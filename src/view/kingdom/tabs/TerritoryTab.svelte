@@ -1,11 +1,11 @@
 <script lang="ts">
-   import { kingdomData, currentFaction, allSettlements } from '../../../stores/KingdomStore';
+   import { kingdomData, currentFaction, allSettlements, ownedSettlements, claimedWorksites } from '../../../stores/KingdomStore';
    import { WorksiteConfig } from '../../../models/Hex';
    import { getResourceIcon, getResourceColor } from '../utils/presentation';
    import { filterVisibleHexes } from '../../../utils/visibility-filter';
-   
+
    // View mode toggle
-   let viewMode: 'territory' | 'world' = 'territory';
+   let viewMode: 'territory' | 'world' | 'overview' = 'territory';
    
    // Check if current user is GM
    $: isGM = (game as any)?.user?.isGM || false;
@@ -312,11 +312,27 @@
       <!-- View Mode Radio Group (right side) -->
       <div class="filter-group view-mode-group">
          <div class="radio-group" role="radiogroup" aria-label="View mode">
+            <label class="radio-option" class:selected={viewMode === 'overview'}>
+               <input
+                  type="radio"
+                  name="viewMode"
+                  value="overview"
+                  bind:group={viewMode}
+                  class="radio-input"
+               />
+               <span class="radio-content">
+                  <span class="radio-label">Overview</span>
+                  <span class="radio-icon-count">
+                     <i class="fas fa-chart-bar"></i>
+                  </span>
+               </span>
+            </label>
+
             <label class="radio-option" class:selected={viewMode === 'territory'}>
-               <input 
-                  type="radio" 
-                  name="viewMode" 
-                  value="territory" 
+               <input
+                  type="radio"
+                  name="viewMode"
+                  value="territory"
                   bind:group={viewMode}
                   class="radio-input"
                />
@@ -328,12 +344,12 @@
                   </span>
                </span>
             </label>
-            
+
             <label class="radio-option" class:selected={viewMode === 'world'}>
-               <input 
-                  type="radio" 
-                  name="viewMode" 
-                  value="world" 
+               <input
+                  type="radio"
+                  name="viewMode"
+                  value="world"
                   bind:group={viewMode}
                   class="radio-input"
                />
@@ -348,8 +364,157 @@
          </div>
       </div>
    </div>
-   
+
+   <!-- Kingdom Overview -->
+   {#if viewMode === 'overview'}
+      <div class="kingdom-overview">
+         <!-- Statistics Grid -->
+         <div class="stats-grid">
+            <!-- Territory Statistics -->
+            <div class="stat-card">
+               <div class="stat-header">
+                  <i class="fas fa-map-marked-alt"></i>
+                  <h3>Territory</h3>
+               </div>
+               <div class="stat-content">
+                  <div class="stat-row">
+                     <span class="stat-label">Claimed Hexes</span>
+                     <span class="stat-value">{claimedHexCount}</span>
+                  </div>
+                  <div class="stat-row">
+                     <span class="stat-label">Kingdom Size</span>
+                     <span class="stat-value">{$kingdomData.size || 0}</span>
+                  </div>
+                  <div class="stat-row">
+                     <span class="stat-label">Roads Built</span>
+                     <span class="stat-value">{($kingdomData.roadsBuilt || []).length}</span>
+                  </div>
+               </div>
+            </div>
+
+            <!-- Settlement Statistics -->
+            <div class="stat-card">
+               <div class="stat-header">
+                  <i class="fas fa-city"></i>
+                  <h3>Settlements</h3>
+               </div>
+               <div class="stat-content">
+                  <div class="stat-row">
+                     <span class="stat-label">Total Settlements</span>
+                     <span class="stat-value">{$ownedSettlements.length}</span>
+                  </div>
+                  {#each Object.entries($ownedSettlements.reduce((acc, s) => {
+                     acc[s.tier] = (acc[s.tier] || 0) + 1;
+                     return acc;
+                  }, {} as Record<string, number>)) as [tier, count]}
+                     <div class="stat-row tier-row">
+                        <span class="stat-label">{tier}s</span>
+                        <span class="stat-value">{count}</span>
+                     </div>
+                  {/each}
+               </div>
+            </div>
+
+            <!-- Worksite Statistics -->
+            <div class="stat-card">
+               <div class="stat-header">
+                  <i class="fas fa-industry"></i>
+                  <h3>Worksites</h3>
+               </div>
+               <div class="stat-content">
+                  <div class="stat-row">
+                     <span class="stat-label">Total Worksites</span>
+                     <span class="stat-value">{Object.values($claimedWorksites).reduce((sum, count) => sum + count, 0)}</span>
+                  </div>
+                  {#if $claimedWorksites.farmlands}
+                     <div class="stat-row">
+                        <span class="stat-label">Farmlands</span>
+                        <span class="stat-value">{$claimedWorksites.farmlands}</span>
+                     </div>
+                  {/if}
+                  {#if $claimedWorksites.lumberCamps}
+                     <div class="stat-row">
+                        <span class="stat-label">Lumber Camps</span>
+                        <span class="stat-value">{$claimedWorksites.lumberCamps}</span>
+                     </div>
+                  {/if}
+                  {#if $claimedWorksites.quarries}
+                     <div class="stat-row">
+                        <span class="stat-label">Quarries</span>
+                        <span class="stat-value">{$claimedWorksites.quarries}</span>
+                     </div>
+                  {/if}
+                  {#if $claimedWorksites.mines}
+                     <div class="stat-row">
+                        <span class="stat-label">Mines</span>
+                        <span class="stat-value">{$claimedWorksites.mines}</span>
+                     </div>
+                  {/if}
+                  {#if Object.values($claimedWorksites).reduce((sum, count) => sum + count, 0) === 0}
+                     <div class="stat-row empty">
+                        <span class="stat-label">No worksites built</span>
+                     </div>
+                  {/if}
+               </div>
+            </div>
+
+            <!-- Production Statistics -->
+            <div class="stat-card">
+               <div class="stat-header">
+                  <i class="fas fa-chart-line"></i>
+                  <h3>Production</h3>
+               </div>
+               <div class="stat-content">
+                  {#if Object.keys(totalProduction).length > 0}
+                     {#each Object.entries(totalProduction) as [resource, amount]}
+                        <div class="stat-row production-row">
+                           <span class="stat-label">
+                              <i class="fas {getResourceIcon(resource)}" style="color: {getResourceColor(resource)}"></i>
+                              {resource.charAt(0).toUpperCase() + resource.slice(1)}
+                           </span>
+                           <span class="stat-value">{amount}</span>
+                        </div>
+                     {/each}
+                  {:else}
+                     <div class="stat-row empty">
+                        <span class="stat-label">No production yet</span>
+                     </div>
+                  {/if}
+               </div>
+            </div>
+         </div>
+
+         <!-- Terrain Breakdown -->
+         <div class="terrain-breakdown">
+            <div class="breakdown-header">
+               <i class="fas fa-mountain"></i>
+               <h3>Terrain Distribution</h3>
+            </div>
+            <div class="terrain-grid">
+               {#each Object.entries(terrainBreakdown).sort(([,a], [,b]) => b - a) as [terrain, count]}
+                  <div class="terrain-item">
+                     <span class="terrain-badge terrain-{terrain.toLowerCase()}">{terrain}</span>
+                     <div class="terrain-bar-container">
+                        <div
+                           class="terrain-bar terrain-{terrain.toLowerCase()}"
+                           style="width: {(count / claimedHexCount) * 100}%"
+                        ></div>
+                     </div>
+                     <span class="terrain-count">{count} ({Math.round((count / claimedHexCount) * 100)}%)</span>
+                  </div>
+               {/each}
+               {#if Object.keys(terrainBreakdown).length === 0}
+                  <div class="empty-state">
+                     <p>No terrain data available</p>
+                  </div>
+               {/if}
+            </div>
+         </div>
+      </div>
+   {/if}
+
    <!-- Territory Table -->
+   {#if viewMode !== 'overview'}
    <div class="territory-table-container">
       {#if filteredAndSortedHexes.length > 0}
          <table class="territory-table">
@@ -517,6 +682,7 @@
          </div>
       {/if}
    </div>
+   {/if}
 </div>
 
 <style lang="scss">
@@ -930,6 +1096,207 @@
             font-size: var(--font-sm);
             font-style: italic;
             color: var(--text-muted);
+         }
+      }
+   }
+
+   // Kingdom Overview Styles
+   .kingdom-overview {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-24);
+      padding: var(--space-16);
+   }
+
+   .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(15.625rem, 1fr));
+      gap: var(--space-16);
+   }
+
+   .stat-card {
+      background: var(--overlay-lower);
+      border-radius: var(--radius-lg);
+      padding: var(--space-16);
+      border: 1px solid var(--border-default);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-12);
+
+      .stat-header {
+         display: flex;
+         align-items: center;
+         gap: var(--space-8);
+         padding-bottom: var(--space-12);
+         border-bottom: 2px solid var(--color-primary);
+
+         i {
+            font-size: var(--font-xl);
+            color: var(--color-primary);
+         }
+
+         h3 {
+            margin: 0;
+            font-size: var(--font-lg);
+            font-weight: var(--font-weight-semibold);
+            color: var(--text-primary);
+         }
+      }
+
+      .stat-content {
+         display: flex;
+         flex-direction: column;
+         gap: var(--space-8);
+      }
+
+      .stat-row {
+         display: flex;
+         justify-content: space-between;
+         align-items: center;
+         padding: var(--space-6) 0;
+
+         &.tier-row {
+            padding-left: var(--space-16);
+            font-size: var(--font-sm);
+         }
+
+         &.production-row {
+            .stat-label {
+               display: flex;
+               align-items: center;
+               gap: var(--space-8);
+
+               i {
+                  font-size: var(--font-md);
+               }
+            }
+         }
+
+         &.empty {
+            justify-content: center;
+            color: var(--text-muted);
+            font-style: italic;
+            font-size: var(--font-sm);
+         }
+
+         .stat-label {
+            color: var(--text-secondary);
+            font-size: var(--font-md);
+         }
+
+         .stat-value {
+            color: var(--text-primary);
+            font-size: var(--font-lg);
+            font-weight: var(--font-weight-semibold);
+         }
+      }
+   }
+
+   .terrain-breakdown {
+      background: var(--overlay-lower);
+      border-radius: var(--radius-lg);
+      padding: var(--space-16);
+      border: 1px solid var(--border-default);
+
+      .breakdown-header {
+         display: flex;
+         align-items: center;
+         gap: var(--space-8);
+         padding-bottom: var(--space-16);
+         border-bottom: 2px solid var(--color-primary);
+         margin-bottom: var(--space-16);
+
+         i {
+            font-size: var(--font-xl);
+            color: var(--color-primary);
+         }
+
+         h3 {
+            margin: 0;
+            font-size: var(--font-lg);
+            font-weight: var(--font-weight-semibold);
+            color: var(--text-primary);
+         }
+      }
+
+      .terrain-grid {
+         display: flex;
+         flex-direction: column;
+         gap: var(--space-12);
+      }
+
+      .terrain-item {
+         display: grid;
+         grid-template-columns: 7.5rem 1fr 6.25rem;
+         align-items: center;
+         gap: var(--space-12);
+      }
+
+      .terrain-bar-container {
+         height: 1.5rem;
+         background: var(--overlay);
+         border-radius: var(--radius-md);
+         overflow: hidden;
+         border: 1px solid var(--border-subtle);
+      }
+
+      .terrain-bar {
+         height: 100%;
+         transition: width 0.3s ease;
+
+         &.terrain-plains {
+            background: var(--color-food-subtle);
+            border-right: 2px solid var(--color-food);
+         }
+
+         &.terrain-forest {
+            background: var(--color-lumber-subtle);
+            border-right: 2px solid var(--color-lumber);
+         }
+
+         &.terrain-hills {
+            background: var(--color-stone-subtle);
+            border-right: 2px solid var(--color-stone);
+         }
+
+         &.terrain-mountains {
+            background: var(--color-ore-subtle);
+            border-right: 2px solid var(--color-ore);
+         }
+
+         &.terrain-swamp {
+            background: rgba(85, 107, 47, 0.2);
+            border-right: 2px solid #556b2f;
+         }
+
+         &.terrain-desert {
+            background: rgba(238, 203, 173, 0.2);
+            border-right: 2px solid #eecbad;
+         }
+
+         &.terrain-water {
+            background: var(--color-ore-subtle);
+            border-right: 2px solid var(--color-ore);
+         }
+      }
+
+      .terrain-count {
+         text-align: right;
+         color: var(--text-secondary);
+         font-size: var(--font-sm);
+         font-weight: var(--font-weight-medium);
+      }
+
+      .empty-state {
+         text-align: center;
+         padding: var(--space-24);
+         color: var(--text-muted);
+         font-style: italic;
+
+         p {
+            margin: 0;
          }
       }
    }
