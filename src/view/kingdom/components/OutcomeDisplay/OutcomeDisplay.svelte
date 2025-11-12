@@ -16,6 +16,11 @@
     const settlement = $kingdomData?.settlements?.find(s => s.id === settlementId);
     return settlement?.name || null;
   }
+  
+  // Helper to get faction name from pending state
+  function getSelectedFactionName(): string | null {
+    return (globalThis as any).__pendingEconomicAidFactionName || null;
+  }
   import {
     updateInstanceResolutionState,
     getInstanceResolutionState,
@@ -305,7 +310,9 @@
     // OR check if customComponentData has data (for metadata-only custom components like outfit-army)
     (customComponentData && Object.keys(customComponentData).length > 0) ||
     // OR check local customSelectionData
-    (customSelectionData && Object.keys(customSelectionData).length > 0)
+    (customSelectionData && Object.keys(customSelectionData).length > 0) ||
+    // OR check if specialEffects are present (for PreparedCommand pattern like request-military-aid)
+    (specialEffects && specialEffects.length > 0)
   );
   
   // Debug logging for custom component resolution
@@ -385,6 +392,7 @@
   // Display effective message and state changes
   // When choices are present, don't show choice result in effect (it's in the button)
   // Special handling for imprisoned unrest - inject settlement name
+  // Special handling for economic aid - inject faction name
   $: displayEffect = (() => {
     let baseEffect = hasChoices ? effect : (choiceResult ? choiceResult.effect : effect);
     
@@ -396,6 +404,13 @@
         baseEffect = baseEffect.replace('in the settlement', `in ${settlementName}`);
         baseEffect = baseEffect.replace('from the settlement', `from ${settlementName}`);
       }
+    }
+    
+    // If we have economic aid action, inject faction name
+    const factionName = getSelectedFactionName();
+    if (factionName) {
+      baseEffect = baseEffect.replace('your ally', factionName);
+      baseEffect = baseEffect.replace('Your ally', factionName);
     }
     
     return baseEffect;
@@ -574,6 +589,7 @@
     const resolution: ResolutionData = {
       numericModifiers,
       manualEffects: manualEffects || [],
+      specialEffects: specialEffects || [],  // Include special effects (PreparedCommand pattern)
       complexActions: [], // Phase 3 will add support for this
       customComponentData: mergedCustomData  // Merged custom component data
     };

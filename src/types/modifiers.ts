@@ -201,7 +201,7 @@ export interface ComplexAction {
 export interface ResolutionData {
   numericModifiers: Array<{ resource: ResourceType; value: number }>;
   manualEffects: string[];
-  specialEffects?: string[];  // Automated effects (e.g., structure damage, hex claimed)
+  specialEffects?: (string | import('../types/special-effects').SpecialEffect)[];  // Automated effects (structured or legacy strings)
   complexActions: ComplexAction[];
   customComponentData?: any;  // Data from custom resolution components (e.g., arrest-dissidents allocations)
 }

@@ -51,6 +51,7 @@
   let showUpgradeSettlementSelectionDialog: boolean = false;
   let showFactionSelectionDialog: boolean = false;
   let showRequestEconomicAidDialog: boolean = false;
+  let showRequestMilitaryAidDialog: boolean = false;
   let showAidSelectionDialog: boolean = false;
   let showSettlementSelectionDialog: boolean = false;
   let showExecuteOrPardonSettlementDialog: boolean = false;
@@ -64,6 +65,7 @@
   let pendingUpgradeAction: { skill: string; settlementId?: string } | null = null;
   let pendingDiplomaticAction: { skill: string; factionId?: string; factionName?: string } | null = null;
   let pendingRequestEconomicAidAction: { skill: string; factionId?: string; factionName?: string } | null = null;
+  let pendingRequestMilitaryAidAction: { skill: string; factionId?: string; factionName?: string } | null = null;
   let pendingStipendAction: { skill: string; settlementId?: string } | null = null;
   let pendingExecuteOrPardonAction: { skill: string; settlementId?: string } | null = null;
   let pendingTrainArmyAction: { skill: string; armyId?: string } | null = null;
@@ -109,6 +111,7 @@
     setShowUpgradeSettlementDialog: (show) => { showUpgradeSettlementSelectionDialog = show; },
     setShowFactionSelectionDialog: (show) => { showFactionSelectionDialog = show; },
     setShowRequestEconomicAidDialog: (show) => { showRequestEconomicAidDialog = show; },
+    setShowRequestMilitaryAidDialog: (show) => { showRequestMilitaryAidDialog = show; },
     setShowSettlementSelectionDialog: (show) => { showSettlementSelectionDialog = show; },
     setShowExecuteOrPardonSettlementDialog: (show) => { showExecuteOrPardonSettlementDialog = show; },
     setShowTrainArmyDialog: (show) => { showTrainArmyDialog = show; },
@@ -121,6 +124,7 @@
     setPendingUpgradeAction: (action) => { pendingUpgradeAction = action; },
     setPendingDiplomaticAction: (action) => { pendingDiplomaticAction = action; },
     setPendingRequestEconomicAidAction: (action) => { pendingRequestEconomicAidAction = action; },
+    setPendingRequestMilitaryAidAction: (action) => { pendingRequestMilitaryAidAction = action; },
     setPendingStipendAction: (action) => { pendingStipendAction = action; },
     setPendingExecuteOrPardonAction: (action) => { pendingExecuteOrPardonAction = action; },
     setPendingTrainArmyAction: (action) => { pendingTrainArmyAction = action; },
@@ -351,11 +355,34 @@
   }
   
 
+  // Deduplication tracking for roll events
+  const processedRolls = new Set<string>();
+  const DEDUPLICATION_TIMEOUT = 2000; // 2 seconds
+  
   // Listen for roll completion events
   async function handleRollComplete(event: CustomEvent) {
     const { checkId, outcome, actorName, checkType, skillName, proficiencyRank, rollBreakdown } = event.detail;
 
     if (checkType === "action") {
+      // DEDUPLICATION: Create a unique key for this roll
+      const rollKey = `${checkId}-${outcome}-${actorName}-${rollBreakdown?.d20Result || 0}-${rollBreakdown?.total || 0}`;
+      
+      // Check if we've already processed this exact roll
+      if (processedRolls.has(rollKey)) {
+        console.log('⚠️ [ActionsPhase] Duplicate roll event detected, skipping:', rollKey);
+        return;
+      }
+      
+      // Mark as processed
+      processedRolls.add(rollKey);
+      
+      // Clean up after timeout
+      setTimeout(() => {
+        processedRolls.delete(rollKey);
+      }, DEDUPLICATION_TIMEOUT);
+      
+      console.log('✅ [ActionsPhase] Processing roll event:', rollKey);
+      
       await onActionResolved(checkId, outcome, actorName, checkType, skillName, proficiencyRank, rollBreakdown);
       
       // Clear aid modifiers for this specific action after roll completes
@@ -381,6 +408,8 @@
 
   // Component lifecycle
   onMount(async () => {
+    console.log('🔵 [ActionsPhase] Component mounting...');
+    
     // Load preference from localStorage on mount
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored !== null) {
@@ -407,10 +436,13 @@
     const game = (window as any).game;
     currentUserId = game?.user?.id || null;
 
+    console.log('🔵 [ActionsPhase] Adding event listener for kingdomRollComplete');
     window.addEventListener(
       "kingdomRollComplete",
       handleRollComplete as any
     );
+    
+    // Initialize roll result handler (has built-in guard against multiple registrations)
     initializeRollResultHandler();
 
     // Wait for store initialization before accessing player data
@@ -418,6 +450,7 @@
   });
 
   onDestroy(() => {
+    console.log('🔴 [ActionsPhase] Component unmounting, removing event listener');
     window.removeEventListener(
       "kingdomRollComplete",
       handleRollComplete as any
@@ -427,6 +460,9 @@
     if (aidManager) {
       aidManager.cleanup();
     }
+    
+    // Clear deduplication set
+    processedRolls.clear();
   });
 
   // Helper functions delegating to controller
@@ -733,9 +769,30 @@
       
       // Store in global state for action-resolver
       (globalThis as any).__pendingEconomicAidFaction = factionId;
+      (globalThis as any).__pendingEconomicAidFactionName = factionName;
       
       // Now trigger the skill roll with the selected faction context
       await executeRequestEconomicAidRoll(pendingRequestEconomicAidAction);
+    }
+  }
+  
+  // Handle when a faction is selected for military aid request
+  async function handleMilitaryAidFactionSelected(event: CustomEvent) {
+    const { factionId, factionName } = event.detail;
+    
+    if (pendingRequestMilitaryAidAction) {
+      pendingRequestMilitaryAidAction.factionId = factionId;
+      pendingRequestMilitaryAidAction.factionName = factionName;
+      
+      // Close dialog
+      showRequestMilitaryAidDialog = false;
+      
+      // Store in global state for action-resolver (uses same global var as economic aid)
+      (globalThis as any).__pendingEconomicAidFaction = factionId;
+      (globalThis as any).__pendingEconomicAidFactionName = factionName;
+      
+      // Now trigger the skill roll with the selected faction context
+      await executeRequestMilitaryAidRoll(pendingRequestMilitaryAidAction);
     }
   }
   
@@ -1068,6 +1125,25 @@
         onRollCancel: () => { 
           pendingRequestEconomicAidAction = null;
           delete (globalThis as any).__pendingEconomicAidFaction;
+          delete (globalThis as any).__pendingEconomicAidFactionName;
+        }
+      }
+    );
+  }
+  
+  // Execute the request military aid skill roll - using ActionExecutionHelpers
+  async function executeRequestMilitaryAidRoll(aidAction: { skill: string; factionId?: string; factionName?: string }) {
+    await executeActionRoll(
+      createExecutionContext('request-military-aid', aidAction.skill, {
+        factionId: aidAction.factionId,
+        factionName: aidAction.factionName
+      }),
+      {
+        getDC: (characterLevel: number) => controller.getActionDC(characterLevel),
+        onRollCancel: () => { 
+          pendingRequestMilitaryAidAction = null;
+          delete (globalThis as any).__pendingEconomicAidFaction;
+          delete (globalThis as any).__pendingEconomicAidFactionName;
         }
       }
     );
@@ -1177,6 +1253,7 @@
   bind:showUpgradeSettlementSelectionDialog
   bind:showFactionSelectionDialog
   bind:showRequestEconomicAidDialog
+  bind:showRequestMilitaryAidDialog
   bind:showAidSelectionDialog
   bind:showSettlementSelectionDialog
   bind:showExecuteOrPardonSettlementDialog
@@ -1190,6 +1267,7 @@
   on:upgradeSettlementSelected={handleUpgradeSettlementSelected}
   on:factionSelected={handleFactionSelected}
   on:economicAidFactionSelected={handleEconomicAidFactionSelected}
+  on:militaryAidFactionSelected={handleMilitaryAidFactionSelected}
   on:settlementSelected={handleSettlementSelected}
   on:executeOrPardonSettlementSelected={handleExecuteOrPardonSettlementSelected}
   on:armySelectedForTraining={handleArmySelectedForTraining}

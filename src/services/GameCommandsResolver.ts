@@ -61,10 +61,11 @@ export async function createGameCommandsResolver() {
      * 
      * @param level - Army level (typically party level)
      * @param name - Optional custom name for the army (deprecated, use pending data)
+     * @param exemptFromUpkeep - If true, army is allied and exempt from upkeep costs
      * @returns PreparedCommand with preview + commit function
      */
-    async recruitArmy(level: number, name?: string): Promise<PreparedCommand> {
-      logger.info(`🎖️ [recruitArmy] PREPARING recruitment at level ${level}`);
+    async recruitArmy(level: number, name?: string, exemptFromUpkeep?: boolean): Promise<PreparedCommand> {
+      logger.info(`🎖️ [recruitArmy] PREPARING recruitment at level ${level} (exempt: ${exemptFromUpkeep})`);
       
       // PHASE 1: PREPARE - Validate everything needed for preview (NO state changes)
       const actor = getKingdomActor();
@@ -83,6 +84,32 @@ export async function createGameCommandsResolver() {
 
       const { name: armyName, settlementId, armyType } = pendingData;
 
+      // NEW: Check allied army limits if exempt from upkeep
+      if (exemptFromUpkeep) {
+        const kingdom = actor.getKingdomData();
+        const alliedArmyCount = (kingdom.armies || []).filter((a: any) => a.exemptFromUpkeep).length;
+        
+        // Get faction ID from pending state
+        const factionId = (globalThis as any).__pendingEconomicAidFaction;
+        if (!factionId) {
+          throw new Error('No faction selected for allied army');
+        }
+        
+        // Get faction attitude
+        const { factionService } = await import('./factions/index');
+        const faction = factionService.getFaction(factionId);
+        if (!faction) {
+          throw new Error(`Faction ${factionId} not found`);
+        }
+        
+        // Check limits: 1 for Friendly, 2 for Helpful
+        const maxAllied = faction.attitude === 'Helpful' ? 2 : (faction.attitude === 'Friendly' ? 1 : 0);
+        
+        if (alliedArmyCount >= maxAllied) {
+          throw new Error(`Maximum allied armies reached for ${faction.attitude} faction (${maxAllied})`);
+        }
+      }
+
       const { ARMY_TYPES } = await import('../utils/armyHelpers');
       if (!ARMY_TYPES[armyType as keyof typeof ARMY_TYPES]) {
         throw new Error(`Invalid army type: ${armyType}`);
@@ -98,9 +125,11 @@ export async function createGameCommandsResolver() {
         }
       }
       
-      const message = settlementName 
-        ? `Recruited ${armyName} in ${settlementName}`
-        : `Recruited ${armyName} (no settlement support)`;
+      const message = exemptFromUpkeep
+        ? `Allied reinforcements arrive: ${armyName} (no upkeep cost)`
+        : (settlementName 
+            ? `Recruited ${armyName} in ${settlementName}`
+            : `Recruited ${armyName} (no settlement support)`);
       
       logger.info(`🎖️ [recruitArmy] PREPARED: ${message}`);
 
@@ -109,18 +138,49 @@ export async function createGameCommandsResolver() {
         specialEffect: {
           type: 'status',
           message: message,
-          icon: 'fa-shield-alt',
+          icon: exemptFromUpkeep ? 'fa-handshake' : 'fa-shield-alt',
           variant: 'positive'
         },
         commit: async () => {
           logger.info(`🎖️ [recruitArmy] COMMITTING: Creating ${armyName}`);
           
           const { armyService } = await import('./army');
-          await armyService.createArmy(armyName, level, {
+          const createdArmy = await armyService.createArmy(armyName, level, {
             type: armyType,
             image: ARMY_TYPES[armyType as keyof typeof ARMY_TYPES].image,
-            settlementId: settlementId
+            settlementId: settlementId,
+            exemptFromUpkeep: exemptFromUpkeep
           });
+
+          // NEW: Add "Allied Army" effect if exempt from upkeep
+          if (exemptFromUpkeep && createdArmy.actorId) {
+            const game = (globalThis as any).game;
+            const armyActor = game.actors.get(createdArmy.actorId);
+            
+            if (armyActor) {
+              await armyActor.createEmbeddedDocuments('Item', [{
+                type: 'effect',
+                name: 'Allied Army',
+                img: 'icons/sundries/flags/banner-standard-green.webp',
+                system: {
+                  slug: 'allied-army',
+                  badge: null,
+                  description: {
+                    value: '<p>This army is provided by an allied faction and does not count toward your kingdom\'s army upkeep costs. If relations with the ally drop below Friendly, the army returns home.</p>'
+                  },
+                  duration: {
+                    value: -1,
+                    unit: 'unlimited',
+                    sustained: false,
+                    expiry: null
+                  },
+                  rules: []
+                }
+              }]);
+              
+              logger.info(`✨ [recruitArmy] Added Allied Army effect to ${armyName}`);
+            }
+          }
 
           delete (globalThis as any).__pendingRecruitArmy;
           
@@ -616,13 +676,14 @@ export async function createGameCommandsResolver() {
      * Applies PF2e effects (armor, runes, weapons, equipment) to army actor
      * Each army can receive each equipment type only once
      * 
-     * @param armyId - ID of army to outfit
-     * @param equipmentType - Type of equipment (armor, runes, weapons, equipment)
+     * @param armyId - ID of army to outfit (optional - will prompt user if not provided)
+     * @param equipmentType - Type of equipment (optional - will prompt user if not provided)
      * @param outcome - Action outcome (success, criticalSuccess, failure, criticalFailure)
+     * @param fallbackToGold - If true and no armies available, grant 1 gold instead
      * @returns ResolveResult with success status
      */
-    async outfitArmy(armyId: string, equipmentType: string, outcome: string): Promise<ResolveResult> {
-      logger.info(`⚔️ [outfitArmy] Outfitting army ${armyId} with ${equipmentType} (outcome: ${outcome})`);
+    async outfitArmy(armyId: string | undefined, equipmentType: string | undefined, outcome: string, fallbackToGold?: boolean): Promise<ResolveResult> {
+      logger.info(`⚔️ [outfitArmy] Outfitting army ${armyId || '(prompt user)'} with ${equipmentType || '(prompt user)'} (outcome: ${outcome}, fallback: ${fallbackToGold})`);
 
       try {
         const actor = getKingdomActor();
@@ -635,7 +696,79 @@ export async function createGameCommandsResolver() {
           return { success: false, error: 'No kingdom data available' };
         }
 
-        // Find the army
+        // Get available armies (those with actorId and at least one available equipment slot)
+        const armies = kingdom.armies || [];
+        const validTypes = ['armor', 'runes', 'weapons', 'equipment'];
+        
+        const availableArmies = armies.filter((a: Army) => {
+          if (!a.actorId) return false;
+          // Check if army has at least one equipment slot available
+          return validTypes.some(type => !a.equipment?.[type as keyof typeof a.equipment]);
+        });
+
+        // NEW: Check if fallback to gold is enabled
+        if (fallbackToGold && availableArmies.length === 0) {
+          // No armies to outfit - grant 1 gold instead
+          await updateKingdom(k => {
+            k.resources.gold = (k.resources.gold || 0) + 1;
+          });
+
+          logger.info(`💰 [outfitArmy] No armies available to outfit - granted 1 gold instead`);
+
+          return {
+            success: true,
+            data: {
+              message: 'No armies available to outfit - received 1 Gold instead',
+              grantedGold: true
+            }
+          };
+        }
+
+        if (availableArmies.length === 0) {
+          return { success: false, error: 'No armies available to outfit (all fully equipped)' };
+        }
+
+        // Prompt user to select army if not provided
+        if (!armyId) {
+          const selectedArmyId = await new Promise<string | null>((resolve) => {
+            const Dialog = (globalThis as any).Dialog;
+            new Dialog({
+              title: 'Select Army to Outfit',
+              content: `
+                <form>
+                  <div class="form-group">
+                    <label>Select an army to outfit:</label>
+                    <select name="armyId" style="width: 100%; padding: 5px;">
+                      ${availableArmies.map((a: Army) => `<option value="${a.id}">${a.name} (Level ${a.level})</option>`).join('')}
+                    </select>
+                  </div>
+                </form>
+              `,
+              buttons: {
+                ok: {
+                  label: 'Select',
+                  callback: (html: any) => {
+                    const selectedId = html.find('[name="armyId"]').val();
+                    resolve(selectedId);
+                  }
+                },
+                cancel: {
+                  label: 'Cancel',
+                  callback: () => resolve(null)
+                }
+              },
+              default: 'ok'
+            }).render(true);
+          });
+
+          if (!selectedArmyId) {
+            return { success: false, error: 'Army selection cancelled' };
+          }
+          
+          armyId = selectedArmyId;
+        }
+
+        // Find the selected army
         const army = kingdom.armies?.find((a: Army) => a.id === armyId);
         if (!army) {
           return { success: false, error: `Army ${armyId} not found` };
@@ -645,14 +778,66 @@ export async function createGameCommandsResolver() {
           return { success: false, error: `${army.name} has no linked NPC actor` };
         }
 
-        // Validate equipment type
-        const validTypes = ['armor', 'runes', 'weapons', 'equipment'];
-        if (!validTypes.includes(equipmentType)) {
-          return { success: false, error: `Invalid equipment type: ${equipmentType}` };
+        // Get available equipment types for this army
+        const availableEquipmentTypes = validTypes.filter(type => 
+          !army.equipment?.[type as keyof typeof army.equipment]
+        );
+
+        if (availableEquipmentTypes.length === 0) {
+          return { success: false, error: `${army.name} is fully equipped (all upgrade slots used)` };
         }
 
-        // Check if army already has this equipment
-        if (army.equipment?.[equipmentType as keyof typeof army.equipment]) {
+        // Prompt user to select equipment type if not provided
+        if (!equipmentType) {
+          const selectedEquipmentType = await new Promise<string | null>((resolve) => {
+            const Dialog = (globalThis as any).Dialog;
+            const equipmentNames = {
+              armor: 'Armor (+1 AC)',
+              runes: 'Runes (+1 to hit)',
+              weapons: 'Weapons (+1 damage dice)',
+              equipment: 'Enhanced Gear (+1 saves)'
+            };
+            
+            new Dialog({
+              title: `Outfit ${army.name}`,
+              content: `
+                <form>
+                  <div class="form-group">
+                    <label>Select equipment type:</label>
+                    <select name="equipmentType" style="width: 100%; padding: 5px;">
+                      ${availableEquipmentTypes.map(type => 
+                        `<option value="${type}">${equipmentNames[type as keyof typeof equipmentNames]}</option>`
+                      ).join('')}
+                    </select>
+                  </div>
+                </form>
+              `,
+              buttons: {
+                ok: {
+                  label: 'Outfit',
+                  callback: (html: any) => {
+                    const selectedType = html.find('[name="equipmentType"]').val();
+                    resolve(selectedType);
+                  }
+                },
+                cancel: {
+                  label: 'Cancel',
+                  callback: () => resolve(null)
+                }
+              },
+              default: 'ok'
+            }).render(true);
+          });
+
+          if (!selectedEquipmentType) {
+            return { success: false, error: 'Equipment selection cancelled' };
+          }
+          
+          equipmentType = selectedEquipmentType;
+        }
+
+        // Check if army already has this equipment (already validated in equipment selection)
+        if (army.equipment?.[equipmentType! as keyof typeof army.equipment]) {
           return {
             success: false,
             error: `${army.name} already has ${equipmentType} upgrade`
@@ -1624,11 +1809,12 @@ export async function createGameCommandsResolver() {
 
     /**
      * Adjust Faction Attitude - Improve or worsen diplomatic relations
+     * REFACTORED: Uses prepare/commit pattern
      * 
      * @param factionId - Optional specific faction (if null, player selects via UI)
      * @param steps - Number of steps to adjust (+1 = improve, -1 = worsen)
      * @param options - Optional constraints (maxLevel, minLevel, count)
-     * @returns ResolveResult with attitude change details
+     * @returns PreparedCommand with preview + commit function
      */
     async adjustFactionAttitude(
       factionId: string | null,
@@ -1638,182 +1824,135 @@ export async function createGameCommandsResolver() {
         minLevel?: string;
         count?: number;
       }
-    ): Promise<ResolveResult> {
-      const count = options?.count || 1;
-      logger.info(`🤝 [adjustFactionAttitude] Adjusting ${count} faction(s) attitude by ${steps} steps`);
+    ): Promise<PreparedCommand> {
+      logger.info(`🤝 [adjustFactionAttitude] PREPARING attitude adjustment by ${steps} steps`);
       
-      try {
-        const actor = getKingdomActor();
-        if (!actor) {
-          return { success: false, error: 'No kingdom actor available' };
-        }
-
-        const kingdom = actor.getKingdomData();
-        if (!kingdom || !kingdom.factions || kingdom.factions.length === 0) {
-          return { success: false, error: 'No factions available' };
-        }
-
-        // Import utilities
-        const { hasDiplomaticStructures } = await import('../utils/faction-attitude-adjuster');
-        const { factionService } = await import('./factions/index');
-
-        // Check diplomatic structures for maxLevel override
-        const hasDiploStructures = hasDiplomaticStructures(kingdom);
-        const effectiveMaxLevel = hasDiploStructures ? undefined : options?.maxLevel;
-
-        // Track results for multiple factions
-        const results: Array<{ factionName: string; oldAttitude: string; newAttitude: string }> = [];
-        const selectedFactionIds = new Set<string>();
-
-        // Loop through count times
-        for (let i = 0; i < count; i++) {
-          // Get target faction
-          let targetFactionId = factionId;
-          let targetFactionName = '';
-
-          if (!targetFactionId) {
-            // For now, use a simple selection prompt
-            // TODO: Implement proper FactionSelectorService with UI
-            const game = (globalThis as any).game;
-            
-            // Filter eligible factions (exclude already selected factions)
-            const { canAdjustAttitude, getAdjustmentBlockReason } = await import('../utils/faction-attitude-adjuster');
-            const eligibleFactions = kingdom.factions.filter((f: any) => {
-              // Skip already selected factions
-              if (selectedFactionIds.has(f.id)) {
-                return false;
-              }
-              return canAdjustAttitude(f.attitude, steps, {
-                maxLevel: effectiveMaxLevel as any,
-                minLevel: options?.minLevel as any
-              });
-            });
-
-            if (eligibleFactions.length === 0) {
-              // If no more eligible factions, break loop early
-              const partialMessage = results.length > 0
-                ? `Only ${results.length} faction(s) available (requested ${count})`
-                : `No factions available to ${steps > 0 ? 'improve' : 'worsen'} relations with${effectiveMaxLevel ? ` (max: ${effectiveMaxLevel})` : ''}`;
-              
-              if (results.length === 0) {
-                return {
-                  success: false,
-                  error: partialMessage
-                };
-              }
-              
-              // Return partial success
-              logger.warn(`⚠️ [adjustFactionAttitude] ${partialMessage}`);
-              break;
-            }
-
-            // Use styled Svelte dialog
-            const promptTitle = count > 1 
-              ? `Select Faction ${i + 1}/${count} (${steps > 0 ? 'Improve' : 'Worsen'} Relations)`
-              : `Select Faction (${steps > 0 ? 'Improve' : 'Worsen'} Relations)`;
-
-            // Calculate remaining count to select
-            const remainingCount = count - results.length;
-            const selectTitle = remainingCount > 1 
-              ? `Select ${remainingCount} Factions (${steps > 0 ? 'Improve' : 'Worsen'} Relations)`
-              : promptTitle;
-
-            const { showSvelteDialog } = await import('../utils/SvelteDialogHelper');
-            const FactionPickerDialog = (await import('../ui/dialogs/FactionPickerDialog.svelte')).default;
-
-            const result = await showSvelteDialog<{ factionIds: string[]; factions: any[] }>(
-              FactionPickerDialog,
-              {
-                title: selectTitle,
-                eligibleFactions,
-                count: remainingCount
-              }
-            );
-
-            if (!result || !result.factionIds || result.factionIds.length === 0) {
-              // User cancelled - return partial results if any
-              if (results.length === 0) {
-                return { success: false, error: 'Faction selection cancelled' };
-              }
-              break;
-            }
-
-            // Process all selected factions at once
-            for (const selectedId of result.factionIds) {
-              const faction = factionService.getFaction(selectedId);
-              if (!faction) {
-                logger.warn(`⚠️ [adjustFactionAttitude] Faction not found: ${selectedId}`);
-                continue;
-              }
-              
-              targetFactionName = faction.name;
-
-              // Track selected faction
-              selectedFactionIds.add(selectedId);
-
-              // Apply adjustment
-              const adjustResult = await factionService.adjustAttitude(
-                selectedId,
-                steps,
-                {
-                  maxLevel: effectiveMaxLevel as any,
-                  minLevel: options?.minLevel as any
-                }
-              );
-
-              if (!adjustResult.success) {
-                // If adjustment failed, continue to next faction (don't abort entire operation)
-                logger.warn(`⚠️ [adjustFactionAttitude] Failed to adjust ${targetFactionName}: ${adjustResult.reason}`);
-                continue;
-              }
-
-              // Track result
-              results.push({
-                factionName: targetFactionName,
-                oldAttitude: adjustResult.oldAttitude || 'Unknown',
-                newAttitude: adjustResult.newAttitude || 'Unknown'
-              });
-
-              logger.info(`✅ [adjustFactionAttitude] ${targetFactionName}: ${adjustResult.oldAttitude} → ${adjustResult.newAttitude}`);
-            }
-
-            // Exit the loop since we selected all factions at once
-            break;
-          }
-        }
-
-        // Format aggregated message
-        if (results.length === 0) {
-          return {
-            success: false,
-            error: 'No factions were adjusted'
-          };
-        }
-
-        const direction = steps > 0 ? 'improved' : 'worsened';
-        const messages = results.map(r => 
-          `${r.factionName}: ${r.oldAttitude} → ${r.newAttitude}`
-        );
-        const message = count > 1
-          ? `Relations ${direction} with ${results.length} faction(s):\n${messages.join('\n')}`
-          : `Relations with ${results[0].factionName} ${direction}: ${results[0].oldAttitude} → ${results[0].newAttitude}`;
-
-        return {
-          success: true,
-          data: {
-            factions: results,
-            count: results.length,
-            message
-          }
-        };
-
-      } catch (error) {
-        logger.error('❌ [GameCommandsResolver] Failed to adjust faction attitude:', error);
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
-        };
+      // PHASE 1: PREPARE - Get faction info and validate (NO state changes)
+      const actor = getKingdomActor();
+      if (!actor) {
+        throw new Error('No kingdom actor available');
       }
+
+      const kingdom = actor.getKingdomData();
+      if (!kingdom || !kingdom.factions || kingdom.factions.length === 0) {
+        throw new Error('No factions available');
+      }
+
+      // Import utilities
+      const { factionService } = await import('./factions/index');
+
+      // Get faction ID from parameter or pending state
+      let selectedFactionId = factionId;
+      if (!selectedFactionId) {
+        // Check for pending faction (set by pre-roll dialog or action)
+        selectedFactionId = (globalThis as any).__pendingEconomicAidFaction;
+      }
+
+      // Prompt user to select faction if not provided
+      if (!selectedFactionId) {
+        const eligibleFactions = kingdom.factions.filter((f: any) => f.attitude !== undefined);
+        
+        if (eligibleFactions.length === 0) {
+          throw new Error('No factions available');
+        }
+
+        selectedFactionId = await new Promise<string | null>((resolve) => {
+          const Dialog = (globalThis as any).Dialog;
+          new Dialog({
+            title: 'Select Faction',
+            content: `
+              <form>
+                <div class="form-group">
+                  <label>Select faction to adjust relations with:</label>
+                  <select name="factionId" style="width: 100%; padding: 5px;">
+                    ${eligibleFactions.map((f: any) => 
+                      `<option value="${f.id}">${f.name} (${f.attitude})</option>`
+                    ).join('')}
+                  </select>
+                </div>
+              </form>
+            `,
+            buttons: {
+              ok: {
+                label: 'Select',
+                callback: (html: any) => {
+                  const selected = html.find('[name="factionId"]').val();
+                  resolve(selected);
+                }
+              },
+              cancel: {
+                label: 'Cancel',
+                callback: () => resolve(null)
+              }
+            },
+            default: 'ok'
+          }).render(true);
+        });
+
+        if (!selectedFactionId) {
+          throw new Error('Faction selection cancelled');
+        }
+      }
+
+      // Get faction details for preview
+      const faction = factionService.getFaction(selectedFactionId);
+      if (!faction) {
+        throw new Error(`Faction ${selectedFactionId} not found`);
+      }
+
+      // Calculate new attitude for preview (don't apply yet)
+      const oldAttitude = faction.attitude;
+      const { hasDiplomaticStructures } = await import('../utils/faction-attitude-adjuster');
+      const hasDiploStructures = hasDiplomaticStructures(kingdom);
+      const effectiveMaxLevel = hasDiploStructures ? undefined : options?.maxLevel;
+
+      // Preview the attitude change
+      const attitudeOrder = ['Hostile', 'Unfriendly', 'Indifferent', 'Friendly', 'Helpful'];
+      const currentIndex = attitudeOrder.indexOf(oldAttitude);
+      let newIndex = currentIndex + steps;
+      
+      // Apply constraints
+      if (effectiveMaxLevel) {
+        const maxIndex = attitudeOrder.indexOf(effectiveMaxLevel);
+        newIndex = Math.min(newIndex, maxIndex);
+      }
+      if (options?.minLevel) {
+        const minIndex = attitudeOrder.indexOf(options.minLevel);
+        newIndex = Math.max(newIndex, minIndex);
+      }
+      
+      newIndex = Math.max(0, Math.min(newIndex, attitudeOrder.length - 1));
+      const newAttitude = attitudeOrder[newIndex];
+
+      const message = `${faction.name}: ${oldAttitude} → ${newAttitude}`;
+      const variant = steps > 0 ? 'positive' : 'negative';
+      
+      logger.info(`🤝 [adjustFactionAttitude] PREPARED: ${message}`);
+
+      // PHASE 2: RETURN - Preview data + commit function
+      return {
+        specialEffect: {
+          type: 'attitude',
+          message: message,
+          icon: 'fa-handshake',
+          variant: variant
+        },
+        commit: async () => {
+          logger.info(`🤝 [adjustFactionAttitude] COMMITTING: Adjusting ${faction.name}`);
+          
+          // Apply the actual attitude change
+          await factionService.adjustAttitude(
+            selectedFactionId!,
+            steps,
+            {
+              maxLevel: effectiveMaxLevel as any,
+              minLevel: options?.minLevel as any
+            }
+          );
+          
+          logger.info(`✅ [adjustFactionAttitude] Successfully adjusted ${faction.name}: ${oldAttitude} → ${newAttitude}`);
+        }
+      };
     },
 
     /**

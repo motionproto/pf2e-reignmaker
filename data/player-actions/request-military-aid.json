@@ -24,23 +24,41 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Your ally provides generous military support.",
-      "modifiers": []
+      "description": "Your ally sends elite reinforcements to support your cause.",
+      "modifiers": [],
+      "gameCommands": [
+        {
+          "type": "requestMilitaryAidRecruitment",
+          "level": "kingdom-level",
+          "exemptFromUpkeep": true
+        }
+      ]
     },
     "success": {
-      "description": "Your ally provides military support.",
-      "modifiers": []
+      "description": "Your ally provides military equipment and supplies.",
+      "modifiers": [],
+      "gameCommands": [
+        {
+          "type": "requestMilitaryAidEquipment"
+        }
+      ]
     },
     "failure": {
-      "description": "Your ally cannot help.",
+      "description": "Your ally cannot help at this time.",
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "Your ally is offended.",
-      "modifiers": []
+      "description": "Your ally is offended by the request.",
+      "modifiers": [],
+      "gameCommands": [
+        {
+          "type": "adjustFactionAttitude",
+          "steps": -1
+        }
+      ]
     }
   },
   "requirements": [
-    "Diplomatic relations"
+    "Diplomatic relations at least friendly"
   ]
 }

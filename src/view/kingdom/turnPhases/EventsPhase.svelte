@@ -164,6 +164,8 @@
    }
    
    onMount(async () => {
+      console.log('🔵 [EventsPhase] Component mounting...');
+      
       // Initialize the controller and service
       eventPhaseController = await createEventPhaseController(null);
       gameCommandsService = await createGameCommandsService();
@@ -189,13 +191,20 @@
       // currentEventInstance.appliedOutcome is automatically restored from KingdomActor flags
       
       // Listen for roll completion to clear aids
+      console.log('🔵 [EventsPhase] Adding event listener for kingdomRollComplete');
       window.addEventListener('kingdomRollComplete', handleRollComplete as any);
+      
+      // Initialize roll result handler (has built-in guard against multiple registrations)
       initializeRollResultHandler();
    });
    
    onDestroy(() => {
+      console.log('🔴 [EventsPhase] Component unmounting, removing event listener');
       window.removeEventListener('kingdomRollComplete', handleRollComplete as any);
       checkHandler?.cleanup();
+      
+      // Clear deduplication set
+      processedRolls.clear();
    });
    
    // Use controller for event check logic
@@ -794,11 +803,34 @@
       };
    }
    
+   // Deduplication tracking for roll events
+   const processedRolls = new Set<string>();
+   const DEDUPLICATION_TIMEOUT = 2000; // 2 seconds
+   
    // Handle roll completion to clear aids
    async function handleRollComplete(event: CustomEvent) {
-      const { checkId, checkType } = event.detail;
+      const { checkId, checkType, outcome, actorName, rollBreakdown } = event.detail;
       
       if (checkType === 'event') {
+         // DEDUPLICATION: Create a unique key for this roll
+         const rollKey = `${checkId}-${outcome}-${actorName}-${rollBreakdown?.d20Result || 0}-${rollBreakdown?.total || 0}`;
+         
+         // Check if we've already processed this exact roll
+         if (processedRolls.has(rollKey)) {
+            console.log('⚠️ [EventsPhase] Duplicate roll event detected, skipping:', rollKey);
+            return;
+         }
+         
+         // Mark as processed
+         processedRolls.add(rollKey);
+         
+         // Clean up after timeout
+         setTimeout(() => {
+            processedRolls.delete(rollKey);
+         }, DEDUPLICATION_TIMEOUT);
+         
+         console.log('✅ [EventsPhase] Processing roll event:', rollKey);
+         
          // Clear aid modifiers for this specific event after roll completes
          const actor = getKingdomActor();
          if (actor) {

@@ -24,6 +24,7 @@
   type ArmyType = keyof typeof ARMY_TYPES;
   
   export let show: boolean = false;
+  export let exemptFromUpkeep: boolean = false; // For allied armies (no settlement support needed)
   
   const dispatch = createEventDispatcher<{
     confirm: { name: string; settlementId: string | null; armyType: ArmyType };
@@ -33,13 +34,10 @@
   let armyName: string = '';
   let selectedSettlementId: string = '';
   let selectedArmyType: ArmyType = 'infantry';
+  let confirmDisabled = true; // Confirm disabled state
   
-  // Reactive validation: prevent confirming with an at-capacity settlement
-  $: {
-    const selectedSettlement = allSettlements.find(s => s.id === selectedSettlementId);
-    const isSelectedAtCapacity = selectedSettlement?.isAtCapacity ?? false;
-    confirmDisabled = !armyName.trim() || isSelectedAtCapacity;
-  }
+  // Reactive validation: only require a name (allow exceeding capacity)
+  $: confirmDisabled = !armyName.trim();
   
   // Reactively calculate ALL claimed settlements (including at-capacity)
   $: allSettlements = $kingdomData.settlements
@@ -74,14 +72,28 @@
   // Available settlements (not at capacity) - for warning check
   $: availableSettlements = allSettlements.filter(s => !s.isAtCapacity);
   
-  // Confirm disabled state
-  let confirmDisabled = true;
+  // Find capital settlement (lowest ID = first settlement founded)
+  $: capitalSettlement = allSettlements.length > 0 
+    ? allSettlements.reduce((oldest, current) => 
+        oldest.id < current.id ? oldest : current
+      )
+    : null;
   
   onMount(() => {
     // Generate default army name
     const armyNumber = ($kingdomData.armies?.length || 0) + 1;
     armyName = `Army ${armyNumber}`;
+    
+    // For allied armies, auto-select capital
+    if (exemptFromUpkeep && capitalSettlement) {
+      selectedSettlementId = capitalSettlement.id;
+    }
   });
+  
+  // Update capital selection when exemptFromUpkeep or capitalSettlement changes
+  $: if (exemptFromUpkeep && capitalSettlement && !selectedSettlementId) {
+    selectedSettlementId = capitalSettlement.id;
+  }
   
   function handleConfirm() {
     // Called by base Dialog component when confirm button clicked
@@ -155,7 +167,16 @@
   
   <div class="form-group">
     <label for="settlement-select">Supported By Settlement:</label>
-    {#if allSettlements.length > 0}
+    {#if exemptFromUpkeep}
+      <!-- Allied army - show info message instead of dropdown -->
+      <div class="allied-army-info">
+        <i class="fas fa-handshake"></i>
+        <span>This is an allied army provided by a friendly faction. No settlement support required.</span>
+      </div>
+      <small class="help-text">
+        This army will be stationed at {capitalSettlement?.name || 'your capital'}.
+      </small>
+    {:else if allSettlements.length > 0}
       <select id="settlement-select" bind:value={selectedSettlementId}>
         <option value="">Unsupported (No Settlement)</option>
         {#each allSettlements as settlement}
@@ -259,6 +280,26 @@
   
   .warning-box strong {
     color: orange;
+  }
+  
+  .allied-army-info {
+    padding: var(--space-16);
+    background: var(--surface-success-low);
+    border: 1px solid var(--border-success-subtle);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+  }
+  
+  .allied-army-info i {
+    color: var(--color-green);
+    font-size: var(--font-lg);
+  }
+  
+  .allied-army-info span {
+    color: var(--text-primary);
+    font-size: var(--font-sm);
   }
   
   .army-type-grid {

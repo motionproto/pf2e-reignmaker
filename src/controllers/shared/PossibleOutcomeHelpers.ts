@@ -15,10 +15,10 @@ export interface PossibleOutcome {
 }
 
 export interface OutcomeEffects {
-  criticalSuccess?: { msg: string; modifiers?: EventModifier[]; manualEffects?: string[]; gameCommands?: any[] };
-  success?: { msg: string; modifiers?: EventModifier[]; manualEffects?: string[]; gameCommands?: any[] };
-  failure?: { msg: string; modifiers?: EventModifier[]; manualEffects?: string[]; gameCommands?: any[] };
-  criticalFailure?: { msg: string; modifiers?: EventModifier[]; manualEffects?: string[]; gameCommands?: any[] };
+  criticalSuccess?: { msg?: string; description?: string; modifiers?: EventModifier[]; manualEffects?: string[]; gameCommands?: any[] };
+  success?: { msg?: string; description?: string; modifiers?: EventModifier[]; manualEffects?: string[]; gameCommands?: any[] };
+  failure?: { msg?: string; description?: string; modifiers?: EventModifier[]; manualEffects?: string[]; gameCommands?: any[] };
+  criticalFailure?: { msg?: string; description?: string; modifiers?: EventModifier[]; manualEffects?: string[]; gameCommands?: any[] };
 }
 
 
@@ -76,7 +76,7 @@ export function buildPossibleOutcomes(effects?: OutcomeEffects): PossibleOutcome
     outcomes.push({
       result: 'criticalSuccess',
       label: 'Critical Success',
-      description: critSuccessEffect.msg,
+      description: critSuccessEffect.msg || critSuccessEffect.description || '',
       modifiers: critSuccessEffect.modifiers || [],
       manualEffects: critSuccessEffect.manualEffects || [],
       gameCommands: critSuccessEffect.gameCommands || []
@@ -88,7 +88,7 @@ export function buildPossibleOutcomes(effects?: OutcomeEffects): PossibleOutcome
     outcomes.push({
       result: 'success',
       label: 'Success',
-      description: effects.success.msg,
+      description: effects.success.msg || effects.success.description || '',
       modifiers: effects.success.modifiers || [],
       manualEffects: effects.success.manualEffects || [],
       gameCommands: effects.success.gameCommands || []
@@ -100,7 +100,7 @@ export function buildPossibleOutcomes(effects?: OutcomeEffects): PossibleOutcome
     outcomes.push({
       result: 'failure',
       label: 'Failure',
-      description: effects.failure.msg,
+      description: effects.failure.msg || effects.failure.description || '',
       modifiers: effects.failure.modifiers || [],
       manualEffects: effects.failure.manualEffects || [],
       gameCommands: effects.failure.gameCommands || []
@@ -112,7 +112,7 @@ export function buildPossibleOutcomes(effects?: OutcomeEffects): PossibleOutcome
     outcomes.push({
       result: 'criticalFailure',
       label: 'Critical Failure',
-      description: effects.criticalFailure.msg,
+      description: effects.criticalFailure.msg || effects.criticalFailure.description || '',
       modifiers: effects.criticalFailure.modifiers || [],
       manualEffects: effects.criticalFailure.manualEffects || [],
       gameCommands: effects.criticalFailure.gameCommands || []

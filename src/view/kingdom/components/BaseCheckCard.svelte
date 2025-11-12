@@ -49,6 +49,7 @@
     type: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
     description: string;
     modifiers?: Array<{ resource: string; value: number }>;
+    gameCommands?: any[];
   }>;
   export let checkType: 'action' | 'event' | 'incident' = 'action';
   export let traits: string[] = [];  // For events/incidents
@@ -335,7 +336,8 @@
            o.type === 'success' ? 'Success' :
            o.type === 'failure' ? 'Failure' : 'Critical Failure',
     description: o.description,
-    modifiers: (o.modifiers || []) as any  // Cast to any - old format compatibility
+    modifiers: (o.modifiers || []) as any,  // Cast to any - old format compatibility
+    gameCommands: o.gameCommands || []
   }));
   
   // Get card state class - never show as fully resolved for actions

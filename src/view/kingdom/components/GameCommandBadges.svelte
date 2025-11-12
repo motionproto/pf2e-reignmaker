@@ -69,6 +69,12 @@
       case 'requestMilitaryAid':
         return 'Request Military Aid';
       
+      case 'requestMilitaryAidRecruitment':
+        return 'Recruit Allied Army';
+      
+      case 'requestMilitaryAidEquipment':
+        return 'Receive Military Equipment';
+      
       case 'infiltration':
         return 'Infiltration';
       

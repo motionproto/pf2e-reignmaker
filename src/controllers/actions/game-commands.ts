@@ -34,6 +34,8 @@ export type GameCommandType =
   | 'adjustFactionAttitude'
   | 'requestEconomicAid'
   | 'requestMilitaryAid'
+  | 'requestMilitaryAidRecruitment'
+  | 'requestMilitaryAidEquipment'
   | 'infiltration'
   | 'sendScouts'
   
@@ -146,6 +148,7 @@ export interface CreateWorksiteCommand extends BaseGameCommand {
 export interface RecruitArmyCommand extends BaseGameCommand {
   type: 'recruitArmy';
   level: number | 'kingdom-level';
+  exemptFromUpkeep?: boolean;  // Allied armies don't count toward upkeep
 }
 
 export interface TrainArmyCommand extends BaseGameCommand {
@@ -161,6 +164,8 @@ export interface DeployArmyCommand extends BaseGameCommand {
 export interface OutfitArmyCommand extends BaseGameCommand {
   type: 'outfitArmy';
   targetArmy: string;
+  outcome?: string;
+  fallbackToGold?: boolean;  // Grant 1 gold if no armies to outfit
 }
 
 export interface RecoverArmyCommand extends BaseGameCommand {
@@ -201,6 +206,16 @@ export interface RequestEconomicAidCommand extends BaseGameCommand {
 
 export interface RequestMilitaryAidCommand extends BaseGameCommand {
   type: 'requestMilitaryAid';
+}
+
+export interface RequestMilitaryAidRecruitmentCommand extends BaseGameCommand {
+  type: 'requestMilitaryAidRecruitment';
+  level: number | 'kingdom-level';
+  exemptFromUpkeep?: boolean;  // Allied armies don't count toward upkeep
+}
+
+export interface RequestMilitaryAidEquipmentCommand extends BaseGameCommand {
+  type: 'requestMilitaryAidEquipment';
 }
 
 /**
@@ -353,6 +368,8 @@ export type GameCommand =
   | AdjustFactionAttitudeCommand
   | RequestEconomicAidCommand
   | RequestMilitaryAidCommand
+  | RequestMilitaryAidRecruitmentCommand
+  | RequestMilitaryAidEquipmentCommand
   | ResolveEventCommand
   | HireAdventurersCommand
   | ArrestDissidentsCommand

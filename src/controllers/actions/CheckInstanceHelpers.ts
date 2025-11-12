@@ -301,7 +301,9 @@ export async function createActionCheckInstance(context: {
                 level = gameCommand.level;
               }
               
-              result = await resolver.recruitArmy(level);
+              // Pass exemptFromUpkeep flag for allied armies
+              const exemptFromUpkeep = gameCommand.exemptFromUpkeep === true;
+              result = await resolver.recruitArmy(level, undefined, exemptFromUpkeep);
               break;
             }
             
@@ -343,8 +345,214 @@ export async function createActionCheckInstance(context: {
               break;
             }
             
-            // NOTE: outfitArmy uses custom implementation (post-roll dialog)
-            // It's handled by OutfitArmyAction, not the prepare/commit pattern
+            case 'adjustFactionAttitude': {
+              // Get factionId from gameCommand OR from pending state (set by pre-roll dialog)
+              const factionId = gameCommand.factionId || (globalThis as any).__pendingEconomicAidFaction;
+              const steps = gameCommand.steps || -1;
+              
+              if (factionId) {
+                result = await resolver.adjustFactionAttitude(
+                  factionId,
+                  steps,
+                  {
+                    maxLevel: gameCommand.maxLevel,
+                    minLevel: gameCommand.minLevel,
+                    count: gameCommand.count
+                  }
+                );
+              }
+              break;
+            }
+            
+            case 'outfitArmy': {
+              // Get armyId from gameCommand (optional - can auto-select)
+              const armyId = gameCommand.armyId;
+              const equipmentType = gameCommand.equipmentType || 'armor';
+              const fallbackToGold = gameCommand.fallbackToGold === true;
+              
+              // Convert outcome to appropriate format for resolver
+              const resolverOutcome = outcomeType === 'criticalSuccess' ? 'criticalSuccess' 
+                : outcomeType === 'success' ? 'success'
+                : outcomeType === 'failure' ? 'failure'
+                : 'criticalFailure';
+              
+              // outfitArmy returns ResolveResult (legacy pattern)
+              // For request-military-aid, it just needs to try outfitting an army or grant gold
+              result = await resolver.outfitArmy(armyId, equipmentType, resolverOutcome, fallbackToGold);
+              
+              // Convert legacy ResolveResult to PreparedCommand format for display
+              if (result && result.success) {
+                const message = result.data?.message || 'Army outfitted';
+                const isNegative = result.data?.grantedGold === true;
+                
+                result = {
+                  specialEffect: {
+                    type: 'status',
+                    message: message,
+                    icon: isNegative ? 'fa-coins' : 'fa-shield-alt',
+                    variant: isNegative ? 'neutral' : 'positive'
+                  },
+                  commit: async () => {
+                    // Already executed by resolver (legacy pattern)
+                    console.log('✅ [CheckInstanceHelpers] outfitArmy already applied (legacy)');
+                  }
+                };
+              }
+              break;
+            }
+            
+            case 'requestMilitaryAidRecruitment': {
+              // Custom game command for Request Military Aid critical success
+              // Shows RecruitArmyDialog FIRST, then prepares allied army recruitment
+              
+              // Determine army level
+              let level = 1;
+              if (gameCommand.level === 'kingdom-level') {
+                level = kingdom.partyLevel || 1;
+              } else if (typeof gameCommand.level === 'number') {
+                level = gameCommand.level;
+              }
+              
+              const exemptFromUpkeep = gameCommand.exemptFromUpkeep === true;
+              
+              // Import and show RecruitArmyDialog to get army details
+              const { default: RecruitArmyDialog } = await import('../../view/kingdom/components/RecruitArmyDialog.svelte');
+              
+              const recruitmentData = await new Promise<any>((resolve) => {
+                let dialogComponent: any;
+                
+                const mount = document.createElement('div');
+                document.body.appendChild(mount);
+                
+                dialogComponent = new RecruitArmyDialog({
+                  target: mount,
+                  props: { 
+                    show: true,
+                    exemptFromUpkeep: exemptFromUpkeep  // Pass exemptFromUpkeep to hide settlement selector
+                  }
+                });
+                
+                dialogComponent.$on('confirm', (event: CustomEvent) => {
+                  dialogComponent.$destroy();
+                  mount.remove();
+                  resolve(event.detail);
+                });
+                
+                dialogComponent.$on('cancel', () => {
+                  dialogComponent.$destroy();
+                  mount.remove();
+                  resolve(null);
+                });
+              });
+              
+              if (recruitmentData) {
+                // Set pending recruitment data
+                (globalThis as any).__pendingRecruitArmy = recruitmentData;
+                
+                // Now prepare recruitment with the data
+                result = await resolver.recruitArmy(level, undefined, exemptFromUpkeep);
+              } else {
+                // User cancelled - no-op
+                result = null;
+              }
+              break;
+            }
+            
+            case 'requestMilitaryAidEquipment': {
+              // Custom game command for Request Military Aid success
+              // Shows custom EquipmentSelectionDialog with army dropdown + equipment choices
+              
+              // Import custom dialog dynamically
+              const { default: EquipmentSelectionDialog } = await import('../../actions/request-military-aid/EquipmentSelectionDialog.svelte');
+              
+              // Show dialog and wait for user selection
+              const selection = await new Promise<{ armyId: string; equipmentType: string } | null>((resolve) => {
+                let dialogComponent: any;
+                
+                const mount = document.createElement('div');
+                document.body.appendChild(mount);
+                
+                dialogComponent = new EquipmentSelectionDialog({
+                  target: mount,
+                  props: { show: true }
+                });
+                
+                // Let Dialog component handle its own show/hide lifecycle
+                dialogComponent.$on('confirm', (event: CustomEvent) => {
+                  // Don't manipulate show - let Dialog handle it
+                  dialogComponent.$destroy();
+                  mount.remove();
+                  resolve(event.detail);
+                });
+                
+                dialogComponent.$on('cancel', () => {
+                  // Don't manipulate show - let Dialog handle it
+                  dialogComponent.$destroy();
+                  mount.remove();
+                  resolve(null);
+                });
+              });
+              
+              if (selection) {
+                // PREPARE: Generate preview message only (don't apply equipment yet)
+                console.log('🎬 [CheckInstanceHelpers] Selection received:', selection);
+                
+                const army = kingdom.armies?.find((a: any) => a.id === selection.armyId);
+                const armyName = army?.name || 'Army';
+                
+                const equipmentNames = {
+                  armor: 'Armor',
+                  runes: 'Runes',
+                  weapons: 'Weapons',
+                  equipment: 'Enhanced Gear'
+                };
+                const equipmentName = equipmentNames[selection.equipmentType as keyof typeof equipmentNames] || selection.equipmentType;
+                
+                const message = `${armyName} will be outfitted with ${equipmentName}`;
+                
+                // Return PreparedCommand with commit function that actually applies equipment
+                result = {
+                  specialEffect: {
+                    type: 'status',
+                    message: message,
+                    icon: 'fa-shield-alt',
+                    variant: 'positive'
+                  },
+                  commit: async () => {
+                    console.log('🎬 [CheckInstanceHelpers] COMMITTING requestMilitaryAidEquipment');
+                    console.log('  - armyId:', selection.armyId);
+                    console.log('  - equipmentType:', selection.equipmentType);
+                    
+                    // NOW apply the equipment
+                    const applyResult = await resolver.outfitArmy(
+                      selection.armyId, 
+                      selection.equipmentType, 
+                      'success',
+                      false
+                    );
+                    
+                    if (!applyResult.success) {
+                      console.error('❌ [CheckInstanceHelpers] Failed to outfit army:', applyResult.error);
+                      throw new Error(applyResult.error || 'Failed to outfit army');
+                    }
+                    
+                    console.log('✅ [CheckInstanceHelpers] Equipment applied successfully');
+                  }
+                };
+                
+                console.log('🎬 [CheckInstanceHelpers] Created PreparedCommand for equipment');
+                console.log('  - has specialEffect:', !!result.specialEffect);
+                console.log('  - has commit:', !!result.commit);
+              } else {
+                console.log('⚠️ [CheckInstanceHelpers] User cancelled equipment selection');
+                // User cancelled - no-op
+                result = null;
+              }
+              break;
+            }
+            
+            // NOTE: Some actions use custom implementation (post-roll dialog)
+            // They're handled by their own action files, not the prepare/commit pattern
             
             // Add more game command types here as they're refactored to PreparedCommand
           }
@@ -355,6 +563,8 @@ export async function createActionCheckInstance(context: {
             preliminarySpecialEffects.push(result.specialEffect);
             pendingCommits.push(result.commit);
             console.log('🎬 [CheckInstanceHelpers] Prepared command:', gameCommand.type);
+            console.log('  - specialEffects count:', preliminarySpecialEffects.length);
+            console.log('  - pendingCommits count:', pendingCommits.length);
           } else if (result && 'success' in result) {
             // LEGACY PATTERN: ResolveResult (will be phased out)
             // For now, do nothing - these commands execute immediately

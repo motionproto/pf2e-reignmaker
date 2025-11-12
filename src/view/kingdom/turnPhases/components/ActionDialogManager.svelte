@@ -5,6 +5,7 @@
   import UpgradeSettlementSelectionDialog from '../../../../actions/upgrade-settlement/UpgradeSettlementSelectionDialog.svelte';
   import FactionSelectionDialog from '../../../../actions/establish-diplomatic-relations/FactionSelectionDialog.svelte';
   import RequestEconomicAidDialog from '../../../../actions/request-economic-aid/RequestEconomicAidDialog.svelte';
+  import RequestMilitaryAidDialog from '../../../../actions/request-military-aid/RequestMilitaryAidDialog.svelte';
   import AidSelectionDialog from '../../../kingdom/components/AidSelectionDialog.svelte';
   import SettlementSelectionDialog from '../../../../actions/collect-stipend/SettlementSelectionDialog.svelte';
   import ExecuteOrPardonSettlementDialog from '../../../../actions/execute-or-pardon-prisoners/SettlementSelectionDialog.svelte';
@@ -23,6 +24,7 @@
   export let showUpgradeSettlementSelectionDialog: boolean = false;
   export let showFactionSelectionDialog: boolean = false;
   export let showRequestEconomicAidDialog: boolean = false;
+  export let showRequestMilitaryAidDialog: boolean = false;
   export let showAidSelectionDialog: boolean = false;
   export let showSettlementSelectionDialog: boolean = false;
   export let showExecuteOrPardonSettlementDialog: boolean = false;
@@ -53,6 +55,10 @@
 
   function handleEconomicAidFactionSelected(event: CustomEvent) {
     dispatch('economicAidFactionSelected', event.detail);
+  }
+
+  function handleMilitaryAidFactionSelected(event: CustomEvent) {
+    dispatch('militaryAidFactionSelected', event.detail);
   }
 
   function handleSettlementSelected(event: CustomEvent) {
@@ -126,6 +132,12 @@
 <RequestEconomicAidDialog
   bind:show={showRequestEconomicAidDialog}
   on:confirm={handleEconomicAidFactionSelected}
+/>
+
+<!-- Request Military Aid Dialog -->
+<RequestMilitaryAidDialog
+  bind:show={showRequestMilitaryAidDialog}
+  on:confirm={handleMilitaryAidFactionSelected}
 />
 
 <!-- Aid Selection Dialog -->

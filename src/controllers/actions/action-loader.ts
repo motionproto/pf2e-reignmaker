@@ -59,6 +59,32 @@ export class ActionLoader {
                         gameCommands: raw.effects.criticalFailure?.gameCommands,
                         choices: raw.effects.criticalFailure?.choices
                     },
+                    effects: {  // Also populate nested effects property for UI compatibility
+                        criticalSuccess: raw.effects.criticalSuccess ? {
+                            description: raw.effects.criticalSuccess.description || '',
+                            modifiers: raw.effects.criticalSuccess.modifiers,
+                            gameCommands: raw.effects.criticalSuccess.gameCommands,
+                            choices: raw.effects.criticalSuccess.choices
+                        } : undefined,
+                        success: raw.effects.success ? {
+                            description: raw.effects.success.description || '',
+                            modifiers: raw.effects.success.modifiers,
+                            gameCommands: raw.effects.success.gameCommands,
+                            choices: raw.effects.success.choices
+                        } : undefined,
+                        failure: raw.effects.failure ? {
+                            description: raw.effects.failure.description || '',
+                            modifiers: raw.effects.failure.modifiers,
+                            gameCommands: raw.effects.failure.gameCommands,
+                            choices: raw.effects.failure.choices
+                        } : undefined,
+                        criticalFailure: raw.effects.criticalFailure ? {
+                            description: raw.effects.criticalFailure.description || '',
+                            modifiers: raw.effects.criticalFailure.modifiers,
+                            gameCommands: raw.effects.criticalFailure.gameCommands,
+                            choices: raw.effects.criticalFailure.choices
+                        } : undefined
+                    },
                     proficiencyScaling: raw.proficiencyScaling 
                         ? new Map(Object.entries(raw.proficiencyScaling))
                         : null,

@@ -101,23 +101,27 @@
             outcomes={[
               {
                 type: 'criticalSuccess',
-                description: action.criticalSuccess?.description || action.success?.description || '—',
-                modifiers: action.criticalSuccess?.modifiers || []
+                description: action.effects?.criticalSuccess?.description || action.criticalSuccess?.description || action.success?.description || '—',
+                modifiers: action.effects?.criticalSuccess?.modifiers || action.criticalSuccess?.modifiers || [],
+                gameCommands: action.effects?.criticalSuccess?.gameCommands || []
               },
               {
                 type: 'success',
-                description: action.success?.description || '—',
-                modifiers: action.success?.modifiers || []
+                description: action.effects?.success?.description || action.success?.description || '—',
+                modifiers: action.effects?.success?.modifiers || action.success?.modifiers || [],
+                gameCommands: action.effects?.success?.gameCommands || []
               },
               {
                 type: 'failure',
-                description: action.failure?.description || '—',
-                modifiers: action.failure?.modifiers || []
+                description: action.effects?.failure?.description || action.failure?.description || '—',
+                modifiers: action.effects?.failure?.modifiers || action.failure?.modifiers || [],
+                gameCommands: action.effects?.failure?.gameCommands || []
               },
               {
                 type: 'criticalFailure',
-                description: action.criticalFailure?.description || '—',
-                modifiers: action.criticalFailure?.modifiers || []
+                description: action.effects?.criticalFailure?.description || action.criticalFailure?.description || '—',
+                modifiers: action.effects?.criticalFailure?.modifiers || action.criticalFailure?.modifiers || [],
+                gameCommands: action.effects?.criticalFailure?.gameCommands || []
               }
             ]}
             checkType="action"

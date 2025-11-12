@@ -17,10 +17,10 @@ export class ArmyService {
    * 
    * @param name - Army name
    * @param level - Army level (typically party level)
-   * @param options - Optional army options (type, image, custom actor data, settlement assignment)
+   * @param options - Optional army options (type, image, custom actor data, settlement assignment, upkeep exemption)
    * @returns Created army with actorId
    */
-  async createArmy(name: string, level: number, options?: { type?: string; image?: string; actorData?: any; settlementId?: string | null }): Promise<Army> {
+  async createArmy(name: string, level: number, options?: { type?: string; image?: string; actorData?: any; settlementId?: string | null; exemptFromUpkeep?: boolean }): Promise<Army> {
     const { actionDispatcher } = await import('../ActionDispatcher');
     
     if (!actionDispatcher.isAvailable()) {
@@ -33,7 +33,8 @@ export class ArmyService {
       type: options?.type,
       image: options?.image,
       actorData: options?.actorData,
-      settlementId: options?.settlementId
+      settlementId: options?.settlementId,
+      exemptFromUpkeep: options?.exemptFromUpkeep
     });
   }
 
@@ -44,7 +45,7 @@ export class ArmyService {
    * 
    * @internal
    */
-  async _createArmyInternal(name: string, level: number, type?: string, image?: string, actorData?: any, settlementId?: string | null): Promise<Army> {
+  async _createArmyInternal(name: string, level: number, type?: string, image?: string, actorData?: any, settlementId?: string | null, exemptFromUpkeep?: boolean): Promise<Army> {
 
     // Generate unique army ID
     const armyId = `army-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -98,7 +99,8 @@ export class ArmyService {
       isSupported: !!supportSettlement,
       turnsUnsupported: supportSettlement ? 0 : 1,
       actorId: actorId,
-      supportedBySettlementId: supportSettlement?.id ?? null
+      supportedBySettlementId: supportSettlement?.id ?? null,
+      exemptFromUpkeep: exemptFromUpkeep // NEW: Set upkeep exemption flag
     };
     
     // Add to kingdom armies

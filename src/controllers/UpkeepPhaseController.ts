@@ -247,7 +247,8 @@ export async function createUpkeepPhaseController() {
       const { kingdomData } = await import('../stores/KingdomStore');
       const kingdom = get(kingdomData);
       
-      const armyCount = kingdom.armies?.length || 0;
+      // Count only non-exempt armies for upkeep
+      const armyCount = (kingdom.armies || []).filter((a: any) => !a.exemptFromUpkeep).length;
       const hexes = kingdom.hexes || [];
       
       const actor = getKingdomActor();
@@ -483,7 +484,9 @@ export async function createUpkeepPhaseController() {
       const { SettlementTierConfig, SettlementTier } = await import('../models/Settlement');
       
       const settlements = kingdomData.settlements || [];
-      const armies = kingdomData.armies || [];
+      const allArmies = kingdomData.armies || [];
+      // Filter out exempt armies for consumption calculations
+      const armies = allArmies.filter((a: any) => !a.exemptFromUpkeep);
       const hexes = kingdomData.hexes || [];
       const consumption = calculateConsumption(settlements, armies, hexes);
       const armySupport = calculateArmySupportCapacity(settlements, hexes);

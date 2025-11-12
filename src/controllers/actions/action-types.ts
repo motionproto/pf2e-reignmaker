@@ -92,6 +92,12 @@ export interface PlayerAction {
   success: ActionEffect;
   failure: ActionEffect;
   criticalFailure: ActionEffect;
+  effects?: {  // Optional nested structure (for backward compatibility with JSON format)
+    criticalSuccess?: ActionEffect;
+    success?: ActionEffect;
+    failure?: ActionEffect;
+    criticalFailure?: ActionEffect;
+  };
   proficiencyScaling?: Map<string, number> | null;
   special?: string | null;
   cost?: Map<string, number> | null; // For actions that have resource costs

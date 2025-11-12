@@ -34,6 +34,9 @@ export interface Army {
     weapons?: boolean;    // +1 damage dice (+2 on critical success)
     equipment?: boolean;  // +1 saves (+2 on critical success)
   };
+  
+  // Allied army support (exempt from upkeep)
+  exemptFromUpkeep?: boolean; // Allied armies don't count toward upkeep costs
 }
 
 /**
