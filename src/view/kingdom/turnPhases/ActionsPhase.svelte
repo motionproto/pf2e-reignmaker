@@ -217,7 +217,6 @@
       await tick();
     } catch (error) {
       console.error('❌ [ActionsPhase] Failed to create check instance:', error);
-      ui.notifications?.error(`Failed to create action result: ${error}`);
     }
   }
 
@@ -277,7 +276,6 @@
       } catch (error) {
         console.error('❌ [ActionsPhase] Failed to execute pending commits:', error);
         logger.error('❌ [ActionsPhase] Failed to execute pending commits:', error);
-        ui.notifications?.error(`Failed to apply action effects: ${error}`);
         return;
       }
     }
@@ -316,24 +314,9 @@
     console.log('🎬 [ActionsPhase] controller.resolveAction returned:', result);
 
     if (!result.success) {
-      // Show error to user about requirements not being met
-      ui.notifications?.warn(`${action.name} requirements not met: ${result.error}`);
       return; // Don't track failed actions
     }
     
-    // Show success notification with applied effects (if any resources were changed)
-    // Skip for actions with custom notifications OR prepare/commit pattern (they handle their own)
-    const { hasCustomImplementation } = await import('../../../controllers/actions/implementations');
-    const hasCustom = hasCustomImplementation(actionId);
-    const suppressNotification = ['disband-army']; // Actions using prepare/commit with animations
-    if (!hasCustom && !suppressNotification.includes(actionId) && result.applied?.resources && result.applied.resources.length > 0) {
-      const effectsMsg = result.applied.resources
-        .map((r: any) => `${r.value > 0 ? '+' : ''}${r.value} ${r.resource}`)
-        .join(', ');
-      if (effectsMsg) {
-        ui.notifications?.info(`${action.name}: ${effectsMsg}`);
-      }
-    }
     
     // Centralized action tracking - applies to ALL actions
     if (gameCommandsService && currentUserId) {
@@ -395,16 +378,10 @@
       if (actor) {
         await actor.updateKingdomData((kingdom: KingdomData) => {
           if (kingdom.turnState?.actionsPhase?.activeAids) {
-            const beforeCount = kingdom.turnState.actionsPhase.activeAids.length;
             kingdom.turnState.actionsPhase.activeAids = 
               kingdom.turnState.actionsPhase.activeAids.filter(
                 (aid: any) => aid.targetActionId !== checkId
               );
-            const afterCount = kingdom.turnState.actionsPhase.activeAids.length;
-            
-            if (beforeCount > afterCount) {
-
-            }
           }
         });
       }
@@ -560,7 +537,6 @@
       );
     } catch (error) {
       logger.error("Error executing skill:", error);
-      ui.notifications?.error(`Failed to perform action: ${error}`);
     }
   }
 
@@ -651,7 +627,6 @@
       if (previousFame !== undefined) {
         await restoreFameAfterFailedReroll(previousFame);
       }
-      ui.notifications?.error(`Failed to reroll: ${error}`);
     }
   }
   
@@ -1020,7 +995,6 @@
       
     } catch (error) {
       logger.error('[handleArmyDeployment] Error:', error);
-      ui.notifications?.error(`Failed to deploy army: ${error}`);
       pendingDeployArmyAction = null;
       delete (globalThis as any).__pendingDeployArmy;
     }
