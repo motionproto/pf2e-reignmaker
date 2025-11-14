@@ -20,6 +20,16 @@ const OutfitArmyAction: CustomActionImplementation = {
   id: 'outfit-army',
   
   /**
+   * Pre-roll dialog configuration
+   */
+  preRollDialog: {
+    dialogId: 'army-selection',
+    extractMetadata: (dialogResult: any) => ({
+      armyId: dialogResult.armyId
+    })
+  },
+  
+  /**
    * Check if there are any armies with available equipment slots
    */
   checkRequirements(kingdomData: KingdomData): ActionRequirement {

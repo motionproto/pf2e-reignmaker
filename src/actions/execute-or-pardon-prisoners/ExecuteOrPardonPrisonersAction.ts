@@ -16,6 +16,16 @@ export const ExecuteOrPardonPrisonersAction = {
   id: 'execute-or-pardon-prisoners',
   
   /**
+   * Pre-roll dialog configuration
+   */
+  preRollDialog: {
+    dialogId: 'settlement-selection',
+    extractMetadata: (dialogResult: any) => ({
+      settlementId: dialogResult.settlementId
+    })
+  },
+  
+  /**
    * Check if action can be performed
    * Requirements:
    * - At least one settlement with imprisoned unrest > 0

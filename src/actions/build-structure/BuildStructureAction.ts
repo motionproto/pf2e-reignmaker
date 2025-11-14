@@ -22,6 +22,17 @@ export const BuildStructureAction = {
   id: 'build-structure',
   
   /**
+   * Pre-roll dialog configuration
+   */
+  preRollDialog: {
+    dialogId: 'build-structure',
+    extractMetadata: (dialogResult: any) => ({
+      structureId: dialogResult.structureId,
+      settlementId: dialogResult.settlementId
+    })
+  },
+  
+  /**
    * Check if action can be performed
    * Requirements:
    * - Must have at least one settlement

@@ -43,6 +43,12 @@ export interface CustomActionImplementation {
   // Check if action requirements are met
   checkRequirements?(kingdomData: KingdomData, instance?: any): ActionRequirement;
   
+  // Pre-roll dialog configuration (for actions requiring selection before rolling)
+  preRollDialog?: {
+    dialogId: string;  // Maps to ActionsPhase dialog flag
+    extractMetadata?: (dialogResult: any) => any;  // Extract metadata from dialog result
+  };
+  
   // Custom resolution for specific outcomes
   customResolution?: {
     component: any; // Svelte component constructor (use any to allow specific component types)

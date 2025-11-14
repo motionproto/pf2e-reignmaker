@@ -3,6 +3,7 @@
   import { TurnPhase, type KingdomData } from "../../../actors/KingdomActor";
   import { createGameCommandsService } from '../../../services/GameCommandsService';
   import { createCheckInstanceService } from '../../../services/CheckInstanceService';
+  import { createActionDialogService } from '../../../services/ActionDialogService';
   import { actionLoader } from "../../../controllers/actions/action-loader";
   import ActionDialogManager from "./components/ActionDialogManager.svelte";
   import ActionCategorySection from "./components/ActionCategorySection.svelte";
@@ -42,6 +43,7 @@
   let controller: any = null;
   let gameCommandsService: any = null;
   let checkInstanceService: any = null;
+  let dialogService: any = null;
   let aidManager: AidManager | null = null;
 
   // UI State (not business logic)
@@ -284,12 +286,30 @@
     const finalResolutionData = { ...resolutionData };
     
     // Add custom data for actions that need it
-    if (actionId === 'build-structure' && pendingBuildAction) {
+    // Check dialogService first for new pattern actions
+    const serviceMetadata = dialogService?.getMetadata(actionId);
+    
+    if (serviceMetadata?.dialogResult) {
+      // NEW PATTERN: Use metadata from dialogService
+      // IMPORTANT: Merge with any existing customComponentData from resolution (e.g., cost choice)
+      finalResolutionData.customComponentData = {
+        ...serviceMetadata.dialogResult,
+        ...resolutionData.customComponentData
+      };
+    } else if (actionId === 'build-structure' && pendingBuildAction) {
+      // LEGACY: build-structure (pending* variables)
       finalResolutionData.customComponentData = {
         structureId: pendingBuildAction.structureId,
         settlementId: pendingBuildAction.settlementId
       };
+    } else if (actionId === 'repair-structure' && pendingRepairAction) {
+      // LEGACY: repair-structure (pending* variables)
+      finalResolutionData.customComponentData = {
+        structureId: pendingRepairAction.structureId,
+        settlementId: pendingRepairAction.settlementId
+      };
     } else if (actionId === 'upgrade-settlement' && pendingUpgradeAction) {
+      // LEGACY: upgrade-settlement (pending* variables)
       finalResolutionData.customComponentData = {
         settlementId: pendingUpgradeAction.settlementId
       };
@@ -403,6 +423,7 @@
     controller = await createActionPhaseController();
     gameCommandsService = await createGameCommandsService();
     checkInstanceService = await createCheckInstanceService();
+    dialogService = await createActionDialogService();
     
     // Initialize aid manager
     aidManager = createAidManager({
@@ -441,6 +462,11 @@
     // Cleanup aid manager
     if (aidManager) {
       aidManager.cleanup();
+    }
+    
+    // Cleanup dialog service
+    if (dialogService) {
+      dialogService.clearAll();
     }
     
     // Clear deduplication set
@@ -483,12 +509,60 @@
 
   // Handle skill execution from CheckCard (decoupled from component)
   async function handleExecuteSkill(event: CustomEvent, action: any) {
-    // Check custom action registry for pre-dialog requirements
+    const { skill } = event.detail;
+    
+    // Check if action uses new dialogService pattern
+    const { getActionImplementation } = await import('../../../controllers/actions/implementations');
+    const impl = getActionImplementation(action.id);
+    
+    if (impl?.preRollDialog && dialogService) {
+      // NEW PATTERN: Use ActionDialogService
+      await dialogService.initiateAction(
+        action.id,
+        skill,
+        {
+          showDialog: (dialogId: string) => {
+            // Map dialog ID to component's show* flags
+            const dialogMap: Record<string, (value: boolean) => void> = {
+              'build-structure': (show) => { showBuildStructureDialog = show; },
+              'repair-structure': (show) => { showRepairStructureDialog = show; },
+              'upgrade-settlement': (show) => { showUpgradeSettlementSelectionDialog = show; },
+              'faction-selection': (show) => { showFactionSelectionDialog = show; },
+              'infiltration': (show) => { showInfiltrationDialog = show; },
+              'request-economic-aid': (show) => { showRequestEconomicAidDialog = show; },
+              'request-military-aid': (show) => { showRequestMilitaryAidDialog = show; },
+              'settlement-selection': (show) => { showSettlementSelectionDialog = show; },
+              'execute-or-pardon': (show) => { showExecuteOrPardonSettlementDialog = show; },
+              'train-army': (show) => { showTrainArmyDialog = show; },
+              'disband-army': (show) => { showDisbandArmyDialog = show; },
+              'outfit-army': (show) => { showOutfitArmyDialog = show; },
+              'recruit-army': (show) => { showRecruitArmyDialog = show; }
+            };
+            
+            const setter = dialogMap[dialogId];
+            if (setter) {
+              setter(true);
+            } else {
+              console.warn(`[handleExecuteSkill] Unknown dialog ID: ${dialogId}`);
+            }
+          },
+          onRollTrigger: async (skill: string, metadata: any) => {
+            // Execute the roll with metadata
+            await executeSkillAction(
+              { detail: { skill, checkId: action.id, checkName: action.name } } as CustomEvent,
+              action
+            );
+          }
+        }
+      );
+      return;
+    }
+    
+    // LEGACY PATTERN: Check custom action registry (fallback)
     const customHandler = CUSTOM_ACTION_HANDLERS?.[action.id];
     
     if (customHandler && customHandler.requiresPreDialog === true) {
       // Custom action requires pre-roll dialog (e.g., structure selection)
-      const { skill } = event.detail;
       customHandler.storePending(skill);
       customHandler.showDialog();
       return;
@@ -678,7 +752,30 @@
   async function handleRepairStructureSelected(event: CustomEvent) {
     const { structureId, settlementId } = event.detail;
     
-    // Store structure selection
+    // Check if using new dialogService pattern
+    if (dialogService) {
+      // Close dialog
+      showRepairStructureDialog = false;
+      
+      // Notify service and trigger roll
+      await dialogService.handleDialogComplete(
+        'repair-structure',
+        { structureId, settlementId },
+        async (skill: string, metadata: any) => {
+          // Execute the roll with metadata
+          const action = actionLoader.getAllActions().find(a => a.id === 'repair-structure');
+          if (action) {
+            await executeSkillAction(
+              { detail: { skill, checkId: action.id, checkName: action.name } } as CustomEvent,
+              action
+            );
+          }
+        }
+      );
+      return;
+    }
+    
+    // LEGACY: Store structure selection
     if (pendingRepairAction) {
       pendingRepairAction.structureId = structureId;
       pendingRepairAction.settlementId = settlementId;

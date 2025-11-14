@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Action Resolution: Pattern-to-Touchpoint Matrix</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 10px;
+        }
+        
+        h1 {
+            font-size: 18px;
+            margin-bottom: 5px;
+            color: #4ec9b0;
+        }
+        
+        h2 {
+            font-size: 14px;
+            margin: 15px 0 8px 0;
+            color: #569cd6;
+        }
+        
+        .subtitle {
+            font-size: 11px;
+            color: #858585;
+            margin-bottom: 10px;
+        }
+        
+        .container {
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #252526;
+            font-size: 11px;
+        }
+        
+        th {
+            background: #2d2d30;
+            color: #4fc1ff;
+            padding: 8px 4px;
+            text-align: left;
+            font-weight: 600;
+            border: 1px solid #3e3e42;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        th:first-child {
+            width: 30px;
+            text-align: center;
+        }
+        
+        th:nth-child(2) {
+            min-width: 280px;
+            max-width: 280px;
+        }
+        
+        td {
+            padding: 6px 4px;
+            border: 1px solid #3e3e42;
+            vertical-align: top;
+        }
+        
+        td:first-child {
+            text-align: center;
+            font-weight: bold;
+            color: #dcdcaa;
+        }
+        
+        .user-action {
+            background: #1a2f3a;
+            font-weight: 600;
+        }
+        
+        .system-action {
+            background: #2a2a2a;
+        }
+        
+        .pattern-active {
+            background: #0e4429;
+            color: #3fb950;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .pattern-starts {
+            background: #1f6feb;
+            color: #ffffff;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .pattern-reads {
+            background: #9e6a03;
+            color: #ffffff;
+            text-align: center;
+            font-size: 10px;
+        }
+        
+        .pattern-description {
+            color: #858585;
+            font-size: 10px;
+        }
+        
+        .summary-section {
+            background: #252526;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+        }
+        
+        .summary-section ul {
+            margin-left: 20px;
+            margin-top: 5px;
+        }
+        
+        .summary-section li {
+            margin: 3px 0;
+            color: #d4d4d4;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 15px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+        }
+        
+        .legend-box {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #3e3e42;
+        }
+        
+        .spans-table {
+            font-size: 11px;
+            margin-top: 10px;
+        }
+        
+        .spans-table th {
+            background: #2d2d30;
+        }
+        
+        .spans-table td {
+            padding: 6px 8px;
+        }
+        
+        code {
+            background: #1e1e1e;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            color: #ce9178;
+        }
+    </style>
+</head>
+<body>
+    <h1>Action Resolution: Pattern-to-Touchpoint Matrix</h1>
+    <p class="subtitle">Complete mapping showing how each architectural pattern interacts with the main data flow</p>
+    
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-box pattern-starts"></div>
+            <span>Pattern Starts</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-box pattern-active"></div>
+            <span>Pattern Active</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-box pattern-reads"></div>
+            <span>Pattern Read/Write</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-box user-action"></div>
+            <span>User Action</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-box system-action"></div>
+            <span>System Operation</span>
+        </div>
+    </div>
+    
+    <div class="container">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Main Data Flow Touchpoint</th>
+                    <th>Pre-Roll<br>Dialog</th>
+                    <th>Check<br>Instance</th>
+                    <th>In-Line<br>Choice</th>
+                    <th>Custom<br>Component</th>
+                    <th>Post-Roll<br>Interaction</th>
+                    <th>Custom<br>Resolution</th>
+                    <th>Dual-Effect<br>Architecture</th>
+                    <th>Typed<br>Modifiers</th>
+                    <th>Game<br>Commands</th>
+                    <th>Prepare/<br>Commit</th>
+                    <th>Hex<br>Selection</th>
+                    <th>Domain<br>Services</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td class="user-action">👤 USER: Select Action & Skill</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td class="user-action">👤 USER: Choose Context</td>
+                    <td class="pattern-starts">✅ Starts<br><span class="pattern-description">Store context</span></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td class="system-action">⚙️ SYSTEM: Prepare Roll</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td class="system-action">⚙️ SYSTEM: Execute Skill Check</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td class="system-action">⚙️ SYSTEM: Store Roll Result</td>
+                    <td></td>
+                    <td class="pattern-starts">✅ Active<br><span class="pattern-description">Create instance</span></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td class="system-action">⚙️ SYSTEM: Display Outcome Options</td>
+                    <td></td>
+                    <td class="pattern-reads">✅ Read<br><span class="pattern-description">Instance data</span></td>
+                    <td class="pattern-active">✅ Mount<br><span class="pattern-description">If needed</span></td>
+                    <td class="pattern-active">✅ Mount<br><span class="pattern-description">If needed</span></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>7</td>
+                    <td class="user-action">👤 USER: Roll Dice & Make Choices</td>
+                    <td></td>
+                    <td class="pattern-reads">✅ Store<br><span class="pattern-description">State stored</span></td>
+                    <td class="pattern-active">✅ Select<br><span class="pattern-description">User chooses</span></td>
+                    <td class="pattern-active">✅ Interact<br><span class="pattern-description">User input</span></td>
+                    <td class="pattern-starts">✅ Active<br><span class="pattern-description">All post-roll UI</span></td>
+                    <td></td>
+                    <td></td>
+                    <td class="pattern-active">✅ Dice<br><span class="pattern-description">Roll dice type</span></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>8</td>
+                    <td class="system-action">⚙️ SYSTEM: Package User Decisions</td>
+                    <td></td>
+                    <td class="pattern-reads">✅ Read<br><span class="pattern-description">State read</span></td>
+                    <td class="pattern-reads">✅ Package<br><span class="pattern-description">Values packed</span></td>
+                    <td class="pattern-reads">✅ Package<br><span class="pattern-description">Data packed</span></td>
+                    <td class="pattern-reads">✅ Build<br><span class="pattern-description">Consolidated</span></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>9</td>
+                    <td class="system-action">⚙️ SYSTEM: PREVIEW OUTCOMES</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td class="pattern-active">✅ Prepare<br><span class="pattern-description">NO state changes</span></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>10</td>
+                    <td class="user-action">👤 USER: Click "Apply Result"</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>11</td>
+                    <td class="system-action">⚙️ SYSTEM: Route to Execution</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>12</td>
+                    <td class="system-action">⚙️ SYSTEM: Check for Custom Logic</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td class="pattern-starts">✅ Decision<br><span class="pattern-description">Check if needed</span></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>13</td>
+                    <td class="system-action">⚙️ SYSTEM: Convert to Indexed Values</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>14</td>
+                    <td class="system-action">⚙️ SYSTEM: Orchestrate Execution</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td class="pattern-starts">✅ Active<br><span class="pattern-description">Separate paths</span></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>15</td>
+                    <td class="system-action">⚙️ SYSTEM: Apply Resource Changes</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td class="pattern-active">✅ Modifiers<br><span class="pattern-description">Path 1</span></td>
+                    <td class="pattern-starts">✅ Active<br><span class="pattern-description">Type-safe apply</span></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>16</td>
+                    <td class="system-action">⚙️ SYSTEM: Execute Complex Operations</td>
+                    <td class="pattern-reads">✅ Read<br><span class="pattern-description">Get context</span></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td class="pattern-active">✅ Commands<br><span class="pattern-description">Path 2</span></td>
+                    <td></td>
+                    <td class="pattern-starts">✅ Active<br><span class="pattern-description">Route commands</span></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>17</td>
+                    <td class="system-action">⚙️ SYSTEM: Route Game Commands</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td class="pattern-active">✅ Route<br><span class="pattern-description">Commands routed</span></td>
+                    <td class="pattern-active">✅ Prepare<br><span class="pattern-description">Calculate preview</span></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>18</td>
+                    <td class="system-action">⚙️ SYSTEM: APPLY OUTCOMES</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td class="pattern-active">✅ Execute<br><span class="pattern-description">Commands run</span></td>
+                    <td class="pattern-active">✅ Commit<br><span class="pattern-description">State changes</span></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>19</td>
+                    <td class="system-action">⚙️ SYSTEM: Delegate to Specialists</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td class="pattern-starts">✅ Active<br><span class="pattern-description">If needed</span></td>
+                    <td class="pattern-starts">✅ Active<br><span class="pattern-description">Services run</span></td>
+                </tr>
+                <tr>
+                    <td>20</td>
+                    <td class="system-action">⚙️ SYSTEM: Persist to Database</td>
+                    <td class="pattern-reads">✅ Clear<br><span class="pattern-description">Context cleared</span></td>
+                    <td class="pattern-reads">✅ Update<br><span class="pattern-description">Status → applied</span></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>21</td>
+                    <td class="system-action">⚙️ SYSTEM: Broadcast State Changes</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>22</td>
+                    <td class="system-action">⚙️ SYSTEM: Clean Up State</td>
+                    <td class="pattern-reads">✅ Clear<br><span class="pattern-description">Global cleared</span></td>
+                    <td class="pattern-reads">✅ Clear<br><span class="pattern-description">Instance cleared</span></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <h2>Pattern Activity Spans</h2>
+    <div class="container">
+        <table class="spans-table">
+            <thead>
+                <tr>
+                    <th>Pattern</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Lifespan</th>
+                    <th>Purpose</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Pre-Roll Dialog</strong></td>
+                    <td>2 (User Choice)</td>
+                    <td>19 (Cleanup)</td>
+                    <td>Entire flow</td>
+                    <td>Store context selection before roll</td>
+                </tr>
+                <tr>
+                    <td><strong>Check Instance System</strong></td>
+                    <td>5 (Store Result)</td>
+                    <td>19 (Cleanup)</td>
+                    <td>Post-roll</td>
+                    <td>Unified check state storage</td>
+                </tr>
+                <tr>
+                    <td><strong>In-Line Choice</strong></td>
+                    <td>6 (Display)</td>
+                    <td>8 (Package)</td>
+                    <td>User interaction</td>
+                    <td>Inline resource selection</td>
+                </tr>
+                <tr>
+                    <td><strong>Custom Component</strong></td>
+                    <td>6 (Display)</td>
+                    <td>8 (Package)</td>
+                    <td>User interaction</td>
+                    <td>Action-specific UI</td>
+                </tr>
+                <tr>
+                    <td><strong>Post-Roll Interaction</strong></td>
+                    <td>7 (User Choices)</td>
+                    <td>8 (Package)</td>
+                    <td>User decisions</td>
+                    <td>All post-roll user input</td>
+                </tr>
+                <tr>
+                    <td><strong>Custom Resolution</strong></td>
+                    <td>10 (Check Logic)</td>
+                    <td>16 (Execute)</td>
+                    <td>Custom path</td>
+                    <td>Complex post-roll calculations</td>
+                </tr>
+                <tr>
+                    <td><strong>Dual-Effect Architecture</strong></td>
+                    <td>12 (Orchestrate)</td>
+                    <td>16 (Execute)</td>
+                    <td>Execution</td>
+                    <td>Separates modifiers from commands</td>
+                </tr>
+                <tr>
+                    <td><strong>Typed Modifiers System</strong></td>
+                    <td>7 (Dice rolls)</td>
+                    <td>13 (Apply)</td>
+                    <td>Modifier handling</td>
+                    <td>Type-safe resource changes</td>
+                </tr>
+                <tr>
+                    <td><strong>Game Commands System</strong></td>
+                    <td>14 (Complex Ops)</td>
+                    <td>16 (Specialists)</td>
+                    <td>Command handling</td>
+                    <td>Structured gameplay mechanics</td>
+                </tr>
+                <tr>
+                    <td><strong>Prepare/Commit Pattern</strong></td>
+                    <td>15 (Route Commands)</td>
+                    <td>16 (Commit)</td>
+                    <td>Command execution</td>
+                    <td>Preview before state changes</td>
+                </tr>
+                <tr>
+                    <td><strong>Hex Selection Pattern</strong></td>
+                    <td>16 (Specialists)</td>
+                    <td>16 (Complete)</td>
+                    <td>Service call</td>
+                    <td>Interactive map selection</td>
+                </tr>
+                <tr>
+                    <td><strong>Domain Services</strong></td>
+                    <td>16 (Specialists)</td>
+                    <td>16 (Complete)</td>
+                    <td>Service call</td>
+                    <td>Specialized business logic</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <h2>Pattern Interactions</h2>
+    
+    <div class="summary-section">
+        <h3 style="color: #4fc1ff; font-size: 12px; margin-bottom: 5px;">Sequential Patterns</h3>
+        <ul>
+            <li>Pre-Roll Dialog → Skill Check → Check Instance</li>
+            <li>Check Instance → Outcome Display → Post-Roll Interaction</li>
+            <li>Post-Roll Interaction → Package Decisions → Execute</li>
+        </ul>
+    </div>
+    
+    <div class="summary-section">
+        <h3 style="color: #4fc1ff; font-size: 12px; margin-bottom: 5px;">Parallel Patterns (Same touchpoint)</h3>
+        <ul>
+            <li><strong>Touchpoint 6-8:</strong> In-Line Choice + Custom Component + Post-Roll Interaction</li>
+            <li><strong>Touchpoint 12-16:</strong> Dual-Effect (Modifiers + Commands in parallel)</li>
+            <li><strong>Touchpoint 16:</strong> Multiple services may execute in sequence</li>
+        </ul>
+    </div>
+    
+    <div class="summary-section">
+        <h3 style="color: #4fc1ff; font-size: 12px; margin-bottom: 5px;">Conditional Patterns</h3>
+        <ul>
+            <li><strong>Pre-Roll Dialog</strong> - Only if <code>requiresPreDialog: true</code></li>
+            <li><strong>In-Line Choice</strong> - Only if action has ChoiceModifier</li>
+            <li><strong>Custom Component</strong> - Only if action has custom resolution</li>
+            <li><strong>Custom Resolution</strong> - Only if <code>needsCustomResolution(outcome)</code> returns true</li>
+            <li><strong>Prepare/Commit</strong> - Only if command uses this pattern</li>
+            <li><strong>Hex Selection</strong> - Only if command needs map interaction</li>
+        </ul>
+    </div>
+    
+    <div style="margin-top: 20px; padding: 10px; background: #252526; border: 1px solid #3e3e42; border-radius: 4px; font-size: 10px; color: #858585;">
+        <strong>Note:</strong> This visualization shows the complete pattern-to-touchpoint mapping for the action resolution system. 
+        Refer to <code>docs/refactoring/action-resolution-touchpoints.md</code> for detailed descriptions of each touchpoint and pattern.
+    </div>
+</body>
+</html>

@@ -19,6 +19,17 @@ const InfiltrationAction: CustomActionImplementation = {
   id: 'infiltration',
   
   /**
+   * Pre-roll dialog configuration
+   */
+  preRollDialog: {
+    dialogId: 'faction-selection',
+    extractMetadata: (dialogResult: any) => ({
+      factionId: dialogResult.factionId,
+      factionName: dialogResult.factionName
+    })
+  },
+  
+  /**
    * Check if action has custom requirements
    */
   checkRequirements(kingdomData: any): { met: boolean; reason?: string } {

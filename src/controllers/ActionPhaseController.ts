@@ -137,6 +137,7 @@ export async function createActionPhaseController() {
         const instance = {
           metadata: {
             ...storedInstance?.metadata,  // Include stored metadata (e.g., factionId, factionName)
+            ...resolutionData.customComponentData,  // CRITICAL: Include dialog selections (structureId, settlementId) and user choices (cost)
             outcome,
             actorName,
             skillName,
@@ -144,6 +145,7 @@ export async function createActionPhaseController() {
           }
         };
         console.log('🎯 [ActionPhaseController] Merged instance metadata:', instance.metadata);
+        console.log('🎯 [ActionPhaseController] customComponentData:', resolutionData.customComponentData);
         
         const result = await executeCustomResolution(actionId, resolutionData, instance);
         

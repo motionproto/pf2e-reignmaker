@@ -12,6 +12,17 @@ const DeployArmyAction: CustomActionImplementation = {
   id: 'deploy-army',
   
   /**
+   * Pre-roll dialog configuration
+   */
+  preRollDialog: {
+    dialogId: 'army-deployment',
+    extractMetadata: (dialogResult: any) => ({
+      armyId: dialogResult.armyId,
+      path: dialogResult.path
+    })
+  },
+  
+  /**
    * Check if there are any armies that haven't been deployed yet this turn
    */
   checkRequirements(kingdomData: KingdomData): ActionRequirement {

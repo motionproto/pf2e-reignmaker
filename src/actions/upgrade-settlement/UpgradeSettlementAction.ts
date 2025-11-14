@@ -61,6 +61,17 @@ export const UpgradeSettlementAction = {
   id: 'upgrade-settlement',
   
   /**
+   * Pre-roll dialog configuration
+   */
+  preRollDialog: {
+    dialogId: 'upgrade-settlement',
+    extractMetadata: (dialogResult: any) => ({
+      settlementId: dialogResult.settlementId,
+      settlementName: dialogResult.settlementName
+    })
+  },
+  
+  /**
    * Check if action can be performed
    * Validates that at least one settlement meets structure requirements and has gold for upgrade
    */

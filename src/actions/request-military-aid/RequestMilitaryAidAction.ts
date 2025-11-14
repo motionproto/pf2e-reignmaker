@@ -17,6 +17,17 @@ const RequestMilitaryAidAction: CustomActionImplementation = {
   id: 'request-military-aid',
 
   /**
+   * Pre-roll dialog configuration
+   */
+  preRollDialog: {
+    dialogId: 'faction-selection',
+    extractMetadata: (dialogResult: any) => ({
+      factionId: dialogResult.factionId,
+      factionName: dialogResult.factionName
+    })
+  },
+
+  /**
    * Check if action requirements are met
    * Requirements:
    * 1. Diplomatic relations at least friendly

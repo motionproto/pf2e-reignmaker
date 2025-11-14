@@ -24,6 +24,17 @@ const RepairStructureAction: CustomActionImplementation = {
   id: 'repair-structure',
   
   /**
+   * Pre-roll dialog configuration
+   */
+  preRollDialog: {
+    dialogId: 'repair-structure',
+    extractMetadata: (dialogResult: any) => ({
+      structureId: dialogResult.structureId,
+      settlementId: dialogResult.settlementId
+    })
+  },
+  
+  /**
    * Check if action has custom requirements
    */
   checkRequirements(kingdomData: any): { met: boolean; reason?: string } {

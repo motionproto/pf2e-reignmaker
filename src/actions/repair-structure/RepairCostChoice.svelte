@@ -4,6 +4,7 @@
   import type { ActiveCheckInstance } from '../../models/CheckInstance';
   import type { ResourceCost } from '../../models/Structure';
   import { getResourceIcon, getResourceColor } from '../../view/kingdom/utils/presentation';
+  import { logger } from '../../utils/Logger';
   
   // Props passed from OutcomeDisplay
   export let instance: ActiveCheckInstance | null = null;
@@ -54,60 +55,47 @@
     // Create cost as plain object (not Map) for proper serialization
     const costObj = { gold: total };
 
-
-    // Store selection in instance (like choice buttons do)
-    if (instance) {
-      const dataToStore = {
-        costType: 'dice',
-        cost: costObj,
-        structureId,
-        settlementId
-      };
-
-      await updateInstanceResolutionState(instance.instanceId, {
-        customComponentData: dataToStore
-      });
-
-    } else {
-      logger.error('❌ [RepairCostChoice] No instance available to store cost');
-    }
-    
-    // Dispatch selection event
-    dispatch('selection', {
+    // Data to store (includes structure IDs from dialog + cost from user choice)
+    const dataToStore = {
       costType: 'dice',
       cost: costObj,
       structureId,
       settlementId
-    });
-  }
-  
-  async function selectHalfOption() {
+    };
 
-
-    // Store selection in instance
+    // Store selection in instance (like choice buttons do)
     if (instance) {
-      const dataToStore = {
-        costType: 'half',
-        cost: halfCost,
-        structureId,
-        settlementId
-      };
-
       await updateInstanceResolutionState(instance.instanceId, {
         customComponentData: dataToStore
       });
-
     } else {
       logger.error('❌ [RepairCostChoice] No instance available to store cost');
     }
     
-    // Dispatch selection event
-    dispatch('selection', {
+    // Dispatch selection event to OutcomeDisplay (triggers customSelectionData)
+    dispatch('selection', dataToStore);
+  }
+  
+  async function selectHalfOption() {
+    // Data to store (includes structure IDs from dialog + cost from user choice)
+    const dataToStore = {
       costType: 'half',
       cost: halfCost,
       structureId,
       settlementId
-    });
+    };
+
+    // Store selection in instance
+    if (instance) {
+      await updateInstanceResolutionState(instance.instanceId, {
+        customComponentData: dataToStore
+      });
+    } else {
+      logger.error('❌ [RepairCostChoice] No instance available to store cost');
+    }
+    
+    // Dispatch selection event to OutcomeDisplay (triggers customSelectionData)
+    dispatch('selection', dataToStore);
   }
   
   // Get selected option from instance (UI state only)
@@ -150,7 +138,7 @@
       <div class="cost-display">
         <div class="cost-value">
           {#if Object.keys(halfCost).length === 0}
-            Free
+            <span class="no-cost">No cost</span>
           {:else}
             <div class="cost-resources">
               {#each Object.entries(halfCost) as [resource, amount]}

@@ -14,6 +14,18 @@ export const RecruitArmyAction = {
   id: 'recruit-unit',
   
   /**
+   * Pre-roll dialog configuration
+   */
+  preRollDialog: {
+    dialogId: 'recruit-army',
+    extractMetadata: (dialogResult: any) => ({
+      name: dialogResult.name,
+      settlementId: dialogResult.settlementId,
+      armyType: dialogResult.armyType
+    })
+  },
+  
+  /**
    * Check if action can be performed (informational only)
    */
   checkRequirements(kingdomData: KingdomData): ActionRequirement {

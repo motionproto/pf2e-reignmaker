@@ -9,7 +9,8 @@ This documentation describes the architecture and core systems of the Reignmaker
 New to the project? Start here:
 
 1. **[ARCHITECTURE.md](ARCHITECTURE.md)** - Comprehensive overview of the entire system
-2. Pick a system to learn more about (see below)
+2. **[AI_ACTION_GUIDE](guides/AI_ACTION_GUIDE.md)** - Quick reference for implementing/updating actions
+3. Pick a system to learn more about (see below)
 
 ---
 
@@ -70,15 +71,33 @@ Implement phase-specific business logic following standardized patterns.
 docs/
 ├── README.md                       (this file - navigation guide)
 ├── ARCHITECTURE.md                 (comprehensive system overview)
+├── UNIFIED_CHECK_ARCHITECTURE.md   (unified check resolution architecture)
+├── BUILD_SYSTEM.md                 (build system reference)
+├── TESTING_MANUAL.md               (testing guide)
+├── features/                       (feature documentation)
+│   └── save-load-feature.md
+├── guides/                         (implementation guides)
+│   ├── AI_ACTION_GUIDE.md          (action implementation quick reference)
+│   └── CUSTOM_UI_ACTION_GUIDE.md   (custom UI patterns)
 ├── systems/                        (core system documentation)
 │   ├── check-instance-system.md
 │   ├── turn-and-phase-system.md
 │   ├── typed-modifiers-system.md
+│   ├── game-commands-system.md
 │   └── phase-controllers.md
+├── todo/                           (development tracking)
+│   ├── known_issues.md
+│   ├── manual_effects_automation.md
+│   └── production_recalculation.md
+├── refactoring/                    (migration documentation)
+│   ├── README.md
+│   ├── MIGRATION_GUIDE.md
+│   ├── CODE_INVENTORY.md
+│   ├── GAME_COMMANDS_CLASSIFICATION.md
+│   ├── ACTION_MIGRATION_MATRIX.md
+│   └── implementation/             (TypeScript implementation files)
+├── design-system/                  (UI/UX documentation)
 └── archived/                       (historical/completed work)
-    ├── controller-improvements-2025-10-12.md
-    ├── events-incidents-audit-2025-10-13.md
-    └── outcome-handling-audit-2025-10-11.md
 ```
 
 ---
