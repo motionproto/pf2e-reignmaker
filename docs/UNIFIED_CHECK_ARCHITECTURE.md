@@ -65,7 +65,8 @@ Every check follows this flow, regardless of type:
                          │
 ┌────────────────────────▼────────────────────────────────────┐
 │ STEP 6: Post-Roll Interactions (optional)                   │
-│ • Actions: All types (dice, choice, allocation, compound)   │
+│ Inline in outcome preview, BEFORE Apply button              │
+│ • Actions: Choice widgets, dice rollers                     │
 │ • Events/Incidents: Limited (dice, choice-dropdown only)    │
 └────────────────────────┬────────────────────────────────────┘
                          │
@@ -73,6 +74,16 @@ Every check follows this flow, regardless of type:
 │ STEP 7: Preview Outcome ⭐ REQUIRED FOR ALL                 │
 │ Mode A: Calculated Preview (text/badges)                    │
 │ Mode B: Interactive Preview (map visualization)             │
+│ Shows outcome with user choices from Step 6                 │
+│                     [Apply Result]                           │
+└────────────────────────┬────────────────────────────────────┘
+                         │ User clicks Apply
+                         │
+┌────────────────────────▼────────────────────────────────────┐
+│ STEP 7.5: Post-Apply Interactions (optional)                │
+│ Full-screen/modal, AFTER Apply button clicked               │
+│ • Actions: Map selections, entity browsers                  │
+│ • Events/Incidents: None (never needed)                     │
 └────────────────────────┬────────────────────────────────────┘
                          │
 ┌────────────────────────▼────────────────────────────────────┐
@@ -86,6 +97,82 @@ Every check follows this flow, regardless of type:
 │ • Events/Incidents: Persist if endsCheck: false             │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Three-Phase Interaction System
+
+The unified pipeline supports **three optional interaction phases** to accommodate different action patterns:
+
+### Phase 1: Pre-Roll Interactions
+**Timing:** BEFORE skill check  
+**Use for:** Decisions that affect the roll or are needed regardless of outcome  
+**Available to:** Actions only  
+
+**Example patterns:**
+- Entity selection: "Which settlement for stipend collection?"
+- Map selection: "Where to deploy army?"
+- Configuration: "How many resources to purchase?"
+
+**Flow:**
+```
+User initiates action → Pre-roll dialog → User selects → Skill check
+```
+
+### Phase 2: Post-Roll Interactions (Inline)
+**Timing:** AFTER outcome determined, BEFORE Apply button  
+**Display:** Inline within outcome preview  
+**Use for:** Choices/decisions based on outcome  
+**Available to:** All check types (limited for events/incidents)
+
+**Example patterns:**
+- Choice widgets: "Choose +2 Gold OR +1 Fame"
+- Dice rollers: "Roll 1d4 for imprisoned reduction"
+- Resource selection: "Choose which bonus to apply"
+
+**Flow:**
+```
+Skill check → Outcome → Choice widgets (inline) → Preview updates → Apply
+```
+
+### Phase 3: Post-Apply Interactions
+**Timing:** AFTER Apply button clicked  
+**Display:** Full-screen/modal overlay  
+**Use for:** Complex workflows that need full screen  
+**Available to:** Actions only
+
+**Example patterns:**
+- Map selections: "Select hexes to claim"
+- Entity browsers: "Choose army to outfit"
+- Multi-step wizards: "Configure settlement"
+
+**Flow:**
+```
+Apply clicked → Map overlay → User selects → Kingdom updates → Completion panel → OK
+```
+
+### Why Three Phases?
+
+**Pre-roll vs Post-roll:**
+- Some decisions must happen before the roll (entity selection, initial configuration)
+- Some decisions depend on the outcome (choose rewards based on success level)
+
+**Post-roll vs Post-apply:**
+- Inline choices fit within outcome preview (compact, quick)
+- Map/entity selection needs full screen (complex, visual)
+
+**Example: Claim Hexes uses Post-Apply**
+```typescript
+postApplyInteractions: [{
+  type: 'map-selection',
+  outcomeAdjustment: {
+    criticalSuccess: { count: (ctx) => /* proficiency-based */ },
+    success: { count: 1 }
+  }
+}]
+```
+
+User sees: Outcome → Apply → Map opens → Select hexes → Territory expands → OK
 
 ---
 
@@ -360,13 +447,57 @@ interface CheckPipeline {
 Single data object passed through all pipeline phases:
 
 ```typescript
+interface ActorContext {
+  // Basic info
+  actorId: string;
+  actorName: string;
+  level: number;
+  
+  // Skill info
+  selectedSkill: string;
+  proficiencyRank: number;  // 0 = untrained, 1 = trained, 2 = expert, 3 = master, 4 = legendary
+  
+  // Full skill data (for future use)
+  skillData?: {
+    rank: number;
+    modifier?: number;
+    breakdown?: string;
+  };
+}
+
 interface CheckContext {
-  action: PlayerAction | KingdomEvent | KingdomIncident;
+  check: PlayerAction | KingdomEvent | KingdomIncident;
   outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
   kingdom: KingdomData;
-  resolutionData: ResolutionData;  // Post-roll interactions
-  metadata: Record<string, any>;   // Pre-roll selections
+  actor?: ActorContext;             // Actor context (proficiency, level, etc.)
+  resolutionData: ResolutionData;   // Post-roll interactions
+  metadata: Record<string, any>;    // Pre-roll selections
+  instanceId: string;
 }
+```
+
+**ActorContext Usage:**
+
+The `actor` field provides access to character-level information during pipeline execution, enabling:
+
+- **Dynamic interaction parameters:** Proficiency-based hex counts, level-scaled effects
+- **Character-aware decisions:** Skill modifier checks, proficiency requirements
+- **Preview calculations:** Character-specific resource generation estimates
+
+**Example - Proficiency-based hex count:**
+```typescript
+postApplyInteractions: [{
+  type: 'map-selection',
+  outcomeAdjustment: {
+    criticalSuccess: {
+      // Dynamic count based on proficiency rank
+      count: (ctx) => {
+        const proficiency = ctx.actor?.proficiencyRank || 0;
+        return proficiency >= 3 ? 4 : proficiency >= 2 ? 3 : 2;
+      }
+    }
+  }
+}]
 ```
 
 ### PreviewData

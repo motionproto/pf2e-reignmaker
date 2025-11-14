@@ -707,24 +707,22 @@ export class HexSelectorService {
   /**
    * Handle OK button click in completed state
    */
-  private handleCompletedOk(): void {
-    logger.info('[HexSelector] OK clicked, completing selection');
+  private async handleCompletedOk(): Promise<void> {
+    logger.info('[HexSelector] OK clicked, cleaning up');
     
-    const hexes = [...this.selectedHexes];
-    const resolver = this.resolve;
-    this.cleanup();
-    resolver?.(hexes);
+    // Just cleanup - hexes were already returned in handleDone
+    await this.cleanup();
   }
   
   /**
-   * Handle Done button click - switches to completed state instead of cleaning up
+   * Handle Done button click - returns hexes and shows completion panel
    */
   private async handleDone(): Promise<void> {
     if (!this.config || this.selectedHexes.length !== this.config.count) {
       return;
     }
     
-    logger.info('[HexSelector] Done clicked, switching to completed state');
+    logger.info('[HexSelector] Done clicked, updating kingdom and showing completion');
     
     // Remove canvas listeners (no more interaction needed)
     const canvas = (globalThis as any).canvas;
@@ -737,16 +735,24 @@ export class HexSelectorService {
       this.canvasMoveHandler = null;
     }
     
-    // Clear interactive layers
+    // Clear hover layer but keep selection visible
     this.mapLayer.hideInteractiveHover();
-    this.mapLayer.clearSelection();
     
-    // For scout actions, reveal hexes in World Explorer NOW (before showing completion)
+    // For scout actions, reveal hexes in World Explorer NOW
     if (this.config.colorType === 'scout') {
       await this.revealHexesInWorldExplorer();
     }
     
-    // Switch to completed state
+    // Return hexes to action (this triggers kingdom data update)
+    // But DON'T cleanup yet - we want to show the completion panel
+    const hexes = [...this.selectedHexes];
+    const resolver = this.resolve;
+    this.resolve = null; // Clear so handleCompletedOk doesn't call it again
+    
+    // Trigger action to update kingdom data
+    resolver?.(hexes);
+    
+    // Switch to completed state - panel stays visible, user sees territory update
     this.panelState = 'completed';
     this.updatePanel();
   }
@@ -823,6 +829,7 @@ export class HexSelectorService {
     this.selectedHexes = [];
     this.resolve = null;
     this.panelComponent = null;
+    this.panelState = 'selection';  // Reset panel state for next use
   }
 }
 

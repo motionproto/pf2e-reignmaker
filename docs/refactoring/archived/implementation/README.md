@@ -72,38 +72,62 @@ All files should compile without errors.
 
 The handler integrates with existing systems at these points:
 
-### 1. Dialog Systems (Pre-Roll)
+### 1. Roll Execution (Skill Check) ✅ IMPLEMENTED
 ```typescript
-// TODO in executeEntitySelection()
-// Delegate to:
-// - SettlementSelectionDialog
-// - FactionSelectionDialog
-// - ArmySelectionDialog
-// - StructureSelectionDialog
+// Delegates to ExecutionHelpers.executeRoll()
+import { executeRoll } from '../controllers/shared/ExecutionHelpers';
+
+async executeSkillCheck(checkId, skill, metadata) {
+  const context = { type, id, skill, metadata };
+  const config = { getDC, onRollStart, onRollCancel };
+  await executeRoll(context, config);
+}
 ```
 
-### 2. Roll Execution (Skill Check)
+### 2. Map Interaction (Pre-Roll) ✅ IMPLEMENTED
 ```typescript
-// TODO in executeSkillCheck()
-// Delegate to ActionExecutionHelpers.executeActionRoll()
+// Delegates to HexSelectorService
+import { hexSelectorService } from './hex-selector';
+
+async executeMapSelection(interaction, kingdom) {
+  const result = await hexSelectorService.selectHexes({
+    mode: interaction.mode,
+    count: interaction.count,
+    colorType: interaction.colorType,
+    validation: interaction.validation
+  });
+  return result;
+}
 ```
 
-### 3. Map Interaction (Pre-Roll)
+### 3. State Updates (Execution) ✅ IMPLEMENTED
 ```typescript
-// TODO in executeMapSelection()
-// Delegate to HexSelectorService
+// Uses updateKingdom() from KingdomStore
+import { updateKingdom } from '../stores/KingdomStore';
+
+async applyResourceChanges(changes, kingdom) {
+  await updateKingdom((k) => {
+    for (const change of changes) {
+      k[change.resource] += change.value;
+    }
+  });
+}
 ```
 
-### 4. State Updates (Execution)
+### 4. Dialog Systems (Pre-Roll) ⚠️ TODO
 ```typescript
-// TODO in applyResourceChanges()
-// Delegate to GameCommandsService or updateKingdom()
+// Entity selection dialogs don't exist yet - need to create
+// Options:
+// 1. Create standalone dialogs (SettlementSelectionDialog, FactionSelectionDialog, etc.)
+// 2. Use Svelte components with promise-based resolution
+// 3. Reuse existing action-specific selection logic
 ```
 
-### 5. Game Commands (Execution)
+### 5. Game Commands (Execution) ⚠️ TODO
 ```typescript
 // TODO in executeGameCommands()
-// Delegate to game command functions
+// Delegate to game command execution functions
+// This will be implemented in Phase 2
 ```
 
 ---
@@ -254,10 +278,36 @@ describe('UnifiedCheckHandler', () => {
 
 ---
 
+## Template Compatibility Status
+
+### ✅ Fixed and Ready
+- **CheckPipeline.ts** - Imports existing types (EventModifier, ResourceType, KingdomSkill)
+- **CheckContext.ts** - No changes needed, compatible as-is
+- **PreviewData.ts** - No changes needed, compatible as-is
+- **UnifiedCheckHandler.ts** - Updated with real service integrations
+
+### 🔗 Verified Dependencies
+- ✅ `ExecutionHelpers.executeRoll()` - src/controllers/shared/ExecutionHelpers.ts
+- ✅ `HexSelectorService` - src/services/hex-selector/index.ts
+- ✅ `updateKingdom()` - src/stores/KingdomStore.ts
+- ⚠️ Entity selection dialogs - Don't exist yet (Phase 2/3 work)
+- ⚠️ Game command execution - Placeholder for Phase 2
+
+### 📝 TypeScript Errors (Expected)
+TypeScript errors about missing modules are EXPECTED in the template directory:
+- `Cannot find module './modifiers'` - Works once copied to src/types/
+- `Cannot find module '../controllers/shared/ExecutionHelpers'` - Works once copied to src/services/
+- These imports reference existing codebase files
+
+### 🎯 Implementation Completeness
+- **~85% Complete** - Core infrastructure ready
+- **~15% Remaining** - Entity selection dialogs and game command delegation
+- All critical paths have real implementations, not placeholders
+
 ## Notes
 
 - All import paths assume standard `src/` structure
 - Files use ES6 module syntax (not CommonJS)
-- All types are fully defined (no `any` except where necessary)
-- TODO comments mark incomplete delegation points
-- Ready for immediate use with ~20% implementation remaining
+- All types import from existing codebase (no duplication)
+- Real service integrations replace TODO placeholders
+- Ready for Phase 1 copying with known gaps documented

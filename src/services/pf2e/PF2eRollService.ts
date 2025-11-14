@@ -162,6 +162,8 @@ export class PF2eRollService {
           checkId: pendingCheck.checkId,
           outcome: outcome,
           actorName: pendingCheck.actorName,
+          actorId: pendingCheck.actorId,  // ✅ ADD: Actor ID
+          actorLevel: pendingCheck.actorLevel,  // ✅ ADD: Actor level
           checkType: pendingCheck.checkType || 'action',
           skillName: pendingCheck.skillName,
           proficiencyRank: pendingCheck.proficiencyRank,

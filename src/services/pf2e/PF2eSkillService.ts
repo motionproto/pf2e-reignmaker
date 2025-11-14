@@ -466,6 +466,7 @@ export class PF2eSkillService {
         skillName,
         actorId: actor.id,
         actorName: actor.name,
+        actorLevel: characterLevel,  // ✅ ADD: Actor level for pipeline context
         dc,
         proficiencyRank
       });

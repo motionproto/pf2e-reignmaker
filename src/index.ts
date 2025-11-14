@@ -24,6 +24,7 @@ import { KingdomApp } from './view/kingdom/KingdomApp';
 import { ResetKingdomDialog } from './ui/ResetKingdomDialog';
 import { initializeActionDispatcher } from './services/ActionDispatcher';
 import { registerKingdomHexControl } from './services/map';
+import { initializePipelineSystem } from './services/PipelineIntegrationAdapter';
 
 // Extend module type for our API
 declare global {
@@ -226,10 +227,18 @@ function deactivateKingmakerButton(toolName: string) {
 Hooks.once('init', () => {
     // Register module settings
     registerModuleSettings();
-    
+
     // Apply CSS classes to hide Kingmaker buttons based on settings
     applyKingmakerButtonVisibility();
-    
+
+    // Initialize pipeline system (unified check resolution)
+    try {
+        initializePipelineSystem();
+        console.log('PF2E ReignMaker | Pipeline system initialized');
+    } catch (error) {
+        console.error('PF2E ReignMaker | Failed to initialize pipeline system:', error);
+    }
+
     // Initialize action dispatcher for player-to-GM communication
     try {
         initializeActionDispatcher();

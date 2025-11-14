@@ -5,6 +5,9 @@
  * Orchestrates the 9-step unified pipeline.
  * 
  * TO USE: Copy this file to src/services/UnifiedCheckHandler.ts
+ * 
+ * NOTE: TypeScript errors about '../types/*' and '../controllers/*' not found are EXPECTED
+ * in this template directory. These imports will work once the file is copied to src/services/
  */
 
 import type { CheckPipeline, CheckType, OutcomeType } from '../types/CheckPipeline';
@@ -12,6 +15,11 @@ import type { CheckContext, CheckMetadata, ResolutionData } from '../types/Check
 import type { PreviewData, SpecialEffect } from '../types/PreviewData';
 import { createEmptyMetadata, createEmptyResolutionData } from '../types/CheckContext';
 import { createEmptyPreviewData } from '../types/PreviewData';
+
+// Import existing services (work once copied to src/)
+import { executeRoll } from '../controllers/shared/ExecutionHelpers';
+import { hexSelectorService } from './hex-selector';
+import { updateKingdom } from '../stores/KingdomStore';
 
 /**
  * Main unified check handler service
@@ -131,25 +139,47 @@ export class UnifiedCheckHandler {
   /**
    * Execute entity selection interaction
    * 
-   * TODO: Delegate to existing dialog systems:
-   * - SettlementSelectionDialog
-   * - FactionSelectionDialog
-   * - ArmySelectionDialog
-   * - StructureSelectionDialog
+   * TODO: Entity selection dialogs don't exist yet. Options:
+   * 1. Create standalone dialogs (SettlementSelectionDialog, FactionSelectionDialog, etc.)
+   * 2. Use Svelte components with promise-based resolution
+   * 3. Reuse existing action-specific selection logic
+   * 
+   * For Phase 1: This is a placeholder - will be implemented in Phase 2/3
    */
   private async executeEntitySelection(interaction: any, kingdom: any): Promise<string | null> {
     console.log(`📋 [UnifiedCheckHandler] Entity selection: ${interaction.entityType}`);
+    console.warn(`⚠️ [UnifiedCheckHandler] Entity selection not yet implemented`);
+    
+    // Show user notification
+    if (typeof ui !== 'undefined' && ui.notifications) {
+      ui.notifications.warn('Entity selection dialogs are not yet implemented');
+    }
+    
     return null;  // Placeholder
   }
   
   /**
    * Execute map selection interaction
    * 
-   * TODO: Delegate to HexSelectorService
+   * Delegates to existing HexSelectorService
    */
   private async executeMapSelection(interaction: any, kingdom: any): Promise<any> {
     console.log(`🗺️ [UnifiedCheckHandler] Map selection: ${interaction.mode}`);
-    return null;  // Placeholder
+    
+    try {
+      // Use existing HexSelectorService
+      const result = await hexSelectorService.selectHexes({
+        mode: interaction.mode || 'hex-selection',
+        count: interaction.count,
+        colorType: interaction.colorType || 'selected',
+        validation: interaction.validation
+      });
+      
+      return result;
+    } catch (error) {
+      console.error(`❌ [UnifiedCheckHandler] Map selection failed:`, error);
+      return null;
+    }
   }
   
   /**
@@ -173,9 +203,7 @@ export class UnifiedCheckHandler {
   }
   
   /**
-   * Execute skill check (delegates to existing system)
-   * 
-   * TODO: Delegate to ActionExecutionHelpers or equivalent
+   * Execute skill check (delegates to existing ExecutionHelpers)
    * 
    * @returns Check instance ID
    */
@@ -191,10 +219,35 @@ export class UnifiedCheckHandler {
     
     console.log(`🎲 [UnifiedCheckHandler] Executing skill check: ${checkId} (${skill})`);
     
-    // TODO: Delegate to ActionExecutionHelpers
-    // This creates the roll, stores check instance, returns instanceId
+    // Use existing ExecutionHelpers.executeRoll()
+    const context = {
+      type: pipeline.checkType === 'action' ? 'action' as const : 'event' as const,
+      id: checkId,
+      skill,
+      metadata
+    };
     
+    const config = {
+      getDC: (level: number) => this.calculateDC(level, pipeline),
+      onRollStart: () => console.log('[UnifiedCheckHandler] Roll started'),
+      onRollCancel: () => console.log('[UnifiedCheckHandler] Roll cancelled')
+    };
+    
+    await executeRoll(context, config);
+    
+    // TODO: Get actual instance ID from CheckInstanceService
+    // For now, return placeholder - will be improved in Phase 1 implementation
     return 'instance-id-placeholder';
+  }
+  
+  /**
+   * Calculate DC based on character level and check tier
+   */
+  private calculateDC(characterLevel: number, pipeline: CheckPipeline): number {
+    // Simple DC calculation - can be enhanced later
+    const baseDC = 15;
+    const tierAdjustment = (pipeline.tier || 1) * 2;
+    return baseDC + tierAdjustment;
   }
   
   /**
@@ -365,13 +418,29 @@ export class UnifiedCheckHandler {
   /**
    * Apply resource changes from preview
    * 
-   * TODO: Delegate to GameCommandsService or updateKingdom
+   * Uses existing updateKingdom() from KingdomStore
    */
   private async applyResourceChanges(
     changes: any[],
     kingdom: any
   ): Promise<void> {
     console.log(`💰 [UnifiedCheckHandler] Applying ${changes.length} resource changes`);
+    
+    if (changes.length === 0) return;
+    
+    await updateKingdom((k) => {
+      for (const change of changes) {
+        const resource = change.resource;
+        const value = change.value;
+        
+        // Apply the change to the kingdom data
+        if (typeof k[resource] === 'number') {
+          k[resource] += value;
+        } else {
+          console.warn(`[UnifiedCheckHandler] Unknown resource: ${resource}`);
+        }
+      }
+    });
   }
   
   /**

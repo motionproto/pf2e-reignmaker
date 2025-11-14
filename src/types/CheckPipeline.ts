@@ -1,25 +1,33 @@
 /**
  * CheckPipeline.ts
- * 
+ *
  * Type definitions for the unified check resolution pipeline.
  * Used by actions, events, and incidents.
- * 
+ *
  * TO USE: Copy this file to src/types/CheckPipeline.ts
+ *
+ * NOTE: TypeScript errors about './modifiers' and './events' not found are EXPECTED
+ * in this template directory. These imports will work once the file is copied to
+ * src/types/ where those modules exist.
  */
 
+// Import existing types from codebase (don't redefine)
+import type { EventModifier, ResourceType } from './modifiers';
+import type { KingdomSkill } from './events';
+
+// Re-export for convenience
+export type { EventModifier, ResourceType, KingdomSkill };
+
+// NEW types for pipeline system
 export type CheckType = 'action' | 'event' | 'incident';
 
 export type OutcomeType = 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
-
-export type ResourceType = 
-  | 'gold' | 'food' | 'lumber' | 'stone' | 'ore' | 'luxuries'
-  | 'unrest' | 'fame' | 'control';
 
 /**
  * Skill option for a check
  */
 export interface SkillOption {
-  skill: string;
+  skill: KingdomSkill;
   description: string;
 }
 
@@ -43,24 +51,33 @@ export interface Interaction {
   label?: string;
   required?: boolean;
   condition?: (ctx: any) => boolean;
+  
+  // Map selection specific (outcome-based adjustments)
+  outcomeAdjustment?: {
+    criticalSuccess?: {
+      count?: number | ((ctx: any) => number);  // Can be static or dynamic
+      title?: string;
+    };
+    success?: {
+      count?: number | ((ctx: any) => number);
+      title?: string;
+    };
+    failure?: {
+      count?: number | ((ctx: any) => number);
+      title?: string;
+    };
+    criticalFailure?: {
+      count?: number | ((ctx: any) => number);
+      title?: string;
+    };
+  };
+  
   [key: string]: any;  // Type-specific properties
 }
 
 /**
- * Typed modifier (from existing system)
- */
-export interface EventModifier {
-  type: 'static' | 'dice' | 'choice';
-  resource: string | string[];
-  value?: number;
-  formula?: string;
-  operation?: 'add' | 'subtract';
-  duration?: 'immediate' | 'ongoing';
-  negative?: boolean;
-}
-
-/**
  * Outcome definition
+ * Uses EventModifier from existing modifiers.ts
  */
 export interface Outcome {
   description: string;
@@ -101,21 +118,41 @@ export interface CheckPipeline {
   name: string;
   description: string;
   checkType: CheckType;
-  
+
   // Category (actions only)
   category?: string;
-  
+
   // Tier/Severity (events/incidents only)
   tier?: number;
   severity?: 'minor' | 'moderate' | 'major';
-  
+
   // Skills
   skills: SkillOption[];
-  
-  // Interactions
+
+  // Interactions (three optional phases)
+  /**
+   * Pre-roll interactions - Execute BEFORE skill check
+   * Use for: Entity selection, configuration that affects the roll
+   * Examples: Select army to train, choose settlement for stipend
+   */
   preRollInteractions?: Interaction[];
+  
+  /**
+   * Post-roll interactions - Execute AFTER outcome, BEFORE Apply button
+   * Displayed inline in outcome preview
+   * Use for: Choices between benefits, optional modifications
+   * Examples: Choose +2 Gold OR +1 Fame, select bonus type
+   */
   postRollInteractions?: Interaction[];
   
+  /**
+   * Post-apply interactions - Execute AFTER Apply button clicked
+   * Full-screen/modal experiences
+   * Use for: Map selections, entity browsers, complex workflows
+   * Examples: Select hexes on map, choose hex to fortify
+   */
+  postApplyInteractions?: Interaction[];
+
   // Outcomes
   outcomes: {
     criticalSuccess?: Outcome;
@@ -123,16 +160,16 @@ export interface CheckPipeline {
     failure?: Outcome;
     criticalFailure?: Outcome;
   };
-  
+
   // Preview
   preview: PreviewConfig;
-  
+
   // Game commands (actions only)
   gameCommands?: GameCommand[];
-  
+
   // Traits (events/incidents only)
   traits?: Trait[];
-  
+
   // Persistence (events/incidents only)
   endsCheck?: boolean;  // Default: true
 }

@@ -39,6 +39,9 @@
   import { ACTION_CATEGORIES } from './action-categories-config';
   import { createActionCheckInstance, updateCheckInstanceOutcome, type PendingActionsState } from '../../../controllers/actions/CheckInstanceHelpers';
 
+  // Migrated actions (temporary tracking during pipeline migration)
+  const MIGRATED_ACTIONS = new Set(['claim-hexes']);
+
   // Initialize controller and services
   let controller: any = null;
   let gameCommandsService: any = null;
@@ -159,7 +162,9 @@
     checkType?: string,
     skillName?: string,
     proficiencyRank?: number,
-    rollBreakdown?: any
+    rollBreakdown?: any,
+    actorId?: string,  // ✅ ADD: Actor ID from event
+    actorLevel?: number  // ✅ ADD: Actor level from event
   ) {
     // Only handle action type checks
     if (checkType && checkType !== "action") {
@@ -203,6 +208,9 @@
         action,
         outcome,
         actorName,
+        actorId,  // ✅ ADD: Pass actor ID
+        actorLevel,  // ✅ ADD: Pass actor level
+        proficiencyRank,  // ✅ ADD: Pass proficiency rank
         skillName,
         rollBreakdown,
         currentTurn: $currentTurn,
@@ -369,7 +377,7 @@
   
   // Listen for roll completion events
   async function handleRollComplete(event: CustomEvent) {
-    const { checkId, outcome, actorName, checkType, skillName, proficiencyRank, rollBreakdown } = event.detail;
+    const { checkId, outcome, actorName, actorId, actorLevel, checkType, skillName, proficiencyRank, rollBreakdown } = event.detail;
 
     if (checkType === "action") {
       // DEDUPLICATION: Create a unique key for this roll
@@ -391,7 +399,7 @@
       
       console.log('✅ [ActionsPhase] Processing roll event:', rollKey);
       
-      await onActionResolved(checkId, outcome, actorName, checkType, skillName, proficiencyRank, rollBreakdown);
+      await onActionResolved(checkId, outcome, actorName, checkType, skillName, proficiencyRank, rollBreakdown, actorId, actorLevel);
       
       // Clear aid modifiers for this specific action after roll completes
       const actor = getKingdomActor();
@@ -1357,6 +1365,7 @@
         {isActionAvailable}
         {getMissingRequirements}
         {hideUntrainedSkills}
+        migratedActions={MIGRATED_ACTIONS}
         on:toggle={(e) => toggleAction(e.detail.actionId)}
         on:executeSkill={(e) => handleExecuteSkill(e.detail.event, e.detail.action)}
         on:performReroll={(e) => handlePerformReroll(e.detail.event, e.detail.action)}

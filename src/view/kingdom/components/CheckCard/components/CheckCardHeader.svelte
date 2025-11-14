@@ -12,6 +12,7 @@
   export let traits: string[] = [];
   export let expandable: boolean = true;  // Control chevron visibility
   export let statusBadge: { text: string; type: 'ongoing' | 'resolved' } | null = null;
+  export let isMigrated: boolean = false;  // Temporary: visual indicator for migrated actions
   
   const dispatch = createEventDispatcher();
   
@@ -34,8 +35,14 @@
       <div class="card-title-row">
         <strong class="card-name" class:unavailable={!available}>{name}</strong>
         <div class="card-badges">
+          {#if isMigrated}
+            <span class="migrated-badge" title="Migrated to unified pipeline">
+              <i class="fas fa-check-circle"></i>
+              Migrated
+            </span>
+          {/if}
           {#if statusBadge}
-            <span class="status-badge {statusBadge.type}">{statusBadge.text}</span>
+            <span class="status-badge {statusBadge.type}}">{statusBadge.text}</span>
           {/if}
           {#if traits && traits.length > 0}
             <div class="card-traits">
@@ -255,6 +262,28 @@
         background: var(--surface-success-high);
         color: var(--color-green);
         border: 1px solid var(--color-green-border);
+      }
+    }
+    
+    .migrated-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-6);
+      padding: var(--space-4) var(--space-10);
+      background: var(--surface-success);
+      border: 1px solid var(--border-success);
+      border-radius: var(--radius-full);
+      font-size: var(--font-xs);
+      font-weight: var(--font-weight-semibold);
+      text-transform: uppercase;
+      letter-spacing: 0.05rem;
+      line-height: 1.2;
+      color: var(--color-green);
+      flex-shrink: 0;
+      cursor: help;
+      
+      i {
+        font-size: var(--font-xs);
       }
     }
   }

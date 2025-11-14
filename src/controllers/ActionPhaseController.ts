@@ -11,10 +11,10 @@ import { getKingdomActor } from '../stores/KingdomStore'
 import { get } from 'svelte/store'
 import { kingdomData } from '../stores/KingdomStore'
 import ArrestDissidentsResolution from '../view/kingdom/components/OutcomeDisplay/components/ArrestDissidentsResolution.svelte'
-import { 
-  reportPhaseStart, 
-  reportPhaseComplete, 
-  reportPhaseError, 
+import {
+  reportPhaseStart,
+  reportPhaseComplete,
+  reportPhaseError,
   createPhaseResult,
   checkPhaseGuard,
   initializePhaseSteps,
@@ -28,6 +28,8 @@ import type { KingdomData } from '../actors/KingdomActor'
 import { TurnPhase } from '../actors/KingdomActor'
 import { ActionPhaseSteps } from './shared/PhaseStepConstants'
 import { getCustomResolutionComponent } from './actions/implementations'
+import { PipelineIntegrationAdapter, shouldUsePipeline } from '../services/PipelineIntegrationAdapter'
+import type { CheckMetadata, ResolutionData as PipelineResolutionData } from '../types/CheckContext'
 
 export async function createActionPhaseController() {
   return {
@@ -76,7 +78,49 @@ export async function createActionPhaseController() {
         logger.error(`❌ [ActionPhaseController] Action ${actionId} not found`);
         return { success: false, error: 'Action not found' };
       }
-      
+
+      // Check if action should use new pipeline system
+      if (shouldUsePipeline(actionId) && PipelineIntegrationAdapter.hasPipeline(actionId)) {
+        logger.info(`🚀 [ActionPhaseController] Using pipeline system for ${actionId}`);
+
+        const kingdom = get(kingdomData);
+
+        // Convert legacy ResolutionData to pipeline format
+        const pipelineResolutionData: PipelineResolutionData = {
+          diceRolls: resolutionData.diceRolls || {},
+          choices: resolutionData.choices || {},
+          allocations: resolutionData.allocations || {},
+          textInputs: resolutionData.textInputs || {},
+          compoundData: resolutionData.compoundData || {},
+          numericModifiers: resolutionData.numericModifiers || [],
+          manualEffects: resolutionData.manualEffects || [],
+          customComponentData: resolutionData.customComponentData || null
+        };
+
+        // Get stored instance metadata if available
+        let metadata: CheckMetadata = {};
+        if (instanceId) {
+          const storedInstance = kingdom.activeCheckInstances?.find(i => i.instanceId === instanceId);
+          if (storedInstance?.metadata) {
+            metadata = storedInstance.metadata;
+          }
+        }
+
+        // Execute via pipeline system
+        const result = await PipelineIntegrationAdapter.executePipelineAction(
+          actionId,
+          outcome,
+          kingdom,
+          metadata,
+          pipelineResolutionData
+        );
+
+        return result;
+      }
+
+      // FALLBACK: Use legacy system for actions not yet migrated
+      logger.info(`🔄 [ActionPhaseController] Using legacy system for ${actionId}`);
+
       // Check requirements
       const kingdom = get(kingdomData);
       

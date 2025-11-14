@@ -158,6 +158,9 @@ export async function createActionCheckInstance(context: {
   action: PlayerAction;
   outcome: string;
   actorName: string;
+  actorId?: string;  // ✅ ADD: Actor ID
+  actorLevel?: number;  // ✅ ADD: Actor level
+  proficiencyRank?: number;  // ✅ ADD: Proficiency rank
   skillName?: string;
   rollBreakdown?: any;
   currentTurn: number;
@@ -169,6 +172,9 @@ export async function createActionCheckInstance(context: {
     action,
     outcome,
     actorName,
+    actorId,
+    actorLevel,
+    proficiencyRank,
     skillName,
     rollBreakdown,
     currentTurn,
@@ -190,8 +196,18 @@ export async function createActionCheckInstance(context: {
   // Replace placeholders in effect message
   effectMessage = await replacePlaceholders(effectMessage, actionId, pendingActions);
   
-  // Create metadata
-  const metadata = createActionMetadata(actionId, pendingActions);
+  // Create metadata with actor context
+  const metadata = {
+    ...createActionMetadata(actionId, pendingActions),
+    // ✅ ADD: Actor context for pipeline use
+    actor: actorId ? {
+      actorId,
+      actorName,
+      level: actorLevel || 1,
+      selectedSkill: skillName || '',
+      proficiencyRank: proficiencyRank || 0
+    } : undefined
+  };
   
   // Create instance
   const instanceId = await checkInstanceService.createInstance(
@@ -361,9 +377,10 @@ export async function createActionCheckInstance(context: {
             }
             
             case 'adjustFactionAttitude': {
-              // Get factionId from gameCommand OR from pending state OR from metadata
-              const factionId = gameCommand.factionId || (globalThis as any).__pendingEconomicAidFaction || metadata?.factionId;
-              const factionName = (globalThis as any).__pendingEconomicAidFactionName || metadata?.factionName || 'faction';
+              // Get factionId from gameCommand OR from pending state OR from metadata (before actor was added)
+              const baseMetadata = createActionMetadata(actionId, pendingActions);
+              const factionId = gameCommand.factionId || (globalThis as any).__pendingEconomicAidFaction || baseMetadata?.factionId;
+              const factionName = (globalThis as any).__pendingEconomicAidFactionName || baseMetadata?.factionName || 'faction';
               const steps = gameCommand.steps || -1;
               
               if (factionId) {

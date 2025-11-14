@@ -66,6 +66,67 @@ Week 5-8: Actions ✅
 
 ---
 
+## Important: Three-Phase Interaction System
+
+**As of 2025-11-14:** The unified pipeline now supports **three optional interaction phases** instead of two.
+
+### What Changed
+
+**Old (Two Phases):**
+```typescript
+preRollInteractions?: Interaction[];   // Before roll
+postRollInteractions?: Interaction[];  // After roll (but actually after Apply!)
+```
+
+**New (Three Phases):**
+```typescript
+preRollInteractions?: Interaction[];      // Before roll
+postRollInteractions?: Interaction[];     // After roll, inline in preview (NEW!)
+postApplyInteractions?: Interaction[];    // After Apply button (renamed)
+```
+
+### Why Three Phases?
+
+**The issue:** The old `postRollInteractions` actually executed AFTER the Apply button was clicked, not immediately after the roll. This was misleading and didn't support inline choice widgets.
+
+**The solution:** Split into two separate phases:
+1. **Post-roll** (NEW) - Inline widgets shown BEFORE Apply button
+   - Choice widgets: "Choose +2 Gold OR +1 Fame"
+   - Dice rollers: "Roll 1d4 for imprisoned"
+   - Displayed inline in outcome preview
+   
+2. **Post-apply** (renamed) - Full-screen overlays shown AFTER Apply button
+   - Map selections: "Select hexes to claim"
+   - Entity browsers: "Choose army to outfit"
+   - Executes after user commits to outcome
+
+### Migration Impact
+
+**For existing pipelines:**
+- `postRollInteractions` for map selections → rename to `postApplyInteractions`
+- Current behavior unchanged, just naming clarity
+
+**Example - claim-hexes:**
+```typescript
+// Before
+postRollInteractions: [{ type: 'map-selection', ... }]
+
+// After (rename only)
+postApplyInteractions: [{ type: 'map-selection', ... }]
+```
+
+### When to Use Each Phase
+
+| Phase | Timing | Display | Use For |
+|-------|--------|---------|---------|
+| **Pre-roll** | Before skill check | Modal/dialog | Entity selection, configuration |
+| **Post-roll** | After outcome, before Apply | Inline widgets | Choices, dice based on outcome |
+| **Post-apply** | After Apply clicked | Full-screen overlay | Map selections, complex workflows |
+
+**All three are optional** - most actions only need one or two phases.
+
+---
+
 ## Phase 0: Prerequisites
 
 ### Before Starting Any Migration
@@ -402,6 +463,48 @@ async function damageStructureExecution(
 - Phase 1 complete (UnifiedCheckHandler exists)
 - Phase 2 complete (game commands support preview)
 
+### Complete Action Migration Checklist
+
+**Recommended Priority Order:**
+
+**Week 5A: Simple Actions (No Game Commands) - START HERE**
+- [x] claim-hexes (hex selection) ✅ COMPLETE
+- [ ] deal-with-unrest (pure resource changes)
+- [ ] sell-surplus (simple, no custom logic)
+- [ ] purchase-resources (simple, no custom logic)
+- [ ] harvest-resources (has choice-buttons)
+- [ ] build-roads (has hex selection)
+- [ ] fortify-hex (has hex selection)
+- [ ] create-worksite (has hex selection)
+- [ ] send-scouts (has dice)
+
+**Week 6: Pre-Roll Dialog Actions**
+- [ ] collect-stipend (settlement selection)
+- [ ] execute-or-pardon-prisoners (settlement selection)
+- [ ] establish-diplomatic-relations (faction selection)
+- [ ] request-economic-aid (faction selection)
+- [ ] request-military-aid (faction selection)
+- [ ] train-army (army selection)
+- [ ] disband-army (army selection)
+
+**Week 7: Game Command Actions**
+- [ ] recruit-unit (post-roll compound + game command)
+- [ ] deploy-army (pre-roll entity + map + game command)
+- [ ] build-structure (pre-roll entity + game command)
+- [ ] repair-structure (pre-roll entity + post-roll choice + game command)
+- [ ] upgrade-settlement (pre-roll entity + game command)
+
+**Week 8: Custom Resolution Actions**
+- [ ] arrest-dissidents (custom component)
+- [ ] outfit-army (custom component)
+- [ ] infiltration (custom logic)
+- [ ] establish-settlement (complex compound)
+- [ ] recover-army (healing calculation)
+
+**Progress: 1/26 actions complete**
+
+---
+
 ### Week 5: Simple Actions (No Custom Logic)
 
 **Convert (9 actions):**
@@ -410,7 +513,7 @@ async function damageStructureExecution(
 - purchase-resources
 - harvest-resources (has choice-buttons)
 - build-roads (has hex selection)
-- claim-hexes (has hex selection)
+- claim-hexes (has hex selection) ✅ COMPLETE
 - fortify-hex (has hex selection)
 - create-worksite (has hex selection)
 - send-scouts (has dice)
@@ -447,6 +550,21 @@ async function damageStructureExecution(
 - [ ] Preview shows before apply
 - [ ] Apply executes correctly
 - [ ] State changes match old version
+
+**After Migration - Update Visual Marker:**
+
+Once an action is fully migrated and tested, add it to the MIGRATED_ACTIONS set in `src/view/kingdom/turnPhases/ActionsPhase.svelte`:
+
+```typescript
+// Migrated actions (temporary tracking during pipeline migration)
+const MIGRATED_ACTIONS = new Set([
+  'claim-hexes',
+  'deal-with-unrest',  // Add newly migrated action here
+  // ... add more as you complete them
+]);
+```
+
+This will display a green "✓ Migrated" badge on the action card in the UI, providing visual feedback on migration progress.
 
 ### Week 6: Pre-Roll Dialog Actions
 

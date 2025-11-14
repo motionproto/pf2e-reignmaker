@@ -66,6 +66,7 @@
   export let brief: string = '';
   export let special: string | null = null;
   export let cost: Map<string, number> | null = null;
+  export let isMigrated: boolean = false;  // Temporary: visual indicator for migrated actions
   
   // State props
   export let expanded: boolean = false;
@@ -357,6 +358,7 @@
     {traits}
     {expandable}
     {statusBadge}
+    {isMigrated}
     on:toggle={toggleExpanded}
   />
   
