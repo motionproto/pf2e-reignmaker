@@ -105,6 +105,19 @@
    }
    
    function getSupportStatusText(army: Army): string {
+      // Allied armies (exempt from upkeep) - show faction name instead of settlement
+      if (army.exemptFromUpkeep) {
+         // Look up faction name from ID
+         if (army.supportedBy === 'playerKingdom') {
+            return 'Player Kingdom';
+         }
+         
+         // Import and use factionService to look up name
+         const faction = $kingdomData.factions?.find(f => f.id === army.supportedBy);
+         return faction?.name || army.supportedBy; // Fallback to ID if faction not found
+      }
+      
+      // Regular armies - show settlement support status
       if (!army.supportedBySettlementId) {
          return army.turnsUnsupported > 0 
             ? `Unsupported (${army.turnsUnsupported} turns)`
@@ -126,10 +139,16 @@
    }
    
    // Get settlements with available capacity (or currently supporting this army)
+   // Excludes allied armies (exemptFromUpkeep) from settlement support count
    function getAvailableSettlements(armyId: string) {
       return $kingdomData.settlements.filter(s => {
          const capacity = SettlementTierConfig[s.tier].armySupport;
-         const current = s.supportedUnits.length;
+         // Only count non-allied armies toward settlement capacity
+         const supportedRegularArmies = s.supportedUnits.filter((id: string) => {
+            const army = $kingdomData.armies.find(a => a.id === id);
+            return army && !army.exemptFromUpkeep;
+         });
+         const current = supportedRegularArmies.length;
          
          // Either has space OR is currently supporting this army
          return current < capacity || s.supportedUnits.includes(armyId);
@@ -1219,6 +1238,10 @@
       align-items: center;
       gap: var(--space-8);
       background: var(--overlay-low);
+      max-width: 250px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       
       &.status-supported {
          color: #90ee90;

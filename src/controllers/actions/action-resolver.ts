@@ -59,10 +59,11 @@ export class ActionResolver {
      */
     checkActionRequirements(
         action: PlayerAction,
-        kingdomData: KingdomData
+        kingdomData: KingdomData,
+        instance?: any
     ): ActionRequirement {
         // Check for custom implementation first
-        const customCheck = checkCustomRequirements(action.id, kingdomData);
+        const customCheck = checkCustomRequirements(action.id, kingdomData, instance);
         if (customCheck !== null) {
             // Custom implementation exists, use it
             return customCheck;
@@ -336,6 +337,30 @@ export class ActionResolver {
                 // This command is prepared in CheckInstanceHelpers and executed in ActionsPhase
                 // Executing it here would cause double execution
                 console.log('⏭️ [ActionResolver] Skipping trainArmy - handled by prepare/commit pattern');
+                return { success: true }; // Don't block resolution
+            }
+            
+            case 'requestMilitaryAidRecruitment': {
+                // PREPARE/COMMIT PATTERN: Skip execution here
+                // This command is prepared in CheckInstanceHelpers and executed in ActionsPhase
+                // Executing it here would cause double execution
+                console.log('⏭️ [ActionResolver] Skipping requestMilitaryAidRecruitment - handled by prepare/commit pattern');
+                return { success: true }; // Don't block resolution
+            }
+            
+            case 'requestMilitaryAidEquipment': {
+                // PREPARE/COMMIT PATTERN: Skip execution here
+                // This command is prepared in CheckInstanceHelpers and executed in ActionsPhase
+                // Executing it here would cause double execution
+                console.log('⏭️ [ActionResolver] Skipping requestMilitaryAidEquipment - handled by prepare/commit pattern');
+                return { success: true }; // Don't block resolution
+            }
+            
+            case 'requestMilitaryAidFactionAttitude': {
+                // PREPARE/COMMIT PATTERN: Skip execution here
+                // This is a Request Military Aid-specific wrapper around adjustFactionAttitude
+                // Prepared in CheckInstanceHelpers and executed in ActionsPhase
+                console.log('⏭️ [ActionResolver] Skipping requestMilitaryAidFactionAttitude - handled by prepare/commit pattern');
                 return { success: true }; // Don't block resolution
             }
             

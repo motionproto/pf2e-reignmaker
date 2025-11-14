@@ -3,7 +3,7 @@
   import BuildStructureDialog from '../../../kingdom/components/BuildStructureDialog/BuildStructureDialog.svelte';
   import RepairStructureDialog from '../../../../actions/repair-structure/RepairStructureDialog.svelte';
   import UpgradeSettlementSelectionDialog from '../../../../actions/upgrade-settlement/UpgradeSettlementSelectionDialog.svelte';
-  import FactionSelectionDialog from '../../../../actions/establish-diplomatic-relations/FactionSelectionDialog.svelte';
+  import SharedFactionSelectionDialog from '../../../../actions/shared/FactionSelectionDialog.svelte';
   import RequestEconomicAidDialog from '../../../../actions/request-economic-aid/RequestEconomicAidDialog.svelte';
   import RequestMilitaryAidDialog from '../../../../actions/request-military-aid/RequestMilitaryAidDialog.svelte';
   import AidSelectionDialog from '../../../kingdom/components/AidSelectionDialog.svelte';
@@ -23,6 +23,7 @@
   export let showRepairStructureDialog: boolean = false;
   export let showUpgradeSettlementSelectionDialog: boolean = false;
   export let showFactionSelectionDialog: boolean = false;
+  export let showInfiltrationDialog: boolean = false;
   export let showRequestEconomicAidDialog: boolean = false;
   export let showRequestMilitaryAidDialog: boolean = false;
   export let showAidSelectionDialog: boolean = false;
@@ -100,6 +101,14 @@
   function handleFactionCancel() {
     dispatch('factionCancel');
   }
+
+  function handleInfiltrationFactionSelected(event: CustomEvent) {
+    dispatch('infiltrationFactionSelected', event.detail);
+  }
+
+  function handleInfiltrationCancel() {
+    dispatch('infiltrationCancel');
+  }
 </script>
 
 <!-- Build Structure Dialog -->
@@ -121,11 +130,27 @@
   on:cancel={handleUpgradeCancel}
 />
 
-<!-- Faction Selection Dialog -->
-<FactionSelectionDialog
+<!-- Faction Selection Dialog (Diplomatic Mission) -->
+<SharedFactionSelectionDialog
   bind:show={showFactionSelectionDialog}
+  title="Select Faction for Diplomatic Mission"
+  description="Choose a faction to improve relations with through diplomatic efforts."
+  filterMode="diplomatic"
+  showCost={true}
+  cost={4}
   on:confirm={handleFactionSelected}
   on:cancel={handleFactionCancel}
+/>
+
+<!-- Faction Selection Dialog (Infiltration) -->
+<SharedFactionSelectionDialog
+  bind:show={showInfiltrationDialog}
+  title="Select Faction to Infiltrate"
+  description="Choose a faction to gather intelligence on through covert operations."
+  filterMode="espionage"
+  showCost={false}
+  on:confirm={handleInfiltrationFactionSelected}
+  on:cancel={handleInfiltrationCancel}
 />
 
 <!-- Request Economic Aid Dialog -->

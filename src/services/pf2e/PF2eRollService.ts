@@ -42,10 +42,11 @@ export class PF2eRollService {
     const total = roll.total;
     
     // Determine outcome based on PF2e degrees of success
+    // First calculate base outcome WITHOUT considering natural 20/1
     let outcome: string;
-    if (roll.dice[0]?.results[0]?.result === 20 || total >= dc + 10) {
+    if (total >= dc + 10) {
       outcome = 'criticalSuccess';
-    } else if (roll.dice[0]?.results[0]?.result === 1 || total <= dc - 10) {
+    } else if (total <= dc - 10) {
       outcome = 'criticalFailure';
     } else if (total >= dc) {
       outcome = 'success';
@@ -53,16 +54,28 @@ export class PF2eRollService {
       outcome = 'failure';
     }
     
-    // Natural 20 upgrades outcome, natural 1 downgrades
+    // Natural 20 upgrades outcome by one step, natural 1 downgrades by one step
     const d20Result = roll.dice[0]?.results[0]?.result;
-    if (d20Result === 20 && outcome === 'success') {
-      outcome = 'criticalSuccess';
-    } else if (d20Result === 20 && outcome === 'failure') {
-      outcome = 'success';
-    } else if (d20Result === 1 && outcome === 'success') {
-      outcome = 'failure';
-    } else if (d20Result === 1 && outcome === 'failure') {
-      outcome = 'criticalFailure';
+    if (d20Result === 20) {
+      // Natural 20: Upgrade by one step
+      if (outcome === 'criticalFailure') {
+        outcome = 'failure';
+      } else if (outcome === 'failure') {
+        outcome = 'success';
+      } else if (outcome === 'success') {
+        outcome = 'criticalSuccess';
+      }
+      // Critical success stays critical success
+    } else if (d20Result === 1) {
+      // Natural 1: Downgrade by one step
+      if (outcome === 'criticalSuccess') {
+        outcome = 'success';
+      } else if (outcome === 'success') {
+        outcome = 'failure';
+      } else if (outcome === 'failure') {
+        outcome = 'criticalFailure';
+      }
+      // Critical failure stays critical failure
     }
     
     return outcome;

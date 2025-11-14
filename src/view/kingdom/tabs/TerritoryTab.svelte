@@ -406,7 +406,7 @@
                   {#each Object.entries($ownedSettlements.reduce((acc, s) => {
                      acc[s.tier] = (acc[s.tier] || 0) + 1;
                      return acc;
-                  }, {} as Record<string, number>)) as [tier, count]}
+                  }, {})) as [tier, count]}
                      <div class="stat-row tier-row">
                         <span class="stat-label">{tier}s</span>
                         <span class="stat-value">{count}</span>

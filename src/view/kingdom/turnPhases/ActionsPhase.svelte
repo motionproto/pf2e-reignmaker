@@ -50,6 +50,7 @@
   let showRepairStructureDialog: boolean = false;
   let showUpgradeSettlementSelectionDialog: boolean = false;
   let showFactionSelectionDialog: boolean = false;
+  let showInfiltrationDialog: boolean = false;
   let showRequestEconomicAidDialog: boolean = false;
   let showRequestMilitaryAidDialog: boolean = false;
   let showAidSelectionDialog: boolean = false;
@@ -64,6 +65,7 @@
   let pendingRepairAction: { skill: string; structureId?: string; settlementId?: string } | null = null;
   let pendingUpgradeAction: { skill: string; settlementId?: string } | null = null;
   let pendingDiplomaticAction: { skill: string; factionId?: string; factionName?: string } | null = null;
+  let pendingInfiltrationAction: { skill: string; factionId?: string; factionName?: string } | null = null;
   let pendingRequestEconomicAidAction: { skill: string; factionId?: string; factionName?: string } | null = null;
   let pendingRequestMilitaryAidAction: { skill: string; factionId?: string; factionName?: string } | null = null;
   let pendingStipendAction: { skill: string; settlementId?: string } | null = null;
@@ -110,6 +112,7 @@
     setShowRepairStructureDialog: (show) => { showRepairStructureDialog = show; },
     setShowUpgradeSettlementDialog: (show) => { showUpgradeSettlementSelectionDialog = show; },
     setShowFactionSelectionDialog: (show) => { showFactionSelectionDialog = show; },
+    setShowInfiltrationDialog: (show) => { showInfiltrationDialog = show; },
     setShowRequestEconomicAidDialog: (show) => { showRequestEconomicAidDialog = show; },
     setShowRequestMilitaryAidDialog: (show) => { showRequestMilitaryAidDialog = show; },
     setShowSettlementSelectionDialog: (show) => { showSettlementSelectionDialog = show; },
@@ -123,6 +126,7 @@
     setPendingRepairAction: (action) => { pendingRepairAction = action; },
     setPendingUpgradeAction: (action) => { pendingUpgradeAction = action; },
     setPendingDiplomaticAction: (action) => { pendingDiplomaticAction = action; },
+    setPendingInfiltrationAction: (action) => { pendingInfiltrationAction = action; },
     setPendingRequestEconomicAidAction: (action) => { pendingRequestEconomicAidAction = action; },
     setPendingRequestMilitaryAidAction: (action) => { pendingRequestMilitaryAidAction = action; },
     setPendingStipendAction: (action) => { pendingStipendAction = action; },
@@ -186,7 +190,8 @@
       pendingBuildAction,
       pendingRepairAction,
       pendingUpgradeAction,
-      pendingDiplomaticAction
+      pendingDiplomaticAction,
+      pendingInfiltrationAction: pendingInfiltrationAction as any
     };
     
     console.log('🎯 [ActionsPhase] About to create check instance for:', actionId);
@@ -575,7 +580,8 @@
       pendingBuildAction,
       pendingRepairAction,
       pendingUpgradeAction,
-      pendingDiplomaticAction
+      pendingDiplomaticAction,
+      pendingInfiltrationAction: pendingInfiltrationAction as any
     };
     
     await updateCheckInstanceOutcome({
@@ -754,6 +760,35 @@
     } else {
       console.warn('⚠️ [ActionsPhase] No pendingDiplomaticAction when faction selected');
     }
+  }
+  
+  // Handle when a faction is selected for infiltration
+  async function handleInfiltrationFactionSelected(event: CustomEvent) {
+    const { factionId, factionName } = event.detail;
+    console.log('🕵️ [ActionsPhase] handleInfiltrationFactionSelected received:', { factionId, factionName });
+    
+    if (pendingInfiltrationAction) {
+      pendingInfiltrationAction.factionId = factionId;
+      pendingInfiltrationAction.factionName = factionName;
+      console.log('🕵️ [ActionsPhase] Updated pendingInfiltrationAction:', pendingInfiltrationAction);
+      
+      // Close dialog
+      showInfiltrationDialog = false;
+      
+      // Store in global state for OutcomeDisplay to access
+      (globalThis as any).__pendingInfiltrationFactionName = factionName;
+      
+      // Now trigger the skill roll with the selected faction context
+      await executeInfiltrationRoll(pendingInfiltrationAction);
+    } else {
+      console.warn('⚠️ [ActionsPhase] No pendingInfiltrationAction when faction selected');
+    }
+  }
+  
+  // Handle infiltration dialog cancel
+  function handleInfiltrationCancel() {
+    pendingInfiltrationAction = null;
+    delete (globalThis as any).__pendingInfiltrationFactionName;
   }
   
   // Handle when a faction is selected for economic aid request
@@ -1113,6 +1148,23 @@
     );
   }
   
+  // Execute the infiltration skill roll - using ActionExecutionHelpers
+  async function executeInfiltrationRoll(infiltrationAction: { skill: string; factionId?: string; factionName?: string }) {
+    await executeActionRoll(
+      createExecutionContext('infiltration', infiltrationAction.skill, {
+        factionId: infiltrationAction.factionId,
+        factionName: infiltrationAction.factionName
+      }),
+      {
+        getDC: (characterLevel: number) => controller.getActionDC(characterLevel),
+        onRollCancel: () => { 
+          pendingInfiltrationAction = null;
+          delete (globalThis as any).__pendingInfiltrationFactionName;
+        }
+      }
+    );
+  }
+  
   // Execute the request economic aid skill roll - using ActionExecutionHelpers
   async function executeRequestEconomicAidRoll(aidAction: { skill: string; factionId?: string; factionName?: string }) {
     await executeActionRoll(
@@ -1246,12 +1298,13 @@
   </div>
 </div>
 
-<!-- Dialog Manager - handles all 11 dialogs -->
+<!-- Dialog Manager - handles all dialogs -->
 <ActionDialogManager
   bind:showBuildStructureDialog
   bind:showRepairStructureDialog
   bind:showUpgradeSettlementSelectionDialog
   bind:showFactionSelectionDialog
+  bind:showInfiltrationDialog
   bind:showRequestEconomicAidDialog
   bind:showRequestMilitaryAidDialog
   bind:showAidSelectionDialog
@@ -1266,6 +1319,7 @@
   on:repairStructureSelected={handleRepairStructureSelected}
   on:upgradeSettlementSelected={handleUpgradeSettlementSelected}
   on:factionSelected={handleFactionSelected}
+  on:infiltrationFactionSelected={handleInfiltrationFactionSelected}
   on:economicAidFactionSelected={handleEconomicAidFactionSelected}
   on:militaryAidFactionSelected={handleMilitaryAidFactionSelected}
   on:settlementSelected={handleSettlementSelected}
@@ -1278,6 +1332,7 @@
   on:aidCancel={handleAidCancel}
   on:upgradeCancel={() => { pendingUpgradeAction = null; }}
   on:factionCancel={() => { pendingDiplomaticAction = null; }}
+  on:infiltrationCancel={handleInfiltrationCancel}
 />
 
 <style lang="scss">

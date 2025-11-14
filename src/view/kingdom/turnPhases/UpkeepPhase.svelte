@@ -117,6 +117,38 @@
          }
       });
    });
+   
+   // Reactively re-initialize when armies/fortifications/buildQueue change
+   // This ensures step completion states update when user adds/removes armies
+   let previousArmyCount = 0;
+   let previousFortificationCount = 0;
+   let previousBuildQueueLength = 0;
+   
+   $: if (upkeepController && $kingdomData) {
+      const currentArmyCount = ($kingdomData.armies || []).filter((a: any) => !a.exemptFromUpkeep).length;
+      const hexes = $kingdomData.hexes || [];
+      const currentTurn = $kingdomData.currentTurn;
+      const currentFortificationCount = hexes.filter(hex => 
+         hex.fortification && 
+         hex.fortification.tier > 0 && 
+         hex.fortification.turnBuilt !== currentTurn
+      ).length;
+      const currentBuildQueueLength = $kingdomData.buildQueue?.length || 0;
+      
+      // Only re-initialize if counts actually changed (prevents infinite loops)
+      if (
+         currentArmyCount !== previousArmyCount || 
+         currentFortificationCount !== previousFortificationCount ||
+         currentBuildQueueLength !== previousBuildQueueLength
+      ) {
+         previousArmyCount = currentArmyCount;
+         previousFortificationCount = currentFortificationCount;
+         previousBuildQueueLength = currentBuildQueueLength;
+         
+         // Re-initialize phase steps to reflect new state
+         initializePhase();
+      }
+   }
 
    async function initializePhase() {
 

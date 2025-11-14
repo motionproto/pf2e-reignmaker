@@ -79,7 +79,14 @@ export async function createActionPhaseController() {
       
       // Check requirements
       const kingdom = get(kingdomData);
-      const requirements = this.getActionRequirements(action, kingdom);
+      
+      // Get the stored instance for context-aware requirement checks (e.g., gold fallback detection)
+      let storedInstance;
+      if (instanceId) {
+        storedInstance = kingdom.activeCheckInstances?.find(i => i.instanceId === instanceId);
+      }
+      
+      const requirements = this.getActionRequirements(action, kingdom, storedInstance);
       if (!requirements.met) {
         return { success: false, error: requirements.reason || 'Action requirements not met' };
       }
@@ -189,8 +196,8 @@ export async function createActionPhaseController() {
     /**
      * Get action requirements (delegates to actionResolver)
      */
-    getActionRequirements(action: PlayerAction, kingdom: KingdomData) {
-      return actionResolver.checkActionRequirements(action, kingdom);
+    getActionRequirements(action: PlayerAction, kingdom: KingdomData, instance?: any) {
+      return actionResolver.checkActionRequirements(action, kingdom, instance);
     },
 
     /**

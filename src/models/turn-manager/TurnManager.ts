@@ -253,7 +253,7 @@ export class TurnManager {
             kingdom.oncePerTurnActions = [];
             
             // ✅ Reset turnState for new turn - clears all phase-specific data
-            // including completionsByAction, activeAids, appliedOutcomes, etc.
+            // including completionsByAction, activeAids, appliedOutcomes, factionsAidedThisTurn, etc.
             kingdom.turnState = createDefaultTurnState(kingdom.currentTurn);
             
             // Active modifiers are now managed by ModifierService

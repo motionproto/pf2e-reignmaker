@@ -135,6 +135,11 @@ export interface KingdomData {
   phaseComplete: boolean;
   oncePerTurnActions: string[];
   
+  // Faction aid tracking - reset at start of each turn
+  // Tracks which factions have provided aid (military or economic) this turn
+  // Each faction may only be called upon once per turn
+  factionsAidedThisTurn?: string[];  // Array of faction IDs
+  
   // Player actions REMOVED - now using turnState.actionLog instead
   
   // Legacy event/incident fields removed - now in turnState (Phase 7 cleanup)

@@ -11,13 +11,71 @@ import type { KingdomData } from '../../actors/KingdomActor';
 import type { ResolutionData } from '../../types/modifiers';
 import type { ResolveResult } from '../shared/ActionHelpers';
 import RequestMilitaryAidResolutionDialog from './RequestMilitaryAidResolutionDialog.svelte';
+import { checkFactionAvailabilityRequirement } from '../../controllers/actions/shared-requirements';
 
 const RequestMilitaryAidAction: CustomActionImplementation = {
   id: 'request-military-aid',
 
+  /**
+   * Check if action requirements are met
+   * Requirements:
+   * 1. Diplomatic relations at least friendly
+   * 2. At least one eligible faction that hasn't provided aid this turn
+   * 
+   * NOTE: This check is bypassed after PreparedCommand execution (gold fallback case)
+   * because the faction was already marked as aided during pre-roll dialog phase.
+   */
+  checkRequirements(kingdomData: any, instance?: any): { met: boolean; reason?: string } {
+    // If this is being called AFTER apply result (instance has special effects),
+    // and it's the gold fallback case, skip requirement checks
+    // The work is already done via PreparedCommand, so requirements are moot
+    if (instance?.appliedOutcome?.specialEffects) {
+      const hasGoldFallback = instance.appliedOutcome.specialEffects.some((e: any) => {
+        if (typeof e === 'object' && 'message' in e) {
+          return e.message.includes('received 1 Gold instead') || 
+                 e.message.includes('No armies available to outfit');
+        }
+        return false;
+      });
+      
+      if (hasGoldFallback) {
+        console.log('🪙 [RequestMilitaryAid] Skipping requirement check for gold fallback (work already done)');
+        return { met: true };
+      }
+    }
+    
+    return checkFactionAvailabilityRequirement();
+  },
+
   // Both critical success (recruit) and success (outfit) need custom resolution
-  needsCustomResolution(outcome) {
-    return outcome === 'criticalSuccess' || outcome === 'success';
+  // UNLESS success has a gold fallback (no armies available)
+  needsCustomResolution(outcome, instance) {
+    if (outcome === 'criticalSuccess') {
+      return true;
+    }
+    
+    if (outcome === 'success') {
+      // Check if this is the gold fallback case (no armies available to outfit)
+      // In this case, we don't need a custom dialog - just apply the gold via special effects
+      const specialEffects = instance?.appliedOutcome?.specialEffects || [];
+      const isGoldFallback = specialEffects.some((e: any) => {
+        if (typeof e === 'object' && 'message' in e) {
+          return e.message.includes('received 1 Gold instead') || 
+                 e.message.includes('No armies available to outfit');
+        }
+        return false;
+      });
+      
+      // Gold fallback doesn't need custom resolution - just show the badge and apply
+      if (isGoldFallback) {
+        console.log('🪙 [RequestMilitaryAid] Gold fallback detected - skipping custom dialog');
+        return false;
+      }
+      
+      return true;
+    }
+    
+    return false;
   },
 
   customResolution: {
@@ -56,6 +114,21 @@ const RequestMilitaryAidAction: CustomActionImplementation = {
       if (resolutionData.specialEffects && resolutionData.specialEffects.length > 0) {
         console.log('  ✓ Has specialEffects:', resolutionData.specialEffects);
         
+        // Check for gold fallback case FIRST (no armies available to outfit)
+        // When outfitArmy() grants 1 gold instead, it creates a special effect with type: 'resource'
+        const hasGoldFallback = resolutionData.specialEffects.some(e => {
+          if (typeof e === 'object' && 'message' in e) {
+            return e.message.includes('received 1 Gold instead') || 
+                   e.message.includes('No armies available to outfit');
+          }
+          return false;
+        });
+        
+        if (hasGoldFallback) {
+          console.log('  ✅ Valid success data (outfitArmy gold fallback)');
+          return true;
+        }
+        
         // PreparedCommand pattern stores a status badge to indicate completion
         // The badge has type: 'status' and a message like "Army X will be outfitted with Y"
         // This is ONLY valid for success outcome (equipment)
@@ -66,9 +139,6 @@ const RequestMilitaryAidAction: CustomActionImplementation = {
         if (hasStatusBadge) {
           console.log('  ✅ Valid success data (PreparedCommand already executed via status badge)');
           return true;
-        } else {
-          console.log('  ❌ No valid status badge found in specialEffects');
-          console.log('  First effect structure:', resolutionData.specialEffects[0]);
         }
       }
       
@@ -93,47 +163,43 @@ const RequestMilitaryAidAction: CustomActionImplementation = {
       }
       
       const outcome = instance?.metadata?.outcome;
+      const factionId = instance?.metadata?.factionId;
+      const factionName = instance?.metadata?.factionName;
       
       // CRITICAL SUCCESS: Recruit allied army
       if (outcome === 'criticalSuccess') {
-        logger.info('🎖️ [RequestMilitaryAid] Creating allied army from critical success');
+        logger.info('🎖️ [RequestMilitaryAid] Critical success - checking if army already created');
         
-        const { name, armyType, settlementId } = resolutionData.customComponentData!;
+        // For Critical Success: The army is ALWAYS created via PreparedCommand (pending commits)
+        // which execute BEFORE this execute() method is called.
+        // So by the time we get here, the army should already exist.
+        // We just need to return success without doing anything.
         
-        // Set pending data for recruitArmy
-        (globalThis as any).__pendingRecruitArmy = {
-          name,
-          armyType,
-          settlementId
-        };
-        
-        // Create allied army using prepare/commit pattern
-        const resolver = await createGameCommandsResolver();
-        const partyLevel = kingdom.partyLevel || 1;
-        
-        try {
-          // Recruit with exemptFromUpkeep = true for allied army
-          const prepared = await resolver.recruitArmy(partyLevel, name, true);
-          
-          // Execute commit immediately
-          await prepared.commit();
-          
-          logger.info(`✅ [RequestMilitaryAid] Successfully created allied army: ${name}`);
-          
-          // Clean up global state
-          delete (globalThis as any).__pendingRecruitArmy;
-          
-          return { success: true };
-          
-        } catch (error) {
-          logger.error('❌ [RequestMilitaryAid] Failed to create allied army:', error);
-          delete (globalThis as any).__pendingRecruitArmy;
-          
-          return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Failed to create allied army'
-          };
+        // The only reason we'd have customComponentData here is if something went wrong
+        // and the commits didn't execute (which shouldn't happen)
+        if (resolutionData.customComponentData) {
+          logger.warn('⚠️ [RequestMilitaryAid] Unexpected customComponentData present - commits may have failed');
+          logger.warn('⚠️ This indicates the PreparedCommand pattern did not work as expected');
         }
+        
+        logger.info('✅ [RequestMilitaryAid] Allied army was already created via pending commits');
+        
+        // Mark faction as having provided aid this turn (after successful execution)
+        if (factionId) {
+          await actor.updateKingdomData((kingdom: any) => {
+            if (!kingdom.turnState?.actionsPhase?.factionsAidedThisTurn) {
+              if (!kingdom.turnState) kingdom.turnState = { actionsPhase: { factionsAidedThisTurn: [] } };
+              if (!kingdom.turnState.actionsPhase) kingdom.turnState.actionsPhase = { factionsAidedThisTurn: [] };
+              if (!kingdom.turnState.actionsPhase.factionsAidedThisTurn) kingdom.turnState.actionsPhase.factionsAidedThisTurn = [];
+            }
+            if (!kingdom.turnState.actionsPhase.factionsAidedThisTurn.includes(factionId)) {
+              kingdom.turnState.actionsPhase.factionsAidedThisTurn.push(factionId);
+              logger.info(`🤝 [RequestMilitaryAid] Marked faction ${factionName || factionId} as aided this turn`);
+            }
+          });
+        }
+        
+        return { success: true };
       }
       
       // SUCCESS: Outfit existing army (uses OutfitArmyDialog)
@@ -146,15 +212,41 @@ const RequestMilitaryAidAction: CustomActionImplementation = {
             typeof e === 'object' && 'type' in e && e.type === 'status'
           );
           
-          if (hasStatusBadge) {
-            // PreparedCommand already executed via pending commits
-            logger.info('✅ [RequestMilitaryAid] Equipment already applied via PreparedCommand (status badge present)');
+          const hasResourceBadge = resolutionData.specialEffects.some(e =>
+            typeof e === 'object' && 'type' in e && e.type === 'resource'
+          );
+          
+          if (hasStatusBadge || hasResourceBadge) {
+            // PreparedCommand already executed via pending commits (either equipment or gold fallback)
+            logger.info('✅ [RequestMilitaryAid] Equipment/gold already applied via PreparedCommand');
+            
+            // Mark faction as having provided aid this turn (after successful execution)
+            if (factionId) {
+              await actor.updateKingdomData((kingdom: any) => {
+                if (!kingdom.turnState?.actionsPhase?.factionsAidedThisTurn) {
+                  if (!kingdom.turnState) kingdom.turnState = { actionsPhase: { factionsAidedThisTurn: [] } };
+                  if (!kingdom.turnState.actionsPhase) kingdom.turnState.actionsPhase = { factionsAidedThisTurn: [] };
+                  if (!kingdom.turnState.actionsPhase.factionsAidedThisTurn) kingdom.turnState.actionsPhase.factionsAidedThisTurn = [];
+                }
+                if (!kingdom.turnState.actionsPhase.factionsAidedThisTurn.includes(factionId)) {
+                  kingdom.turnState.actionsPhase.factionsAidedThisTurn.push(factionId);
+                  logger.info(`🤝 [RequestMilitaryAid] Marked faction ${factionName || factionId} as aided this turn`);
+                }
+              });
+            }
+            
             return { success: true };
           }
         }
         
         // Otherwise, use OutfitArmyAction logic (legacy path)
-        const { armyId } = resolutionData.customComponentData!;
+        // This shouldn't happen anymore since we use PreparedCommand pattern
+        if (!resolutionData.customComponentData?.armyId) {
+          logger.error('❌ [RequestMilitaryAid] No armyId in customComponentData and no PreparedCommand badge');
+          return { success: false, error: 'No army selected or PreparedCommand not executed' };
+        }
+        
+        const { armyId } = resolutionData.customComponentData;
         
         // Import OutfitArmyAction to reuse its logic
         const { OutfitArmyAction } = await import('../../controllers/actions/implementations');

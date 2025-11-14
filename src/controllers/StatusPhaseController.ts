@@ -354,6 +354,8 @@ export async function createStatusPhaseController() {
         // Fresh initialization (no migration needed - data is already clean)
         await actor.updateKingdomData((k: KingdomData) => {
           k.turnState = createDefaultTurnState(currentTurn);
+          // Clear faction aid tracking for new turn
+          k.factionsAidedThisTurn = [];
         });
 
         return;
@@ -365,6 +367,8 @@ export async function createStatusPhaseController() {
 
         await actor.updateKingdomData((k: KingdomData) => {
           k.turnState = createDefaultTurnState(currentTurn);
+          // Clear faction aid tracking for new turn
+          k.factionsAidedThisTurn = [];
         });
 
         return;

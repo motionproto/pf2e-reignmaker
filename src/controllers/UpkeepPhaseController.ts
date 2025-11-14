@@ -39,7 +39,8 @@ export async function createUpkeepPhaseController() {
         // No workarounds needed - steps reflect kingdom state directly
         
         // Check if military support is needed (armies OR fortifications requiring maintenance)
-        const hasArmies = (kingdom.armies?.length || 0) > 0;
+        // Only count non-exempt armies (allied armies don't require upkeep)
+        const hasArmies = (kingdom.armies || []).filter((a: any) => !a.exemptFromUpkeep).length > 0;
         const hexes = kingdom.hexes || [];
         const currentTurn = kingdom.currentTurn;
         const hasFortifications = hexes.some(hex => 

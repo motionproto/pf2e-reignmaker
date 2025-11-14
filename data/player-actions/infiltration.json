@@ -33,11 +33,20 @@
   "effects": {
     "criticalSuccess": {
       "description": "Valuable intel is gathered.",
-      "modifiers": []
+      "modifiers": [
+        {
+          "type": "dice",
+          "resource": "gold",
+          "formula": "1d4",
+          "duration": "immediate"
+        }
+      ],
+      "manualEffect": "The GM should disclose sensitive information."
     },
     "success": {
       "description": "Intel is gathered.",
-      "modifiers": []
+      "modifiers": [],
+      "manualEffect": "The GM should disclose sensitive information."
     },
     "failure": {
       "description": "The mission fails.",
@@ -45,7 +54,27 @@
     },
     "criticalFailure": {
       "description": "Your spies are captured.",
-      "modifiers": []
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "unrest",
+          "value": 1,
+          "duration": "immediate"
+        },
+        {
+          "type": "dice",
+          "resource": "gold",
+          "formula": "1d4",
+          "negative": true,
+          "duration": "immediate"
+        }
+      ],
+      "gameCommands": [
+        {
+          "type": "adjustFactionAttitude",
+          "steps": -1
+        }
+      ]
     }
   }
 }

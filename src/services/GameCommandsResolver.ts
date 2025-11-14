@@ -84,31 +84,8 @@ export async function createGameCommandsResolver() {
 
       const { name: armyName, settlementId, armyType } = pendingData;
 
-      // NEW: Check allied army limits if exempt from upkeep
-      if (exemptFromUpkeep) {
-        const kingdom = actor.getKingdomData();
-        const alliedArmyCount = (kingdom.armies || []).filter((a: any) => a.exemptFromUpkeep).length;
-        
-        // Get faction ID from pending state
-        const factionId = (globalThis as any).__pendingEconomicAidFaction;
-        if (!factionId) {
-          throw new Error('No faction selected for allied army');
-        }
-        
-        // Get faction attitude
-        const { factionService } = await import('./factions/index');
-        const faction = factionService.getFaction(factionId);
-        if (!faction) {
-          throw new Error(`Faction ${factionId} not found`);
-        }
-        
-        // Check limits: 1 for Friendly, 2 for Helpful
-        const maxAllied = faction.attitude === 'Helpful' ? 2 : (faction.attitude === 'Friendly' ? 1 : 0);
-        
-        if (alliedArmyCount >= maxAllied) {
-          throw new Error(`Maximum allied armies reached for ${faction.attitude} faction (${maxAllied})`);
-        }
-      }
+      // Army limit validation is done at faction selection dialog (RequestMilitaryAidDialog.svelte)
+      // so we don't need to check here - if we got this far, the faction is eligible
 
       const { ARMY_TYPES } = await import('../utils/armyHelpers');
       if (!ARMY_TYPES[armyType as keyof typeof ARMY_TYPES]) {
@@ -145,11 +122,17 @@ export async function createGameCommandsResolver() {
           logger.info(`🎖️ [recruitArmy] COMMITTING: Creating ${armyName}`);
           
           const { armyService } = await import('./army');
+          
+          // Get supportedBy from pending data (for allied armies)
+          const supportedBy = pendingData.supportedBy || undefined;
+          
           const createdArmy = await armyService.createArmy(armyName, level, {
             type: armyType,
             image: ARMY_TYPES[armyType as keyof typeof ARMY_TYPES].image,
             settlementId: settlementId,
-            exemptFromUpkeep: exemptFromUpkeep
+            exemptFromUpkeep: exemptFromUpkeep,
+            supportedBy: supportedBy  // Pass faction name for allied armies (who pays upkeep)
+            // ledBy remains PLAYER_KINGDOM by default (player commands the army)
           });
 
           // NEW: Add "Allied Army" effect if exempt from upkeep
@@ -675,14 +658,15 @@ export async function createGameCommandsResolver() {
      * Outfit Army - Equip army with gear upgrades
      * Applies PF2e effects (armor, runes, weapons, equipment) to army actor
      * Each army can receive each equipment type only once
+     * REFACTORED: Uses prepare/commit pattern
      * 
      * @param armyId - ID of army to outfit (optional - will prompt user if not provided)
      * @param equipmentType - Type of equipment (optional - will prompt user if not provided)
      * @param outcome - Action outcome (success, criticalSuccess, failure, criticalFailure)
      * @param fallbackToGold - If true and no armies available, grant 1 gold instead
-     * @returns ResolveResult with success status
+     * @returns PreparedCommand with preview + commit function (or legacy ResolveResult if interactive prompts needed)
      */
-    async outfitArmy(armyId: string | undefined, equipmentType: string | undefined, outcome: string, fallbackToGold?: boolean): Promise<ResolveResult> {
+    async outfitArmy(armyId: string | undefined, equipmentType: string | undefined, outcome: string, fallbackToGold?: boolean): Promise<PreparedCommand | ResolveResult> {
       logger.info(`⚔️ [outfitArmy] Outfitting army ${armyId || '(prompt user)'} with ${equipmentType || '(prompt user)'} (outcome: ${outcome}, fallback: ${fallbackToGold})`);
 
       try {
@@ -708,18 +692,24 @@ export async function createGameCommandsResolver() {
 
         // NEW: Check if fallback to gold is enabled
         if (fallbackToGold && availableArmies.length === 0) {
-          // No armies to outfit - grant 1 gold instead
-          await updateKingdom(k => {
-            k.resources.gold = (k.resources.gold || 0) + 1;
-          });
-
-          logger.info(`💰 [outfitArmy] No armies available to outfit - granted 1 gold instead`);
+          // No armies to outfit - grant 1 gold instead (PREPARE/COMMIT pattern)
+          logger.info(`💰 [outfitArmy] PREPARED: Will grant 1 gold (no armies available)`);
 
           return {
-            success: true,
-            data: {
+            specialEffect: {
+              type: 'resource',
               message: 'No armies available to outfit - received 1 Gold instead',
-              grantedGold: true
+              icon: 'fa-coins',
+              variant: 'positive'
+            },
+            commit: async () => {
+              logger.info(`💰 [outfitArmy] COMMITTING: Adding 1 gold`);
+              
+              await updateKingdom(k => {
+                k.resources.gold = (k.resources.gold || 0) + 1;
+              });
+
+              logger.info(`✅ [outfitArmy] Successfully granted 1 gold`);
             }
           };
         }
@@ -1101,7 +1091,8 @@ export async function createGameCommandsResolver() {
             k.turnState!.actionsPhase = {
               completed: false,
               activeAids: [],
-              deployedArmyIds: []
+              deployedArmyIds: [],
+              factionsAidedThisTurn: []
             };
           }
           

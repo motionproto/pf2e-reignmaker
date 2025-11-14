@@ -31,6 +31,8 @@ import DisbandArmyAction from '../../../actions/disband-army/DisbandArmyAction';
 import OutfitArmyAction from '../../../actions/outfit-army/OutfitArmyAction';
 import DeployArmyAction from '../../../actions/deploy-army/DeployArmyAction';
 import RequestMilitaryAidAction from '../../../actions/request-military-aid/RequestMilitaryAidAction';
+import RequestEconomicAidAction from '../../../actions/request-economic-aid/RequestEconomicAidAction';
+import InfiltrationAction from '../../../actions/infiltration/InfiltrationAction';
 
 /**
  * Interface for custom action implementations
@@ -39,7 +41,7 @@ export interface CustomActionImplementation {
   id: string;
   
   // Check if action requirements are met
-  checkRequirements?(kingdomData: KingdomData): ActionRequirement;
+  checkRequirements?(kingdomData: KingdomData, instance?: any): ActionRequirement;
   
   // Custom resolution for specific outcomes
   customResolution?: {
@@ -50,7 +52,7 @@ export interface CustomActionImplementation {
   };
   
   // Determine if a specific outcome needs custom resolution
-  needsCustomResolution?(outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure'): boolean;
+  needsCustomResolution?(outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure', instance?: any): boolean;
 }
 
 /**
@@ -83,6 +85,8 @@ actionImplementations.set(ExecuteOrPardonPrisonersAction.id, ExecuteOrPardonPris
 actionImplementations.set(OutfitArmyAction.id, OutfitArmyAction);
 actionImplementations.set(DeployArmyAction.id, DeployArmyAction);
 actionImplementations.set(RequestMilitaryAidAction.id, RequestMilitaryAidAction);
+actionImplementations.set(RequestEconomicAidAction.id, RequestEconomicAidAction);
+actionImplementations.set(InfiltrationAction.id, InfiltrationAction);
 
 // TODO: Add more action implementations as they're created
 // actionImplementations.set(RecruitArmyAction.id, RecruitArmyAction);
@@ -110,11 +114,13 @@ export function hasCustomImplementation(actionId: string): boolean {
  * Get custom resolution component and props for an action outcome
  * @param actionId - The action ID
  * @param outcome - The outcome degree
+ * @param instance - Optional instance data for context-aware decisions
  * @returns Object with component and props, or null if no custom resolution
  */
 export function getCustomResolutionComponent(
   actionId: string,
-  outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure'
+  outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
+  instance?: any
 ): { component: any; props: Record<string, any> } | null {
   const impl = actionImplementations.get(actionId);
   
@@ -122,8 +128,8 @@ export function getCustomResolutionComponent(
     return null;
   }
   
-  // Check if this outcome needs custom resolution
-  if (impl.needsCustomResolution && !impl.needsCustomResolution(outcome)) {
+  // Check if this outcome needs custom resolution (pass instance for context-aware decisions)
+  if (impl.needsCustomResolution && !impl.needsCustomResolution(outcome, instance)) {
     return null;
   }
   
@@ -147,7 +153,8 @@ export function getCustomResolutionComponent(
  */
 export function checkCustomRequirements(
   actionId: string,
-  kingdomData: KingdomData
+  kingdomData: KingdomData,
+  instance?: any
 ): ActionRequirement | null {
   const impl = actionImplementations.get(actionId);
   
@@ -155,7 +162,7 @@ export function checkCustomRequirements(
     return null;
   }
   
-  return impl.checkRequirements(kingdomData);
+  return impl.checkRequirements(kingdomData, instance);
 }
 
 /**

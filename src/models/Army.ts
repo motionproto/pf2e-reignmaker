@@ -19,7 +19,11 @@ export interface Army {
   // - null = Neutral/mercenary
   ledBy: OwnershipValue;
   
-  // Support tracking
+  // Support tracking (upkeep provider)
+  // 'playerKingdom' for player armies, faction ID for allied armies (e.g., "default-swordlords-restov")
+  supportedBy: string;
+  
+  // Settlement support tracking (only for player-controlled armies)
   isSupported: boolean;
   supportedBySettlementId: string | null;
   turnsUnsupported: number;
@@ -44,17 +48,20 @@ export interface Army {
  * @param name Army name
  * @param level Army level
  * @param ledBy Faction leading this army (defaults to PLAYER_KINGDOM)
+ * @param supportedBy Faction providing upkeep (defaults to PLAYER_KINGDOM)
  */
 export function createArmy(
   name: string,
   level: number,
-  ledBy: OwnershipValue = PLAYER_KINGDOM
+  ledBy: OwnershipValue = PLAYER_KINGDOM,
+  supportedBy: string = PLAYER_KINGDOM
 ): Army {
   return {
     id: `army-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     name,
     level,
     ledBy,
+    supportedBy,
     isSupported: false,
     supportedBySettlementId: null,
     turnsUnsupported: 0

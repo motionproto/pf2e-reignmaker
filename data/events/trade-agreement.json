@@ -45,7 +45,7 @@
     "failure": {
       "msg": "The terms are poor.",
       "modifiers": [],
-      "endsEvent": false
+      "endsEvent": true
     },
     "criticalFailure": {
       "msg": "A trade dispute erupts.",

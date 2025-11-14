@@ -355,6 +355,9 @@
           </div>
           <!-- Diplomatic Support Card (matches ResourceCard style) -->
           <div class="diplomatic-support-card" class:over-capacity={isOverCapacity}>
+            <div class="tooltip">
+              Helpful factions may provide assistance. Gain additional capacity by building diplomacy structures.
+            </div>
             <i class="fas fa-handshake diplomatic-icon"></i>
             <div class="diplomatic-info">
               <div class="diplomatic-value">{helpfulRelationships} / {diplomaticCapacity}</div>
@@ -454,7 +457,10 @@
               >{actualGoldIncome > 0 ? "+" : ""}{actualGoldIncome}</span
             >
           </div>
-          <div class="stat-item">
+          <div class="stat-item has-tooltip">
+            <div class="stat-tooltip">
+              Unrest gain per turn. Reduce with the Deal with Unrest action or by building structures that lower unrest.
+            </div>
             <span class="stat-label"
               ><i class="fa-solid fa-hand-fist stat-icon"></i>Unrest:</span
             >
@@ -662,6 +668,14 @@
     border: 1px solid var(--border-subtle);
     margin: var(--space-12) var(--space-16);
     transition: all 0.2s ease;
+    position: relative;
+    cursor: help;
+  }
+  
+  .diplomatic-support-card:hover {
+    outline: 2px solid var(--color-info);
+    outline-offset: 0.125rem;
+    background: var(--overlay);
   }
 
   .diplomatic-support-card.over-capacity {
@@ -751,5 +765,59 @@
 
   .kingdom-stats-scrollable::-webkit-scrollbar-thumb:hover {
     background: var(--color-primary-hover);
+  }
+  
+  /* Tooltip styles for diplomatic support and stats */
+  .diplomatic-support-card .tooltip,
+  .stat-item .stat-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-0.5rem);
+    background: rgba(0, 0, 0, 0.95);
+    color: white;
+    padding: var(--space-12) var(--space-16);
+    border-radius: var(--radius-md);
+    font-size: var(--font-sm);
+    line-height: 1.5;
+    white-space: normal;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 1001;
+    min-width: 15rem;
+    max-width: 20rem;
+    text-align: left;
+    box-shadow: var(--shadow-lg);
+  }
+  
+  .diplomatic-support-card .tooltip::after,
+  .stat-item .stat-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.95);
+  }
+  
+  .diplomatic-support-card:hover .tooltip,
+  .stat-item.has-tooltip:hover .stat-tooltip {
+    opacity: 1;
+  }
+  
+  .tooltip .warning-text {
+    color: var(--color-warning);
+    font-weight: var(--font-weight-semibold);
+  }
+  
+  .stat-item.has-tooltip {
+    position: relative;
+    cursor: help;
+  }
+  
+  .stat-item.has-tooltip:hover {
+    background: var(--overlay);
   }
 </style>

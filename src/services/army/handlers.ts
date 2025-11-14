@@ -23,9 +23,22 @@ export function registerArmyHandlers(): void {
     image?: string;
     actorData?: any;
     settlementId?: string | null;
+    exemptFromUpkeep?: boolean;
+    ledBy?: string;
+    supportedBy?: string;
   }) => {
 
-    const army = await armyService._createArmyInternal(data.name, data.level, data.type, data.image, data.actorData, data.settlementId);
+    const army = await armyService._createArmyInternal(
+      data.name, 
+      data.level, 
+      data.type, 
+      data.image, 
+      data.actorData, 
+      data.settlementId,
+      data.exemptFromUpkeep,
+      data.ledBy,
+      data.supportedBy
+    );
 
     return army;
   });

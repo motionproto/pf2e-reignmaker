@@ -17,10 +17,10 @@ export class ArmyService {
    * 
    * @param name - Army name
    * @param level - Army level (typically party level)
-   * @param options - Optional army options (type, image, custom actor data, settlement assignment, upkeep exemption)
+   * @param options - Optional army options (type, image, custom actor data, settlement assignment, upkeep exemption, ledBy faction, supportedBy faction)
    * @returns Created army with actorId
    */
-  async createArmy(name: string, level: number, options?: { type?: string; image?: string; actorData?: any; settlementId?: string | null; exemptFromUpkeep?: boolean }): Promise<Army> {
+  async createArmy(name: string, level: number, options?: { type?: string; image?: string; actorData?: any; settlementId?: string | null; exemptFromUpkeep?: boolean; ledBy?: string; supportedBy?: string }): Promise<Army> {
     const { actionDispatcher } = await import('../ActionDispatcher');
     
     if (!actionDispatcher.isAvailable()) {
@@ -34,7 +34,9 @@ export class ArmyService {
       image: options?.image,
       actorData: options?.actorData,
       settlementId: options?.settlementId,
-      exemptFromUpkeep: options?.exemptFromUpkeep
+      exemptFromUpkeep: options?.exemptFromUpkeep,
+      ledBy: options?.ledBy,
+      supportedBy: options?.supportedBy
     });
   }
 
@@ -45,7 +47,7 @@ export class ArmyService {
    * 
    * @internal
    */
-  async _createArmyInternal(name: string, level: number, type?: string, image?: string, actorData?: any, settlementId?: string | null, exemptFromUpkeep?: boolean): Promise<Army> {
+  async _createArmyInternal(name: string, level: number, type?: string, image?: string, actorData?: any, settlementId?: string | null, exemptFromUpkeep?: boolean, ledBy?: string, supportedBy?: string): Promise<Army> {
 
     // Generate unique army ID
     const armyId = `army-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -87,20 +89,21 @@ export class ArmyService {
     }
     
     // Create army record
-    // Default to current faction (PLAYER_KINGDOM if not GM switching factions)
-    const faction = get(currentFaction) || PLAYER_KINGDOM;
+    // Use provided ledBy (for allied armies), or default to current faction
+    const faction = ledBy || get(currentFaction) || PLAYER_KINGDOM;
     
     const army: Army = {
       id: armyId,
-      name: name,
-      level: level,
-      type: type,
-      ledBy: faction, // Set ledBy based on current faction view
-      isSupported: !!supportSettlement,
-      turnsUnsupported: supportSettlement ? 0 : 1,
-      actorId: actorId,
-      supportedBySettlementId: supportSettlement?.id ?? null,
-      exemptFromUpkeep: exemptFromUpkeep // NEW: Set upkeep exemption flag
+      name,
+      level,
+      type,
+      ledBy: PLAYER_KINGDOM,
+      supportedBy: supportedBy || PLAYER_KINGDOM,
+      isSupported: false,
+      supportedBySettlementId: null,
+      turnsUnsupported: 0,
+      actorId,
+      exemptFromUpkeep
     };
     
     // Add to kingdom armies

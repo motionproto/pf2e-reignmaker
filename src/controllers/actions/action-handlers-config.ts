@@ -49,6 +49,8 @@ export function createCustomActionHandlers(context: {
   setPendingDeployArmyAction: (action: { skill: string }) => void;
   setPendingRequestEconomicAidAction: (action: { skill: string }) => void;
   setPendingRequestMilitaryAidAction: (action: { skill: string }) => void;
+  setPendingInfiltrationAction?: (action: { skill: string }) => void;
+  setShowInfiltrationDialog?: (show: boolean) => void;
 }): CustomActionHandlers {
   return {
     'build-structure': {
@@ -125,6 +127,11 @@ export function createCustomActionHandlers(context: {
       requiresPreDialog: true,
       showDialog: () => context.setShowRequestMilitaryAidDialog(true),
       storePending: (skill: string) => context.setPendingRequestMilitaryAidAction({ skill })
+    },
+    'infiltration': {
+      requiresPreDialog: true,
+      showDialog: () => context.setShowInfiltrationDialog?.(true),
+      storePending: (skill: string) => context.setPendingInfiltrationAction?.({ skill })
     }
   };
 }

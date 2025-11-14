@@ -17,9 +17,11 @@
     return settlement?.name || null;
   }
   
-  // Helper to get faction name from pending state
+  // Helper to get faction name from pending state (economic aid or infiltration)
   function getSelectedFactionName(): string | null {
-    return (globalThis as any).__pendingEconomicAidFactionName || null;
+    return (globalThis as any).__pendingEconomicAidFactionName || 
+           (globalThis as any).__pendingInfiltrationFactionName || 
+           null;
   }
   import {
     updateInstanceResolutionState,

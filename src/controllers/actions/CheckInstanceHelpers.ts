@@ -6,8 +6,9 @@
  */
 
 import { createCheckInstanceService } from '../../services/CheckInstanceService';
-import { getKingdomActor } from '../../stores/KingdomStore';
+import { getKingdomActor, updateKingdom } from '../../stores/KingdomStore';
 import type { PlayerAction } from './action-types';
+import type { Army } from '../../models/Army';
 
 /**
  * Pending actions state - passed from ActionsPhase component
@@ -17,6 +18,7 @@ export interface PendingActionsState {
   pendingRepairAction?: { skill: string; structureId?: string; settlementId?: string } | null;
   pendingUpgradeAction?: { skill: string; settlementId?: string } | null;
   pendingDiplomaticAction?: { skill: string; factionId?: string; factionName?: string } | null;
+  pendingInfiltrationAction?: { skill: string; factionId?: string; factionName?: string } | null;
 }
 
 /**
@@ -123,14 +125,17 @@ export function createActionMetadata(
   }
   
   if (actionId === 'dimplomatic-mission' && pendingActions.pendingDiplomaticAction) {
-    console.log('🎯 [CheckInstanceHelpers] Creating metadata for diplomatic mission');
-    console.log('🎯 [CheckInstanceHelpers] pendingDiplomaticAction:', pendingActions.pendingDiplomaticAction);
-    const metadata = {
+    return {
       factionId: pendingActions.pendingDiplomaticAction.factionId,
       factionName: pendingActions.pendingDiplomaticAction.factionName
     };
-    console.log('🎯 [CheckInstanceHelpers] Created metadata:', metadata);
-    return metadata;
+  }
+  
+  if (actionId === 'infiltration' && (pendingActions as any).pendingInfiltrationAction) {
+    return {
+      factionId: (pendingActions as any).pendingInfiltrationAction.factionId,
+      factionName: (pendingActions as any).pendingInfiltrationAction.factionName
+    };
   }
   
   return undefined;
@@ -187,8 +192,6 @@ export async function createActionCheckInstance(context: {
   
   // Create metadata
   const metadata = createActionMetadata(actionId, pendingActions);
-  console.log('🎯 [CheckInstanceHelpers] createActionCheckInstance - actionId:', actionId);
-  console.log('🎯 [CheckInstanceHelpers] createActionCheckInstance - metadata:', metadata);
   
   // Create instance
   const instanceId = await checkInstanceService.createInstance(
@@ -198,7 +201,6 @@ export async function createActionCheckInstance(context: {
     currentTurn,
     metadata
   );
-  console.log('🎯 [CheckInstanceHelpers] Created instance with ID:', instanceId);
   
   // Build preliminary resolution data with dynamic modifiers
   // IMPORTANT: Keep raw modifiers (with formulas) for OutcomeDisplay
@@ -259,8 +261,6 @@ export async function createActionCheckInstance(context: {
   const shouldSkipPrepare = actionsWithCustomImplementations.includes(actionId);
 
   if (gameCommands.length > 0 && !shouldSkipPrepare) {
-    console.log('🎬 [CheckInstanceHelpers] Preparing game commands (not executing)');
-
     const actor = getKingdomActor();
     if (actor) {
       const kingdom = actor.getKingdomData();
@@ -303,6 +303,21 @@ export async function createActionCheckInstance(context: {
               
               // Pass exemptFromUpkeep flag for allied armies
               const exemptFromUpkeep = gameCommand.exemptFromUpkeep === true;
+              
+              // For allied armies, get faction ID from global state and store it for resolver
+              if (exemptFromUpkeep) {
+                const factionId = (globalThis as any).__pendingEconomicAidFaction;
+                if (factionId) {
+                  // Store faction ID in pending recruit data so resolver can pick it up
+                  const existingPendingData = (globalThis as any).__pendingRecruitArmy || {};
+                  (globalThis as any).__pendingRecruitArmy = {
+                    ...existingPendingData,
+                    supportedBy: factionId  // Faction ID provides support/upkeep
+                    // ledBy remains PLAYER_KINGDOM (player commands the army)
+                  };
+                }
+              }
+              
               result = await resolver.recruitArmy(level, undefined, exemptFromUpkeep);
               break;
             }
@@ -346,20 +361,72 @@ export async function createActionCheckInstance(context: {
             }
             
             case 'adjustFactionAttitude': {
-              // Get factionId from gameCommand OR from pending state (set by pre-roll dialog)
-              const factionId = gameCommand.factionId || (globalThis as any).__pendingEconomicAidFaction;
+              // Get factionId from gameCommand OR from pending state OR from metadata
+              const factionId = gameCommand.factionId || (globalThis as any).__pendingEconomicAidFaction || metadata?.factionId;
+              const factionName = (globalThis as any).__pendingEconomicAidFactionName || metadata?.factionName || 'faction';
               const steps = gameCommand.steps || -1;
               
               if (factionId) {
+                // IMPORTANT: Capture factionId and factionName in closure for commit phase
+                const capturedFactionId = factionId;
+                const capturedFactionName = factionName;
+                const capturedSteps = steps;
+                
+                // Call resolver to prepare the command
                 result = await resolver.adjustFactionAttitude(
-                  factionId,
-                  steps,
+                  capturedFactionId,
+                  capturedSteps,
                   {
                     maxLevel: gameCommand.maxLevel,
                     minLevel: gameCommand.minLevel,
                     count: gameCommand.count
                   }
                 );
+                
+                // If result is a PreparedCommand, wrap its commit to use captured values
+                if (result && 'commit' in result) {
+                  const originalCommit = result.commit;
+                  result.commit = async () => {
+                    // Execute original commit (which should use the captured faction ID)
+                    await originalCommit();
+                  };
+                }
+              }
+              break;
+            }
+            
+            case 'requestMilitaryAidFactionAttitude': {
+              // Request Military Aid-specific wrapper around adjustFactionAttitude
+              // Gets factionId from pending state (set by pre-roll dialog)
+              const factionId = (globalThis as any).__pendingEconomicAidFaction;
+              const factionName = (globalThis as any).__pendingEconomicAidFactionName || 'faction';
+              const steps = gameCommand.steps || -1;
+              
+              if (factionId) {
+                // IMPORTANT: Capture factionId and factionName in closure for commit phase
+                const capturedFactionId = factionId;
+                const capturedFactionName = factionName;
+                const capturedSteps = steps;
+                
+                // Call resolver's adjustFactionAttitude (reuse the same implementation)
+                result = await resolver.adjustFactionAttitude(
+                  capturedFactionId,
+                  capturedSteps,
+                  {
+                    maxLevel: gameCommand.maxLevel,
+                    minLevel: gameCommand.minLevel,
+                    count: gameCommand.count
+                  }
+                );
+                
+                // If result is a PreparedCommand, wrap its commit to use captured values
+                if (result && 'commit' in result) {
+                  const originalCommit = result.commit;
+                  result.commit = async () => {
+                    // Execute original commit (which should use the captured faction ID)
+                    await originalCommit();
+                  };
+                }
               }
               break;
             }
@@ -376,28 +443,31 @@ export async function createActionCheckInstance(context: {
                 : outcomeType === 'failure' ? 'failure'
                 : 'criticalFailure';
               
-              // outfitArmy returns ResolveResult (legacy pattern)
-              // For request-military-aid, it just needs to try outfitting an army or grant gold
+              // outfitArmy now returns PreparedCommand | ResolveResult (hybrid during migration)
               result = await resolver.outfitArmy(armyId, equipmentType, resolverOutcome, fallbackToGold);
               
-              // Convert legacy ResolveResult to PreparedCommand format for display
-              if (result && result.success) {
-                const message = result.data?.message || 'Army outfitted';
-                const isNegative = result.data?.grantedGold === true;
-                
-                result = {
-                  specialEffect: {
-                    type: 'status',
-                    message: message,
-                    icon: isNegative ? 'fa-coins' : 'fa-shield-alt',
-                    variant: isNegative ? 'neutral' : 'positive'
-                  },
-                  commit: async () => {
-                    // Already executed by resolver (legacy pattern)
-                    console.log('✅ [CheckInstanceHelpers] outfitArmy already applied (legacy)');
-                  }
-                };
+              // Check if result is ResolveResult (legacy) and convert to PreparedCommand
+              if (result && 'success' in result && !('specialEffect' in result)) {
+                // Legacy ResolveResult - convert to PreparedCommand format
+                if (result.success) {
+                  const message = result.data?.message || 'Army outfitted';
+                  const isNegative = result.data?.grantedGold === true;
+                  
+                  result = {
+                    specialEffect: {
+                      type: 'status',
+                      message: message,
+                      icon: isNegative ? 'fa-coins' : 'fa-shield-alt',
+                      variant: isNegative ? 'neutral' : 'positive'
+                    },
+                    commit: async () => {
+                      // Already executed by resolver (legacy pattern)
+                      console.log('✅ [CheckInstanceHelpers] outfitArmy already applied (legacy)');
+                    }
+                  };
+                }
               }
+              // If result is already PreparedCommand, use it as-is
               break;
             }
             
@@ -461,6 +531,40 @@ export async function createActionCheckInstance(context: {
             case 'requestMilitaryAidEquipment': {
               // Custom game command for Request Military Aid success
               // Shows custom EquipmentSelectionDialog with army dropdown + equipment choices
+              
+              // IMPORTANT: Check if there are any armies available BEFORE showing dialog
+              const availableArmies = (kingdom.armies || []).filter((a: Army) => {
+                if (!a.actorId) return false;
+                // Check if army has at least one equipment slot available
+                const validTypes = ['armor', 'runes', 'weapons', 'equipment'];
+                return validTypes.some(type => !a.equipment?.[type as keyof typeof a.equipment]);
+              });
+              
+              if (availableArmies.length === 0) {
+                // No armies to outfit - grant 1 gold instead (fallback case)
+                console.log('💰 [CheckInstanceHelpers] No armies available to outfit - PREPARING to grant 1 gold');
+                
+                // Return PreparedCommand with commit function that adds gold
+                result = {
+                  specialEffect: {
+                    type: 'resource',
+                    message: 'No armies available to outfit - received 1 Gold instead',
+                    icon: 'fa-coins',
+                    variant: 'neutral'
+                  },
+                  commit: async () => {
+                    console.log('🎬 [CheckInstanceHelpers] COMMITTING: Adding 1 gold');
+                    
+                    await updateKingdom(k => {
+                      k.resources.gold = (k.resources.gold || 0) + 1;
+                    });
+                    
+                    console.log('✅ [CheckInstanceHelpers] Gold fallback applied successfully');
+                  }
+                };
+                
+                break;
+              }
               
               // Import custom dialog dynamically
               const { default: EquipmentSelectionDialog } = await import('../../actions/request-military-aid/EquipmentSelectionDialog.svelte');
@@ -531,9 +635,15 @@ export async function createActionCheckInstance(context: {
                       false
                     );
                     
-                    if (!applyResult.success) {
-                      console.error('❌ [CheckInstanceHelpers] Failed to outfit army:', applyResult.error);
-                      throw new Error(applyResult.error || 'Failed to outfit army');
+                    // Check if result is ResolveResult (has success property)
+                    if ('success' in applyResult) {
+                      if (!applyResult.success) {
+                        console.error('❌ [CheckInstanceHelpers] Failed to outfit army:', applyResult.error);
+                        throw new Error(applyResult.error || 'Failed to outfit army');
+                      }
+                    } else if ('commit' in applyResult) {
+                      // PreparedCommand - execute commit
+                      await applyResult.commit();
                     }
                     
                     console.log('✅ [CheckInstanceHelpers] Equipment applied successfully');
@@ -562,13 +672,6 @@ export async function createActionCheckInstance(context: {
             // NEW PATTERN: PreparedCommand
             preliminarySpecialEffects.push(result.specialEffect);
             pendingCommits.push(result.commit);
-            console.log('🎬 [CheckInstanceHelpers] Prepared command:', gameCommand.type);
-            console.log('  - specialEffects count:', preliminarySpecialEffects.length);
-            console.log('  - pendingCommits count:', pendingCommits.length);
-          } else if (result && 'success' in result) {
-            // LEGACY PATTERN: ResolveResult (will be phased out)
-            // For now, do nothing - these commands execute immediately
-            console.log('⚠️ [CheckInstanceHelpers] Legacy command (not prepared):', gameCommand.type);
           }
         } catch (error) {
           console.error('❌ [CheckInstanceHelpers] Failed to prepare game command:', gameCommand.type, error);
@@ -584,7 +687,6 @@ export async function createActionCheckInstance(context: {
   };
   
   // Store outcome with special effects
-  console.log('🔍 [CheckInstanceHelpers] About to store outcome with specialEffects:', preliminarySpecialEffects);
   await checkInstanceService.storeOutcome(
     instanceId,
     outcomeType,
@@ -595,12 +697,10 @@ export async function createActionCheckInstance(context: {
     rollBreakdown,
     preliminarySpecialEffects  // Pass special effects to display in preview
   );
-  console.log('✅ [CheckInstanceHelpers] Outcome stored, verifying instance...');
   
   // Store pending commits if any (prepare/commit pattern)
   // IMPORTANT: Store in client-side memory, NOT in actor flags (functions can't be serialized)
   if (pendingCommits.length > 0) {
-    console.log(`🎬 [CheckInstanceHelpers] Storing ${pendingCommits.length} pending commit(s) in client-side storage`);
     const { commitStorage } = await import('../../utils/CommitStorage');
     commitStorage.store(instanceId, pendingCommits);
   }

@@ -14,7 +14,7 @@
   const dispatch = createEventDispatcher();
   
   let selectedFactionId: string | null = null;
-  let eligibleFactions: Faction[] = [];
+  let eligibleFactions: Array<Faction & { alreadyAided: boolean; isEligible: boolean }> = [];
   
   $: if (show) {
     loadEligibleFactions();
@@ -33,20 +33,32 @@
       return;
     }
     
-    // Filter factions: Must be Friendly or Helpful (requirement for economic aid)
+    // Get factions that have already provided aid this turn
+    const aidedThisTurn = kingdom.turnState?.actionsPhase?.factionsAidedThisTurn || [];
+    
+    // Filter factions: Must be Friendly or Helpful (show all, but mark aided as disabled)
     eligibleFactions = (kingdom.factions || [])
       .filter((f: Faction) => f.attitude === 'Friendly' || f.attitude === 'Helpful')
+      .map((f: Faction) => {
+        const alreadyAided = aidedThisTurn.includes(f.id);
+        const isEligible = !alreadyAided;
+        
+        return {
+          ...f,
+          alreadyAided,
+          isEligible
+        };
+      })
       .sort((a: Faction, b: Faction) => a.name.localeCompare(b.name));
   }
   
-  function selectFaction(faction: Faction) {
+  function selectFaction(faction: typeof eligibleFactions[0]) {
+    if (!faction.isEligible) return; // Can't select disabled factions
     selectedFactionId = faction.id;
   }
   
   function handleConfirm() {
     if (!selectedFactionId) {
-      // @ts-ignore
-      ui?.notifications?.warn('Please select a faction');
       return;
     }
     
@@ -55,6 +67,10 @@
       logger.error('❌ [RequestEconomicAidDialog] Selected faction not found');
       return;
     }
+
+    // NOTE: Faction marking moved to action implementation execute method
+    // This ensures faction is only marked AFTER user clicks "Apply Result"
+    // If user cancels, faction won't be marked as having provided aid
 
     dispatch('confirm', {
       factionId: selectedFactionId,
@@ -91,10 +107,9 @@
     </div>
     
     <div class="dialog-body">
-      <div class="info-notice">
-        <i class="fas fa-info-circle"></i>
-        <span>Request resources from an allied nation. Only Friendly or Helpful factions will provide aid.</span>
-      </div>
+      <p class="dialog-description">
+        Request resources from an allied nation. Only Friendly or Helpful factions will provide aid.
+      </p>
       
       {#if eligibleFactions.length === 0}
         <div class="no-factions">
@@ -112,20 +127,28 @@
           <div class="table-body">
             {#each eligibleFactions as faction (faction.id)}
               {@const config = getAttitudeConfig(faction.attitude)}
-              <div
-                class="table-row"
-                class:selected={selectedFactionId === faction.id}
-                on:click={() => selectFaction(faction)}
-              >
-                <div class="col-name">
-                  {faction.name}
-                </div>
-                <div class="col-attitude">
-                  <div class="attitude-badge">
-                    <i class="fas {config.icon}"></i>
-                    <span>{config.displayName}</span>
+              <div class="table-row-container">
+                <div
+                  class="table-row"
+                  class:selected={selectedFactionId === faction.id}
+                  class:disabled={!faction.isEligible}
+                  on:click={() => selectFaction(faction)}
+                >
+                  <div class="col-name">
+                    {faction.name}
+                  </div>
+                  <div class="col-attitude">
+                    <div class="attitude-badge">
+                      <i class="fas {config.icon}"></i>
+                      <span>{config.displayName}</span>
+                    </div>
                   </div>
                 </div>
+                {#if faction.alreadyAided}
+                  <div class="row-description">
+                    Already provided support this turn
+                  </div>
+                {/if}
               </div>
             {/each}
           </div>
@@ -280,21 +303,11 @@
     }
   }
   
-  .info-notice {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    background: var(--surface-info);
-    border: 1px solid var(--border-info-subtle);
-    border-radius: var(--radius-md);
-    margin-bottom: 16px;
+  .dialog-description {
+    margin: 0 0 20px 0;
     font-size: var(--font-md);
     color: var(--text-secondary);
-    
-    i {
-      color: rgb(59, 130, 246);
-    }
+    line-height: 1.5;
   }
   
   .no-factions {
@@ -343,22 +356,25 @@
     flex-direction: column;
   }
   
+  .table-row-container {
+    border-bottom: 1px solid var(--border-medium);
+    
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+  
   .table-row {
     display: grid;
     grid-template-columns: 2fr 1.5fr;
     gap: 12px;
     padding: 16px;
-    border-bottom: 1px solid var(--border-medium);
     cursor: pointer;
     transition: all 0.2s ease;
     font-size: var(--font-lg);
     align-items: center;
     
-    &:last-child {
-      border-bottom: none;
-    }
-    
-    &:hover {
+    &:hover:not(.disabled) {
       background: rgba(100, 116, 139, 0.15);
     }
     
@@ -368,9 +384,18 @@
       padding-left: 13px;
     }
     
+    &.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: rgba(100, 116, 139, 0.05);
+    }
+    
     .col-name {
       font-weight: var(--font-weight-semibold);
       color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     
     .col-attitude {
@@ -392,5 +417,13 @@
         }
       }
     }
+  }
+  
+  .row-description {
+    padding: 0 var(--space-16) var(--space-12) var(--space-16);
+    font-size: var(--font-sm);
+    font-weight: normal;
+    color: var(--text-secondary);
+    line-height: 1.5;
   }
 </style>
