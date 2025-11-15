@@ -7,7 +7,7 @@
   import RequestEconomicAidDialog from '../../../../actions/request-economic-aid/RequestEconomicAidDialog.svelte';
   import RequestMilitaryAidDialog from '../../../../actions/request-military-aid/RequestMilitaryAidDialog.svelte';
   import AidSelectionDialog from '../../../kingdom/components/AidSelectionDialog.svelte';
-  import SettlementSelectionDialog from '../../../../actions/collect-stipend/SettlementSelectionDialog.svelte';
+  import SettlementSelectionDialog from '../../../../actions/execute-or-pardon-prisoners/SettlementSelectionDialog.svelte';
   import ExecuteOrPardonSettlementDialog from '../../../../actions/execute-or-pardon-prisoners/SettlementSelectionDialog.svelte';
   import ArmySelectionDialog from '../../../../actions/train-army/ArmySelectionDialog.svelte';
   import DisbandArmyDialog from '../../../../actions/disband-army/ArmySelectionDialog.svelte';
@@ -173,7 +173,7 @@
   on:cancel={handleAidCancel}
 />
 
-<!-- Settlement Selection Dialog (Collect Stipend) -->
+<!-- Settlement Selection Dialog (Collect Stipend) - using execute-or-pardon component temporarily -->
 <SettlementSelectionDialog
   bind:show={showSettlementSelectionDialog}
   on:settlementSelected={handleSettlementSelected}

@@ -19,6 +19,7 @@ export interface PendingActionsState {
   pendingUpgradeAction?: { skill: string; settlementId?: string } | null;
   pendingDiplomaticAction?: { skill: string; factionId?: string; factionName?: string } | null;
   pendingInfiltrationAction?: { skill: string; factionId?: string; factionName?: string } | null;
+  pendingStipendAction?: { skill: string; settlementId?: string } | null;
 }
 
 /**
@@ -135,6 +136,12 @@ export function createActionMetadata(
     return {
       factionId: (pendingActions as any).pendingInfiltrationAction.factionId,
       factionName: (pendingActions as any).pendingInfiltrationAction.factionName
+    };
+  }
+  
+  if (actionId === 'collect-stipend' && pendingActions.pendingStipendAction) {
+    return {
+      settlementId: pendingActions.pendingStipendAction.settlementId
     };
   }
   
@@ -267,6 +274,61 @@ export async function createActionCheckInstance(context: {
   // This allows the OutcomeDisplay to show special effect badges before Apply Result is clicked
   let preliminarySpecialEffects: any[] = [];
   let pendingCommits: Array<() => Promise<void>> = [];
+  
+  // Build preliminary resolution data first (needed for preview calculation)
+  const preliminaryResolutionData = {
+    diceRolls: {},
+    choices: {},
+    allocations: {},
+    textInputs: {},
+    compoundData: {},
+    numericModifiers: preliminaryModifiers,
+    manualEffects: [],
+    complexActions: [],
+    customComponentData: null
+  };
+  
+  // ✅ CALCULATE PREVIEW FOR MIGRATED PIPELINE ACTIONS
+  // Check if action uses new pipeline system
+  const MIGRATED_ACTIONS = new Set([
+    'deal-with-unrest', 'sell-surplus', 'purchase-resources', 'harvest-resources',
+    'claim-hexes', 'build-roads', 'fortify-hex', 'create-worksite', 'send-scouts',
+    'collect-stipend'
+  ]);
+  
+  if (MIGRATED_ACTIONS.has(actionId)) {
+    console.log(`🎯 [CheckInstanceHelpers] Calculating preview for migrated action: ${actionId}`);
+    
+    try {
+      const actor = getKingdomActor();
+      if (actor) {
+        const kingdom = actor.getKingdomData();
+        const { unifiedCheckHandler } = await import('../../services/UnifiedCheckHandler');
+        
+        // Build context for preview calculation
+        const context = {
+          check: action,
+          outcome: outcomeType,
+          kingdom,
+          metadata,
+          resolutionData: preliminaryResolutionData
+        };
+        
+        // Calculate preview
+        const preview = await unifiedCheckHandler.calculatePreview(actionId, context);
+        
+        // Format preview to special effects
+        const formattedPreview = unifiedCheckHandler.formatPreview(actionId, preview);
+        
+        // Add preview special effects
+        preliminarySpecialEffects.push(...formattedPreview);
+        
+        console.log(`✅ [CheckInstanceHelpers] Preview calculated:`, formattedPreview);
+      }
+    } catch (error) {
+      console.error(`❌ [CheckInstanceHelpers] Failed to calculate preview:`, error);
+    }
+  }
   
   // Get game commands from action outcome (reuse outcomeData from above)
   const gameCommands = outcomeData?.gameCommands || [];
@@ -696,12 +758,6 @@ export async function createActionCheckInstance(context: {
       }
     }
   }
-  
-  const preliminaryResolutionData = {
-    numericModifiers: preliminaryModifiers,
-    manualEffects: [],
-    complexActions: []
-  };
   
   // Store outcome with special effects
   await checkInstanceService.storeOutcome(

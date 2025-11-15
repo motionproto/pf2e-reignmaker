@@ -104,7 +104,7 @@ export type Trait = 'ongoing' | 'dangerous' | 'beneficial';
  * Preview configuration
  */
 export interface PreviewConfig {
-  calculate?: (context: any) => any;
+  calculate?: (context: any) => any | Promise<any>;  // Can be sync or async
   format?: (preview: any) => any[];
   providedByInteraction?: boolean;  // True for map-selection actions
 }
@@ -121,6 +121,16 @@ export interface CheckPipeline {
 
   // Category (actions only)
   category?: string;
+
+  // Cost (actions only) - Upfront resource costs
+  cost?: {
+    gold?: number;
+    lumber?: number;
+    stone?: number;
+    ore?: number;
+    food?: number;
+    [resource: string]: number | undefined;  // Allow any resource type
+  };
 
   // Tier/Severity (events/incidents only)
   tier?: number;

@@ -73,11 +73,6 @@ export function createCustomActionHandlers(context: {
       showDialog: () => context.setShowFactionSelectionDialog(true),
       storePending: (skill: string) => context.setPendingDiplomaticAction({ skill })
     },
-    'collect-stipend': {
-      requiresPreDialog: true,
-      showDialog: () => context.setShowSettlementSelectionDialog(true),
-      storePending: (skill: string) => context.setPendingStipendAction({ skill })
-    },
     'execute-or-pardon-prisoners': {
       requiresPreDialog: true,
       showDialog: () => context.setShowExecuteOrPardonSettlementDialog(true),

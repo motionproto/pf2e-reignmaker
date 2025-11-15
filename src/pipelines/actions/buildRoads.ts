@@ -7,6 +7,8 @@
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import { buildRoadsExecution } from '../../execution/territory/buildRoads';
+import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
+import { applyActionCost } from '../shared/applyActionCost';
 
 export const buildRoadsPipeline: CheckPipeline = {
   id: 'build-roads',
@@ -14,6 +16,11 @@ export const buildRoadsPipeline: CheckPipeline = {
   description: 'Construct pathways between settlements to improve trade, travel, and military movement. Roads must be built in claimed territory.',
   checkType: 'action',
   category: 'expand-borders',
+
+  cost: {
+    lumber: 1,  // JSON says "wood" but resource system uses "lumber"
+    stone: 1
+  },
 
   skills: [
     { skill: 'crafting', description: 'engineering expertise' },
@@ -95,8 +102,9 @@ export const buildRoadsPipeline: CheckPipeline = {
     calculate: (ctx) => {
       const resources = [];
       
-      // Show gold cost for all outcomes
-      resources.push({ resource: 'gold', value: -2 });
+      // Show resource costs for all outcomes
+      resources.push({ resource: 'wood', value: -1 });
+      resources.push({ resource: 'stone', value: -1 });
       
       // Show unrest on critical failure
       if (ctx.outcome === 'criticalFailure') {
@@ -108,6 +116,32 @@ export const buildRoadsPipeline: CheckPipeline = {
         specialEffects: [],
         warnings: []
       };
+    }
+  },
+
+  // Execute function - explicitly handles ALL outcomes
+  execute: async (ctx) => {
+    // Deduct cost first (regardless of outcome - action was attempted)
+    await applyActionCost(buildRoadsPipeline);
+    
+    switch (ctx.outcome) {
+      case 'criticalSuccess':
+      case 'success':
+        // Road building handled by postApplyInteractions (builds roads via buildRoadsExecution)
+        // No modifiers defined in pipeline for these outcomes
+        return { success: true };
+        
+      case 'failure':
+        // Explicitly do nothing (no modifiers defined)
+        return { success: true };
+        
+      case 'criticalFailure':
+        // Explicitly apply +1 unrest modifier from pipeline
+        await applyPipelineModifiers(buildRoadsPipeline, ctx.outcome);
+        return { success: true };
+        
+      default:
+        return { success: false, error: `Unexpected outcome: ${ctx.outcome}` };
     }
   }
 };

@@ -861,8 +861,10 @@ export class HexSelectorService {
       this.canvasMoveHandler = null;
     }
     
-    // Clear hover layer but keep selection visible
+    // Clear hover and selection layers - show only permanent changes from kingdom data
     this.mapLayer.hideInteractiveHover();
+    this.mapLayer.clearSelection();
+    this.selectedRoadConnections.clear();
     
     // For scout actions, reveal hexes in World Explorer NOW
     if (this.config.colorType === 'scout') {
@@ -882,6 +884,9 @@ export class HexSelectorService {
     } else {
       resolver?.(hexes);
     }
+    
+    // Give kingdom data update time to propagate to reactive overlays
+    await new Promise(resolve => setTimeout(resolve, 100));
     
     // Switch to completed state - panel stays visible, user sees territory update
     this.panelState = 'completed';

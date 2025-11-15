@@ -9,6 +9,7 @@ import type { CheckPipeline } from '../../types/CheckPipeline';
 import { fortifyHexExecution } from '../../execution/territory/fortifyHex';
 import { getKingdomData } from '../../stores/KingdomStore';
 import { validateFortifyHexForPipeline } from '../../actions/fortify-hex/fortifyHexValidator';
+import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const fortifyHexPipeline: CheckPipeline = {
   id: 'fortify-hex',
@@ -150,6 +151,34 @@ export const fortifyHexPipeline: CheckPipeline = {
         specialEffects: [],
         warnings: []
       };
+    }
+  },
+
+  // Execute function - explicitly handles ALL outcomes
+  execute: async (ctx) => {
+    switch (ctx.outcome) {
+      case 'criticalSuccess':
+        // Fortification built by onComplete handler
+        // Apply -1 unrest modifier from pipeline
+        await applyPipelineModifiers(fortifyHexPipeline, ctx.outcome);
+        return { success: true };
+        
+      case 'success':
+        // Fortification built by onComplete handler
+        // No modifiers defined in pipeline
+        return { success: true };
+        
+      case 'failure':
+        // Explicitly do nothing (no modifiers defined)
+        return { success: true };
+        
+      case 'criticalFailure':
+        // Explicitly apply +1 unrest modifier from pipeline
+        await applyPipelineModifiers(fortifyHexPipeline, ctx.outcome);
+        return { success: true };
+        
+      default:
+        return { success: false, error: `Unexpected outcome: ${ctx.outcome}` };
     }
   }
 };

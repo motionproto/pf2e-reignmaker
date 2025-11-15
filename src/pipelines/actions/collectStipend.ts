@@ -11,7 +11,7 @@ import { giveActorGoldExecution } from '../../execution/resources/giveActorGold'
 export const collectStipendPipeline: CheckPipeline = {
   id: 'collect-stipend',
   name: 'Collect Stipend',
-  description: 'Draw personal funds from the kingdom\'s treasury as compensation for your service.',
+  description: 'Draw personal funds from the kingdom\'s treasury as compensation for your service. Stipend is based on your highest-level settlement.',
   checkType: 'action',
   category: 'economic-resources',
 
@@ -24,33 +24,23 @@ export const collectStipendPipeline: CheckPipeline = {
     { skill: 'thievery', description: 'skim the treasury' }
   ],
 
-  // Pre-roll: Select settlement (determines income tier)
-  preRollInteractions: [
-    {
-      type: 'entity-selection',
-      id: 'settlementId',
-      label: 'Select settlement with Counting House',
-      entityType: 'settlement'
-    }
-  ],
-
   outcomes: {
     criticalSuccess: {
-      description: 'You are handsomely compensated.',
+      description: 'Receive double stipend (based on highest settlement level and taxation)',
       modifiers: []
     },
     success: {
-      description: 'You receive your stipend.',
+      description: 'Receive standard stipend (based on highest settlement level and taxation)',
       modifiers: []
     },
     failure: {
-      description: 'The treasury struggles to pay you.',
+      description: 'Receive half stipend and gain 1 Unrest (based on highest settlement level and taxation)',
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
     },
     criticalFailure: {
-      description: 'The treasury is empty.',
+      description: 'Receive no stipend and gain 1d4 Unrest',
       modifiers: [
         { type: 'dice', resource: 'unrest', formula: '1d4', duration: 'immediate' }
       ]
@@ -58,25 +48,49 @@ export const collectStipendPipeline: CheckPipeline = {
   },
 
   preview: {
-    calculate: (ctx) => {
+    calculate: async (ctx) => {
       // Calculate based on settlement taxation tier
       const multiplier = ctx.outcome === 'criticalSuccess' ? 2 :
                         ctx.outcome === 'success' ? 1 :
                         ctx.outcome === 'failure' ? 0.5 : 0;
 
-      const resources = [];
-      if (ctx.outcome === 'failure') {
-        resources.push({ resource: 'unrest', value: 1 });
-      } else if (ctx.outcome === 'criticalFailure') {
-        // Dice roll for unrest
-        resources.push({ resource: 'unrest', value: 2 }); // Estimated
+      // Note: Don't add resources for modifiers here - they're handled by the modifier system
+      // Preview only shows the gold badge
+
+      // Calculate actual gold amount
+      let goldMessage = '';
+      if (multiplier > 0) {
+        const settlements = ctx.kingdom.settlements || [];
+        if (settlements.length > 0) {
+          // Get highest level settlement
+          const highestSettlement = settlements.reduce((highest: any, current: any) => {
+            return current.level > highest.level ? current : highest;
+          }, settlements[0]);
+
+          const { getKingdomTaxationTier, calculateIncome } = await import('../../services/commands/resources/playerRewards');
+
+          const taxationInfo = getKingdomTaxationTier(ctx.kingdom);
+          if (taxationInfo) {
+            const baseIncome = calculateIncome(highestSettlement.level, taxationInfo.tier);
+            const goldAmount = Math.round(baseIncome * multiplier);
+            
+            // Get character name from metadata
+            const characterName = ctx.metadata?.actor?.actorName || 'Player';
+            goldMessage = `${characterName} collects ${goldAmount} gold`;
+          } else {
+            const characterName = ctx.metadata?.actor?.actorName || 'Player';
+            goldMessage = `${characterName} collects gold (${multiplier}x stipend)`;
+          }
+        } else {
+          goldMessage = 'No settlements available';
+        }
       }
 
       return {
-        resources,
-        specialEffects: multiplier > 0 ? [{
+        resources: [],  // Modifiers handle unrest changes
+        specialEffects: goldMessage ? [{
           type: 'status' as const,
-          message: `Will transfer gold to player (${multiplier}x stipend)`,
+          message: goldMessage,
           variant: 'positive' as const
         }] : [],
         warnings: []
@@ -89,21 +103,35 @@ export const collectStipendPipeline: CheckPipeline = {
                       ctx.outcome === 'success' ? 1 :
                       ctx.outcome === 'failure' ? 0.5 : 0;
 
+    // Handle gold transfer for successful outcomes
     if (multiplier > 0) {
-      // Get settlement and calculate stipend
+      // Find highest-level settlement automatically
+      const settlements = ctx.kingdom.settlements || [];
+      if (settlements.length === 0) {
+        return { success: false, error: 'No settlements available' };
+      }
+
+      // Get highest level settlement
+      const highestSettlement = settlements.reduce((highest: any, current: any) => {
+        return current.level > highest.level ? current : highest;
+      }, settlements[0]);
+
       const { getKingdomTaxationTier, calculateIncome } = await import('../../services/commands/resources/playerRewards');
 
-      const settlement = ctx.kingdom.settlements?.find((s: any) => s.id === ctx.metadata.settlementId);
-      if (!settlement) throw new Error('Settlement not found');
-
       const taxationInfo = getKingdomTaxationTier(ctx.kingdom);
-      const baseIncome = calculateIncome(settlement.level, taxationInfo.tier);
+      if (!taxationInfo) {
+        return { success: false, error: 'Unable to determine taxation tier' };
+      }
+
+      const baseIncome = calculateIncome(highestSettlement.level, taxationInfo.tier);
       const goldAmount = Math.round(baseIncome * multiplier);
-      const kingdomGoldCost = goldAmount; // 1:1 transfer
+      const kingdomGoldCost = 0; // ✅ Don't deduct from kingdom - free stipend
 
       const game = (globalThis as any).game;
       const actorId = game.user?.character?.id;
-      if (!actorId) throw new Error('No character assigned to current user');
+      if (!actorId) {
+        return { success: false, error: 'No character assigned to current user' };
+      }
 
       await giveActorGoldExecution({
         actorId,
@@ -111,5 +139,28 @@ export const collectStipendPipeline: CheckPipeline = {
         kingdomGoldCost
       });
     }
+
+    // Handle unrest penalties for failures
+    const { updateKingdom } = await import('../../stores/KingdomStore');
+    
+    if (ctx.outcome === 'failure') {
+      // Apply +1 unrest
+      await updateKingdom(kingdom => {
+        kingdom.unrest = (kingdom.unrest || 0) + 1;
+      });
+    } else if (ctx.outcome === 'criticalFailure') {
+      // Roll 1d4 and apply that much unrest
+      const roll = await new Roll('1d4').evaluate();
+      const unrestAmount = roll.total || 0;
+      
+      await updateKingdom(kingdom => {
+        kingdom.unrest = (kingdom.unrest || 0) + unrestAmount;
+      });
+    }
+
+    return { 
+      success: true, 
+      message: multiplier > 0 ? `Transferred gold` : 'Stipend collection complete'
+    };
   }
 };

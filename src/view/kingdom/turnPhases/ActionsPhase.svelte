@@ -40,7 +40,7 @@
   import { createActionCheckInstance, updateCheckInstanceOutcome, type PendingActionsState } from '../../../controllers/actions/CheckInstanceHelpers';
 
   // Migrated actions (temporary tracking during pipeline migration)
-  const MIGRATED_ACTIONS = new Set(['claim-hexes', 'deal-with-unrest', 'sell-surplus', 'purchase-resources', 'harvest-resources', 'build-roads', 'fortify-hex', 'create-worksite']);
+  const MIGRATED_ACTIONS = new Set(['claim-hexes', 'deal-with-unrest', 'sell-surplus', 'purchase-resources', 'harvest-resources', 'build-roads', 'fortify-hex', 'create-worksite', 'send-scouts', 'collect-stipend']);
   
   // Action number mapping for migration badges
   const MIGRATED_ACTION_NUMBERS = new Map([
@@ -51,7 +51,9 @@
     ['harvest-resources', 5],
     ['build-roads', 6],
     ['fortify-hex', 7],
-    ['create-worksite', 8]
+    ['create-worksite', 8],
+    ['send-scouts', 9],
+    ['collect-stipend', 10]
   ]);
 
   // Initialize controller and services
@@ -210,7 +212,8 @@
       pendingRepairAction,
       pendingUpgradeAction,
       pendingDiplomaticAction,
-      pendingInfiltrationAction: pendingInfiltrationAction as any
+      pendingInfiltrationAction: pendingInfiltrationAction as any,
+      pendingStipendAction
     };
     
     console.log('🎯 [ActionsPhase] About to create check instance for:', actionId);
@@ -956,20 +959,6 @@
     }
   }
   
-  // Handle when a settlement is selected for collect stipend
-  async function handleSettlementSelected(event: CustomEvent) {
-    const { settlementId } = event.detail;
-    
-    if (pendingStipendAction) {
-      pendingStipendAction.settlementId = settlementId;
-      showSettlementSelectionDialog = false;
-      
-      // Store in global state for action-resolver to access
-      (globalThis as any).__pendingStipendSettlement = settlementId;
-      
-      await executeStipendRoll(pendingStipendAction);
-    }
-  }
   
   // Handle when a settlement is selected for execute or pardon prisoners
   async function handleExecuteOrPardonSettlementSelected(event: CustomEvent) {
@@ -986,21 +975,6 @@
     }
   }
   
-  // Execute collect stipend skill roll - using ActionExecutionHelpers
-  async function executeStipendRoll(stipendAction: { skill: string; settlementId?: string }) {
-    await executeActionRoll(
-      createExecutionContext('collect-stipend', stipendAction.skill, {
-        settlementId: stipendAction.settlementId
-      }),
-      {
-        getDC: (characterLevel: number) => controller.getActionDC(characterLevel),
-        onRollCancel: () => { 
-          pendingStipendAction = null;
-          delete (globalThis as any).__pendingStipendSettlement;
-        }
-      }
-    );
-  }
   
   // Execute execute or pardon prisoners skill roll - using ActionExecutionHelpers
   async function executeExecuteOrPardonRoll(executeOrPardonAction: { skill: string; settlementId?: string }) {
@@ -1448,7 +1422,6 @@
   on:infiltrationFactionSelected={handleInfiltrationFactionSelected}
   on:economicAidFactionSelected={handleEconomicAidFactionSelected}
   on:militaryAidFactionSelected={handleMilitaryAidFactionSelected}
-  on:settlementSelected={handleSettlementSelected}
   on:executeOrPardonSettlementSelected={handleExecuteOrPardonSettlementSelected}
   on:armySelectedForTraining={handleArmySelectedForTraining}
   on:armySelectedForDisbanding={handleArmySelectedForDisbanding}

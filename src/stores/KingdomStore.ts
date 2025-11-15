@@ -12,6 +12,7 @@ import { calculateProduction } from '../services/economics/production';
 import { PLAYER_KINGDOM } from '../types/ownership';
 import { filterVisibleHexes, filterVisibleHexIds } from '../utils/visibility-filter';
 import { logger } from '../utils/Logger';
+import { wrapKingdomActor } from '../utils/kingdom-actor-wrapper';
 
 // Core actor store - this is the single source of truth
 export const kingdomActor = writable<KingdomActor | null>(null);
@@ -620,8 +621,12 @@ export function setupFoundrySync(): void {
       // Check if kingdom data was updated
       if (changes.flags?.['pf2e-reignmaker']?.['kingdom-data']) {
 
+        // CRITICAL: Re-wrap the actor to maintain kingdom methods
+        // The actor from Foundry's updateActor hook is unwrapped
+        const wrappedActor = wrapKingdomActor(actor);
+        
         // Refresh the actor reference in the store
-        kingdomActor.set(actor as KingdomActor);
+        kingdomActor.set(wrappedActor);
         
         // Get the new kingdom data from the updated actor
         const kingdom = actor.getFlag('pf2e-reignmaker', 'kingdom-data');

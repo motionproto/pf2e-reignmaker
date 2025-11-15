@@ -1,4 +1,5 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
+import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 /**
  * Harvest Resources - Choose resource type after seeing outcome
@@ -71,6 +72,29 @@ export const harvestResourcesPipeline: CheckPipeline = {
       }
       
       return { resources: changes };
+    }
+  },
+
+  // Execute function - explicitly handles ALL outcomes
+  execute: async (ctx) => {
+    switch (ctx.outcome) {
+      case 'criticalSuccess':
+      case 'success':
+        // Resource gain handled by post-roll interaction choice
+        // No modifiers defined in pipeline for these outcomes
+        return { success: true };
+        
+      case 'failure':
+        // Explicitly do nothing (no modifiers defined)
+        return { success: true };
+        
+      case 'criticalFailure':
+        // Explicitly apply -1 gold modifier from pipeline
+        await applyPipelineModifiers(harvestResourcesPipeline, ctx.outcome);
+        return { success: true };
+        
+      default:
+        return { success: false, error: `Unexpected outcome: ${ctx.outcome}` };
     }
   }
 };

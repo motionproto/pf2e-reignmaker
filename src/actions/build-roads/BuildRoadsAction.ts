@@ -38,14 +38,30 @@ const BuildRoadsAction: CustomActionImplementation = {
    * Check if action requirements are met
    */
   checkRequirements(kingdomData: KingdomData): ActionRequirement {
-    // Check gold cost
-    const goldCost = 2;
-    if ((kingdomData.resources?.gold || 0) < goldCost) {
+    // Check resource costs
+    const woodCost = 1;
+    const stoneCost = 1;
+    const currentWood = kingdomData.resources?.wood || 0;
+    const currentStone = kingdomData.resources?.stone || 0;
+    
+    if (currentWood < woodCost || currentStone < stoneCost) {
+      const requiredResources = new Map<string, number>();
+      const missingResources = new Map<string, number>();
+      
+      if (currentWood < woodCost) {
+        requiredResources.set('wood', woodCost);
+        missingResources.set('wood', woodCost - currentWood);
+      }
+      if (currentStone < stoneCost) {
+        requiredResources.set('stone', stoneCost);
+        missingResources.set('stone', stoneCost - currentStone);
+      }
+      
       return {
         met: false,
-        reason: 'Insufficient gold',
-        requiredResources: new Map([['gold', goldCost]]),
-        missingResources: new Map([['gold', goldCost - (kingdomData.resources?.gold || 0)]])
+        reason: 'Insufficient resources',
+        requiredResources,
+        missingResources
       };
     }
     
@@ -131,9 +147,9 @@ const BuildRoadsAction: CustomActionImplementation = {
         // Update Kingdom Store - Deduct cost and set hasRoad flag on each hex
         const { updateKingdom } = await import('../../stores/KingdomStore');
         await updateKingdom(kingdom => {
-          // Deduct gold cost (2 gold per action, not per segment)
-          const goldCost = 2;
-          kingdom.resources.gold = Math.max(0, (kingdom.resources.gold || 0) - goldCost);
+          // Deduct resource costs (1 wood + 1 stone per action, not per segment)
+          kingdom.resources.wood = Math.max(0, (kingdom.resources.wood || 0) - 1);
+          kingdom.resources.stone = Math.max(0, (kingdom.resources.stone || 0) - 1);
           
           // Mark selected hexes as having roads
           selectedHexes.forEach(hexId => {
@@ -144,11 +160,9 @@ const BuildRoadsAction: CustomActionImplementation = {
           });
         });
         
-        // Clear interactive layers - roads now permanent in 'routes' layer (via reactive overlay)
-        const { ReignMakerMapLayer } = await import('../../services/map/core/ReignMakerMapLayer');
-        const mapLayer = ReignMakerMapLayer.getInstance();
-        mapLayer.clearSelection();
-
+        // ✅ HexSelectorService handles cleanup when user clicks "OK" on completion panel
+        // ✅ Reactive overlays automatically show permanent roads from kingdom data
+        // ✅ No need to manually clear - let the hex selector finish its flow
 
         // Success message
         const message = outcome === 'criticalSuccess'

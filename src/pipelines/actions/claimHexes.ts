@@ -7,6 +7,7 @@
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import { claimHexesExecution } from '../../execution/territory/claimHexes';
+import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const claimHexesPipeline: CheckPipeline = {
   id: 'claim-hexes',
@@ -85,5 +86,32 @@ export const claimHexesPipeline: CheckPipeline = {
 
   preview: {
     providedByInteraction: true  // Map selection shows hexes in real-time
+  },
+
+  // Execute function - explicitly handles ALL outcomes
+  execute: async (ctx) => {
+    switch (ctx.outcome) {
+      case 'criticalSuccess':
+      case 'success':
+        // Explicit hex selection and claiming logic
+        const hexIds = ctx.resolutionData.compoundData?.selectedHexes;
+        if (!hexIds || hexIds.length === 0) {
+          return { success: false, error: 'No hexes selected' };
+        }
+        await claimHexesExecution(hexIds);
+        return { success: true };
+        
+      case 'failure':
+        // Explicitly do nothing for failure (no modifiers defined)
+        return { success: true };
+        
+      case 'criticalFailure':
+        // Explicitly apply +1 unrest modifier from pipeline
+        await applyPipelineModifiers(claimHexesPipeline, ctx.outcome);
+        return { success: true };
+        
+      default:
+        return { success: false, error: `Unexpected outcome: ${ctx.outcome}` };
+    }
   }
 };

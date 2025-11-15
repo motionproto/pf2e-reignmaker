@@ -6,6 +6,7 @@
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
+import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const dealWithUnrestPipeline: CheckPipeline = {
   id: 'deal-with-unrest',
@@ -55,5 +56,13 @@ export const dealWithUnrestPipeline: CheckPipeline = {
         { resource: 'unrest', value: -2 }  // Show typical success case
       ]
     })
+  },
+
+  // Execute function - explicitly handles ALL outcomes
+  execute: async (ctx) => {
+    // All outcomes apply their modifiers directly from pipeline
+    // (criticalFailure has no modifiers, so it's a no-op)
+    await applyPipelineModifiers(dealWithUnrestPipeline, ctx.outcome);
+    return { success: true };
   }
 };

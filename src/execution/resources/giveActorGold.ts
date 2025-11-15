@@ -28,7 +28,7 @@ export async function giveActorGoldExecution(
     kingdom.resources.gold = (kingdom.resources.gold || 0) - transfer.kingdomGoldCost;
   });
 
-  // Add gold to player character
+  // Add gold to player character using PF2e's inventory API
   const game = (globalThis as any).game;
   const character = game.actors.get(transfer.actorId);
 
@@ -36,10 +36,8 @@ export async function giveActorGoldExecution(
     throw new Error(`Character ${transfer.actorId} not found`);
   }
 
-  const currentGold = character.system.currency?.gp || 0;
-  await character.update({
-    "system.currency.gp": currentGold + transfer.goldAmount
-  });
+  // Use PF2e's addCoins method (adds coins as inventory items)
+  await character.inventory.addCoins({ gp: transfer.goldAmount });
 
   logger.info(`✅ [giveActorGoldExecution] Successfully transferred gold (Kingdom: -${transfer.kingdomGoldCost}, Player: +${transfer.goldAmount})`);
 }

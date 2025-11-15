@@ -23,10 +23,10 @@ export async function buildRoadsExecution(hexIds: string[]): Promise<void> {
 
   // Update Kingdom Store - Deduct cost and set hasRoad flag on each hex
   await updateKingdom(kingdom => {
-    // Deduct gold cost (2 gold per action, not per segment)
-    const goldCost = 2;
-    kingdom.resources.gold = Math.max(0, (kingdom.resources.gold || 0) - goldCost);
-    logger.info(`[buildRoadsExecution] Deducted ${goldCost} gold, new balance: ${kingdom.resources.gold}`);
+    // Deduct resource costs (1 wood + 1 stone per action, not per segment)
+    kingdom.resources.wood = Math.max(0, (kingdom.resources.wood || 0) - 1);
+    kingdom.resources.stone = Math.max(0, (kingdom.resources.stone || 0) - 1);
+    logger.info(`[buildRoadsExecution] Deducted 1 wood and 1 stone, new balances: wood=${kingdom.resources.wood}, stone=${kingdom.resources.stone}`);
     
     // Mark selected hexes as having roads
     hexIds.forEach(hexId => {

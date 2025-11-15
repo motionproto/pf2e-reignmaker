@@ -36,21 +36,32 @@
   }
 </script>
 
-{#if hasDiceModifiers && !allResolved}
+{#if hasDiceModifiers}
   <div class="dice-rollers">
     <div class="dice-rollers-header">
       <i class="fas fa-dice-d20"></i>
       <span>Roll for Random Outcomes</span>
     </div>
     {#each diceModifiers as modifier}
-      {#if !resolvedDice.has(modifier.originalIndex)}
-        <button class="dice-roller-button" on:click={() => handleRoll(modifier)}>
+      {@const isResolved = resolvedDice.has(modifier.originalIndex)}
+      {@const resolvedValue = resolvedDice.get(modifier.originalIndex) ?? 0}
+      <button 
+        class="dice-roller-button" 
+        class:resolved={isResolved}
+        on:click={() => handleRoll(modifier)}
+        disabled={isResolved}
+      >
+        {#if isResolved}
+          <i class="fas fa-check-circle"></i>
+          <span class="dice-result">{resolvedValue > 0 ? '+' : ''}{resolvedValue}</span>
+          <span class="dice-resource">{formatStateChangeLabel(modifier.resource)}</span>
+        {:else}
           <i class="fas fa-dice-d20"></i>
           <span class="dice-formula">{getDisplayFormula(modifier)}</span>
           <span class="dice-resource">for {formatStateChangeLabel(modifier.resource)}</span>
           <i class="fas fa-arrow-right"></i>
-        </button>
-      {/if}
+        {/if}
+      </button>
     {/each}
   </div>
 {/if}
@@ -100,15 +111,25 @@
       margin-bottom: 0;
     }
     
-    &:hover {
+    &:hover:not(:disabled) {
       background: var(--hover);
       border-color: var(--border-subtle);
       transform: translateY(-0.125rem);
       box-shadow: 0 0.25rem 0.75rem var(--overlay);
     }
     
-    &:active {
+    &:active:not(:disabled) {
       transform: translateY(0);
+    }
+    
+    &.resolved {
+      background: var(--surface-success-subtle);
+      border-color: var(--border-success-subtle);
+      cursor: default;
+      
+      i.fa-check-circle {
+        color: var(--text-success);
+      }
     }
     
     i.fa-dice-d20 {
@@ -123,6 +144,16 @@
       color: var(--text-primary);
       padding: var(--space-2) var(--space-8);
       background: var(--hover);
+      border-radius: var(--radius-xs);
+    }
+    
+    .dice-result {
+      font-family: var(--font-code, monospace);
+      font-size: var(--font-lg);
+      font-weight: var(--font-weight-bold);
+      color: var(--text-success);
+      padding: var(--space-2) var(--space-8);
+      background: var(--surface-success-subtle);
       border-radius: var(--radius-xs);
     }
     

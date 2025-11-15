@@ -8,6 +8,7 @@
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
+import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const purchaseResourcesPipeline: CheckPipeline = {
   id: 'purchase-resources',
@@ -62,38 +63,52 @@ export const purchaseResourcesPipeline: CheckPipeline = {
     }
   },
 
-  // Execute function: Apply resource changes from custom component
+  // Execute function - explicitly handles ALL outcomes
   execute: async (ctx) => {
-    const { selectedResource, selectedAmount, goldCost } = ctx.resolutionData.customComponentData || {};
-    
-    if (!selectedResource || !selectedAmount || goldCost === undefined) {
-      return {
-        success: false,
-        error: 'No resource selection was made'
-      };
-    }
+    switch (ctx.outcome) {
+      case 'criticalSuccess':
+      case 'success': {
+        // Apply resource changes for successful purchases
+        const { selectedResource, selectedAmount, goldCost } = ctx.resolutionData.customComponentData || {};
+        
+        if (!selectedResource || !selectedAmount || goldCost === undefined) {
+          return {
+            success: false,
+            error: 'No resource selection was made'
+          };
+        }
 
-    // Import helper to apply resource changes
-    const { applyResourceChanges } = await import('../../actions/shared/InlineActionHelpers');
-    
-    // Apply resource changes
-    const result = await applyResourceChanges([
-      { resource: 'gold', amount: -goldCost },
-      { resource: selectedResource, amount: selectedAmount }
-    ], 'purchase-resources');
-    
-    if (!result.success) {
-      return {
-        success: false,
-        error: result.error || 'Failed to purchase resources'
-      };
-    }
+        // Import helper to apply resource changes
+        const { applyResourceChanges } = await import('../../actions/shared/InlineActionHelpers');
+        
+        // Apply resource changes
+        const result = await applyResourceChanges([
+          { resource: 'gold', amount: -goldCost },
+          { resource: selectedResource, amount: selectedAmount }
+        ], 'purchase-resources');
+        
+        if (!result.success) {
+          return {
+            success: false,
+            error: result.error || 'Failed to purchase resources'
+          };
+        }
 
-    // Build success message
-    const resourceName = selectedResource.charAt(0).toUpperCase() + selectedResource.slice(1);
-    return {
-      success: true,
-      message: `Purchased ${selectedAmount} ${resourceName} for ${goldCost} gold!`
-    };
+        // Build success message
+        const resourceName = selectedResource.charAt(0).toUpperCase() + selectedResource.slice(1);
+        return {
+          success: true,
+          message: `Purchased ${selectedAmount} ${resourceName} for ${goldCost} gold!`
+        };
+      }
+        
+      case 'failure':
+      case 'criticalFailure':
+        // Explicitly do nothing on failure (no modifiers defined)
+        return { success: true };
+        
+      default:
+        return { success: false, error: `Unexpected outcome: ${ctx.outcome}` };
+    }
   }
 };

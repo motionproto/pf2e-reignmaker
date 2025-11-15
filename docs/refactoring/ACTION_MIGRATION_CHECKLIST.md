@@ -1,6 +1,6 @@
 # Action Migration Checklist
 
-**Status:** 8/26 actions complete (31%)
+**Status:** 10/26 actions complete (38%)
 
 **Last Updated:** 2025-11-15
 
@@ -18,11 +18,11 @@
 6. [x] build-roads (has hex selection) ✅ COMPLETE
 7. [x] fortify-hex (has hex selection) ✅ COMPLETE
 8. [x] create-worksite (has hex selection) ✅ COMPLETE
-9. [ ] send-scouts (has dice)
+9. [x] send-scouts (has hex selection + World Explorer integration) ✅ COMPLETE
 
 ### Week 6: Pre-Roll Dialog Actions
 
-10. [ ] collect-stipend (settlement selection)
+10. [x] collect-stipend (settlement selection) ✅ COMPLETE
 11. [ ] execute-or-pardon-prisoners (settlement selection)
 12. [ ] establish-diplomatic-relations (faction selection)
 13. [ ] request-economic-aid (faction selection)
