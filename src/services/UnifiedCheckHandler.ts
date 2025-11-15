@@ -21,7 +21,7 @@ import { executeRoll } from '../controllers/shared/ExecutionHelpers';
 import { hexSelectorService } from './hex-selector';
 import { updateKingdom, getKingdomActor } from '../stores/KingdomStore';
 import { CheckInstanceService } from './CheckInstanceService';
-import { showEntitySelectionDialog, showTextInputDialog, showConfirmationDialog } from './InteractionDialogs';
+import { showEntitySelectionDialog, showTextInputDialog, showConfirmationDialog, showChoiceDialog } from './InteractionDialogs';
 
 /**
  * Main unified check handler service
@@ -138,6 +138,9 @@ export class UnifiedCheckHandler {
       case 'text-input':
         return await this.executeTextInput(interaction);
 
+      case 'choice':
+        return await this.executeChoice(interaction);
+
       default:
         console.warn(`[UnifiedCheckHandler] Unknown interaction type: ${interaction.type}`);
         return null;
@@ -237,6 +240,26 @@ export class UnifiedCheckHandler {
 
     console.log(`✅ [UnifiedCheckHandler] Text input: ${text}`);
     return text;
+  }
+
+  /**
+   * Execute choice interaction
+   */
+  private async executeChoice(interaction: any): Promise<string | null> {
+    console.log(`🎯 [UnifiedCheckHandler] Choice: ${interaction.label}`);
+
+    const choice = await showChoiceDialog(
+      interaction.label || 'Choose Option',
+      interaction.options || []
+    );
+
+    if (!choice) {
+      console.log(`⏭️ [UnifiedCheckHandler] Choice cancelled`);
+      return null;
+    }
+
+    console.log(`✅ [UnifiedCheckHandler] Choice selected: ${choice}`);
+    return choice;
   }
 
   /**
@@ -381,14 +404,16 @@ export class UnifiedCheckHandler {
       }
 
       // Store result in resolution data based on interaction type
-      if (interaction.id && result !== null && result !== undefined) {
+      if (result !== null && result !== undefined) {
+        const storeKey = interaction.storeAs || interaction.id;
+        
         switch (interaction.type) {
           case 'map-selection':
             // Map selection returns array of hex IDs
             if (!resolutionData.compoundData) {
               resolutionData.compoundData = {};
             }
-            resolutionData.compoundData[interaction.id] = result;
+            resolutionData.compoundData[storeKey] = result;
             break;
 
           case 'entity-selection':
@@ -396,8 +421,8 @@ export class UnifiedCheckHandler {
             if (!resolutionData.customComponentData) {
               resolutionData.customComponentData = {};
             }
-            resolutionData.customComponentData[interaction.id] = result.id;
-            resolutionData.customComponentData[`${interaction.id}Name`] = result.name;
+            resolutionData.customComponentData[storeKey] = result.id;
+            resolutionData.customComponentData[`${storeKey}Name`] = result.name;
             break;
 
           case 'text-input':
@@ -405,7 +430,15 @@ export class UnifiedCheckHandler {
             if (!resolutionData.textInputs) {
               resolutionData.textInputs = {};
             }
-            resolutionData.textInputs[interaction.id] = result;
+            resolutionData.textInputs[storeKey] = result;
+            break;
+
+          case 'choice':
+            // Choice returns string (selected option)
+            if (!resolutionData.choices) {
+              resolutionData.choices = {};
+            }
+            resolutionData.choices[storeKey] = result;
             break;
 
           default:
@@ -413,7 +446,7 @@ export class UnifiedCheckHandler {
             if (!resolutionData.customComponentData) {
               resolutionData.customComponentData = {};
             }
-            resolutionData.customComponentData[interaction.id] = result;
+            resolutionData.customComponentData[storeKey] = result;
         }
       }
     }

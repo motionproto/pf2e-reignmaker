@@ -44,17 +44,14 @@ export const harvestResourcesPipeline: CheckPipeline = {
     }
   },
   
-  // NEW: Post-roll interaction (inline choice widget before Apply)
-  postRollInteractions: [
+  // Post-apply: Choose resource type based on outcome (AFTER Apply button clicked)
+  postApplyInteractions: [
     {
-      type: 'choice-buttons',
+      type: 'choice',
+      id: 'resourceChoice',
       condition: (ctx: any) => ctx.outcome === 'criticalSuccess' || ctx.outcome === 'success',
-      options: [
-        { label: 'Food', value: 'food' },
-        { label: 'Lumber', value: 'lumber' },
-        { label: 'Stone', value: 'stone' },
-        { label: 'Ore', value: 'ore' }
-      ],
+      label: 'Choose Resource Type',
+      options: ['food', 'lumber', 'stone', 'ore'],
       storeAs: 'chosenResource'
     }
   ],
@@ -62,16 +59,29 @@ export const harvestResourcesPipeline: CheckPipeline = {
   preview: {
     calculate: (ctx: any) => {
       const changes = [];
+      const specialEffects = [];
       
       if (ctx.outcome === 'criticalFailure') {
         changes.push({ resource: 'gold', value: -1 });
-      } else if (ctx.outcome === 'criticalSuccess' && ctx.metadata.chosenResource) {
-        changes.push({ resource: ctx.metadata.chosenResource, value: 2 });
-      } else if (ctx.outcome === 'success' && ctx.metadata.chosenResource) {
-        changes.push({ resource: ctx.metadata.chosenResource, value: 1 });
+      } else if (ctx.outcome === 'criticalSuccess' && ctx.resolutionData?.choices?.chosenResource) {
+        changes.push({ resource: ctx.resolutionData.choices.chosenResource, value: 2 });
+      } else if (ctx.outcome === 'success' && ctx.resolutionData?.choices?.chosenResource) {
+        changes.push({ resource: ctx.resolutionData.choices.chosenResource, value: 1 });
+      } else if (ctx.outcome === 'criticalSuccess' || ctx.outcome === 'success') {
+        // No resource chosen yet - will be chosen in post-apply interaction
+        specialEffects.push({
+          type: 'status',
+          message: 'Choose resource type in next step',
+          variant: 'neutral'
+        });
       }
       
-      return { resources: changes };
+      return { 
+        resources: changes,
+        entities: [],
+        specialEffects,
+        warnings: []
+      };
     }
   },
 
@@ -79,10 +89,33 @@ export const harvestResourcesPipeline: CheckPipeline = {
   execute: async (ctx) => {
     switch (ctx.outcome) {
       case 'criticalSuccess':
-      case 'success':
-        // Resource gain handled by post-roll interaction choice
-        // No modifiers defined in pipeline for these outcomes
-        return { success: true };
+      case 'success': {
+        // Get chosen resource from resolution data (from post-roll interaction)
+        const chosenResource = ctx.resolutionData?.choices?.chosenResource;
+        
+        if (!chosenResource) {
+          return { success: false, error: 'No resource chosen' };
+        }
+        
+        // Determine amount based on outcome
+        const amount = ctx.outcome === 'criticalSuccess' ? 2 : 1;
+        
+        // Apply resource gain using GameCommandsService
+        const { createGameCommandsService } = await import('../../services/GameCommandsService');
+        const gameCommandsService = await createGameCommandsService();
+        
+        const result = await gameCommandsService.applyOutcome({
+          type: 'action',
+          sourceId: harvestResourcesPipeline.id,
+          sourceName: harvestResourcesPipeline.name,
+          outcome: ctx.outcome,
+          modifiers: [
+            { type: 'static', resource: chosenResource, value: amount, duration: 'immediate' }
+          ]
+        });
+        
+        return result;
+      }
         
       case 'failure':
         // Explicitly do nothing (no modifiers defined)

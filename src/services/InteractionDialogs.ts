@@ -29,7 +29,7 @@ export async function showEntitySelectionDialog(
 
   // Get entities based on type
   let entities: any[] = [];
-  let entityLabel = entityType;
+  let entityLabel: string = entityType;
 
   switch (entityType) {
     case 'settlement':
@@ -134,6 +134,58 @@ export async function showTextInputDialog(
           callback: (html: any) => {
             const input = html.find('#text-input')[0] as HTMLInputElement;
             resolve(input.value || null);
+          }
+        },
+        cancel: {
+          icon: '<i class="fas fa-times"></i>',
+          label: 'Cancel',
+          callback: () => resolve(null)
+        }
+      },
+      default: 'confirm',
+      close: () => resolve(null)
+    }).render(true);
+  });
+}
+
+/**
+ * Show choice dialog
+ *
+ * @param label - Dialog label
+ * @param options - Array of choice options
+ * @returns Selected option or null if cancelled
+ */
+export async function showChoiceDialog(
+  label: string,
+  options: string[]
+): Promise<string | null> {
+  const optionsHtml = options
+    .map(opt => `<option value="${opt}">${opt.charAt(0).toUpperCase() + opt.slice(1)}</option>`)
+    .join('');
+
+  const content = `
+    <div class="form-group">
+      <label>${label}</label>
+      <select id="choice-select" style="width: 100%">
+        <option value="">-- Select Option --</option>
+        ${optionsHtml}
+      </select>
+    </div>
+  `;
+
+  return new Promise((resolve) => {
+    const game = (globalThis as any).game;
+    new game.Dialog({
+      title: label,
+      content,
+      buttons: {
+        confirm: {
+          icon: '<i class="fas fa-check"></i>',
+          label: 'Confirm',
+          callback: (html: any) => {
+            const select = html.find('#choice-select')[0] as HTMLSelectElement;
+            const selectedValue = select.value;
+            resolve(selectedValue || null);
           }
         },
         cancel: {
