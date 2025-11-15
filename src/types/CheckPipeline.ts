@@ -164,6 +164,17 @@ export interface CheckPipeline {
   // Preview
   preview: PreviewConfig;
 
+  // Execution (optional custom execution logic)
+  /**
+   * Execute function - Custom execution logic for the check
+   * Called by UnifiedCheckHandler after Apply button is clicked
+   * Use for: Custom resource changes, complex state updates
+   * 
+   * @param ctx - Check context with kingdom, metadata, resolutionData
+   * @returns Execution result with success/error/message
+   */
+  execute?: (ctx: any) => Promise<{ success: boolean; error?: string; message?: string }>;
+
   // Game commands (actions only)
   gameCommands?: GameCommand[];
 

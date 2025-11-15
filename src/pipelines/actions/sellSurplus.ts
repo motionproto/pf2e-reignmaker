@@ -54,17 +54,47 @@ export const sellSurplusPipeline: CheckPipeline = {
 
   preview: {
     calculate: (ctx) => {
-      // Commerce-based calculation (handled by commerce service)
-      // Preview shows resource loss and gold gain based on commerce tier
+      // Preview is provided by custom component
       return {
         resources: [],
-        specialEffects: [{
-          type: 'status',
-          message: 'Commerce calculation required',
-          variant: 'neutral'
-        }],
+        specialEffects: [],
         warnings: []
       };
     }
+  },
+
+  // Execute function: Apply resource changes from custom component
+  execute: async (ctx) => {
+    const { selectedResource, selectedAmount, goldGain } = ctx.resolutionData.customComponentData || {};
+    
+    if (!selectedResource || !selectedAmount || goldGain === undefined) {
+      return {
+        success: false,
+        error: 'No resource selection was made'
+      };
+    }
+
+    // Import helper to apply resource changes
+    const { applyResourceChanges } = await import('../../actions/shared/InlineActionHelpers');
+    
+    // Apply resource changes (lose resource, gain gold)
+    const result = await applyResourceChanges([
+      { resource: selectedResource, amount: -selectedAmount },
+      { resource: 'gold', amount: goldGain }
+    ], 'sell-surplus');
+    
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error || 'Failed to sell resources'
+      };
+    }
+
+    // Build success message
+    const resourceName = selectedResource.charAt(0).toUpperCase() + selectedResource.slice(1);
+    return {
+      success: true,
+      message: `Sold ${selectedAmount} ${resourceName} for ${goldGain} gold!`
+    };
   }
 };

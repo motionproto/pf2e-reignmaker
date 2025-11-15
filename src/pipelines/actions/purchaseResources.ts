@@ -53,16 +53,47 @@ export const purchaseResourcesPipeline: CheckPipeline = {
 
   preview: {
     calculate: (ctx) => {
-      // Commerce-based calculation (handled by commerce service)
+      // Preview is provided by custom component
       return {
         resources: [],
-        specialEffects: [{
-          type: 'status',
-          message: 'Commerce calculation required',
-          variant: 'neutral'
-        }],
+        specialEffects: [],
         warnings: []
       };
     }
+  },
+
+  // Execute function: Apply resource changes from custom component
+  execute: async (ctx) => {
+    const { selectedResource, selectedAmount, goldCost } = ctx.resolutionData.customComponentData || {};
+    
+    if (!selectedResource || !selectedAmount || goldCost === undefined) {
+      return {
+        success: false,
+        error: 'No resource selection was made'
+      };
+    }
+
+    // Import helper to apply resource changes
+    const { applyResourceChanges } = await import('../../actions/shared/InlineActionHelpers');
+    
+    // Apply resource changes
+    const result = await applyResourceChanges([
+      { resource: 'gold', amount: -goldCost },
+      { resource: selectedResource, amount: selectedAmount }
+    ], 'purchase-resources');
+    
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error || 'Failed to purchase resources'
+      };
+    }
+
+    // Build success message
+    const resourceName = selectedResource.charAt(0).toUpperCase() + selectedResource.slice(1);
+    return {
+      success: true,
+      message: `Purchased ${selectedAmount} ${resourceName} for ${goldCost} gold!`
+    };
   }
 };

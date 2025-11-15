@@ -45,7 +45,9 @@
     "deploy:dev": "npm run dev:setup",
     "package": "node buildscripts/package.js",
     "preview": "vite preview",
-    "proxy": "npm run dev"
+    "proxy": "npm run dev",
+    "check-migration": "node buildscripts/check-action-migration.cjs",
+    "check-migration:verbose": "node buildscripts/check-action-migration.cjs --verbose"
   },
   "repository": {
     "type": "git",

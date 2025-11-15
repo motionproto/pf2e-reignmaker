@@ -40,7 +40,7 @@
   import { createActionCheckInstance, updateCheckInstanceOutcome, type PendingActionsState } from '../../../controllers/actions/CheckInstanceHelpers';
 
   // Migrated actions (temporary tracking during pipeline migration)
-  const MIGRATED_ACTIONS = new Set(['claim-hexes', 'deal-with-unrest', 'sell-surplus']);
+  const MIGRATED_ACTIONS = new Set(['claim-hexes', 'deal-with-unrest', 'sell-surplus', 'purchase-resources', 'harvest-resources', 'build-roads']);
 
   // Initialize controller and services
   let controller: any = null;
@@ -266,6 +266,39 @@
       return;
     }
     console.log('🎬 [ActionsPhase] Instance has outcome:', instance.appliedOutcome.outcome);
+
+    // ✅ CHECK FOR POST-APPLY INTERACTIONS (migrated actions only)
+    if (MIGRATED_ACTIONS.has(actionId)) {
+      console.log('🎯 [ActionsPhase] Checking for post-apply interactions for migrated action');
+      const { unifiedCheckHandler } = await import('../../../services/UnifiedCheckHandler');
+      
+      try {
+        // Execute post-apply interactions (e.g., hex selection for claim-hexes)
+        const postApplyData = await unifiedCheckHandler.executePostApplyInteractions(
+          instanceId,
+          instance.appliedOutcome.outcome
+        );
+        
+        console.log('🎯 [ActionsPhase] Post-apply interactions returned:', postApplyData);
+        
+        // Merge post-apply data into resolution data
+        if (postApplyData.compoundData) {
+          resolutionData.compoundData = {
+            ...resolutionData.compoundData,
+            ...postApplyData.compoundData
+          };
+        }
+        if (postApplyData.customComponentData) {
+          resolutionData.customComponentData = {
+            ...resolutionData.customComponentData,
+            ...postApplyData.customComponentData
+          };
+        }
+      } catch (error) {
+        console.error('❌ [ActionsPhase] Post-apply interactions failed:', error);
+        // Don't return - continue with execution even if interaction fails
+      }
+    }
 
     // EXECUTE PENDING COMMITS (prepare/commit pattern)
     // This executes game commands like giveActorGold that were prepared earlier

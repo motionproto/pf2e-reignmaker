@@ -6,155 +6,101 @@
 
 ---
 
-## Overview
+## Architecture Overview
 
-This guide details the migration from three separate check systems (Actions, Events, Incidents) to a single unified pipeline. The migration is structured in 6 phases over 12 weeks.
+**Current:** Three separate systems (Actions, Events, Incidents) with duplicated check resolution logic.
 
-**Architecture Reference:** `docs/UNIFIED_CHECK_ARCHITECTURE.md`
+**Target:** Single unified pipeline where:
+- **CheckPipeline** = Config object defining: skills, outcomes, interactions, preview
+- **UnifiedCheckHandler** = Executes pipelines, manages check instances
+- **Preview** = Calculated before Apply, shows resource/entity changes
+- **Interactions** = Pre-roll (selection), post-roll (choices), post-apply (map)
 
----
+**Key Change:** Move business logic from scattered custom files → Centralized pipeline configs
 
-## Migration Timeline
-
-```
-Weeks 1-2:  Phase 1 - Foundation (UnifiedCheckHandler core)
-Weeks 3-4:  Phase 2 - Game Commands (prepare/commit pattern)
-Weeks 5-8:  Phase 3 - Actions (26 actions to pipeline configs)
-Weeks 9-10: Phase 4 - Events (37 events to pipeline configs)
-Week 11:    Phase 5 - Incidents (30 incidents to pipeline configs)
-Week 12:    Phase 6 - Cleanup (remove old code, update docs)
-
-Total: 12 weeks
-```
+**Full Architecture:** See `docs/UNIFIED_CHECK_ARCHITECTURE.md`
 
 ---
 
-## Why This Order?
+## Implementation Order
 
-### Game Commands Must Come First
-
-**Dependency Chain:**
-```
-Actions/Events/Incidents
-    ↓ (depend on)
-Game Commands
-    ↓ (depend on)
-UnifiedCheckHandler
-```
-
-**Critical Reasons:**
-
-1. **Preview Support:** All 93 checks need preview, which requires game commands using prepare/commit pattern
-2. **Actions Dependency:** 15/26 actions use game commands—can't migrate actions until commands support preview
-3. **Events/Incidents:** Special resources (damage_structure, etc.) become game commands
-4. **Foundation:** Game commands are the integration layer between checks and state changes
-
-**Wrong Order (Actions First):**
-```
-Week 1-4: Actions ❌
-  Problem: Can't show full preview without prepare/commit commands
-  Result: Actions show partial preview, need rework later
-```
-
-**Correct Order (Game Commands First):**
-```
-Week 3-4: Game Commands ✅
-  Result: Preview infrastructure ready
-Week 5-8: Actions ✅
-  Result: Full preview support from day 1
-```
+1. **Core Handler Structure** - UnifiedCheckHandler skeleton, type definitions
+2. **Preview Infrastructure** - Preview calculation and formatting
+3. **Game Commands Refactor** - Extract execution functions, eliminate globals
+4. **Simple Actions** - Resource-only actions (deal-with-unrest, etc.)
+5. **Pre-Roll Dialog Actions** - Entity selection actions (collect-stipend, etc.)
+6. **Game Command Actions** - Actions with complex execution (recruit-unit, etc.)
+7. **Custom Resolution Actions** - Special logic actions (arrest-dissidents, etc.)
+8. **Events** - Convert 37 events to pipeline configs
+9. **Incidents** - Convert 30 incidents to pipeline configs
+10. **Cleanup** - Remove old code, archive docs
 
 ---
 
-## Important: Three-Phase Interaction System
+## Pipeline Flow (Complete Check Resolution)
 
-**As of 2025-11-14:** The unified pipeline now supports **three optional interaction phases** instead of two.
+```
+1. Check Triggered
+   └─> CheckPipeline config loaded by UnifiedCheckHandler
 
-### What Changed
+2. Pre-Roll Interactions (optional)
+   └─> Entity selection, configuration dialogs
+   └─> Results stored in metadata
 
-**Old (Two Phases):**
-```typescript
-preRollInteractions?: Interaction[];   // Before roll
-postRollInteractions?: Interaction[];  // After roll (but actually after Apply!)
+3. Skill Check Execution
+   └─> Roll against DC + modifiers
+   └─> Determine outcome (critical success/success/failure/critical failure)
+
+4. Post-Roll Interactions (optional)
+   └─> Choice widgets (inline in preview)
+   └─> Dice rolls based on outcome
+   └─> Results affect preview calculation
+
+5. Preview Calculation
+   └─> pipeline.preview.calculate(context)
+   └─> Returns: resources, entities, specialEffects
+   └─> Formatted into preview badges
+   └─> NO state changes
+
+6. User Review
+   └─> User sees outcome + preview
+   └─> Clicks "Apply" to commit
+   └─> NO state changes (UI only)
+
+7. Post-Apply Interactions (optional)
+   └─> Map selections (full-screen)
+   └─> Complex workflows requiring commitment first
+   └─> MAY update kingdom state (e.g., claim-hexes updates hex ownership)
+
+8. Final Execution (if not handled by step 7)
+   └─> pipeline.execute(context) OR game commands
+   └─> Applies remaining state changes to kingdom
+
+9. Check Instance Updated
+   └─> Status set to 'resolved'
+   └─> History recorded
 ```
 
-**New (Three Phases):**
-```typescript
-preRollInteractions?: Interaction[];      // Before roll
-postRollInteractions?: Interaction[];     // After roll, inline in preview (NEW!)
-postApplyInteractions?: Interaction[];    // After Apply button (renamed)
-```
+**Key:** Steps 2, 4, 7 are the three interaction phases. All are optional.
 
-### Why Three Phases?
-
-**The issue:** The old `postRollInteractions` actually executed AFTER the Apply button was clicked, not immediately after the roll. This was misleading and didn't support inline choice widgets.
-
-**The solution:** Split into two separate phases:
-1. **Post-roll** (NEW) - Inline widgets shown BEFORE Apply button
-   - Choice widgets: "Choose +2 Gold OR +1 Fame"
-   - Dice rollers: "Roll 1d4 for imprisoned"
-   - Displayed inline in outcome preview
-   
-2. **Post-apply** (renamed) - Full-screen overlays shown AFTER Apply button
-   - Map selections: "Select hexes to claim"
-   - Entity browsers: "Choose army to outfit"
-   - Executes after user commits to outcome
-
-### Migration Impact
-
-**For existing pipelines:**
-- `postRollInteractions` for map selections → rename to `postApplyInteractions`
-- Current behavior unchanged, just naming clarity
-
-**Example - claim-hexes:**
-```typescript
-// Before
-postRollInteractions: [{ type: 'map-selection', ... }]
-
-// After (rename only)
-postApplyInteractions: [{ type: 'map-selection', ... }]
-```
-
-### When to Use Each Phase
-
-| Phase | Timing | Display | Use For |
-|-------|--------|---------|---------|
-| **Pre-roll** | Before skill check | Modal/dialog | Entity selection, configuration |
-| **Post-roll** | After outcome, before Apply | Inline widgets | Choices, dice based on outcome |
-| **Post-apply** | After Apply clicked | Full-screen overlay | Map selections, complex workflows |
-
-**All three are optional** - most actions only need one or two phases.
+**Note:** Steps 7 and 8 may both update kingdom state. Some actions complete entirely in step 7 (map interactions), others use step 8 for final execution.
 
 ---
 
-## Phase 0: Prerequisites
+## Prerequisites
 
-### Before Starting Any Migration
-
-**Required:**
-- [x] Architecture document reviewed and approved
-- [x] Team buy-in on 12-week timeline
-- [x] Staging/testing environment ready
-- [x] Backup plan established
-
-**Recommended:**
-- [ ] Create feature branch: `feature/unified-check-system`
-- [ ] Set up automated testing for check resolution
+- [x] Architecture doc reviewed
+- [x] Staging environment ready
+- [ ] Feature branch: `feature/unified-check-system`
 - [ ] Document current behavior for regression testing
-- [ ] Communicate plan to users/stakeholders
 
-**Safety Nets:**
-- All changes behind feature flag (optional toggle)
-- Old code remains until Phase 6 (parallel systems)
-- Rollback possible at any phase boundary
+**Safety:** Changes behind feature flag, old code remains until Phase 6
 
 ---
 
-## Phase 1: Foundation (Weeks 1-2)
+## 1. Core Handler Structure
 
-### Goal: Build UnifiedCheckHandler core without breaking existing systems
-
-### Week 1: Core Handler Structure
+**Goal:** Build UnifiedCheckHandler skeleton without breaking existing systems
 
 **Create:**
 - `src/services/UnifiedCheckHandler.ts` - Main handler class
@@ -193,7 +139,7 @@ export class UnifiedCheckHandler {
 - [ ] Retrieval works
 - [ ] No impact on existing systems
 
-### Week 2: Preview Infrastructure
+## 2. Preview Infrastructure
 
 **Implement:**
 ```typescript
@@ -237,9 +183,9 @@ formatPreview(preview: PreviewData): SpecialEffect[] {
 
 ---
 
-## Phase 2: Game Commands (Weeks 3-4)
+## 3. Game Commands Refactor
 
-### Goal: Extract execution logic from game commands, move preview/pre-roll logic to pipeline
+**Goal:** Extract execution logic, move preview/pre-roll to pipelines
 
 **Why Critical:** Actions need clean execution functions; preview must move to pipeline level.
 
@@ -253,278 +199,71 @@ formatPreview(preview: PreviewData): SpecialEffect[] {
 
 **This mess needs cleaning up.**
 
-### Week 3: Extract Core Execution Logic
+### Refactor Pattern
 
-**For prepare/commit commands:**
+**Transform:** `prepare()/commit()` → Simple execution functions  
+**Eliminate:** Global variables → Use `CheckContext`  
+**Move:** Preview logic → Pipeline configs
 
-**Example - recruitArmy:**
+**Commands to refactor (25+):** Territory, Settlement, Diplomatic, Unrest, Army commands
 
-**Current (prepare/commit):**
+**Example transformation:**
 ```typescript
-// GameCommandsResolver.ts
+// OLD: Mixed concerns
 async recruitArmy(level): Promise<PreparedCommand> {
-  // PREPARE: Mixed concerns (pre-roll + preview)
-  const cost = calculateRecruitmentCost(level);
-  const actor = getCurrentUserActor();
-  
   return {
-    specialEffect: { message: `Will recruit Level ${level} army...` },
-    commit: async () => {
-      // COMMIT: Actual execution logic
-      await updateKingdom(k => {
-        k.armies.push({ level, stationed: settlementId });
-        k.gold -= cost;
-      });
-    }
+    specialEffect: { message: `Will recruit...` },
+    commit: async () => { /* execution */ }
   };
 }
-```
 
-**Extract to simple execution function:**
-```typescript
-// execution/recruitArmy.ts
-async function recruitArmyExecution(
-  kingdom: KingdomData,
-  armyData: { name: string; level: number; stationedAt: string }
-): Promise<void> {
-  // Pure execution - no preview, no pre-roll
+// NEW: Pure execution
+async function recruitArmyExecution(kingdom, armyData): Promise<void> {
   await updateKingdom(k => {
-    k.armies.push({
-      id: generateId(),
-      name: armyData.name,
-      level: armyData.level,
-      stationed: armyData.stationedAt
-    });
-    k.gold -= calculateRecruitmentCost(armyData.level);
+    k.armies.push({ ...armyData });
+    k.gold -= calculateCost(armyData.level);
   });
 }
-```
 
-### Week 4: Refactor All Commands
-
-**Commands to refactor (25+):**
-
-**Territory:** claimHexes, buildRoads, fortifyHex, removeBorderHexes
-**Settlement:** foundSettlement, buildStructure, repairStructure, upgradeSettlement, damageStructure, destroyStructure
-**Diplomatic:** establishDiplomaticRelations, adjustFactionAttitude, requestEconomicAid, requestMilitaryAid
-**Unrest:** arrestDissidents, reduceImprisoned, executeOrPardonPrisoners
-**Army:** deployArmy, recoverArmy, outfitArmy
-
-**Pattern:**
-```typescript
-// Simple execution function (no prepare/commit)
-async function claimHexesExecution(
-  kingdom: KingdomData,
-  hexIds: string[]
-): Promise<void> {
-  await updateKingdom(k => {
-    hexIds.forEach(hexId => {
-      const hex = k.hexes.find(h => h.id === hexId);
-      if (hex) hex.claimedBy = 1;
-    });
-  });
-}
-```
-
-**Preview moves to pipeline:**
-```typescript
-// In action pipeline config
+// Preview moves to pipeline
 {
-  preRollInteractions: [{
-    type: 'map-selection',
-    mode: 'hex-selection',
-    count: 3,
-    validation: (hex) => isAdjacentToClaimed(hex)
-  }],
-  preview: {
-    calculate: (ctx) => ({
-      specialEffects: [{
-        type: 'status',
-        message: `Will claim ${ctx.metadata.selectedHexes.length} hexes`,
-        variant: 'positive'
-      }]
-    }),
-    providedByInteraction: true  // Map shows preview visually
-  },
-  execute: async (ctx) => {
-    await claimHexesExecution(ctx.kingdom, ctx.metadata.selectedHexes);
-  }
+  execute: async (ctx) => recruitArmyExecution(ctx.kingdom, ctx.metadata)
 }
 ```
-
-### Eliminate Global Variables
-
-**Current problem:**
-```typescript
-// In action handler
-(globalThis as any).__pendingStipendSettlement = settlementId;
-
-// In game command
-const settlementId = (globalThis as any).__pendingStipendSettlement;
-```
-
-**New approach - use CheckContext:**
-```typescript
-// In pre-roll interaction
-ctx.metadata.settlementId = settlementId;
-
-// In execution function
-async function giveActorGoldExecution(
-  kingdom: KingdomData,
-  actorId: string,
-  gold: number
-): Promise<void> {
-  await updateKingdom(k => k.gold -= gold);
-  const actor = game.actors.get(actorId);
-  await actor.update({ "system.currency.gp": actor.system.currency.gp + gold });
-}
-
-// In pipeline
-execute: async (ctx) => {
-  const gold = calculateStipend(findSettlement(ctx.kingdom, ctx.metadata.settlementId));
-  await giveActorGoldExecution(ctx.kingdom, ctx.metadata.actorId, gold);
-}
-```
-
-### Special Resources → Regular Game Commands
-
-**Events/incidents currently use "special resources":**
-- `damage_structure`
-- `destroy_structure`
-- `imprisoned_unrest`
-
-**These become simple execution functions:**
-
-```typescript
-// execution/damageStructure.ts
-async function damageStructureExecution(
-  kingdom: KingdomData,
-  structureId: string
-): Promise<void> {
-  await updateKingdom(k => {
-    const structure = findStructure(k, structureId);
-    if (structure) structure.damaged = true;
-  });
-}
-
-// In event pipeline config
-{
-  preview: {
-    calculate: (ctx) => {
-      const structure = selectStructureTarget('category-filtered', ctx.kingdom);
-      return {
-        entities: [{
-          type: 'structure',
-          action: 'modify',
-          name: structure.name,
-          details: 'Will be damaged'
-        }]
-      };
-    }
-  },
-  execute: async (ctx) => {
-    const structure = selectStructureTarget('category-filtered', ctx.kingdom);
-    await damageStructureExecution(ctx.kingdom, structure.id);
-  }
-}
-```
-
-### Testing Checklist
-
-**For each refactored command:**
-- [ ] Execution function takes structured data (no context mixing)
-- [ ] No global variables used
-- [ ] Preview logic moved to pipeline
-- [ ] Pre-roll interactions moved to pipeline
-- [ ] State changes identical to old version
-- [ ] Testable in isolation
-
-**Integration:**
-- [ ] All 25+ commands are simple execution functions
-- [ ] No prepare/commit pattern remains
-- [ ] Preview logic in action pipeline configs
-- [ ] Special resources eliminated
-- [ ] Global variables eliminated
 
 **Deliverables:**
-- ~25 simple execution functions (no prepare/commit)
-- Preview logic moved to pipeline level
-- No global variables
-- Clean separation of concerns
-- Zero functional regressions
+- ~25 execution functions (no prepare/commit, no globals)
+- Preview logic in pipelines
+- State changes identical to old version
 
 ---
 
-## Phase 3: Actions (Weeks 5-8)
+## 4-7. Actions (26 total)
 
-### Goal: Convert 26 actions to pipeline configs
+**Prerequisites:** Steps 1-3 complete
 
-**Prerequisites:**
-- Phase 1 complete (UnifiedCheckHandler exists)
-- Phase 2 complete (game commands support preview)
+**See:** `ACTION_MIGRATION_CHECKLIST.md` for live progress (currently 4/26 complete)
 
-### Complete Action Migration Checklist
+### Action Migration Checklist
 
-**Recommended Priority Order:**
+**See:** `docs/refactoring/ACTION_MIGRATION_CHECKLIST.md` for the complete, up-to-date checklist.
 
-**Week 5A: Simple Actions (No Game Commands) - START HERE**
-- [x] claim-hexes (hex selection) ✅ COMPLETE
-- [ ] deal-with-unrest (pure resource changes)
-- [ ] sell-surplus (simple, no custom logic)
-- [ ] purchase-resources (simple, no custom logic)
-- [ ] harvest-resources (has choice-buttons)
-- [ ] build-roads (has hex selection)
-- [ ] fortify-hex (has hex selection)
-- [ ] create-worksite (has hex selection)
-- [ ] send-scouts (has dice)
+**Current Status:** 4/26 actions complete (15%)
 
-**Week 6: Pre-Roll Dialog Actions**
-- [ ] collect-stipend (settlement selection)
-- [ ] execute-or-pardon-prisoners (settlement selection)
-- [ ] establish-diplomatic-relations (faction selection)
-- [ ] request-economic-aid (faction selection)
-- [ ] request-military-aid (faction selection)
-- [ ] train-army (army selection)
-- [ ] disband-army (army selection)
-
-**Week 7: Game Command Actions**
-- [ ] recruit-unit (post-roll compound + game command)
-- [ ] deploy-army (pre-roll entity + map + game command)
-- [ ] build-structure (pre-roll entity + game command)
-- [ ] repair-structure (pre-roll entity + post-roll choice + game command)
-- [ ] upgrade-settlement (pre-roll entity + game command)
-
-**Week 8: Custom Resolution Actions**
-- [ ] arrest-dissidents (custom component)
-- [ ] outfit-army (custom component)
-- [ ] infiltration (custom logic)
-- [ ] establish-settlement (complex compound)
-- [ ] recover-army (healing calculation)
-
-**Progress: 1/26 actions complete**
+**Important:** Update the checklist file as you complete each action migration.
 
 ---
 
-### Week 5: Simple Actions (No Custom Logic)
+### 4. Simple Actions (9 actions)
 
-**Convert (9 actions):**
-- deal-with-unrest
-- sell-surplus
-- purchase-resources
-- harvest-resources (has choice-buttons)
-- build-roads (has hex selection)
-- claim-hexes (has hex selection) ✅ COMPLETE
-- fortify-hex (has hex selection)
-- create-worksite (has hex selection)
-- send-scouts (has dice)
+**Actions:** deal-with-unrest, sell-surplus, purchase-resources, harvest-resources, build-roads, claim-hexes, fortify-hex, create-worksite, send-scouts
 
-**Pattern:**
+**Example pipeline config:**
 ```typescript
-// Action pipeline config
 {
   id: 'deal-with-unrest',
   checkType: 'action',
-  skills: [{ skill: 'diplomacy', description: 'diplomatic engagement' }],
+  skills: [{ skill: 'diplomacy', ... }],
   outcomes: {
     success: {
       description: 'The People Listen',
@@ -532,301 +271,76 @@ async function damageStructureExecution(
     }
   },
   preview: {
-    calculate: (ctx) => ({
-      resources: [{ resource: 'unrest', value: -2 }]
-    }),
-    format: (prev) => [{
-      type: 'resource',
-      message: 'Will reduce unrest by 2',
-      variant: 'positive'
-    }]
+    calculate: (ctx) => ({ resources: [{ resource: 'unrest', value: -2 }] })
   }
 }
 ```
 
-**Testing:**
-- [ ] Action card displays correctly
-- [ ] Skill button triggers roll
-- [ ] Preview shows before apply
-- [ ] Apply executes correctly
-- [ ] State changes match old version
+### 5. Pre-Roll Dialog Actions (7 actions)
 
-**After Migration - Update Visual Marker:**
+**Actions:** collect-stipend, execute-or-pardon-prisoners, establish-diplomatic-relations, request-economic-aid, request-military-aid, train-army, disband-army
 
-Once an action is fully migrated and tested, add it to the MIGRATED_ACTIONS set in `src/view/kingdom/turnPhases/ActionsPhase.svelte`:
+### 6. Game Command Actions (5 actions)
 
-```typescript
-// Migrated actions (temporary tracking during pipeline migration)
-const MIGRATED_ACTIONS = new Set([
-  'claim-hexes',
-  'deal-with-unrest',  // Add newly migrated action here
-  // ... add more as you complete them
-]);
-```
+**Actions:** recruit-unit, deploy-army, build-structure, repair-structure, upgrade-settlement
 
-This will display a green "✓ Migrated" badge on the action card in the UI, providing visual feedback on migration progress.
+### 7. Custom Resolution Actions (5 actions)
 
-### Week 6: Pre-Roll Dialog Actions
+**Actions:** arrest-dissidents, outfit-army, infiltration, establish-settlement, recover-army
 
-**Convert (7 actions):**
-- collect-stipend (settlement selection)
-- execute-or-pardon-prisoners (settlement selection)
-- establish-diplomatic-relations (faction selection)
-- request-economic-aid (faction selection)
-- request-military-aid (faction selection)
-- train-army (army selection)
-- disband-army (army selection)
+**After each migration:** Add action ID to `MIGRATED_ACTIONS` set in `ActionsPhase.svelte`
 
-**Pattern:**
-```typescript
-{
-  id: 'collect-stipend',
-  checkType: 'action',
-  preRollInteractions: [{
-    type: 'entity-selection',
-    entityType: 'settlement',
-    filter: (s) => s.level >= 1
-  }],
-  gameCommands: [{
-    type: 'giveActorGold',
-    multiplier: 1
-  }],
-  preview: {
-    calculate: async (ctx) => {
-      const settlement = findSettlement(ctx.metadata.settlementId);
-      const gold = calculateStipend(settlement);
-      const cmd = await GAME_COMMANDS.giveActorGold.prepare(ctx);
-      return {
-        resources: [{ resource: 'gold', value: -gold }],
-        specialEffects: [cmd.specialEffect]
-      };
-    }
-  }
-}
-```
-
-### Week 7: Game Command Actions
-
-**Convert (5 actions):**
-- recruit-unit (has post-roll compound + game command)
-- deploy-army (has pre-roll entity + map + game command)
-- build-structure (has pre-roll entity + game command)
-- repair-structure (has pre-roll entity + post-roll choice + game command)
-- upgrade-settlement (has pre-roll entity + game command)
-
-**Pattern:**
-```typescript
-{
-  id: 'recruit-unit',
-  checkType: 'action',
-  postRollInteractions: [{
-    type: 'compound',
-    components: [
-      { type: 'text-input', label: 'Army Name' },
-      { type: 'entity-selection', label: 'Station At', entityType: 'settlement' }
-    ]
-  }],
-  gameCommands: [{
-    type: 'recruitArmy',
-    level: 'kingdom-level'
-  }],
-  preview: {
-    calculate: async (ctx) => {
-      const cmd = await GAME_COMMANDS.recruitArmy.prepare(ctx);
-      return {
-        resources: [{ resource: 'gold', value: -50 }],
-        specialEffects: [cmd.specialEffect]
-      };
-    }
-  }
-}
-```
-
-### Week 8: Custom Resolution Actions
-
-**Convert (5 actions):**
-- arrest-dissidents (custom component)
-- outfit-army (custom component)
-- infiltration (custom logic)
-- establish-settlement (complex compound)
-- recover-army (healing calculation)
-
-**These may need custom preview functions but still use pipeline config.**
-
-### Testing After Each Week
-
-- [ ] All converted actions work identically to before
-- [ ] Preview shows for all actions
-- [ ] No regressions in existing actions
-- [ ] Controllers delegate to UnifiedCheckHandler
-
-**Deliverables:**
-- 26 actions use pipeline configs
-- ActionPhaseController simplified (~50 lines)
-- Custom action files removed
-- Preview support for all actions
+**Testing:** Action card → Skill triggers → Preview shows → Apply executes → State matches
 
 ---
 
-## Phase 4: Events (Weeks 9-10)
+## 8. Events (37 total)
 
-### Goal: Convert 37 events to pipeline configs
+**Prerequisites:** Step 3 complete (game commands refactored)
 
-**Prerequisites:**
-- Phase 2 complete (game commands ready for special resources)
-
-### Week 9: Simple Events (No Dice/Choice)
-
-**Convert (~15 events):**
-- good-weather
-- economic-surge
-- immigration
-- etc.
-
-**Pattern:**
+**Example:** Simple event
 ```typescript
 {
   id: 'good-weather',
   checkType: 'event',
-  traits: [],
-  skills: [{ skill: 'agriculture', description: 'maximize farming benefits' }],
+  skills: [{ skill: 'agriculture', ... }],
   outcomes: {
     criticalSuccess: {
       description: 'Exceptional harvest',
-      modifiers: [{ type: 'static', resource: 'food', value: 4 }],
-      endsCheck: true
-    }
-  },
-  preview: {
-    calculate: (ctx) => ({
-      resources: [{ resource: 'food', value: 4 }]
-    }),
-    format: (prev) => [{
-      type: 'resource',
-      message: `Will gain ${prev.resources[0].value} food`,
-      variant: 'positive'
-    }]
-  }
-}
-```
-
-### Week 10: Complex Events (Dice/Choice/Game Commands)
-
-**Convert (~22 events):**
-- archaeological-find (has choice-dropdown)
-- plague (ongoing trait)
-- monster-attack (has damageStructure game command)
-- etc.
-
-**With game commands:**
-```typescript
-{
-  id: 'monster-attack',
-  checkType: 'event',
-  gameCommands: [{
-    type: 'damageStructure',
-    targetStrategy: 'random'
-  }],
-  preview: {
-    calculate: async (ctx) => {
-      const cmd = await GAME_COMMANDS.damageStructure.prepare(ctx);
-      return {
-        specialEffects: [cmd.specialEffect]
-      };
+      modifiers: [{ type: 'static', resource: 'food', value: 4 }]
     }
   }
 }
 ```
 
-**Testing:**
-- [ ] Events trigger correctly
-- [ ] Preview shows for all events
-- [ ] Ongoing events persist correctly
-- [ ] Game commands execute from events
-
-**Deliverables:**
-- 37 events use pipeline configs
-- EventPhaseController simplified (~50 lines)
-- Special resources migrated to game commands
-- Preview support for all events
+**Testing:** Events trigger → Preview shows → Ongoing persists
 
 ---
 
-## Phase 5: Incidents (Week 11)
+## 9. Incidents (30 total)
 
-### Goal: Convert 30 incidents to pipeline configs
+**Prerequisites:** Step 3 complete (game commands refactored)
 
-**Prerequisites:** Same as Phase 4 (events)
+**Differences:** Trigger (unrest % vs random), Severity (minor/moderate/major vs 1-20)
 
-### Pattern (Same as Events)
+**Example:** Same structure as events, add `severity` field.
 
-**Incidents identical to events structurally, just:**
-- Different trigger (unrest % vs random)
-- Different tier (minor/moderate/major vs 1-20)
-
-**Example:**
-```typescript
-{
-  id: 'bandit-activity',
-  checkType: 'incident',
-  severity: 'minor',
-  traits: ['dangerous'],
-  skills: [
-    { skill: 'intimidation', description: 'show force' },
-    { skill: 'stealth', description: 'infiltrate bandits' }
-  ],
-  outcomes: {
-    failure: {
-      description: 'Bandits raid',
-      modifiers: [{ type: 'dice', resource: 'gold', formula: '1d4', negative: true }],
-      endsCheck: true
-    }
-  },
-  postRollInteractions: [{ type: 'dice', resource: 'gold', formula: '1d4' }],
-  preview: {
-    calculate: (ctx) => ({
-      resources: [{ resource: 'gold', value: -(ctx.resolutionData.diceRolls.gold || 0) }]
-    }),
-    format: (prev) => [{
-      type: 'resource',
-      message: `Will lose ${-prev.resources[0].value} gold`,
-      variant: 'negative'
-    }]
-  }
-}
-```
-
-**Testing:**
-- [ ] Incidents trigger on unrest
-- [ ] Preview shows for all incidents
-- [ ] Ongoing incidents persist
-- [ ] Severity levels work correctly
-
-**Deliverables:**
-- 30 incidents use pipeline configs
-- UnrestPhaseController simplified (~50 lines)
-- Preview support for all incidents
+**Testing:** Trigger on unrest → Preview shows → Ongoing persists
 
 ---
 
-## Phase 6: Cleanup (Week 12)
+## 10. Cleanup
 
-### Goal: Remove old code, archive docs, finalize
+**Goal:** Remove old code, archive docs
 
-### Remove Old Code
+### Removing Legacy Code
 
-**Files to delete:**
-- `src/actions/*/Action.ts` (12 files, ~1000 lines)
-- `src/controllers/actions/implementations/index.ts` (~100 lines)
-- `src/services/GameCommandsResolver.ts` (~800 lines, replaced by Registry)
-- Custom action dialog files (~800 lines total)
+**See:** `CLEANUP_GUIDE.md` for detailed instructions
 
-**Files to simplify:**
-- ActionPhaseController (~200 → ~50 lines)
-- EventPhaseController (~150 → ~50 lines)
-- UnrestPhaseController (~180 → ~50 lines)
-
-### Update Documentation
+**Summary:**
+- After each action: Delete `src/actions/[action-name]/` folder
+- After all 26 actions: Delete `src/controllers/actions/implementations/`
+- Final step: Delete `src/actions/` entirely
 
 **Archive (move to docs/archived/):**
 - `docs/refactoring/unified-action-handler-architecture.md` (interim doc)
@@ -841,82 +355,13 @@ This will display a green "✓ Migrated" badge on the action card in the UI, pro
 **Create:**
 - `docs/guides/CREATING_CHECKS.md` - How to add new actions/events/incidents
 
-### Final Testing
-
-**Regression Suite:**
-- [ ] All 26 actions work identically
-- [ ] All 37 events work identically
-- [ ] All 30 incidents work identically
-- [ ] Preview shows for all 93 checks
-- [ ] No performance regressions
-- [ ] All game commands work correctly
-
-**User Acceptance:**
-- [ ] Beta test with users
-- [ ] Collect feedback
-- [ ] Address any issues
-- [ ] Document known limitations
-
-**Deliverables:**
-- Old code removed
-- Documentation updated
-- Clean codebase
-- Production-ready system
+**Final testing:** All 93 checks work identically with preview support
 
 ---
 
-## Rollback Plan
-
-**At any phase boundary:**
-
-1. **Feature Flag:** Toggle old system back on
-2. **Git:** Revert to pre-phase commit
-3. **Communication:** Notify users of rollback
-4. **Analysis:** Identify blocking issues
-5. **Fix:** Address issues in separate branch
-6. **Retry:** Restart phase when ready
-
-**Critical Rollback Points:**
-- End of Phase 2 (game commands)
-- End of Phase 3 (actions)
-- End of Phase 4 (events)
-- End of Phase 5 (incidents)
-
----
-
-## Success Criteria
-
-### Phase Completion
-
-Each phase complete when:
-- [ ] All conversions done
-- [ ] All tests pass
-- [ ] No regressions
-- [ ] Documentation updated
-- [ ] Team review approved
-
-### Overall Success
-
-Migration successful when:
-- [ ] 93/93 checks use pipeline configs
-- [ ] 93/93 checks show preview
-- [ ] ~2500 lines of code removed
-- [ ] Controllers simplified to ~50 lines each
-- [ ] Zero functional regressions
-- [ ] User feedback positive
-
----
 
 ## Summary
 
-**12-Week Timeline:**
-- Weeks 1-2: Foundation
-- **Weeks 3-4: Game Commands (CRITICAL)**
-- Weeks 5-8: Actions
-- Weeks 9-10: Events
-- Week 11: Incidents
-- Week 12: Cleanup
+**Critical Order:** Game Commands (step 3) BEFORE Actions/Events/Incidents (steps 4-9) - preview infrastructure dependency
 
-**Key Insight:** Game commands must be migrated BEFORE actions/events/incidents because they are the foundation for preview support across all check types.
-
-**Result:** Single, unified system serving all 93 kingdom challenges with consistent UX and minimal code.
+**Result:** Single unified system for all 93 kingdom challenges with consistent preview support

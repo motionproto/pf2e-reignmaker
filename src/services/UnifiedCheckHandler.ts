@@ -557,9 +557,8 @@ export class UnifiedCheckHandler {
   /**
    * Execute a check (apply state changes)
    *
-   * TODO: Implement resource change application
-   * TODO: Implement game command execution
-   * TODO: Implement persistence handling
+   * If pipeline has a custom execute function, uses that.
+   * Otherwise, uses default behavior (resource changes + game commands).
    */
   async executeCheck(
     checkId: string,
@@ -574,6 +573,24 @@ export class UnifiedCheckHandler {
     console.log(`⚡ [UnifiedCheckHandler] Executing check: ${checkId}`);
 
     try {
+      // Check if pipeline has custom execute function
+      if (pipeline.execute) {
+        console.log(`🎯 [UnifiedCheckHandler] Using custom execute function`);
+        const result = await pipeline.execute(context);
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Custom execution failed');
+        }
+        
+        if (result.message) {
+          console.log(`💬 [UnifiedCheckHandler] ${result.message}`);
+        }
+        
+        console.log(`✅ [UnifiedCheckHandler] Custom execution succeeded`);
+        return;
+      }
+
+      // Default execution path (no custom execute function)
       // Apply resource changes from preview
       await this.applyResourceChanges(preview.resources, context.kingdom);
 
