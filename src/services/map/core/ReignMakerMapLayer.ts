@@ -290,6 +290,9 @@ export class ReignMakerMapLayer {
 
     this.drawSingleHex(graphics, hexId, style, canvas);
     layer.addChild(graphics);
+    
+    // Make layer visible (critical - without this, graphics won't render after layer cleanup!)
+    this.showLayer(layerId);
   }
 
   /**
@@ -636,7 +639,7 @@ export class ReignMakerMapLayer {
       });
       layer.addChild(roadGraphics);
     } else {
-      // Invalid hover - show red hex fill (no road preview)
+      // Show hex fill (for non-road actions like fortify-hex, claim-hex, etc.)
       const hexGraphics = new PIXI.Graphics();
       hexGraphics.name = `Hover_${hexId}`;
       hexGraphics.visible = true;
@@ -646,6 +649,9 @@ export class ReignMakerMapLayer {
         layer.addChild(hexGraphics);
       }
     }
+    
+    // Make layer visible (critical - without this, graphics won't render!)
+    this.showLayer(layerId);
   }
   
   /**
@@ -684,8 +690,10 @@ export class ReignMakerMapLayer {
         dashed: false     // Solid line
       });
       layer.addChild(roadGraphics);
-
     }
+    
+    // Make layer visible (critical - without this, graphics won't render after layer cleanup!)
+    this.showLayer(layerId);
   }
   
   /**

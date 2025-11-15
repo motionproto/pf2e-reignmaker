@@ -13,6 +13,7 @@
   export let expandable: boolean = true;  // Control chevron visibility
   export let statusBadge: { text: string; type: 'ongoing' | 'resolved' } | null = null;
   export let isMigrated: boolean = false;  // Temporary: visual indicator for migrated actions
+  export let migratedNumber: number | undefined = undefined;  // Action number for migration badge
   
   const dispatch = createEventDispatcher();
   
@@ -38,7 +39,11 @@
           {#if isMigrated}
             <span class="migrated-badge" title="Migrated to unified pipeline">
               <i class="fas fa-check-circle"></i>
-              Migrated
+              {#if migratedNumber}
+                #{migratedNumber}
+              {:else}
+                Migrated
+              {/if}
             </span>
           {/if}
           {#if statusBadge}

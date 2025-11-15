@@ -92,19 +92,30 @@ export class PipelineRegistry {
    */
   initialize(): void {
     if (this.initialized) {
-      console.warn('[PipelineRegistry] Already initialized');
+      console.warn('[PipelineRegistry] ⚠️ Already initialized');
       return;
     }
 
-    console.log('[PipelineRegistry] Initializing...');
+    console.log('[PipelineRegistry] 🔧 Initializing...');
+    console.log(`[PipelineRegistry] 📋 Total pipelines to register: ${ACTION_PIPELINES.length}`);
 
     // Register all action pipelines
+    let successCount = 0;
     for (const pipeline of ACTION_PIPELINES) {
-      unifiedCheckHandler.registerCheck(pipeline.id, pipeline);
+      try {
+        unifiedCheckHandler.registerCheck(pipeline.id, pipeline);
+        successCount++;
+      } catch (error) {
+        console.error(`[PipelineRegistry] ❌ Failed to register ${pipeline.id}:`, error);
+      }
     }
 
     this.initialized = true;
-    console.log(`✅ [PipelineRegistry] Registered ${ACTION_PIPELINES.length} action pipelines`);
+    console.log(`✅ [PipelineRegistry] Successfully registered ${successCount}/${ACTION_PIPELINES.length} action pipelines`);
+    
+    // List all registered pipelines for debugging
+    const registeredIds = ACTION_PIPELINES.map(p => p.id);
+    console.log(`[PipelineRegistry] 📝 Registered IDs: ${registeredIds.join(', ')}`);
   }
 
   /**

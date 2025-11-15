@@ -31,6 +31,7 @@
   export let getMissingRequirements: (action: any) => string[];
   export let hideUntrainedSkills: boolean = true;
   export let migratedActions: Set<string> = new Set();
+  export let migratedActionNumbers: Map<string, number> = new Map();
 
   // Toggle action expansion
   function handleToggle(actionId: string) {
@@ -89,10 +90,12 @@
         {@const isAvailable = controller ? isActionAvailable(action) : false}
         {@const missingRequirements = !isAvailable && controller ? getMissingRequirements(action) : []}
         {@const isMigrated = migratedActions.has(action.id)}
+        {@const migratedNumber = migratedActionNumbers.get(action.id)}
         {#key `${action.id}-${instanceId || 'none'}-${activeAidsCount}-${isAvailable}-${armyDataKey}-${resourcesKey}`}
           <BaseCheckCard
             id={action.id}
             isMigrated={isMigrated}
+            migratedNumber={migratedNumber}
             checkInstance={checkInstance || null}
             customResolutionComponent={customResolution?.component || null}
             customResolutionProps={customResolution?.props || {}}

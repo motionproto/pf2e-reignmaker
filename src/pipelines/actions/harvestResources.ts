@@ -11,7 +11,10 @@ import type { CheckPipeline } from '../../types/CheckPipeline';
  */
 export const harvestResourcesPipeline: CheckPipeline = {
   id: 'harvest-resources',
+  name: 'Harvest Resources',
+  description: 'Extract natural resources from your territory to stockpile materials.',
   checkType: 'action',
+  category: 'resource-management',
   
   skills: [
     { skill: 'nature', description: 'natural harvesting' },

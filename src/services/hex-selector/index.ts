@@ -53,6 +53,13 @@ export class HexSelectorService {
    * Main entry point - returns Promise that resolves when selection complete
    */
   async selectHexes(config: HexSelectionConfig): Promise<string[] | null> {
+    console.log(`[HexSelector] selectHexes called, current state:`, {
+      active: this.active,
+      hasConfig: !!this.config,
+      hasResolve: !!this.resolve,
+      panelState: this.panelState
+    });
+    
     if (this.active) {
       throw new Error('Hex selection already in progress');
     }
@@ -62,6 +69,12 @@ export class HexSelectorService {
       this.config = config;
       this.selectedHexes = [];
       this.active = true;
+      
+      console.log(`[HexSelector] State after initialization:`, {
+        active: this.active,
+        hasConfig: !!this.config,
+        hasValidationFn: !!config.validationFn
+      });
       
       try {
         // 1. Switch to kingdom scene
@@ -276,7 +289,10 @@ export class HexSelectorService {
    * Handle canvas mousemove event (hover detection)
    */
   private handleCanvasMove(event: any): void {
-    if (!this.active || !this.config) return;
+    if (!this.active || !this.config) {
+      console.log('[HexSelector] handleCanvasMove - not active or no config');
+      return;
+    }
     
     try {
       // Get mouse position
@@ -300,9 +316,11 @@ export class HexSelectorService {
       // Only redraw if different hex
       if (this.currentHoveredHex !== hexId) {
         this.currentHoveredHex = hexId;
+        console.log(`[HexSelector] Hovering over hex: ${hexId}, validationFn exists: ${!!this.config.validationFn}`);
         
         // Validate hex if validation function provided (pass pending selections for road chaining)
         const isValid = !this.config.validationFn || this.config.validationFn(hexId, this.selectedHexes);
+        console.log(`[HexSelector] Hex ${hexId} validation result: ${isValid}`);
         
         if (isValid) {
           // Get road preview for 'road' type (include pending roads)
@@ -312,10 +330,12 @@ export class HexSelectorService {
           
           // Show hover with optional road preview (all types use hex fills now)
           const style = this.getHoverStyle();
+          console.log(`[HexSelector] Calling showInteractiveHover for VALID hex ${hexId}`, style);
           this.mapLayer.showInteractiveHover(hexId, style, roadPreview);
         } else {
           // Show invalid hover (red, no preview)
           const invalidStyle = { fillColor: 0xFF0000, fillAlpha: 0.2 };
+          console.log(`[HexSelector] Calling showInteractiveHover for INVALID hex ${hexId}`, invalidStyle);
           this.mapLayer.showInteractiveHover(hexId, invalidStyle);
         }
       }
@@ -804,10 +824,10 @@ export class HexSelectorService {
       this.canvasMoveHandler = null;
     }
     
-    // Clear interactive layers
+    // Clear interactive layers - CRITICAL: Reset hover state before clearing
+    this.currentHoveredHex = null;
     this.mapLayer.hideInteractiveHover();
     this.mapLayer.clearSelection();
-    this.currentHoveredHex = null;
     this.selectedRoadConnections.clear();
     
     // Restore player's overlay preferences

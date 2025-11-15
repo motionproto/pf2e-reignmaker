@@ -47,14 +47,18 @@ export class UnifiedCheckHandler {
     this.validatePipeline(pipeline);
 
     this.pipelines.set(id, pipeline);
-    console.log(`✅ [UnifiedCheckHandler] Registered ${pipeline.checkType}: ${id}`);
+    console.log(`✅ [UnifiedCheckHandler] Registered ${pipeline.checkType}: ${id} (total: ${this.pipelines.size})`);
   }
 
   /**
    * Get a registered pipeline
    */
   getCheck(id: string): CheckPipeline | undefined {
-    return this.pipelines.get(id);
+    const pipeline = this.pipelines.get(id);
+    if (!pipeline) {
+      console.warn(`[UnifiedCheckHandler] Pipeline '${id}' not found. Available: [${Array.from(this.pipelines.keys()).join(', ')}]`);
+    }
+    return pipeline;
   }
 
   /**
@@ -365,6 +369,17 @@ export class UnifiedCheckHandler {
       // Execute interaction based on type
       const result = await this.executeInteraction(adjustedInteraction, kingdom, instance.metadata || {});
 
+      // ✅ NEW: Call onComplete handler if defined (executes custom logic with user selections)
+      if (interaction.onComplete && result !== null && result !== undefined) {
+        console.log(`🎯 [UnifiedCheckHandler] Calling onComplete handler for ${interaction.type}`);
+        try {
+          await interaction.onComplete(result, context);
+        } catch (error) {
+          console.error(`❌ [UnifiedCheckHandler] onComplete handler failed:`, error);
+          throw error;
+        }
+      }
+
       // Store result in resolution data based on interaction type
       if (interaction.id && result !== null && result !== undefined) {
         switch (interaction.type) {
@@ -629,9 +644,9 @@ export class UnifiedCheckHandler {
         const resource = change.resource;
         const value = change.value;
 
-        // Apply the change to the kingdom data
-        if (typeof k[resource] === 'number') {
-          k[resource] += value;
+        // Apply the change to the kingdom data (cast to any for dynamic key access)
+        if (typeof (k as any)[resource] === 'number') {
+          (k as any)[resource] += value;
         } else {
           console.warn(`[UnifiedCheckHandler] Unknown resource: ${resource}`);
         }

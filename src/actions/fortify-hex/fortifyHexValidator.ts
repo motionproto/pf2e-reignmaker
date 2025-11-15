@@ -7,6 +7,7 @@ import { get } from 'svelte/store';
 import { kingdomData } from '../../stores/KingdomStore';
 import { isHexClaimedByPlayer, getHex } from '../shared/hexValidation';
 import { PLAYER_KINGDOM } from '../../types/ownership';
+import fortificationData from '../../../data/player-actions/fortify-hex.json';
 
 /**
  * Validate if a hex can be fortified
@@ -50,4 +51,64 @@ export async function validateFortifyHex(hexId: string): Promise<{ valid: boolea
   const message = `${action} ${tierConfig.name} (cost: ${costSummary})`;
   
   return { valid: true, message };
+}
+
+/**
+ * Simplified validator for pipeline use
+ * Returns true if hex can be fortified (claimed, not at max tier, AND affordable)
+ * 
+ * @param hexId - The hex ID to validate
+ * @returns boolean - true if hex can be fortified
+ */
+export function validateFortifyHexForPipeline(hexId: string): boolean {
+  const kingdom = get(kingdomData);
+  
+  // Find the hex
+  const hex = getHex(hexId, kingdom);
+  
+  if (!hex) {
+    return false;
+  }
+  
+  // Must be claimed territory
+  if (!isHexClaimedByPlayer(hexId, kingdom)) {
+    return false;
+  }
+  
+  // Check current tier - must not be at max (4)
+  const currentTier = hex.fortification?.tier || 0;
+  
+  if (currentTier >= 4) {
+    return false;
+  }
+  
+  // Cannot fortify a hex with a settlement
+  const hasSettlement = (kingdom.settlements || []).some(s => {
+    if (!s.location || (s.location.x === 0 && s.location.y === 0)) return false;
+    const settlementHexId = `${s.location.x}.${s.location.y}`;
+    return settlementHexId === hexId;
+  });
+  
+  if (hasSettlement) {
+    return false;
+  }
+  
+  // ✅ NEW: Check if we can afford the next tier upgrade
+  const nextTier = currentTier + 1;
+  const tierConfig = fortificationData.tiers[nextTier - 1];
+  
+  if (!tierConfig) {
+    return false;  // Invalid tier
+  }
+  
+  // Check affordability
+  for (const [resource, amount] of Object.entries(tierConfig.cost)) {
+    const available = (kingdom.resources as any)[resource] || 0;
+    if (available < (amount as number)) {
+      console.log(`[FortifyHex Validator] Cannot afford tier ${nextTier} - need ${amount} ${resource}, have ${available}`);
+      return false;  // Cannot afford
+    }
+  }
+  
+  return true;
 }
