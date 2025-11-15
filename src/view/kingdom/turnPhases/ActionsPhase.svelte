@@ -40,7 +40,7 @@
   import { createActionCheckInstance, updateCheckInstanceOutcome, type PendingActionsState } from '../../../controllers/actions/CheckInstanceHelpers';
 
   // Migrated actions (temporary tracking during pipeline migration)
-  const MIGRATED_ACTIONS = new Set(['claim-hexes']);
+  const MIGRATED_ACTIONS = new Set(['claim-hexes', 'deal-with-unrest', 'sell-surplus']);
 
   // Initialize controller and services
   let controller: any = null;

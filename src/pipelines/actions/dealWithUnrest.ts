@@ -1,21 +1,19 @@
 /**
  * Deal with Unrest Action Pipeline
  *
- * Simple action that reduces unrest through various approaches.
+ * Address grievances and calm tensions through various approaches.
  * Converted from data/player-actions/deal-with-unrest.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
 
 export const dealWithUnrestPipeline: CheckPipeline = {
-  // Identity
   id: 'deal-with-unrest',
   name: 'Deal with Unrest',
   description: 'Address grievances and calm tensions through various approaches: entertainment, religious ceremonies, shows of force, diplomatic engagement, scholarly discourse, or magical displays',
   checkType: 'action',
   category: 'uphold-stability',
 
-  // Skills - all approaches are valid
   skills: [
     { skill: 'performance', description: 'entertainment and festivities' },
     { skill: 'religion', description: 'religious ceremonies' },
@@ -26,7 +24,6 @@ export const dealWithUnrestPipeline: CheckPipeline = {
     { skill: 'occultism', description: 'mystical demonstrations' }
   ],
 
-  // Outcomes - all outcomes reduce unrest (even failure helps a little)
   outcomes: {
     criticalSuccess: {
       description: 'The people rally to your cause.',
@@ -48,24 +45,15 @@ export const dealWithUnrestPipeline: CheckPipeline = {
     },
     criticalFailure: {
       description: 'No one listens.',
-      modifiers: [
-        { type: 'static', resource: 'unrest', value: 0, duration: 'immediate' }
-      ]
+      modifiers: []  // No change to unrest
     }
   },
 
-  // Preview - show unrest reduction based on outcome
   preview: {
-    calculate: (ctx) => {
-      const unrestChange = ctx.outcome === 'criticalSuccess' ? -3 :
-                          ctx.outcome === 'success' ? -2 :
-                          ctx.outcome === 'failure' ? -1 : 0;
-
-      return {
-        resources: unrestChange !== 0 ? [{ resource: 'unrest', value: unrestChange }] : [],
-        specialEffects: [],
-        warnings: []
-      };
-    }
+    calculate: (ctx) => ({
+      resources: [
+        { resource: 'unrest', value: -2 }  // Show typical success case
+      ]
+    })
   }
 };

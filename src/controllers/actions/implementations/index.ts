@@ -26,13 +26,16 @@ import HarvestResourcesAction from '../../../actions/harvest-resources/HarvestRe
 import PurchaseResourcesAction from '../../../actions/purchase-resources/PurchaseResourcesAction';
 import SellSurplusAction from '../../../actions/sell-surplus/SellSurplusAction';
 import ExecuteOrPardonPrisonersAction from '../../../actions/execute-or-pardon-prisoners/ExecuteOrPardonPrisonersAction';
-import TrainArmyAction from '../../../actions/train-army/TrainArmyAction';
-import DisbandArmyAction from '../../../actions/disband-army/DisbandArmyAction';
+// REMOVED: TrainArmyAction - migrated to prepare/commit pattern
+// import TrainArmyAction from '../../../actions/train-army/TrainArmyAction';
+// REMOVED: DisbandArmyAction - migrated to prepare/commit pattern
+// import DisbandArmyAction from '../../../actions/disband-army/DisbandArmyAction';
 import OutfitArmyAction from '../../../actions/outfit-army/OutfitArmyAction';
 import DeployArmyAction from '../../../actions/deploy-army/DeployArmyAction';
 import RequestMilitaryAidAction from '../../../actions/request-military-aid/RequestMilitaryAidAction';
 import RequestEconomicAidAction from '../../../actions/request-economic-aid/RequestEconomicAidAction';
-import InfiltrationAction from '../../../actions/infiltration/InfiltrationAction';
+// REMOVED: InfiltrationAction - not yet implemented
+// import InfiltrationAction from '../../../actions/infiltration/InfiltrationAction';
 
 /**
  * Interface for custom action implementations
@@ -92,7 +95,8 @@ actionImplementations.set(OutfitArmyAction.id, OutfitArmyAction);
 actionImplementations.set(DeployArmyAction.id, DeployArmyAction);
 actionImplementations.set(RequestMilitaryAidAction.id, RequestMilitaryAidAction);
 actionImplementations.set(RequestEconomicAidAction.id, RequestEconomicAidAction);
-actionImplementations.set(InfiltrationAction.id, InfiltrationAction);
+// REMOVED: InfiltrationAction - not yet implemented
+// actionImplementations.set(InfiltrationAction.id, InfiltrationAction);
 
 // TODO: Add more action implementations as they're created
 // actionImplementations.set(RecruitArmyAction.id, RecruitArmyAction);
@@ -205,7 +209,7 @@ export async function executeCustomResolution(
 }
 
 // Export all implementations for direct use if needed
-export { ArrestDissidentsAction, RepairStructureAction, EstablishSettlementAction, UpgradeSettlementAction, BuildStructureAction, EstablishDiplomaticRelationsAction, BuildRoadsAction, ClaimHexesAction, FortifyHexAction, SendScoutsAction, RecruitArmyAction, HarvestResourcesAction, PurchaseResourcesAction, SellSurplusAction, ExecuteOrPardonPrisonersAction, TrainArmyAction, DisbandArmyAction, OutfitArmyAction, DeployArmyAction, RequestMilitaryAidAction };
+export { ArrestDissidentsAction, RepairStructureAction, EstablishSettlementAction, UpgradeSettlementAction, BuildStructureAction, EstablishDiplomaticRelationsAction, BuildRoadsAction, ClaimHexesAction, FortifyHexAction, SendScoutsAction, RecruitArmyAction, HarvestResourcesAction, PurchaseResourcesAction, SellSurplusAction, ExecuteOrPardonPrisonersAction, OutfitArmyAction, DeployArmyAction, RequestMilitaryAidAction, RequestEconomicAidAction };
 
 // TODO: Export additional implementations as they're created
 // export { RecruitArmyAction };
