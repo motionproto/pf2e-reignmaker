@@ -1,7 +1,7 @@
 {
   "id": "create-worksite",
   "name": "Create Worksite",
-  "category": "borders",
+  "category": "expand-borders",
   "brief": "Establish farms, mines, quarries, or lumber camps",
   "description": "Establish resource extraction operations to harness the natural wealth of your territories",
   "skills": [

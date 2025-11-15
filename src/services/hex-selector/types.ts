@@ -5,7 +5,7 @@
 /**
  * Type of hex selection action
  */
-export type HexSelectionType = 'claim' | 'road' | 'settlement' | 'scout' | 'fortify' | 'unclaim';
+export type HexSelectionType = 'claim' | 'road' | 'settlement' | 'scout' | 'fortify' | 'unclaim' | 'worksite';
 
 /**
  * Color configuration for hex highlighting
@@ -13,6 +13,14 @@ export type HexSelectionType = 'claim' | 'road' | 'settlement' | 'scout' | 'fort
 export interface ColorConfig {
   color: number;  // Hex color value (e.g., 0xCCCCCC)
   alpha: number;  // Opacity (0-1)
+}
+
+/**
+ * Custom selector component configuration
+ */
+export interface CustomSelectorConfig {
+  component: any;  // Svelte component constructor
+  props?: Record<string, any>;  // Additional props to pass to component
 }
 
 /**
@@ -25,6 +33,7 @@ export interface HexSelectionConfig {
   existingHexes?: string[];   // Already selected hexes (for highlighting)
   allowToggle?: boolean;      // Allow clicking to deselect (default: true)
   validationFn?: (hexId: string, pendingRoads?: string[]) => boolean;  // Optional validation function (supports pending selections for chaining)
+  customSelector?: CustomSelectorConfig;  // Optional custom component for additional selection (e.g., worksite type)
 }
 
 /**
@@ -62,5 +71,10 @@ export const HEX_HIGHLIGHT_COLORS: Record<string, ColorConfig> = {
   // Unclaim/Remove Territory (uses same colors as settlement for consistency)
   existingUnclaim: { color: 0xD2691E, alpha: 0.3 },  // Dark orange (same as settlement)
   newUnclaim: { color: 0xFFA500, alpha: 0.5 },        // Light orange (same as settlement)
-  hoverUnclaim: { color: 0xFFB347, alpha: 0.4 }       // Light orange hover (same as settlement)
+  hoverUnclaim: { color: 0xFFB347, alpha: 0.4 },      // Light orange hover (same as settlement)
+  
+  // Worksite Creation
+  existingWorksite: { color: 0x8B4513, alpha: 0.3 },  // Brown
+  newWorksite: { color: 0xD2691E, alpha: 0.5 },        // Orange
+  hoverWorksite: { color: 0xFFB347, alpha: 0.4 }       // Light orange (hover)
 };

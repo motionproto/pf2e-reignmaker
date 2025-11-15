@@ -40,7 +40,7 @@
   import { createActionCheckInstance, updateCheckInstanceOutcome, type PendingActionsState } from '../../../controllers/actions/CheckInstanceHelpers';
 
   // Migrated actions (temporary tracking during pipeline migration)
-  const MIGRATED_ACTIONS = new Set(['claim-hexes', 'deal-with-unrest', 'sell-surplus', 'purchase-resources', 'harvest-resources', 'build-roads', 'fortify-hex']);
+  const MIGRATED_ACTIONS = new Set(['claim-hexes', 'deal-with-unrest', 'sell-surplus', 'purchase-resources', 'harvest-resources', 'build-roads', 'fortify-hex', 'create-worksite']);
   
   // Action number mapping for migration badges
   const MIGRATED_ACTION_NUMBERS = new Map([
@@ -50,7 +50,8 @@
     ['purchase-resources', 4],
     ['harvest-resources', 5],
     ['build-roads', 6],
-    ['fortify-hex', 7]
+    ['fortify-hex', 7],
+    ['create-worksite', 8]
   ]);
 
   // Initialize controller and services

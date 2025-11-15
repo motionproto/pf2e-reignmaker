@@ -66,9 +66,6 @@ export async function createActionEffectsService() {
           case 'repairStructure':
             await this.repairStructure(action.data, result);
             break;
-          case 'createWorksite':
-            await this.createWorksite(action.data, result);
-            break;
           case 'recruitArmy':
             await this.recruitArmy(action.data, result);
             break;
@@ -239,27 +236,6 @@ export async function createActionEffectsService() {
       });
     },
 
-    /**
-     * Create a worksite (special hex improvement)
-     */
-    async createWorksite(data: { hexId: string; resourceType: string }, result: ActionEffectResult): Promise<void> {
-
-      await updateKingdom(kingdom => {
-        if (!kingdom.worksites) {
-          kingdom.worksites = [];
-        }
-
-        const worksite = {
-          id: `worksite-${Date.now()}`,
-          hexId: data.hexId,
-          resourceType: data.resourceType,
-          createdAt: Date.now()
-        };
-
-        kingdom.worksites.push(worksite);
-        result.changes.push(`Created ${data.resourceType} worksite in hex ${data.hexId}`);
-      });
-    },
 
     // ============================================================
     // MILITARY ACTIONS

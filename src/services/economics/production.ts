@@ -132,8 +132,8 @@ function getWorksiteBaseProduction(worksiteType: string, terrain: string): Map<s
     case 'Farmstead':
       switch (normalizedTerrain) {
         case 'plains':
-        case 'forest':
           return new Map([['food', 2]]);
+        case 'forest':
         case 'hills':
         case 'swamp':
         case 'desert':

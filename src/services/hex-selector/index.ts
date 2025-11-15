@@ -33,13 +33,14 @@ export class HexSelectorService {
   private config: HexSelectionConfig | null = null;
   private selectedHexes: string[] = [];
   private selectedRoadConnections: Map<string, string[]> = new Map();  // Track road connections for preview
+  private selectedMetadata: any = null;  // Custom selector metadata (e.g., worksite type)
   private mapLayer: ReignMakerMapLayer;
   private overlayManager = getOverlayManager();
   private canvasClickHandler: ((event: any) => void) | null = null;
   private canvasMoveHandler: ((event: any) => void) | null = null;
-  private resolve: ((hexes: string[] | null) => void) | null = null;
+  private resolve: ((result: any) => void) | null = null;
   private panelMountPoint: HTMLElement | null = null;
-  private panelComponent: any = null;  // Svelte component instance
+  private panelComponent: any = null;  // Svelte component instance (for custom selector)
   private currentHoveredHex: string | null = null;
   
   // Panel state machine
@@ -53,13 +54,6 @@ export class HexSelectorService {
    * Main entry point - returns Promise that resolves when selection complete
    */
   async selectHexes(config: HexSelectionConfig): Promise<string[] | null> {
-    console.log(`[HexSelector] selectHexes called, current state:`, {
-      active: this.active,
-      hasConfig: !!this.config,
-      hasResolve: !!this.resolve,
-      panelState: this.panelState
-    });
-    
     if (this.active) {
       throw new Error('Hex selection already in progress');
     }
@@ -69,12 +63,6 @@ export class HexSelectorService {
       this.config = config;
       this.selectedHexes = [];
       this.active = true;
-      
-      console.log(`[HexSelector] State after initialization:`, {
-        active: this.active,
-        hasConfig: !!this.config,
-        hasValidationFn: !!config.validationFn
-      });
       
       try {
         // 1. Switch to kingdom scene
@@ -214,6 +202,11 @@ export class HexSelectorService {
         // Show territory, roads, settlements, and existing fortifications
         actionViewOverlays = ['territories', 'territory-border', 'roads', 'settlement-icons', 'settlement-labels', 'fortifications'];
         break;
+        
+      case 'worksite':
+        // Show territory border and existing worksites
+        actionViewOverlays = ['territories', 'territory-border', 'worksites'];
+        break;
     }
     
     // Apply temporary overlay configuration (saves current state automatically)
@@ -266,6 +259,7 @@ export class HexSelectorService {
       case 'scout': return 'hoverScout';
       case 'fortify': return 'hoverFortify';
       case 'unclaim': return 'hoverUnclaim';
+      case 'worksite': return 'hoverWorksite';
       default: return 'hoverClaim';
     }
   }
@@ -281,6 +275,7 @@ export class HexSelectorService {
       case 'scout': return 'newScout';
       case 'fortify': return 'newFortify';
       case 'unclaim': return 'newUnclaim';
+      case 'worksite': return 'newWorksite';
       default: return 'newClaim';
     }
   }
@@ -290,7 +285,6 @@ export class HexSelectorService {
    */
   private handleCanvasMove(event: any): void {
     if (!this.active || !this.config) {
-      console.log('[HexSelector] handleCanvasMove - not active or no config');
       return;
     }
     
@@ -316,11 +310,9 @@ export class HexSelectorService {
       // Only redraw if different hex
       if (this.currentHoveredHex !== hexId) {
         this.currentHoveredHex = hexId;
-        console.log(`[HexSelector] Hovering over hex: ${hexId}, validationFn exists: ${!!this.config.validationFn}`);
         
         // Validate hex if validation function provided (pass pending selections for road chaining)
         const isValid = !this.config.validationFn || this.config.validationFn(hexId, this.selectedHexes);
-        console.log(`[HexSelector] Hex ${hexId} validation result: ${isValid}`);
         
         if (isValid) {
           // Get road preview for 'road' type (include pending roads)
@@ -330,12 +322,10 @@ export class HexSelectorService {
           
           // Show hover with optional road preview (all types use hex fills now)
           const style = this.getHoverStyle();
-          console.log(`[HexSelector] Calling showInteractiveHover for VALID hex ${hexId}`, style);
           this.mapLayer.showInteractiveHover(hexId, style, roadPreview);
         } else {
           // Show invalid hover (red, no preview)
           const invalidStyle = { fillColor: 0xFF0000, fillAlpha: 0.2 };
-          console.log(`[HexSelector] Calling showInteractiveHover for INVALID hex ${hexId}`, invalidStyle);
           this.mapLayer.showInteractiveHover(hexId, invalidStyle);
         }
       }
@@ -560,7 +550,7 @@ export class HexSelectorService {
     `;
     
     panel.innerHTML = `
-      <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #D2691E;">
+      <div class="panel-header" style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #D2691E; cursor: move;">
         <h3 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">
           <i class="fas fa-map-marked-alt"></i>
           ${this.config.title}
@@ -588,8 +578,80 @@ export class HexSelectorService {
     btnCancel?.addEventListener('click', () => this.handleCancel());
     btnDone?.addEventListener('click', () => this.handleDone());
     
+    // Add drag functionality
+    this.makePanelDraggable(panel);
+    
     // Initial slot render
     this.updatePanel();
+  }
+  
+  /**
+   * Make panel draggable by the header
+   */
+  private makePanelDraggable(panel: HTMLElement): void {
+    const header = panel.querySelector('.panel-header') as HTMLElement;
+    if (!header) return;
+    
+    let isDragging = false;
+    let currentX = 0;
+    let currentY = 0;
+    let initialX = 0;
+    let initialY = 0;
+    
+    header.addEventListener('mousedown', (e: MouseEvent) => {
+      isDragging = true;
+      
+      // Get current panel position
+      const rect = panel.getBoundingClientRect();
+      
+      // Store initial mouse position and panel position
+      initialX = e.clientX - rect.left;
+      initialY = e.clientY - rect.top;
+      
+      // Change cursor
+      document.body.style.cursor = 'grabbing';
+      header.style.cursor = 'grabbing';
+    });
+    
+    document.addEventListener('mousemove', (e: MouseEvent) => {
+      if (!isDragging) return;
+      
+      e.preventDefault();
+      
+      // Calculate new position
+      currentX = e.clientX - initialX;
+      currentY = e.clientY - initialY;
+      
+      // Constrain to viewport
+      const maxX = window.innerWidth - panel.offsetWidth;
+      const maxY = window.innerHeight - panel.offsetHeight;
+      
+      currentX = Math.max(0, Math.min(currentX, maxX));
+      currentY = Math.max(0, Math.min(currentY, maxY));
+      
+      // Update panel position
+      panel.style.left = `${currentX}px`;
+      panel.style.top = `${currentY}px`;
+      panel.style.right = 'auto';
+      panel.style.transform = 'none';
+    });
+    
+    document.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        document.body.style.cursor = '';
+        header.style.cursor = 'move';
+      }
+    });
+  }
+  
+  /**
+   * Get terrain type for a hex
+   */
+  private getHexTerrain(hexId: string): string {
+    const kingdom = getKingdomData();
+    const hex = kingdom.hexes?.find((h: any) => h.id === hexId);
+    return hex?.terrain || 'Unknown';
   }
   
   /**
@@ -614,6 +676,7 @@ export class HexSelectorService {
     for (let i = 0; i < this.config.count; i++) {
       const slot = document.createElement('div');
       const hexId = this.selectedHexes[i];
+      const terrain = hexId ? this.getHexTerrain(hexId) : '';
       
       slot.style.cssText = `
         display: flex;
@@ -630,7 +693,7 @@ export class HexSelectorService {
       slot.innerHTML = `
         <span style="font-weight: bold; color: #999; min-width: 30px;">[${i + 1}]</span>
         ${hexId 
-          ? `<span style="flex: 1; font-family: monospace; font-size: 16px; color: #D2691E;">${hexId}</span>
+          ? `<span style="flex: 1; font-family: monospace; font-size: 16px; color: #D2691E;">${hexId} <span style="font-size: 12px; color: #999;">[${terrain}]</span></span>
              <i class="fas fa-check" style="color: #4CAF50;"></i>`
           : `<span style="flex: 1; font-family: monospace; color: #666; opacity: 0.5;">______</span>`
         }
@@ -659,12 +722,52 @@ export class HexSelectorService {
       slotsContainer.appendChild(slot);
     }
     
-    // Update Done button
-    const isComplete = this.selectedHexes.length === this.config.count;
+    // Mount custom selector if provided and hex is selected
+    if (this.config.customSelector && this.selectedHexes.length > 0) {
+      this.mountCustomSelector(slotsContainer);
+    }
+    
+    // Update Done button - require both hex AND metadata if custom selector exists
+    const isComplete = this.selectedHexes.length === this.config.count && 
+                       (!this.config.customSelector || this.selectedMetadata !== null);
     if (btnDone) {
       btnDone.disabled = !isComplete;
       btnDone.style.opacity = isComplete ? '1' : '0.5';
     }
+  }
+  
+  /**
+   * Mount custom selector component (e.g., WorksiteTypeSelector)
+   */
+  private mountCustomSelector(container: Element): void {
+    if (!this.config?.customSelector) return;
+    
+    // Unmount previous instance if exists
+    if (this.panelComponent) {
+      this.panelComponent.$destroy();
+      this.panelComponent = null;
+    }
+    
+    // Create mount point for custom component
+    const customMount = document.createElement('div');
+    customMount.id = 'custom-selector-mount';
+    container.appendChild(customMount);
+    
+    // Import and mount the component
+    const ComponentConstructor = this.config.customSelector.component;
+    const selectedHex = this.selectedHexes[0]; // For single-hex selection
+    
+    this.panelComponent = new ComponentConstructor({
+      target: customMount,
+      props: {
+        selectedHex,
+        onSelect: (metadata: any) => {
+          this.selectedMetadata = metadata;
+          this.updatePanel(); // Re-render to enable Done button
+        },
+        ...this.config.customSelector.props
+      }
+    });
   }
   
   /**
@@ -700,12 +803,15 @@ export class HexSelectorService {
         <div style="background: var(--hover-low); border-radius: 4px; padding: 16px; margin-bottom: 16px;">
           <div style="font-size: 12px; color: #999; margin-bottom: 8px;">Selected ${this.selectedHexes.length} ${this.selectedHexes.length === 1 ? 'hex' : 'hexes'}:</div>
           <div style="max-height: 200px; overflow-y: auto;">
-            ${this.selectedHexes.map(hexId => `
-              <div style="padding: 6px 8px; margin: 4px 0; background: rgba(210, 105, 30, 0.2); border-radius: 4px; font-family: monospace; font-size: 14px; color: #D2691E; display: flex; align-items: center; gap: 8px;">
-                <i class="fas fa-check-circle" style="color: #4CAF50;"></i>
-                ${hexId}
-              </div>
-            `).join('')}
+            ${this.selectedHexes.map(hexId => {
+              const terrain = this.getHexTerrain(hexId);
+              return `
+                <div style="padding: 6px 8px; margin: 4px 0; background: rgba(210, 105, 30, 0.2); border-radius: 4px; font-family: monospace; font-size: 14px; color: #D2691E; display: flex; align-items: center; gap: 8px;">
+                  <i class="fas fa-check-circle" style="color: #4CAF50;"></i>
+                  ${hexId} <span style="font-size: 12px; color: #999;">[${terrain}]</span>
+                </div>
+              `;
+            }).join('')}
           </div>
           ${this.config.colorType === 'scout' ? `
             <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #666; font-size: 12px; color: #999; text-align: center;">
@@ -769,8 +875,13 @@ export class HexSelectorService {
     const resolver = this.resolve;
     this.resolve = null; // Clear so handleCompletedOk doesn't call it again
     
-    // Trigger action to update kingdom data
-    resolver?.(hexes);
+    // Return data - if custom selector exists, return object with metadata
+    // Otherwise return just the hex array for backward compatibility
+    if (this.config.customSelector && this.selectedMetadata) {
+      resolver?.({ hexIds: hexes, metadata: this.selectedMetadata });
+    } else {
+      resolver?.(hexes);
+    }
     
     // Switch to completed state - panel stays visible, user sees territory update
     this.panelState = 'completed';

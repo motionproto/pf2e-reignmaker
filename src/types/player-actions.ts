@@ -16,7 +16,6 @@ export interface ActionSkill {
  * Action category types
  */
 export type ActionCategory = 
-  | "borders"
   | "economic-resources"
   | "expand-borders"
   | "foreign-affairs"

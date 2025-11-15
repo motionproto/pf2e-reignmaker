@@ -196,10 +196,10 @@ export class UnifiedCheckHandler {
       // Use existing HexSelectorService
       const result = await hexSelectorService.selectHexes({
         title: interaction.title,
-        mode: interaction.mode || 'hex-selection',
         count: interaction.count,
         colorType: interaction.colorType || 'claim',
-        validationFn: interaction.validation
+        validationFn: interaction.validation,
+        customSelector: interaction.customSelector  // ✅ Pass custom selector if provided
       });
 
       return result;

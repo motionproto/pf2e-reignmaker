@@ -1,6 +1,6 @@
 # Action Migration Checklist
 
-**Status:** 7/26 actions complete (27%)
+**Status:** 8/26 actions complete (31%)
 
 **Last Updated:** 2025-11-15
 
@@ -17,7 +17,7 @@
 5. [x] harvest-resources (has choice-buttons) ✅ COMPLETE
 6. [x] build-roads (has hex selection) ✅ COMPLETE
 7. [x] fortify-hex (has hex selection) ✅ COMPLETE
-8. [ ] create-worksite (has hex selection)
+8. [x] create-worksite (has hex selection) ✅ COMPLETE
 9. [ ] send-scouts (has dice)
 
 ### Week 6: Pre-Roll Dialog Actions
