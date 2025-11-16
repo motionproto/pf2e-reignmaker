@@ -119,15 +119,8 @@ export class ActionResolver {
                 }
                 break;
                 
-            case 'execute-pardon-prisoners':
-            case 'execute-or-pardon-prisoners':
-                if (kingdomData.imprisonedUnrest <= 0) {
-                    return {
-                        met: false,
-                        reason: 'No imprisoned unrest to resolve'
-                    };
-                }
-                break;
+            // execute-or-pardon-prisoners now handled by pipeline system
+            // The preRollInteractions filter checks for settlements with imprisoned unrest
                 
             case 'disband-army':
                 if (kingdomData.armies.length === 0) {

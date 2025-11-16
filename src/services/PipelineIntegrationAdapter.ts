@@ -20,10 +20,10 @@ export const PIPELINE_FEATURE_FLAGS = {
   ENABLED: true,
 
   // Actions to use pipeline system (empty = use for all)
-  WHITELIST: [] as string[],
+  ALLOWLIST: [] as string[],
 
   // Actions to exclude from pipeline system
-  BLACKLIST: [] as string[],
+  DENYLIST: [] as string[],
 
   // Log all pipeline executions
   DEBUG: true
@@ -37,18 +37,24 @@ export function shouldUsePipeline(actionId: string): boolean {
     return false;
   }
 
-  // Check blacklist first
-  if (PIPELINE_FEATURE_FLAGS.BLACKLIST.includes(actionId)) {
+  // Check denylist first
+  if (PIPELINE_FEATURE_FLAGS.DENYLIST.includes(actionId)) {
     return false;
   }
 
-  // If whitelist is empty, use for all (except blacklisted)
-  if (PIPELINE_FEATURE_FLAGS.WHITELIST.length === 0) {
+  // CRITICAL: Only use pipeline if it actually exists
+  const hasPipeline = unifiedCheckHandler.getCheck(actionId) !== undefined;
+  if (!hasPipeline) {
+    return false;  // No pipeline implementation = use legacy system
+  }
+
+  // If allowlist is empty, use for all actions that have pipelines (except denylisted)
+  if (PIPELINE_FEATURE_FLAGS.ALLOWLIST.length === 0) {
     return true;
   }
 
-  // Otherwise, only use if whitelisted
-  return PIPELINE_FEATURE_FLAGS.WHITELIST.includes(actionId);
+  // Otherwise, only use if allowlisted AND has pipeline
+  return PIPELINE_FEATURE_FLAGS.ALLOWLIST.includes(actionId);
 }
 
 /**
@@ -189,17 +195,17 @@ export class PipelineIntegrationAdapter {
   }
 
   /**
-   * Execute post-roll interactions
+   * Execute post-apply interactions
    */
-  static async executePostRollInteractions(
+  static async executePostApplyInteractions(
     instanceId: string,
     outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure'
   ): Promise<ResolutionData> {
     if (PIPELINE_FEATURE_FLAGS.DEBUG) {
-      logger.info(`🎯 [PipelineAdapter] Executing post-roll interactions for instance ${instanceId}`);
+      logger.info(`🎯 [PipelineAdapter] Executing post-apply interactions for instance ${instanceId}`);
     }
 
-    return await unifiedCheckHandler.executePostRollInteractions(instanceId, outcome);
+    return await unifiedCheckHandler.executePostApplyInteractions(instanceId, outcome);
   }
 
   /**

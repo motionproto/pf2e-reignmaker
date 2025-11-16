@@ -6,8 +6,8 @@
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { recruitArmyExecution } from '../../execution/armies/recruitArmy';
-import { adjustFactionAttitudeExecution } from '../../execution/factions/adjustFactionAttitude';
+import { factionService } from '../../services/factions';
+import type { Faction } from '../../models/Faction';
 
 export const requestMilitaryAidPipeline: CheckPipeline = {
   id: 'request-military-aid',
@@ -16,6 +16,33 @@ export const requestMilitaryAidPipeline: CheckPipeline = {
   checkType: 'action',
   category: 'foreign-affairs',
 
+  /**
+   * Pre-roll interaction: Select friendly/helpful faction
+   * Requirements: Diplomatic relations at least friendly
+   */
+  preRollInteractions: [
+    {
+      id: 'faction',
+      type: 'entity-selection',
+      entityType: 'faction',
+      label: 'Select Faction for Military Aid Request',
+      filter: (faction: Faction) => {
+        // Only Friendly or Helpful factions can provide military aid
+        if (faction.attitude === 'Friendly' || faction.attitude === 'Helpful') {
+          return { eligible: true };
+        }
+        
+        return { 
+          eligible: false, 
+          reason: 'Relations must be at least Friendly'
+        };
+      }
+    }
+  ],
+
+  /**
+   * Skills - various approaches to requesting military support
+   */
   skills: [
     { skill: 'diplomacy', description: 'alliance obligations' },
     { skill: 'intimidation', description: 'pressure tactics' },
@@ -23,85 +50,122 @@ export const requestMilitaryAidPipeline: CheckPipeline = {
     { skill: 'arcana', description: 'magical pacts' }
   ],
 
-  // Pre-roll: Select friendly faction
-  preRollInteractions: [
-    {
-      type: 'entity-selection',
-      id: 'factionId',
-      label: 'Select friendly faction for military aid',
-      entityType: 'faction'
-    }
-  ],
-
   outcomes: {
     criticalSuccess: {
-      description: 'Your ally sends elite reinforcements to support your cause.',
+      description: 'Your ally sends elite reinforcements to support your cause',
       modifiers: []
     },
     success: {
-      description: 'Your ally provides military equipment and supplies.',
+      description: 'Your ally provides military equipment and supplies',
       modifiers: []
     },
     failure: {
-      description: 'Your ally cannot help at this time.',
+      description: 'Your ally cannot help at this time',
       modifiers: []
     },
     criticalFailure: {
-      description: 'Your ally is offended by the request.',
+      description: 'Your ally is offended by the request',
       modifiers: []
     }
   },
 
   preview: {
-    calculate: (ctx) => {
-      const specialEffects = [];
+    calculate: async (ctx) => {
+      const factionId = ctx.metadata?.faction?.id || ctx.metadata?.factionId;
+      if (!factionId) {
+        return {
+          resources: [],
+          specialEffects: [],
+          warnings: ['No faction selected']
+        };
+      }
 
+      const faction = factionService.getFaction(factionId);
+      if (!faction) {
+        return {
+          resources: [],
+          specialEffects: [],
+          warnings: ['Faction not found']
+        };
+      }
+
+      const effects: any[] = [];
+
+      // Show appropriate message based on outcome
       if (ctx.outcome === 'criticalSuccess') {
-        specialEffects.push({
+        effects.push({
           type: 'entity' as const,
-          message: `Allied army will be recruited (exempt from upkeep)`,
+          message: `${faction.name} will send elite reinforcements (allied army, exempt from upkeep)`,
           variant: 'positive' as const
         });
       } else if (ctx.outcome === 'success') {
-        specialEffects.push({
+        effects.push({
           type: 'status' as const,
-          message: 'Military equipment provided',
+          message: `${faction.name} will provide military equipment and supplies`,
           variant: 'positive' as const
         });
       } else if (ctx.outcome === 'criticalFailure') {
-        specialEffects.push({
-          type: 'status' as const,
-          message: `Relations worsen with ${ctx.metadata.factionName || 'faction'}`,
-          variant: 'negative' as const
-        });
+        const { adjustAttitudeBySteps } = await import('../../utils/faction-attitude-adjuster');
+        const newAttitude = adjustAttitudeBySteps(faction.attitude, -1);
+        
+        if (newAttitude) {
+          effects.push({
+            type: 'status' as const,
+            message: `${faction.name} is offended! Attitude will worsen from ${faction.attitude} to ${newAttitude}`,
+            variant: 'negative' as const
+          });
+        }
       }
 
-      return { resources: [], specialEffects, warnings: [] };
+      return {
+        resources: [],
+        specialEffects: effects,
+        warnings: []
+      };
     }
   },
 
   execute: async (ctx) => {
-    if (ctx.outcome === 'criticalSuccess') {
-      // Recruit allied army (exempt from upkeep)
-      const { getPartyLevel } = await import('../../services/commands/armies/armyCommands');
-      const { ARMY_TYPES } = await import('../../utils/armyHelpers');
-
-      const level = getPartyLevel();
-      const factionName = ctx.metadata.factionName || 'Allied';
-
-      await recruitArmyExecution({
-        name: `${factionName} Reinforcements`,
-        level,
-        type: 'infantry', // Default type
-        image: ARMY_TYPES.infantry.image,
-        exemptFromUpkeep: true,
-        supportedBy: factionName
-      });
-    } else if (ctx.outcome === 'success') {
-      // Equipment/supplies - could be implemented as resources
-      // For now, just a notification
-    } else if (ctx.outcome === 'criticalFailure') {
-      await adjustFactionAttitudeExecution(ctx.metadata.factionId, -1);
+    const factionId = ctx.metadata?.faction?.id || ctx.metadata?.factionId;
+    
+    if (!factionId) {
+      return { success: false, error: 'No faction selected' };
     }
+
+    const faction = factionService.getFaction(factionId);
+    if (!faction) {
+      return { success: false, error: 'Faction not found' };
+    }
+
+    // Note: Critical success and success outcomes are handled by custom resolution
+    // (RequestMilitaryAidAction.ts) which shows recruitment/equipment dialogs
+    // This execute() only handles failure and critical failure
+    
+    if (ctx.outcome === 'failure') {
+      return { 
+        success: true, 
+        message: `${faction.name} cannot provide military support at this time` 
+      };
+    } 
+    
+    if (ctx.outcome === 'criticalFailure') {
+      // Worsen attitude by 1 step
+      const result = await factionService.adjustAttitude(factionId, -1);
+      
+      if (result.success) {
+        return { 
+          success: true, 
+          message: `Your request offends ${faction.name}! Attitude worsened from ${result.oldAttitude} to ${result.newAttitude}` 
+        };
+      } else {
+        return { 
+          success: true, 
+          message: `Your request offends ${faction.name}, but attitude cannot worsen further (already ${result.oldAttitude})` 
+        };
+      }
+    }
+
+    // Critical success and success are handled by custom resolution
+    return { success: true };
   }
 };

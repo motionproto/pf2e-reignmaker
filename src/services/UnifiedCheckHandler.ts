@@ -66,9 +66,14 @@ export class UnifiedCheckHandler {
    */
   needsPreRollInteraction(checkId: string): boolean {
     const pipeline = this.getCheck(checkId);
-    if (!pipeline) return false;
+    if (!pipeline) {
+      console.log(`❌ [UnifiedCheckHandler.needsPreRollInteraction] Pipeline not found: ${checkId}`);
+      return false;
+    }
 
-    return (pipeline.preRollInteractions?.length || 0) > 0;
+    const hasInteractions = (pipeline.preRollInteractions?.length || 0) > 0;
+    console.log(`🔍 [UnifiedCheckHandler.needsPreRollInteraction] ${checkId}: ${hasInteractions} (${pipeline.preRollInteractions?.length || 0} interactions)`);
+    return hasInteractions;
   }
 
   /**
@@ -156,7 +161,8 @@ export class UnifiedCheckHandler {
     const selectedId = await showEntitySelectionDialog(
       interaction.entityType,
       interaction.label,
-      interaction.filter
+      interaction.filter,
+      kingdom  // ✅ ADD: Pass kingdom data to filter
     );
 
     if (!selectedId) {
@@ -677,9 +683,14 @@ export class UnifiedCheckHandler {
         const resource = change.resource;
         const value = change.value;
 
-        // Apply the change to the kingdom data (cast to any for dynamic key access)
-        if (typeof (k as any)[resource] === 'number') {
+        // Check if resource is in the nested resources object
+        if (k.resources && typeof (k.resources as any)[resource] === 'number') {
+          (k.resources as any)[resource] += value;
+          console.log(`💰 [UnifiedCheckHandler] Applied ${value} to ${resource} (new value: ${(k.resources as any)[resource]})`);
+        } else if (typeof (k as any)[resource] === 'number') {
+          // Fallback: Try direct access (for non-resource properties)
           (k as any)[resource] += value;
+          console.log(`💰 [UnifiedCheckHandler] Applied ${value} to ${resource} (new value: ${(k as any)[resource]})`);
         } else {
           console.warn(`[UnifiedCheckHandler] Unknown resource: ${resource}`);
         }

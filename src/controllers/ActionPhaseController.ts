@@ -87,11 +87,11 @@ export async function createActionPhaseController() {
 
         // Convert legacy ResolutionData to pipeline format
         const pipelineResolutionData: PipelineResolutionData = {
-          diceRolls: resolutionData.diceRolls || {},
-          choices: resolutionData.choices || {},
-          allocations: resolutionData.allocations || {},
-          textInputs: resolutionData.textInputs || {},
-          compoundData: resolutionData.compoundData || {},
+          diceRolls: (resolutionData as any).diceRolls || {},
+          choices: (resolutionData as any).choices || {},
+          allocations: (resolutionData as any).allocations || {},
+          textInputs: (resolutionData as any).textInputs || {},
+          compoundData: (resolutionData as any).compoundData || {},
           numericModifiers: resolutionData.numericModifiers || [],
           manualEffects: resolutionData.manualEffects || [],
           customComponentData: resolutionData.customComponentData || null
@@ -120,6 +120,22 @@ export async function createActionPhaseController() {
 
       // FALLBACK: Use legacy system for actions not yet migrated
       logger.info(`🔄 [ActionPhaseController] Using legacy system for ${actionId}`);
+
+      // ⚠️ WARN: Action not yet migrated to pipeline system
+      const game = (window as any).game;
+      if (game?.ui?.notifications) {
+        // Get action name for better notification message
+        const { actionLoader } = await import('./actions/action-loader');
+        const action = actionLoader.getAllActions().find(a => a.id === actionId);
+        const actionName = action?.name || actionId;
+        
+        game.ui.notifications.warn(
+          `⚠️ Action "${actionName}" not yet migrated to pipeline system. Basic functionality only.`,
+          { permanent: false }
+        );
+        
+        console.warn(`⚠️ [ActionPhaseController] Unmigrated action: ${actionName} (${actionId})`);
+      }
 
       // Check requirements
       const kingdom = get(kingdomData);
@@ -228,6 +244,17 @@ export async function createActionPhaseController() {
         kingdom,
         preRolledValues
       );
+      
+      // ✅ CLEANUP: Clear pipeline metadata after successful execution
+      if (result.success && playerId) {
+        try {
+          const { pipelineMetadataStorage } = await import('../services/PipelineMetadataStorage');
+          pipelineMetadataStorage.clear(actionId, playerId);
+          console.log(`📦 [ActionPhaseController] Cleared pipeline metadata for ${actionId}`);
+        } catch (error) {
+          console.error('❌ [ActionPhaseController] Failed to clear pipeline metadata:', error);
+        }
+      }
       
       return result;
     },

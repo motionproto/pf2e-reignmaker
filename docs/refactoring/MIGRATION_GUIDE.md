@@ -87,6 +87,89 @@
 
 ---
 
+## Interaction Patterns (NEW)
+
+**Three distinct patterns** for user interactions, each suited to different action types:
+
+### Pattern 1: Pre-Roll Interactions (NEW - Actions #11+)
+
+**When to use:** Action needs user input BEFORE the roll (entity selection)
+
+**Examples:** execute-or-pardon-prisoners (#11), diplomatic relations (#12), aid requests (#13-14), army actions (#15-16)
+
+**How it works:**
+1. User clicks skill → Pre-roll dialog appears
+2. User selects entity (settlement, faction, army) → Stored in `PipelineMetadataStorage`
+3. Roll dialog appears → User rolls
+4. Roll completes → Metadata retrieved and merged into `CheckContext`
+5. Preview/Execute have access to metadata via `ctx.metadata`
+
+**Code pattern:**
+```typescript
+{
+  preRollInteractions: [
+    { id: 'settlement', type: 'entity-selection', entityType: 'settlement' }
+  ],
+  execute: async (ctx) => {
+    const settlementId = ctx.metadata.settlement.id;  // ✅ Available!
+    await performAction(settlementId);
+  }
+}
+```
+
+### Pattern 2: Post-Apply Interactions (Existing - Actions #1, #6-9)
+
+**When to use:** Action needs user input AFTER roll (map selection, entity creation)
+
+**Examples:** claim-hexes (#1), build-roads (#6), fortify-hex (#7), create-worksite (#8), send-scouts (#9)
+
+**How it works:**
+1. User clicks skill → Roll dialog appears
+2. User rolls → Preview calculated
+3. User clicks Apply → Post-apply dialog appears (map selection)
+4. User selects items → `onComplete()` callback executes with full context
+5. State changes applied directly in callback
+
+**Code pattern:**
+```typescript
+{
+  postApplyInteractions: [
+    {
+      type: 'map-selection',
+      onComplete: async (hexIds, ctx) => {
+        await markHexesClaimed(hexIds);  // Execute directly
+      }
+    }
+  ]
+}
+```
+
+### Pattern 3: No Interactions (Existing - Actions #2-5)
+
+**When to use:** Action is fully automatic (no user input needed)
+
+**Examples:** deal-with-unrest (#2), sell-surplus (#3), purchase-resources (#4), harvest-resources (#5)
+
+**How it works:**
+1. User clicks skill → Roll dialog appears
+2. User rolls → Preview calculated
+3. User clicks Apply → Execute runs immediately
+
+**Code pattern:**
+```typescript
+{
+  execute: async (ctx) => {
+    await updateKingdom(kingdom => {
+      kingdom.unrest -= 2;
+    });
+  }
+}
+```
+
+**Full Details:** See `PIPELINE_DATA_FLOW.md` for complete architectural documentation.
+
+---
+
 ## Prerequisites
 
 - [x] Architecture doc reviewed
@@ -95,6 +178,80 @@
 - [ ] Document current behavior for regression testing
 
 **Safety:** Changes behind feature flag, old code remains until Phase 6
+
+---
+
+## ⚠️ CRITICAL: Dice Modifier Pattern (COMMON MISTAKE)
+
+**Problem:** Dice modifiers are automatically evaluated by the system. Do NOT roll dice manually in `execute()`.
+
+**How It Works:**
+1. User clicks Apply → System evaluates ALL dice modifiers in `outcomes`
+2. Results stored in `ctx.resolutionData.numericModifiers`
+3. Execute function reads these PRE-ROLLED values
+4. Same dice values shown in preview are applied
+
+### ❌ WRONG: Rolling Dice in execute()
+
+```typescript
+export const requestEconomicAidPipeline: CheckPipeline = {
+  outcomes: {
+    criticalSuccess: {
+      modifiers: [
+        { type: 'dice', resource: 'gold', formula: '2d6', duration: 'immediate' }
+      ]
+    }
+  },
+  
+  execute: async (ctx) => {
+    // ❌ WRONG - Rolling AGAIN causes double-roll bug!
+    const roll = await new Roll('2d6').evaluate();
+    const goldAmount = roll.total || 0;
+    
+    await updateKingdom(k => {
+      k.resources.gold += goldAmount;  // Different value than preview!
+    });
+  }
+};
+```
+
+**Result:** Gold value changes between preview and application ❌
+
+### ✅ CORRECT: Reading Pre-Rolled Values
+
+```typescript
+export const requestEconomicAidPipeline: CheckPipeline = {
+  outcomes: {
+    criticalSuccess: {
+      modifiers: [
+        { type: 'dice', resource: 'gold', formula: '2d6', duration: 'immediate' }
+      ]
+    }
+  },
+  
+  execute: async (ctx) => {
+    // ✅ CORRECT - Read the value that was already rolled
+    const goldModifier = ctx.resolutionData.numericModifiers.find((m: any) => m.resource === 'gold');
+    const goldAmount = goldModifier?.value || 0;
+    
+    await updateKingdom(k => {
+      k.resources.gold += goldAmount;  // Same value as preview ✅
+    });
+  }
+};
+```
+
+**Result:** Preview and application use same dice value ✅
+
+### When Dice Are Evaluated
+
+**Timeline:**
+1. Roll completes → Preview calculated (modifiers NOT yet evaluated)
+2. User clicks Apply → **OutcomeDisplay.svelte evaluates dice modifiers**
+3. User sees rolled values in preview
+4. Execute runs → Reads from `ctx.resolutionData.numericModifiers`
+
+**Key Rule:** If you define dice modifiers in `outcomes`, NEVER use `new Roll()` in `execute()`.
 
 ---
 

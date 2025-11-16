@@ -7,8 +7,10 @@
   import RequestEconomicAidDialog from '../../../../actions/request-economic-aid/RequestEconomicAidDialog.svelte';
   import RequestMilitaryAidDialog from '../../../../actions/request-military-aid/RequestMilitaryAidDialog.svelte';
   import AidSelectionDialog from '../../../kingdom/components/AidSelectionDialog.svelte';
-  import SettlementSelectionDialog from '../../../../actions/execute-or-pardon-prisoners/SettlementSelectionDialog.svelte';
-  import ExecuteOrPardonSettlementDialog from '../../../../actions/execute-or-pardon-prisoners/SettlementSelectionDialog.svelte';
+  // REMOVED: SettlementSelectionDialog - execute-or-pardon-prisoners migrated to pipeline system
+  // import SettlementSelectionDialog from '../../../../actions/execute-or-pardon-prisoners/SettlementSelectionDialog.svelte';
+  // REMOVED: ExecuteOrPardonSettlementDialog - execute-or-pardon-prisoners migrated to pipeline system
+  // import ExecuteOrPardonSettlementDialog from '../../../../actions/execute-or-pardon-prisoners/SettlementSelectionDialog.svelte';
   import ArmySelectionDialog from '../../../../actions/train-army/ArmySelectionDialog.svelte';
   import DisbandArmyDialog from '../../../../actions/disband-army/ArmySelectionDialog.svelte';
   import OutfitArmyDialog from '../../../../actions/outfit-army/ArmySelectionDialog.svelte';
@@ -173,17 +175,8 @@
   on:cancel={handleAidCancel}
 />
 
-<!-- Settlement Selection Dialog (Collect Stipend) - using execute-or-pardon component temporarily -->
-<SettlementSelectionDialog
-  bind:show={showSettlementSelectionDialog}
-  on:settlementSelected={handleSettlementSelected}
-/>
-
-<!-- Settlement Selection Dialog (Execute or Pardon Prisoners) -->
-<ExecuteOrPardonSettlementDialog
-  bind:show={showExecuteOrPardonSettlementDialog}
-  on:settlementSelected={handleExecuteOrPardonSettlementSelected}
-/>
+<!-- Settlement Selection Dialog (Collect Stipend) - REMOVED: using pipeline system now -->
+<!-- Settlement Selection Dialog (Execute or Pardon Prisoners) - REMOVED: using pipeline system now -->
 
 <!-- Army Selection Dialog (Train Army) -->
 <ArmySelectionDialog

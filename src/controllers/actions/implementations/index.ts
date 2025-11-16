@@ -25,7 +25,8 @@ import RecruitArmyAction from '../../../actions/recruit-unit/RecruitUnitAction';
 import HarvestResourcesAction from '../../../actions/harvest-resources/HarvestResourcesAction';
 import PurchaseResourcesAction from '../../../actions/purchase-resources/PurchaseResourcesAction';
 import SellSurplusAction from '../../../actions/sell-surplus/SellSurplusAction';
-import ExecuteOrPardonPrisonersAction from '../../../actions/execute-or-pardon-prisoners/ExecuteOrPardonPrisonersAction';
+// REMOVED: ExecuteOrPardonPrisonersAction - migrated to pipeline system
+// import ExecuteOrPardonPrisonersAction from '../../../actions/execute-or-pardon-prisoners/ExecuteOrPardonPrisonersAction';
 // REMOVED: TrainArmyAction - migrated to prepare/commit pattern
 // import TrainArmyAction from '../../../actions/train-army/TrainArmyAction';
 // REMOVED: DisbandArmyAction - migrated to prepare/commit pattern
@@ -66,41 +67,43 @@ export interface CustomActionImplementation {
 
 /**
  * Registry of all custom action implementations
+ * 
+ * ⚠️ ALL REGISTRATIONS REMOVED - MIGRATING TO PIPELINE SYSTEM
+ * 
+ * This registry is being phased out in favor of the unified pipeline system.
+ * All actions will be migrated to pipelines over time. During the migration:
+ * - Actions with pipelines: Full functionality via pipeline system
+ * - Actions without pipelines: Basic functionality (modifiers only) + warning notification
+ * 
+ * The infrastructure remains for backward compatibility and reference.
  */
 const actionImplementations = new Map<string, CustomActionImplementation>();
 
-// Register action implementations
-actionImplementations.set(ArrestDissidentsAction.id, ArrestDissidentsAction);
-actionImplementations.set(RepairStructureAction.id, RepairStructureAction);
-actionImplementations.set(EstablishSettlementAction.id, EstablishSettlementAction);
-actionImplementations.set(UpgradeSettlementAction.id, UpgradeSettlementAction);
-actionImplementations.set(BuildStructureAction.id, BuildStructureAction);
-actionImplementations.set(EstablishDiplomaticRelationsAction.id, EstablishDiplomaticRelationsAction);
-actionImplementations.set(BuildRoadsAction.id, BuildRoadsAction);
-actionImplementations.set(ClaimHexesAction.id, ClaimHexesAction);
-actionImplementations.set(FortifyHexAction.id, FortifyHexAction);
-actionImplementations.set(SendScoutsAction.id, SendScoutsAction);
-actionImplementations.set(RecruitArmyAction.id, RecruitArmyAction);
-actionImplementations.set(HarvestResourcesAction.id, HarvestResourcesAction);
-actionImplementations.set(PurchaseResourcesAction.id, PurchaseResourcesAction);
-actionImplementations.set(SellSurplusAction.id, SellSurplusAction);
-actionImplementations.set(ExecuteOrPardonPrisonersAction.id, ExecuteOrPardonPrisonersAction);
-// REMOVED: TrainArmyAction - migrated to prepare/commit pattern (uses CheckInstanceHelpers + GameCommandsResolver)
-// actionImplementations.set(TrainArmyAction.id, TrainArmyAction);
-// REMOVED: DisbandArmyAction - migrated to prepare/commit pattern (uses CheckInstanceHelpers + GameCommandsResolver)
-// actionImplementations.set(DisbandArmyAction.id, DisbandArmyAction);
-// NOTE: OutfitArmyAction MUST stay registered - it uses post-roll dialog for equipment selection
-// The prepare/commit pattern doesn't work for actions that need post-roll user input
-actionImplementations.set(OutfitArmyAction.id, OutfitArmyAction);
-actionImplementations.set(DeployArmyAction.id, DeployArmyAction);
-actionImplementations.set(RequestMilitaryAidAction.id, RequestMilitaryAidAction);
-actionImplementations.set(RequestEconomicAidAction.id, RequestEconomicAidAction);
-// REMOVED: InfiltrationAction - not yet implemented
-// actionImplementations.set(InfiltrationAction.id, InfiltrationAction);
-
-// TODO: Add more action implementations as they're created
-// actionImplementations.set(RecruitArmyAction.id, RecruitArmyAction);
-// etc.
+// ⚠️ ALL REGISTRATIONS COMMENTED OUT - CLEAN SLATE FOR PIPELINE MIGRATION
+// 
+// Previously registered actions (kept for reference):
+// - ArrestDissidentsAction
+// - RepairStructureAction
+// - EstablishSettlementAction
+// - UpgradeSettlementAction
+// - BuildStructureAction
+// - EstablishDiplomaticRelationsAction (MIGRATED to pipeline)
+// - BuildRoadsAction (MIGRATED to pipeline)
+// - ClaimHexesAction (MIGRATED to pipeline)
+// - FortifyHexAction (MIGRATED to pipeline)
+// - SendScoutsAction (MIGRATED to pipeline)
+// - RecruitArmyAction
+// - HarvestResourcesAction (MIGRATED to pipeline)
+// - PurchaseResourcesAction (MIGRATED to pipeline)
+// - SellSurplusAction (MIGRATED to pipeline)
+// - ExecuteOrPardonPrisonersAction (MIGRATED to pipeline)
+// - OutfitArmyAction
+// - DeployArmyAction
+// - RequestMilitaryAidAction
+// - RequestEconomicAidAction
+//
+// To re-enable an action implementation (only if not migrating to pipeline):
+// actionImplementations.set(ActionClass.id, ActionClass);
 
 /**
  * Get custom implementation for an action
@@ -209,7 +212,7 @@ export async function executeCustomResolution(
 }
 
 // Export all implementations for direct use if needed
-export { ArrestDissidentsAction, RepairStructureAction, EstablishSettlementAction, UpgradeSettlementAction, BuildStructureAction, EstablishDiplomaticRelationsAction, BuildRoadsAction, ClaimHexesAction, FortifyHexAction, SendScoutsAction, RecruitArmyAction, HarvestResourcesAction, PurchaseResourcesAction, SellSurplusAction, ExecuteOrPardonPrisonersAction, OutfitArmyAction, DeployArmyAction, RequestMilitaryAidAction, RequestEconomicAidAction };
+export { ArrestDissidentsAction, RepairStructureAction, EstablishSettlementAction, UpgradeSettlementAction, BuildStructureAction, EstablishDiplomaticRelationsAction, BuildRoadsAction, ClaimHexesAction, FortifyHexAction, SendScoutsAction, RecruitArmyAction, HarvestResourcesAction, PurchaseResourcesAction, SellSurplusAction, OutfitArmyAction, DeployArmyAction, RequestMilitaryAidAction, RequestEconomicAidAction };
 
 // TODO: Export additional implementations as they're created
 // export { RecruitArmyAction };

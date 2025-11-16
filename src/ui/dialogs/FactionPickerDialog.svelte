@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import Dialog from '../../view/kingdom/components/baseComponents/Dialog.svelte';
   import { getKingdomActor } from '../../stores/KingdomStore';
   import type { Faction, AttitudeLevel } from '../../models/Faction';
   import { ATTITUDE_ORDER } from '../../models/Faction';
@@ -16,13 +17,41 @@
   export let eligibleFactions: Faction[] = [];
   export let allowMultiple: boolean = false;
   export let count: number = 1;
+  export let filter: ((faction: Faction, kingdom?: any) => boolean | { eligible: boolean; reason?: string }) | undefined = undefined;
+  export let kingdom: any = undefined;
   
   const dispatch = createEventDispatcher();
   
   // UI State
   let selectedFactionIds: Set<string> = new Set();
   
+  // Compute if confirm should be disabled
+  $: confirmDisabled = selectedFactionIds.size !== count;
+  
+  // Check if a faction is eligible and get reason if not
+  function checkEligibility(faction: Faction): { eligible: boolean; reason?: string } {
+    if (!filter) return { eligible: true };
+    
+    const result = filter(faction, kingdom);
+    
+    // Handle boolean return (legacy compatibility)
+    if (typeof result === 'boolean') {
+      return { eligible: result };
+    }
+    
+    // Handle object return with eligibility info
+    return result;
+  }
+  
   function toggleFaction(faction: Faction) {
+    // Check if faction is eligible
+    const eligibility = checkEligibility(faction);
+    if (!eligibility.eligible) {
+      // @ts-ignore
+      ui?.notifications?.warn(eligibility.reason || 'This faction cannot be selected');
+      return;
+    }
+    
     if (selectedFactionIds.has(faction.id)) {
       selectedFactionIds.delete(faction.id);
     } else {
@@ -79,214 +108,64 @@
   }
 </script>
 
-{#if show}
-<div class="dialog-overlay" on:click={handleCancel}>
-  <div class="dialog-content" on:click|stopPropagation>
-    <div class="dialog-header">
-      <h2>{title}</h2>
-      <button class="close-button" on:click={handleCancel}>
-        <i class="fas fa-times"></i>
-      </button>
+<Dialog 
+  bind:show 
+  {title}
+  confirmLabel="Select {count > 1 ? 'Factions' : 'Faction'}"
+  cancelLabel="Cancel"
+  {confirmDisabled}
+  width="600px"
+  onConfirm={handleConfirm}
+  onCancel={handleCancel}
+>
+  <div slot="footer-left" class="selection-count">
+    {selectedFactionIds.size}/{count} selected
+  </div>
+
+  {#if eligibleFactions.length === 0}
+    <div class="no-factions">
+      <i class="fas fa-exclamation-circle"></i>
+      <p>No eligible factions available.</p>
     </div>
-    
-    <div class="dialog-body">
-      {#if eligibleFactions.length === 0}
-        <div class="no-factions">
-          <i class="fas fa-exclamation-circle"></i>
-          <p>No eligible factions available.</p>
-        </div>
-      {:else}
-        <div class="faction-table">
-          <div class="table-header">
-            <div class="col-name">Faction</div>
-            <div class="col-attitude">Current Attitude</div>
-          </div>
-          
-          <div class="table-body">
-            {#each eligibleFactions as faction (faction.id)}
-              {@const config = getAttitudeConfig(faction.attitude)}
-              <div
-                class="table-row"
-                class:selected={selectedFactionIds.has(faction.id)}
-                on:click={() => toggleFaction(faction)}
-              >
-                <div class="col-name">
-                  {faction.name}
-                </div>
-                <div class="col-attitude">
-                  <div class="attitude-badge" style="border-color: {config.color};">
-                    <i class="fas {config.icon}" style="color: {config.color};"></i>
-                    <span>{config.displayName}</span>
-                  </div>
+  {:else}
+    <div class="faction-table">
+      <div class="table-header">
+        <div class="col-name">Faction</div>
+        <div class="col-attitude">Current Attitude</div>
+      </div>
+      
+      <div class="table-body">
+        {#each eligibleFactions as faction (faction.id)}
+          {@const config = getAttitudeConfig(faction.attitude)}
+          {@const eligibility = checkEligibility(faction)}
+          {#if eligibility.eligible}
+            <div
+              class="table-row"
+              class:selected={selectedFactionIds.has(faction.id)}
+              on:click={() => toggleFaction(faction)}
+            >
+              <div class="col-name">
+                <div class="name-text">{faction.name}</div>
+              </div>
+              <div class="col-attitude">
+                <div class="attitude-badge" style="border-color: {config.color};">
+                  <i class="fas {config.icon}" style="color: {config.color};"></i>
+                  <span>{config.displayName}</span>
                 </div>
               </div>
-            {/each}
-          </div>
-        </div>
-      {/if}
-    </div>
-    
-    <div class="dialog-footer">
-      <div class="selection-count">
-        {selectedFactionIds.size}/{count} selected
-      </div>
-      <div class="footer-buttons">
-        <button class="cancel-button" on:click={handleCancel}>
-          Cancel
-        </button>
-        <button 
-          class="confirm-button" 
-          disabled={selectedFactionIds.size !== count}
-          on:click={handleConfirm}
-        >
-          <i class="fas fa-check"></i>
-          Select {count > 1 ? 'Factions' : 'Faction'}
-        </button>
+            </div>
+          {/if}
+        {/each}
       </div>
     </div>
-  </div>
-</div>
-{/if}
+  {/if}
+</Dialog>
 
 <style lang="scss">
-  .dialog-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--overlay-higher);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    animation: fadeIn 0.2s ease;
-  }
-  
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-  
-  .dialog-content {
-    background: var(--surface-lower);
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-lg);
-    box-shadow: 0 20px 60px var(--overlay-high);
-    width: 600px;
-    max-width: 90vw;
-    max-height: 80vh;
-    display: flex;
-    flex-direction: column;
-    animation: slideUp 0.3s ease;
-  }
-  
-  @keyframes slideUp {
-    from {
-      transform: translateY(30px);
-      opacity: 0;
-    }
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
-  }
-  
-  .dialog-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px 24px;
-    border-bottom: 1px solid var(--border-medium);
-    
-    h2 {
-      margin: 0;
-      font-size: var(--font-2xl);
-      font-weight: var(--font-weight-semibold);
-      color: var(--text-primary);
-    }
-    
-    .close-button {
-      background: none;
-      border: none;
-      color: var(--text-tertiary);
-      font-size: var(--font-lg);
-      cursor: pointer;
-      padding: 4px 8px;
-      transition: color 0.2s ease;
-      
-      &:hover {
-        color: var(--text-primary);
-      }
-    }
-  }
-  
-  .dialog-body {
-    padding: 20px 24px;
-    overflow-y: auto;
-    flex: 1;
-  }
-  
-  .dialog-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 24px;
-    border-top: 1px solid var(--border-medium);
-    
-    .selection-count {
-      font-size: var(--font-md);
-      font-weight: var(--font-weight-medium);
-      color: var(--text-secondary);
-    }
-    
-    .footer-buttons {
-      display: flex;
-      gap: 12px;
-    }
-    
-    button {
-      padding: 10px 20px;
-      border-radius: var(--radius-md);
-      font-size: var(--font-md);
-      font-weight: var(--font-weight-medium);
-      cursor: pointer;
-      transition: all 0.2s ease;
-      
-      &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-    }
-    
-    .cancel-button {
-      background: var(--surface-lower);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-secondary);
-      
-      &:hover:not(:disabled) {
-        background: var(--surface-low);
-        color: var(--text-primary);
-      }
-    }
-    
-    .confirm-button {
-      background: var(--color-primary);
-      border: none;
-      color: white;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      
-      &:hover:not(:disabled) {
-        background: var(--color-primary-dark);
-        transform: translateY(-1px);
-      }
-    }
+  .selection-count {
+    font-size: var(--font-md);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-secondary);
   }
   
   .no-factions {
@@ -309,6 +188,9 @@
     border: 1px solid var(--border-medium);
     border-radius: var(--radius-md);
     overflow: hidden;
+    max-height: 400px;
+    display: flex;
+    flex-direction: column;
   }
   
   .table-header {
@@ -328,6 +210,8 @@
   .table-body {
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
+    flex: 1;
   }
   
   .table-row {
@@ -356,8 +240,21 @@
     }
     
     .col-name {
-      font-weight: var(--font-weight-semibold);
-      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      
+      .name-text {
+        font-weight: var(--font-weight-semibold);
+        color: var(--text-primary);
+      }
+      
+      .ineligible-reason {
+        font-size: var(--font-sm);
+        color: var(--text-tertiary);
+        font-weight: var(--font-weight-normal);
+        font-style: italic;
+      }
     }
     
     .col-attitude {

@@ -40,7 +40,7 @@
   import { createActionCheckInstance, updateCheckInstanceOutcome, type PendingActionsState } from '../../../controllers/actions/CheckInstanceHelpers';
 
   // Migrated actions (temporary tracking during pipeline migration)
-  const MIGRATED_ACTIONS = new Set(['claim-hexes', 'deal-with-unrest', 'sell-surplus', 'purchase-resources', 'harvest-resources', 'build-roads', 'fortify-hex', 'create-worksite', 'send-scouts', 'collect-stipend']);
+  const MIGRATED_ACTIONS = new Set(['claim-hexes', 'deal-with-unrest', 'sell-surplus', 'purchase-resources', 'harvest-resources', 'build-roads', 'fortify-hex', 'create-worksite', 'send-scouts', 'collect-stipend', 'execute-or-pardon-prisoners', 'establish-diplomatic-relations', 'request-economic-aid', 'request-military-aid']);
   
   // Action number mapping for migration badges
   const MIGRATED_ACTION_NUMBERS = new Map([
@@ -53,7 +53,11 @@
     ['fortify-hex', 7],
     ['create-worksite', 8],
     ['send-scouts', 9],
-    ['collect-stipend', 10]
+    ['collect-stipend', 10],
+    ['execute-or-pardon-prisoners', 11],
+    ['establish-diplomatic-relations', 12],
+    ['request-economic-aid', 13],
+    ['request-military-aid', 14]
   ]);
 
   // Initialize controller and services
@@ -566,6 +570,49 @@
   // Handle skill execution from CheckCard (decoupled from component)
   async function handleExecuteSkill(event: CustomEvent, action: any) {
     const { skill } = event.detail;
+    
+    // ✅ CHECK FOR MIGRATED PIPELINE ACTIONS FIRST
+    if (MIGRATED_ACTIONS.has(action.id)) {
+      // Use UnifiedCheckHandler for migrated actions
+      const { unifiedCheckHandler } = await import('../../../services/UnifiedCheckHandler');
+      const { PipelineIntegrationAdapter } = await import('../../../services/PipelineIntegrationAdapter');
+      const { pipelineMetadataStorage } = await import('../../../services/PipelineMetadataStorage');
+      
+      // Check if action needs pre-roll interactions
+      if (unifiedCheckHandler.needsPreRollInteraction(action.id)) {
+        console.log(`🎯 [ActionsPhase] Executing pre-roll interactions for ${action.id}`);
+        
+        try {
+          // Execute pre-roll interactions (e.g., settlement selection)
+          const metadata = await PipelineIntegrationAdapter.executePreRollInteractions(
+            action.id,
+            $kingdomData
+          );
+          
+          // ✅ STORE METADATA for retrieval when check instance is created
+          if (currentUserId) {
+            pipelineMetadataStorage.store(action.id, currentUserId, metadata);
+            console.log('✅ [ActionsPhase] Stored pipeline metadata');
+          }
+          
+          // Now execute the roll with the metadata
+          await executeSkillAction(
+            { detail: { skill, checkId: action.id, checkName: action.name } } as CustomEvent,
+            action
+          );
+        } catch (error) {
+          console.error(`❌ [ActionsPhase] Pre-roll interactions failed:`, error);
+        }
+        return;
+      }
+      
+      // No pre-roll interactions needed, proceed directly to roll
+      await executeSkillAction(
+        { detail: { skill, checkId: action.id, checkName: action.name } } as CustomEvent,
+        action
+      );
+      return;
+    }
     
     // Check if action uses new dialogService pattern
     const { getActionImplementation } = await import('../../../controllers/actions/implementations');

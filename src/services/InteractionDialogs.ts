@@ -14,14 +14,16 @@ import { kingdomData } from '../stores/KingdomStore';
  * @param entityType - Type of entity to select (settlement, army, faction)
  * @param label - Dialog label
  * @param filter - Optional filter function
+ * @param kingdom - Kingdom data to pass to filter
  * @returns Selected entity ID or null if cancelled
  */
 export async function showEntitySelectionDialog(
   entityType: 'settlement' | 'army' | 'faction',
   label?: string,
-  filter?: (entity: any) => boolean
+  filter?: (entity: any, kingdom?: any) => boolean | { eligible: boolean; reason?: string },
+  kingdomParam?: any
 ): Promise<string | null> {
-  const kingdom = get(kingdomData);
+  const kingdom = kingdomParam || get(kingdomData);
   if (!kingdom) {
     console.error('[InteractionDialogs] No kingdom data available');
     return null;
@@ -41,7 +43,9 @@ export async function showEntitySelectionDialog(
       entityLabel = 'Army';
       break;
     case 'faction':
-      entities = kingdom.factions || [];
+      // ✅ FIX: Factions are managed by factionService, not stored in kingdom
+      const { factionService } = await import('./factions');
+      entities = factionService.getAllFactions();
       entityLabel = 'Faction';
       break;
     default:
@@ -51,7 +55,12 @@ export async function showEntitySelectionDialog(
 
   // Apply filter if provided
   if (filter) {
-    entities = entities.filter(filter);
+    entities = entities.filter(e => {
+      const result = filter(e, kingdom);
+      // Handle both boolean and object returns
+      if (typeof result === 'boolean') return result;
+      return result.eligible;
+    });
   }
 
   if (entities.length === 0) {
@@ -62,7 +71,54 @@ export async function showEntitySelectionDialog(
     return null;
   }
 
-  // Create dialog HTML
+  // Use FactionPickerDialog for faction selection (supports rich display)
+  if (entityType === 'faction') {
+    const FactionPickerDialog = await import('../ui/dialogs/FactionPickerDialog.svelte');
+
+    return new Promise((resolve) => {
+      // Create container element
+      const container = document.createElement('div');
+      container.id = 'faction-picker-dialog-container';
+      document.body.appendChild(container);
+
+      // Create Svelte component instance
+      const dialog = new FactionPickerDialog.default({
+        target: container,
+        props: {
+          show: true,
+          title: label || `Select ${entityLabel}`,
+          eligibleFactions: entities,
+          allowMultiple: false,
+          count: 1,
+          filter,
+          kingdom
+        }
+      });
+
+      // Listen for confirm event
+      dialog.$on('confirm', (event: any) => {
+        const selectedFactionIds = event.detail.factionIds;
+        const selectedId = selectedFactionIds[0] || null;
+        
+        // Cleanup
+        dialog.$destroy();
+        container.remove();
+        
+        resolve(selectedId);
+      });
+
+      // Listen for cancel event
+      dialog.$on('cancel', () => {
+        // Cleanup
+        dialog.$destroy();
+        container.remove();
+        
+        resolve(null);
+      });
+    });
+  }
+
+  // Use simple Foundry dialog for settlements and armies
   const options = entities
     .map(e => `<option value="${e.id}">${e.name}</option>`)
     .join('');
@@ -78,8 +134,8 @@ export async function showEntitySelectionDialog(
   `;
 
   return new Promise((resolve) => {
-    const game = (globalThis as any).game;
-    new game.Dialog({
+    const Dialog = (globalThis as any).Dialog;
+    new Dialog({
       title: label || `Select ${entityLabel}`,
       content,
       buttons: {
@@ -123,8 +179,8 @@ export async function showTextInputDialog(
   `;
 
   return new Promise((resolve) => {
-    const game = (globalThis as any).game;
-    new game.Dialog({
+    const Dialog = (globalThis as any).Dialog;
+    new Dialog({
       title: label,
       content,
       buttons: {
@@ -174,8 +230,8 @@ export async function showChoiceDialog(
   `;
 
   return new Promise((resolve) => {
-    const game = (globalThis as any).game;
-    new game.Dialog({
+    const Dialog = (globalThis as any).Dialog;
+    new Dialog({
       title: label,
       content,
       buttons: {
@@ -212,8 +268,8 @@ export async function showConfirmationDialog(
   const content = `<p>${message}</p>`;
 
   return new Promise((resolve) => {
-    const game = (globalThis as any).game;
-    new game.Dialog({
+    const Dialog = (globalThis as any).Dialog;
+    new Dialog({
       title: 'Confirm',
       content,
       buttons: {

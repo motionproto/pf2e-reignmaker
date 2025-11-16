@@ -98,7 +98,7 @@
   confirmDisabled={confirmDisabled}
   onConfirm={handleConfirm}
   onCancel={handleCancel}
-  width="600px"
+  width="750px"
 >
   <div class="dialog-content">
     {#if eligibleArmies.length === 0}
@@ -165,7 +165,7 @@
 
 <style lang="scss">
   .dialog-content {
-    min-width: 550px;
+    min-width: 700px;
   }
 
   .no-armies {
@@ -225,13 +225,13 @@
     flex-direction: column;
     align-items: center;
     gap: 0.5rem;
-    padding: 1rem;
+    padding: 1.25rem;
     background: var(--overlay);
     border: 2px solid var(--border-subtle);
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
-    min-height: 120px;
+    min-height: 140px;
 
     &:hover:not(:disabled) {
       background: var(--overlay-high);
@@ -268,23 +268,25 @@
   }
 
   .equipment-bonus {
-    padding: 0.25rem 0.5rem;
+    padding: 0.35rem 0.75rem;
     background: var(--surface-success-high);
     border: 1px solid var(--border-success-subtle);
     border-radius: 4px;
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--color-green);
+    white-space: nowrap;
   }
 
   .owned-badge {
-    padding: 0.25rem 0.5rem;
+    padding: 0.35rem 0.75rem;
     background: var(--hover);
     border: 1px solid var(--border-default);
     border-radius: 4px;
     font-size: 0.85rem;
     font-weight: 600;
     color: #ffffff;
+    white-space: nowrap;
   }
 
   .all-equipped {

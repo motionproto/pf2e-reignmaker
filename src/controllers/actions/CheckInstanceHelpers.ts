@@ -216,7 +216,28 @@ export async function createActionCheckInstance(context: {
     } : undefined
   };
   
-  // Create instance
+  // ✅ RETRIEVE PIPELINE METADATA BEFORE creating instance
+  try {
+    const { pipelineMetadataStorage } = await import('../../services/PipelineMetadataStorage');
+    const game = (window as any).game;
+    const userId = game?.user?.id;
+    
+    if (userId) {
+      const pipelineMetadata = pipelineMetadataStorage.retrieve(actionId, userId);
+      
+      if (pipelineMetadata) {
+        console.log(`📦 [CheckInstanceHelpers] Retrieved pipeline metadata for ${actionId}:`, pipelineMetadata);
+        
+        // MERGE pipeline metadata into metadata object BEFORE creating instance
+        Object.assign(metadata, pipelineMetadata);
+        console.log(`📦 [CheckInstanceHelpers] Merged metadata:`, metadata);
+      }
+    }
+  } catch (error) {
+    console.error('❌ [CheckInstanceHelpers] Failed to retrieve pipeline metadata:', error);
+  }
+  
+  // Create instance with complete metadata (including faction info)
   const instanceId = await checkInstanceService.createInstance(
     'action',
     actionId,
@@ -293,7 +314,7 @@ export async function createActionCheckInstance(context: {
   const MIGRATED_ACTIONS = new Set([
     'deal-with-unrest', 'sell-surplus', 'purchase-resources', 'harvest-resources',
     'claim-hexes', 'build-roads', 'fortify-hex', 'create-worksite', 'send-scouts',
-    'collect-stipend'
+    'collect-stipend', 'execute-or-pardon-prisoners', 'dimplomatic-mission'
   ]);
   
   if (MIGRATED_ACTIONS.has(actionId)) {
