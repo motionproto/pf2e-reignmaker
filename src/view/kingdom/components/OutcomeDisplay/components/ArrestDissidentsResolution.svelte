@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount, onDestroy } from 'svelte';
   import { kingdomData } from '../../../../../stores/KingdomStore';
   import { structuresService } from '../../../../../services/structures';
   import type { ActiveCheckInstance } from '../../../../../models/CheckInstance';
@@ -7,6 +7,7 @@
     updateInstanceResolutionState,
     getInstanceResolutionState 
   } from '../../../../../controllers/shared/ResolutionStateHelpers';
+  import { getValidationContext } from '../context/ValidationContext';
 
   // Props
   export let instance: ActiveCheckInstance | null = null;
@@ -16,6 +17,10 @@
   export let applied: boolean = false;  // Track if result has been applied
 
   const dispatch = createEventDispatcher();
+  
+  // ✨ NEW: Register with validation context
+  const validationContext = getValidationContext();
+  const providerId = 'arrest-dissidents-resolution';
 
   // Determine how much unrest can be imprisoned based on outcome
   $: maxUnrestToImprison = outcome === 'criticalSuccess' ? 8 : 4;
@@ -52,6 +57,32 @@
 
   // Check if resolution is complete (user has allocated something)
   $: isResolved = totalAllocated > 0;
+  
+  // ✨ NEW: Register validation on mount
+  onMount(() => {
+    if (validationContext) {
+      validationContext.register(providerId, {
+        id: providerId,
+        needsResolution: true,  // Always needs allocation decision
+        isResolved: isResolved
+      });
+    }
+  });
+  
+  // ✨ NEW: Update validation state when allocation changes
+  $: if (validationContext) {
+    validationContext.update(providerId, {
+      needsResolution: true,
+      isResolved: isResolved
+    });
+  }
+  
+  // ✨ NEW: Unregister on destroy
+  onDestroy(() => {
+    if (validationContext) {
+      validationContext.unregister(providerId);
+    }
+  });
 
   async function handleAllocate(settlementId: string) {
     if (!instance) return;

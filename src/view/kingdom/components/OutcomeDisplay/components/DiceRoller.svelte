@@ -1,15 +1,46 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount, onDestroy } from 'svelte';
   import { detectDiceModifiers, rollDiceFormula, formatStateChangeLabel } from '../../../../../services/resolution';
+  import { getValidationContext } from '../context/ValidationContext';
   
   export let modifiers: any[] | undefined;
   export let resolvedDice: Map<number | string, number>;
   
   const dispatch = createEventDispatcher();
   
+  // ✨ NEW: Register with validation context
+  const validationContext = getValidationContext();
+  const providerId = 'dice-roller';
+  
   $: diceModifiers = detectDiceModifiers(modifiers);
   $: hasDiceModifiers = diceModifiers.length > 0;
   $: allResolved = hasDiceModifiers && diceModifiers.every(m => resolvedDice.has(m.originalIndex));
+  
+  // ✨ NEW: Register validation on mount
+  onMount(() => {
+    if (validationContext) {
+      validationContext.register(providerId, {
+        id: providerId,
+        needsResolution: hasDiceModifiers,
+        isResolved: allResolved
+      });
+    }
+  });
+  
+  // ✨ NEW: Update validation state when dice/resolution changes
+  $: if (validationContext) {
+    validationContext.update(providerId, {
+      needsResolution: hasDiceModifiers,
+      isResolved: allResolved
+    });
+  }
+  
+  // ✨ NEW: Unregister on destroy
+  onDestroy(() => {
+    if (validationContext) {
+      validationContext.unregister(providerId);
+    }
+  });
   
   function handleRoll(modifier: any) {
     // Extract formula from either typed format (formula field) or legacy format (value field)

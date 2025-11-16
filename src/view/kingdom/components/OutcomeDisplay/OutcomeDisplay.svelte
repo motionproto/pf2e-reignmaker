@@ -8,6 +8,9 @@
     computeDisplayStateChanges
   } from './logic/OutcomeDisplayLogic';
   
+  // ✨ NEW: Validation context for centralized validation
+  import { setValidationContext } from './context/ValidationContext';
+  
   // Helper to get settlement name from pending state
   function getSelectedSettlementName(): string | null {
     const settlementId = (globalThis as any).__pendingExecuteOrPardonSettlement;
@@ -89,9 +92,12 @@
   export let customResolutionProps: Record<string, any> = {};  // Props to pass to custom component
   
   const dispatch = createEventDispatcher();
-  const DICE_PATTERN = /^-?\(?\d+d\d+([+-]\d+)?\)?$|^-?\d+d\d+([+-]\d+)?$/;
+  const DICE_PATTERN = /^-?\(?\\d+d\\d+([+-]\\d+)?\)?$|^-?\d+d\d+([+-]\d+)?$/;
   
   type OutcomeType = 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
+  
+  // ✨ NEW: Create validation context for sub-components to register with
+  const validationContext = setValidationContext();
   
   // ✅ READ state from instance (syncs across all clients)
   $: resolutionState = getInstanceResolutionState(instance);
@@ -339,56 +345,33 @@
   $: showFameRerollButton = showFameReroll && !applied && !isIgnored && !hasAnyResolutionState;
   $: effectivePrimaryLabel = applied ? '✓ Applied' : primaryButtonLabel;
   
-  // Validation logic with debug logging
-  // FIXED: Check ALL interactive elements (choices, dice, state changes) independently
+  // ✨ NEW: Validation via context (collects from all registered providers)
+  $: unresolvedProviders = Array.from($validationContext.values()).filter(
+    p => p.needsResolution && !p.isResolved
+  );
+  
+  // ✨ NEW: Simplified validation logic using context-based validation
   let primaryButtonDisabled = false;
   $: {
     // Check if there's any content to apply
-    // A message alone counts as content (e.g., "Surge slows" with empty modifiers)
     const hasMessage = effect && effect.trim().length > 0;
     const hasManualEffects = manualEffects && manualEffects.length > 0;
     const hasNumericModifiers = modifiers && modifiers.length > 0;
     const hasStateChanges = stateChanges && Object.keys(stateChanges).length > 0;
     const hasCustomData = customComponentData && Object.keys(customComponentData).length > 0;
     const hasChoiceResultData = choiceResult && Object.keys(choiceResult.stateChanges || {}).length > 0;
-    const hasSpecialEffects = specialEffects && specialEffects.length > 0;  // FIXED: Check for special effects
+    const hasSpecialEffects = specialEffects && specialEffects.length > 0;
     const hasContent = hasMessage || hasManualEffects || hasNumericModifiers || hasStateChanges || hasCustomData || hasChoiceResultData || hasSpecialEffects;
     
-    const validationState = {
-      applied,
-      hasChoices,
-      choicesResolved,
-      hasDiceModifiers,
-      diceResolved,
-      hasStateChangeDice,
-      stateChangeDiceResolved,
-      hasMessage,
-      hasManualEffects,
-      hasContent,
-      resolvedDiceKeys: Array.from(resolvedDice.keys()),
-      stateChangeDiceKeys: stateChangeDice.map(d => `state:${d.key}`)
-    };
-
     // If there's no content at all, this is a data error
     if (!hasContent && !applied) {
       ui.notifications?.error('Outcome data error: No message or modifiers to display');
     }
     
-    // FIXED: Check ALL resolution requirements independently
-    // Choices, dice, state changes, choice modifiers, and custom components can all coexist
-    const choicesNeedResolution = hasChoices && !choicesResolved;
-    const diceNeedResolution = hasDiceModifiers && !diceResolved;
-    const stateChangeDiceNeedResolution = hasStateChangeDice && !stateChangeDiceResolved;
-    const choiceModifiersNeedResolution = hasChoiceModifiers && !choiceModifiersResolved;
-    const customComponentNeedsResolution = hasCustomComponent && !customComponentResolved;
+    // ✨ Context-based validation (all components register themselves)
+    const contextValidationFails = unresolvedProviders.length > 0;
     
-    primaryButtonDisabled = applied || 
-      choicesNeedResolution ||
-      diceNeedResolution ||
-      stateChangeDiceNeedResolution ||
-      choiceModifiersNeedResolution ||
-      customComponentNeedsResolution ||
-      !hasContent;
+    primaryButtonDisabled = applied || contextValidationFails || !hasContent;
   }
   
   // Display effective message and state changes

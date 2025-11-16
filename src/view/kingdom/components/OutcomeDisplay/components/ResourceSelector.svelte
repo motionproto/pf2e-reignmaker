@@ -1,11 +1,16 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount, onDestroy } from 'svelte';
   import { getResourceIcon } from '../../../../kingdom/utils/presentation';
+  import { getValidationContext } from '../context/ValidationContext';
   
   export let modifiers: any[] | undefined = undefined;
   export let selectedResources: Map<number, string> = new Map();
   
   const dispatch = createEventDispatcher();
+  
+  // ✨ NEW: Register with validation context
+  const validationContext = getValidationContext();
+  const providerId = 'resource-selector';
   
   // Filter to only choice-dropdown modifiers (those with resources array)
   // BREAKING CHANGE: Only recognizes explicit type: "choice-dropdown"
@@ -14,6 +19,33 @@
     .filter(m => m.type === 'choice-dropdown' && Array.isArray(m.resources));
   
   $: hasChoiceModifiers = choiceModifiers.length > 0;
+  $: allResolved = hasChoiceModifiers && choiceModifiers.every(m => selectedResources.has(m.originalIndex));
+  
+  // ✨ NEW: Register validation on mount
+  onMount(() => {
+    if (validationContext) {
+      validationContext.register(providerId, {
+        id: providerId,
+        needsResolution: hasChoiceModifiers,
+        isResolved: allResolved
+      });
+    }
+  });
+  
+  // ✨ NEW: Update validation state when modifiers/selections change
+  $: if (validationContext) {
+    validationContext.update(providerId, {
+      needsResolution: hasChoiceModifiers,
+      isResolved: allResolved
+    });
+  }
+  
+  // ✨ NEW: Unregister on destroy
+  onDestroy(() => {
+    if (validationContext) {
+      validationContext.unregister(providerId);
+    }
+  });
   
   function handleResourceSelect(modifierIndex: number, resource: string) {
     dispatch('select', { modifierIndex, resource });

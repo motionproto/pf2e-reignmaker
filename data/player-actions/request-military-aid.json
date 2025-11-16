@@ -52,7 +52,7 @@
       "modifiers": [],
       "gameCommands": [
         {
-          "type": "requestMilitaryAidFactionAttitude",
+          "type": "adjustFactionAttitude",
           "steps": -1
         }
       ]

@@ -2,182 +2,42 @@
 
 **Purpose:** Step-by-step implementation plan for unifying Actions, Events, and Incidents
 
-**Last Updated:** 2025-11-14
+**Last Updated:** 2025-11-16
 
 ---
 
-## Architecture Overview
+## Quick Start
 
-**Current:** Three separate systems (Actions, Events, Incidents) with duplicated check resolution logic.
+**Goal:** Migrate 26 actions from custom implementations to unified CheckPipeline configs.
 
-**Target:** Single unified pipeline where:
-- **CheckPipeline** = Config object defining: skills, outcomes, interactions, preview
-- **UnifiedCheckHandler** = Executes pipelines, manages check instances
-- **Preview** = Calculated before Apply, shows resource/entity changes
-- **Interactions** = Pre-roll (selection), post-roll (choices), post-apply (map)
+**Current Progress:** 14/26 actions (54%) - See `ACTION_MIGRATION_CHECKLIST.md`
 
-**Key Change:** Move business logic from scattered custom files → Centralized pipeline configs
+**Architecture:** See `PIPELINE_DATA_FLOW.md` for complete data flow and interaction patterns.
 
-**Full Architecture:** See `docs/UNIFIED_CHECK_ARCHITECTURE.md`
+---
+
+## ⚠️ CRITICAL PATTERNS (Read Before Migrating)
+
+Before migrating any action, understand these three critical patterns to avoid common bugs:
+
+1. **[Dice Modifier Pattern](#️-critical-dice-modifier-pattern-common-mistake)** - Prevents double-rolling
+2. **[Shared Execution Functions](#️-critical-shared-execution-functions-dry-principle)** - Avoid code duplication
+3. **[Declarative Modifiers](#️-critical-declarative-modifiers-vs-execution-functions)** - When to use modifiers vs. execute()
 
 ---
 
 ## Implementation Order
 
-1. **Core Handler Structure** - UnifiedCheckHandler skeleton, type definitions
-2. **Preview Infrastructure** - Preview calculation and formatting
-3. **Game Commands Refactor** - Extract execution functions, eliminate globals
-4. **Simple Actions** - Resource-only actions (deal-with-unrest, etc.)
-5. **Pre-Roll Dialog Actions** - Entity selection actions (collect-stipend, etc.)
-6. **Game Command Actions** - Actions with complex execution (recruit-unit, etc.)
-7. **Custom Resolution Actions** - Special logic actions (arrest-dissidents, etc.)
-8. **Events** - Convert 37 events to pipeline configs
-9. **Incidents** - Convert 30 incidents to pipeline configs
+1. **Core Handler Structure** - UnifiedCheckHandler skeleton, type definitions ✅
+2. **Preview Infrastructure** - Preview calculation and formatting ✅
+3. **Game Commands Refactor** - Extract execution functions, eliminate globals ✅
+4. **Simple Actions** (9) - Resource-only actions 🔄 **In Progress**
+5. **Pre-Roll Dialog Actions** (7) - Entity selection actions 🔄 **In Progress**
+6. **Game Command Actions** (5) - Actions with complex execution
+7. **Custom Resolution Actions** (5) - Special logic actions
+8. **Events** (37) - Convert to pipeline configs
+9. **Incidents** (30) - Convert to pipeline configs
 10. **Cleanup** - Remove old code, archive docs
-
----
-
-## Pipeline Flow (Complete Check Resolution)
-
-```
-1. Check Triggered
-   └─> CheckPipeline config loaded by UnifiedCheckHandler
-
-2. Pre-Roll Interactions (optional)
-   └─> Entity selection, configuration dialogs
-   └─> Results stored in metadata
-
-3. Skill Check Execution
-   └─> Roll against DC + modifiers
-   └─> Determine outcome (critical success/success/failure/critical failure)
-
-4. Post-Roll Interactions (optional)
-   └─> Choice widgets (inline in preview)
-   └─> Dice rolls based on outcome
-   └─> Results affect preview calculation
-
-5. Preview Calculation
-   └─> pipeline.preview.calculate(context)
-   └─> Returns: resources, entities, specialEffects
-   └─> Formatted into preview badges
-   └─> NO state changes
-
-6. User Review
-   └─> User sees outcome + preview
-   └─> Clicks "Apply" to commit
-   └─> NO state changes (UI only)
-
-7. Post-Apply Interactions (optional)
-   └─> Map selections (full-screen)
-   └─> Complex workflows requiring commitment first
-   └─> MAY update kingdom state (e.g., claim-hexes updates hex ownership)
-
-8. Final Execution (if not handled by step 7)
-   └─> pipeline.execute(context) OR game commands
-   └─> Applies remaining state changes to kingdom
-
-9. Check Instance Updated
-   └─> Status set to 'resolved'
-   └─> History recorded
-```
-
-**Key:** Steps 2, 4, 7 are the three interaction phases. All are optional.
-
-**Note:** Steps 7 and 8 may both update kingdom state. Some actions complete entirely in step 7 (map interactions), others use step 8 for final execution.
-
----
-
-## Interaction Patterns (NEW)
-
-**Three distinct patterns** for user interactions, each suited to different action types:
-
-### Pattern 1: Pre-Roll Interactions (NEW - Actions #11+)
-
-**When to use:** Action needs user input BEFORE the roll (entity selection)
-
-**Examples:** execute-or-pardon-prisoners (#11), diplomatic relations (#12), aid requests (#13-14), army actions (#15-16)
-
-**How it works:**
-1. User clicks skill → Pre-roll dialog appears
-2. User selects entity (settlement, faction, army) → Stored in `PipelineMetadataStorage`
-3. Roll dialog appears → User rolls
-4. Roll completes → Metadata retrieved and merged into `CheckContext`
-5. Preview/Execute have access to metadata via `ctx.metadata`
-
-**Code pattern:**
-```typescript
-{
-  preRollInteractions: [
-    { id: 'settlement', type: 'entity-selection', entityType: 'settlement' }
-  ],
-  execute: async (ctx) => {
-    const settlementId = ctx.metadata.settlement.id;  // ✅ Available!
-    await performAction(settlementId);
-  }
-}
-```
-
-### Pattern 2: Post-Apply Interactions (Existing - Actions #1, #6-9)
-
-**When to use:** Action needs user input AFTER roll (map selection, entity creation)
-
-**Examples:** claim-hexes (#1), build-roads (#6), fortify-hex (#7), create-worksite (#8), send-scouts (#9)
-
-**How it works:**
-1. User clicks skill → Roll dialog appears
-2. User rolls → Preview calculated
-3. User clicks Apply → Post-apply dialog appears (map selection)
-4. User selects items → `onComplete()` callback executes with full context
-5. State changes applied directly in callback
-
-**Code pattern:**
-```typescript
-{
-  postApplyInteractions: [
-    {
-      type: 'map-selection',
-      onComplete: async (hexIds, ctx) => {
-        await markHexesClaimed(hexIds);  // Execute directly
-      }
-    }
-  ]
-}
-```
-
-### Pattern 3: No Interactions (Existing - Actions #2-5)
-
-**When to use:** Action is fully automatic (no user input needed)
-
-**Examples:** deal-with-unrest (#2), sell-surplus (#3), purchase-resources (#4), harvest-resources (#5)
-
-**How it works:**
-1. User clicks skill → Roll dialog appears
-2. User rolls → Preview calculated
-3. User clicks Apply → Execute runs immediately
-
-**Code pattern:**
-```typescript
-{
-  execute: async (ctx) => {
-    await updateKingdom(kingdom => {
-      kingdom.unrest -= 2;
-    });
-  }
-}
-```
-
-**Full Details:** See `PIPELINE_DATA_FLOW.md` for complete architectural documentation.
-
----
-
-## Prerequisites
-
-- [x] Architecture doc reviewed
-- [x] Staging environment ready
-- [ ] Feature branch: `feature/unified-check-system`
-- [ ] Document current behavior for regression testing
-
-**Safety:** Changes behind feature flag, old code remains until Phase 6
 
 ---
 
@@ -252,6 +112,391 @@ export const requestEconomicAidPipeline: CheckPipeline = {
 4. Execute runs → Reads from `ctx.resolutionData.numericModifiers`
 
 **Key Rule:** If you define dice modifiers in `outcomes`, NEVER use `new Roll()` in `execute()`.
+
+---
+
+## ⚠️ CRITICAL: Shared Execution Functions (DRY PRINCIPLE)
+
+**Problem:** Duplicating execution logic across multiple actions creates maintenance burden and inconsistency.
+
+**Solution:** Use shared execution functions from `src/execution/` for common operations.
+
+### Available Shared Functions
+
+All shared execution functions are exported from `src/execution/index.ts`:
+
+| Function | Location | Purpose | Game Command |
+|----------|----------|---------|--------------|
+| `adjustFactionAttitudeExecution()` | `factions/` | Adjust faction attitude by N steps | `adjustFactionAttitude` |
+| `recruitArmyExecution()` | `armies/` | Recruit new army | `recruitArmy` |
+| `deployArmyExecution()` | `armies/` | Deploy army to hex | `deployArmy` |
+| `disbandArmyExecution()` | `armies/` | Disband existing army | `disbandArmy` |
+| `outfitArmyExecution()` | `armies/` | Add equipment to army | `outfitArmy` |
+| More functions... | Various | See `src/execution/index.ts` | Various |
+
+### When to Use Shared Functions
+
+**✅ Use Shared Function When:**
+- The operation is common across multiple actions (e.g., faction attitude changes)
+- A shared function already exists for your use case
+- The logic is standardized and doesn't need customization
+- You want consistent messaging across the application
+
+**✅ Create New Shared Function When:**
+- You're implementing logic that will be reused by multiple actions
+- The operation is a common game mechanic (territory, settlement, army, faction operations)
+- You want to ensure consistency across similar operations
+
+**❌ Use Custom execute() When:**
+- The logic is unique to one action only
+- The operation requires complex, action-specific branching
+- You need to combine multiple shared functions in a specific way
+
+### Correct Pattern: Using Shared Functions
+
+#### Example: Faction Attitude Adjustment
+
+**✅ CORRECT:** All three faction actions use the same pattern
+
+```typescript
+// In preview.calculate()
+import { adjustAttitudeBySteps } from '../../utils/faction-attitude-adjuster';
+
+const newAttitude = adjustAttitudeBySteps(faction.attitude, -1);
+if (newAttitude) {
+  effects.push({
+    type: 'status',
+    message: `Attitude with ${faction.name} worsens from ${faction.attitude} to ${newAttitude}`,
+    variant: 'negative'
+  });
+}
+
+// In execute()
+import { factionService } from '../../services/factions';
+
+const result = await factionService.adjustAttitude(factionId, -1);
+if (result.success) {
+  return { 
+    success: true, 
+    message: `Your request offends ${faction.name}! Attitude worsened from ${result.oldAttitude} to ${result.newAttitude}` 
+  };
+}
+```
+
+**❌ WRONG:** Custom implementation per action
+
+```typescript
+// DON'T duplicate this logic in each action!
+execute: async (ctx) => {
+  const faction = getFaction(factionId);
+  const attitudeLevels = ['Hostile', 'Unfriendly', 'Indifferent', 'Friendly', 'Helpful'];
+  const currentIndex = attitudeLevels.indexOf(faction.attitude);
+  const newIndex = Math.max(0, currentIndex - 1);
+  faction.attitude = attitudeLevels[newIndex];
+  // ❌ This duplicates factionService.adjustAttitude() logic!
+}
+```
+
+### Standard Messaging Patterns
+
+When using shared functions, follow these messaging conventions:
+
+**Preview (before Apply):**
+```typescript
+// Format: "Attitude with [Faction] worsens/improves from [Old] to [New]"
+message: `Attitude with ${faction.name} worsens from ${faction.attitude} to ${newAttitude}`
+
+// Edge case: "Attitude with [Faction] cannot worsen/improve further"
+message: `Attitude with ${faction.name} cannot worsen further (already ${faction.attitude})`
+```
+
+**Execute (after Apply):**
+```typescript
+// Format: "[Action specific context]! Attitude worsened/improved from [Old] to [New]"
+message: `Your request offends ${faction.name}! Attitude worsened from ${result.oldAttitude} to ${result.newAttitude}`
+
+// Edge case: Same as preview
+message: `Your request offends ${faction.name}, but attitude cannot worsen further (already ${result.oldAttitude})`
+```
+
+### Actions Using Shared Functions
+
+**Faction Operations:**
+- `establish-diplomatic-relations` - adjustFactionAttitude
+- `request-economic-aid` - adjustFactionAttitude  
+- `request-military-aid` - adjustFactionAttitude
+
+**All use:**
+- Same `factionService.adjustAttitude()` call
+- Same `adjustAttitudeBySteps()` for preview
+- Same messaging format
+- Same game command type in JSON: `"type": "adjustFactionAttitude"`
+
+### Anti-Patterns to Avoid
+
+**❌ Custom gameCommand types instead of shared:**
+```json
+{
+  "type": "requestMilitaryAidFactionAttitude",  // ❌ WRONG
+  "steps": -1
+}
+```
+```json
+{
+  "type": "adjustFactionAttitude",  // ✅ CORRECT - Shared command
+  "steps": -1
+}
+```
+
+**❌ Duplicated messaging formats:**
+```typescript
+// ❌ WRONG - Inconsistent messaging
+message: `${faction.name} is offended! Attitude will worsen from ${faction.attitude} to ${newAttitude}`
+
+// ✅ CORRECT - Standard format
+message: `Attitude with ${faction.name} worsens from ${faction.attitude} to ${newAttitude}`
+```
+
+**❌ Custom execution instead of shared service:**
+```typescript
+// ❌ WRONG - Bypassing shared service
+execute: async (ctx) => {
+  await updateKingdom(k => {
+    const faction = k.factions.find(f => f.id === factionId);
+    faction.attitude = newAttitude;  // Direct manipulation!
+  });
+}
+
+// ✅ CORRECT - Using shared service
+execute: async (ctx) => {
+  const result = await factionService.adjustAttitude(factionId, -1);
+  // Service handles validation, edge cases, and consistent state updates
+}
+```
+
+### Creating New Shared Functions
+
+When creating a new shared execution function:
+
+1. **Location:** Place in `src/execution/[category]/[functionName].ts`
+2. **Naming:** Use `[operation]Execution` suffix (e.g., `adjustFactionAttitudeExecution`)
+3. **Exports:** Add to `src/execution/index.ts`
+4. **Pure Logic:** No preview, no UI - execution only
+5. **Consistent Interface:** Return meaningful result objects
+6. **Error Handling:** Validate inputs, handle edge cases
+
+**Example Structure:**
+```typescript
+// src/execution/factions/adjustFactionAttitude.ts
+export async function adjustFactionAttitudeExecution(
+  factionId: string,
+  steps: number,
+  options?: { maxLevel?: AttitudeLevel; minLevel?: AttitudeLevel }
+): Promise<void> {
+  // 1. Validate inputs
+  // 2. Get current state
+  // 3. Apply changes via service
+  // 4. Log results
+}
+```
+
+### Benefits of Shared Functions
+
+✅ **Consistency** - Same behavior across all actions  
+✅ **Maintainability** - Fix bugs once, apply everywhere  
+✅ **Testability** - Test shared logic once  
+✅ **Readability** - Clear intent, no duplicated code  
+✅ **Standards** - Enforces messaging and UX patterns
+
+---
+
+## ⚠️ CRITICAL: Declarative Modifiers vs. Execution Functions
+
+**Problem:** Knowing when to use declarative modifiers vs. custom execution functions for resource changes.
+
+**Solution:** Use declarative modifiers for simple resource changes; use execution functions only for complex operations.
+
+### The Modifier System (Preferred for Simple Resources)
+
+For most resource changes, use **declarative modifiers** in your pipeline's `outcomes` section:
+
+```typescript
+outcomes: {
+  success: {
+    description: 'The people listen.',
+    modifiers: [
+      { type: 'static', resource: 'unrest', value: -2, duration: 'immediate' },
+      { type: 'dice', resource: 'gold', formula: '1d4+1', duration: 'immediate' }
+    ]
+  }
+}
+```
+
+Then use `applyPipelineModifiers` in your execute function:
+
+```typescript
+import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
+
+execute: async (ctx) => {
+  await applyPipelineModifiers(dealWithUnrestPipeline, ctx.outcome);
+  return { success: true };
+}
+```
+
+### Why This Pattern is Better
+
+**✅ Declarative Modifiers:**
+- Single call handles all resource changes
+- Modifiers are visible in pipeline definition
+- Automatic handling by GameCommandsService
+- Consistent across all actions
+- Less code, fewer bugs
+
+**❌ Custom Execute Functions:**
+```typescript
+// DON'T do this for simple resource changes!
+execute: async (ctx) => {
+  await updateKingdom(k => {
+    k.unrest -= 2;  // ❌ Bypasses modifier system
+    k.gold += 3;    // ❌ Duplicates logic
+  });
+}
+```
+
+### How applyPipelineModifiers Works
+
+**Behind the scenes:**
+1. Reads `modifiers` array from pipeline's outcome
+2. Calls `GameCommandsService.applyOutcome()` 
+3. GameCommandsService applies each modifier to kingdom state
+4. Handles static, dice, and choice modifiers automatically
+5. Logs results for debugging
+
+**Location:** `src/pipelines/shared/applyPipelineModifiers.ts`
+
+**This is a shared utility, not an execution function** - it's a helper for pipelines.
+
+### When to Use Execution Functions
+
+Use execution functions in `src/execution/` ONLY when:
+
+**✅ Complex Operations:**
+- Faction attitude changes (validation, caps, diplomatic capacity)
+- Army recruitment (cost calculation, equipment, tracking)
+- Settlement operations (validation, growth checks)
+- Territory management (hex validation, borders)
+
+**✅ Reused Logic:**
+- Multiple actions need identical complex logic
+- Operation involves multiple steps/services
+- Business rules beyond simple arithmetic
+
+**❌ Simple Resource Changes:**
+- Adding/subtracting gold, food, lumber, etc.
+- Adjusting unrest, fame, culture
+- Immediate numeric changes
+
+### Complete Example: Deal with Unrest
+
+```typescript
+export const dealWithUnrestPipeline: CheckPipeline = {
+  outcomes: {
+    criticalSuccess: {
+      description: 'The people rally to your cause.',
+      modifiers: [
+        { type: 'static', resource: 'unrest', value: -3, duration: 'immediate' }
+      ]
+    },
+    success: {
+      description: 'The people listen.',
+      modifiers: [
+        { type: 'static', resource: 'unrest', value: -2, duration: 'immediate' }
+      ]
+    },
+    failure: {
+      description: 'Tensions ease slightly.',
+      modifiers: [
+        { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
+      ]
+    },
+    criticalFailure: {
+      description: 'No one listens.',
+      modifiers: []  // No change
+    }
+  },
+
+  execute: async (ctx) => {
+    // ✅ Single call applies whichever outcome occurred
+    await applyPipelineModifiers(dealWithUnrestPipeline, ctx.outcome);
+    return { success: true };
+  }
+};
+```
+
+### Special Case: giveActorGoldExecution
+
+You may see `giveActorGoldExecution` in `src/execution/resources/`. This is for **player character rewards** (Foundry actors), not kingdom resources:
+
+```typescript
+// ✅ CORRECT - Rewarding a PC with gold
+await giveActorGoldExecution(actor, 50);  // Foundry actor's inventory
+
+// ❌ WRONG - Don't use for kingdom resources
+// Kingdom resource changes should use modifiers
+```
+
+### Anti-Patterns to Avoid
+
+**❌ Bypassing modifier system:**
+```typescript
+execute: async (ctx) => {
+  // DON'T manually update resources that could use modifiers
+  await updateKingdom(k => {
+    if (ctx.outcome === 'success') {
+      k.unrest -= 2;  // ❌ Use modifiers instead!
+    }
+  });
+}
+```
+
+**❌ Duplicating modifier logic:**
+```typescript
+// DON'T repeat the same resource changes in execute
+outcomes: {
+  success: {
+    modifiers: [{ type: 'static', resource: 'gold', value: 10 }]
+  }
+},
+execute: async (ctx) => {
+  await updateKingdom(k => k.gold += 10);  // ❌ Already in modifiers!
+}
+```
+
+**✅ CORRECT pattern:**
+```typescript
+outcomes: {
+  success: {
+    modifiers: [{ type: 'static', resource: 'gold', value: 10 }]
+  }
+},
+execute: async (ctx) => {
+  await applyPipelineModifiers(pipeline, ctx.outcome);  // ✅ Clean!
+}
+```
+
+### Summary: Decision Tree
+
+```
+Need to change kingdom resources?
+├─ Simple arithmetic (add/subtract)?
+│  └─ ✅ Use declarative modifiers + applyPipelineModifiers
+│
+├─ Complex calculation with business rules?
+│  └─ ✅ Create execution function in src/execution/
+│
+└─ Already exists as execution function?
+   └─ ✅ Use the existing function (DRY principle)
+```
 
 ---
 

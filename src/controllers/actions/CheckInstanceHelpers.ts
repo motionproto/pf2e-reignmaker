@@ -125,7 +125,7 @@ export function createActionMetadata(
     };
   }
   
-  if (actionId === 'dimplomatic-mission' && pendingActions.pendingDiplomaticAction) {
+  if (actionId === 'establish-diplomatic-relations' && pendingActions.pendingDiplomaticAction) {
     return {
       factionId: pendingActions.pendingDiplomaticAction.factionId,
       factionName: pendingActions.pendingDiplomaticAction.factionName
@@ -311,11 +311,7 @@ export async function createActionCheckInstance(context: {
   
   // ✅ CALCULATE PREVIEW FOR MIGRATED PIPELINE ACTIONS
   // Check if action uses new pipeline system
-  const MIGRATED_ACTIONS = new Set([
-    'deal-with-unrest', 'sell-surplus', 'purchase-resources', 'harvest-resources',
-    'claim-hexes', 'build-roads', 'fortify-hex', 'create-worksite', 'send-scouts',
-    'collect-stipend', 'execute-or-pardon-prisoners', 'dimplomatic-mission'
-  ]);
+  const { MIGRATED_ACTIONS } = await import('../../constants/migratedActions');
   
   if (MIGRATED_ACTIONS.has(actionId)) {
     console.log(`🎯 [CheckInstanceHelpers] Calculating preview for migrated action: ${actionId}`);

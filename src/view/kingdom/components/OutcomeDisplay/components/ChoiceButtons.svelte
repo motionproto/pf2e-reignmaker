@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount, onDestroy } from 'svelte';
   import { rollDiceFormula } from '../../../../../services/resolution';
+  import { getValidationContext } from '../context/ValidationContext';
   
   export let choices: any[] | undefined = undefined;
   export let selectedChoice: number | null = null;
@@ -8,6 +9,10 @@
   
   const dispatch = createEventDispatcher();
   const DICE_PATTERN = /^-?\(?\d+d\d+([+-]\d+)?\)?$|^-?\d+d\d+([+-]\d+)?$/;
+  
+  // ✨ NEW: Register with validation context
+  const validationContext = getValidationContext();
+  const providerId = 'choice-buttons';
   
   // Track rolled dice values per choice
   let rolledDice: Map<number, Map<number, number>> = new Map();
@@ -17,6 +22,32 @@
   let rolledDiceVersion = 0;
   
   $: hasChoices = choices && choices.length > 0;
+  
+  // ✨ NEW: Register validation on mount
+  onMount(() => {
+    if (validationContext) {
+      validationContext.register(providerId, {
+        id: providerId,
+        needsResolution: !!hasChoices,
+        isResolved: selectedChoice !== null
+      });
+    }
+  });
+  
+  // ✨ NEW: Update validation state when choices/selection changes
+  $: if (validationContext) {
+    validationContext.update(providerId, {
+      needsResolution: !!hasChoices,
+      isResolved: selectedChoice !== null
+    });
+  }
+  
+  // ✨ NEW: Unregister on destroy
+  onDestroy(() => {
+    if (validationContext) {
+      validationContext.unregister(providerId);
+    }
+  });
   
   // Check if a choice has dice formulas
   function hasDiceFormulas(choice: any): boolean {
@@ -69,7 +100,7 @@
         if (formula.startsWith('-')) {
           formula = formula.substring(1);
         }
-        formula = formula.replace(/^\\((.+)\\)$/, '$1');
+        formula = formula.replace(/^\((.+)\)$/, '$1');
       }
       return `${action} ${formula} ${resourceName}`;
     }

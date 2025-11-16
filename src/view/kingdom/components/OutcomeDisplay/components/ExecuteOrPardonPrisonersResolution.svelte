@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount, onDestroy } from 'svelte';
   import { kingdomData } from '../../../../../stores/KingdomStore';
   import type { ActiveCheckInstance } from '../../../../../models/CheckInstance';
   import { 
@@ -7,6 +7,7 @@
     getInstanceResolutionState 
   } from '../../../../../controllers/shared/ResolutionStateHelpers';
   import { structuresService } from '../../../../../services/structures';
+  import { getValidationContext } from '../context/ValidationContext';
 
   // Props
   export let instance: ActiveCheckInstance | null = null;
@@ -15,6 +16,10 @@
   export let stateChanges: Record<string, any> | undefined = undefined;
 
   const dispatch = createEventDispatcher();
+  
+  // ✨ NEW: Register with validation context
+  const validationContext = getValidationContext();
+  const providerId = 'execute-or-pardon-prisoners-resolution';
 
   // Get resolution state from instance
   $: resolutionState = getInstanceResolutionState(instance);
@@ -22,6 +27,32 @@
 
   // Check if resolution is complete
   $: isResolved = !!selectedSettlementId;
+  
+  // ✨ NEW: Register validation on mount
+  onMount(() => {
+    if (validationContext) {
+      validationContext.register(providerId, {
+        id: providerId,
+        needsResolution: true,  // Always needs settlement selection
+        isResolved: isResolved
+      });
+    }
+  });
+  
+  // ✨ NEW: Update validation state when selection changes
+  $: if (validationContext) {
+    validationContext.update(providerId, {
+      needsResolution: true,
+      isResolved: isResolved
+    });
+  }
+  
+  // ✨ NEW: Unregister on destroy
+  onDestroy(() => {
+    if (validationContext) {
+      validationContext.unregister(providerId);
+    }
+  });
 
   // Get settlements with imprisoned unrest, sorted by imprisoned unrest descending
   $: settlementsWithPrisoners = ($kingdomData?.settlements || [])

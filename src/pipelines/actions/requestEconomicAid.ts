@@ -111,7 +111,7 @@ export const requestEconomicAidPipeline: CheckPipeline = {
         });
       }
 
-      // Show attitude warning on crit failure
+      // Show attitude warning on crit failure (matches establish-diplomatic-relations pattern)
       if (ctx.outcome === 'criticalFailure') {
         const { adjustAttitudeBySteps } = await import('../../utils/faction-attitude-adjuster');
         const newAttitude = adjustAttitudeBySteps(faction.attitude, -1);
@@ -119,8 +119,14 @@ export const requestEconomicAidPipeline: CheckPipeline = {
         if (newAttitude) {
           effects.push({
             type: 'status' as const,
-            message: `${faction.name} is offended! Attitude will worsen from ${faction.attitude} to ${newAttitude}`,
+            message: `Attitude with ${faction.name} worsens from ${faction.attitude} to ${newAttitude}`,
             variant: 'negative' as const
+          });
+        } else {
+          effects.push({
+            type: 'status' as const,
+            message: `Attitude with ${faction.name} cannot worsen further (already ${faction.attitude})`,
+            variant: 'neutral' as const
           });
         }
       }

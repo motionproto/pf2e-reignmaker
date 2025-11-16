@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount, onDestroy } from 'svelte';
   import { kingdomData } from '../../../../../stores/KingdomStore';
   import type { ActiveCheckInstance } from '../../../../../models/CheckInstance';
   import { 
@@ -7,12 +7,17 @@
     getInstanceResolutionState 
   } from '../../../../../controllers/shared/ResolutionStateHelpers';
   import { getResourceIcon } from '../../../../kingdom/utils/presentation';
+  import { getValidationContext } from '../context/ValidationContext';
 
   // Props
   export let instance: ActiveCheckInstance | null = null;
   export let outcome: string;
 
   const dispatch = createEventDispatcher();
+  
+  // ✨ NEW: Register with validation context
+  const validationContext = getValidationContext();
+  const providerId = 'resource-choice-selector';
 
   // Hardcoded resources (always the same for harvest action)
   const resources = ['food', 'lumber', 'stone', 'ore'];
@@ -26,6 +31,32 @@
 
   // Check if resolution is complete
   $: isResolved = !!selectedResource;
+  
+  // ✨ NEW: Register validation on mount
+  onMount(() => {
+    if (validationContext) {
+      validationContext.register(providerId, {
+        id: providerId,
+        needsResolution: true,  // Always needs resource selection
+        isResolved: isResolved
+      });
+    }
+  });
+  
+  // ✨ NEW: Update validation state when selection changes
+  $: if (validationContext) {
+    validationContext.update(providerId, {
+      needsResolution: true,
+      isResolved: isResolved
+    });
+  }
+  
+  // ✨ NEW: Unregister on destroy
+  onDestroy(() => {
+    if (validationContext) {
+      validationContext.unregister(providerId);
+    }
+  });
 
   // Format resource name for display
   function formatResourceName(resource: string): string {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount, onDestroy } from 'svelte';
   import { kingdomData } from '../../../../../stores/KingdomStore';
   import type { ActiveCheckInstance } from '../../../../../models/CheckInstance';
   import { 
@@ -7,12 +7,17 @@
     getInstanceResolutionState 
   } from '../../../../../controllers/shared/ResolutionStateHelpers';
   import { getBestTradeRates, getCriticalSuccessRates } from '../../../../../services/commerce/tradeRates';
+  import { getValidationContext } from '../context/ValidationContext';
 
   // Props
   export let instance: ActiveCheckInstance | null = null;
   export let outcome: string;
 
   const dispatch = createEventDispatcher();
+  
+  // ✨ NEW: Register with validation context
+  const validationContext = getValidationContext();
+  const providerId = 'purchase-resource-selector';
 
   // Hardcoded resources (always the same for purchase action)
   const resources = ['food', 'lumber', 'stone', 'ore'];
@@ -46,6 +51,32 @@
   // Validation
   $: isValid = selectedResource && selectedAmount > 0 && selectedAmount <= maxResources && selectedAmount % resourceGain === 0;
   $: totalCost = selectedAmount > 0 ? Math.ceil(selectedAmount / resourceGain) * goldCost : 0;
+  
+  // ✨ NEW: Register validation on mount
+  onMount(() => {
+    if (validationContext) {
+      validationContext.register(providerId, {
+        id: providerId,
+        needsResolution: true,  // Always needs resource + amount selection
+        isResolved: isValid
+      });
+    }
+  });
+  
+  // ✨ NEW: Update validation state when selection changes
+  $: if (validationContext) {
+    validationContext.update(providerId, {
+      needsResolution: true,
+      isResolved: isValid
+    });
+  }
+  
+  // ✨ NEW: Unregister on destroy
+  onDestroy(() => {
+    if (validationContext) {
+      validationContext.unregister(providerId);
+    }
+  });
 
   // Format resource name for display
   function formatResourceName(resource: string): string {
