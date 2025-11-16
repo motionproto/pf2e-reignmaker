@@ -8,6 +8,7 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import { claimHexesExecution } from '../../execution/territory/claimHexes';
 import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
+import { validateClaimHex } from '../../actions/claim-hexes/claimHexValidator';
 
 export const claimHexesPipeline: CheckPipeline = {
   id: 'claim-hexes',
@@ -27,11 +28,8 @@ export const claimHexesPipeline: CheckPipeline = {
       type: 'map-selection',
       id: 'selectedHexes',
       mode: 'hex-selection',
-      colorType: 'claimed',
-      validation: (hex: any) => {
-        // Must be adjacent to existing kingdom territory
-        return true;  // Validation logic in hex selector
-      },
+      colorType: 'claim',
+      validation: validateClaimHex,
       // Outcome-based adjustments
       outcomeAdjustment: {
         criticalSuccess: {
@@ -59,6 +57,14 @@ export const claimHexesPipeline: CheckPipeline = {
       // Condition: only show for success/criticalSuccess
       condition: (ctx: any) => {
         return ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess';
+      },
+      // ✅ FIX: Execute claim logic immediately after user selects hexes
+      onComplete: async (selectedHexIds: string[], ctx: any) => {
+        console.log('🎯 [ClaimHexes] User selected hexes:', selectedHexIds);
+        if (selectedHexIds && selectedHexIds.length > 0) {
+          await claimHexesExecution(selectedHexIds);
+          console.log('✅ [ClaimHexes] Hexes claimed successfully');
+        }
       }
     }
   ],

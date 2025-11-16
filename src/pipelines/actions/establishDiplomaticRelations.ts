@@ -10,7 +10,7 @@ import { factionService } from '../../services/factions';
 import type { Faction } from '../../models/Faction';
 
 export const establishDiplomaticRelationsPipeline: CheckPipeline = {
-  id: 'dimplomatic-mission',
+  id: 'diplomatic-mission',
   name: 'Diplomatic Mission',
   description: 'Send envoys to improve your kingdom\'s standing with neighboring powers and influential organizations',
   checkType: 'action',

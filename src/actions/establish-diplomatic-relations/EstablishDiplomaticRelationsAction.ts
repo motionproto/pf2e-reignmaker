@@ -43,7 +43,7 @@ function getPreviousAttitude(current: AttitudeLevel): AttitudeLevel | null {
 }
 
 const EstablishDiplomaticRelationsAction: CustomActionImplementation = {
-  id: 'dimplomatic-mission',
+  id: 'diplomatic-mission',
   
   /**
    * Pre-roll dialog configuration
@@ -102,7 +102,7 @@ const EstablishDiplomaticRelationsAction: CustomActionImplementation = {
     },
     
     async execute(resolutionData: ResolutionData, instance?: any): Promise<ResolveResult> {
-      logActionStart('establish-diplomatic-relations', 'Processing diplomatic relations');
+      logActionStart('diplomatic-mission', 'Processing diplomatic relations');
       console.log('🎯 [EstablishDiplomaticRelationsAction] execute() called');
       console.log('🎯 [EstablishDiplomaticRelationsAction] instance:', instance);
       console.log('🎯 [EstablishDiplomaticRelationsAction] instance.metadata:', instance?.metadata);
@@ -152,7 +152,7 @@ const EstablishDiplomaticRelationsAction: CustomActionImplementation = {
               specificMessage = outcome === 'criticalSuccess'
                 ? `${factionName}'s attitude improved to ${newAttitude}!`
                 : `${factionName}'s attitude improved to ${newAttitude}.`;
-              logActionSuccess('establish-diplomatic-relations', 
+              logActionSuccess('diplomatic-mission',
                 `Improved ${factionName} attitude: ${faction.attitude} → ${newAttitude}`);
             } else {
               // Already at maximum (Helpful)
@@ -166,7 +166,7 @@ const EstablishDiplomaticRelationsAction: CustomActionImplementation = {
             if (newAttitude) {
               await factionService.updateAttitude(factionId, newAttitude);
               specificMessage = `${factionName}'s attitude worsened to ${newAttitude}.`;
-              logActionSuccess('establish-diplomatic-relations', 
+              logActionSuccess('diplomatic-mission',
                 `Worsened ${factionName} attitude: ${faction.attitude} → ${newAttitude}`);
             } else {
               // Already at minimum (Hostile)
@@ -177,7 +177,7 @@ const EstablishDiplomaticRelationsAction: CustomActionImplementation = {
           case 'failure':
             // No attitude change
             specificMessage = `Your diplomatic mission with ${factionName} yielded no results, but relations remain stable.`;
-            logActionSuccess('establish-diplomatic-relations', 
+            logActionSuccess('diplomatic-mission',
               `No attitude change for ${factionName}`);
             break;
         }
@@ -194,11 +194,11 @@ const EstablishDiplomaticRelationsAction: CustomActionImplementation = {
           game?.ui?.notifications?.info(`ℹ️ ${specificMessage}`);
         }
         
-        logActionSuccess('establish-diplomatic-relations', specificMessage);
+        logActionSuccess('diplomatic-mission', specificMessage);
         return createSuccessResult(specificMessage);
         
       } catch (error) {
-        logActionError('establish-diplomatic-relations', error as Error);
+        logActionError('diplomatic-mission', error as Error);
         return createErrorResult(error instanceof Error ? error.message : 'Unknown error');
       }
     }

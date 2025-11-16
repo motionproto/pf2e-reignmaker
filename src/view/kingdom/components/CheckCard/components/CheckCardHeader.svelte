@@ -12,8 +12,10 @@
   export let traits: string[] = [];
   export let expandable: boolean = true;  // Control chevron visibility
   export let statusBadge: { text: string; type: 'ongoing' | 'resolved' } | null = null;
-  export let isMigrated: boolean = false;  // Temporary: visual indicator for migrated actions
-  export let migratedNumber: number | undefined = undefined;  // Action number for migration badge
+  
+  // Migration status tracking
+  export let actionStatus: 'untested' | 'testing' | 'tested' | null = null;
+  export let actionNumber: number | undefined = undefined;  // Action number for migration badge (1-26)
   
   const dispatch = createEventDispatcher();
   
@@ -36,16 +38,6 @@
       <div class="card-title-row">
         <strong class="card-name" class:unavailable={!available}>{name}</strong>
         <div class="card-badges">
-          {#if isMigrated}
-            <span class="migrated-badge" title="Migrated to unified pipeline">
-              <i class="fas fa-check-circle"></i>
-              {#if migratedNumber}
-                #{migratedNumber}
-              {:else}
-                Migrated
-              {/if}
-            </span>
-          {/if}
           {#if statusBadge}
             <span class="status-badge {statusBadge.type}}">{statusBadge.text}</span>
           {/if}
@@ -60,6 +52,19 @@
             <span class="requirements-badge">
               <i class="fas fa-exclamation-triangle"></i>
               {missingRequirements.join(', ')}
+            </span>
+          {/if}
+          {#if actionStatus === 'tested' && actionNumber}
+            <span class="migration-badge tested" title="Tested with PipelineCoordinator">
+              #{actionNumber}
+            </span>
+          {:else if actionStatus === 'testing' && actionNumber}
+            <span class="migration-badge testing" title="Currently being tested">
+              #{actionNumber}
+            </span>
+          {:else if actionStatus === 'untested' && actionNumber}
+            <span class="migration-number untested" title="Pipeline exists, needs testing">
+              #{actionNumber}
             </span>
           {/if}
           <div class="expand-icon-wrapper">
@@ -270,25 +275,45 @@
       }
     }
     
-    .migrated-badge {
+    .migration-badge {
       display: inline-flex;
       align-items: center;
-      gap: var(--space-6);
+      justify-content: center;
       padding: var(--space-4) var(--space-10);
-      background: var(--surface-success);
-      border: 1px solid var(--border-success);
       border-radius: var(--radius-full);
       font-size: var(--font-xs);
       font-weight: var(--font-weight-semibold);
-      text-transform: uppercase;
       letter-spacing: 0.05rem;
       line-height: 1.2;
-      color: var(--color-green);
       flex-shrink: 0;
       cursor: help;
       
-      i {
-        font-size: var(--font-xs);
+      &.tested {
+        background: var(--surface-success);
+        border: 1px solid var(--border-success);
+        color: var(--color-green);
+      }
+      
+      &.testing {
+        background: transparent;
+        border: 1px solid var(--text-primary);
+        color: var(--text-primary);
+      }
+    }
+    
+    .migration-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--font-xs);
+      font-weight: var(--font-weight-medium);
+      letter-spacing: 0.05rem;
+      line-height: 1.2;
+      flex-shrink: 0;
+      cursor: help;
+      
+      &.untested {
+        color: var(--text-tertiary);
       }
     }
   }

@@ -129,8 +129,12 @@ const ClaimHexesAction: CustomActionImplementation = {
         const mapLayer = ReignMakerMapLayer.getInstance();
         mapLayer.showPixiContainer();
 
+        // ✅ AUTO-ACTIVATE: Turn on territories overlay to show claimed hexes
+        const { getOverlayManager } = await import('../../services/map/core/OverlayManager');
+        const overlayManager = getOverlayManager();
+        await overlayManager.showOverlay('territories');
+        
         // ✅ REACTIVE OVERLAYS: Kingdom Store change automatically triggers overlay updates
-        // No need to manually call showOverlay() - the reactive subscriptions handle it!
         // Territory and border overlays subscribe to claimedHexes store and auto-redraw.
 
         const message = outcome === 'criticalSuccess'

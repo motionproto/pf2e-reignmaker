@@ -48,6 +48,7 @@
   let checkInstanceService: any = null;
   let dialogService: any = null;
   let aidManager: AidManager | null = null;
+  let pipelineCoordinator: any = null;  // NEW: PipelineCoordinator for unified execution
 
   // UI State (not business logic)
   let expandedActions = new Set<string>();
@@ -81,9 +82,15 @@
   let pendingRecruitArmyAction: { skill: string; armyId?: string } | null = null;
   let pendingDeployArmyAction: { skill: string; armyId?: string } | null = null;
 
-  // Track action ID to current instance ID mapping for this player
-  // Map<actionId, instanceId> - one active instance per action per player
-  let currentActionInstances = new Map<string, string>();
+  // REACTIVE DERIVATION: Auto-derive from ActiveCheckInstances (Single Source of Truth)
+  // Map<actionId, instanceId> - coordinator-managed instances only
+  // Include both 'pending' (before roll) and 'resolved' (after storeOutcome) to show outcome UI
+  $: currentActionInstances = ($kingdomData.activeCheckInstances || [])
+    .filter(i => i.usePipelineCoordinator && (i.status === 'pending' || i.status === 'resolved'))
+    .reduce((map, instance) => {
+      map.set(instance.checkId, instance.instanceId);
+      return map;
+    }, new Map<string, string>());
   
   // Count of players who have acted (from actionLog)
   $: actionsUsed = ($kingdomData.turnState?.actionLog || []).filter((entry: any) => 
@@ -144,12 +151,22 @@
   });
 
   // UI helper - toggle action expansion
-  function toggleAction(actionId: string) {
+  async function toggleAction(actionId: string) {
     if (expandedActions.has(actionId)) {
       expandedActions.clear();
     } else {
       expandedActions.clear();
       expandedActions.add(actionId);
+      
+      // ✅ CLEANUP: Clear any stale instances for this action when opening
+      // This prevents old test results from showing up
+      const instanceId = currentActionInstances.get(actionId);
+      if (instanceId && checkInstanceService) {
+        console.log(`🧹 [ActionsPhase] Clearing stale instance for ${actionId}: ${instanceId}`);
+        await checkInstanceService.clearInstance(instanceId);
+        currentActionInstances.delete(actionId);
+        currentActionInstances = currentActionInstances;  // Trigger reactivity
+      }
     }
     expandedActions = new Set(expandedActions);
   }
@@ -267,6 +284,13 @@
       return;
     }
     console.log('🎬 [ActionsPhase] Instance has outcome:', instance.appliedOutcome.outcome);
+
+    // ✅ CHECK FOR PIPELINE COORDINATOR (new unified system)
+    if (instance.usePipelineCoordinator && pipelineCoordinator) {
+      console.log('🚀 [ActionsPhase] Coordinator-managed action, calling confirmApply()');
+      pipelineCoordinator.confirmApply(instanceId);
+      return; // Coordinator handles Steps 7-9
+    }
 
     // ✅ CHECK FOR POST-APPLY INTERACTIONS (migrated actions only)
     if (MIGRATED_ACTIONS.has(actionId)) {
@@ -433,6 +457,13 @@
       
       console.log('✅ [ActionsPhase] Processing roll event:', rollKey);
       
+      // Coordinator-managed actions don't use event-based roll handling
+      // (they use native PF2e roll return value in continuous pipeline)
+      if (checkId === 'claim-hexes') {
+        console.log('⏭️ [ActionsPhase] Skipping event handler for coordinator-managed action');
+        return; // Handled by continuous pipeline
+      }
+      
       await onActionResolved(checkId, outcome, actorName, checkType, skillName, proficiencyRank, rollBreakdown, actorId, actorLevel);
       
       // Clear aid modifiers for this specific action after roll completes
@@ -466,6 +497,32 @@
     gameCommandsService = await createGameCommandsService();
     checkInstanceService = await createCheckInstanceService();
     dialogService = await createActionDialogService();
+    
+    // Initialize PipelineCoordinator
+    const { getPipelineCoordinator } = await import('../../../services/PipelineCoordinator');
+    pipelineCoordinator = await getPipelineCoordinator();
+    console.log('✅ [ActionsPhase] PipelineCoordinator initialized');
+    
+    // 🧹 CLEANUP: Remove any stale coordinator-managed instances from previous sessions
+    // This handles cases where instances weren't properly deleted before Step 9 fix
+    const actor = getKingdomActor();
+    if (actor) {
+      const staleInstances = $kingdomData.activeCheckInstances?.filter(
+        i => i.usePipelineCoordinator
+      ) || [];
+      
+      if (staleInstances.length > 0) {
+        console.log(`🧹 [ActionsPhase] Cleaning up ${staleInstances.length} stale coordinator instance(s) from previous sessions`);
+        await actor.updateKingdomData((kingdom: KingdomData) => {
+          if (kingdom.activeCheckInstances) {
+            kingdom.activeCheckInstances = kingdom.activeCheckInstances.filter(
+              i => !i.usePipelineCoordinator
+            );
+          }
+        });
+        console.log('✅ [ActionsPhase] Stale instances cleaned up');
+      }
+    }
     
     // Initialize aid manager
     aidManager = createAidManager({
@@ -552,6 +609,56 @@
   // Handle skill execution from CheckCard (decoupled from component)
   async function handleExecuteSkill(event: CustomEvent, action: any) {
     const { skill } = event.detail;
+    
+    // 🚀 CONTINUOUS PIPELINE: Execute all 9 steps (pauses internally at Step 6)
+    if (action.id === 'claim-hexes' && pipelineCoordinator) {
+      console.log('🚀 [ActionsPhase] Using continuous PipelineCoordinator for claim-hexes');
+      
+      // Get character for roll
+      let actingCharacter = getCurrentUserCharacter();
+      if (!actingCharacter) {
+        actingCharacter = await showCharacterSelectionDialog();
+        if (!actingCharacter) {
+          console.log('⚠️ [ActionsPhase] User cancelled character selection');
+          return;
+        }
+      }
+      
+      try {
+        // Execute complete pipeline (Steps 1-9, pauses at Step 6 for user confirmation)
+        await pipelineCoordinator.executePipeline('claim-hexes', {
+          actor: {
+            selectedSkill: skill,
+            fullActor: actingCharacter,
+            actorName: actingCharacter.name,
+            actorId: actingCharacter.id,
+            level: actingCharacter.level || 1,
+            proficiencyRank: 0 // TODO: Get from actor
+          }
+        });
+        
+        console.log('✅ [ActionsPhase] Pipeline complete for claim-hexes');
+        
+        // Clear aid modifiers for claim-hexes
+        const actor = getKingdomActor();
+        if (actor) {
+          await actor.updateKingdomData((kingdom: KingdomData) => {
+            if (kingdom.turnState?.actionsPhase?.activeAids) {
+              kingdom.turnState.actionsPhase.activeAids = 
+                kingdom.turnState.actionsPhase.activeAids.filter(
+                  (aid: any) => aid.targetActionId !== 'claim-hexes'
+                );
+            }
+          });
+        }
+        
+        return; // Pipeline complete
+        
+      } catch (error) {
+        console.error('❌ [ActionsPhase] PipelineCoordinator failed:', error);
+        // Fall through to old system if coordinator fails
+      }
+    }
     
     // ✅ CHECK FOR MIGRATED PIPELINE ACTIONS FIRST
     if (MIGRATED_ACTIONS.has(action.id)) {
@@ -761,7 +868,38 @@
       }
     }
     
-    // Trigger new roll
+    // ✅ CHECK FOR COORDINATOR-MANAGED ACTIONS (claim-hexes uses continuous pipeline)
+    if (action.id === 'claim-hexes' && pipelineCoordinator) {
+      console.log('🔄 [ActionsPhase] Reroll for coordinator-managed action, re-executing pipeline');
+      
+      try {
+        // Re-execute complete pipeline (Steps 1-9, pauses at Step 6 for user confirmation)
+        await pipelineCoordinator.executePipeline('claim-hexes', {
+          actor: {
+            selectedSkill: skill,
+            fullActor: actingCharacter,
+            actorName: actingCharacter.name,
+            actorId: actingCharacter.id,
+            level: actingCharacter.level || 1,
+            proficiencyRank: 0 // TODO: Get from actor
+          }
+        });
+        
+        console.log('✅ [ActionsPhase] Pipeline reroll complete for claim-hexes');
+        return; // Pipeline complete
+        
+      } catch (error) {
+        console.error('❌ [ActionsPhase] PipelineCoordinator reroll failed:', error);
+        // Restore fame if the roll failed
+        const { restoreFameAfterFailedReroll } = await import('../../../controllers/shared/RerollHelpers');
+        if (previousFame !== undefined) {
+          await restoreFameAfterFailedReroll(previousFame);
+        }
+        return;
+      }
+    }
+    
+    // Standard action reroll - trigger new roll
     try {
       const characterLevel = actingCharacter.level || 1;
       const dc = controller.getActionDC(characterLevel);

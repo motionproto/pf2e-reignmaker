@@ -4,7 +4,9 @@
   import CommerceTierInfo from '../../../kingdom/components/CheckCard/components/CommerceTierInfo.svelte';
   import SectionHeader from './SectionHeader.svelte';
   import { getCustomResolutionComponent } from '../../../../controllers/actions/implementations';
+  import { getActionStatus, getActionNumber } from '../../../../constants/migratedActions';
   import type { PlayerAction } from '../../../../controllers/actions/action-types';
+  import type { ActionStatus } from '../../../../constants/migratedActions';
 
   const dispatch = createEventDispatcher();
 
@@ -30,8 +32,6 @@
   export let isActionAvailable: (action: any) => boolean;
   export let getMissingRequirements: (action: any) => string[];
   export let hideUntrainedSkills: boolean = true;
-  export let migratedActions: Set<string> = new Set();
-  export let migratedActionNumbers: Map<string, number> = new Map();
 
   // Toggle action expansion
   function handleToggle(actionId: string) {
@@ -89,13 +89,13 @@
         {@const customResolution = (resolution && controller) ? getCustomResolutionComponent(action.id, resolution.outcome) : null}
         {@const isAvailable = controller ? isActionAvailable(action) : false}
         {@const missingRequirements = !isAvailable && controller ? getMissingRequirements(action) : []}
-        {@const isMigrated = migratedActions.has(action.id)}
-        {@const migratedNumber = migratedActionNumbers.get(action.id)}
+        {@const actionStatus = getActionStatus(action.id)}
+        {@const actionNumber = getActionNumber(action.id)}
         {#key `${action.id}-${instanceId || 'none'}-${activeAidsCount}-${isAvailable}-${armyDataKey}-${resourcesKey}`}
           <BaseCheckCard
             id={action.id}
-            isMigrated={isMigrated}
-            migratedNumber={migratedNumber}
+            actionStatus={actionStatus}
+            actionNumber={actionNumber}
             checkInstance={checkInstance || null}
             customResolutionComponent={customResolution?.component || null}
             customResolutionProps={customResolution?.props || {}}

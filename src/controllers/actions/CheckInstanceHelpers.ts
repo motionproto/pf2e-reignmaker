@@ -125,7 +125,7 @@ export function createActionMetadata(
     };
   }
   
-  if (actionId === 'establish-diplomatic-relations' && pendingActions.pendingDiplomaticAction) {
+  if (actionId === 'diplomatic-mission' && pendingActions.pendingDiplomaticAction) {
     return {
       factionId: pendingActions.pendingDiplomaticAction.factionId,
       factionName: pendingActions.pendingDiplomaticAction.factionName

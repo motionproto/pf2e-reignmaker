@@ -54,7 +54,8 @@ export const dealWithUnrestPipeline: CheckPipeline = {
     calculate: (ctx) => ({
       resources: [
         { resource: 'unrest', value: -2 }  // Show typical success case
-      ]
+      ],
+      specialEffects: []  // Required by PreviewData type
     })
   },
 

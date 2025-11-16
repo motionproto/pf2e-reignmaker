@@ -23,6 +23,9 @@ export interface ActiveCheckInstance {
   checkData: any;               // KingdomEvent | KingdomIncident | PlayerAction
   metadata?: any;               // Optional metadata for action-specific data (e.g., structureId, settlementId)
   
+  // Pipeline coordinator flag (for new unified pipeline system)
+  usePipelineCoordinator?: boolean;  // If true, PipelineCoordinator manages this instance
+  
   // Lifecycle
   createdTurn: number;
   status: 'pending' | 'resolved' | 'applied';
