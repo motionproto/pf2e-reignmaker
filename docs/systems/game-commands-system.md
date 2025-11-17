@@ -546,7 +546,7 @@ Player actions in `data/player-actions/*.json` use both modifiers and gameComman
 
 ### With Check Instance System
 
-ActiveCheckInstances store both modifier and gameCommand data:
+OutcomePreviews store both modifier and gameCommand data:
 
 ```typescript
 appliedOutcome: {
@@ -784,10 +784,10 @@ Action Implementation
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { updateInstanceResolutionState, getInstanceResolutionState } from '../../../../../controllers/shared/ResolutionStateHelpers';
-  import type { ActiveCheckInstance } from '../../../../../models/CheckInstance';
+  import type { OutcomePreview } from '../../../../../models/CheckInstance';
 
   // Props (passed from action implementation)
-  export let instance: ActiveCheckInstance | null = null;
+  export let instance: OutcomePreview | null = null;
   export let outcome: string;
   export let yourCustomProp: string[] = [];  // Example: resource types
   export let amount: number = 1;  // Example: amount to gain
@@ -805,7 +805,7 @@ Action Implementation
     if (!instance) return;
 
     // Store selection in instance (syncs to all clients)
-    await updateInstanceResolutionState(instance.instanceId, {
+    await updateInstanceResolutionState(instance.previewId, {
       customComponentData: { 
         selectedValue: value,
         additionalData: 'any metadata you need'

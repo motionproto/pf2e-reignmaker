@@ -1,0 +1,51 @@
+/**
+ * Settlement Crisis Incident Pipeline
+ *
+ * Generated from data/incidents/moderate/settlement-crisis.json
+ */
+
+import type { CheckPipeline } from '../../../types/CheckPipeline';
+import { applyPipelineModifiers } from '../../shared/applyPipelineModifiers';
+
+export const settlementCrisisPipeline: CheckPipeline = {
+  id: 'settlement-crisis',
+  name: 'Settlement Crisis',
+  description: 'One of your settlements faces a major crisis',
+  checkType: 'incident',
+  tier: 'moderate',
+
+  skills: [
+      { skill: 'diplomacy', description: 'address concerns' },
+      { skill: 'society', description: 'emergency aid' },
+      { skill: 'religion', description: 'provide hope' },
+    ],
+
+  outcomes: {
+    success: {
+      description: 'The settlement is stabilized.',
+      modifiers: []
+    },
+    failure: {
+      description: 'The crisis threatens the settlement.',
+      modifiers: [],
+      manualEffects: ["Choose or roll for one random settlement. If you chose 'structure damaged', damage 1 random structure in that settlement"]
+    },
+    criticalFailure: {
+      description: 'A settlement collapses.',
+      modifiers: [
+        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
+      ],
+      manualEffects: ["Choose or roll for one random settlement. That settlement loses one level (minimum level 1)"]
+    },
+  },
+
+  preview: {
+    providedByInteraction: false
+  },
+
+  execute: async (ctx) => {
+    // Apply modifiers from outcome
+    await applyPipelineModifiers(settlementCrisisPipeline, ctx.outcome);
+    return { success: true };
+  }
+};

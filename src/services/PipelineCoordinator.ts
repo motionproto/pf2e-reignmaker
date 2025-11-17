@@ -13,9 +13,20 @@ import type { CheckPipeline, OutcomeType, KingdomSkill } from '../types/CheckPip
 import type { ActorContext } from '../types/CheckContext';
 import { createPipelineContext, log, getPipeline, getKingdom, getOutcome } from '../types/PipelineContext';
 import { getKingdomActor } from '../stores/KingdomStore';
-import { getCurrentUserCharacter, performKingdomActionRoll } from './pf2e';
+import { getCurrentUserCharacter } from './pf2e';
 import { unifiedCheckHandler } from './UnifiedCheckHandler';
-import { createCheckInstanceService } from './CheckInstanceService';
+import { createOutcomePreviewService } from './OutcomePreviewService';
+
+/**
+ * PF2e native callback type for skill rolls
+ * Called when roll completes with outcome data
+ */
+type CheckRollCallback = (
+  roll: any,
+  outcome: string | null | undefined,
+  message: any,
+  event: Event | null
+) => Promise<void> | void;
 
 /**
  * Pipeline Coordinator
@@ -26,9 +37,6 @@ import { createCheckInstanceService } from './CheckInstanceService';
 export class PipelineCoordinator {
   // Pending contexts waiting for user confirmation (Step 6)
   private pendingContexts = new Map<string, PipelineContext>();
-  
-  // Pre-roll contexts waiting for roll completion (Steps 1-3 complete, waiting for Step 4)
-  private preRollContexts = new Map<string, PipelineContext>();
   
   // Check instance service
   private checkInstanceService: any;
@@ -42,7 +50,7 @@ export class PipelineCoordinator {
    * Initialize required services
    */
   private async initializeServices(): Promise<void> {
-    this.checkInstanceService = await createCheckInstanceService();
+    this.checkInstanceService = await createOutcomePreviewService();
   }
 
   /**
@@ -62,24 +70,12 @@ export class PipelineCoordinator {
     log(context, 0, 'initialize', `Starting pipeline for ${actionId}`);
     
     try {
-      // Execute all 9 steps sequentially
+      // Execute Steps 1-3
       await this.step1_checkRequirements(context);
       await this.step2_preRollInteractions(context);
-      await this.step3_executeRoll(context);
-      await this.step4_createCheckInstance(context);
-      await this.step5_calculatePreview(context);
-      await this.step6_waitForUserConfirmation(context);
-      await this.step7_postApplyInteractions(context);
-      await this.step8_executeAction(context);
-      await this.step9_cleanup(context);
+      await this.step3_executeRoll(context); // Returns after setting up callback
       
-      log(context, 0, 'complete', `Pipeline completed successfully`);
-      console.log('✅ [PipelineCoordinator] Pipeline execution complete:', {
-        actionId: context.actionId,
-        outcome: context.rollData?.outcome,
-        steps: context.logs.length
-      });
-      
+      // Callback will resume with Steps 4-9
       return context;
       
     } catch (error) {
@@ -95,145 +91,31 @@ export class PipelineCoordinator {
   }
 
   /**
-   * Execute pipeline pre-roll phase (Steps 1-3)
-   * 
-   * Executes requirements check, pre-roll interactions, and initiates roll.
-   * Stores context for continuation when roll completes.
-   * 
-   * @param actionId - Action/event/incident ID
-   * @param initialContext - Initial context data
-   * @returns Partial context after pre-roll phase
+   * Resume pipeline after roll completes (Steps 4-9)
+   * Called by the PF2e callback after roll is complete
    */
-  async executePipelinePreRoll(
-    actionId: string,
-    initialContext: Partial<PipelineContext>
-  ): Promise<PipelineContext> {
-    // Initialize context
-    const context = this.initializeContext(actionId, initialContext);
-    
-    log(context, 0, 'initialize', `Starting pre-roll phase for ${actionId}`);
-    
-    // Store context BEFORE executing roll (to handle race condition)
-    // The roll event can fire before step3 returns, so we need the context ready
-    const contextKey = `${actionId}:${context.userId}`;
-    this.preRollContexts.set(contextKey, context);
-    console.log(`🔑 [PipelineCoordinator] Context stored with key: ${contextKey}`);
-    
+  private async resumeAfterRoll(ctx: PipelineContext): Promise<void> {
     try {
-      // Execute Steps 1-3
-      await this.step1_checkRequirements(context);
-      await this.step2_preRollInteractions(context);
-      await this.step3_executeRoll(context);
+      await this.step4_createCheckInstance(ctx);
+      await this.step5_calculatePreview(ctx);
+      await this.step6_waitForUserConfirmation(ctx);
+      await this.step7_postApplyInteractions(ctx);
+      await this.step8_executeAction(ctx);
+      await this.step9_cleanup(ctx);
       
-      log(context, 0, 'preRoll', `Pre-roll phase complete, awaiting roll result`);
-      console.log('✅ [PipelineCoordinator] Pre-roll phase complete:', {
-        actionId: context.actionId,
-        userId: context.userId,
-        contextKey
-      });
-      
-      return context;
-      
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      log(context, 0, 'error', `Pre-roll phase failed: ${errorMessage}`, error);
-      console.error('❌ [PipelineCoordinator] Pre-roll phase failed:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Continue pipeline from roll complete (Steps 4-9)
-   * 
-   * Retrieves stored context, updates with roll data, and executes Steps 4-9.
-   * Pauses internally at Step 6 for user confirmation via callback pattern.
-   * 
-   * @param actionId - Action/event/incident ID
-   * @param userId - User who initiated the action
-   * @param rollData - Roll outcome data from event
-   */
-  async continueFromRollComplete(
-    actionId: string,
-    userId: string,
-    rollData: {
-      outcome: OutcomeType;
-      actorName: string;
-      actorId?: string;
-      actorLevel?: number;
-      proficiencyRank?: number;
-      skillName?: string;
-      rollBreakdown?: any;
-    }
-  ): Promise<void> {
-    const contextKey = `${actionId}:${userId}`;
-    const context = this.preRollContexts.get(contextKey);
-    
-    if (!context) {
-      console.error(`[PipelineCoordinator] No pre-roll context for ${contextKey}`);
-      return;
-    }
-    
-    log(context, 0, 'postRoll', `Continuing pipeline after roll complete`);
-    
-    try {
-      // Update context with roll data
-      context.rollData = {
-        ...context.rollData!,
-        outcome: rollData.outcome,
-        rollBreakdown: rollData.rollBreakdown
-      };
-      
-      // Update actor context if provided
-      if (rollData.actorId) {
-        context.actor = {
-          ...context.actor!,
-          actorId: rollData.actorId,
-          actorName: rollData.actorName,
-          level: rollData.actorLevel || context.actor?.level || 1,
-          proficiencyRank: rollData.proficiencyRank || context.actor?.proficiencyRank || 0,
-          selectedSkill: rollData.skillName || context.actor?.selectedSkill || ''
-        };
-      }
-      
-      // Refresh kingdom data (may have changed since pre-roll)
-      const actor = getKingdomActor();
-      context.kingdom = actor?.getKingdomData();
-      
-      log(context, 0, 'postRoll', `Roll data updated, executing Steps 4-9`);
-      
-      // Remove from pre-roll contexts (we're now executing post-roll)
-      this.preRollContexts.delete(contextKey);
-      
-      // Execute Steps 4-5 (create instance and calculate preview)
-      await this.step4_createCheckInstance(context);
-      await this.step5_calculatePreview(context);
-      
-      // Step 6: Wait for user confirmation (INTERNAL PAUSE via callback)
-      await this.step6_waitForUserConfirmation(context);
-      
-      // Steps 7-9: Continue after user clicks "Apply Result"
-      // (step6 promise resolves when confirmApply() is called)
-      await this.step7_postApplyInteractions(context);
-      await this.step8_executeAction(context);
-      await this.step9_cleanup(context);
-      
-      log(context, 0, 'complete', `Pipeline completed successfully`);
+      log(ctx, 0, 'complete', `Pipeline completed successfully`);
       console.log('✅ [PipelineCoordinator] Pipeline execution complete:', {
-        actionId: context.actionId,
-        outcome: context.rollData?.outcome,
-        steps: context.logs.length
+        actionId: ctx.actionId,
+        outcome: ctx.rollData?.outcome,
+        steps: ctx.logs.length
       });
-      
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      log(context, 0, 'error', `Post-roll phase failed: ${errorMessage}`, error);
+      log(ctx, 0, 'error', `Post-roll phase failed: ${errorMessage}`, error);
       console.error('❌ [PipelineCoordinator] Post-roll phase failed:', error);
       
       // Rollback any partial changes
-      await this.rollback(context);
-      
-      // Remove from pre-roll contexts if still there
-      this.preRollContexts.delete(contextKey);
+      await this.rollback(ctx);
       
       throw error;
     }
@@ -367,43 +249,43 @@ export class PipelineCoordinator {
     
     log(ctx, 3, 'executeRoll', `Rolling ${skillName} vs DC ${dc}`, { characterLevel, dc });
     
-    // Call PF2e roll and CAPTURE the native return value
-    const rollResult = await performKingdomActionRoll(
-      actingCharacter,
-      skillName,
-      dc,
-      pipeline.name,
-      ctx.actionId,
-      pipeline.outcomes
+    // CREATE CALLBACK that resumes pipeline
+    const callback: CheckRollCallback = async (roll, outcome, message, event) => {
+      console.log('✅ [Callback] Roll complete:', { outcome, total: roll.total });
+      
+      // Update context with roll data
+      const d20Result = roll.dice[0]?.results[0]?.result || 0;
+      ctx.rollData = {
+        skill: skillName,
+        dc,
+        roll,
+        outcome: (outcome ?? 'failure') as OutcomeType,
+        rollBreakdown: {
+          d20Result,
+          total: roll.total,
+          modifiers: []
+        }
+      };
+      
+      // Resume pipeline at Step 4
+      await this.resumeAfterRoll(ctx);
+    };
+    
+    // Call PF2eSkillService with callback (delegates to skill.roll internally)
+    const { pf2eSkillService } = await import('./pf2e/PF2eSkillService');
+    
+    await pf2eSkillService.performKingdomSkillCheck(
+      skillName,      // skill name
+      'action',       // check type
+      pipeline.name,  // check name
+      ctx.actionId,   // check ID
+      undefined,      // checkEffects (optional)
+      ctx.actionId,   // actionId for aids
+      callback        // ← Pass callback
     );
     
-    if (!rollResult) {
-      throw new Error('Roll was cancelled or failed');
-    }
-    
-    // Parse outcome immediately from roll result
-    const { pf2eRollService } = await import('./pf2e');
-    const outcome = pf2eRollService.parseRollOutcome(rollResult, dc) as OutcomeType;
-    
-    // Extract roll breakdown
-    const d20Result = rollResult.dice[0]?.results[0]?.result || 0;
-    const rollBreakdown = {
-      d20Result,
-      total: rollResult.total,
-      dc,
-      modifiers: [] // TODO: Extract from roll if needed
-    };
-    
-    // Store complete roll data in context
-    ctx.rollData = {
-      skill: skillName,
-      dc,
-      roll: rollResult,
-      outcome,
-      rollBreakdown
-    };
-    
-    log(ctx, 3, 'executeRoll', `Roll complete: ${outcome} (total: ${rollResult.total} vs DC ${dc})`);
+    // Step 3 returns - callback will resume pipeline when roll completes
+    log(ctx, 3, 'executeRoll', 'Roll initiated with callback');
   }
 
   /**
@@ -423,8 +305,8 @@ export class PipelineCoordinator {
     const pipeline = await getPipeline(ctx);
     const outcome = ctx.rollData?.outcome || 'success';
     
-    // Import CheckInstanceHelpers
-    const { createActionCheckInstance } = await import('../controllers/actions/CheckInstanceHelpers');
+    // Import OutcomePreviewHelpers
+    const { createActionOutcomePreview } = await import('../controllers/actions/OutcomePreviewHelpers');
     
     // Import action loader to get action definition
     const { actionLoader } = await import('../controllers/actions/action-loader');
@@ -482,7 +364,7 @@ export class PipelineCoordinator {
     };
     
     // Create check instance
-    const instanceId = await createActionCheckInstance({
+    const instanceId = await createActionOutcomePreview({
       actionId: ctx.actionId,
       action,
       outcome,

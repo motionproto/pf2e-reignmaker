@@ -159,7 +159,8 @@ export async function resolvePhaseOutcome(
     
     // NEW ARCHITECTURE: Mark instance as applied BEFORE completing steps
     // This must happen while instance still has status 'resolved'
-    const { checkInstanceService } = await import('../../services/CheckInstanceService');
+    const { createOutcomePreviewService } = await import('../../services/OutcomePreviewService');
+    const outcomePreviewService = await createOutcomePreviewService();
     const { get } = await import('svelte/store');
     const { kingdomData } = await import('../../stores/KingdomStore');
     const kingdom = get(kingdomData);
@@ -170,7 +171,7 @@ export async function resolvePhaseOutcome(
     );
     
     if (resolvedInstance) {
-      await checkInstanceService.markApplied(resolvedInstance.instanceId);
+      await outcomePreviewService.markApplied(resolvedInstance.instanceId);
 
     } else {
       logger.warn(`⚠️ [PhaseControllerHelpers] No resolved ${itemType} instance found to mark as applied`);

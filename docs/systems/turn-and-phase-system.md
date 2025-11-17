@@ -273,7 +273,7 @@ TurnState stores check-related state:
 - Incident rolls and triggered incidents
 - Player action selections
 
-ActiveCheckInstances store actual check data and outcomes.
+OutcomePreviews store actual check data and outcomes.
 
 ### With Phase Controllers
 

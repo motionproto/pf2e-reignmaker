@@ -7,7 +7,7 @@ import type { Settlement } from '../models/Settlement';
 import type { Army } from '../models/Army';
 import type { BuildProject } from '../services/buildQueue/BuildProject';
 import type { ActiveModifier, ActiveEventInstance } from '../models/Modifiers';
-import type { ActiveCheckInstance } from '../models/CheckInstance';
+import type { OutcomePreview } from '../models/OutcomePreview';
 import type { TurnState } from '../models/TurnState';
 import type { Faction } from '../models/Faction';
 import { loadDefaultFactions } from '../models/DefaultFactions';
@@ -126,7 +126,7 @@ export interface KingdomData {
   
   // Events & Modifiers (persistent across turns)
   ongoingEvents: string[];  // Event IDs that persist across turns (legacy - may be deprecated)
-  activeCheckInstances: ActiveCheckInstance[];  // Unified check tracking (incidents, events, actions)
+  pendingOutcomes: OutcomePreview[];  // Unified outcome preview tracking (incidents, events, actions)
   activeModifiers: ActiveModifier[];  // Active modifiers from structures/diplomatic/custom (NOT events)
   eventDC: number;  // Event DC that persists across turns (15 default, -5 when no event, min 6)
   
@@ -402,7 +402,7 @@ export class KingdomActor extends Actor {
       isAtWar: false,
       partyLevel: partyLevel,  // Synced from party actors during initialization
       ongoingEvents: [],
-      activeCheckInstances: [],
+      pendingOutcomes: [],
       activeModifiers: [],
       eventDC: 15,  // Default event DC per rules
       currentPhaseSteps: [],
@@ -572,7 +572,7 @@ export function createDefaultKingdom(name: string = 'New Kingdom'): KingdomData 
       isAtWar: false,
       partyLevel: partyLevel,  // Synced from party actors during initialization
       ongoingEvents: [],
-      activeCheckInstances: [],
+      pendingOutcomes: [],
       activeModifiers: [],
       eventDC: 15,  // Default event DC per rules
       currentPhaseSteps: [],

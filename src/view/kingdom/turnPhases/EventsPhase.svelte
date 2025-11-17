@@ -26,8 +26,7 @@
    import {
      getCurrentUserCharacter,
      showCharacterSelectionDialog,
-     performKingdomActionRoll,
-     initializeRollResultHandler
+     performKingdomActionRoll
    } from '../../../services/pf2e';
    import { createCheckHandler } from '../../../controllers/shared/CheckHandler';
    import { buildPossibleOutcomes } from '../../../controllers/shared/PossibleOutcomeHelpers';
@@ -193,9 +192,6 @@
       // Listen for roll completion to clear aids
       console.log('🔵 [EventsPhase] Adding event listener for kingdomRollComplete');
       window.addEventListener('kingdomRollComplete', handleRollComplete as any);
-      
-      // Initialize roll result handler (has built-in guard against multiple registrations)
-      initializeRollResultHandler();
    });
    
    onDestroy(() => {

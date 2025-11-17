@@ -1,23 +1,23 @@
 /**
- * CheckInstance - Unified check instance for all check-based gameplay
+ * OutcomePreview - Unified outcome preview for all check-based gameplay
  * 
  * This replaces the fragmented state management where:
  * - Incidents stored in turnState.unrestPhase.incidentResolution
  * - Events stored in activeEventInstances
  * 
- * New unified pattern: All checks (incidents, events, actions) use ActiveCheckInstance
- * stored in kingdomData.activeCheckInstances
+ * New unified pattern: All checks (incidents, events, actions) use OutcomePreview
+ * stored in kingdomData.pendingOutcomes
  */
 
 import type { EventModifier } from '../types/events';
 
 /**
- * Unified check instance for all check-based gameplay
+ * Unified outcome preview for all check-based gameplay
  * Replaces ActiveEventInstance and turnState check fields
  */
-export interface ActiveCheckInstance {
+export interface OutcomePreview {
   // Identity
-  instanceId: string;           // Unique per instance: "{checkType}-{checkId}-{timestamp}"
+  previewId: string;           // Unique per preview: "{checkType}-{checkId}-{timestamp}"
   checkType: 'event' | 'incident' | 'action';
   checkId: string;              // Source ID (eventId, incidentId, actionId)
   checkData: any;               // KingdomEvent | KingdomIncident | PlayerAction
@@ -54,12 +54,29 @@ export interface ActiveCheckInstance {
     actorName: string;
     skillName: string;
     effect: string;
+    
+    // Resolution data (all synced across clients for multi-player coordination)
+    stateChanges?: Record<string, number>;  // Pre-computed state changes (synced for display)
     modifiers: EventModifier[];  // Resolved static values
     manualEffects: string[];
     specialEffects: (string | import('../types/special-effects').SpecialEffect)[];    // Supports both legacy strings and new structured format
+    gameCommands?: any[];  // Complex operations to execute on "Apply Result" (PreparedCommand pattern)
+    choices?: any[];  // Explicit choices (if not auto-generated from resource arrays)
+    
+    // Metadata
     shortfallResources: string[];
     rollBreakdown?: any;
     effectsApplied: boolean;     // Mark when "Apply Result" clicked
+    
+    // Component-based rendering (unified pattern for standard and custom outcomes)
+    component?: any;       // Svelte component for rendering (null = use StandardOutcomeDisplay)
+    componentProps?: Record<string, any>;  // Props to pass to component
+    
+    // Legacy aliases (deprecated - use component/componentProps instead)
+    /** @deprecated Use component instead */
+    customComponent?: any;
+    /** @deprecated Use componentProps instead */
+    customResolutionProps?: Record<string, any>;
   };
   
   // NOTE: Pending commits are stored client-side in CommitStorage (src/utils/CommitStorage.ts)
@@ -67,7 +84,7 @@ export interface ActiveCheckInstance {
 }
 
 /**
- * Helper type for check instance filtering
+ * Helper type for outcome preview filtering
  */
-export type CheckType = ActiveCheckInstance['checkType'];
-export type CheckStatus = ActiveCheckInstance['status'];
+export type CheckType = OutcomePreview['checkType'];
+export type CheckStatus = OutcomePreview['status'];

@@ -1,0 +1,54 @@
+/**
+ * Religious Schism Incident Pipeline
+ *
+ * Generated from data/incidents/major/religious-schism.json
+ */
+
+import type { CheckPipeline } from '../../../types/CheckPipeline';
+import { applyPipelineModifiers } from '../../shared/applyPipelineModifiers';
+
+export const religiousSchismPipeline: CheckPipeline = {
+  id: 'religious-schism',
+  name: 'Religious Schism',
+  description: 'Religious divisions tear your kingdom apart',
+  checkType: 'incident',
+  tier: 'major',
+
+  skills: [
+      { skill: 'religion', description: 'theological debate' },
+      { skill: 'diplomacy', description: 'mediate factions' },
+      { skill: 'occultism', description: 'divine intervention' },
+      { skill: 'society', description: 'secular compromise' },
+    ],
+
+  outcomes: {
+    success: {
+      description: 'The schism is averted.',
+      modifiers: []
+    },
+    failure: {
+      description: 'Religious divisions weaken your kingdom.',
+      modifiers: [
+        { type: 'dice', resource: 'gold', formula: '2d6', negative: true, duration: 'immediate' }
+      ],
+      manualEffects: ["Mark your highest tier religious structure as damaged"]
+    },
+    criticalFailure: {
+      description: 'The church splits entirely.',
+      modifiers: [
+        { type: 'dice', resource: 'gold', formula: '4d6', negative: true, duration: 'immediate' }
+      ],
+      manualEffects: ["Reduce your highest tier religious structure's tier by one and mark it as damaged. If the tier is reduced to zero, remove it entirely"]
+    },
+  },
+
+  preview: {
+    providedByInteraction: false
+  },
+
+  execute: async (ctx) => {
+    // Apply modifiers from outcome
+    await applyPipelineModifiers(religiousSchismPipeline, ctx.outcome);
+    return { success: true };
+  }
+};

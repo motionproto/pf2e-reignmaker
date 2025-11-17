@@ -15,7 +15,7 @@ import { createModifierService } from '../services/ModifierService';
 import { createGameCommandsService } from '../services/GameCommandsService';
 import type { ActiveModifier, ActiveEventInstance } from '../models/Modifiers';
 import { isStaticModifier, isOngoingDuration, isDiceModifier } from '../types/modifiers';
-import { checkInstanceService } from '../services/CheckInstanceService';
+import { createOutcomePreviewService } from '../services/OutcomePreviewService';
 import { 
   reportPhaseStart, 
   reportPhaseComplete, 
@@ -53,6 +53,8 @@ export interface IncidentResolution {
 export async function createEventPhaseController(_eventService?: any) {
     const modifierService = await createModifierService();
     const gameCommandsService = await createGameCommandsService();
+    // Initialize OutcomePreviewService once per controller instance
+    const outcomePreviewService = await createOutcomePreviewService();
     
     const createInitialState = (): EventPhaseState => ({
         currentEvent: null,
@@ -84,8 +86,8 @@ export async function createEventPhaseController(_eventService?: any) {
                 await applyCustomModifiers({ phase: 'Events' });
                 
                 // NEW ARCHITECTURE: Clear completed events and reset ongoing event resolutions
-                await checkInstanceService.clearCompleted('event', kingdom?.currentTurn);
-                await checkInstanceService.clearOngoingResolutions('event');
+                await outcomePreviewService.clearCompleted('event', kingdom?.currentTurn);
+                await outcomePreviewService.clearOngoingResolutions('event');
                 
         // Read CURRENT state from turnState (single source of truth)
         const eventRolled = kingdom?.turnState?.eventsPhase?.eventRolled ?? false;
@@ -168,7 +170,7 @@ export async function createEventPhaseController(_eventService?: any) {
 
                         } else {
                             // Create new instance via CheckInstanceService
-                            instanceId = await checkInstanceService.createInstance(
+                            instanceId = await outcomePreviewService.createInstance(
                                 'event',
                                 event.id,
                                 event,
@@ -242,6 +244,10 @@ export async function createEventPhaseController(_eventService?: any) {
         /**
          * Resolve event with ResolutionData
          * Receives pre-computed resolution data from UI (all dice rolled, choices made)
+         * 
+         * @deprecated TODO: This method duplicates PipelineCoordinator logic.
+         * Should be replaced with: pipelineCoordinator.executePipeline(eventId, actorData)
+         * See Task B: Pipeline Unification Migration
          */
         async resolveEvent(
             eventId: string,
@@ -305,7 +311,7 @@ export async function createEventPhaseController(_eventService?: any) {
             // Create instance using NEW system (activeCheckInstances, not activeEventInstances)
             if (shouldCreateInstance && !existingInstance) {
                 // First time: Create new instance via CheckInstanceService
-                newInstanceId = await checkInstanceService.createInstance(
+                newInstanceId = await outcomePreviewService.createInstance(
                     'event',
                     event.id,
                     event,
@@ -519,7 +525,7 @@ export async function createEventPhaseController(_eventService?: any) {
 
                     } else {
                         // Create new instance (fallback for edge cases)
-                        instanceId = await checkInstanceService.createInstance(
+                        instanceId = await outcomePreviewService.createInstance(
                             'event',
                             event.id,
                             event,

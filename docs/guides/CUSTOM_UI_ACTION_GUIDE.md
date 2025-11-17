@@ -123,10 +123,10 @@ export const HarvestResourcesAction = {
 ```svelte
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import type { ActiveCheckInstance } from '../../../../../models/CheckInstance';
+  import type { OutcomePreview } from '../../../../../models/CheckInstance';
   import { updateInstanceResolutionState } from '../../../../../controllers/shared/ResolutionStateHelpers';
   
-  export let instance: ActiveCheckInstance | null = null;
+  export let instance: OutcomePreview | null = null;
   export let outcome: string;
   
   const dispatch = createEventDispatcher();
@@ -141,7 +141,7 @@ export const HarvestResourcesAction = {
     if (!instance) return;
     
     // Store in instance state
-    await updateInstanceResolutionState(instance.instanceId, {
+    await updateInstanceResolutionState(instance.previewId, {
       customComponentData: { selectedResource: resource, amount }
     });
     
@@ -217,14 +217,14 @@ export const HarvestResourcesAction = {
 ```svelte
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import type { ActiveCheckInstance } from '../../../../../models/CheckInstance';
+  import type { OutcomePreview } from '../../../../../models/CheckInstance';
   import { 
     updateInstanceResolutionState,
     getInstanceResolutionState 
   } from '../../../../../controllers/shared/ResolutionStateHelpers';
   
   // Props (automatically passed by OutcomeDisplay)
-  export let instance: ActiveCheckInstance | null = null;
+  export let instance: OutcomePreview | null = null;
   export let outcome: string;
   
   const dispatch = createEventDispatcher();
@@ -243,7 +243,7 @@ export const HarvestResourcesAction = {
     if (!instance) return;
     
     // Store in instance
-    await updateInstanceResolutionState(instance.instanceId, {
+    await updateInstanceResolutionState(instance.previewId, {
       customComponentData: { 
         selectedOption: option,
         amount: amount
@@ -538,7 +538,7 @@ customResolution: {
 **Wrong:**
 ```typescript
 async function handleSelect(option: string) {
-  await updateInstanceResolutionState(instance.instanceId, {
+  await updateInstanceResolutionState(instance.previewId, {
     customComponentData: { selectedOption: option }
   });
   // ❌ Forgot to dispatch!
@@ -548,7 +548,7 @@ async function handleSelect(option: string) {
 **Right:**
 ```typescript
 async function handleSelect(option: string) {
-  await updateInstanceResolutionState(instance.instanceId, {
+  await updateInstanceResolutionState(instance.previewId, {
     customComponentData: { selectedOption: option }
   });
   
@@ -727,7 +727,7 @@ validateData(resolutionData: ResolutionData): boolean {
 // ❌ BAD: Persisting on every +/- click
 function incrementAmount() {
   selectedAmount++;
-  await updateInstanceResolutionState(instance.instanceId, {
+  await updateInstanceResolutionState(instance.previewId, {
     customComponentData: { selectedAmount }
   });
   // Result: Actor update → Map redraw → Flash!
@@ -757,7 +757,7 @@ User Interaction:
 <script lang="ts">
   import { updateInstanceResolutionState, getInstanceResolutionState } from '...';
   
-  export let instance: ActiveCheckInstance | null = null;
+  export let instance: OutcomePreview | null = null;
   export let outcome: string;
   
   // ✅ Persist critical data (for validation)
@@ -770,7 +770,7 @@ User Interaction:
   
   async function handleResourceSelect(resource: string) {
     // Persist selectedResource (ONCE, for validation)
-    await updateInstanceResolutionState(instance.instanceId, {
+    await updateInstanceResolutionState(instance.previewId, {
       customComponentData: { selectedResource: resource }
     });
     
@@ -889,7 +889,7 @@ Total: 2 actor updates, 0 map flashes ✅
     selectedResource = resource;
     
     // Persist ONCE for validation
-    await updateInstanceResolutionState(instance.instanceId, {
+    await updateInstanceResolutionState(instance.previewId, {
       customComponentData: { selectedResource: resource }
     });
     

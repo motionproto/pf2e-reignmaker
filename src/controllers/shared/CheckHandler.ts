@@ -8,7 +8,7 @@
  * - State cleanup
  */
 
-import { performKingdomSkillCheck, initializeRollResultHandler } from '../../services/pf2e';
+import { performKingdomSkillCheck } from '../../services/pf2e';
 import { logger } from '../../utils/Logger';
 
 export interface CheckConfig {
@@ -46,9 +46,6 @@ export class CheckHandler {
    */
   async executeCheck(config: CheckConfig): Promise<void> {
     const { checkType, item, skill, enabledModifiers, onStart, onComplete, onCancel, onError } = config;
-
-    // Initialize roll result handler
-    initializeRollResultHandler();
 
     // Call onStart callback
     onStart?.();

@@ -3,17 +3,19 @@
  *
  * Trade resources for gold based on commerce structure tier.
  * Converted from data/player-actions/sell-surplus.json
- *
- * NOTE: Actual execution logic is in custom implementation (commerce service)
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
+import { hasCommerceStructure, getBestTradeRates } from '../../services/commerce/tradeRates';
+import { get } from 'svelte/store';
+import { kingdomData } from '../../stores/KingdomStore';
+import { applyResourceChanges } from '../../actions/shared/InlineActionHelpers';
+import SellResourceSelector from '../../view/kingdom/components/OutcomeDisplay/components/SellResourceSelector.svelte';
 
 export const sellSurplusPipeline: CheckPipeline = {
   id: 'sell-surplus',
   name: 'Sell Surplus',
-  description: 'Convert excess resources into gold through your kingdom\'s commerce infrastructure. Better commerce structures provide better trade rates.',
+  description: 'Convert excess resources into gold through your kingdom\'s commerce infrastructure. Better commerce structures provide better trade rates. Requires at least one commerce structure.',
   checkType: 'action',
   category: 'economic-resources',
 
@@ -25,12 +27,37 @@ export const sellSurplusPipeline: CheckPipeline = {
     { skill: 'thievery', description: 'black market' }
   ],
 
-  // Pre-roll: Select resource to sell and quantity
-  preRollInteractions: [
+  // Post-roll: Select resource and amount (BEFORE Apply button, shown inline in outcome display)
+  postRollInteractions: [
     {
       type: 'configuration',
-      id: 'sellConfig',
-      label: 'Select resources to sell'
+      id: 'resourceSelection',
+      component: SellResourceSelector,  // Custom property for Svelte component
+      // Only show for successful sales
+      condition: (ctx) => {
+        return ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess';
+      },
+      // Execute sale when user confirms selection
+      onComplete: async (data: any, ctx: any) => {
+        console.log('🎯 [SellSurplus] User selected:', data);
+        const { selectedResource, selectedAmount, goldGained } = data || {};
+        
+        if (!selectedResource || !selectedAmount || goldGained === undefined) {
+          throw new Error('No resource selection was made');
+        }
+        
+        // Apply resource changes
+        const result = await applyResourceChanges([
+          { resource: selectedResource, amount: -selectedAmount },
+          { resource: 'gold', amount: goldGained }
+        ], 'sell-surplus');
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to apply resource changes');
+        }
+        
+        console.log('✅ [SellSurplus] Resources sold successfully');
+      }
     }
   ],
 
@@ -54,58 +81,23 @@ export const sellSurplusPipeline: CheckPipeline = {
   },
 
   preview: {
-    calculate: (ctx) => {
-      // Preview is provided by custom component
-      return {
-        resources: [],
-        specialEffects: [],
-        warnings: []
-      };
-    }
+    providedByInteraction: true  // Resource selector shows preview
   },
 
   // Execute function - explicitly handles ALL outcomes
   execute: async (ctx) => {
     switch (ctx.outcome) {
       case 'criticalSuccess':
-      case 'success': {
-        // Apply resource changes for successful sales
-        const { selectedResource, selectedAmount, goldGain } = ctx.resolutionData.customComponentData || {};
-        
-        if (!selectedResource || !selectedAmount || goldGain === undefined) {
-          return {
-            success: false,
-            error: 'No resource selection was made'
-          };
-        }
-
-        // Import helper to apply resource changes
-        const { applyResourceChanges } = await import('../../actions/shared/InlineActionHelpers');
-        
-        // Apply resource changes (lose resource, gain gold)
-        const result = await applyResourceChanges([
-          { resource: selectedResource, amount: -selectedAmount },
-          { resource: 'gold', amount: goldGain }
-        ], 'sell-surplus');
-        
-        if (!result.success) {
-          return {
-            success: false,
-            error: result.error || 'Failed to sell resources'
-          };
-        }
-
-        // Build success message
-        const resourceName = selectedResource.charAt(0).toUpperCase() + selectedResource.slice(1);
-        return {
-          success: true,
-          message: `Sold ${selectedAmount} ${resourceName} for ${goldGain} gold!`
-        };
-      }
+      case 'success':
+        // Resource selection and application handled by postRollInteractions.onComplete
+        // The onComplete handler already applied the resource changes during Step 7,
+        // so we just need to verify it ran successfully.
+        console.log('[SellSurplus] ✅ Resources sold via postRollInteractions');
+        return { success: true };
         
       case 'failure':
       case 'criticalFailure':
-        // Explicitly do nothing on failure (no modifiers defined)
+        // No action taken on failure
         return { success: true };
         
       default:

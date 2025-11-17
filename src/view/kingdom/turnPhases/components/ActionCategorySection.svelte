@@ -4,9 +4,7 @@
   import CommerceTierInfo from '../../../kingdom/components/CheckCard/components/CommerceTierInfo.svelte';
   import SectionHeader from './SectionHeader.svelte';
   import { getCustomResolutionComponent } from '../../../../controllers/actions/implementations';
-  import { getActionStatus, getActionNumber } from '../../../../constants/migratedActions';
   import type { PlayerAction } from '../../../../controllers/actions/action-types';
-  import type { ActionStatus } from '../../../../constants/migratedActions';
 
   const dispatch = createEventDispatcher();
 
@@ -86,16 +84,19 @@
           rollBreakdown: checkInstance.appliedOutcome.rollBreakdown,
           effectsApplied: checkInstance.appliedOutcome.effectsApplied || false
         } : undefined}
-        {@const customResolution = (resolution && controller) ? getCustomResolutionComponent(action.id, resolution.outcome) : null}
+        {@const customResolution = (resolution && checkInstance?.appliedOutcome?.customComponent) 
+          ? { 
+              component: checkInstance.appliedOutcome.customComponent, 
+              props: checkInstance.appliedOutcome.customResolutionProps || {} 
+            }
+          : (resolution && controller) 
+            ? getCustomResolutionComponent(action.id, resolution.outcome) 
+            : null}
         {@const isAvailable = controller ? isActionAvailable(action) : false}
         {@const missingRequirements = !isAvailable && controller ? getMissingRequirements(action) : []}
-        {@const actionStatus = getActionStatus(action.id)}
-        {@const actionNumber = getActionNumber(action.id)}
         {#key `${action.id}-${instanceId || 'none'}-${activeAidsCount}-${isAvailable}-${armyDataKey}-${resourcesKey}`}
           <BaseCheckCard
             id={action.id}
-            actionStatus={actionStatus}
-            actionNumber={actionNumber}
             checkInstance={checkInstance || null}
             customResolutionComponent={customResolution?.component || null}
             customResolutionProps={customResolution?.props || {}}

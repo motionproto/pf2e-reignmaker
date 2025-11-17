@@ -151,9 +151,13 @@ export function getKingdom(ctx: PipelineContext): KingdomData {
  */
 export async function getPipeline(ctx: PipelineContext): Promise<CheckPipeline> {
   // Import registry (circular dependency safe - done at runtime)
+  console.log(`🔍 [PipelineContext.getPipeline] Looking up pipeline: ${ctx.actionId}`);
   const { pipelineRegistry } = await import('../pipelines/PipelineRegistry');
+  console.log(`🔍 [PipelineContext.getPipeline] Registry imported, calling getPipeline()`);
   
   const pipeline = pipelineRegistry.getPipeline(ctx.actionId);
+  console.log(`🔍 [PipelineContext.getPipeline] Result:`, pipeline ? 'FOUND ✅' : 'NOT FOUND ❌');
+  
   if (!pipeline) {
     throw new Error(`[PipelineContext] Pipeline not found: ${ctx.actionId}`);
   }

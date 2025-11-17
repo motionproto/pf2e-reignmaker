@@ -8,9 +8,9 @@ The 14 migrated actions currently use a **fragmented approach** where different 
 
 **Current Flow (Fragmented):**
 1. **Pre-roll interactions** - Called from `ActionsPhase.handleExecuteSkill()`
-2. **Roll execution** - Handled by PF2e roll system
-3. **Check instance creation** - Called from `ActionsPhase.onActionResolved()`
-4. **Preview calculation** - Called in `CheckInstanceHelpers.createActionCheckInstance()`
+2. **Roll execution** - Handled by PF2e roll system with callback
+3. **Outcome preview creation** - Called from roll callback
+4. **Preview calculation** - Calculated in pipeline definition
 5. **OutcomeDisplay** - Mounted as Svelte component
 6. **Post-apply interactions** - Called from `ActionsPhase.applyActionEffects()`
 7. **Execute** - Called from `ActionPhaseController.resolveAction()`
@@ -19,20 +19,12 @@ The 14 migrated actions currently use a **fragmented approach** where different 
 ### Problems with Current Architecture
 
 ❌ **No central coordinator** - Steps are executed from 5+ different locations  
-❌ **No unified context** - Data scattered across `instance.metadata`, `resolutionData`, global state  
+❌ **No unified context** - Data scattered across `preview.metadata`, `resolutionData`, global state  
 ❌ **Inconsistent logging** - Each integration point logs differently  
 ❌ **Hard to debug** - No single place to trace execution flow  
 ❌ **MIGRATED_ACTIONS branching** - Two parallel code paths instead of one  
 ❌ **Silent failures** - Each integration point can fail without clear error handling  
 ❌ **Data persistence issues** - Context doesn't flow cleanly through all steps  
-
-### Example: claim-hexes Bug
-
-The recent claim-hexes bug illustrates this problem:
-- Pipeline defined `postApplyInteractions` for hex selection
-- But no `onComplete` handler was defined to save the selected hexes
-- Result: User selected hexes, but they were never claimed
-- Root cause: Fragmented execution meant the hex selection interaction and execution logic were disconnected
 
 ---
 
@@ -48,10 +40,10 @@ The recent claim-hexes bug illustrates this problem:
 │                                                          │
 │  Step 1: Requirements Check          [optional]         │
 │  Step 2: Pre-Roll Interactions       [optional]         │
-│  Step 3: Roll Execution              [always runs]      │
-│  Step 4: Check Instance Creation     [always runs]      │
-│  Step 5: Preview Calculation         [optional]         │
-│  Step 6: User Confirmation (UI)      [always runs]      │
+│  Step 3: Execute Roll                [always runs]      │
+│  Step 4: Display Outcome             [always runs]      │
+│  Step 5: Outcome Interactions        [optional]         │
+│  Step 6: Wait For Apply              [always runs]      │
 │  Step 7: Post-Apply Interactions     [optional]         │
 │  Step 8: Execute Action              [always runs]      │
 │  Step 9: Cleanup                     [always runs]      │
@@ -73,7 +65,7 @@ interface PipelineContext {
   actor?: ActorContext;           // Step 1
   metadata: CheckMetadata;         // Step 2
   rollData?: RollData;             // Step 3
-  instanceId?: string;             // Step 4
+  previewId?: string;             // Step 4
   preview?: PreviewData;           // Step 5
   userConfirmed: boolean;          // Step 6
   resolutionData: ResolutionData;  // Step 7
@@ -201,13 +193,13 @@ class PipelineCoordinator {
     initialContext: Partial<PipelineContext>
   ): Promise<PipelineContext>
   
-  // Individual step implementations
+  // Individual step implementations (9-step architecture)
   private async step1_checkRequirements(ctx: PipelineContext): Promise<void>
   private async step2_preRollInteractions(ctx: PipelineContext): Promise<void>
   private async step3_executeRoll(ctx: PipelineContext): Promise<void>
-  private async step4_createCheckInstance(ctx: PipelineContext): Promise<void>
-  private async step5_calculatePreview(ctx: PipelineContext): Promise<void>
-  private async step6_waitForUserConfirmation(ctx: PipelineContext): Promise<void>
+  private async step4_displayOutcome(ctx: PipelineContext): Promise<void>
+  private async step5_outcomeInteractions(ctx: PipelineContext): Promise<void>
+  private async step6_waitForApply(ctx: PipelineContext): Promise<void>
   private async step7_postApplyInteractions(ctx: PipelineContext): Promise<void>
   private async step8_executeAction(ctx: PipelineContext): Promise<void>
   private async step9_cleanup(ctx: PipelineContext): Promise<void>
@@ -219,6 +211,56 @@ class PipelineCoordinator {
   private log(ctx: PipelineContext, step: number, message: string): void
 }
 ```
+
+**Step Descriptions:**
+
+**Step 1: checkRequirements()**
+- Validate action can be performed
+- Check resources, prerequisites
+- Optional - skip if no requirements
+
+**Step 2: preRollInteractions()**
+- Execute interactions BEFORE roll
+- Examples: select settlement, choose army
+- Optional - skip if no pre-roll interactions
+
+**Step 3: executeRoll()**
+- Execute PF2e skill check with callback
+- Callback resumes pipeline when roll completes
+- **CALLBACK INJECTION POINT**
+- Always runs
+
+**Step 4: displayOutcome()**
+- Create OutcomePreview data structure
+- Mount OutcomeDisplay component
+- Store in kingdom.pendingOutcomes
+- Always runs
+
+**Step 5: outcomeInteractions()**
+- Wait for user to interact with OutcomeDisplay
+- User rolls on tables, makes choices, updates preview
+- Passive - handled by OutcomeDisplay component
+- Optional - skip if no outcome interactions defined
+
+**Step 6: waitForApply()**
+- Wait for user to click "Apply Result" button
+- Pause/resume pattern (see below)
+- Always runs
+
+**Step 7: postApplyInteractions()**
+- Execute interactions AFTER apply clicked
+- Examples: select hexes on map, allocate resources
+- Optional - skip if no post-apply interactions
+
+**Step 8: executeAction()**
+- Apply state changes to kingdom
+- Update resources, create entities
+- Always runs
+
+**Step 9: cleanup()**
+- Delete OutcomePreview from kingdom.pendingOutcomes
+- Track action in log
+- Always runs
 
 **Execution Flow:**
 
@@ -248,7 +290,7 @@ async function handleAction(actionId) {
 }
 ```
 
-### 3. Step 6 Special Handling (User Confirmation)
+### 3. Step 6 Special Handling (Wait For Apply)
 
 **Challenge:** Step 6 waits for user to click "Apply Result" in OutcomeDisplay
 
@@ -258,11 +300,11 @@ async function handleAction(actionId) {
 // Store context in memory
 private pendingContexts = new Map<string, PipelineContext>();
 
-private async step6_waitForUserConfirmation(ctx: PipelineContext): Promise<void> {
-  this.log(ctx, 6, 'Pausing for user confirmation...');
+private async step6_waitForApply(ctx: PipelineContext): Promise<void> {
+  this.log(ctx, 6, 'Pausing for user to click Apply Result...');
   
   // Store context
-  this.pendingContexts.set(ctx.instanceId!, ctx);
+  this.pendingContexts.set(ctx.previewId!, ctx);
   
   // Return promise that resolves when user clicks Apply
   return new Promise((resolve) => {
@@ -271,16 +313,66 @@ private async step6_waitForUserConfirmation(ctx: PipelineContext): Promise<void>
 }
 
 // Called from OutcomeDisplay when user clicks Apply
-resumePipeline(instanceId: string): void {
-  const ctx = this.pendingContexts.get(instanceId);
+resumePipeline(previewId: string): void {
+  const ctx = this.pendingContexts.get(previewId);
   if (ctx && ctx._resumeCallback) {
     ctx.userConfirmed = true;
     ctx._resumeCallback();
+    
+    // Continue with Steps 7-9
+    await this.step7_postApplyInteractions(ctx);
+    await this.step8_executeAction(ctx);
+    await this.step9_cleanup(ctx);
   }
 }
 ```
 
-### 4. Conditional Step Execution
+### 4. Callback Integration (Step 3)
+
+**Challenge:** PF2e roll callback fires asynchronously after user completes roll
+
+**Solution:** Callback resumes pipeline at Step 4
+
+```typescript
+private async step3_executeRoll(ctx: PipelineContext): Promise<void> {
+  this.log(ctx, 3, 'Executing skill check');
+  
+  // CREATE CALLBACK that resumes pipeline
+  const callback: CheckRollCallback = async (roll, outcome, message, event) => {
+    console.log('✅ [Callback] Roll complete:', { outcome, total: roll.total });
+    
+    // Update context with roll data
+    ctx.rollData = {
+      skill: skillName,
+      dc,
+      roll,
+      outcome: outcome ?? 'failure',
+      rollBreakdown: { ... }
+    };
+    
+    // Resume pipeline at Step 4
+    await this.resumeAfterRoll(ctx);
+  };
+  
+  // Call PF2eSkillService with callback
+  await pf2eSkillService.performKingdomSkillCheck(
+    skillName, 'action', actionName, actionId, outcomes,
+    undefined, // actionId
+    callback   // ← Pass callback
+  );
+  
+  // Step 3 returns - callback will resume pipeline later
+}
+
+private async resumeAfterRoll(ctx: PipelineContext): Promise<void> {
+  await this.step4_displayOutcome(ctx);
+  await this.step5_outcomeInteractions(ctx);
+  await this.step6_waitForApply(ctx);
+  // Steps 7-9 happen after user clicks Apply (see step6)
+}
+```
+
+### 5. Conditional Step Execution
 
 Each step checks if it's needed before executing:
 
@@ -297,7 +389,7 @@ private async step2_preRollInteractions(ctx: PipelineContext): Promise<void> {
 }
 ```
 
-### 5. Error Handling & Rollback
+### 6. Error Handling & Rollback
 
 **Centralized try/catch with rollback:**
 
@@ -308,7 +400,8 @@ async executePipeline(actionId, initialContext) {
   try {
     await this.step1_checkRequirements(context);
     await this.step2_preRollInteractions(context);
-    // ... all 9 steps
+    await this.step3_executeRoll(context);
+    // Steps 4-9 happen via callbacks
     
     this.logSuccess(context);
     return context;
@@ -323,56 +416,47 @@ async executePipeline(actionId, initialContext) {
 private async rollback(ctx: PipelineContext): Promise<void> {
   // Check which steps completed
   // Undo state changes from completed steps
-  // Clear check instance if created
+  // Clear outcome preview if created
   // Restore deducted resources if needed
 }
 ```
 
 ---
 
-## Migration Plan
+## Migration Status
 
-### Phase 1: Infrastructure (Week 1)
+### ✅ Phase 1: Callback Refactor (Complete)
 
-**Goal:** Create core coordinator without breaking existing functionality
+- [x] Remove event-based roll completion system
+- [x] Implement callback-based architecture in PipelineCoordinator
+- [x] Step 3 creates callback, PF2e calls it when roll completes
+- [x] Callback resumes pipeline at Step 4
+- [x] Tested with claim-hexes and deal-with-unrest
 
-- [ ] Create `src/types/PipelineContext.ts`
-- [ ] Create `src/services/PipelineCoordinator.ts` (stub implementation)
-- [ ] Add tests for context initialization
-- [ ] Document API
+### ✅ Phase 2: Naming Cleanup (Complete)
 
-### Phase 2: Step-by-Step Integration (Week 2-3)
+- [x] Rename `CheckInstance` → `OutcomePreview`
+- [x] Rename `activeCheckInstances` → `pendingOutcomes`
+- [x] Rename `instanceId` → `previewId`
+- [x] Update all documentation
+- [x] Build verified successful
 
-**Goal:** Migrate ActionsPhase to use coordinator, one step at a time
+### 🔄 Phase 3: Full Pipeline Integration (In Progress)
 
-- [ ] Implement Step 1 (requirements)
-- [ ] Implement Step 2 (pre-roll interactions)
-- [ ] Implement Step 3 (roll execution)
-- [ ] Implement Step 4 (check instance creation)
-- [ ] Implement Step 5 (preview calculation)
-- [ ] Implement Step 6 (user confirmation - pause/resume)
-- [ ] Implement Step 7 (post-apply interactions)
-- [ ] Implement Step 8 (execute)
-- [ ] Implement Step 9 (cleanup)
+**Goal:** Migrate ActionsPhase to use coordinator for ALL actions
 
-### Phase 3: Refactor ActionsPhase (Week 4)
-
-**Goal:** Remove fragmented code, simplify ActionsPhase
-
-- [ ] Replace `handleExecuteSkill()` with coordinator call
-- [ ] Replace `applyActionEffects()` with coordinator resume
+- [ ] Update ActionsPhase to call `executePipeline()` as single entry point
 - [ ] Remove `MIGRATED_ACTIONS` branching
-- [ ] Delete old helper methods
-- [ ] Test all 26 actions
+- [ ] Test all 26 actions with unified pipeline
+- [ ] Remove old helper methods
 
-### Phase 4: Cleanup (Week 5)
+### 📋 Phase 4: Cleanup (Pending)
 
 **Goal:** Remove old implementation system
 
 - [ ] Delete `src/actions/*/ActionClass.ts` files (24 files)
 - [ ] Delete `src/controllers/actions/implementations/index.ts`
 - [ ] Delete `src/actions/shared/InlineActionHelpers.ts`
-- [ ] Add deprecation notices to old files
 - [ ] Update documentation
 
 ---
@@ -402,49 +486,15 @@ private async rollback(ctx: PipelineContext): Promise<void> {
 
 ---
 
-## Open Questions
-
-1. **Async UI Step (Step 6):**  
-   Q: Should we use a pause/resume pattern or a callback-based approach?  
-   A: TBD - need to discuss trade-offs
-
-2. **Rollback Complexity:**  
-   Q: How granular should rollback be? Per-step or all-or-nothing?  
-   A: TBD - depends on step complexity
-
-3. **Migration Strategy:**  
-   Q: Big-bang migration or gradual rollout?  
-   A: Prefer gradual - migrate one category at a time (e.g., Simple Actions first)
-
-4. **Performance:**  
-   Q: Will single coordinator become a bottleneck?  
-   A: Unlikely - actions are infrequent, and coordinator is stateless
-
-5. **Context Size:**  
-   Q: Will context object become too large?  
-   A: Monitor - can split into sub-contexts if needed
-
----
-
-## Next Steps
-
-1. **Review this document** - Discuss design decisions
-2. **Create PipelineContext type** - Start with type definitions
-3. **Create PipelineCoordinator stub** - Basic class structure
-4. **Implement Step 1** - Simplest step to validate approach
-5. **Test with one action** - Prove concept with claim-hexes
-6. **Iterate** - Refine based on learnings
-
----
-
 ## Related Documents
 
-- `docs/refactoring/MIGRATION_GUIDE.md` - Overall migration progress
+- `docs/refactoring/CALLBACK_REFACTOR_MIGRATION.md` - Callback system migration
+- `docs/refactoring/OUTCOME_PREVIEW_RENAMING.md` - Terminology cleanup
 - `docs/refactoring/ACTION_MIGRATION_CHECKLIST.md` - Per-action migration tracking
 - `.clinerules/ARCHITECTURE_SUMMARY.md` - System architecture overview
 
 ---
 
-**Status:** 📋 Design Phase  
-**Owner:** Architecture Team  
-**Last Updated:** 2025-11-16
+**Status:** � Active Development  
+**Current Phase:** Phase 3 (Full Pipeline Integration)  
+**Last Updated:** 2025-11-17

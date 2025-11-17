@@ -1,10 +1,10 @@
 /**
- * CheckInstanceService - Lifecycle management for check instances
+ * OutcomePreviewService - Lifecycle management for outcome previews
  * 
  * Provides unified state management for all check-based gameplay:
  * - Incidents (Unrest phase)
  * - Events (Events phase)
- * - Actions (Actions phase - future)
+ * - Actions (Actions phase)
  * 
  * Replaces fragmented state management where incidents stored in
  * turnState.unrestPhase.incidentResolution and events stored in
@@ -12,16 +12,16 @@
  */
 
 import { updateKingdom } from '../stores/KingdomStore';
-import type { ActiveCheckInstance } from '../models/CheckInstance';
+import type { OutcomePreview } from '../models/OutcomePreview';
 import type { KingdomData } from '../actors/KingdomActor';
 import type { ResolutionData } from '../types/modifiers';
 /**
- * Service for managing check instances (incidents, events, actions)
+ * Service for managing outcome previews (incidents, events, actions)
  * Provides lifecycle management and state synchronization across clients
  */
-export class CheckInstanceService {
+export class OutcomePreviewService {
   /**
-   * Create a new check instance
+   * Create a new outcome preview
    */
   async createInstance(
     checkType: 'incident' | 'event' | 'action',
@@ -30,9 +30,9 @@ export class CheckInstanceService {
     currentTurn: number,
     metadata?: any
   ): Promise<string> {
-    const instanceId = `T${currentTurn}-${checkId}-${Date.now()}`;
-    const instance: ActiveCheckInstance = {
-      instanceId,
+    const previewId = `T${currentTurn}-${checkId}-${Date.now()}`;
+    const preview: OutcomePreview = {
+      previewId,
       checkType,
       checkId,
       checkData,
@@ -42,26 +42,26 @@ export class CheckInstanceService {
     };
     
     await updateKingdom(kingdom => {
-      if (!kingdom.activeCheckInstances) kingdom.activeCheckInstances = [];
-      kingdom.activeCheckInstances.push(instance);
+      if (!kingdom.pendingOutcomes) kingdom.pendingOutcomes = [];
+      kingdom.pendingOutcomes.push(preview);
 
     });
     
-    return instanceId;
+    return previewId;
   }
   
   /**
-   * Get instance by ID
+   * Get preview by ID
    */
-  getInstance(instanceId: string, kingdom: KingdomData): ActiveCheckInstance | null {
-    return kingdom.activeCheckInstances?.find(i => i.instanceId === instanceId) || null;
+  getInstance(previewId: string, kingdom: KingdomData): OutcomePreview | null {
+    return kingdom.pendingOutcomes?.find(i => i.previewId === previewId) || null;
   }
   
   /**
-   * Get active instance by check type and check ID
+   * Get active preview by check type and check ID
    */
-  getActiveInstance(checkType: string, checkId: string, kingdom: KingdomData): ActiveCheckInstance | null {
-    return kingdom.activeCheckInstances?.find(i => 
+  getActiveInstance(checkType: string, checkId: string, kingdom: KingdomData): OutcomePreview | null {
+    return kingdom.pendingOutcomes?.find(i => 
       i.checkType === checkType && 
       i.checkId === checkId && 
       i.status === 'pending'
@@ -69,10 +69,10 @@ export class CheckInstanceService {
   }
   
   /**
-   * Get all pending instances by type
+   * Get all pending previews by type
    */
-  getPendingInstances(checkType: string, kingdom: KingdomData): ActiveCheckInstance[] {
-    return kingdom.activeCheckInstances?.filter(i => 
+  getPendingInstances(checkType: string, kingdom: KingdomData): OutcomePreview[] {
+    return kingdom.pendingOutcomes?.filter(i => 
       i.checkType === checkType && 
       i.status === 'pending'
     ) || [];
@@ -82,20 +82,25 @@ export class CheckInstanceService {
    * Store outcome (after skill check, before effects applied)
    */
   async storeOutcome(
-    instanceId: string,
+    previewId: string,
     outcome: string,
     resolutionData: ResolutionData,
     actorName: string,
     skillName: string,
     effect: string,
     rollBreakdown?: any,
-    specialEffects?: any[]
+    specialEffects?: any[],
+    customComponent?: any,
+    customResolutionProps?: Record<string, any>
   ): Promise<void> {
-    console.log('📦 [CheckInstanceService] storeOutcome called with specialEffects:', specialEffects);
+    console.log('📦 [OutcomePreviewService] storeOutcome called with specialEffects:', specialEffects);
+    if (customComponent) {
+      console.log('📦 [OutcomePreviewService] Custom component provided for inline rendering');
+    }
     await updateKingdom(kingdom => {
-      const instance = kingdom.activeCheckInstances?.find(i => i.instanceId === instanceId);
-      if (instance) {
-        instance.appliedOutcome = {
+      const preview = kingdom.pendingOutcomes?.find(i => i.previewId === previewId);
+      if (preview) {
+        preview.appliedOutcome = {
           outcome: outcome as any,
           actorName,
           skillName,
@@ -105,12 +110,14 @@ export class CheckInstanceService {
           specialEffects: specialEffects || [],
           shortfallResources: [],
           rollBreakdown,
-          effectsApplied: false
+          effectsApplied: false,
+          customComponent,  // Store custom component for inline rendering
+          customResolutionProps  // Store props for custom component
         };
-        instance.status = 'resolved';
-        console.log('✅ [CheckInstanceService] Stored outcome with specialEffects:', instance.appliedOutcome.specialEffects);
+        preview.status = 'resolved';
+        console.log('✅ [OutcomePreviewService] Stored outcome with specialEffects:', preview.appliedOutcome.specialEffects);
       } else {
-        console.error(`❌ [CheckInstanceService] Instance ${instanceId} not found when storing outcome`);
+        console.error(`❌ [OutcomePreviewService] Preview ${previewId} not found when storing outcome`);
       }
     });
   }
@@ -118,24 +125,24 @@ export class CheckInstanceService {
   /**
    * Mark effects as applied (after "Apply Result" clicked)
    */
-  async markApplied(instanceId: string): Promise<void> {
+  async markApplied(previewId: string): Promise<void> {
     await updateKingdom(kingdom => {
-      if (!kingdom.activeCheckInstances) return;
+      if (!kingdom.pendingOutcomes) return;
       
       // CRITICAL: Create new array atomically (no mutation before reassignment)
-      kingdom.activeCheckInstances = kingdom.activeCheckInstances.map(instance => {
-        if (instance.instanceId === instanceId && instance.appliedOutcome) {
-          // Create new instance with updated nested properties
+      kingdom.pendingOutcomes = kingdom.pendingOutcomes.map(preview => {
+        if (preview.previewId === previewId && preview.appliedOutcome) {
+          // Create new preview with updated nested properties
           return {
-            ...instance,
+            ...preview,
             status: 'applied' as const,
             appliedOutcome: {
-              ...instance.appliedOutcome,
+              ...preview.appliedOutcome,
               effectsApplied: true
             }
           };
         }
-        return instance;
+        return preview;
       });
 
     });
@@ -144,32 +151,32 @@ export class CheckInstanceService {
   /**
    * Update shortfall resources after effects application
    */
-  async updateShortfallResources(instanceId: string, resources: string[]): Promise<void> {
+  async updateShortfallResources(previewId: string, resources: string[]): Promise<void> {
     await updateKingdom(kingdom => {
-      const instance = kingdom.activeCheckInstances?.find(i => i.instanceId === instanceId);
-      if (instance?.appliedOutcome) {
-        instance.appliedOutcome.shortfallResources = resources;
+      const preview = kingdom.pendingOutcomes?.find(i => i.previewId === previewId);
+      if (preview?.appliedOutcome) {
+        preview.appliedOutcome.shortfallResources = resources;
       }
     });
   }
   
   /**
-   * Clear completed instances (for specific check type)
+   * Clear completed previews (for specific check type)
    * IMPORTANT: For events, this only clears 'resolved' or 'applied' status, NOT 'pending' (ongoing events)
    */
   async clearCompleted(checkType: 'incident' | 'event', currentTurn?: number): Promise<void> {
     await updateKingdom(kingdom => {
-      const before = kingdom.activeCheckInstances?.length || 0;
+      const before = kingdom.pendingOutcomes?.length || 0;
       
       if (checkType === 'event') {
         // Events: Keep pending (ongoing), clear resolved/applied
-        kingdom.activeCheckInstances = kingdom.activeCheckInstances?.filter(i => 
+        kingdom.pendingOutcomes = kingdom.pendingOutcomes?.filter(i => 
           i.checkType !== 'event' || i.status === 'pending'
         ) || [];
 
       } else {
         // Incidents: Clear all non-pending (incidents don't have ongoing state)
-        kingdom.activeCheckInstances = kingdom.activeCheckInstances?.filter(i => 
+        kingdom.pendingOutcomes = kingdom.pendingOutcomes?.filter(i => 
           i.checkType !== checkType || i.status === 'pending'
         ) || [];
 
@@ -183,34 +190,34 @@ export class CheckInstanceService {
    */
   async clearOngoingResolutions(checkType: 'event'): Promise<void> {
     await updateKingdom(kingdom => {
-      if (!kingdom.activeCheckInstances) return;
+      if (!kingdom.pendingOutcomes) return;
       
       // CRITICAL: Create new array atomically (no mutation before reassignment)
       // This ensures Foundry VTT detects changes and syncs across clients
-      kingdom.activeCheckInstances = kingdom.activeCheckInstances.map(instance => {
-        if (instance.checkType === checkType && instance.status === 'pending') {
-          // Create new instance with cleared resolution data
+      kingdom.pendingOutcomes = kingdom.pendingOutcomes.map(preview => {
+        if (preview.checkType === checkType && preview.status === 'pending') {
+          // Create new preview with cleared resolution data
           return {
-            ...instance,
+            ...preview,
             appliedOutcome: undefined,
             resolutionProgress: undefined
           };
         }
-        return instance;
+        return preview;
       });
     });
   }
   
   /**
-   * Clear specific instance
+   * Clear specific preview
    */
-  async clearInstance(instanceId: string): Promise<void> {
+  async clearInstance(previewId: string): Promise<void> {
     await updateKingdom(kingdom => {
-      const before = kingdom.activeCheckInstances?.length || 0;
-      kingdom.activeCheckInstances = kingdom.activeCheckInstances?.filter(i => 
-        i.instanceId !== instanceId
+      const before = kingdom.pendingOutcomes?.length || 0;
+      kingdom.pendingOutcomes = kingdom.pendingOutcomes?.filter(i => 
+        i.previewId !== previewId
       ) || [];
-      const after = kingdom.activeCheckInstances.length;
+      const after = kingdom.pendingOutcomes.length;
       if (before > after) {
 
       }
@@ -221,7 +228,7 @@ export class CheckInstanceService {
    * Update resolution progress (for multi-player coordination)
    */
   async updateResolutionProgress(
-    instanceId: string,
+    previewId: string,
     playerId: string,
     playerName: string,
     outcome: string,
@@ -231,10 +238,10 @@ export class CheckInstanceService {
     }
   ): Promise<void> {
     await updateKingdom(kingdom => {
-      const instance = kingdom.activeCheckInstances?.find(i => i.instanceId === instanceId);
-      if (instance) {
-        if (!instance.resolutionProgress) {
-          instance.resolutionProgress = {
+      const preview = kingdom.pendingOutcomes?.find(i => i.previewId === previewId);
+      if (preview) {
+        if (!preview.resolutionProgress) {
+          preview.resolutionProgress = {
             playerId,
             playerName,
             timestamp: Date.now(),
@@ -245,11 +252,11 @@ export class CheckInstanceService {
         }
         
         if (updates.selectedChoices !== undefined) {
-          instance.resolutionProgress.selectedChoices = updates.selectedChoices;
+          preview.resolutionProgress.selectedChoices = updates.selectedChoices;
         }
         if (updates.rolledDice !== undefined) {
-          instance.resolutionProgress.rolledDice = {
-            ...instance.resolutionProgress.rolledDice,
+          preview.resolutionProgress.rolledDice = {
+            ...preview.resolutionProgress.rolledDice,
             ...updates.rolledDice
           };
         }
@@ -261,11 +268,11 @@ export class CheckInstanceService {
   /**
    * Clear resolution progress
    */
-  async clearResolutionProgress(instanceId: string): Promise<void> {
+  async clearResolutionProgress(previewId: string): Promise<void> {
     await updateKingdom(kingdom => {
-      const instance = kingdom.activeCheckInstances?.find(i => i.instanceId === instanceId);
-      if (instance) {
-        instance.resolutionProgress = undefined;
+      const preview = kingdom.pendingOutcomes?.find(i => i.previewId === previewId);
+      if (preview) {
+        preview.resolutionProgress = undefined;
 
       }
     });
@@ -273,11 +280,11 @@ export class CheckInstanceService {
 }
 
 // Export singleton instance
-export const checkInstanceService = new CheckInstanceService();
+export const outcomePreviewService = new OutcomePreviewService();
 
 /**
  * Factory function for creating service instance
  */
-export async function createCheckInstanceService(): Promise<CheckInstanceService> {
-  return checkInstanceService;
+export async function createOutcomePreviewService(): Promise<OutcomePreviewService> {
+  return outcomePreviewService;
 }

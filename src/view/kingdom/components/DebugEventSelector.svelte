@@ -2,7 +2,7 @@
    import { updateKingdom, kingdomData } from '../../../stores/KingdomStore';
    import { eventService } from '../../../controllers/events/event-loader';
    import { incidentLoader } from '../../../controllers/incidents/incident-loader';
-   import { checkInstanceService } from '../../../services/CheckInstanceService';
+   import { createOutcomePreviewService } from '../../../services/OutcomePreviewService';
    import { get } from 'svelte/store';
    import type { EventData } from '../../../controllers/events/event-loader';
    import type { KingdomIncident } from '../../../types/incidents';
@@ -80,6 +80,9 @@
          return;
       }
       
+      // Initialize service for this operation
+      const outcomePreviewService = await createOutcomePreviewService();
+      
       if (type === 'event') {
          // EVENT: NEW ARCHITECTURE (ActiveCheckInstance + turnState)
          if (itemId !== null) {
@@ -91,13 +94,13 @@
             }
             
             // Clear any existing event instances
-            const existing = checkInstanceService.getPendingInstances('event', kingdom);
+            const existing = outcomePreviewService.getPendingInstances('event', kingdom);
             for (const instance of existing) {
-               await checkInstanceService.clearInstance(instance.instanceId);
+               await outcomePreviewService.clearInstance(instance.instanceId);
             }
             
             // Create new ActiveCheckInstance
-            const instanceId = await checkInstanceService.createInstance(
+            const instanceId = await outcomePreviewService.createInstance(
                'event',
                event.id,
                event,
@@ -117,9 +120,9 @@
 
          } else {
             // Clear event
-            const existing = checkInstanceService.getPendingInstances('event', kingdom);
+            const existing = outcomePreviewService.getPendingInstances('event', kingdom);
             for (const instance of existing) {
-               await checkInstanceService.clearInstance(instance.instanceId);
+               await outcomePreviewService.clearInstance(instance.instanceId);
             }
             
             // Clear turnState AND reset phase step (step 0 = event check)
@@ -154,13 +157,13 @@
             }
             
             // Clear any existing incident instances
-            const existing = checkInstanceService.getPendingInstances('incident', kingdom);
+            const existing = outcomePreviewService.getPendingInstances('incident', kingdom);
             for (const instance of existing) {
-               await checkInstanceService.clearInstance(instance.instanceId);
+               await outcomePreviewService.clearInstance(instance.instanceId);
             }
             
             // Create new ActiveCheckInstance
-            const instanceId = await checkInstanceService.createInstance(
+            const instanceId = await outcomePreviewService.createInstance(
                'incident',
                incident.id,
                incident,
@@ -177,9 +180,9 @@
 
          } else {
             // Clear incident
-            const existing = checkInstanceService.getPendingInstances('incident', kingdom);
+            const existing = outcomePreviewService.getPendingInstances('incident', kingdom);
             for (const instance of existing) {
-               await checkInstanceService.clearInstance(instance.instanceId);
+               await outcomePreviewService.clearInstance(instance.instanceId);
             }
             
             // Clear turnState AND reset phase step (step 1 = incident check)

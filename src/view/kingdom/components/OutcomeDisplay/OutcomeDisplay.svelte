@@ -2,6 +2,7 @@
   import { createEventDispatcher } from 'svelte';
   import { kingdomData } from '../../../../stores/KingdomStore';
   import { structuresService } from '../../../../services/structures';
+  import type { OutcomePreview } from '../../../../models/OutcomePreview';
   import {
     processChoiceSelection,
     detectResourceArrayModifiers,
@@ -63,33 +64,37 @@
   import type { SpecialEffect } from '../../../../types/special-effects';
   import { parseLegacyEffect } from '../../../../types/special-effects';
   
-  // Props
-  export let instance: ActiveCheckInstance | null = null;  // NEW: Full instance object for state access
-  export let outcome: string;
-  export let actorName: string;
-  export let skillName: string | undefined = undefined;
-  export let effect: string;
-  export let stateChanges: Record<string, any> | undefined = undefined;
-  export let modifiers: any[] | undefined = undefined;
-  export let manualEffects: string[] | undefined = undefined;
-  export let specialEffects: (string | SpecialEffect)[] | undefined = undefined;  // Special effects (structured or legacy strings)
-  export const rerollEnabled: boolean = false;
-  export const rerollLabel: string = "Reroll";
-  export const rerollCount: number | undefined = undefined;
-  export let primaryButtonLabel: string = "OK";
+  // ✨ NEW UNIFIED INTERFACE: Only 2 required props
+  export let preview: OutcomePreview;  // Contains ALL outcome data
+  export let instance: ActiveCheckInstance | null = null;  // State management
+  
+  // Optional UI overrides (with sensible defaults)
+  export let primaryButtonLabel: string = "Apply Result";
   export let compact: boolean = false;
   export let showFameReroll: boolean = true;
   export let showCancel: boolean = true;
-  export let applied: boolean = false;
-  export let choices: any[] | undefined = undefined;
-  export let rollBreakdown: any = null;
   export let debugMode: boolean = false;
-  export let shortfallResources: string[] = [];
   export let showIgnoreEvent: boolean = false;
   export let ignoreEventDisabled: boolean = false;
-  export let isIgnored: boolean = false;  // Flag to hide reroll button for ignored events
-  export let customComponent: any = null;  // Custom resolution UI component (Svelte constructor)
-  export let customResolutionProps: Record<string, any> = {};  // Props to pass to custom component
+  
+  // Derive all data from preview
+  $: outcome = preview.appliedOutcome?.outcome || 'success';
+  $: actorName = preview.appliedOutcome?.actorName || '';
+  $: skillName = preview.appliedOutcome?.skillName || '';
+  $: effect = preview.appliedOutcome?.effect || '';
+  $: stateChanges = preview.appliedOutcome?.stateChanges;
+  $: modifiers = preview.appliedOutcome?.modifiers;
+  $: manualEffects = preview.appliedOutcome?.manualEffects;
+  $: specialEffects = preview.appliedOutcome?.specialEffects;
+  $: rollBreakdown = preview.appliedOutcome?.rollBreakdown;
+  $: shortfallResources = preview.appliedOutcome?.shortfallResources || [];
+  $: applied = preview.appliedOutcome?.effectsApplied || false;
+  $: isIgnored = false;  // Not tracked in OutcomePreview yet
+  $: choices = preview.appliedOutcome?.choices;
+  
+  // Custom component support (prefer new field names, fallback to legacy)
+  $: customComponent = preview.appliedOutcome?.component || preview.appliedOutcome?.customComponent || null;
+  $: customResolutionProps = preview.appliedOutcome?.componentProps || preview.appliedOutcome?.customResolutionProps || {};
   
   const dispatch = createEventDispatcher();
   const DICE_PATTERN = /^-?\(?\\d+d\\d+([+-]\\d+)?\)?$|^-?\d+d\d+([+-]\d+)?$/;
@@ -132,7 +137,7 @@
     
     const messages: string[] = [];
     
-    for (const effect of effects) {
+    for (const effect of effects as string[]) {
       // Parse structure_damaged:structureId:settlementId
       if (effect.startsWith('structure_damaged:')) {
         const parts = effect.split(':');
@@ -213,7 +218,7 @@
   $: currentFame = $kingdomData?.fame || 0;
   
   // Parse special effects (handles both new structured format and legacy strings)
-  $: structuredEffects = specialEffects?.map(effect => {
+  $: structuredEffects = specialEffects?.map((effect: any) => {
     if (typeof effect === 'string') {
       // Legacy string format - parse into structured effect
       return parseLegacyEffect(effect);
@@ -271,8 +276,8 @@
   
   // Detect dice formula modifiers that are NOT part of choices
   // Supports BOTH legacy (value as string) and typed (formula field) formats
-  $: diceModifiers = modifiers?.map((m, originalIdx) => ({ ...m, originalIndex: originalIdx }))
-    .filter(m => {
+  $: diceModifiers = modifiers?.map((m: any, originalIdx: number) => ({ ...m, originalIndex: originalIdx }))
+    .filter((m: any) => {
       if (Array.isArray(m.resources)) return false; // Not a resource array
       
       // Legacy format: value as string matching dice pattern
@@ -303,8 +308,8 @@
   // Detect choice modifiers (type: "choice-dropdown") that need resource selection
   // BREAKING CHANGE (2025-11-08): Only recognizes explicit type: "choice-dropdown"
   $: choiceModifiers = (modifiers || [])
-    .map((m, idx) => ({ ...m, originalIndex: idx }))
-    .filter(m => m.type === 'choice-dropdown' && Array.isArray(m.resources));
+    .map((m: any, idx: number) => ({ ...m, originalIndex: idx }))
+    .filter((m: any) => m.type === 'choice-dropdown' && Array.isArray(m.resources));
   $: hasChoiceModifiers = choiceModifiers.length > 0;
   $: choiceModifiersResolved = hasChoiceModifiers && choiceModifiers.every(m => selectedResources.has(m.originalIndex));
   
@@ -382,7 +387,7 @@
     let baseEffect = hasChoices ? effect : (choiceResult ? choiceResult.effect : effect);
     
     // If we have imprisoned unrest modifier, inject settlement name
-    if (modifiers?.some(m => (m.resource as string) === 'imprisoned')) {
+    if (modifiers?.some((m: any) => (m.resource as string) === 'imprisoned')) {
       const settlementName = getSelectedSettlementName();
       if (settlementName) {
         baseEffect = baseEffect.replace('the settlement', settlementName);
@@ -498,7 +503,7 @@
       // Add non-resource-array modifiers (e.g., gold penalty in Trade War)
       if (modifiers) {
         for (let i = 0; i < modifiers.length; i++) {
-          const mod = modifiers[i];
+          const mod = modifiers[i] as any;
           
           // Skip resource arrays (they're replaced by the choice)
           if (Array.isArray(mod.resources)) {
@@ -535,7 +540,7 @@
 
       if (modifiers) {
         for (let i = 0; i < modifiers.length; i++) {
-          const mod = modifiers[i];
+          const mod = modifiers[i] as any;
 
           // Handle ChoiceModifiers (type: "choice-dropdown" with resources array)
           if (mod.type === 'choice-dropdown' && Array.isArray(mod.resources)) {

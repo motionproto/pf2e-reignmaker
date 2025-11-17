@@ -308,7 +308,7 @@ const result = await controller.performEventCheck(eventId, actorId, skillName);
 
 **Controller Processing:**
 ```typescript
-const result = await controller.resolveEvent(instanceId, resolutionData);
+const result = await controller.resolveEvent(previewId, resolutionData);
 // - Applies numeric modifiers
 // - Handles special resources (damage_structure, etc.)
 // - Checks endsEvent flag
@@ -411,7 +411,7 @@ if (roll <= unrestLevel) {
 ```typescript
 const controller = await createEventPhaseController();
 await controller.performEventCheck(eventId, actorId, skillName);
-await controller.resolveEvent(instanceId, resolutionData);
+await controller.resolveEvent(previewId, resolutionData);
 ```
 
 ### With UnrestPhaseController
@@ -428,16 +428,16 @@ await controller.resolveEvent(instanceId, resolutionData);
 ```typescript
 const controller = await createUnrestPhaseController();
 const result = await controller.checkForIncidents();
-await controller.resolveIncident(instanceId, resolutionData);
+await controller.resolveIncident(previewId, resolutionData);
 ```
 
-### With CheckInstanceService
+### With OutcomePreviewService
 
 **Both controllers use CheckInstance system:**
 
 ```typescript
 // Create instance
-const instanceId = await checkInstanceService.createInstance(
+const previewId = await outcomePreviewService.createInstance(
   'event',  // or 'incident'
   eventId,
   eventData,
@@ -445,8 +445,8 @@ const instanceId = await checkInstanceService.createInstance(
 );
 
 // Store outcome
-await checkInstanceService.storeOutcome(
-  instanceId,
+await outcomePreviewService.storeOutcome(
+  previewId,
   outcome,
   resolutionData,
   actorName,
@@ -455,7 +455,7 @@ await checkInstanceService.storeOutcome(
 );
 
 // Mark applied
-await checkInstanceService.markApplied(instanceId);
+await outcomePreviewService.markApplied(previewId);
 ```
 
 **See:** `docs/systems/check-instance-system.md`
@@ -536,7 +536,7 @@ export const eventStructureTargetingConfigs = {
 ### Code Implementation
 
 - ✅ Always check `endsEvent` after applying outcome
-- ✅ Use CheckInstanceService for all check data
+- ✅ Use OutcomePreviewService for all check data
 - ✅ Apply modifiers through GameCommandsService
 - ✅ Update turnState to persist ongoing events/incidents
 - ✅ Clear turnState when events end

@@ -1,4 +1,4 @@
-# Check Instance System
+# Outcome Preview System
 
 **Purpose:** Unified architecture for all check-based gameplay (events, incidents, player actions)
 
@@ -6,8 +6,8 @@
 
 ## Overview
 
-The Check Instance System provides a single, consistent flow for all kingdom checks:
-1. Create check instance
+The Outcome Preview System provides a single, consistent flow for all kingdom checks:
+1. Create outcome preview
 2. Player performs skill check
 3. User interacts with outcome (dice, choices)
 4. Controller applies results
@@ -19,14 +19,14 @@ The Check Instance System provides a single, consistent flow for all kingdom che
 
 ## Architecture Components
 
-### ActiveCheckInstance (Data Structure)
+### OutcomePreview (Data Structure)
 
-**Storage:** `KingdomActor.activeCheckInstances: ActiveCheckInstance[]`
+**Storage:** `KingdomActor.pendingOutcomes: OutcomePreview[]`
 
 ```typescript
-interface ActiveCheckInstance {
+interface OutcomePreview {
   // Identity
-  instanceId: string;
+  previewId: string;
   checkType: 'event' | 'incident' | 'action';
   checkId: string;
   checkData: KingdomEvent | KingdomIncident | PlayerAction;
@@ -59,17 +59,17 @@ interface ActiveCheckInstance {
 }
 ```
 
-### CheckInstanceService
+### OutcomePreviewService
 
-**Role:** Central service for check lifecycle management
+**Role:** Central service for outcome preview lifecycle management
 
 **Key Methods:**
-- `createInstance()` - Create new check instance
+- `createInstance()` - Create new outcome preview
 - `storeOutcome()` - Record resolution after skill check
 - `markApplied()` - Mark effects as applied
 - `clearCompleted()` - Cleanup at phase boundaries
 
-**Pattern:** Controllers always use CheckInstanceService, never manipulate `activeCheckInstances` directly.
+**Pattern:** Controllers always use OutcomePreviewService, never manipulate `pendingOutcomes` directly.
 
 ### BaseCheckCard (UI Component)
 
@@ -91,21 +91,21 @@ interface ActiveCheckInstance {
 
 ```
 Controller.performCheck()
-  → CheckInstanceService.createInstance()
-    → Stores in activeCheckInstances[] with status: 'pending'
+  → OutcomePreviewService.createInstance()
+    → Stores in pendingOutcomes[] with status: 'pending'
       → UI displays check card
 ```
 
 **Example (Events Phase):**
 ```typescript
 // User clicks "Roll for Event"
-const instanceId = await checkInstanceService.createInstance(
+const previewId = await outcomePreviewService.createInstance(
   'event',
   eventId,
   eventData,
   currentTurn
 );
-// Instance appears in UI immediately
+// Preview appears in UI immediately
 ```
 
 ### 2. Resolution (Resolved)
@@ -114,7 +114,7 @@ const instanceId = await checkInstanceService.createInstance(
 User selects skill
   → CheckHandler executes PF2e roll
     → Controller.resolveCheck()
-      → CheckInstanceService.storeOutcome()
+      → OutcomePreviewService.storeOutcome()
         → Status changes to 'resolved'
           → OutcomeDisplay shows interactive resolution
 ```
@@ -127,7 +127,7 @@ User selects skill
 User resolves all interactions (dice, choices)
   → User clicks "Apply Result"
     → Controller applies effects via GameEffectsService
-      → CheckInstanceService.markApplied()
+      → OutcomePreviewService.markApplied()
         → Status changes to 'applied'
           → UI shows completion badge
 ```
@@ -137,9 +137,9 @@ User resolves all interactions (dice, choices)
 ```
 Phase entry (next turn or next phase)
   → Controller.startPhase()
-    → CheckInstanceService.clearCompleted()
-      → Removes 'resolved' and 'applied' instances
-        → Only 'pending' instances remain (ongoing events)
+    → OutcomePreviewService.clearCompleted()
+      → Removes 'resolved' and 'applied' previews
+        → Only 'pending' previews remain (ongoing events)
 ```
 
 ---
@@ -204,7 +204,7 @@ When effects are applied:
 
 ### With Typed Modifiers
 
-Check instances store outcomes with typed modifiers:
+Outcome previews store outcomes with typed modifiers:
 - `StaticModifier` - Direct numeric values
 - `DiceModifier` - User rolls dice
 - `ChoiceModifier` - User selects from options
@@ -213,24 +213,24 @@ OutcomeDisplay handles all modifier types automatically.
 
 ### With Turn/Phase System
 
-Check instances are turn-scoped:
+Outcome previews are turn-scoped:
 - Created during phase execution
 - Persist across phase navigation (within same turn)
 - Cleaned up at phase boundaries
 
 ### With Phase Controllers
 
-Controllers coordinate check lifecycle:
+Controllers coordinate outcome preview lifecycle:
 ```typescript
 // Pattern: All check-based controllers
 async performCheck() {
-  const instanceId = await checkInstanceService.createInstance(...);
-  // Instance is now pending
+  const previewId = await outcomePreviewService.createInstance(...);
+  // Preview is now pending
 }
 
-async resolveCheck(instanceId, outcome, resolutionData) {
+async resolveCheck(previewId, outcome, resolutionData) {
   await gameEffectsService.applyResolution(resolutionData);
-  await checkInstanceService.markApplied(instanceId);
+  await outcomePreviewService.markApplied(previewId);
   await completePhaseStepByIndex(stepIndex);
 }
 ```
@@ -240,14 +240,14 @@ async resolveCheck(instanceId, outcome, resolutionData) {
 ## Best Practices
 
 ### Controllers
-- ✅ Use CheckInstanceService for all check operations
-- ✅ Never manipulate `activeCheckInstances` directly
+- ✅ Use OutcomePreviewService for all check operations
+- ✅ Never manipulate `pendingOutcomes` directly
 - ✅ Return `{ success: boolean, error?: string }` from operations
 
 ### UI Components
-- ✅ Read from `activeCheckInstances` filtered by `checkType`
-- ✅ Access check data via `instance.checkData`
-- ✅ Pass `instance.instanceId` as card ID
+- ✅ Read from `pendingOutcomes` filtered by `checkType`
+- ✅ Access check data via `preview.checkData`
+- ✅ Pass `preview.previewId` as card ID
 - ✅ Delegate all operations to controllers via events
 
 ### Status Management
@@ -259,7 +259,7 @@ async resolveCheck(instanceId, outcome, resolutionData) {
 
 ## Summary
 
-The unified ActiveCheckInstance system provides:
+The unified OutcomePreview system provides:
 
 - ✅ Single source of truth for all check state
 - ✅ Clear lifecycle boundaries

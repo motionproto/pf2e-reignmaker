@@ -294,15 +294,9 @@
       resolution: event.detail  // ResolutionData from OutcomeDisplay
     });
     
-    // For player actions, reset resolution state to allow other players
-    // (Events and Incidents don't reset - they're one-time)
-    if (checkType === 'action') {
-      resolved = false;
-      resolution = null;
-      localUsedSkill = '';
-    }
-    // Note: For events/incidents, effectsApplied is set by the controller
-    // and syncs via resolution.effectsApplied prop
+    // ✅ DON'T reset state here - let PipelineCoordinator handle cleanup
+    // PipelineCoordinator will delete the instance in step9_cleanup after Steps 7-9 complete
+    // This prevents the flash where the card reverts to default state prematurely
   }
   
   function handleCancel() {

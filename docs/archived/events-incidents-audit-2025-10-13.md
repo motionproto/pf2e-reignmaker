@@ -21,7 +21,7 @@ From `docs/ARCHITECTURE.md`:
 - ✅ **Single Source of Truth:** KingdomActor is persistent storage
 - ✅ **Clean Separation:** Components = UI only, Controllers = Business logic, Services = Utilities
 - ✅ **Write Pattern:** Component → Controller → KingdomActor → Foundry → All Clients
-- ✅ **Unified Check System:** activeCheckInstances for all check-based gameplay
+- ✅ **Unified Check System:** pendingOutcomes for all check-based gameplay
 
 **Current Violations:**
 - ❌ UI components creating instances directly (EventsPhase.svelte.handleIgnore)
@@ -33,7 +33,7 @@ From `docs/ARCHITECTURE.md`:
 ## Issue #1: Duplicate Instance Creation Paths
 
 ### Problem
-Multiple code locations can create ActiveCheckInstance for the same event, leading to confusion and potential duplicates.
+Multiple code locations can create OutcomePreview for the same event, leading to confusion and potential duplicates.
 
 ### Current Code Paths
 
@@ -43,16 +43,16 @@ Multiple code locations can create ActiveCheckInstance for the same event, leadi
 if (triggered) {
     event = eventService.getRandomEvent();
     
-    const instanceId = await checkInstanceService.createInstance(
+    const previewId = await outcomePreviewService.createInstance(
         'event', event.id, event, kingdom.currentTurn
     );
     
-    console.log(`✅ [EventPhaseController] Created event instance: ${instanceId}`);
+    console.log(`✅ [EventPhaseController] Created event instance: ${previewId}`);
 }
 ```
 **Purpose:** Create instance for newly triggered event  
 **Status:** `pending`  
-**Logged as:** `✅ [CheckInstanceService] Created event instance: ...`
+**Logged as:** `✅ [OutcomePreviewService] Created event instance: ...`
 
 #### Path B: `EventPhaseController.resolveEvent()` (Lines 289-320)
 ```typescript
@@ -62,7 +62,7 @@ const shouldCreateInstance = (
 );
 
 if (shouldCreateInstance && !existingInstance) {
-    newInstanceId = await checkInstanceService.createInstance(
+    newInstanceId = await outcomePreviewService.createInstance(
         'event', event.id, event, currentTurn
     );
 }
@@ -73,10 +73,10 @@ if (shouldCreateInstance && !existingInstance) {
 
 #### Path C: `EventsPhase.svelte.handleIgnore()` (Lines 520-532)
 ```typescript
-// Current event - use CheckInstanceService to create instance properly
-const { checkInstanceService } = await import('...');
+// Current event - use OutcomePreviewService to create instance properly
+const { outcomePreviewService } = await import('...');
 
-const instanceId = await checkInstanceService.createInstance(
+const previewId = await outcomePreviewService.createInstance(
     'event', targetEvent.id, targetEvent, currentTurn
 );
 ```
@@ -87,7 +87,7 @@ const instanceId = await checkInstanceService.createInstance(
 ### Root Cause Analysis
 
 The console logs showing "duplicate" creation are actually:
-1. CheckInstanceService logs: `✅ [CheckInstanceService] Created event instance: ...`
+1. OutcomePreviewService logs: `✅ [OutcomePreviewService] Created event instance: ...`
 2. EventPhaseController logs: `✅ [EventPhaseController] Created event instance: ...`
 
 These are **TWO LOGS for ONE creation**, not duplicate instances.
@@ -141,7 +141,7 @@ Events with `endsEvent: true` are appearing in the "Ongoing Events" section inst
 // After resolution, mark instance as resolved if it ends the event
 if (!isIgnored && outcomeData?.endsEvent) {
     await updateKingdom(kingdom => {
-        const instance = kingdom.activeCheckInstances?.find(...);
+        const instance = kingdom.pendingOutcomes?.find(...);
         if (instance) {
             instance.status = 'resolved';
             console.log(`✅ Marked event as resolved (endsEvent: true)`);
@@ -173,13 +173,13 @@ But players report seeing **immediate events in "Ongoing Events" before resoluti
 
 This happens because:
 - Instance is created IMMEDIATELY when event triggers
-- Before player even makes a choice, it's already in activeCheckInstances
-- Current event should NOT be in activeCheckInstances at all!
+- Before player even makes a choice, it's already in pendingOutcomes
+- Current event should NOT be in pendingOutcomes at all!
 
 ### Expected Behavior
 
 **Current Event** (just triggered):
-- Display via: `turnState.eventsPhase.eventId` (NOT in activeCheckInstances)
+- Display via: `turnState.eventsPhase.eventId` (NOT in pendingOutcomes)
 - UI shows in main event card area
 - Player makes choice
 
@@ -198,7 +198,7 @@ When switching away from Unrest phase and back, applied incidents disappear.
 
 **UnrestPhase.svelte** (Lines 41-44):
 ```typescript
-$: activeIncidents = $kingdomData.activeCheckInstances?.filter(
+$: activeIncidents = $kingdomData.pendingOutcomes?.filter(
     i => i.checkType === 'incident'
 ) || [];
 $: currentIncidentInstance = activeIncidents[0] || null;
@@ -208,7 +208,7 @@ $: incidentResolution = currentIncidentInstance?.appliedOutcome || null;
 **UnrestPhaseController.startPhase()** (Lines 20-25):
 ```typescript
 // Clear any completed/applied incidents from previous turns
-await checkInstanceService.clearCompleted('incident', kingdom.currentTurn);
+await outcomePreviewService.clearCompleted('incident', kingdom.currentTurn);
 ```
 
 ### Root Cause
@@ -218,13 +218,13 @@ The `clearCompleted()` call is TOO AGGRESSIVE:
 - Clears ALL non-pending incidents, including 'applied' ones
 - No check for whether incident was actually resolved this turn
 
-**CheckInstanceService.clearCompleted()** (Lines 155-162):
+**OutcomePreviewService.clearCompleted()** (Lines 155-162):
 ```typescript
 if (checkType === 'event') {
     // Events: Keep pending (ongoing), clear resolved/applied
 } else {
     // Incidents: Clear all non-pending
-    kingdom.activeCheckInstances = kingdom.activeCheckInstances?.filter(i => 
+    kingdom.pendingOutcomes = kingdom.pendingOutcomes?.filter(i => 
       i.checkType !== checkType || i.status === 'pending'
     ) || [];
 }
@@ -329,8 +329,8 @@ Incidents should persist until:
 │                                                              │
 │ Display:                                                     │
 │   - Current event: turnState.eventsPhase.eventId            │
-│   - Ongoing events: activeCheckInstances (status=pending)   │
-│   - Resolved this turn: activeCheckInstances (status=resolved)│
+│   - Ongoing events: pendingOutcomes (status=pending)   │
+│   - Resolved this turn: pendingOutcomes (status=resolved)│
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -389,7 +389,7 @@ Incidents should persist until:
 │ UnrestPhaseController.checkForIncidents()                   │
 │   ↓                                                          │
 │ IF triggered:                                               │
-│   - Create instance via checkInstanceService                │
+│   - Create instance via outcomePreviewService                │
 │   - Update turnState (roll display only)                    │
 │   - Display incident in BaseCheckCard                       │
 │ ELSE:                                                        │
@@ -430,15 +430,15 @@ Incidents should persist until:
 
 ```typescript
 // REMOVE THIS BLOCK (Lines 176-214)
-// NEW ARCHITECTURE: Create ActiveCheckInstance for the triggered event
-const instanceId = await checkInstanceService.createInstance(
+// NEW ARCHITECTURE: Create OutcomePreview for the triggered event
+const previewId = await outcomePreviewService.createInstance(
     'event',
     event.id,
     event,
     kingdom.currentTurn
 );
 
-console.log(`✅ [EventPhaseController] Created event instance: ${instanceId}`);
+console.log(`✅ [EventPhaseController] Created event instance: ${previewId}`);
 ```
 
 **Rationale:**  
@@ -465,7 +465,7 @@ async createOngoingEventInstance(
     isIgnored: boolean = false
 ): Promise<string> {
     // Single instance creation path for ongoing events
-    // Returns instanceId
+    // Returns previewId
 }
 ```
 
@@ -491,7 +491,7 @@ async startPhase() {
     const isFirstEntry = !kingdom.turnState?.unrestPhase?.initialized;
     
     if (isFirstEntry) {
-        await checkInstanceService.clearCompleted('incident', kingdom.currentTurn);
+        await outcomePreviewService.clearCompleted('incident', kingdom.currentTurn);
         
         // Mark as initialized
         await updateKingdom(k => {
@@ -534,7 +534,7 @@ After implementing fixes, verify:
 
 - [ ] **No duplicate instance creation**
   - Check console logs for duplicate "Created event instance" messages
-  - Verify `activeCheckInstances` array length is correct
+  - Verify `pendingOutcomes` array length is correct
 
 - [ ] **Immediate events don't appear in ongoing section**
   - Trigger event with `endsEvent: true`

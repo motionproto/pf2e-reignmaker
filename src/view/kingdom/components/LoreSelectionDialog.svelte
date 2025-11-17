@@ -37,32 +37,43 @@
 <Dialog 
   bind:show 
   title="Select Applicable Lore Skill"
-  confirmLabel="Roll"
+  confirmLabel={loreItems.length > 0 ? "Roll" : "OK"}
   width="450px"
-  on:confirm={handleSelect}
+  confirmDisabled={loreItems.length === 0}
+  on:confirm={loreItems.length > 0 ? handleSelect : handleCancel}
   on:cancel={handleCancel}
 >
   <div class="lore-dialog-content">
-    <label for="lore-selection" class="dialog-label">
-      Choose which Lore skill to use:
-    </label>
-    <select 
-      id="lore-selection" 
-      bind:value={selectedSlug}
-      class="lore-select"
-      autofocus
-    >
-      {#each loreItems as item}
-        <option value={item.slug}>{item.name}</option>
-      {/each}
-    </select>
-    <div class="notification-wrapper">
-      <Notification
-        variant="info"
-        title="GM Approval"
-        description="The GM will determine if your chosen Lore is applicable to this action."
-      />
-    </div>
+    {#if loreItems.length > 0}
+      <label for="lore-selection" class="dialog-label">
+        Choose which Lore skill to use:
+      </label>
+      <select 
+        id="lore-selection" 
+        bind:value={selectedSlug}
+        class="lore-select"
+        autofocus
+      >
+        {#each loreItems as item}
+          <option value={item.slug}>{item.name}</option>
+        {/each}
+      </select>
+      <div class="notification-wrapper">
+        <Notification
+          variant="info"
+          title="GM Approval"
+          description="The GM will determine if your chosen Lore is applicable to this action."
+        />
+      </div>
+    {:else}
+      <div class="notification-wrapper">
+        <Notification
+          variant="warning"
+          title="No Lore Skills"
+          description="You have no Lore skills. Add a Lore skill to your character sheet to use this option."
+        />
+      </div>
+    {/if}
   </div>
 </Dialog>
 

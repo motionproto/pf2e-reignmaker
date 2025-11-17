@@ -56,11 +56,11 @@
           {/if}
           {#if actionStatus === 'tested' && actionNumber}
             <span class="migration-badge tested" title="Tested with PipelineCoordinator">
-              #{actionNumber}
+              #{actionNumber} ✓
             </span>
           {:else if actionStatus === 'testing' && actionNumber}
             <span class="migration-badge testing" title="Currently being tested">
-              #{actionNumber}
+              #{actionNumber} ⟳
             </span>
           {:else if actionStatus === 'untested' && actionNumber}
             <span class="migration-number untested" title="Pipeline exists, needs testing">

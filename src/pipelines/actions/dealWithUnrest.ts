@@ -51,19 +51,58 @@ export const dealWithUnrestPipeline: CheckPipeline = {
   },
 
   preview: {
-    calculate: (ctx) => ({
-      resources: [
-        { resource: 'unrest', value: -2 }  // Show typical success case
-      ],
-      specialEffects: []  // Required by PreviewData type
-    })
+    calculate: (ctx) => {
+      // Calculate based on actual outcome (not hardcoded to success)
+      let unrestChange = 0;
+      
+      switch (ctx.outcome) {
+        case 'criticalSuccess':
+          unrestChange = -3;
+          break;
+        case 'success':
+          unrestChange = -2;
+          break;
+        case 'failure':
+          unrestChange = -1;
+          break;
+        case 'criticalFailure':
+          unrestChange = 0;  // No change
+          break;
+      }
+      
+      return {
+        resources: unrestChange !== 0 ? [
+          { resource: 'unrest', value: unrestChange }
+        ] : [],
+        specialEffects: []
+      };
+    }
   },
 
   // Execute function - explicitly handles ALL outcomes
   execute: async (ctx) => {
-    // All outcomes apply their modifiers directly from pipeline
-    // (criticalFailure has no modifiers, so it's a no-op)
-    await applyPipelineModifiers(dealWithUnrestPipeline, ctx.outcome);
-    return { success: true };
+    switch (ctx.outcome) {
+      case 'criticalSuccess':
+        // Explicitly apply -3 unrest modifier from pipeline
+        await applyPipelineModifiers(dealWithUnrestPipeline, ctx.outcome);
+        return { success: true };
+        
+      case 'success':
+        // Explicitly apply -2 unrest modifier from pipeline
+        await applyPipelineModifiers(dealWithUnrestPipeline, ctx.outcome);
+        return { success: true };
+        
+      case 'failure':
+        // Explicitly apply -1 unrest modifier from pipeline
+        await applyPipelineModifiers(dealWithUnrestPipeline, ctx.outcome);
+        return { success: true };
+        
+      case 'criticalFailure':
+        // Explicitly do nothing (no modifiers defined in pipeline)
+        return { success: true };
+        
+      default:
+        return { success: false, error: `Unexpected outcome: ${ctx.outcome}` };
+    }
   }
 };

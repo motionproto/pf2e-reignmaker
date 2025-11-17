@@ -336,7 +336,7 @@ See `docs/systems/game-commands-system.md` for comprehensive documentation.
 
 ### With Check Instance System
 
-ActiveCheckInstances store outcomes with typed modifiers:
+OutcomePreviews store outcomes with typed modifiers:
 
 ```typescript
 appliedOutcome: {

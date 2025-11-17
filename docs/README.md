@@ -22,7 +22,7 @@ These documents describe the four main architectural systems:
 Unified architecture for all check-based gameplay (events, incidents, player actions).
 
 **Topics:**
-- ActiveCheckInstance data structure
+- OutcomePreview data structure
 - Check lifecycle (creation → resolution → application → cleanup)
 - Multi-client synchronization
 - Integration with typed modifiers
@@ -142,7 +142,7 @@ From [ARCHITECTURE.md](ARCHITECTURE.md):
 - `src/controllers/shared/PhaseControllerHelpers.ts` - Shared utilities
 
 **Checks & Effects:**
-- `src/services/CheckInstanceService.ts` - Check lifecycle management
+- `src/services/OutcomePreviewService.ts` - Check lifecycle management
 - `src/services/GameEffectsService.ts` - Effect application
 - `src/types/modifiers.ts` - Hand-written modifier types
 
@@ -175,7 +175,7 @@ When adding new features:
 - ✅ Use type-safe modifiers, not string parsing
 - ✅ Delegate business logic to controllers
 - ✅ Keep UI components presentation-only
-- ✅ Use CheckInstanceService for all check operations
+- ✅ Use OutcomePreviewService for all check operations
 - ✅ Update documentation if architecture changes
 
 ---

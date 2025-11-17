@@ -33,12 +33,15 @@ import {
   getIncidentSeverity,
   type UnrestTierInfo
 } from '../services/domain/unrest/UnrestService'
-import { checkInstanceService } from '../services/CheckInstanceService'
+import { createOutcomePreviewService } from '../services/OutcomePreviewService'
 
 // Re-export for backwards compatibility
 export { type UnrestTierInfo, getUnrestTierInfo, getUnrestStatus };
 
 export async function createUnrestPhaseController() {
+  // Initialize OutcomePreviewService once per controller instance
+  const outcomePreviewService = await createOutcomePreviewService();
+  
   return {
     async startPhase() {
       reportPhaseStart('UnrestPhaseController')
@@ -55,7 +58,7 @@ export async function createUnrestPhaseController() {
         
         if (outdatedIncidents.length > 0) {
 
-          await checkInstanceService.clearCompleted('incident', kingdom.currentTurn);
+          await outcomePreviewService.clearCompleted('incident', kingdom.currentTurn);
         }
         
         // Also clear completed/applied incidents from THIS turn on first entry
@@ -64,11 +67,11 @@ export async function createUnrestPhaseController() {
         );
         if (completedThisTurn.length > 0) {
 
-          await checkInstanceService.clearCompleted('incident', kingdom.currentTurn);
+          await outcomePreviewService.clearCompleted('incident', kingdom.currentTurn);
         }
         
         // Read state from activeCheckInstances (new) OR turnState (legacy fallback)
-        const pendingIncidents = checkInstanceService.getPendingInstances('incident', kingdom);
+        const pendingIncidents = outcomePreviewService.getPendingInstances('incident', kingdom);
         const incidentRolled = kingdom.turnState?.unrestPhase?.incidentRolled ?? false;
         const incidentTriggered = pendingIncidents.length > 0 || (kingdom.turnState?.unrestPhase?.incidentTriggered ?? false);
         
@@ -139,7 +142,7 @@ export async function createUnrestPhaseController() {
           if (incident) {
 
             // NEW ARCHITECTURE: Create ActiveCheckInstance
-            instanceId = await checkInstanceService.createInstance(
+            instanceId = await outcomePreviewService.createInstance(
               'incident',
               incident.id,
               incident,
@@ -192,6 +195,10 @@ export async function createUnrestPhaseController() {
     /**
      * Resolve a triggered incident (step 2)
      * NEW ARCHITECTURE: Receives ResolutionData with all values already computed
+     * 
+     * @deprecated TODO: This method duplicates PipelineCoordinator logic.
+     * Should be replaced with: pipelineCoordinator.executePipeline(incidentId, actorData)
+     * See Task B: Pipeline Unification Migration
      */
     async resolveIncident(
       incidentId: string, 
@@ -264,7 +271,7 @@ export async function createUnrestPhaseController() {
       const kingdom = get(kingdomData);
       
       // NEW ARCHITECTURE: Store in ActiveCheckInstance
-      const pendingIncidents = checkInstanceService.getPendingInstances('incident', kingdom);
+      const pendingIncidents = outcomePreviewService.getPendingInstances('incident', kingdom);
       const instance = pendingIncidents.find(i => i.checkId === incidentId);
       
       if (!instance) {
@@ -279,7 +286,7 @@ export async function createUnrestPhaseController() {
         complexActions: []  // Incidents don't have complex actions
       };
       
-      await checkInstanceService.storeOutcome(
+      await outcomePreviewService.storeOutcome(
         instance.instanceId,
         resolution.outcome,
         resolutionData,
@@ -309,7 +316,7 @@ export async function createUnrestPhaseController() {
         return;
       }
       
-      await checkInstanceService.markApplied(resolvedIncident.instanceId);
+      await outcomePreviewService.markApplied(resolvedIncident.instanceId);
 
     },
 

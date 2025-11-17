@@ -20,7 +20,7 @@ import { createEmptyPreviewData } from '../types/PreviewData';
 import { executeRoll } from '../controllers/shared/ExecutionHelpers';
 import { hexSelectorService } from './hex-selector';
 import { updateKingdom, getKingdomActor } from '../stores/KingdomStore';
-import { CheckInstanceService } from './CheckInstanceService';
+import { OutcomePreviewService } from './OutcomePreviewService';
 import { showEntitySelectionDialog, showTextInputDialog, showConfirmationDialog, showChoiceDialog } from './InteractionDialogs';
 
 /**
@@ -28,11 +28,11 @@ import { showEntitySelectionDialog, showTextInputDialog, showConfirmationDialog,
  */
 export class UnifiedCheckHandler {
   private pipelines = new Map<string, CheckPipeline>();
-  private checkInstanceService: CheckInstanceService;
+  private checkInstanceService: OutcomePreviewService;
 
   constructor() {
     console.log('🔧 [UnifiedCheckHandler] Initializing');
-    this.checkInstanceService = new CheckInstanceService();
+    this.checkInstanceService = new OutcomePreviewService();
   }
 
   /**
@@ -221,11 +221,32 @@ export class UnifiedCheckHandler {
   /**
    * Execute configuration interaction
    *
-   * TODO: Implement configuration dialog
+   * Shows custom Svelte component dialog and waits for user input
    */
   private async executeConfiguration(interaction: any, kingdom: any): Promise<any> {
-    console.log(`⚙️ [UnifiedCheckHandler] Configuration`);
-    return null;  // Placeholder
+    console.log(`⚙️ [UnifiedCheckHandler] Configuration: ${interaction.id || 'unknown'}`);
+    
+    // Check if component is provided
+    if (!interaction.component) {
+      console.error('[UnifiedCheckHandler] No component specified for configuration interaction');
+      return null;
+    }
+    
+    // Show configuration dialog with custom component
+    const { showConfigurationDialog } = await import('./InteractionDialogs');
+    const result = await showConfigurationDialog(interaction.component, {
+      instance: null,  // Not used in new pipeline system
+      outcome: interaction.outcome || 'success',
+      ...interaction.componentProps  // Additional props if provided
+    });
+    
+    if (!result) {
+      console.log('[UnifiedCheckHandler] Configuration cancelled by user');
+      return null;
+    }
+    
+    console.log('[UnifiedCheckHandler] Configuration complete:', result);
+    return result;
   }
 
   /**
@@ -567,21 +588,19 @@ export class UnifiedCheckHandler {
 
   /**
    * Default preview formatter
+   * 
+   * NOTE: Resources are already shown in StateChanges component,
+   * so we DON'T convert them into special effects (avoids duplication).
+   * Only actual special effects, entity operations, and warnings are formatted.
    */
   private defaultFormatPreview(preview: PreviewData): SpecialEffect[] {
     const effects: SpecialEffect[] = [];
 
-    // Format resource changes
-    for (const change of preview.resources) {
-      const sign = change.value >= 0 ? '+' : '';
-      effects.push({
-        type: 'resource',
-        message: `${sign}${change.value} ${change.resource}`,
-        variant: change.value >= 0 ? 'positive' : 'negative'
-      });
-    }
+    // ❌ REMOVED: Don't convert resource changes into special effects
+    // Resources are already displayed in StateChanges component
+    // This was causing duplication
 
-    // Format entity operations
+    // Format entity operations (create/modify/delete entities)
     for (const entity of preview.entities || []) {
       const actionVerb = entity.action === 'create' ? 'Will create' :
                          entity.action === 'modify' ? 'Will modify' :
@@ -593,7 +612,7 @@ export class UnifiedCheckHandler {
       });
     }
 
-    // Add special effects
+    // Add actual special effects (things that aren't simple resource changes)
     effects.push(...preview.specialEffects);
 
     // Add warnings

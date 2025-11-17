@@ -65,11 +65,15 @@ export class PipelineIntegrationAdapter {
    * Initialize the pipeline system
    */
   static initialize(): void {
+    console.log('🔧 [PipelineAdapter] Initializing pipeline system');
     logger.info('🔧 [PipelineAdapter] Initializing pipeline system');
 
     // Initialize pipeline registry
+    console.log('🔧 [PipelineAdapter] About to call pipelineRegistry.initialize()');
     pipelineRegistry.initialize();
+    console.log('🔧 [PipelineAdapter] pipelineRegistry.initialize() completed');
 
+    console.log('✅ [PipelineAdapter] Pipeline system ready');
     logger.info('✅ [PipelineAdapter] Pipeline system ready');
   }
 
@@ -257,4 +261,22 @@ export function initializePipelineSystem(): void {
 
   PipelineIntegrationAdapter.initialize();
   initialized = true;
+}
+
+/**
+ * Force re-initialization (for HMR)
+ * Called when modules hot-reload during development
+ */
+export function reinitializePipelineSystem(): void {
+  logger.info('🔄 [PipelineAdapter] Hot reload detected, re-initializing pipeline system');
+  initialized = false;  // Reset guard
+  initializePipelineSystem();
+}
+
+// Hot Module Replacement support
+if (import.meta.hot) {
+  import.meta.hot.accept(() => {
+    logger.info('🔥 [PipelineAdapter] Module hot reloaded');
+    reinitializePipelineSystem();
+  });
 }

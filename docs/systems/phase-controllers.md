@@ -176,7 +176,7 @@ async performCheck() {
 **Key Operations:**
 - `performEventCheck()` - Roll d20 vs DC
 - `resolveEvent()` - Handle skill check outcome
-- Integration with CheckInstanceService
+- Integration with OutcomePreviewService
 
 ### UnrestPhaseController
 
@@ -214,13 +214,13 @@ async performCheck() {
 
 ## Integration Patterns
 
-### With CheckInstanceService
+### With OutcomePreviewService
 
 Controllers create and manage check instances:
 
 ```typescript
 // Create instance
-const instanceId = await checkInstanceService.createInstance(
+const previewId = await outcomePreviewService.createInstance(
   'event',
   eventId,
   eventData,
@@ -228,8 +228,8 @@ const instanceId = await checkInstanceService.createInstance(
 );
 
 // Store outcome
-await checkInstanceService.storeOutcome(
-  instanceId,
+await outcomePreviewService.storeOutcome(
+  previewId,
   outcome,
   resolutionData,
   actorName,
@@ -238,7 +238,7 @@ await checkInstanceService.storeOutcome(
 );
 
 // Mark applied
-await checkInstanceService.markApplied(instanceId);
+await outcomePreviewService.markApplied(previewId);
 ```
 
 **Pattern:** All check-based controllers follow the same flow.
@@ -334,7 +334,7 @@ await completePhaseStepByIndex(EventsPhaseSteps.RESOLVE_EVENT);
 
 - ❌ Access TurnManager or PhaseHandler directly
 - ❌ Perform UI operations in controllers
-- ❌ Bypass CheckInstanceService for check data
+- ❌ Bypass OutcomePreviewService for check data
 - ❌ Use magic numbers for step indices
 - ❌ Trigger other controllers (phases are self-executing)
 - ❌ Mix data access with business logic

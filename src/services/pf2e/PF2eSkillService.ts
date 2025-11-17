@@ -60,7 +60,8 @@ export class PF2eSkillService {
     'acrobatics': 'acrobatics',
     'thievery': 'thievery',
     'lore': 'lore',
-    'applicable-lore': 'lore'
+    'applicable-lore': 'lore',   // hyphen version
+    'applicable lore': 'lore'     // space version
   };
 
   constructor() {
@@ -323,7 +324,8 @@ export class PF2eSkillService {
     checkName: string,
     checkId: string,
     checkEffects?: any,
-    actionId?: string  // Optional action ID for aid bonuses
+    actionId?: string,  // Optional action ID for aid bonuses
+    callback?: (roll: any, outcome: string | null | undefined, message: any, event: Event | null) => Promise<void> | void  // NEW: Callback for PF2e native callback pattern
   ): Promise<any> {
     try {
 
@@ -346,24 +348,22 @@ export class PF2eSkillService {
       if (skillSlug === 'lore' && !skill) {
         const loreItems = actor?.itemTypes?.lore || [];
         
-        if (loreItems.length > 0) {
-          // Show selection dialog for lore skills
-          const selectedLoreItem = await this.showLoreSelectionDialog(loreItems);
-          if (!selectedLoreItem) {
-            return null; // User cancelled
-          }
-          // Get the skill data for the selected lore item
-          skill = actor.skills?.[selectedLoreItem.slug];
-        } else {
-          logger.warn(`⚠️ [PF2eSkillService] Character ${actor.name} has no lore skills.`);
-          ui.notifications?.warn(`${actor.name} has no lore skills to use.`);
+        // ALWAYS show the dialog - it will display "No Lore Skills" message if empty
+        const selectedLoreItem = await this.showLoreSelectionDialog(loreItems);
+        if (!selectedLoreItem) {
+          return null; // User cancelled or no lore skills available
         }
+        // Get the skill data for the selected lore item
+        skill = actor.skills?.[selectedLoreItem.slug];
       }
       
+      // After lore selection, verify we have a skill
       if (!skill) {
-        // Skill not found - warn but continue (may be untrained or different mapping)
-        logger.warn(`⚠️ [PF2eSkillService] Character ${actor.name} doesn't have skill '${skillName}' (slug: ${skillSlug}). Attempting roll anyway.`);
-        ui.notifications?.info(`Rolling ${skillName} (untrained or not in character sheet)`);
+        // For lore, we've already handled the case above - this shouldn't happen
+        // For other skills, this might be an issue with skill mapping
+        logger.error(`❌ [PF2eSkillService] Character ${actor.name} doesn't have skill '${skillName}' (slug: ${skillSlug}).`);
+        ui.notifications?.error(`${actor.name} doesn't have the ${skillName} skill.`);
+        return null; // Cancel the roll
       }
       
       // Calculate DC based on character's level
@@ -457,20 +457,6 @@ export class PF2eSkillService {
       // Get skill proficiency rank for aid bonuses
       const proficiencyRank = skill?.rank || 0; // 0=untrained, 1=trained, 2=expert, 3=master, 4=legendary
       
-      // Store check info in a flag for retrieval after roll
-      await game.user?.setFlag('pf2e-reignmaker', 'pendingCheck', {
-        checkId,
-        checkType,
-        checkName,
-        checkEffects,
-        skillName,
-        actorId: actor.id,
-        actorName: actor.name,
-        actorLevel: characterLevel,  // ✅ ADD: Actor level for pipeline context
-        dc,
-        proficiencyRank
-      });
-      
       // Determine label based on check type
       const labelPrefix = checkType === 'action' ? 'Kingdom Action' : 
                          checkType === 'event' ? 'Kingdom Event' : 
@@ -480,50 +466,24 @@ export class PF2eSkillService {
       const useKeepHigher = this.shouldUseKeepHigher(actionId || checkId, checkType);
       
       // Trigger the PF2e system roll with DC and modifiers
-      let rollResult;
-      if (skill) {
-        // Use the skill's roll method if available
-        rollResult = await skill.roll({
-          dc: { value: dc },
-          label: `${labelPrefix}: ${checkName}`,
-          modifiers: pf2eModifiers,
-          rollTwice: useKeepHigher ? 'keep-higher' : false,
-          skipDialog: false,
-          extraRollOptions: [
-            `${checkType}:kingdom`,
-            `${checkType}:kingdom:${checkName.toLowerCase().replace(/\s+/g, '-')}`
-          ]
-        });
-      } else {
-        // Fallback: Try to find any skill and use it, or create a generic check
-        const firstAvailableSkill = Object.values(actor.skills || {})[0] as any;
-        if (firstAvailableSkill && firstAvailableSkill.roll) {
-
-          rollResult = await firstAvailableSkill.roll({
-            dc: { value: dc },
-            label: `${labelPrefix}: ${checkName} (${skillName})`,
-            modifiers: pf2eModifiers,
-            rollTwice: useKeepHigher ? 'keep-higher' : false,
-            skipDialog: false,
-            extraRollOptions: [
-              `${checkType}:kingdom`,
-              `${checkType}:kingdom:${checkName.toLowerCase().replace(/\s+/g, '-')}`
-            ]
-          });
-        } else {
-          logger.error('❌ [PF2eSkillService] No skills available on character');
-          ui.notifications?.error(`Cannot roll - character has no skills`);
-          await game.user?.unsetFlag('pf2e-reignmaker', 'pendingCheck');
-          return null;
-        }
-      }
+      const rollResult = await skill.roll({
+        dc: { value: dc },
+        label: `${labelPrefix}: ${checkName}`,
+        modifiers: pf2eModifiers,
+        rollTwice: useKeepHigher ? 'keep-higher' : false,
+        skipDialog: false,
+        callback,  // NEW: Pass callback for native PF2e callback pattern
+        extraRollOptions: [
+          `${checkType}:kingdom`,
+          `${checkType}:kingdom:${checkName.toLowerCase().replace(/\s+/g, '-')}`
+        ]
+      });
 
       return rollResult;
       
     } catch (error) {
       logger.error(`❌ [PF2eSkillService] Failed to perform kingdom ${checkType} roll:`, error);
       ui.notifications?.error("Failed to perform skill check");
-      await game.user?.unsetFlag('pf2e-reignmaker', 'pendingCheck');
       return null;
     }
   }
