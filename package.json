@@ -34,9 +34,9 @@
     "not IE 11"
   ],
   "scripts": {
-    "build": "python buildscripts/combine-data.py && python buildscripts/generate-types.py && vite build",
-    "generate-types": "python buildscripts/generate-types.py",
-    "dev": "python buildscripts/combine-data.py && python buildscripts/generate-types.py && vite --config vite.config.dev.ts",
+    "build": "node buildscripts/run-python.js buildscripts/combine-data.py && node buildscripts/run-python.js buildscripts/generate-types.py && vite build",
+    "generate-types": "node buildscripts/run-python.js buildscripts/generate-types.py",
+    "dev": "node buildscripts/run-python.js buildscripts/combine-data.py && node buildscripts/run-python.js buildscripts/generate-types.py && vite --config vite.config.dev.ts",
     "dev:setup": "node buildscripts/setup-dev.js",
     "dev:start": "npm run dev:setup && npm run dev",
     "dev:proxy": "vite --config vite.config.dev.ts",
