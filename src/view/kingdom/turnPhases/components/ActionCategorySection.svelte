@@ -99,19 +99,6 @@
         {@const missingRequirements = !isAvailable && controller ? getMissingRequirements(action) : []}
         {#key `${action.id}-${instanceId || 'none'}-${activeAidsCount}-${isAvailable}-${armyDataKey}-${resourcesKey}`}
           <div class="action-card-wrapper">
-            {#if actionNumber}
-              <div class="action-badge" 
-                   class:untested={actionStatus === 'untested'}
-                   class:testing={actionStatus === 'testing'}
-                   class:tested={actionStatus === 'tested' || actionStatus === 'verified'}
-                   title="{actionStatus === 'untested' ? 'Untested' : actionStatus === 'testing' ? 'Currently Testing' : 'Tested'}">
-                {#if actionStatus === 'tested' || actionStatus === 'verified'}
-                  <span class="checkmark">✓</span>
-                {:else}
-                  <span class="number">#{actionNumber}</span>
-                {/if}
-              </div>
-            {/if}
             <BaseCheckCard
             id={action.id}
             checkInstance={checkInstance || null}
@@ -171,6 +158,8 @@
             primaryButtonLabel="Apply Result"
             skillSectionTitle="Choose Skill:"
             {isViewingCurrentPhase}
+            {actionStatus}
+            {actionNumber}
             on:toggle={() => handleToggle(action.id)}
             on:executeSkill={(e) => handleExecuteSkill(e, action)}
             on:performReroll={(e) => handlePerformReroll(e, action)}
@@ -193,52 +182,6 @@
 {/if}
 
 <style lang="scss">
-  .action-card-wrapper {
-    position: relative;
-  }
-
-  .action-badge {
-    position: absolute;
-    top: var(--space-12);
-    right: var(--space-12);
-    z-index: 10;
-    min-width: 2rem;
-    height: 2rem;
-    padding: 0 var(--space-8);
-    border-radius: var(--radius-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--font-sm);
-    font-weight: var(--font-weight-bold);
-    transition: all 0.2s ease;
-    
-    &.untested {
-      background: var(--color-gray-600);
-      color: white;
-    }
-    
-    &.testing {
-      background: white;
-      color: var(--color-primary);
-      border: 2px solid var(--color-primary);
-      box-shadow: 0 0 8px rgba(0, 123, 255, 0.3);
-    }
-    
-    &.tested {
-      background: var(--color-success);
-      color: white;
-    }
-    
-    .checkmark {
-      font-size: var(--font-lg);
-    }
-    
-    .number {
-      font-size: var(--font-sm);
-    }
-  }
-
   .action-category {
    // background: var(--surface-lowest);
     border-radius: var(--radius-md);

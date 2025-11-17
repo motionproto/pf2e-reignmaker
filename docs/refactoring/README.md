@@ -8,7 +8,6 @@
 
 - **README.md** (this file) - Quick reference and overview
 - **ACTION_MIGRATION_CHECKLIST.md** - Complete 1-26 action list with testing status
-- **CALLBACK_REFACTOR_MIGRATION.md** - Historical context on callback refactor (reference)
 - **CUSTOM_COMPONENTS_TODO.md** - Pending custom component implementation work
 
 ## 🏗️ Architecture
@@ -17,7 +16,7 @@
 
 ### Unified PipelineCoordinator (9-Step Architecture)
 
-All actions now flow through a single coordinator:
+All actions, events, and incidents flow through the same single coordinator:
 
 ```
 Step 1: Requirements Check          [optional]
@@ -31,7 +30,11 @@ Step 8: Execute Action              [always runs]
 Step 9: Cleanup                     [always runs]
 ```
 
-**Key Principle:** Single `PipelineContext` object persists through all steps
+**Key Principles:**
+- Single `PipelineContext` object persists through all steps
+- State persisted in `kingdom.pendingOutcomes` (survives page refresh)
+- FIFO queue with lock prevents concurrent execution race conditions
+- Roll-forward error handling (no rollback - optimistic progression)
 
 ## 📊 Current Status
 
@@ -40,39 +43,102 @@ Step 9: Cleanup                     [always runs]
 - **Tracking:** `src/constants/migratedActions.ts`
 - **UI Badges:** Gray (untested) → Green ✓ (tested)
 
-## 🎯 Action Implementation Workflow
+## 🎯 Action Implementation Workflows
 
-### For Each Action (1-26):
+**Not all actions need the same steps!** Follow the workflow that matches your action type:
 
-**1. Add gameCommands to Action Definition**
-```json
-{
-  "criticalSuccess": {
-    "description": "...",
-    "modifiers": [...],
-    "gameCommands": [
-      {
-        "type": "foundSettlement",
-        "name": "{{settlementName}}",
-        "location": "{{selectedLocation}}"
-      }
-    ]
-  }
-}
-```
+### Workflow A: Basic Actions (#1-9)
+*No gameCommands needed - just kingdom state changes*
 
-**2. Test in Foundry**
-```
-Click action → Roll → Apply Result → Verify state changes
-```
+**Examples:** claim-hexes, deal-with-unrest, sell-surplus, harvest-resources, build-roads
 
-**3. Update Status**
-```typescript
-// In src/constants/migratedActions.ts
-['establish-settlement', 'tested'],  // ✅ Changed from 'untested'
-```
+**Steps:**
+1. **Test in Foundry:**
+   ```
+   Click action → Roll → Apply Result
+   ↓ (if post-apply interaction)
+   Complete hex selection → Verify state changes
+   ```
 
-**4. Badge Turns Green** ✓ automatically in UI
+2. **Update Status:**
+   ```typescript
+   // In src/constants/migratedActions.ts
+   ['deal-with-unrest', 'tested'],  // ✅ Changed from 'untested'
+   ```
+
+3. **Badge Turns Green** ✓ automatically in UI
+
+**NO gameCommands needed** - modifiers update kingdom state directly
+
+---
+
+### Workflow B: Entity Selection (#10-16)
+*Pre-roll dialog to select entity, no gameCommands*
+
+**Examples:** execute-or-pardon-prisoners, establish-diplomatic-relations, train-army
+
+**Steps:**
+1. **Test in Foundry:**
+   ```
+   Click action → Select entity (settlement/faction/army)
+   ↓
+   Roll → Apply Result → Verify state changes
+   ```
+
+2. **Update Status** (same as Workflow A)
+
+**NO gameCommands needed** - selected entity stored in metadata, modifiers update state
+
+---
+
+### Workflow C: Foundry Integration (#17-21 + #25)
+*Requires gameCommands for Foundry actors/items*
+
+**Examples:** recruit-unit, build-structure, establish-settlement
+
+**Steps:**
+1. **Add gameCommands to Action JSON:**
+   ```json
+   {
+     "criticalSuccess": {
+       "description": "...",
+       "modifiers": [...],
+       "gameCommands": [
+         {
+           "type": "foundSettlement",
+           "name": "{{settlementName}}",
+           "location": "{{selectedLocation}}"
+         }
+       ]
+     }
+   }
+   ```
+
+2. **Test in Foundry:**
+   ```
+   Click action → Roll → Apply Result
+   ↓
+   gameCommands execute → Verify Foundry integration
+   (e.g., army actor created, settlement placed)
+   ```
+
+3. **Update Status** (same as Workflow A)
+
+**gameCommands required** - creates/modifies Foundry actors, items, or tokens
+
+---
+
+### Quick Reference: Which Actions Need gameCommands?
+
+**Actions with gameCommands:**
+- #17: recruit-unit
+- #18: deploy-army  
+- #19: build-structure
+- #20: repair-structure
+- #21: upgrade-settlement
+- #25: establish-settlement
+
+**All other actions (#1-16, #22-24, #26):** NO gameCommands needed
 
 ## 📋 Implementation Order
 
@@ -117,10 +183,12 @@ npm run dev  # HMR enabled, auto-rebuild on save
 
 ## 📝 Notes
 
-- All actions use the same 9-step pipeline
+- All actions, events, and incidents use the same 9-step pipeline
 - Optional steps are automatically skipped if not needed
 - Context persists through all steps for debugging
-- Centralized error handling with rollback support
+- Centralized error handling with roll-forward philosophy (no rollback)
+- State persistence ensures pipelines survive page refresh
+- Concurrency control via FIFO queue prevents race conditions
 
 ---
 

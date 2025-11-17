@@ -126,6 +126,12 @@ The system provides 25+ typed command interfaces organized by function:
 
 ## Data Flow
 
+### Overview
+
+All checks (events, incidents, actions) execute through **PipelineCoordinator**, which coordinates modifier and game command application at Step 8 (Execute Action).
+
+**See:** `docs/systems/pipeline-coordinator.md` for complete pipeline architecture.
+
 ### 1. Action Defined (JSON)
 
 ```json
@@ -148,22 +154,36 @@ The system provides 25+ typed command interfaces organized by function:
 ### 2. Player Performs Action
 
 ```
-User selects action → BaseCheckCard UI
-  → Skill check rolled via Foundry VTT
-    → Outcome determined (critSuccess/success/failure/critFailure)
+User selects action → PipelineCoordinator.executePipeline()
+  → Step 1: Requirements Check
+    → Step 2: Pre-Roll Interactions (optional)
+      → Step 3: Execute Roll
+        → Skill check rolled via Foundry VTT
+          → Outcome determined (critSuccess/success/failure/critFailure)
 ```
 
-### 3. Resolution Applied
+### 3. User Interaction
 
 ```
-OutcomeDisplay resolves user interactions (dice, choices)
-  → Controller calls GameCommandsService.applyNumericModifiers()
-    → Resources updated in KingdomActor
-      → Controller calls GameCommandsResolver for each gameCommand
-        → State changes applied to kingdom
+Step 4: Display Outcome (create OutcomePreview)
+  → Step 5: Outcome Interactions
+    → OutcomeDisplay resolves user interactions (dice, choices)
+      → Step 6: Wait For Apply (user clicks button)
 ```
 
-### 4. State Synchronized
+### 4. Resolution Applied
+
+```
+Step 7: Post-Apply Interactions (optional)
+  → Step 8: Execute Action
+    → GameCommandsService.applyNumericModifiers()
+      → Resources updated in KingdomActor
+        → GameCommandsResolver for each gameCommand
+          → State changes applied to kingdom
+            → Step 9: Cleanup
+```
+
+### 5. State Synchronized
 
 ```
 KingdomActor updated
@@ -1171,8 +1191,21 @@ The Game Commands System provides:
 - ✅ Type-safe command definitions (25+ types)
 - ✅ Clear separation from resource modifiers
 - ✅ Service-based architecture with delegation
-- ✅ Full integration with player actions
+- ✅ Full integration with PipelineCoordinator (Step 8: Execute Action)
 - ✅ Compile-time validation and IDE support
 - ✅ Prepare/Commit pattern for preview-before-execute
 
+**Integration with PipelineCoordinator:**
+- Game commands execute at Step 8 (Execute Action)
+- Applied after user clicks "Apply Result" (Step 6 complete)
+- Can use post-apply interactions (Step 7) for user input
+- All effects are part of the unified pipeline flow
+
 This architecture enables complex kingdom operations while maintaining code clarity and type safety.
+
+---
+
+**Related Documents:**
+- `docs/systems/pipeline-coordinator.md` - Complete pipeline architecture
+- `docs/systems/check-type-differences.md` - Events vs Incidents vs Actions
+- `docs/systems/check-instance-system.md` - OutcomePreview system

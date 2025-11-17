@@ -269,6 +269,12 @@ Turn 4: No drug-den event (resolved)
 
 ## Event Lifecycle
 
+### Overview
+
+Events now execute through **PipelineCoordinator**, which provides a standardized 9-step execution flow. EventPhaseController triggers the pipeline and handles event-specific persistence logic.
+
+**See:** `docs/systems/pipeline-coordinator.md` for complete pipeline architecture.
+
 ### 1. Event Selection (Events Phase Start)
 
 ```typescript
@@ -286,33 +292,55 @@ if (kingdom.turnState?.eventsPhase?.eventTriggered) {
 }
 ```
 
-### 2. Event Roll
+### 2. Event Execution (via PipelineCoordinator)
 
 ```typescript
-// Component triggers controller
-const controller = await createEventPhaseController();
-const result = await controller.performEventCheck(eventId, actorId, skillName);
+// EventPhaseController triggers pipeline
+const coordinator = new PipelineCoordinator();
+const context = await coordinator.executePipeline(eventId, {
+  checkType: 'event',
+  userId: game.userId
+});
 ```
 
-**Creates CheckInstance:**
-- Stores roll data
-- Tracks which event
-- Records actor and skill used
+**Pipeline Flow:**
+```
+Step 1: Requirements Check (tier ≤ kingdom level)
+Step 2: Pre-Roll Interactions (rare for events)
+Step 3: Execute Roll (skill check)
+Step 4: Display Outcome (create OutcomePreview)
+Step 5: Outcome Interactions (dice/choice modifiers)
+Step 6: Wait For Apply (user clicks button)
+Step 7: Post-Apply Interactions (rare for events)
+Step 8: Execute Action (apply effects + check endsEvent)
+Step 9: Cleanup (update turnState)
+```
+
+**See:** `docs/systems/check-type-differences.md` for event-specific pipeline behavior.
 
 ### 3. Outcome Application
 
-**Player Interaction:**
+**Player Interaction (Steps 4-6):**
 1. Roll displayed with degree of success
-2. Outcome modifiers shown (dice, choices resolved)
-3. Player clicks "Apply Result"
+2. Outcome modifiers shown (dice, choices resolved in Step 5)
+3. Player clicks "Apply Result" (Step 6 completes)
 
-**Controller Processing:**
+**Pipeline Processing (Steps 7-9):**
 ```typescript
-const result = await controller.resolveEvent(previewId, resolutionData);
-// - Applies numeric modifiers
-// - Handles special resources (damage_structure, etc.)
-// - Checks endsEvent flag
-// - Updates turnState
+// Step 8: Execute Action
+await gameCommandsService.applyNumericModifiers(resolutionData.numericModifiers);
+await gameCommandsResolver.executeGameCommands(resolutionData.gameCommands);
+
+// Check endsEvent flag
+if (!outcome.endsEvent) {
+  await updateKingdom(k => {
+    k.turnState.eventsPhase.eventTriggered = true;
+    k.turnState.eventsPhase.eventId = eventId;
+  });
+}
+
+// Step 9: Cleanup
+await outcomePreviewService.markApplied(previewId);
 ```
 
 ### 4. Event Persistence
@@ -336,6 +364,8 @@ await updateKingdom(k => {
 ```
 
 **Next turn:** New random event selected.
+
+**Note:** Pipeline Step 8 automatically handles this persistence logic based on the `endsEvent` flag in the outcome data.
 
 ---
 
@@ -370,6 +400,13 @@ if (roll <= unrestLevel) {
   // Incident triggered!
   const severity = determineSeverity(unrestLevel);
   const incident = selectIncident(severity);
+  
+  // Trigger pipeline
+  const coordinator = new PipelineCoordinator();
+  await coordinator.executePipeline(incident.id, {
+    checkType: 'incident',
+    userId: game.userId
+  });
 }
 ```
 
@@ -385,33 +422,76 @@ if (roll <= unrestLevel) {
 
 ### Incident Resolution
 
-**Same as Events:**
-1. Roll skill check
-2. Apply outcome modifiers
-3. Check endsEvent (incidents can be ongoing too)
-4. Update turnState
+**Via PipelineCoordinator:**
+
+Incidents use the same 9-step pipeline as events, with minor differences:
+
+1. **Step 1 (Requirements)** - Uses severity instead of tier for validation
+2. **Steps 2-7** - Identical to events (rarely use pre/post interactions)
+3. **Step 8 (Execute)** - Updates `turnState.unrestPhase` instead of `eventsPhase`
+4. **Step 9 (Cleanup)** - Same cleanup logic
 
 **Persistence:** Uses `kingdom.turnState.unrestPhase` instead of `eventsPhase`.
+
+**See:** `docs/systems/check-type-differences.md` for complete incident vs event comparison.
 
 ---
 
 ## Integration Points
+
+### With PipelineCoordinator
+
+**File:** `src/services/PipelineCoordinator.ts`
+
+**Responsibilities:**
+- Orchestrate 9-step execution flow
+- Manage pipeline context
+- Handle roll callbacks
+- Coordinate pause/resume at apply button
+
+**Pattern (Events):**
+```typescript
+const coordinator = new PipelineCoordinator();
+const context = await coordinator.executePipeline(eventId, {
+  checkType: 'event',
+  userId: game.userId
+});
+// Pipeline handles everything from roll to cleanup
+```
+
+**Pattern (Incidents):**
+```typescript
+const coordinator = new PipelineCoordinator();
+const context = await coordinator.executePipeline(incidentId, {
+  checkType: 'incident',
+  userId: game.userId
+});
+// Same flow, different checkType
+```
+
+**See:** `docs/systems/pipeline-coordinator.md` for complete architecture.
 
 ### With EventPhaseController
 
 **File:** `src/controllers/EventPhaseController.ts`
 
 **Responsibilities:**
-- Select/persist events
-- Trigger skill checks
-- Apply outcomes
-- Manage event state
+- Select events (random or ongoing)
+- Trigger PipelineCoordinator
+- Handle event ignore flow (separate from pipeline)
+- Manage event persistence
 
 **Pattern:**
 ```typescript
 const controller = await createEventPhaseController();
-await controller.performEventCheck(eventId, actorId, skillName);
-await controller.resolveEvent(previewId, resolutionData);
+
+// Standard flow
+await controller.performEventCheck(eventId);
+// → Calls PipelineCoordinator internally
+
+// Ignore flow (bypasses pipeline)
+await controller.ignoreEvent(eventId);
+// → Separate code path
 ```
 
 ### With UnrestPhaseController
@@ -420,23 +500,28 @@ await controller.resolveEvent(previewId, resolutionData);
 
 **Responsibilities:**
 - Calculate unrest
-- Check for incidents
-- Trigger incident resolution
-- Manage incident state
+- Trigger incident checks (d100 roll)
+- Call PipelineCoordinator if incident triggered
+- Manage incident persistence
 
 **Pattern:**
 ```typescript
 const controller = await createUnrestPhaseController();
+
+// Unrest calculation
+await controller.calculateUnrest();
+
+// Incident check + resolution
 const result = await controller.checkForIncidents();
-await controller.resolveIncident(previewId, resolutionData);
+// → Calls PipelineCoordinator internally if triggered
 ```
 
 ### With OutcomePreviewService
 
-**Both controllers use CheckInstance system:**
+**PipelineCoordinator uses OutcomePreviewService internally:**
 
 ```typescript
-// Create instance
+// Pipeline Step 4: Display Outcome
 const previewId = await outcomePreviewService.createInstance(
   'event',  // or 'incident'
   eventId,
@@ -444,7 +529,7 @@ const previewId = await outcomePreviewService.createInstance(
   currentTurn
 );
 
-// Store outcome
+// Pipeline Step 4: Store outcome after roll
 await outcomePreviewService.storeOutcome(
   previewId,
   outcome,
@@ -454,21 +539,25 @@ await outcomePreviewService.storeOutcome(
   effect
 );
 
-// Mark applied
+// Pipeline Step 8: Mark applied
 await outcomePreviewService.markApplied(previewId);
 ```
 
 **See:** `docs/systems/check-instance-system.md`
 
-### With GameCommandsService
+### With GameCommandsService & GameCommandsResolver
 
-**Special resources processed here:**
+**Pipeline Step 8 applies all effects:**
 
 ```typescript
-// Structure damage
-await gameCommandsService.damageStructure(params);
+// Apply numeric modifiers
+await gameCommandsService.applyNumericModifiers(resolutionData.numericModifiers);
 
-// Structure destruction
+// Execute game commands
+await gameCommandsResolver.executeGameCommands(resolutionData.gameCommands);
+
+// Special resources (structure damage, etc.)
+await gameCommandsService.damageStructure(params);
 await gameCommandsService.destroyStructure(params);
 ```
 
@@ -686,8 +775,19 @@ The Events and Incidents System provides:
 - ✅ Ongoing event support through traits + endsEvent
 - ✅ Special resources (structure damage, imprisoned unrest)
 - ✅ Manual effects for non-automatable outcomes
-- ✅ Integration with CheckInstance and GameCommands systems
+- ✅ **Unified execution via PipelineCoordinator**
+- ✅ Integration with OutcomePreview and GameCommands systems
 
 **Key Distinction:** Event trait `"ongoing"` ≠ Modifier duration `"ongoing"`
 
+**Architecture:** PipelineCoordinator provides the 9-step execution flow, while phase controllers handle event/incident-specific triggering and persistence logic.
+
 This architecture provides dynamic, replayable kingdom challenges while maintaining clear separation between event persistence and modifier application.
+
+---
+
+**Related Documents:**
+- `docs/systems/pipeline-coordinator.md` - Complete pipeline architecture
+- `docs/systems/check-type-differences.md` - Events vs Incidents vs Actions
+- `docs/systems/check-instance-system.md` - OutcomePreview system
+- `docs/systems/game-commands-system.md` - Game commands integration

@@ -10,6 +10,10 @@ Phase controllers execute the business logic for each of the six kingdom turn ph
 
 **Key Principle:** Controllers contain business logic only - no UI concerns, no direct data access.
 
+**Architecture Note:** For check-based phases (Events, Unrest, Actions), controllers trigger **PipelineCoordinator** for execution while handling phase-specific triggering and persistence logic.
+
+**See:** `docs/systems/pipeline-coordinator.md` for complete check execution architecture.
+
 ---
 
 ## Architecture Pattern
@@ -171,33 +175,91 @@ async performCheck() {
 
 **Purpose:** Handle kingdom events (immediate and ongoing)
 
-**Pattern:** Check roll, optional resolution
+**Pattern:** Trigger PipelineCoordinator for event execution
 
 **Key Operations:**
-- `performEventCheck()` - Roll d20 vs DC
-- `resolveEvent()` - Handle skill check outcome
-- Integration with OutcomePreviewService
+- `selectEvent()` - Choose random event or continue ongoing event
+- `performEventCheck()` - Trigger PipelineCoordinator with event ID
+- `ignoreEvent()` - Bypass pipeline for ignored events (separate flow)
+- Event persistence management (turnState.eventsPhase)
+
+**Integration:**
+```typescript
+async performEventCheck(eventId: string) {
+  const coordinator = new PipelineCoordinator();
+  const context = await coordinator.executePipeline(eventId, {
+    checkType: 'event',
+    userId: game.userId
+  });
+  
+  return { success: context.executionResult?.success };
+}
+```
+
+**See:** `docs/systems/check-type-differences.md` for event-specific behavior.
 
 ### UnrestPhaseController
 
 **Purpose:** Calculate unrest, handle incidents
 
-**Pattern:** Auto-calculate, check for incidents
+**Pattern:** Trigger d100 check, execute via PipelineCoordinator if triggered
 
 **Key Operations:**
 - `calculateUnrest()` - Display current unrest level
-- `checkForIncidents()` - Percentage-based incident check
-- `resolveIncident()` - Handle incident resolution
+- `checkForIncidents()` - d100 roll vs unrest, trigger pipeline if incident occurs
+- Incident persistence management (turnState.unrestPhase)
+
+**Integration:**
+```typescript
+async checkForIncidents() {
+  const unrestLevel = kingdom.unrest;
+  const roll = d100();
+  
+  if (roll <= unrestLevel) {
+    const severity = determineSeverity(unrestLevel);
+    const incident = selectIncident(severity);
+    
+    const coordinator = new PipelineCoordinator();
+    await coordinator.executePipeline(incident.id, {
+      checkType: 'incident',
+      userId: game.userId
+    });
+  }
+}
+```
+
+**See:** `docs/systems/check-type-differences.md` for incident-specific behavior.
 
 ### ActionPhaseController
 
 **Purpose:** Execute player kingdom actions
 
-**Pattern:** Multiple actions, player-driven
+**Pattern:** Trigger PipelineCoordinator for each action
 
 **Key Operations:**
-- Action validation and execution
-- Integration with player action system
+- Action selection and validation
+- Trigger PipelineCoordinator with action ID
+- Handle pre-roll interactions (Step 2)
+- Handle post-apply interactions (Step 7)
+- Action logging (turnState.actionsPhase)
+
+**Integration:**
+```typescript
+async performAction(actionId: string) {
+  const coordinator = new PipelineCoordinator();
+  const context = await coordinator.executePipeline(actionId, {
+    checkType: 'action',
+    userId: game.userId
+  });
+  
+  // Log action
+  await trackPlayerAction(actionId, context.rollData?.outcome);
+  
+  return { success: context.executionResult?.success };
+}
+```
+
+**See:** `docs/systems/check-type-differences.md` for action-specific behavior (pre/post interactions, custom components).
 
 ### UpkeepPhaseController
 
@@ -214,46 +276,61 @@ async performCheck() {
 
 ## Integration Patterns
 
+### With PipelineCoordinator
+
+Controllers trigger pipeline for all check execution:
+
+```typescript
+// Phase controller triggers pipeline
+const coordinator = new PipelineCoordinator();
+const context = await coordinator.executePipeline(checkId, {
+  checkType: this.checkType,  // 'event' | 'incident' | 'action'
+  userId: game.userId
+});
+
+// Pipeline handles:
+// - Requirements check (Step 1)
+// - Pre-roll interactions (Step 2)
+// - Roll execution (Step 3)
+// - Outcome display (Step 4)
+// - User interactions (Step 5)
+// - Apply button wait (Step 6)
+// - Post-apply interactions (Step 7)
+// - Effect execution (Step 8)
+// - Cleanup (Step 9)
+
+return { success: context.executionResult?.success };
+```
+
+**Pattern:** Controllers focus on phase-specific logic (triggering, persistence), PipelineCoordinator handles execution.
+
+**See:** `docs/systems/pipeline-coordinator.md` for complete 9-step flow.
+
 ### With OutcomePreviewService
 
-Controllers create and manage check instances:
+PipelineCoordinator manages OutcomePreview internally:
 
 ```typescript
-// Create instance
-const previewId = await outcomePreviewService.createInstance(
-  'event',
-  eventId,
-  eventData,
-  currentTurn
-);
-
-// Store outcome
-await outcomePreviewService.storeOutcome(
-  previewId,
-  outcome,
-  resolutionData,
-  actorName,
-  skillName,
-  effect
-);
-
-// Mark applied
-await outcomePreviewService.markApplied(previewId);
+// Controllers no longer call OutcomePreviewService directly
+// PipelineCoordinator handles:
+// - Step 4: createInstance()
+// - Step 4: storeOutcome()
+// - Step 8: markApplied()
 ```
 
-**Pattern:** All check-based controllers follow the same flow.
+**Pattern:** Controllers delegate to PipelineCoordinator, which uses OutcomePreviewService.
 
-### With GameEffectsService
+### With GameCommandsService & GameCommandsResolver
 
-Controllers apply effects through unified service:
+PipelineCoordinator applies effects at Step 8:
 
 ```typescript
-await gameEffectsService.applyNumericModifiers(
-  resolutionData.numericModifiers
-);
+// PipelineCoordinator Step 8: Execute Action
+await gameCommandsService.applyNumericModifiers(resolutionData.numericModifiers);
+await gameCommandsResolver.executeGameCommands(resolutionData.gameCommands);
 ```
 
-**Pattern:** Controllers receive final numeric values from UI, apply via service.
+**Pattern:** Controllers don't call these directly - PipelineCoordinator handles effect application.
 
 ### With TurnState
 
@@ -380,15 +457,23 @@ Phase Controllers provide:
 - ✅ Standardized factory function pattern
 - ✅ Required phase guard protection
 - ✅ Consistent step management
-- ✅ Clear integration points
+- ✅ Clear integration points (trigger PipelineCoordinator for checks)
 - ✅ Separation of concerns (business logic only)
 - ✅ Type-safe step references
+
+**Architecture:**
+- **Check-based phases** (Events, Unrest, Actions) trigger PipelineCoordinator for execution
+- **Non-check phases** (Status, Resource, Upkeep) execute directly
+- Controllers handle phase-specific logic (triggering, persistence, state management)
+- PipelineCoordinator handles unified check execution (9-step flow)
 
 This architecture ensures maintainable, testable phase implementations that follow consistent patterns across all six kingdom phases.
 
 ---
 
-**See Also:**
+**Related Documents:**
+- `docs/systems/pipeline-coordinator.md` - Check execution architecture (9-step flow)
+- `docs/systems/check-type-differences.md` - Events vs Incidents vs Actions
+- `docs/systems/check-instance-system.md` - OutcomePreview system
 - `docs/systems/turn-and-phase-system.md` - Turn/phase progression architecture
-- `docs/systems/check-instance-system.md` - Check lifecycle integration
 - `docs/ARCHITECTURE.md` - Overall system architecture

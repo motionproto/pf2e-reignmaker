@@ -389,9 +389,9 @@ private async step2_preRollInteractions(ctx: PipelineContext): Promise<void> {
 }
 ```
 
-### 6. Error Handling & Rollback
+### 6. Error Handling (Roll Forward)
 
-**Centralized try/catch with rollback:**
+**Centralized try/catch with "roll forward" philosophy:**
 
 ```typescript
 async executePipeline(actionId, initialContext) {
@@ -408,18 +408,360 @@ async executePipeline(actionId, initialContext) {
     
   } catch (error) {
     this.logError(context, error);
-    await this.rollback(context); // ← Undo partial changes
+    
+    // Roll forward: Mark pipeline as failed but DON'T undo changes
+    // This preserves state for debugging and maintains optimistic progression
+    await updateKingdom(kingdom => {
+      const preview = kingdom.pendingOutcomes.find(p => p.previewId === context.previewId);
+      if (preview) {
+        preview.status = 'failed';
+        preview.error = error.message;
+        if (preview.pipelineState) {
+          preview.pipelineState.currentStep = -1;  // Mark as failed
+        }
+      }
+    });
+    
     throw error;
   }
 }
+```
 
-private async rollback(ctx: PipelineContext): Promise<void> {
-  // Check which steps completed
-  // Undo state changes from completed steps
-  // Clear outcome preview if created
-  // Restore deducted resources if needed
+**No Rollback Philosophy:**
+- Failed pipelines stay visible for debugging
+- Partial state changes are preserved (optimistic progression)
+- GM can manually fix issues if needed
+- Errors are logged with full context for investigation
+
+---
+
+## Advanced Features
+
+### 7. State Persistence Strategy
+
+**Problem:** Paused contexts stored in memory are lost on page refresh/tab switch.
+
+**Solution:** Store pipeline execution state in `kingdom.pendingOutcomes` (already persisted by Foundry).
+
+**Updated OutcomePreview Structure:**
+
+```typescript
+interface OutcomePreview {
+  // Existing fields (already persisted)
+  previewId: string;
+  checkType: 'action' | 'event' | 'incident';
+  checkId: string;
+  status: 'pending' | 'resolved' | 'applied' | 'failed';
+  
+  // ADD: Pipeline execution state (NEW)
+  pipelineState?: {
+    currentStep: number;           // Which step (1-9) we're at
+    pausedAt: 'roll' | 'apply';    // Where we're waiting
+    rollData?: RollData;            // Step 3 results
+    metadata?: CheckMetadata;       // Step 2 data
+    resolutionData?: ResolutionData; // Step 7 data
+  };
+  
+  // Error tracking
+  error?: string;                   // Error message if status = 'failed'
 }
 ```
+
+**Implementation:**
+
+```typescript
+// Store state at each step transition
+private async updatePipelineState(ctx: PipelineContext, step: number, pausedAt?: 'roll' | 'apply') {
+  await updateKingdom(kingdom => {
+    const preview = kingdom.pendingOutcomes.find(p => p.previewId === ctx.previewId);
+    if (preview) {
+      if (!preview.pipelineState) {
+        preview.pipelineState = { currentStep: step };
+      } else {
+        preview.pipelineState.currentStep = step;
+      }
+      
+      if (pausedAt) preview.pipelineState.pausedAt = pausedAt;
+      if (ctx.rollData) preview.pipelineState.rollData = ctx.rollData;
+      if (ctx.metadata) preview.pipelineState.metadata = ctx.metadata;
+      if (ctx.resolutionData) preview.pipelineState.resolutionData = ctx.resolutionData;
+    }
+  });
+}
+
+// Resume from persisted state
+async resumeFromPersistedState(previewId: string): Promise<void> {
+  const kingdom = getKingdom();
+  const preview = kingdom.pendingOutcomes.find(p => p.previewId === previewId);
+  
+  if (!preview?.pipelineState) {
+    throw new Error('No persisted state found');
+  }
+  
+  // Reconstruct context from persisted state
+  const ctx = this.reconstructContext(preview);
+  
+  // Resume from saved step
+  const step = preview.pipelineState.currentStep;
+  if (preview.pipelineState.pausedAt === 'roll') {
+    // Waiting for roll callback - can't resume automatically
+    console.log('Pipeline paused at roll, waiting for callback');
+  } else if (preview.pipelineState.pausedAt === 'apply') {
+    // User can click Apply to continue
+    this.pendingContexts.set(previewId, ctx);
+  }
+}
+```
+
+**Benefits:**
+- ✅ Survives page refresh
+- ✅ Syncs across all clients (GM sees player actions)
+- ✅ Can resume from any step
+- ✅ Full audit trail
+
+**Storage Cost:** Minimal (~1-2KB per pipeline, max ~12KB for 6 clients)
+
+### 8. Concurrency Control (Queue + Lock)
+
+**Problem:** Multiple clients submitting actions simultaneously causes race conditions.
+
+**Solution:** FIFO queue with lock held until completion (no release on pause).
+
+**Data Structure:**
+
+```typescript
+interface KingdomData {
+  // ... existing fields
+  
+  // NEW: Pipeline queue and lock
+  pipelineQueue: QueuedPipeline[];
+  currentPipelineId: string | null;  // Acts as lock
+}
+
+interface QueuedPipeline {
+  queueId: string;
+  checkType: 'action' | 'event' | 'incident';
+  checkId: string;
+  userId: string;
+  queuedAt: number;
+  status: 'queued' | 'executing' | 'paused' | 'completed';
+}
+```
+
+**Implementation:**
+
+```typescript
+class PipelineCoordinator {
+  async executePipeline(actionId: string, ctx: Partial<PipelineContext>) {
+    // 1. Enqueue
+    const queueId = await this.enqueue(actionId, ctx.userId);
+    
+    // 2. Wait for turn (poll until we're first in queue)
+    await this.waitForTurn(queueId);
+    
+    // 3. Acquire lock (mark as executing)
+    await this.acquireLock(queueId);
+    
+    try {
+      // 4. Execute ALL steps (1-9), lock held throughout
+      await this.runSteps(ctx);
+      // Steps pause at Step 3 (roll callback) and Step 6 (apply button)
+      // Lock STAYS acquired during these pauses
+      
+    } finally {
+      // 5. Release lock ONLY when fully complete or failed
+      await this.releaseLock(queueId);
+      await this.processNextInQueue();
+    }
+  }
+  
+  private async waitForTurn(queueId: string) {
+    return new Promise((resolve) => {
+      const checkInterval = setInterval(async () => {
+        const kingdom = getKingdom();
+        const isMyTurn = kingdom.pipelineQueue[0]?.queueId === queueId;
+        const noActivePipeline = !kingdom.currentPipelineId;
+        
+        if (isMyTurn && noActivePipeline) {
+          clearInterval(checkInterval);
+          resolve();
+        }
+      }, 100); // Check every 100ms
+    });
+  }
+  
+  private async acquireLock(queueId: string) {
+    await updateKingdom(kingdom => {
+      kingdom.currentPipelineId = queueId;
+    });
+  }
+  
+  private async releaseLock(queueId: string) {
+    await updateKingdom(kingdom => {
+      if (kingdom.currentPipelineId === queueId) {
+        kingdom.currentPipelineId = null;
+      }
+      
+      // Mark as completed in queue
+      const queued = kingdom.pipelineQueue.find(q => q.queueId === queueId);
+      if (queued) {
+        queued.status = 'completed';
+      }
+    });
+  }
+}
+```
+
+**Benefits:**
+- ✅ FIFO queue (fair ordering)
+- ✅ Only one pipeline executes at a time (no race conditions)
+- ✅ Lock held during pauses (no mid-execution interruptions)
+- ✅ Simple to implement
+
+**Tradeoff:** If Player A pauses for 5 minutes, Player B waits (acceptable for max 6 clients)
+
+### 9. Event Ignore Flow
+
+**Events can be ignored, which applies the failure outcome without rolling.**
+
+**Updated Step 1 (Requirements Check):**
+
+```typescript
+/**
+ * Step 1: checkRequirements()
+ * 
+ * EVENTS ONLY: Skip Step (Ignore Event)
+ * 
+ * Events can be ignored, which skips the roll and applies failure outcome:
+ * 
+ * - Beneficial events: Auto-apply failure outcome immediately (resolveEvent with isIgnored=true)
+ * - Dangerous events: Create pending outcome with failure preview, wait for Apply
+ * - Ignore doesn't count as player action (no tracking)
+ * 
+ * This is handled OUTSIDE the normal 9-step flow (separate code path).
+ */
+private async step1_checkRequirements(ctx: PipelineContext): Promise<void> {
+  // ... existing requirements logic
+}
+```
+
+**Ignore Implementation (Separate from Pipeline):**
+
+```typescript
+// EventPhaseController.ignoreEvent()
+async ignoreEvent(eventId: string) {
+  const event = eventService.getEventById(eventId);
+  const isBeneficial = event.traits?.includes('beneficial');
+  const isDangerous = event.traits?.includes('dangerous');
+  
+  if (isBeneficial && !isDangerous) {
+    // Auto-apply failure immediately (bypass pipeline)
+    await this.resolveEvent(eventId, 'failure', {
+      numericModifiers: [],
+      manualEffects: [],
+      complexActions: []
+    }, true); // isIgnored = true
+  } else if (isDangerous) {
+    // Create pending outcome with failure preview
+    await outcomePreviewService.createInstance('event', eventId, event, currentTurn);
+    // Wait for user to Apply (enters pipeline at Step 6)
+  } else {
+    // Neither beneficial nor dangerous - just clear
+    await clearCurrentEvent(eventId);
+  }
+}
+```
+
+**Key Differences:**
+- Beneficial events skip Steps 1-6 (direct to execute)
+- Dangerous events skip Steps 1-5 (start at Step 6: Wait For Apply)
+- Non-beneficial/non-dangerous skip all steps (just clear)
+
+### 10. Testing Strategy
+
+**Goal:** Validate all 100+ actions/events/incidents with 4 outcomes each (~400 tests).
+
+**Automated Smoke Tests:**
+
+```typescript
+// test/pipeline-smoke-tests.ts
+async function runSmokeTests() {
+  const outcomes = [
+    { name: 'Critical Success', dc: 10, roll: 30 },  // Always crit success
+    { name: 'Success', dc: 15, roll: 20 },           // Always success
+    { name: 'Failure', dc: 20, roll: 10 },           // Always failure
+    { name: 'Critical Failure', dc: 15, roll: 1 }    // Natural 1 = crit fail
+  ];
+  
+  const results = [];
+  
+  // Test all actions × 4 outcomes = ~100 × 4 = 400 tests
+  for (const actionId of ALL_ACTION_IDS) {
+    for (const outcome of outcomes) {
+      try {
+        const coordinator = new PipelineCoordinator();
+        const ctx = await coordinator.executePipeline(actionId, {
+          userId: 'test-user',
+          actor: { selectedSkill: 'politics' },
+          skipInteractions: true,  // Auto-fill choices with defaults
+          mockRoll: { 
+            dc: outcome.dc, 
+            total: outcome.roll,
+            outcome: calculateOutcome(outcome.roll, outcome.dc)
+          }
+        });
+        
+        results.push({ 
+          actionId, 
+          outcome: outcome.name,
+          status: 'PASS', 
+          error: null 
+        });
+      } catch (error) {
+        results.push({ 
+          actionId, 
+          outcome: outcome.name,
+          status: 'FAIL', 
+          error: error.message 
+        });
+      }
+    }
+  }
+  
+  // Print report grouped by outcome
+  console.log('=== CRITICAL SUCCESS ===');
+  console.table(results.filter(r => r.outcome === 'Critical Success'));
+  
+  console.log('=== SUCCESS ===');
+  console.table(results.filter(r => r.outcome === 'Success'));
+  
+  console.log('=== FAILURE ===');
+  console.table(results.filter(r => r.outcome === 'Failure'));
+  
+  console.log('=== CRITICAL FAILURE ===');
+  console.table(results.filter(r => r.outcome === 'Critical Failure'));
+  
+  return results;
+}
+```
+
+**What This Catches:**
+- ✅ Missing `specialEffects: []` in PreviewData
+- ✅ Undefined function calls
+- ✅ Type errors
+- ✅ Invalid JSON references
+- ✅ All 4 outcome code paths validated
+
+**Effort:** 1-2 hours to set up, runs in ~10-20 seconds
+
+**Manual Acceptance Tests (Supplement):**
+
+Test representative examples manually:
+- Actions: Simple action, pre-roll interactions, post-apply interactions, dice modifiers
+- Events: Beneficial (ignore), dangerous (ignore), ongoing, immediate
+- Incidents: Minor, moderate, major
+
+**Effort:** ~2-3 hours for 15-20 cases
 
 ---
 
