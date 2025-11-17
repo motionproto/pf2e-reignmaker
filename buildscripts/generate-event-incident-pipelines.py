@@ -26,6 +26,10 @@ def format_modifier(modifier: Dict[str, Any]) -> str:
     """Format a single modifier for TypeScript."""
     mod_type = modifier.get('type', 'static')
     
+    # Normalize choice-dropdown to choice (legacy compatibility)
+    if mod_type == 'choice-dropdown':
+        mod_type = 'choice'
+    
     if mod_type == 'static':
         resource = modifier.get('resource', '')
         value = modifier.get('value', 0)
@@ -47,7 +51,14 @@ def format_modifier(modifier: Dict[str, Any]) -> str:
         duration = modifier.get('duration', 'immediate')
         resources_str = json.dumps(resources)
         neg_str = 'true' if negative else 'false'
-        return f"{{ type: 'choice', resources: {resources_str}, value: {value}, negative: {neg_str}, duration: '{duration}' }}"
+        
+        # Handle both numeric and formula (string) values
+        if isinstance(value, str):
+            value_str = f"'{value}'"
+        else:
+            value_str = str(value)
+        
+        return f"{{ type: 'choice', resources: {resources_str}, value: {value_str}, negative: {neg_str}, duration: '{duration}' }}"
     
     else:
         # Fallback: use JSON serialization to ensure proper JavaScript types

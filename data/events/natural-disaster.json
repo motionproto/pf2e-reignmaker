@@ -34,7 +34,7 @@
       "msg": "Some damage occurs.",
       "modifiers": [
         {
-          "type": "choice-dropdown",
+          "type": "choice",
           "resources": [
             "lumber",
             "ore",

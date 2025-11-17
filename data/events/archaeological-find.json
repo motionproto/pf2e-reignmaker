@@ -58,7 +58,7 @@
       "msg": "Only minor artifacts are found.",
       "modifiers": [
         {
-          "type": "choice-dropdown",
+          "type": "choice",
           "resources": [
             "food",
             "lumber",

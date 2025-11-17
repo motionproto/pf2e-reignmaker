@@ -31,7 +31,7 @@
       "msg": "The strike causes resource losses.",
       "modifiers": [
         {
-          "type": "choice-dropdown",
+          "type": "choice",
           "resources": [
             "lumber",
             "ore",
@@ -48,7 +48,7 @@
       "msg": "A prolonged strike devastates production.",
       "modifiers": [
         {
-          "type": "choice-dropdown",
+          "type": "choice",
           "resources": [
             "lumber",
             "ore",

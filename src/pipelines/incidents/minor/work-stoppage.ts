@@ -29,14 +29,14 @@ export const workStoppagePipeline: CheckPipeline = {
     failure: {
       description: 'Work stoppage halts production.',
       modifiers: [
-        {'type': 'choice-dropdown', 'resources': ['lumber', 'ore', 'stone'], 'value': 1, 'negative': True, 'duration': 'immediate'}
+        { type: 'choice', resources: ["lumber", "ore", "stone"], value: 1, negative: true, duration: 'immediate' }
       ]
     },
     criticalFailure: {
       description: 'Widespread work stoppage causes chaos.',
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
-        {'type': 'choice-dropdown', 'resources': ['lumber', 'ore', 'stone'], 'value': 2, 'negative': True, 'duration': 'immediate'},
+        { type: 'choice', resources: ["lumber", "ore", "stone"], value: 2, negative: true, duration: 'immediate' },
       ]
     },
   },

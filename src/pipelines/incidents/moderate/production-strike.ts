@@ -29,13 +29,13 @@ export const productionStrikePipeline: CheckPipeline = {
     failure: {
       description: 'The strike causes resource losses.',
       modifiers: [
-        {'type': 'choice-dropdown', 'resources': ['lumber', 'ore', 'stone'], 'value': '1d4-1', 'negative': True, 'duration': 'immediate'}
+        { type: 'choice', resources: ["lumber", "ore", "stone"], value: '1d4-1', negative: true, duration: 'immediate' }
       ]
     },
     criticalFailure: {
       description: 'A prolonged strike devastates production.',
       modifiers: [
-        {'type': 'choice-dropdown', 'resources': ['lumber', 'ore', 'stone'], 'value': '2d4-1', 'negative': True, 'duration': 'immediate'}
+        { type: 'choice', resources: ["lumber", "ore", "stone"], value: '2d4-1', negative: true, duration: 'immediate' }
       ]
     },
   },

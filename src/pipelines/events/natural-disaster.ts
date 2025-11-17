@@ -30,7 +30,7 @@ export const naturalDisasterPipeline: CheckPipeline = {
     success: {
       description: 'Some damage occurs.',
       modifiers: [
-        {'type': 'choice-dropdown', 'resources': ['lumber', 'ore', 'food', 'stone'], 'value': 1, 'negative': True, 'duration': 'immediate'}
+        { type: 'choice', resources: ["lumber", "ore", "food", "stone"], value: 1, negative: true, duration: 'immediate' }
       ]
     },
     failure: {

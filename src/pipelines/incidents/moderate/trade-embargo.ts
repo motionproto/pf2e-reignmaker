@@ -30,14 +30,14 @@ export const tradeEmbargoPipeline: CheckPipeline = {
       description: 'A trade embargo disrupts your economy.',
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '1d4', negative: true, duration: 'immediate' },
-        {'type': 'choice-dropdown', 'resources': ['lumber', 'ore', 'food', 'stone'], 'value': '1d4+1', 'negative': True, 'duration': 'immediate'},
+        { type: 'choice', resources: ["lumber", "ore", "food", "stone"], value: '1d4+1', negative: true, duration: 'immediate' },
       ]
     },
     criticalFailure: {
       description: 'A complete trade embargo cripples your economy.',
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '2d4', negative: true, duration: 'immediate' },
-        {'type': 'choice-dropdown', 'resources': ['lumber', 'ore', 'food', 'stone'], 'value': '1d4+1', 'negative': True, 'duration': 'immediate'},
+        { type: 'choice', resources: ["lumber", "ore", "food", "stone"], value: '1d4+1', negative: true, duration: 'immediate' },
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
       ]
     },

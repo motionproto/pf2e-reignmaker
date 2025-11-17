@@ -30,14 +30,14 @@ export const tradeWarPipeline: CheckPipeline = {
       description: 'A trade war damages your economy.',
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '2d4', negative: true, duration: 'immediate' },
-        {'type': 'choice-dropdown', 'resources': ['lumber', 'ore', 'food', 'stone'], 'value': '2d4+1', 'negative': True, 'duration': 'immediate'},
+        { type: 'choice', resources: ["lumber", "ore", "food", "stone"], value: '2d4+1', negative: true, duration: 'immediate' },
       ]
     },
     criticalFailure: {
       description: 'Economic isolation devastates your kingdom.',
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '3d4', negative: true, duration: 'immediate' },
-        {'type': 'choice-dropdown', 'resources': ['lumber', 'ore', 'food', 'stone'], 'value': '2d4+1', 'negative': True, 'duration': 'immediate'},
+        { type: 'choice', resources: ["lumber", "ore", "food", "stone"], value: '2d4+1', negative: true, duration: 'immediate' },
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
       ]
     },
