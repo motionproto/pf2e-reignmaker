@@ -58,9 +58,11 @@ __reignmakerRules/
 __pf2e/
 
 ### Reference/documentation directories ###
+_pf2e
 _pf2e-kingmaker-module
 _pf2e-kingmaker-tools
 _pf2e-system
+_reignmaker_rules
 _reignmaker_rules_docs
 _svelte_sample
 _world-explorer
