@@ -52,8 +52,9 @@ bin/
 .kotlin
 .idea
 
-### Windows symbolic links (junction points) ###
+### Symbolic links (junction points) ###
 __foundryData/
+__foundryModules/
 __reignmakerRules/
 __pf2e/
 

@@ -19,12 +19,13 @@ console.log('🚀 Setting up PF2e ReignMaker for development...\n');
 // Function to copy module.dev.json to Foundry modules directory
 function setupDevModule() {
     // Try to find Foundry data path
+    // Covers Windows, macOS, and Linux common locations
     const possiblePaths = [
-        process.env.FOUNDRY_DATA_PATH,
-        path.join(process.env.HOME || process.env.USERPROFILE, 'FoundryVTT', 'Data'),
-        path.join(process.env.HOME || process.env.USERPROFILE, 'Documents', 'FoundryVTT', 'Data'),
-        path.join(process.env.HOME || process.env.USERPROFILE, 'Library', 'Application Support', 'FoundryVTT', 'Data'),
-        '/Users/mark/FoundryVTT/Data',  // Your specific path
+        process.env.FOUNDRY_DATA_PATH,                                                                           // Environment variable (highest priority)
+        path.join(process.env.USERPROFILE || process.env.HOME, 'AppData', 'Local', 'FoundryVTT', 'Data'),      // Windows default
+        path.join(process.env.USERPROFILE || process.env.HOME, 'Documents', 'FoundryVTT', 'Data'),             // Windows/Linux custom
+        path.join(process.env.HOME || process.env.USERPROFILE, 'Library', 'Application Support', 'FoundryVTT', 'Data'), // macOS default
+        path.join(process.env.HOME || process.env.USERPROFILE, 'FoundryVTT', 'Data'),                          // Linux/general
     ].filter(Boolean);
     
     let foundryDataPath = null;
@@ -64,7 +65,7 @@ function setupDevModule() {
     }
     
     // Copy other necessary files
-    const filesToCopy = ['lang', 'macros', 'img', 'data'];
+    const filesToCopy = ['lang', 'macros', 'img', 'data', 'dist'];
     
     filesToCopy.forEach(file => {
         const sourcePath = path.join(rootDir, file);
