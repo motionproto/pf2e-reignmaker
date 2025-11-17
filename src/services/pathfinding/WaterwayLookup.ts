@@ -169,6 +169,9 @@ export class WaterwayLookup {
     const edgeIndex = edgeNameToIndex(edge as EdgeDirection);
     const canonicalId = getEdgeIdForDirection(hexI, hexJ, edgeIndex, canvas);
     
+    // Edge of map - no neighbor in this direction
+    if (!canonicalId) return null;
+    
     // Parse canonical ID to get both hexes
     // Format: "hexI:hexJ:edge,hexI2:hexJ2:edge2"
     const parts = canonicalId.split(',');

@@ -359,6 +359,12 @@ export class RiverEditorHandlers {
       const lastEdgeId = getEdgeIdForDirection(lastPoint.hexI, lastPoint.hexJ, lastEdgeIndex, canvas);
       const newEdgeId = getEdgeIdForDirection(newPoint.hexI, newPoint.hexJ, newEdgeIndex, canvas);
       
+      // Skip if either edge is off the map (boundary hex)
+      if (!lastEdgeId || !newEdgeId) {
+        logger.info(`  ⚠️ Edge off map - adjacency check skipped`);
+        return false;
+      }
+      
       logger.info(`    Last canonical ID: ${lastEdgeId}`);
       logger.info(`    New canonical ID:  ${newEdgeId}`);
       

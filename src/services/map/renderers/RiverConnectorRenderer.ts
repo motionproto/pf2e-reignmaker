@@ -118,6 +118,9 @@ export async function renderRiverConnectors(
       const edgeIndex = edgeNameToIndex(edge);
       const edgeId = getEdgeIdForDirection(hex.i, hex.j, edgeIndex, canvas);
       
+      // Skip if edge is off the map (boundary hex)
+      if (!edgeId) continue;
+      
       // Skip if already rendered as active
       if (renderedEdges.has(edgeId)) continue;
       
@@ -480,6 +483,10 @@ export function getConnectorAtPosition(
       
       // Look up state from canonical edge map
       const edgeId = getEdgeIdForDirection(hexI, hexJ, edgeIndex, canvas);
+      
+      // Skip if edge is off the map (boundary hex)
+      if (!edgeId) continue;
+      
       const edgeData = kingdom.rivers?.edges?.[edgeId];
       const edgeState: ConnectorState = edgeData?.state || 'inactive';
       

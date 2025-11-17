@@ -148,6 +148,10 @@ export class EditorDebugHandlers {
         if (!nearestEdge || distance < nearestEdge.distance) {
           const edgeIndex = edgeNameToIndex(edge);
           const edgeId = getEdgeIdForDirection(hexI, hexJ, edgeIndex, canvas);
+          
+          // Skip if edge is off the map (boundary hex)
+          if (!edgeId) continue;
+          
           nearestEdge = { id: edgeId, direction: edge, distance };
         }
       }

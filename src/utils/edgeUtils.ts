@@ -92,14 +92,15 @@ export function getEdgeIdForDirection(
   hexJ: number,
   direction: number,
   canvas: any
-): string {
+): string | null {
   // Get all neighbors (returned in clockwise order: e, se, sw, w, nw, ne)
   const neighbors = canvas.grid.getNeighbors(hexI, hexJ);
   
   // Pick the neighbor at this direction index
   const neighbor = neighbors[direction];
   if (!neighbor) {
-    throw new Error(`No neighbor found at direction ${direction} for hex ${hexI}:${hexJ}`);
+    // Edge of map - no neighbor in this direction (this is expected for boundary hexes)
+    return null;
   }
   
   const [neighborI, neighborJ] = neighbor;
