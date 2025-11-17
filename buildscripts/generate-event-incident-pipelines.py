@@ -40,8 +40,18 @@ def format_modifier(modifier: Dict[str, Any]) -> str:
         neg_str = ', negative: true' if negative else ''
         return f"{{ type: 'dice', resource: '{resource}', formula: '{formula}'{neg_str}, duration: '{duration}' }}"
     
+    elif mod_type == 'choice':
+        resources = modifier.get('resources', [])
+        value = modifier.get('value', 1)
+        negative = modifier.get('negative', False)
+        duration = modifier.get('duration', 'immediate')
+        resources_str = json.dumps(resources)
+        neg_str = 'true' if negative else 'false'
+        return f"{{ type: 'choice', resources: {resources_str}, value: {value}, negative: {neg_str}, duration: '{duration}' }}"
+    
     else:
-        return str(modifier)
+        # Fallback: use JSON serialization to ensure proper JavaScript types
+        return json.dumps(modifier)
 
 def format_modifiers(modifiers: List[Dict[str, Any]]) -> str:
     """Format modifiers array for TypeScript."""

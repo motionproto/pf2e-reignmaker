@@ -24,7 +24,6 @@
   import { kingdomData } from '../../../stores/KingdomStore';
   import { TurnPhase } from '../../../actors/KingdomActor';
   import { structuresService } from '../../../services/structures';
-  import type { ConditionalSkillGroup, SkillCondition } from '../../../types/player-actions';
   
   // Sub-components
   import CheckCardHeader from './CheckCard/components/CheckCardHeader.svelte';
@@ -34,17 +33,17 @@
   import PossibleOutcomes from './PossibleOutcomes.svelte';
   import OutcomesSection from './CheckCard/components/OutcomesSection.svelte';
   import AdditionalInfo from './CheckCard/components/AdditionalInfo.svelte';
-  import OutcomeDisplay from './OutcomeDisplay/OutcomeDisplay.svelte';
+  import OutcomeRenderer from './OutcomeRenderer.svelte';
   import ActionConfirmDialog from './ActionConfirmDialog.svelte';
   
-  import type { ActiveCheckInstance } from '../../../models/CheckInstance';
+  import type { OutcomePreview } from '../../../models/OutcomePreview';
   
   // Required props
   export let id: string;
   export let name: string;
   export let description: string;
   export let skills: Array<{ skill: string; description?: string }> = [];
-  export let conditionalSkills: ConditionalSkillGroup[] | undefined = undefined;
+  export let conditionalSkills: any[] | undefined = undefined;  // Conditional skills (type from action-types.ts)
   export let outcomes: Array<{
     type: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
     description: string;
@@ -53,7 +52,7 @@
   }>;
   export let checkType: 'action' | 'event' | 'incident' = 'action';
   export let traits: string[] = [];  // For events/incidents
-  export let checkInstance: ActiveCheckInstance | null = null;  // NEW: Full instance for resolution state
+  export let checkInstance: any | null = null;  // Full instance for resolution state (type from PipelineCoordinator)
   
   // Feature flags
   export let expandable: boolean = false;  // Actions only
@@ -131,6 +130,39 @@
   let isRolling: boolean = false;
   let localUsedSkill: string = '';
   
+  // Build OutcomePreview from resolution for OutcomeRenderer
+  $: outcomePreview = resolution ? {
+    previewId: `${id}-${Date.now()}`,
+    checkType: checkType,
+    checkId: id,
+    checkData: { name, description },  // Minimal check data
+    createdTurn: $kingdomData.currentTurn || 0,
+    status: 'resolved' as const,
+    appliedOutcome: {
+      outcome: resolution.outcome as any,
+      actorName: resolution.actorName,
+      skillName: usedSkill,
+      effect: resolution.effect,
+      stateChanges: resolution.stateChanges || {},
+      modifiers: resolution.modifiers || [],
+      manualEffects: resolution.manualEffects || [],
+      specialEffects: resolution.specialEffects || [],
+      shortfallResources: resolution.shortfallResources || [],
+      rollBreakdown: resolution.rollBreakdown,
+      isIgnored: resolution.isIgnored || false,
+      effectsApplied: outcomeApplied,
+      
+      // Custom component support
+      component: customResolutionComponent,
+      componentProps: customResolutionProps,
+      
+      // UI configuration (pass through componentProps for backward compatibility)
+      primaryButtonLabel,
+      showFameReroll,
+      debugMode: effectiveDebugMode
+    }
+  } satisfies OutcomePreview : null;
+  
   // Internal confirmation dialog state
   let showOwnConfirmDialog: boolean = false;
   let pendingSkill: string = '';
@@ -141,7 +173,7 @@
   /**
    * Check if a skill condition is met
    */
-  function isConditionMet(condition: SkillCondition): boolean {
+  function isConditionMet(condition: any): boolean {
     if (condition.type === 'structure') {
       return structuresService.checkStructureCondition(condition.family, condition.minTier);
     }
@@ -368,27 +400,11 @@
       <!-- Slot for content before completion tracking (e.g., CommerceTierInfo) -->
       <slot name="pre-completion-content"></slot>
       
-      {#if resolved && resolution}
-        <!-- After resolution: Show OutcomeDisplay -->
-        <OutcomeDisplay
+      {#if resolved && outcomePreview}
+        <!-- After resolution: Show OutcomeRenderer -->
+        <OutcomeRenderer
+          preview={outcomePreview}
           instance={checkInstance}
-          outcome={resolution.outcome}
-          actorName={resolution.actorName}
-          skillName={usedSkill}
-          effect={resolution.effect}
-          stateChanges={resolution.stateChanges || {}}
-          modifiers={resolution.modifiers || []}
-          manualEffects={resolution.manualEffects || []}
-          specialEffects={resolution.specialEffects || []}
-          shortfallResources={resolution.shortfallResources || []}
-          rollBreakdown={resolution.rollBreakdown}
-          isIgnored={resolution.isIgnored || false}
-          applied={outcomeApplied}
-          {primaryButtonLabel}
-          {showFameReroll}
-          debugMode={effectiveDebugMode}
-          customComponent={customResolutionComponent}
-          {...customResolutionProps}
           on:primary={handleApplyResult}
           on:cancel={handleCancel}
           on:performReroll={handlePerformReroll}

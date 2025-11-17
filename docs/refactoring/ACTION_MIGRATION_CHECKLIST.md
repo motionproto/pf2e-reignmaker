@@ -2,21 +2,25 @@
 
 **Status:** 0/26 actions tested (0%)
 
-**Last Updated:** 2025-11-16
-
-⚠️ **ALL ACTIONS RESET TO 'UNTESTED'** after PipelineCoordinator refactor. Previous event-based system removed - all actions need retesting with continuous pipeline.
+**Last Updated:** 2025-11-17
 
 ---
 
-## Quick Reference
+## Overview
 
-**Current tracking location:** `src/constants/migratedActions.ts`
+This checklist tracks the implementation and testing of all 26 player actions through the unified PipelineCoordinator architecture.
 
-**How to update status:**
+**Tracking Location:** `src/constants/migratedActions.ts`
+
+**UI Badges:**
+- 🔲 Gray badge with number - Untested
+- ✅ Green badge with checkmark - Tested
+- ⚪ White badge with border - Currently testing
+
+**Update Workflow:**
 1. Test action in Foundry
-2. Update `ACTION_STATUS` Map in `migratedActions.ts`
-3. Rebuild (or use HMR in dev mode)
-4. Badge turns green ✓ in UI
+2. Update status in `src/constants/migratedActions.ts`
+3. Badge automatically turns green ✓ in UI
 
 ---
 
@@ -28,7 +32,7 @@
 - No pre-roll dialogs or entity selection
 - Start here - simplest from a pipeline perspective
 
-1. [X] claim-hexes *(post-apply: hex selection)*
+1. [ ] claim-hexes *(post-apply: hex selection)*
 2. [ ] deal-with-unrest *(no interactions)*
 3. [ ] sell-surplus *(no interactions)*
 4. [ ] purchase-resources *(no interactions)*
@@ -78,28 +82,6 @@
 
 ---
 
-## Why Retesting is Required
-
-**What Changed:**
-- **Old System:** Event-based, fragmented execution across 5+ locations
-- **New System:** Unified PipelineCoordinator with 9-step continuous pipeline
-
-**Key Differences:**
-1. **Roll execution:** Now synchronous (direct return) instead of event-based
-2. **Context flow:** Single `PipelineContext` object persists through all steps
-3. **Step execution:** All 9 steps run in order with centralized error handling
-4. **User confirmation:** Internal pause/resume pattern (Step 6)
-5. **Post-apply interactions:** Integrated into pipeline (Step 7)
-
-**Testing Verifies:**
-- Roll completes correctly
-- Preview displays accurate changes
-- User confirmation works
-- Post-apply interactions trigger
-- Kingdom state updates
-- No errors during execution
-
----
 
 ## Testing Workflow
 
@@ -203,74 +185,22 @@ Once all actions show green ✓ badges:
 All actions use one of these patterns:
 
 | Pattern | Description | Examples |
-|---------|-------------|----------|
+|---------|-------------|------------|
 | **No Interactions** | Roll → Apply → Execute | deal-with-unrest, sell-surplus |
-| **Pre-Roll Dialog** | Select entity → Roll → Apply → Execute | execute-or-pardon-prisoners, establish-diplomatic-relations |
-| **Post-Apply Map** | Roll → Apply → Select hexes → Execute | claim-hexes, build-roads, fortify-hex |
+| **Pre-Roll Dialog** | Select entity → Roll → Apply → Execute | execute-or-pardon-prisoners |
+| **Post-Apply Map** | Roll → Apply → Select hexes → Execute | claim-hexes, build-roads |
 | **Pre-Roll + Post-Apply** | Select entity → Roll → Apply → Select hexes → Execute | establish-settlement |
 
-**All patterns flow through the same 9-step pipeline** - the coordinator just skips optional steps for simpler actions.
+**All patterns flow through the same 9-step pipeline** - the coordinator skips optional steps for simpler actions.
 
 ---
 
-## Preview Data Requirements
+## Implementation Notes
 
-⚠️ **CRITICAL:** All pipelines that define a `preview.calculate()` function must return a **complete** `PreviewData` object.
+**For complete architecture details, see:** `docs/systems/pipeline-coordinator.md`
 
-### Required Structure
-
-```typescript
-preview: {
-  calculate: (ctx) => ({
-    resources: ResourceChange[],        // ✅ Required (can be empty array)
-    specialEffects: SpecialEffect[],    // ✅ Required (can be empty array)
-    entities?: EntityOperation[],       // ⚠️ Optional
-    warnings?: string[]                 // ⚠️ Optional
-  })
-}
-```
-
-### Common Mistake
-
-```typescript
-// ❌ WRONG - Missing specialEffects
-preview: {
-  calculate: (ctx) => ({
-    resources: [{ resource: 'unrest', value: -2 }]
-  })
-}
-
-// ✅ CORRECT - Complete PreviewData
-preview: {
-  calculate: (ctx) => ({
-    resources: [{ resource: 'unrest', value: -2 }],
-    specialEffects: []  // Required even if empty
-  })
-}
-```
-
-### Why This Matters
-
-The `defaultFormatPreview` method in `UnifiedCheckHandler` iterates over `specialEffects`, causing a crash if the property is undefined:
-
-```
-TypeError: preview.specialEffects is not iterable (cannot read property undefined)
-```
-
-### Helper Function (Recommended)
-
-Use `createEmptyPreviewData()` to ensure complete structure:
-
-```typescript
-import { createEmptyPreviewData } from '../../types/PreviewData';
-
-preview: {
-  calculate: (ctx) => {
-    const preview = createEmptyPreviewData();
-    preview.resources.push({ resource: 'unrest', value: -2 });
-    return preview;
-  }
-}
-```
-
-This guarantees all required properties are present and prevents runtime errors.
+**Key points:**
+- All actions use the same PipelineCoordinator
+- Single `PipelineContext` object persists through all 9 steps
+- Optional steps are automatically skipped
+- Centralized error handling with rollback support

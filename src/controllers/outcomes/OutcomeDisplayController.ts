@@ -470,7 +470,7 @@ export class OutcomeDisplayController {
       numericModifiers,
       manualEffects: this.preview.appliedOutcome?.manualEffects || [],
       specialEffects: this.preview.appliedOutcome?.specialEffects || [],
-      complexActions: [],
+      complexActions: this.preview.appliedOutcome?.gameCommands || [],  // ✅ Extract gameCommands for execution
       customComponentData: mergedCustomData
     };
   }

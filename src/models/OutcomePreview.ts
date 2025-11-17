@@ -67,6 +67,12 @@ export interface OutcomePreview {
     shortfallResources: string[];
     rollBreakdown?: any;
     effectsApplied: boolean;     // Mark when "Apply Result" clicked
+    isIgnored?: boolean;         // Flag for ignored events (hides reroll button)
+    
+    // UI configuration (for OutcomeDisplay)
+    primaryButtonLabel?: string;
+    showFameReroll?: boolean;
+    debugMode?: boolean;
     
     // Component-based rendering (unified pattern for standard and custom outcomes)
     component?: any;       // Svelte component for rendering (null = use StandardOutcomeDisplay)
