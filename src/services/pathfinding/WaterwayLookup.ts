@@ -262,7 +262,8 @@ export class WaterwayLookup {
       // Find the path this crossing belongs to
       const path = paths.find(p => p.id === crossing.pathId);
       if (!path) {
-        logger.warn(`[WaterwayLookup] Crossing ${crossing.id} references missing path ${crossing.pathId}`);
+        // Silently skip orphaned crossings (paths were deleted but crossing wasn't cleaned up)
+        // This is harmless - the crossing just won't be rendered or used for pathfinding
         continue;
       }
       

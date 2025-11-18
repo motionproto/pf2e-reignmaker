@@ -7,6 +7,7 @@ import { logger } from '../../../utils/Logger';
 import { getEdgeIdForDirection, edgeNameToIndex } from '../../../utils/edgeUtils';
 import { getEdgeMidpoint, getAllEdges } from '../../../utils/riverUtils';
 import type { EdgeDirection } from '../../../models/Hex';
+import { getAdjacentHexes } from '../../../utils/hexUtils';
 
 export class EditorDebugHandlers {
   private debugHexMode = false;
@@ -112,9 +113,9 @@ export class EditorDebugHandlers {
       }
       
       if (this.debugNeighborsMode) {
-        const neighbors = canvas.grid.getNeighbors(offset.i, offset.j);
+        const neighbors = getAdjacentHexes(offset.i, offset.j);
         if (neighbors) {
-          const neighborStrs = neighbors.map((n: [number, number]) => `${n[0]}:${n[1]}`);
+          const neighborStrs = neighbors.map((n) => `${n.i}:${n.j}`);
           console.log(`%c🔗 Neighbors of ${hexId}: [${neighborStrs.join(', ')}]`, 'font-size: 12px; color: #FF69B4; font-weight: bold;');
         }
       }

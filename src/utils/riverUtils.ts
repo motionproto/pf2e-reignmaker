@@ -5,6 +5,7 @@
 
 import type { EdgeDirection } from '../models/Hex';
 import { logger } from './Logger';
+import { getAdjacentHexes } from './hexUtils';
 
 /**
  * Get edge midpoint position for a pointy-top hex
@@ -133,8 +134,8 @@ export function getNeighborFromEdge(
     return null;
   }
 
-  // Get all neighbors
-  const neighbors = canvas.grid.getNeighbors(hexI, hexJ);
+  // Get all neighbors using shared utility
+  const neighbors = getAdjacentHexes(hexI, hexJ);
   if (!neighbors || neighbors.length === 0) {
     return null;
   }
@@ -170,10 +171,10 @@ export function getNeighborFromEdge(
     return null;
   }
 
-  // Foundry returns neighbors as [i, j] arrays
+  // Return neighbor coordinates
   return {
-    i: neighbor[0],
-    j: neighbor[1]
+    i: neighbor.i,
+    j: neighbor.j
   };
 }
 

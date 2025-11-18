@@ -8,6 +8,8 @@
  * Both hexes sharing the edge are included for clarity and verification.
  */
 
+import { getAdjacentHexes } from './hexUtils';
+
 /**
  * Get opposite edge direction
  * e → w, se → nw, sw → ne, w → e, nw → se, ne → sw
@@ -65,12 +67,12 @@ function getEdgeDirectionBetweenHexes(
   hex2: { i: number; j: number },
   canvas: any
 ): string {
-  const neighbors = canvas.grid.getNeighbors(hex1.i, hex1.j);
+  const neighbors = getAdjacentHexes(hex1.i, hex1.j);
   
   // Find which neighbor index matches hex2
   for (let i = 0; i < neighbors.length; i++) {
-    const [neighborI, neighborJ] = neighbors[i];
-    if (neighborI === hex2.i && neighborJ === hex2.j) {
+    const neighbor = neighbors[i];
+    if (neighbor.i === hex2.i && neighbor.j === hex2.j) {
       return edgeIndexToName(i);
     }
   }
@@ -94,7 +96,7 @@ export function getEdgeIdForDirection(
   canvas: any
 ): string | null {
   // Get all neighbors (returned in clockwise order: e, se, sw, w, nw, ne)
-  const neighbors = canvas.grid.getNeighbors(hexI, hexJ);
+  const neighbors = getAdjacentHexes(hexI, hexJ);
   
   // Pick the neighbor at this direction index
   const neighbor = neighbors[direction];
@@ -103,12 +105,10 @@ export function getEdgeIdForDirection(
     return null;
   }
   
-  const [neighborI, neighborJ] = neighbor;
-  
   // Generate canonical ID using both hex coordinates
   return getCanonicalEdgeId(
     { i: hexI, j: hexJ },
-    { i: neighborI, j: neighborJ },
+    { i: neighbor.i, j: neighbor.j },
     canvas
   );
 }

@@ -37,6 +37,7 @@ declare global {
             exportKingdom?: () => Promise<void>;
             importKingdom?: () => Promise<void>;
             resetKingdom?: () => Promise<void>;
+            recalculateProduction?: () => Promise<void>;
         };
     }
     
@@ -50,6 +51,7 @@ declare global {
             exportKingdom?: () => Promise<void>;
             importKingdom?: () => Promise<void>;
             resetKingdom?: () => Promise<void>;
+            recalculateProduction?: () => Promise<void>;
         };
     }
 }
@@ -482,6 +484,23 @@ Hooks.once('ready', async () => {
             }
         };
         
+        const recalculateProduction = async () => {
+            const { recalculateWorksiteProduction } = await import('./utils/recalculateProduction');
+            const success = await recalculateWorksiteProduction();
+            if (success) {
+                // @ts-ignore
+                ui?.notifications?.info('Production recalculated successfully');
+                console.log('PF2E ReignMaker | Production recalculated from current hex data');
+            } else {
+                // @ts-ignore
+                ui?.notifications?.warn('Failed to recalculation production');
+            }
+        };
+        
+        // Register production inspector for debugging
+        const { registerProductionInspector } = await import('./debug/inspectProduction');
+        registerProductionInspector();
+        
         // Get the module object and add the API
         // @ts-ignore
         const module = game.modules.get('pf2e-reignmaker') as any;
@@ -494,7 +513,8 @@ Hooks.once('ready', async () => {
                 loadKingdom,
                 exportKingdom,
                 importKingdom,
-                resetKingdom
+                resetKingdom,
+                recalculateProduction
             };
             // For backwards compatibility
             module.openKingdomUI = openKingdomUI;
@@ -509,7 +529,8 @@ Hooks.once('ready', async () => {
             loadKingdom,
             exportKingdom,
             importKingdom,
-            resetKingdom
+            resetKingdom,
+            recalculateProduction
         };
         
         // Also add to window for easy console access in dev mode
@@ -522,7 +543,8 @@ Hooks.once('ready', async () => {
                 loadKingdom,
                 exportKingdom,
                 importKingdom,
-                resetKingdom
+                resetKingdom,
+                recalculateProduction
             };
         }
         

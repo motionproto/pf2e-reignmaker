@@ -15,6 +15,7 @@
 import type { Settlement } from '../models/Settlement';
 import type { KingdomData } from '../actors/KingdomActor';
 import { hexHasRoads } from '../actions/shared/hexValidation';
+import { getAdjacentHexes } from '../utils/hexUtils';
 
 class RoadConnectivityService {
   /**
@@ -35,11 +36,11 @@ class RoadConnectivityService {
       
       if (isNaN(i) || isNaN(j)) return [];
       
-      const neighbors = canvas.grid.getNeighbors(i, j);
+      const neighbors = getAdjacentHexes(i, j);
       
-      // Foundry returns [i, j] arrays, not {i, j} objects
-      return neighbors.map((neighbor: any) => 
-        `${neighbor[0]}.${neighbor[1]}`
+      // Convert to hex ID format
+      return neighbors.map((neighbor) => 
+        `${neighbor.i}.${neighbor.j}`
       );
     } catch (error) {
       return [];

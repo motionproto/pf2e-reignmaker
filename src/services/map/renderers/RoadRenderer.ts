@@ -7,6 +7,7 @@ import type { KingdomData } from '../../../actors/KingdomActor';
 import { isWaterTerrain } from '../../../types/terrain';
 import { ROAD_COLORS } from '../../../view/kingdom/utils/presentation';
 import { logger } from '../../../utils/Logger';
+import { getAdjacentHexes } from '../../../utils/hexUtils';
 
 /**
  * Normalize hex ID format (remove leading zeros for consistent matching)
@@ -91,15 +92,15 @@ export async function renderRoadConnections(
 
       const hexCenter = canvas.grid.getCenterPoint({i, j});
       
-      // Get neighbors directly from grid API (Foundry v13+)
-      const neighbors = canvas.grid.getNeighbors(i, j);
+      // Get neighbors using shared utility
+      const neighbors = getAdjacentHexes(i, j);
 
       const normalizedHexId = normalizeHexId(hexId);
 
-      neighbors.forEach((neighbor: any) => {
-        // Foundry returns [i, j] arrays, not {i, j} objects
-        const neighborI = neighbor[0];
-        const neighborJ = neighbor[1];
+      neighbors.forEach((neighbor) => {
+        // Convert to hex ID format
+        const neighborI = neighbor.i;
+        const neighborJ = neighbor.j;
         const neighborId = `${neighborI}.${neighborJ}`;
 
         if (!roadHexSet.has(neighborId)) return;

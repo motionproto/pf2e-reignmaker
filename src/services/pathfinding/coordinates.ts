@@ -5,6 +5,7 @@
 
 import type { CubeCoord, OffsetCoord } from './types';
 import { logger } from '../../utils/Logger';
+import { getAdjacentHexes } from '../../utils/hexUtils';
 
 /**
  * Convert hex ID (dot notation) to offset coordinates
@@ -138,28 +139,20 @@ export function cubeDistance(a: CubeCoord, b: CubeCoord): number {
 
 /**
  * Get all 6 neighbor hex IDs for a given hex
- * Uses Foundry's built-in canvas.grid.getNeighbors() API
+ * Uses shared getAdjacentHexes utility
  */
 export function getNeighborHexIds(hexId: string): string[] {
   try {
     // Parse hex ID to offset coords
     const offset = hexIdToOffset(hexId);
     
-    // Get canvas grid
-    const canvas = (globalThis as any).canvas;
-    if (!canvas?.grid) {
-      logger.error('[Coordinates] Canvas grid not available');
-      return [];
-    }
-    
-    // Get all 6 neighbors directly from grid API (Foundry v13+)
-    const hexNeighbors = canvas.grid.getNeighbors(offset.i, offset.j);
+    // Get all 6 neighbors using shared utility
+    const hexNeighbors = getAdjacentHexes(offset.i, offset.j);
     
     // Convert to hex ID format
-    // Foundry returns [i, j] arrays, not {i, j} objects
     const neighbors: string[] = [];
-    hexNeighbors.forEach((neighbor: any) => {
-      const neighborId = `${neighbor[0]}.${neighbor[1]}`;
+    hexNeighbors.forEach((neighbor) => {
+      const neighborId = `${neighbor.i}.${neighbor.j}`;
       neighbors.push(neighborId);
     });
     

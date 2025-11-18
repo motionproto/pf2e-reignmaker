@@ -6,6 +6,7 @@
 import { getKingdomData, updateKingdom } from '../../../stores/KingdomStore';
 import { logger } from '../../../utils/Logger';
 import type { RoadBlockedConnection } from '../../actors/KingdomActor';
+import { getAdjacentHexes } from '../../../utils/hexUtils';
 
 export class RoadEditorHandlers {
   /**
@@ -67,11 +68,11 @@ export class RoadEditorHandlers {
 
     for (const hex of roadHexes) {
       const hexCenter = canvas.grid.getCenterPoint({ i: hex.row, j: hex.col });
-      const neighbors = canvas.grid.getNeighbors(hex.row, hex.col);
+      const neighbors = getAdjacentHexes(hex.row, hex.col);
 
       for (const neighbor of neighbors) {
-        const neighborI = neighbor[0];
-        const neighborJ = neighbor[1];
+        const neighborI = neighbor.i;
+        const neighborJ = neighbor.j;
         const neighborHex = kingdom.hexes?.find(h => h.row === neighborI && h.col === neighborJ);
 
         // Only consider segments where both hexes have roads

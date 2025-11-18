@@ -9,6 +9,7 @@
 import type { Settlement } from '../models/Settlement';
 import { waterwayLookup } from '../services/pathfinding/WaterwayLookup';
 import { logger } from './Logger';
+import { getAdjacentHexes } from './hexUtils';
 
 
 /**
@@ -61,12 +62,11 @@ export function canSettlementDeployBoats(settlement: Settlement, kingdom: any): 
     return false;
   }
   
-  const neighbors = canvas.grid.getNeighbors(hexI, hexJ);
+  const neighbors = getAdjacentHexes(hexI, hexJ);
   
   for (const neighbor of neighbors) {
-    const [nI, nJ] = neighbor;
-    if (hasWater(nI, nJ, kingdom)) {
-      logger.debug(`[NavalDeployment] ${settlement.name} can deploy boats (neighbor ${nI}.${nJ} has water)`);
+    if (hasWater(neighbor.i, neighbor.j, kingdom)) {
+      logger.debug(`[NavalDeployment] ${settlement.name} can deploy boats (neighbor ${neighbor.i}.${neighbor.j} has water)`);
       return true;
     }
   }
@@ -115,13 +115,12 @@ export function getNavalDeploymentDescription(settlement: Settlement, kingdom: a
   // Check neighbors too using Foundry's API
   const canvas = (globalThis as any).canvas;
   if (canvas?.grid) {
-    const neighbors = canvas.grid.getNeighbors(hexI, hexJ);
+    const neighbors = getAdjacentHexes(hexI, hexJ);
     for (const neighbor of neighbors) {
-      const [nI, nJ] = neighbor;
-      if (waterwayLookup.hasRiver(nI, nJ) && !waterTypes.includes('river')) {
+      if (waterwayLookup.hasRiver(neighbor.i, neighbor.j) && !waterTypes.includes('river')) {
         waterTypes.push('river');
       }
-      if (waterwayLookup.hasLake(nI, nJ) && !waterTypes.includes('lake')) {
+      if (waterwayLookup.hasLake(neighbor.i, neighbor.j) && !waterTypes.includes('lake')) {
         waterTypes.push('lake');
       }
     }

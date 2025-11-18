@@ -5,7 +5,7 @@
 
 import { updateKingdom } from '../../../stores/KingdomStore';
 import { logger } from '../../../utils/Logger';
-import type { TerrainType } from '../../types/terrain';
+import type { TerrainType } from '../../../types/terrain';
 
 export type WorksiteType = 'Farmstead' | 'Logging Camp' | 'Mine' | 'Quarry';
 
@@ -70,6 +70,10 @@ export class WorksiteEditorHandlers {
       });
       logger.info(`[WorksiteEditorHandlers] Placed ${finalWorksiteType} on hex ${hexId}`);
     });
+    
+    // Recalculate production after worksite placement
+    const { tryRecalculateProduction } = await import('../../../utils/recalculateProduction');
+    await tryRecalculateProduction();
   }
   
   /**
@@ -104,6 +108,10 @@ export class WorksiteEditorHandlers {
       });
       logger.info(`[WorksiteEditorHandlers] Removed ${removedType} from hex ${hexId}`);
     });
+    
+    // Recalculate production after worksite removal
+    const { tryRecalculateProduction } = await import('../../../utils/recalculateProduction');
+    await tryRecalculateProduction();
   }
   
   /**

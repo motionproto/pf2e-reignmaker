@@ -9,6 +9,7 @@ import { kingmakerIdToOffset, hexToKingmakerId } from '../../services/hex-select
 import { PLAYER_KINGDOM } from '../../types/ownership';
 import type { KingdomData } from '../../actors/KingdomActor';
 import { logger } from '../../utils/Logger';
+import { getAdjacentHexes } from '../../utils/hexUtils';
 
 /**
  * Get adjacent hex IDs for a given hex using Foundry's grid API
@@ -26,11 +27,10 @@ export function getAdjacentHexIds(hexId: string): string[] {
   
   try {
     const offset = kingmakerIdToOffset(hexId);
-    const neighbors = canvas.grid.getNeighbors(offset.i, offset.j);
+    const neighbors = getAdjacentHexes(offset.i, offset.j);
     
-    // Foundry returns array of [i, j] coordinate pairs (arrays, not objects)
-    // Example: [[5,8], [5,9], [6,8], ...]
-    return neighbors.map((neighbor: any) => `${neighbor[0]}.${neighbor[1]}`);
+    // Convert to hex ID format
+    return neighbors.map((neighbor) => `${neighbor.i}.${neighbor.j}`);
   } catch (error) {
     logger.warn(`[HexValidation] Error getting neighbors for ${hexId}:`, error);
     return [];

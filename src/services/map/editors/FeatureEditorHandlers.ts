@@ -9,6 +9,7 @@ import { settlementEditorDialog } from '../../../stores/SettlementEditorDialogSt
 import type { SettlementData } from '../../../stores/SettlementEditorDialogStore';
 import { createSettlement, SettlementTier } from '../../../models/Settlement';
 import type { Settlement } from '../../../models/Settlement';
+import { getAdjacentHexes } from '../../../utils/hexUtils';
 
 export class FeatureEditorHandlers {
   /**
@@ -26,8 +27,8 @@ export class FeatureEditorHandlers {
     const hexJ = parseInt(parts[1], 10);
     if (isNaN(hexI) || isNaN(hexJ)) return false;
     
-    // Get neighboring hexes using Foundry's API
-    const neighbors = canvas.grid.getNeighbors(hexI, hexJ);
+    // Get neighboring hexes using shared utility
+    const neighbors = getAdjacentHexes(hexI, hexJ);
     if (!neighbors || neighbors.length === 0) return false;
     
     // Get current kingdom data to check for settlements
@@ -35,8 +36,7 @@ export class FeatureEditorHandlers {
     
     // Check each neighbor for settlement features (hex.features is source of truth for map)
     for (const neighbor of neighbors) {
-      const [nI, nJ] = neighbor;
-      const neighborId = `${nI}.${nJ}`;
+      const neighborId = `${neighbor.i}.${neighbor.j}`;
       
       const neighborHex = kingdom.hexes.find(h => h.id === neighborId);
       if (neighborHex?.features?.some((f: any) => f.type === 'settlement')) {

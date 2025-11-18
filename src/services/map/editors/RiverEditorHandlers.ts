@@ -9,6 +9,7 @@ import { getConnectorAtPosition } from '../renderers/RiverConnectorRenderer';
 import { getEdgeMidpoint, getHexCenter } from '../../../utils/riverUtils';
 import type { EdgeDirection } from '../../../models/Hex';
 import type { RiverPathPoint } from '../../../actors/KingdomActor';
+import { getAdjacentHexes } from '../../../utils/hexUtils';
 
 export class RiverEditorHandlers {
   // River path being drawn (sequential system)
@@ -394,8 +395,8 @@ export class RiverEditorHandlers {
           }
           
           // Are they neighbors?
-          const neighbors = canvas.grid.getNeighbors(lastI, lastJ);
-          const isNeighbor = neighbors.some((n: [number, number]) => n[0] === newI && n[1] === newJ);
+          const neighbors = getAdjacentHexes(lastI, lastJ);
+          const isNeighbor = neighbors.some((n) => n.i === newI && n.j === newJ);
           if (isNeighbor) {
             logger.info(`  ✅ Edge hex (${lastI},${lastJ}) is neighbor of (${newI},${newJ}) - Adjacent!`);
             return true;
@@ -406,17 +407,17 @@ export class RiverEditorHandlers {
       logger.info(`  ❌ No shared or neighboring hexes between edges`);
     }
     
-    // Check if hexes are neighbors using Foundry's API
+    // Check if hexes are neighbors using shared utility
     
-    const neighbors = canvas.grid.getNeighbors(lastPoint.hexI, lastPoint.hexJ);
+    const neighbors = getAdjacentHexes(lastPoint.hexI, lastPoint.hexJ);
     
-    // Debug: Log what Foundry returns
-    logger.info(`  Foundry neighbors of (${lastPoint.hexI},${lastPoint.hexJ}):`);
-    neighbors.forEach((n: [number, number], idx: number) => {
-      logger.info(`    [${idx}] = (${n[0]},${n[1]}) ${n[0] === newPoint.hexI && n[1] === newPoint.hexJ ? '✓ MATCH' : ''}`);
+    // Debug: Log neighbors
+    logger.info(`  Neighbors of (${lastPoint.hexI},${lastPoint.hexJ}):`);
+    neighbors.forEach((n, idx: number) => {
+      logger.info(`    [${idx}] = (${n.i},${n.j}) ${n.i === newPoint.hexI && n.j === newPoint.hexJ ? '✓ MATCH' : ''}`);
     });
     
-    const isMatch = neighbors.some((n: [number, number]) => n[0] === newPoint.hexI && n[1] === newPoint.hexJ);
+    const isMatch = neighbors.some((n) => n.i === newPoint.hexI && n.j === newPoint.hexJ);
     logger.info(`  Neighbor match: ${isMatch}`);
     
     return isMatch;
