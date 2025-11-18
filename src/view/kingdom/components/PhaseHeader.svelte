@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { currentPhase, currentTurn, isCurrentPhaseComplete, kingdomData } from '../../../stores/KingdomStore';
+  import { currentPhase, currentTurn, isCurrentPhaseComplete, kingdomData, advancePhase } from '../../../stores/KingdomStore';
   import { TurnPhase } from '../../../actors/KingdomActor';
   import Button from './baseComponents/Button.svelte';
   
@@ -26,6 +26,22 @@
 
   let headerElement: HTMLElement;
   let previousTitle = '';
+  
+  // GM force advance - mark all steps complete and advance
+  async function forceAdvanceToNextPhase() {
+    const { PhaseHandler } = await import('../../../models/turn-manager/phase-handler');
+    const totalSteps = $kingdomData.currentPhaseSteps?.length || 0;
+    
+    // Complete all incomplete steps
+    for (let i = 0; i < totalSteps; i++) {
+      if ($kingdomData.currentPhaseSteps[i]?.completed !== 1) {
+        await PhaseHandler.completePhaseStepByIndex(i);
+      }
+    }
+    
+    // Then advance to next phase
+    advancePhase();
+  }
   
   // GM-only shift-click handler to bypass disabled state
   function handleNextPhaseClick(event: CustomEvent) {
@@ -94,6 +110,18 @@
             <span>Hide Untrained Skills</span>
           </label>
         </div>
+      {/if}
+      {#if isGM && onNextPhase}
+        <Button 
+          variant="tertiary"
+          icon="fas fa-forward"
+          iconPosition="right"
+          on:click={() => forceAdvanceToNextPhase()}
+          tooltip="GM: Force advance to next phase (bypasses all checks)"
+          class="gm-force-advance"
+        >
+          Force Next
+        </Button>
       {/if}
       {#if onNextPhase}
         <Button 
@@ -217,6 +245,18 @@
     font-weight: var(--font-weight-medium);
     user-select: none;
     line-height: 1.5;
+  }
+
+  /* GM Force Advance Button Styling */
+  :global(.gm-force-advance) {
+    border-color: var(--border-special) !important;
+    background: var(--surface-special-low) !important;
+    color: var(--border-special) !important;
+  }
+
+  :global(.gm-force-advance:hover) {
+    background: var(--surface-special) !important;
+    border-color: var(--border-special-medium) !important;
   }
 
   /* Responsive design */
