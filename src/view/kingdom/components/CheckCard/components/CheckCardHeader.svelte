@@ -14,7 +14,7 @@
   export let statusBadge: { text: string; type: 'ongoing' | 'resolved' } | null = null;
   
   // Migration status tracking
-  export let actionStatus: 'untested' | 'testing' | 'tested' | 'verified' | null = null;
+  export let actionStatus: 'untested' | 'testing' | 'tested' | null = null;
   export let actionNumber: number | null | undefined = undefined;  // Action number for migration badge (1-26)
   
   const dispatch = createEventDispatcher();
@@ -54,7 +54,7 @@
               {missingRequirements.join(', ')}
             </span>
           {/if}
-          {#if (actionStatus === 'tested' || actionStatus === 'verified') && actionNumber}
+          {#if actionStatus === 'tested' && actionNumber}
             <span class="migration-badge tested" title="Tested with PipelineCoordinator">
               #{actionNumber} ✓
             </span>

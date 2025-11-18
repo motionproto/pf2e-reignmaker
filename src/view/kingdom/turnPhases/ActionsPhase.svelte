@@ -78,13 +78,13 @@
   let pendingRecruitArmyAction: { skill: string; armyId?: string } | null = null;
   let pendingDeployArmyAction: { skill: string; armyId?: string } | null = null;
 
-  // REACTIVE DERIVATION: Auto-derive from ActiveCheckInstances (Single Source of Truth)
+  // REACTIVE DERIVATION: Auto-derive from pendingOutcomes (Single Source of Truth)
   // Map<actionId, instanceId> - coordinator-managed instances only
   // Include both 'pending' (before roll) and 'resolved' (after storeOutcome) to show outcome UI
-  $: currentActionInstances = ($kingdomData.activeCheckInstances || [])
-    .filter(i => i.usePipelineCoordinator && (i.status === 'pending' || i.status === 'resolved'))
+  $: currentActionInstances = ($kingdomData.pendingOutcomes || [])
+    .filter(i => i.checkType === 'action' && (i.status === 'pending' || i.status === 'resolved'))
     .reduce((map, instance) => {
-      map.set(instance.checkId, instance.instanceId);
+      map.set(instance.checkId, instance.previewId);
       return map;
     }, new Map<string, string>());
   
@@ -156,12 +156,19 @@
       
       // ✅ CLEANUP: Clear any stale instances for this action when opening
       // This prevents old test results from showing up
-      const instanceId = currentActionInstances.get(actionId);
-      if (instanceId && checkInstanceService) {
-        console.log(`🧹 [ActionsPhase] Clearing stale instance for ${actionId}: ${instanceId}`);
-        await checkInstanceService.clearInstance(instanceId);
-        currentActionInstances.delete(actionId);
-        currentActionInstances = currentActionInstances;  // Trigger reactivity
+      const actor = getKingdomActor();
+      if (actor && checkInstanceService) {
+        const kingdom = actor.getKingdomData();
+        const oldInstances = (kingdom.pendingOutcomes || []).filter(
+          (i: any) => i.checkType === 'action' && i.checkId === actionId
+        );
+        
+        if (oldInstances.length > 0) {
+          console.log(`🧹 [ActionsPhase] Clearing ${oldInstances.length} stale instance(s) for ${actionId}`);
+          for (const instance of oldInstances) {
+            await checkInstanceService.clearInstance(instance.previewId);
+          }
+        }
       }
     }
     expandedActions = new Set(expandedActions);
@@ -272,7 +279,7 @@
       return;
     }
     
-    const instance = $kingdomData.activeCheckInstances?.find(i => i.instanceId === instanceId);
+    const instance = $kingdomData.pendingOutcomes?.find(i => i.previewId === instanceId);
     console.log('🎬 [ActionsPhase] Found instance:', instance);
     if (!instance?.appliedOutcome) {
       console.error('❌ [applyActionEffects] Instance has no outcome:', instanceId);
@@ -282,7 +289,7 @@
     console.log('🎬 [ActionsPhase] Instance has outcome:', instance.appliedOutcome.outcome);
 
     // ✅ CHECK FOR PIPELINE COORDINATOR (new unified system)
-    if (instance.usePipelineCoordinator && pipelineCoordinator) {
+    if (instance.checkType === 'action' && pipelineCoordinator) {
       console.log('🚀 [ActionsPhase] Coordinator-managed action, calling confirmApply()');
       pipelineCoordinator.confirmApply(instanceId);
       return; // Coordinator handles Steps 7-9
@@ -603,7 +610,7 @@
     const instanceId = currentActionInstances.get(action.id);
     if (!instanceId) return;
     
-    const instance = $kingdomData.activeCheckInstances?.find(i => i.instanceId === instanceId);
+    const instance = $kingdomData.pendingOutcomes?.find(i => i.previewId === instanceId);
     if (!instance) return;
     
     // Update instance using helper (handles placeholder replacement)
@@ -1300,7 +1307,7 @@
         {category}
         {actions}
         {currentActionInstances}
-        activeCheckInstances={$kingdomData.activeCheckInstances || []}
+        activeCheckInstances={$kingdomData.pendingOutcomes || []}
         {expandedActions}
         {controller}
         {activeAidsCount}

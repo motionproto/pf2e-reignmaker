@@ -24,27 +24,41 @@ This checklist tracks the implementation and testing of all 26 player actions th
 
 ---
 
-## Actions (Migration Order 1-26)
+## Actions (Testing Order 1-26: Simplest → Most Complex)
 
-### Basic Kingdom Operations - #1-9
-*No Foundry game commands, pure kingdom state changes*
-- May include post-apply map interactions (hex selection)
-- No pre-roll dialogs or entity selection
-- Start here - simplest from a pipeline perspective
+### Phase 1: No Interactions - #1
+*Simplest actions - no dialogs, no map interactions*
+- Pure modifier application to kingdom state
+- Perfect for validating core pipeline
+- Start here to build confidence
 
-1. [ ] claim-hexes *(post-apply: hex selection)*
-2. [ ] deal-with-unrest *(no interactions)*
-3. [ ] sell-surplus *(no interactions)*
-4. [ ] purchase-resources *(no interactions)*
-5. [ ] harvest-resources *(in-preview: resource choice)*
-6. [ ] build-roads *(post-apply: hex selection)*
-7. [ ] fortify-hex *(post-apply: hex selection)*
-8. [ ] create-worksite *(post-apply: hex selection)*
-9. [ ] send-scouts *(post-apply: hex selection + World Explorer)*
+1. [ ] deal-with-unrest *(no interactions)*
 
-### Entity Selection Actions - #10-16
-*Pre-roll dialog to select faction, settlement, or army*
-- Dialog appears before roll
+### Phase 2: Post-Apply Map Interactions - #2-7
+*Map selection after applying result*
+- Validates post-apply interaction pattern
+- Hex selection, validation, state updates
+- Common pattern across many actions
+
+2. [ ] claim-hexes *(post-apply: hex selection)*
+3. [ ] build-roads *(post-apply: hex selection)*
+4. [ ] fortify-hex *(post-apply: hex selection)*
+5. [ ] create-worksite *(post-apply: hex selection)*
+6. [ ] harvest-resources *(in-preview: resource choice)*
+7. [ ] send-scouts *(post-apply: hex selection + World Explorer)*
+
+### Phase 3: Custom Components (Graceful Degradation) - #8-9
+*Actions with custom UI components*
+- May not mount properly yet (acceptable)
+- Should fail gracefully without crashing
+- Validates error handling
+
+8. [ ] sell-surplus *(custom component: resource selector)*
+9. [ ] purchase-resources *(custom component: resource selector)*
+
+### Phase 4: Pre-Roll Entity Selection - #10-16
+*Dialog appears before roll*
+- Pre-roll dialog to select faction, settlement, or army
 - Selected entity stored in metadata
 - Used in preview calculation and execution
 
@@ -56,11 +70,11 @@ This checklist tracks the implementation and testing of all 26 player actions th
 15. [ ] train-army *(pre-roll: army selection)*
 16. [ ] disband-army *(pre-roll: army selection)*
 
-### Foundry Integration Actions - #17-21
-*Trigger Foundry game commands (chat cards, items, etc.)*
+### Phase 5: Foundry Integration (gameCommands) - #17-21
+*Creates/modifies Foundry actors and items*
 - Integrate with PF2e system
-- May create actors or items
-- Post-roll chat messages
+- Creates actors or items in Foundry
+- Validates gameCommands execution
 
 17. [ ] recruit-unit *(game command: create army actor)*
 18. [ ] deploy-army *(game command: army placement)*
@@ -68,16 +82,16 @@ This checklist tracks the implementation and testing of all 26 player actions th
 20. [ ] repair-structure *(game command: structure update)*
 21. [ ] upgrade-settlement *(game command: settlement tier change)*
 
-### Complex Custom Logic - #22-26
-*Custom components, compound operations, or special handling*
-- Most complex from implementation perspective
-- May combine multiple patterns
-- Test after simpler actions work
+### Phase 6: Complex Custom Logic - #22-26
+*Most complex actions - test last*
+- Custom components with complex logic
+- Compound operations (multiple patterns)
+- Special handling required
 
 22. [ ] arrest-dissidents *(custom: unrest reduction component)*
 23. [ ] outfit-army *(custom: army equipment logic)*
 24. [ ] infiltration *(custom: complex resolution)*
-25. [ ] establish-settlement *(compound: pre-roll + post-apply map)*
+25. [ ] establish-settlement *(compound: pre-roll + post-apply + gameCommands)*
 26. [ ] recover-army *(custom: healing calculation)*
 
 ---

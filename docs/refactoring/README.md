@@ -4,11 +4,34 @@
 
 ---
 
-## 📁 Files in This Directory
+## � Quick Onboarding (Start Here!)
+
+**New to testing actions? Follow this sequence:**
+
+1. **Read this README** (5 min) - Understand the architecture
+2. **Read DEBUGGING_GUIDE.md** (10 min) - Learn common issues & fixes
+3. **Read TESTING_GUIDE.md** (10 min) - Understand test workflow
+4. **Start with #1: deal-with-unrest** - Simplest action, validates setup
+5. **Full browser refresh before testing** (Ctrl+Shift+R / Cmd+Shift+R)
+
+**First-Time Setup Checklist:**
+- [ ] Dev server running: `npm run dev`
+- [ ] Foundry VTT loaded with kingdom world
+- [ ] Kingdom has resources (gold, lumber, ore, food > 0)
+- [ ] Browser console open (F12) to watch pipeline logs
+
+**⚠️ CRITICAL: Always full refresh after code changes!**
+
+---
+
+## �📁 Files in This Directory
 
 - **README.md** (this file) - Quick reference and overview
+- **DEBUGGING_GUIDE.md** - ⭐ **START HERE** - Common issues & fixes from real testing
+- **TESTING_GUIDE.md** - Detailed test workflows for each action type
 - **ACTION_MIGRATION_CHECKLIST.md** - Complete 1-26 action list with testing status
 - **CUSTOM_COMPONENTS_TODO.md** - Pending custom component implementation work
+- **TEST_RESULTS.md** - Log findings and issues during testing
 
 ## 🏗️ Architecture
 
@@ -39,9 +62,12 @@ Step 9: Cleanup                     [always runs]
 ## 📊 Current Status
 
 - **Implementation:** Core architecture complete ✅
+- **Current Phase:** 🧪 TESTING & VALIDATION
 - **Testing:** 0/26 actions tested (0% complete)
 - **Tracking:** `src/constants/migratedActions.ts`
 - **UI Badges:** Gray (untested) → Green ✓ (tested)
+- **Test Guide:** See `TESTING_GUIDE.md` for detailed instructions
+- **Results Log:** See `TEST_RESULTS.md` to record findings
 
 ## 🎯 Action Implementation Workflows
 
@@ -140,15 +166,18 @@ Step 9: Cleanup                     [always runs]
 
 **All other actions (#1-16, #22-24, #26):** NO gameCommands needed
 
-## 📋 Implementation Order
+## 📋 Testing Order (Simplest → Most Complex)
 
 See `ACTION_MIGRATION_CHECKLIST.md` for detailed action list.
 
-**Recommended order:**
-1. **#1-9:** Basic Kingdom Operations (no game commands)
-2. **#10-16:** Entity Selection (pre-roll dialogs)
-3. **#17-21:** Foundry Integration (game commands)
-4. **#22-26:** Complex Custom Logic (custom components)
+**Phase 1:** #1 - No Interactions (deal-with-unrest)
+**Phase 2:** #2-7 - Post-Apply Map Interactions (claim-hexes, build-roads, etc.)
+**Phase 3:** #8-9 - Custom Components (sell-surplus, purchase-resources)
+**Phase 4:** #10-16 - Pre-Roll Entity Selection (collect-stipend, diplomatic relations, etc.)
+**Phase 5:** #17-21 - Foundry Integration (recruit-unit, build-structure, etc.)
+**Phase 6:** #22-26 - Complex Custom Logic (arrest-dissidents, establish-settlement, etc.)
+
+**Start with #1 (deal-with-unrest)** - simplest action with no interactions
 
 ## 🔗 Key Files
 
@@ -169,17 +198,94 @@ See `ACTION_MIGRATION_CHECKLIST.md` for detailed action list.
 
 ## ⚡ Quick Start
 
-**To implement next action:**
-1. Pick from ACTION_MIGRATION_CHECKLIST.md (in order)
-2. Add `gameCommands` to action JSON (if needed)
-3. Test in Foundry
-4. Update migratedActions.ts
-5. Badge turns green ✓
+### Starting a New Testing Session
 
-**To run development server:**
+**Copy/paste this prompt when resuming work:**
+
+```
+Continue action pipeline testing.
+
+Files:
+- Status tracker: src/constants/migratedActions.ts
+- Documentation: docs/refactoring/README.md, DEBUGGING_GUIDE.md, TESTING_GUIDE.md
+
+Task: Test the action currently marked as 'testing' in migratedActions.ts
+
+Workflow:
+1. Read migratedActions.ts to identify action marked 'testing'
+2. Full browser refresh (Ctrl+Shift+R)
+3. Test in Foundry: Expand → Roll → Apply → Verify state changes
+4. Update status to 'tested' in migratedActions.ts
+5. Report results
+
+Proceed with testing.
+```
+
+### Testing Each Action (Simple Iteration)
+
+**Your workflow:**
+1. Open `src/constants/migratedActions.ts`
+2. Change next action from `'untested'` to `'testing'`
+3. Save file
+4. Prompt: **"Test next action"** (that's it!)
+
+**System will:**
+- Auto-detect the action marked `'testing'`
+- Execute full test workflow
+- Update status to `'tested'` when complete
+- Wait for you to mark the next one
+
+**Example:**
+```typescript
+// In migratedActions.ts
+['claim-hexes', 'testing'],  // #2 ← Changed from 'untested'
+
+// Then just say: "Test next action"
+// System reads file, finds #2, runs tests, updates to 'tested'
+```
+
+### Development Server
+
 ```bash
 npm run dev  # HMR enabled, auto-rebuild on save
 ```
+
+## ⚠️ Common Pitfalls (From Real Testing)
+
+**These issues cost hours - avoid them!**
+
+### 1. Stale Instances from Previous Sessions
+**Problem:** Old outcomes appear when expanding actions  
+**Fix:** Full browser refresh (Ctrl+Shift+R) before testing  
+**See:** DEBUGGING_GUIDE.md - Issue #2
+
+### 2. Naming Mismatches
+**Problem:** Outcome doesn't appear after roll  
+**Always Use:**
+- `pendingOutcomes` (NOT `activeCheckInstances`)
+- `previewId` (NOT `instanceId`)
+- `checkId` (NOT `actionId` in some contexts)  
+**See:** DEBUGGING_GUIDE.md - Issue #1
+
+### 3. State Changes Not Persisting
+**Problem:** Logs show "Success" but resources don't update  
+**Check:** Missing `await` on `updateKingdom()` calls  
+**See:** DEBUGGING_GUIDE.md - Issue #3
+
+### 4. "No Pending Context" Error
+**Problem:** Can't apply old instances after page refresh  
+**Cause:** Coordinator context is in-memory only (lost on refresh)  
+**Fix:** Always full refresh to clear stale instances  
+**See:** DEBUGGING_GUIDE.md - Issue #4
+
+### 5. Action Card Doesn't Reset
+**Problem:** Action completes but card shows "Resolved" forever  
+**Cause:** Step 9 not deleting instance from `pendingOutcomes`  
+**See:** DEBUGGING_GUIDE.md - Issue #5
+
+**📖 Full details + fixes:** See `DEBUGGING_GUIDE.md`
+
+---
 
 ## 📝 Notes
 
@@ -192,5 +298,20 @@ npm run dev  # HMR enabled, auto-rebuild on save
 
 ---
 
-**Last Updated:** 2025-11-17  
-**Status:** 🚀 Ready for action implementation
+## 🆘 Getting Help
+
+**Stuck on an issue?**
+1. Check `DEBUGGING_GUIDE.md` - Has solutions for 5+ common issues
+2. Check browser console - Pipeline logs show which step failed
+3. Full refresh (Ctrl+Shift+R) - Clears 80% of stale state issues
+4. Compare with working action (`deal-with-unrest`) - Reference implementation
+
+**Recording Issues:**
+- Add findings to `TEST_RESULTS.md`
+- Include console logs and error messages
+- Note which action and which step failed
+
+---
+
+**Last Updated:** 2025-11-18  
+**Status:** 🚀 Ready for action implementation (1/26 tested)

@@ -64,6 +64,9 @@ export class PipelineCoordinator {
     actionId: string,
     initialContext: Partial<PipelineContext>
   ): Promise<PipelineContext> {
+    // Clean up any old instances for this action before starting new pipeline
+    await this.cleanupOldInstances(actionId);
+    
     // Initialize context
     const context = this.initializeContext(actionId, initialContext);
     
@@ -553,25 +556,36 @@ export class PipelineCoordinator {
   private async step9_cleanup(ctx: PipelineContext): Promise<void> {
     log(ctx, 9, 'cleanup', 'Cleaning up');
     
-    // DELETE check instance completely (not just clear)
-    if (ctx.instanceId) {
-      const actor = getKingdomActor();
-      if (actor) {
-        await actor.updateKingdomData((kingdom: any) => {
-          if (kingdom.activeCheckInstances) {
-            kingdom.activeCheckInstances = kingdom.activeCheckInstances.filter(
-              (i: any) => i.instanceId !== ctx.instanceId
-            );
-          }
-        });
-        log(ctx, 9, 'cleanup', `Deleted check instance: ${ctx.instanceId}`);
-      }
+    // TRACK ACTION in actionLog (so player can't perform unlimited actions)
+    const game = (window as any).game;
+    const userId = ctx.userId || game?.user?.id;
+    const userName = game?.user?.name;
+    const actorName = ctx.actor?.actorName || 'Unknown';
+    
+    if (userId && userName) {
+      const { createGameCommandsService } = await import('./GameCommandsService');
+      const { TurnPhase } = await import('../actors/KingdomActor');
+      const gameCommandsService = await createGameCommandsService();
+      
+      await gameCommandsService.trackPlayerAction(
+        userId,
+        userName,
+        actorName,
+        ctx.actionId,
+        TurnPhase.ACTIONS
+      );
+      
+      log(ctx, 9, 'cleanup', `Tracked action for user ${userName}`);
+    }
+    
+    // DELETE check instance completely from pendingOutcomes
+    if (ctx.instanceId && this.checkInstanceService) {
+      await this.checkInstanceService.clearInstance(ctx.instanceId);
+      log(ctx, 9, 'cleanup', `Deleted check instance: ${ctx.instanceId}`);
       
       // Remove from pending contexts
       this.pendingContexts.delete(ctx.instanceId);
     }
-    
-    // TODO: Track player action in actionLog (via GameCommandsService)
     
     log(ctx, 9, 'cleanup', 'Cleanup complete');
   }
@@ -619,6 +633,29 @@ export class PipelineCoordinator {
     const tierAdjustment = (pipeline.tier || 1) - 1;
     
     return baseDC + levelAdjustment + tierAdjustment;
+  }
+
+  /**
+   * Clean up old instances for an action
+   * Called before starting a new pipeline to prevent stale data
+   */
+  private async cleanupOldInstances(actionId: string): Promise<void> {
+    const actor = getKingdomActor();
+    if (!actor) return;
+    
+    const kingdom = actor.getKingdomData();
+    const oldInstances = (kingdom.pendingOutcomes || []).filter(
+      (i: any) => i.checkType === 'action' && i.checkId === actionId
+    );
+    
+    if (oldInstances.length > 0) {
+      console.log(`🧹 [PipelineCoordinator] Cleaning up ${oldInstances.length} old instance(s) for ${actionId}`);
+      
+      for (const instance of oldInstances) {
+        await this.checkInstanceService.clearInstance(instance.previewId);
+        this.pendingContexts.delete(instance.previewId);
+      }
+    }
   }
 
   /**

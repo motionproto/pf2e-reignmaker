@@ -75,7 +75,7 @@
         {@const actionStatus = getActionStatus(action.id)}
         {@const actionNumber = getActionNumber(action.id)}
         {@const instanceId = currentActionInstances.get(action.id)}
-        {@const checkInstance = instanceId ? activeCheckInstances?.find(i => i.instanceId === instanceId) : null}
+        {@const checkInstance = instanceId ? activeCheckInstances?.find(i => i.previewId === instanceId) : null}
         {@const isResolved = !!(checkInstance && checkInstance.status !== 'pending')}
         {@const resolution = checkInstance?.appliedOutcome ? {
           outcome: checkInstance.appliedOutcome.outcome,

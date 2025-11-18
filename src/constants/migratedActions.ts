@@ -5,7 +5,7 @@
  * Updates badge display in Actions tab UI.
  */
 
-export type ActionStatus = 'untested' | 'testing' | 'tested' | 'verified';
+export type ActionStatus = 'untested' | 'testing' | 'tested';
 
 /**
  * Action status tracking
@@ -13,58 +13,66 @@ export type ActionStatus = 'untested' | 'testing' | 'tested' | 'verified';
  * Value: current status
  */
 export const ACTION_STATUS = new Map<string, ActionStatus>([
-  // Basic Kingdom Operations (#1-9)
-  ['claim-hexes', 'untested'],
-  ['deal-with-unrest', 'untested'],
-  ['sell-surplus', 'untested'],
-  ['purchase-resources', 'untested'],
-  ['harvest-resources', 'untested'],
-  ['build-roads', 'untested'],
-  ['fortify-hex', 'untested'],
-  ['create-worksite', 'untested'],
-  ['send-scouts', 'untested'],
+  // Phase 1: No Interactions
+  ['deal-with-unrest', 'tested'],  // #1
   
-  // Entity Selection Actions (#10-16)
-  ['collect-stipend', 'untested'],
-  ['execute-or-pardon-prisoners', 'untested'],
-  ['establish-diplomatic-relations', 'untested'],
-  ['request-economic-aid', 'untested'],
-  ['request-military-aid', 'untested'],
-  ['train-army', 'untested'],
-  ['disband-army', 'untested'],
+  // Phase 2: Post-Apply Map Interactions
+  ['claim-hexes', 'untested'],  // #2
+  ['build-roads', 'untested'],  // #3
+  ['fortify-hex', 'untested'],  // #4
+  ['create-worksite', 'untested'],  // #5
+  ['harvest-resources', 'untested'],  // #6
+  ['send-scouts', 'untested'],  // #7
   
-  // Foundry Integration Actions (#17-21)
-  ['recruit-unit', 'untested'],
-  ['deploy-army', 'untested'],
-  ['build-structure', 'untested'],
-  ['repair-structure', 'untested'],
-  ['upgrade-settlement', 'untested'],
+  // Phase 3: Custom Components (graceful degradation)
+  ['sell-surplus', 'untested'],  // #8
+  ['purchase-resources', 'untested'],  // #9
   
-  // Complex Custom Logic (#22-26)
-  ['arrest-dissidents', 'untested'],
-  ['outfit-army', 'untested'],
-  ['infiltration', 'untested'],
-  ['establish-settlement', 'untested'],
-  ['recover-army', 'untested'],
+  // Phase 4: Pre-Roll Entity Selection
+  ['collect-stipend', 'untested'],  // #10
+  ['execute-or-pardon-prisoners', 'untested'],  // #11
+  ['establish-diplomatic-relations', 'untested'],  // #12
+  ['request-economic-aid', 'untested'],  // #13
+  ['request-military-aid', 'untested'],  // #14
+  ['train-army', 'untested'],  // #15
+  ['disband-army', 'untested'],  // #16
+  
+  // Phase 5: Foundry Integration (gameCommands)
+  ['recruit-unit', 'untested'],  // #17
+  ['deploy-army', 'untested'],  // #18
+  ['build-structure', 'untested'],  // #19
+  ['repair-structure', 'untested'],  // #20
+  ['upgrade-settlement', 'untested'],  // #21
+  
+  // Phase 6: Complex Custom Logic
+  ['arrest-dissidents', 'untested'],  // #22
+  ['outfit-army', 'untested'],  // #23
+  ['infiltration', 'untested'],  // #24
+  ['establish-settlement', 'untested'],  // #25
+  ['recover-army', 'untested'],  // #26
 ]);
 
 /**
  * Action numbers (for display in badges)
- * Maps action ID to migration order number
+ * Maps action ID to testing order number (simplest → most complex)
  */
 export const ACTION_NUMBERS = new Map<string, number>([
-  // Basic Kingdom Operations (#1-9)
-  ['claim-hexes', 1],
-  ['deal-with-unrest', 2],
-  ['sell-surplus', 3],
-  ['purchase-resources', 4],
-  ['harvest-resources', 5],
-  ['build-roads', 6],
-  ['fortify-hex', 7],
-  ['create-worksite', 8],
-  ['send-scouts', 9],
+  // Phase 1: No Interactions (#1)
+  ['deal-with-unrest', 1],
   
-  // Entity Selection Actions (#10-16)
+  // Phase 2: Post-Apply Map Interactions (#2-7)
+  ['claim-hexes', 2],
+  ['build-roads', 3],
+  ['fortify-hex', 4],
+  ['create-worksite', 5],
+  ['harvest-resources', 6],
+  ['send-scouts', 7],
+  
+  // Phase 3: Custom Components (graceful degradation) (#8-9)
+  ['sell-surplus', 8],
+  ['purchase-resources', 9],
+  
+  // Phase 4: Pre-Roll Entity Selection (#10-16)
   ['collect-stipend', 10],
   ['execute-or-pardon-prisoners', 11],
   ['establish-diplomatic-relations', 12],
@@ -73,14 +81,14 @@ export const ACTION_NUMBERS = new Map<string, number>([
   ['train-army', 15],
   ['disband-army', 16],
   
-  // Foundry Integration Actions (#17-21)
+  // Phase 5: Foundry Integration (gameCommands) (#17-21)
   ['recruit-unit', 17],
   ['deploy-army', 18],
   ['build-structure', 19],
   ['repair-structure', 20],
   ['upgrade-settlement', 21],
   
-  // Complex Custom Logic (#22-26)
+  // Phase 6: Complex Custom Logic (#22-26)
   ['arrest-dissidents', 22],
   ['outfit-army', 23],
   ['infiltration', 24],
@@ -125,7 +133,6 @@ export function getCompletionStats(): {
   untested: number;
   testing: number;
   tested: number;
-  verified: number;
   total: number;
   percentComplete: number;
 } {
@@ -133,7 +140,6 @@ export function getCompletionStats(): {
     untested: 0,
     testing: 0,
     tested: 0,
-    verified: 0,
     total: ACTION_STATUS.size,
     percentComplete: 0
   };
@@ -143,7 +149,7 @@ export function getCompletionStats(): {
   }
   
   stats.percentComplete = Math.round(
-    ((stats.tested + stats.verified) / stats.total) * 100
+    (stats.tested / stats.total) * 100
   );
   
   return stats;
