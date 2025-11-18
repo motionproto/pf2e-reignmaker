@@ -107,6 +107,12 @@
       step = 'importing';
       
       try {
+         // Save selected scene to settings FIRST
+         if (selectedScene?.id) {
+            console.log('[WelcomeDialog] Saving kingdom scene:', selectedScene.name, selectedScene.id);
+            await KingdomSettings.setKingdomSceneId(selectedScene.id);
+         }
+         
          // Step 1: Import hexes from Kingmaker
          const result = await territoryService.syncFromKingmaker();
          importResult = result;
@@ -142,6 +148,12 @@
       step = 'importing';
       
       try {
+         // Save selected scene to settings FIRST
+         if (selectedScene?.id) {
+            console.log('[WelcomeDialog] Saving kingdom scene:', selectedScene.name, selectedScene.id);
+            await KingdomSettings.setKingdomSceneId(selectedScene.id);
+         }
+         
          // Step 1: Import from Foundry grid
          const result = await territoryService.importFromFoundryGrid();
          importResult = result;

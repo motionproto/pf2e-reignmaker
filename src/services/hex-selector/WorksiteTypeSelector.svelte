@@ -6,7 +6,7 @@
 -->
 
 <script lang="ts">
-  import { getValidWorksiteTypes, WORKSITE_TYPES, type WorksiteType } from '../../actions/create-worksite/worksiteValidator';
+  import { getValidWorksiteTypes, WORKSITE_TYPES, type WorksiteType } from '../../pipelines/shared/worksiteValidator';
   import { getKingdomData } from '../../stores/KingdomStore';
   
   // Props passed by hex-selector

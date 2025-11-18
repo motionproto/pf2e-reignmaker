@@ -79,7 +79,7 @@ export const purchaseResourcesPipeline: CheckPipeline = {
         }
 
         // Import helper to apply resource changes
-        const { applyResourceChanges } = await import('../../actions/shared/InlineActionHelpers');
+        const { applyResourceChanges } = await import('../shared/InlineActionHelpers');
         
         // Apply resource changes
         const result = await applyResourceChanges([

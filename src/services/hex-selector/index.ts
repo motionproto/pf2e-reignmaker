@@ -22,7 +22,7 @@ import { ReignMakerMapLayer } from '../map/core/ReignMakerMapLayer';
 import { getOverlayManager } from '../map/core/OverlayManager';
 import type { HexStyle } from '../map/types';
 import { getKingdomData } from '../../stores/KingdomStore';
-import { getAdjacentRoadsAndSettlements } from '../../actions/build-roads/roadValidator';
+import { getAdjacentRoadsAndSettlements } from '../../pipelines/shared/roadValidator';
 import { logger } from '../../utils/Logger';
 import { appWindowManager } from '../ui/AppWindowManager';
 
@@ -42,6 +42,7 @@ export class HexSelectorService {
   private panelMountPoint: HTMLElement | null = null;
   private panelComponent: any = null;  // Svelte component instance (for custom selector)
   private currentHoveredHex: string | null = null;
+  private completionHexInfo: string | null = null;  // Preserve hex info for completion state
   
   // Panel state machine
   private panelState: 'selection' | 'revealing' | 'completed' = 'selection';
@@ -99,39 +100,78 @@ export class HexSelectorService {
    * Switch to the kingdom map scene
    */
   private async switchToKingdomScene(): Promise<void> {
-
+    console.log('[HexSelector] 🎬 Starting scene switch...');
+    
     try {
       const game = (globalThis as any).game;
       
-      // Get kingdom scene ID from settings
-      const sceneId = game.settings?.get('pf2e-reignmaker', 'kingdomSceneId');
+      // Try to find kingdom scene in order of priority:
+      // 1. Configured setting (if set)
+      // 2. Auto-detect by name (Stolen Lands, Kingdom Map, etc.)
+      // 3. Stay on current scene
+      
+      let sceneId = game.settings?.get('pf2e-reignmaker', 'kingdomSceneId');
+      console.log('[HexSelector] 📍 Kingdom scene ID from settings:', sceneId || '(not configured)');
 
+      // If no setting, try to auto-detect kingdom scene
       if (!sceneId) {
-        logger.warn('[HexSelector] ⚠️  No kingdom scene configured in settings - skipping scene switch');
-
-        return;
+        console.log('[HexSelector] 🔍 Auto-detecting kingdom scene...');
+        
+        // Common kingdom map names
+        const kingdomSceneNames = [
+          'Stolen Lands',
+          'stolen lands',
+          'Kingdom Map',
+          'kingdom map',
+          'Kingdom',
+          'Kingmaker'
+        ];
+        
+        // Search for scene by name
+        const detectedScene = game.scenes?.find((s: any) => 
+          kingdomSceneNames.some(name => s.name?.toLowerCase().includes(name.toLowerCase()))
+        );
+        
+        if (detectedScene) {
+          sceneId = detectedScene.id;
+          console.log('[HexSelector] ✅ Auto-detected kingdom scene:', `"${detectedScene.name}" (${sceneId})`);
+          
+          // Save for next time
+          await game.settings?.set('pf2e-reignmaker', 'kingdomSceneId', sceneId);
+          console.log('[HexSelector] 💾 Saved kingdom scene ID to settings');
+        } else {
+          console.warn('[HexSelector] ⚠️  Could not auto-detect kingdom scene, staying on current scene');
+          logger.warn('[HexSelector] ⚠️  Could not auto-detect kingdom scene - looking for scenes named "Stolen Lands" or "Kingdom Map"');
+          return;
+        }
       }
       
       const scene = game.scenes?.get(sceneId);
+      console.log('[HexSelector] 🗺️  Found scene object:', scene ? `"${scene.name}" (${sceneId})` : 'NOT FOUND');
 
       if (!scene) {
+        console.warn('[HexSelector] ⚠️  Kingdom scene not found:', sceneId);
         logger.warn('[HexSelector] ⚠️  Kingdom scene not found:', sceneId);
         return;
       }
       
       // Only switch if not already viewing this scene
       const currentSceneId = game.scenes?.active?.id;
+      const currentSceneName = game.scenes?.active?.name;
+      console.log('[HexSelector] 👁️  Current scene:', currentSceneName, `(${currentSceneId})`);
 
       if (currentSceneId !== sceneId) {
-
+        console.log('[HexSelector] 🔄 Switching to kingdom scene...');
         await scene.view();
+        console.log('[HexSelector] ✅ Scene switched successfully');
 
         // Give the scene time to render
         await new Promise(resolve => setTimeout(resolve, 300));
       } else {
-
+        console.log('[HexSelector] ✅ Already on kingdom scene, no switch needed');
       }
     } catch (error) {
+      console.error('[HexSelector] ❌ Failed to switch scene:', error);
       logger.warn('[HexSelector] ❌ Failed to switch scene:', error);
     }
   }
@@ -312,7 +352,11 @@ export class HexSelectorService {
         this.currentHoveredHex = hexId;
         
         // Validate hex if validation function provided (pass pending selections for road chaining)
-        const isValid = !this.config.validationFn || this.config.validationFn(hexId, this.selectedHexes);
+        let isValid = true;
+        if (this.config.validationFn) {
+          const result = this.config.validationFn(hexId, this.selectedHexes);
+          isValid = typeof result === 'boolean' ? result : result.valid;
+        }
         
         if (isValid) {
           // Get road preview for 'road' type (include pending roads)
@@ -355,10 +399,18 @@ export class HexSelectorService {
       const hexId = hexToKingmakerId(offset);
 
       // Validate hex if validation function provided (pass pending selections for road chaining)
-      if (this.config.validationFn && !this.config.validationFn(hexId, this.selectedHexes)) {
-        const ui = (globalThis as any).ui;
-        ui?.notifications?.warn(`Cannot select this hex - it doesn't meet the requirements`);
-        return;
+      if (this.config.validationFn) {
+        const result = this.config.validationFn(hexId, this.selectedHexes);
+        
+        // Handle both boolean and ValidationResult return types
+        const isValid = typeof result === 'boolean' ? result : result.valid;
+        const message = typeof result === 'boolean' ? 'Cannot select this hex - it doesn\'t meet the requirements' : (result.message || 'Cannot select this hex');
+        
+        if (!isValid) {
+          const ui = (globalThis as any).ui;
+          ui?.notifications?.warn(message);
+          return;
+        }
       }
       
       // Toggle selection
@@ -397,6 +449,10 @@ export class HexSelectorService {
         // Render selection using explicit type-based rendering
         const style = this.getSelectionStyle();
         this.renderSelection(hexId, style, roadConnections);
+        
+        // Update hex info panel to show selected hex details
+        this.updateHexInfo(hexId);
+        
         this.updatePanel();
 
       }
@@ -556,6 +612,7 @@ export class HexSelectorService {
           ${this.config.title}
         </h3>
       </div>
+      <div id="hex-info" style="margin-bottom: 12px; padding: 8px; background: var(--hover-low); border-radius: 4px; font-size: 13px; min-height: 40px; display: block;">&nbsp;</div>
       <div id="hex-slots" style="margin-bottom: 12px;">
         <!-- Slots will be added here -->
       </div>
@@ -655,6 +712,59 @@ export class HexSelectorService {
   }
   
   /**
+   * Update hex info panel with hex-specific information
+   * @param hexId - Hex to show info for, or null to clear
+   */
+  private updateHexInfo(hexId: string | null): void {
+    console.log('[HexSelector] updateHexInfo called with hexId:', hexId);
+    
+    if (!this.panelMountPoint || !this.config) {
+      console.log('[HexSelector] No panel mount or config');
+      return;
+    }
+    
+    const hexInfoDiv = this.panelMountPoint.querySelector('#hex-info') as HTMLElement;
+    if (!hexInfoDiv) {
+      console.log('[HexSelector] hex-info div not found!');
+      return;
+    }
+    
+    // Always keep div visible to prevent UI shift
+    hexInfoDiv.style.display = 'block';
+    
+    // If no getHexInfo callback, keep blank
+    if (!this.config.getHexInfo) {
+      console.log('[HexSelector] No getHexInfo callback');
+      hexInfoDiv.innerHTML = '&nbsp;';
+      return;
+    }
+    
+    // If no hex hovered, keep blank
+    if (!hexId) {
+      console.log('[HexSelector] No hexId, clearing');
+      hexInfoDiv.innerHTML = '&nbsp;';
+      return;
+    }
+    
+    // Get hex info from callback
+    console.log('[HexSelector] Calling getHexInfo callback...');
+    const info = this.config.getHexInfo(hexId);
+    console.log('[HexSelector] Callback returned:', info ? 'HTML content' : 'null');
+    
+    if (!info) {
+      // No info available for this hex, keep blank
+      hexInfoDiv.innerHTML = '&nbsp;';
+    } else {
+      // Show actual hex info (reset styling in case it was placeholder)
+      console.log('[HexSelector] Setting HTML content');
+      hexInfoDiv.innerHTML = info;
+      hexInfoDiv.style.color = '';
+      hexInfoDiv.style.fontStyle = '';
+      hexInfoDiv.style.textAlign = '';
+    }
+  }
+  
+  /**
    * Update panel with current selection state or completion display
    */
   private updatePanel(): void {
@@ -694,7 +804,7 @@ export class HexSelectorService {
         <span style="font-weight: bold; color: #999; min-width: 30px;">[${i + 1}]</span>
         ${hexId 
           ? `<span style="flex: 1; font-family: monospace; font-size: 16px; color: #D2691E;">${hexId} <span style="font-size: 12px; color: #999;">[${terrain}]</span></span>
-             <i class="fas fa-check" style="color: #4CAF50;"></i>`
+             <i class="fas fa-minus-circle" style="color: #999;"></i>`
           : `<span style="flex: 1; font-family: monospace; color: #666; opacity: 0.5;">______</span>`
         }
       `;
@@ -713,6 +823,12 @@ export class HexSelectorService {
             if (removed.length > 0) {
 
             }
+            
+            // Update hex info to show last remaining selected hex (or clear if none)
+            const lastSelected = this.selectedHexes.length > 0 
+              ? this.selectedHexes[this.selectedHexes.length - 1] 
+              : null;
+            this.updateHexInfo(lastSelected);
             
             this.updatePanel();
           }
@@ -799,6 +915,11 @@ export class HexSelectorService {
           ${title}
         </h3>
       </div>
+      ${this.completionHexInfo ? `
+        <div style="margin-bottom: 12px; padding: 8px; background: var(--hover-low); border-radius: 4px; font-size: 13px;">
+          ${this.completionHexInfo}
+        </div>
+      ` : ''}
       <div style="padding: 20px;">
         <div style="background: var(--hover-low); border-radius: 4px; padding: 16px; margin-bottom: 16px;">
           <div style="font-size: 12px; color: #999; margin-bottom: 8px;">Selected ${this.selectedHexes.length} ${this.selectedHexes.length === 1 ? 'hex' : 'hexes'}:</div>
@@ -887,6 +1008,11 @@ export class HexSelectorService {
     
     // Give kingdom data update time to propagate to reactive overlays
     await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Capture hex info for completion display (if callback provided)
+    if (this.config.getHexInfo && this.selectedHexes.length > 0) {
+      this.completionHexInfo = this.config.getHexInfo(this.selectedHexes[0]);
+    }
     
     // Switch to completed state - panel stays visible, user sees territory update
     this.panelState = 'completed';

@@ -809,7 +809,7 @@ export async function createGameCommandsService() {
       
       // Import hex selector service and validator
       const { hexSelectorService } = await import('../services/hex-selector');
-      const { validateClaimHex } = await import('../actions/claim-hexes/claimHexValidator');
+      const { validateClaimHex } = await import('../pipelines/shared/claimHexValidator');
       
       // Get number of hexes to claim from first modifier with claim_hex resource
       const claimModifier = params.modifiers.find(m => (m as any).resource === 'claim_hex');

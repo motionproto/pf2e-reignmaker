@@ -21,12 +21,10 @@ export async function buildRoadsExecution(hexIds: string[]): Promise<void> {
     return;
   }
 
-  // Update Kingdom Store - Deduct cost and set hasRoad flag on each hex
+  // Update Kingdom Store - Mark selected hexes as having roads
   await updateKingdom(kingdom => {
-    // Deduct resource costs (1 wood + 1 stone per action, not per segment)
-    kingdom.resources.wood = Math.max(0, (kingdom.resources.wood || 0) - 1);
-    kingdom.resources.stone = Math.max(0, (kingdom.resources.stone || 0) - 1);
-    logger.info(`[buildRoadsExecution] Deducted 1 wood and 1 stone, new balances: wood=${kingdom.resources.wood}, stone=${kingdom.resources.stone}`);
+    // NOTE: Resource costs already deducted by applyActionCost() in pipeline execute()
+    // No need to deduct here - just set road flags
     
     // Mark selected hexes as having roads
     hexIds.forEach(hexId => {

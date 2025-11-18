@@ -38,8 +38,13 @@ export const buildRoadsPipeline: CheckPipeline = {
       colorType: 'road',
       validation: async (hexId: string, pendingHexes: string[]) => {
         // Import validator at runtime to avoid circular dependencies
-        const { validateRoadHex } = await import('../../actions/build-roads/roadValidator');
+        const { validateRoadHex } = await import('../shared/roadValidator');
         return validateRoadHex(hexId, pendingHexes);
+      },
+      // ✅ Execute road building when user completes hex selection
+      onComplete: async (selectedHexIds: string[]) => {
+        console.log(`🛣️ [buildRoads] Building roads on ${selectedHexIds.length} hex(es)`);
+        await buildRoadsExecution(selectedHexIds);
       },
       // Outcome-based adjustments
       outcomeAdjustment: {
@@ -103,7 +108,7 @@ export const buildRoadsPipeline: CheckPipeline = {
       const resources = [];
       
       // Show resource costs for all outcomes
-      resources.push({ resource: 'wood', value: -1 });
+      resources.push({ resource: 'lumber', value: -1 });
       resources.push({ resource: 'stone', value: -1 });
       
       // Show unrest on critical failure
@@ -121,22 +126,30 @@ export const buildRoadsPipeline: CheckPipeline = {
 
   // Execute function - explicitly handles ALL outcomes
   execute: async (ctx) => {
-    // Deduct cost first (regardless of outcome - action was attempted)
-    await applyActionCost(buildRoadsPipeline);
-    
     switch (ctx.outcome) {
       case 'criticalSuccess':
       case 'success':
-        // Road building handled by postApplyInteractions (builds roads via buildRoadsExecution)
-        // No modifiers defined in pipeline for these outcomes
+        // Check if user actually selected hexes (didn't cancel)
+        const selectedHexes = ctx.resolutionData?.compoundData?.selectedHexes;
+        if (!selectedHexes || selectedHexes.length === 0) {
+          console.log('⏭️ [buildRoads] User cancelled hex selection, skipping execution gracefully');
+          return { success: true };  // ✅ Graceful cancellation - no error thrown
+        }
+        
+        // User completed hex selection - deduct costs
+        await applyActionCost(buildRoadsPipeline);
+        
+        // Road building handled by postApplyInteractions onComplete handler
         return { success: true };
         
       case 'failure':
-        // Explicitly do nothing (no modifiers defined)
+        // Deduct costs even on failure (action was attempted)
+        await applyActionCost(buildRoadsPipeline);
         return { success: true };
         
       case 'criticalFailure':
-        // Explicitly apply +1 unrest modifier from pipeline
+        // Deduct costs and apply +1 unrest modifier
+        await applyActionCost(buildRoadsPipeline);
         await applyPipelineModifiers(buildRoadsPipeline, ctx.outcome);
         return { success: true };
         

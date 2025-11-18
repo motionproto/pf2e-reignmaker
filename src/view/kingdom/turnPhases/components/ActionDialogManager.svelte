@@ -1,19 +1,19 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import BuildStructureDialog from '../../../kingdom/components/BuildStructureDialog/BuildStructureDialog.svelte';
-  import RepairStructureDialog from '../../../../actions/repair-structure/RepairStructureDialog.svelte';
-  import UpgradeSettlementSelectionDialog from '../../../../actions/upgrade-settlement/UpgradeSettlementSelectionDialog.svelte';
-  import SharedFactionSelectionDialog from '../../../../actions/shared/FactionSelectionDialog.svelte';
-  import RequestEconomicAidDialog from '../../../../actions/request-economic-aid/RequestEconomicAidDialog.svelte';
-  import RequestMilitaryAidDialog from '../../../../actions/request-military-aid/RequestMilitaryAidDialog.svelte';
+  import RepairStructureDialog from '../../components/dialogs/RepairStructureDialog.svelte';
+  import UpgradeSettlementSelectionDialog from '../../components/dialogs/UpgradeSettlementSelectionDialog.svelte';
+  import SharedFactionSelectionDialog from '../../../../pipelines/shared/FactionSelectionDialog.svelte';
+  import RequestEconomicAidDialog from '../../components/dialogs/RequestEconomicAidDialog.svelte';
+  import RequestMilitaryAidDialog from '../../components/dialogs/RequestMilitaryAidDialog.svelte';
   import AidSelectionDialog from '../../../kingdom/components/AidSelectionDialog.svelte';
   // REMOVED: SettlementSelectionDialog - execute-or-pardon-prisoners migrated to pipeline system
   // import SettlementSelectionDialog from '../../../../actions/execute-or-pardon-prisoners/SettlementSelectionDialog.svelte';
   // REMOVED: ExecuteOrPardonSettlementDialog - execute-or-pardon-prisoners migrated to pipeline system
   // import ExecuteOrPardonSettlementDialog from '../../../../actions/execute-or-pardon-prisoners/SettlementSelectionDialog.svelte';
-  import ArmySelectionDialog from '../../../../actions/train-army/ArmySelectionDialog.svelte';
-  import DisbandArmyDialog from '../../../../actions/disband-army/ArmySelectionDialog.svelte';
-  import OutfitArmyDialog from '../../../../actions/outfit-army/ArmySelectionDialog.svelte';
+  import ArmySelectionDialog from '../../components/dialogs/ArmySelectionDialog.svelte';
+  import DisbandArmyDialog from '../../components/dialogs/DisbandArmySelectionDialog.svelte';
+  import OutfitArmyDialog from '../../components/dialogs/OutfitArmySelectionDialog.svelte';
   import RecruitArmyDialog from '../../../kingdom/components/RecruitArmyDialog.svelte';
   import EstablishSettlementNameDialog from '../../../kingdom/components/EstablishSettlementNameDialog.svelte';
   import StructureSelectionDialog from '../../../kingdom/components/StructureSelectionDialog.svelte';

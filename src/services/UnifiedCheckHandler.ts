@@ -208,7 +208,8 @@ export class UnifiedCheckHandler {
         count: interaction.count,
         colorType: interaction.colorType || 'claim',
         validationFn: interaction.validation,
-        customSelector: interaction.customSelector  // ✅ Pass custom selector if provided
+        customSelector: interaction.customSelector,  // ✅ Pass custom selector if provided
+        getHexInfo: interaction.getHexInfo  // ✅ Pass hex info callback if provided
       });
 
       return result;

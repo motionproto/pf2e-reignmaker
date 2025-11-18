@@ -10,7 +10,7 @@
 
 import { getKingdomData } from '../stores/KingdomStore';
 import { positionToOffset, offsetToHexId } from '../services/hex-selector/coordinates';
-import { getAdjacentHexIds } from '../actions/shared/hexValidation';
+import { getAdjacentHexIds } from '../pipelines/shared/hexValidation';
 
 class HexInspector {
   private active = false;

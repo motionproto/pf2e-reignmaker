@@ -8,8 +8,9 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import { fortifyHexExecution } from '../../execution/territory/fortifyHex';
 import { getKingdomData } from '../../stores/KingdomStore';
-import { validateFortifyHexForPipeline } from '../../actions/fortify-hex/fortifyHexValidator';
+import { validateFortifyHexForPipeline } from '../shared/fortifyHexValidator';
 import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
+import fortificationData from '../../../data/player-actions/fortify-hex.json';
 
 export const fortifyHexPipeline: CheckPipeline = {
   id: 'fortify-hex',
@@ -35,6 +36,68 @@ export const fortifyHexPipeline: CheckPipeline = {
       validation: (hexId: string) => {
         // Synchronous validation for hex selector
         return validateFortifyHexForPipeline(hexId);
+      },
+      // Show cost/benefit info when hex is selected
+      getHexInfo: (hexId: string) => {
+        const kingdom = getKingdomData();
+        const hex = kingdom.hexes?.find((h: any) => h.id === hexId);
+        
+        if (!hex) {
+          return '<div style="color: #999; font-style: italic;">Hex not found</div>';
+        }
+
+        // Determine current and next tier
+        const currentTier = hex.fortification?.tier || 0;
+        const nextTier = currentTier + 1;
+
+        if (nextTier > 4) {
+          return '<div style="color: #FF6B6B;">Maximum fortification level reached</div>';
+        }
+
+        // Use imported fortification data
+        const tierConfig = fortificationData.tiers[nextTier - 1];
+
+        // Format cost
+        const costEntries = Object.entries(tierConfig.cost).map(([resource, amount]) => {
+          const displayResource = resource.charAt(0).toUpperCase() + resource.slice(1);
+          return `${amount} ${displayResource}`;
+        });
+        const costText = costEntries.join(', ');
+
+        // Format benefits
+        const benefits = [];
+        if (tierConfig.benefits.ac > 0) {
+          benefits.push(`+${tierConfig.benefits.ac} AC`);
+        }
+        if (tierConfig.benefits.initiative > 0) {
+          benefits.push(`+${tierConfig.benefits.initiative} Initiative`);
+        }
+        const benefitsText = benefits.join(', ') + ' to defending troops';
+
+        // Build info HTML
+        let html = '<div style="font-size: 13px;">';
+        
+        // Title
+        if (currentTier === 0) {
+          html += `<div style="font-weight: bold; color: #D2691E; margin-bottom: 8px;">Building: ${tierConfig.name}</div>`;
+        } else {
+          const currentConfig = fortificationData.tiers[currentTier - 1];
+          html += `<div style="font-weight: bold; color: #D2691E; margin-bottom: 8px;">Upgrading: ${currentConfig.name} → ${tierConfig.name}</div>`;
+        }
+
+        // Cost
+        html += `<div style="margin-bottom: 6px;"><i class="fas fa-coins" style="color: #FFD700; margin-right: 6px;"></i><strong>Cost:</strong> ${costText}</div>`;
+
+        // Benefits
+        html += `<div style="margin-bottom: 6px;"><i class="fas fa-shield-alt" style="color: #4CAF50; margin-right: 6px;"></i><strong>Benefits:</strong> ${benefitsText}</div>`;
+
+        // Special effects (Tier 4 fortress)
+        if (tierConfig.special) {
+          html += `<div style="margin-top: 8px; padding: 6px; background: rgba(76, 175, 80, 0.1); border-left: 3px solid #4CAF50; font-size: 12px;"><i class="fas fa-star" style="color: #FFD700; margin-right: 6px;"></i>${tierConfig.special}</div>`;
+        }
+
+        html += '</div>';
+        return html;
       },
       // Outcome-based adjustments
       outcomeAdjustment: {
@@ -95,18 +158,6 @@ export const fortifyHexPipeline: CheckPipeline = {
         const updatedKingdom = getKingdomData();
         const updatedHex = updatedKingdom.hexes.find((h: any) => h.id === hexId);
         console.log(`[FortifyHex] Updated hex fortification:`, updatedHex?.fortification);
-
-        // Show success notification
-        const actionVerb = currentTier === 0 ? 'Built' : 'Upgraded to';
-        const costSummary = Object.entries(tierConfig.cost)
-          .map(([r, a]) => `${a} ${r}`)
-          .join(', ');
-        
-        const message = ctx.outcome === 'criticalSuccess'
-          ? `${actionVerb} ${tierConfig.name} at hex ${hexId} (cost: ${costSummary}). ${tierConfig.description}`
-          : `${actionVerb} ${tierConfig.name} at hex ${hexId} (cost: ${costSummary}). ${tierConfig.description}`;
-
-        ui.notifications?.info(message);
       }
     }
   ],

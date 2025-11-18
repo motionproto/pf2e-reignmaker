@@ -57,6 +57,7 @@ const FortifyHexAction: CustomActionImplementation = {
     },
     
     async execute(resolutionData: ResolutionData, instance?: any): Promise<ResolveResult> {
+      console.log('🔧 [FortifyHex] NEW CODE LOADED - execute() called');
       logActionStart('fortify-hex', 'Starting fortification process');
       
       try {
@@ -81,6 +82,10 @@ const FortifyHexAction: CustomActionImplementation = {
         // (hexSelectorService now handles all overlay management via temporary overlay system)
         const { hexSelectorService } = await import('../../services/hex-selector');
         
+        // Import kingdom store and svelte for getHexInfo callback
+        const { kingdomData: kingdomDataStore } = await import('../../stores/KingdomStore');
+        const { get } = await import('svelte/store');
+        
         // Retry loop - keep selector open until affordable hex selected or explicit cancel
         let hexId: string | null = null;
         let hex: any = null;
@@ -90,12 +95,144 @@ const FortifyHexAction: CustomActionImplementation = {
         let cost: any = {};
         
         while (!hexId) {
-          const selectedHexes = await hexSelectorService.selectHexes({
+          const config: any = {
             title: 'Select Hex to Fortify',
             count: 1,
-            colorType: 'fortify' // Shows territory, roads, settlements, and fortifications
-            // No validationFn - we validate affordability in the retry loop
-          });
+            colorType: 'fortify' as const, // Shows territory, roads, settlements, and fortifications
+            
+            // Validation function with detailed error messages
+            validationFn: (hexId: string) => {
+              const kingdom = get(kingdomDataStore) as KingdomData;
+              
+              // Find the hex
+              const hex = kingdom.hexes?.find((h: any) => h.id === hexId);
+              if (!hex) {
+                return { valid: false, message: 'Hex not found' };
+              }
+              
+              // Must be claimed territory
+              if (hex.claimedBy !== PLAYER_KINGDOM) {
+                return { valid: false, message: 'Must be in claimed territory' };
+              }
+              
+              // Check current tier
+              const currentTier = hex.fortification?.tier || 0;
+              if (currentTier >= 4) {
+                return { valid: false, message: 'Already at maximum fortification (Fortress)' };
+              }
+              
+              // Cannot fortify hexes with settlements
+              const hasSettlement = (kingdom.settlements || []).some(s => {
+                if (!s.location || (s.location.x === 0 && s.location.y === 0)) return false;
+                const settlementHexId = `${s.location.x}.${s.location.y}`;
+                return settlementHexId === hexId;
+              });
+              
+              if (hasSettlement) {
+                return { valid: false, message: 'Cannot fortify hexes with settlements' };
+              }
+              
+              // Check affordability for next tier
+              const nextTier = currentTier + 1;
+              const tierConfig = fortificationData.tiers[nextTier - 1];
+              
+              if (!tierConfig) {
+                return { valid: false, message: 'Invalid tier' };
+              }
+              
+              // Check if we can afford this tier
+              const missingResources: string[] = [];
+              for (const [resource, amount] of Object.entries(tierConfig.cost)) {
+                const available = kingdom.resources[resource] || 0;
+                if (available < amount) {
+                  const resourceName = resource.charAt(0).toUpperCase() + resource.slice(1);
+                  missingResources.push(`${resourceName}: need ${amount}, have ${available}`);
+                }
+              }
+              
+              if (missingResources.length > 0) {
+                return { 
+                  valid: false, 
+                  message: `Cannot afford ${tierConfig.name}. ${missingResources.join(', ')}` 
+                };
+              }
+              
+              return { valid: true };
+            },
+            
+            // Display cost information for selected hex
+            getHexInfo: (hoveredHexId: string) => {
+              console.log('[FortifyHex] getHexInfo called for hex:', hoveredHexId);
+              const kingdom = get(kingdomDataStore) as KingdomData;
+              
+              // Find the hovered hex
+              const hoveredHex = kingdom.hexes?.find((h: any) => h.id === hoveredHexId);
+              if (!hoveredHex) {
+                console.log('[FortifyHex] Hex not found in kingdom data');
+                return null;
+              }
+              
+              // Get current fortification tier
+              const currentTier = hoveredHex.fortification?.tier || 0;
+              
+              // Check if already at max tier
+              if (currentTier >= 4) {
+                console.log('[FortifyHex] Max tier reached');
+                return `<div style="color: #FFB347; text-align: center;">
+                  <i class="fas fa-crown"></i> Maximum fortification (Fortress)
+                </div>`;
+              }
+              
+              // Calculate next tier
+              const nextTier = currentTier + 1;
+              const tierConfig = fortificationData.tiers[nextTier - 1];
+              console.log('[FortifyHex] Displaying cost for tier:', tierConfig.name);
+              
+              // Check affordability
+              const cost = tierConfig.cost;
+              const missingResources: string[] = [];
+              let canAfford = true;
+              
+              for (const [resource, amount] of Object.entries(cost)) {
+                const available = kingdom.resources[resource] || 0;
+                if (available < amount) {
+                  canAfford = false;
+                  missingResources.push(`${resource}: need ${amount}, have ${available}`);
+                }
+              }
+              
+              // Format cost display
+              const costStr = Object.entries(cost)
+                .map(([r, a]) => `${a} ${r.charAt(0).toUpperCase() + r.slice(1)}`)
+                .join(', ');
+              
+              const affordabilityIcon = canAfford 
+                ? '<i class="fas fa-check-circle" style="color: #4CAF50;"></i>'
+                : '<i class="fas fa-times-circle" style="color: #FF5252;"></i>';
+              
+              const affordabilityText = canAfford
+                ? '<span style="color: #4CAF50;">✓ Can Afford</span>'
+                : `<span style="color: #FF5252;">✗ ${missingResources.join(', ')}</span>`;
+              
+              return `
+                <div style="line-height: 1.6;">
+                  <div style="font-weight: bold; margin-bottom: 4px; color: #D2691E;">
+                    ${currentTier === 0 ? 'Build' : 'Upgrade to'}: ${tierConfig.name}
+                  </div>
+                  <div style="margin-bottom: 4px;">
+                    <strong>Cost:</strong> ${costStr}
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    ${affordabilityIcon} ${affordabilityText}
+                  </div>
+                </div>
+              `;
+            }
+          };
+          
+          console.log('[FortifyHex] Config object created, has getHexInfo?', !!config.getHexInfo);
+          
+          const selectedHexes = await hexSelectorService.selectHexes(config);
           
           // Handle cancellation - exit loop
           if (!selectedHexes || selectedHexes.length === 0) {

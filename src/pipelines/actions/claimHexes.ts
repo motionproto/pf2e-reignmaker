@@ -8,7 +8,7 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import { claimHexesExecution } from '../../execution/territory/claimHexes';
 import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
-import { validateClaimHex } from '../../actions/claim-hexes/claimHexValidator';
+import { validateClaimHex } from '../shared/claimHexValidator';
 
 export const claimHexesPipeline: CheckPipeline = {
   id: 'claim-hexes',

@@ -8,7 +8,7 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import { createWorksiteExecution } from '../../execution/territory/createWorksite';
 import { getKingdomData } from '../../stores/KingdomStore';
-import { validateCreateWorksiteForPipeline } from '../../actions/create-worksite/worksiteValidator';
+import { validateCreateWorksiteForPipeline } from '../shared/worksiteValidator';
 import WorksiteTypeSelector from '../../services/hex-selector/WorksiteTypeSelector.svelte';
 
 export const createWorksitePipeline: CheckPipeline = {

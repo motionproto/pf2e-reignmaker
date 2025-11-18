@@ -17,7 +17,7 @@ import type { ResolveResult } from '../types';
  * @returns Array of border hex IDs
  */
 export async function getBorderHexes(kingdom: any): Promise<string[]> {
-  const { getAdjacentHexIds } = await import('../../../actions/shared/hexValidation');
+  const { getAdjacentHexIds } = await import('../../../pipelines/shared/hexValidation');
   const { PLAYER_KINGDOM } = await import('../../../types/ownership');
   
   // Get all claimed hexes

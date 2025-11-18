@@ -14,7 +14,7 @@
 
 import type { Settlement } from '../models/Settlement';
 import type { KingdomData } from '../actors/KingdomActor';
-import { hexHasRoads } from '../actions/shared/hexValidation';
+import { hexHasRoads } from '../pipelines/shared/hexValidation';
 import { getAdjacentHexes } from '../utils/hexUtils';
 
 class RoadConnectivityService {

@@ -146,7 +146,7 @@ export class RequestMilitaryAidHandler extends BaseGameCommandHandler {
     }
     
     // Import custom dialog dynamically
-    const { default: EquipmentSelectionDialog } = await import('../../../actions/request-military-aid/EquipmentSelectionDialog.svelte');
+    const { default: EquipmentSelectionDialog } = await import('../../../view/kingdom/components/dialogs/EquipmentSelectionDialog.svelte');
     
     // Show dialog and wait for user selection
     const selection = await new Promise<{ armyId: string; equipmentType: string } | null>((resolve) => {

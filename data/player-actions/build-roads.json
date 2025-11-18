@@ -5,7 +5,7 @@
   "brief": "Connect your territory with infrastructure",
   "description": "Construct pathways between settlements to improve trade, travel, and military movement. Roads must be built in claimed territory.",
   "cost": {
-    "wood": 1,
+    "lumber": 1,
     "stone": 1
   },
   "skills": [

@@ -33,6 +33,178 @@
 - **CUSTOM_COMPONENTS_TODO.md** - Pending custom component implementation work
 - **TEST_RESULTS.md** - Log findings and issues during testing
 
+## ⚠️ Implementation Guidelines
+
+**CRITICAL: Pipeline-First Development**
+
+### Best Practices from Tested Actions
+
+**Learned from fortify-hex and other implementations:**
+
+#### 1. **`getHexInfo` Callback Pattern** ✨ 
+Show contextual information when user selects a hex:
+
+```typescript
+postApplyInteractions: [{
+  type: 'map-selection',
+  getHexInfo: (hexId: string) => {
+    // ✅ CORRECT: Synchronous callback returning HTML
+    const tierConfig = fortificationData.tiers[nextTier - 1];
+    
+    return `
+      <div style="font-size: 13px;">
+        <div>Building: ${tierConfig.name}</div>
+        <div>💰 Cost: ${costText}</div>
+        <div>🛡️ Benefits: ${benefitsText}</div>
+      </div>
+    `;
+  }
+}]
+```
+
+**Key points:**
+- Use ES6 imports at file level (synchronous access)
+- Return HTML string (NOT async!)
+- Include cost, benefits, warnings
+- Info persists in completion state
+
+**Apply to:** claim-hexes, build-roads, create-worksite, establish-settlement
+
+#### 2. **Detailed Validation Messages** ✅
+Return validation result with specific error messages:
+
+```typescript
+// ✅ CORRECT: Return detailed result
+export function validateMyHex(hexId: string): { valid: boolean; message?: string } {
+  if (currentTier >= 4) {
+    return { 
+      valid: false, 
+      message: 'Already a Fortress, cannot be upgraded further' 
+    };
+  }
+  
+  if (missingResources.length > 0) {
+    return { 
+      valid: false, 
+      message: `You need at least ${missingResources.join(' and ')} to build ${tierName}` 
+    };
+  }
+  
+  return { valid: true };
+}
+
+// ❌ WRONG: Vague boolean return
+export function validateMyHex(hexId: string): boolean {
+  return currentTier < 4 && hasResources;  // User doesn't know WHY it failed!
+}
+```
+
+**Update all validators in `src/pipelines/shared/*Validator.ts`**
+
+#### 3. **Reduce Notification Spam** 🔕
+Don't show success notifications when UI already shows the result:
+
+```typescript
+// ✅ CORRECT: No notification (floater shows build info)
+onComplete: async (selectedHexIds: string[], ctx: any) => {
+  await fortifyHexExecution(hexId, nextTier);
+  // No ui.notifications.info() - completion panel shows details
+}
+
+// ❌ WRONG: Redundant notification
+onComplete: async (selectedHexIds: string[], ctx: any) => {
+  await fortifyHexExecution(hexId, nextTier);
+  ui.notifications.info('Built Wooden Tower!');  // User already sees this in floater!
+}
+```
+
+**Only notify on:** Errors, warnings, or non-obvious changes
+
+#### 4. **Synchronous Data Access in Callbacks** ⚙️
+Use ES6 imports at file level for synchronous access:
+
+```typescript
+// ✅ CORRECT: Import at file level
+import fortificationData from '../../../data/player-actions/fortify-hex.json';
+
+getHexInfo: (hexId: string) => {
+  const tierConfig = fortificationData.tiers[nextTier - 1];
+  return `<div>Cost: ${tierConfig.cost}</div>`;
+}
+
+// ❌ WRONG: Async import inside callback
+getHexInfo: async (hexId: string) => {
+  const data = await import('../../../data/.../fortify-hex.json');
+  // HexSelector expects synchronous return!
+}
+```
+
+**Why:** Browser environment requires synchronous callbacks in hex-selector
+
+#### 5. **Completion Context Preservation** 📋
+HexSelector automatically preserves `getHexInfo` result in completion state:
+
+```typescript
+// When user clicks Done, the hex info is captured and shown in completion panel
+// No additional code needed - this is automatic!
+
+// Just provide getHexInfo callback, system handles the rest
+postApplyInteractions: [{
+  type: 'map-selection',
+  getHexInfo: (hexId: string) => {
+    return '<div>Build info here</div>';  // Auto-preserved in completion
+  }
+}]
+```
+
+**Benefit:** Users can review what they built after clicking OK
+
+---
+
+### Creating New Action Implementations
+
+**✅ CORRECT: Create new pipeline files**
+```typescript
+// src/pipelines/actions/myAction.ts
+export const myActionPipeline: CheckPipeline = {
+  id: 'my-action',
+  name: 'My Action',
+  // ... implement from data/player-actions/my-action.json
+};
+```
+
+**❌ WRONG: Copy old action implementation files**
+```typescript
+// DON'T copy files from archived-implementations/actions/
+// These are REFERENCE ONLY - not for direct implementation!
+```
+
+### Using Archived Implementations
+
+**Files in `archived-implementations/actions/` are REFERENCE ONLY:**
+
+- ✅ **Use for:** Understanding patterns, reviewing logic, checking validation rules
+- ✅ **Use for:** Seeing how dialogs were structured, what data was needed
+- ✅ **Use for:** Finding shared utilities that may have been moved to `src/pipelines/shared/`
+
+- ❌ **DON'T:** Copy entire files into `src/pipelines/actions/`
+- ❌ **DON'T:** Import from `archived-implementations/` in new code
+- ❌ **DON'T:** Try to integrate old action classes with new pipelines
+
+**The pipeline system is the ONLY active implementation architecture.**
+
+### Development Workflow
+
+1. **Read** `data/player-actions/{action-name}.json` - Source of truth
+2. **Reference** `archived-implementations/actions/{action-name}/` - Pattern examples
+3. **Create** `src/pipelines/actions/{actionName}.ts` - New pipeline implementation
+4. **Test** in Foundry - Verify functionality
+5. **Update** `src/constants/migratedActions.ts` - Mark as tested
+
+**Never modify or use files in `archived-implementations/` directly!**
+
+---
+
 ## 🏗️ Architecture
 
 **Complete design documentation:** `docs/systems/pipeline-coordinator.md`

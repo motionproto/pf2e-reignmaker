@@ -24,6 +24,14 @@ export interface CustomSelectorConfig {
 }
 
 /**
+ * Validation result with optional custom error message
+ */
+export interface ValidationResult {
+  valid: boolean;
+  message?: string;  // Custom error message to show user
+}
+
+/**
  * Configuration for hex selection
  */
 export interface HexSelectionConfig {
@@ -32,8 +40,9 @@ export interface HexSelectionConfig {
   colorType: HexSelectionType;  // Action type for color coding
   existingHexes?: string[];   // Already selected hexes (for highlighting)
   allowToggle?: boolean;      // Allow clicking to deselect (default: true)
-  validationFn?: (hexId: string, pendingRoads?: string[]) => boolean;  // Optional validation function (supports pending selections for chaining)
+  validationFn?: (hexId: string, pendingRoads?: string[]) => boolean | ValidationResult;  // Optional validation function (supports pending selections for chaining)
   customSelector?: CustomSelectorConfig;  // Optional custom component for additional selection (e.g., worksite type)
+  getHexInfo?: (hexId: string) => string | null;  // Optional callback to provide hex-specific information (e.g., costs, requirements)
 }
 
 /**

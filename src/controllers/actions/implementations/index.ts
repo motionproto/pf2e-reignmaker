@@ -8,35 +8,26 @@
 import type { KingdomData } from '../../../actors/KingdomActor';
 import type { ActionRequirement } from '../action-resolver';
 import type { ResolutionData } from '../../../types/modifiers';
-import type { ResolveResult } from '../../../actions/shared/ActionHelpers';
 import type { SvelteComponent } from 'svelte';
 
-import ArrestDissidentsAction from '../../../actions/arrest-dissidents/ArrestDissidentsAction';
-import RepairStructureAction from '../../../actions/repair-structure/RepairStructureAction';
-import EstablishSettlementAction from '../../../actions/establish-settlement/EstablishSettlementAction';
-import UpgradeSettlementAction from '../../../actions/upgrade-settlement/UpgradeSettlementAction';
-import BuildStructureAction from '../../../actions/build-structure/BuildStructureAction';
-import EstablishDiplomaticRelationsAction from '../../../actions/establish-diplomatic-relations/EstablishDiplomaticRelationsAction';
-import BuildRoadsAction from '../../../actions/build-roads/BuildRoadsAction';
-import ClaimHexesAction from '../../../actions/claim-hexes/ClaimHexesAction';
-import FortifyHexAction from '../../../actions/fortify-hex/FortifyHexAction';
-import SendScoutsAction from '../../../actions/send-scouts/SendScoutsAction';
-import RecruitArmyAction from '../../../actions/recruit-unit/RecruitUnitAction';
-import HarvestResourcesAction from '../../../actions/harvest-resources/HarvestResourcesAction';
-import PurchaseResourcesAction from '../../../actions/purchase-resources/PurchaseResourcesAction';
-import SellSurplusAction from '../../../actions/sell-surplus/SellSurplusAction';
-// REMOVED: ExecuteOrPardonPrisonersAction - migrated to pipeline system
-// import ExecuteOrPardonPrisonersAction from '../../../actions/execute-or-pardon-prisoners/ExecuteOrPardonPrisonersAction';
-// REMOVED: TrainArmyAction - migrated to prepare/commit pattern
-// import TrainArmyAction from '../../../actions/train-army/TrainArmyAction';
-// REMOVED: DisbandArmyAction - migrated to prepare/commit pattern
-// import DisbandArmyAction from '../../../actions/disband-army/DisbandArmyAction';
-import OutfitArmyAction from '../../../actions/outfit-army/OutfitArmyAction';
-import DeployArmyAction from '../../../actions/deploy-army/DeployArmyAction';
-import RequestMilitaryAidAction from '../../../actions/request-military-aid/RequestMilitaryAidAction';
-import RequestEconomicAidAction from '../../../actions/request-economic-aid/RequestEconomicAidAction';
-// REMOVED: InfiltrationAction - not yet implemented
-// import InfiltrationAction from '../../../actions/infiltration/InfiltrationAction';
+/**
+ * ⚠️ ALL ACTION IMPORTS REMOVED - MIGRATED TO ARCHIVED-IMPLEMENTATIONS
+ * 
+ * These imports were from src/actions/* which has been archived.
+ * The action registry below is empty - all actions now use the pipeline system.
+ * 
+ * If you need to reference an old action implementation, it can be found in:
+ * archived-implementations/actions/
+ */
+
+/**
+ * Result type for action resolution
+ * (Previously imported from archived actions/shared/ActionHelpers)
+ */
+export interface ResolveResult {
+  success: boolean;
+  error?: string;
+}
 
 /**
  * Interface for custom action implementations
@@ -211,9 +202,15 @@ export async function executeCustomResolution(
   return await impl.customResolution.execute(resolutionData, instance);
 }
 
-// Export all implementations for direct use if needed
-export { ArrestDissidentsAction, RepairStructureAction, EstablishSettlementAction, UpgradeSettlementAction, BuildStructureAction, EstablishDiplomaticRelationsAction, BuildRoadsAction, ClaimHexesAction, FortifyHexAction, SendScoutsAction, RecruitArmyAction, HarvestResourcesAction, PurchaseResourcesAction, SellSurplusAction, OutfitArmyAction, DeployArmyAction, RequestMilitaryAidAction, RequestEconomicAidAction };
-
-// TODO: Export additional implementations as they're created
-// export { RecruitArmyAction };
-// etc.
+/**
+ * ⚠️ NO EXPORTS - All action implementations archived
+ * 
+ * Previously exported actions (now in archived-implementations/actions/):
+ * - ArrestDissidentsAction, RepairStructureAction, EstablishSettlementAction
+ * - UpgradeSettlementAction, BuildStructureAction, EstablishDiplomaticRelationsAction
+ * - BuildRoadsAction, ClaimHexesAction, FortifyHexAction, SendScoutsAction
+ * - RecruitArmyAction, HarvestResourcesAction, PurchaseResourcesAction, SellSurplusAction
+ * - OutfitArmyAction, DeployArmyAction, RequestMilitaryAidAction, RequestEconomicAidAction
+ * 
+ * All actions now use the unified pipeline system (src/pipelines/).
+ */

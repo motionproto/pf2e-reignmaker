@@ -9,7 +9,7 @@ import type { CheckPipeline } from '../../types/CheckPipeline';
 import { hasCommerceStructure, getBestTradeRates } from '../../services/commerce/tradeRates';
 import { get } from 'svelte/store';
 import { kingdomData } from '../../stores/KingdomStore';
-import { applyResourceChanges } from '../../actions/shared/InlineActionHelpers';
+import { applyResourceChanges } from '../shared/InlineActionHelpers';
 import SellResourceSelector from '../../view/kingdom/components/OutcomeDisplay/components/SellResourceSelector.svelte';
 
 export const sellSurplusPipeline: CheckPipeline = {
