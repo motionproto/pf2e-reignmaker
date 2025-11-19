@@ -16,6 +16,17 @@ export const recoverArmyPipeline: CheckPipeline = {
   checkType: 'action',
   category: 'military',
 
+  // Requirements: Must have at least one army
+  requirements: (kingdom) => {
+    if (kingdom.armies.length === 0) {
+      return {
+        met: false,
+        reason: 'No armies available'
+      };
+    }
+    return { met: true };
+  },
+
   skills: [
     { skill: 'medicine', description: 'heal the wounded' },
     { skill: 'performance', description: 'boost morale' },

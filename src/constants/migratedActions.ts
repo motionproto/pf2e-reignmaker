@@ -29,8 +29,8 @@ export const ACTION_STATUS = new Map<string, ActionStatus>([
   ['purchase-resources', 'tested'],  // #9
   
   // Phase 4: Pre-Roll Entity Selection
-  ['collect-stipend', 'testing'],  // #10
-  ['execute-or-pardon-prisoners', 'untested'],  // #11
+  ['collect-stipend', 'tested'],  // #10
+  ['execute-or-pardon-prisoners', 'tested'],  // #11
   ['diplomatic-mission', 'untested'],  // #12
   ['request-economic-aid', 'untested'],  // #13
   ['request-military-aid', 'untested'],  // #14

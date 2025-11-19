@@ -15,6 +15,17 @@ export const disbandArmyPipeline: CheckPipeline = {
   checkType: 'action',
   category: 'military-operations',
 
+  // Requirements: Must have at least one army
+  requirements: (kingdom) => {
+    if (kingdom.armies.length === 0) {
+      return {
+        met: false,
+        reason: 'No armies to disband'
+      };
+    }
+    return { met: true };
+  },
+
   skills: [
     { skill: 'intimidation', description: 'stern dismissal' },
     { skill: 'diplomacy', description: 'honorable discharge' },
@@ -77,5 +88,6 @@ export const disbandArmyPipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     await disbandArmyExecution(ctx.metadata.armyId, true);
+    return { success: true, message: 'Army disbanded' };
   }
 };

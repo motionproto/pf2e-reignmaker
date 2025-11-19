@@ -15,6 +15,23 @@ export const collectStipendPipeline: CheckPipeline = {
   checkType: 'action',
   category: 'economic-resources',
 
+  // Requirements: Must have a taxation structure (Counting House T2+)
+  requirements: (kingdom) => {
+    const REVENUE_STRUCTURES = ['counting-house', 'treasury', 'exchequer'];
+    const hasTaxationStructure = kingdom.settlements?.some(s => 
+      s.structureIds?.some(id => REVENUE_STRUCTURES.includes(id))
+    );
+    
+    if (!hasTaxationStructure) {
+      return {
+        met: false,
+        reason: 'Requires Counting House (T2) or higher Taxation structure'
+      };
+    }
+    
+    return { met: true };
+  },
+
   skills: [
     { skill: 'intimidation', description: 'demand payment' },
     { skill: 'deception', description: 'creative accounting' },

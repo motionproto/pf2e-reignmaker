@@ -16,6 +16,22 @@ export const requestEconomicAidPipeline: CheckPipeline = {
   checkType: 'action',
   category: 'foreign-affairs',
 
+  // Requirements: Must have at least one Friendly or Helpful faction
+  requirements: (kingdom) => {
+    const hasAllies = kingdom.factions?.some(f => 
+      f.attitude === 'Friendly' || f.attitude === 'Helpful'
+    );
+    
+    if (!hasAllies) {
+      return {
+        met: false,
+        reason: 'Requires diplomatic relations (Friendly or Helpful) with at least one faction'
+      };
+    }
+    
+    return { met: true };
+  },
+
   /**
    * Pre-roll interaction: Select friendly/helpful faction
    * Requirements: Diplomatic relations at least friendly

@@ -17,6 +17,22 @@ export const executeOrPardonPrisonersPipeline: CheckPipeline = {
   category: 'uphold-stability',
 
   /**
+   * Requirements: At least one settlement with imprisoned unrest and capacity
+   */
+  requirements: (kingdom) => {
+    const hasEligibleSettlement = kingdom.settlements?.some((s: any) => {
+      const imprisonedUnrest = s.imprisonedUnrest || 0;
+      const capacity = structuresService.calculateImprisonedUnrestCapacity(s);
+      return imprisonedUnrest > 0 && capacity > 0;
+    });
+    
+    return {
+      met: hasEligibleSettlement || false,
+      reason: hasEligibleSettlement ? undefined : 'No settlements with imprisoned unrest'
+    };
+  },
+
+  /**
    * Pre-roll interaction: Select settlement with imprisoned unrest
    * NOTE: The filter function acts as the requirements check - if no settlements
    * pass the filter, the action is unavailable.

@@ -16,6 +16,17 @@ export const establishDiplomaticRelationsPipeline: CheckPipeline = {
   checkType: 'action',
   category: 'foreign-affairs',
 
+  // Requirements: Must have at least one faction
+  requirements: (kingdom) => {
+    if (!kingdom.factions || kingdom.factions.length === 0) {
+      return {
+        met: false,
+        reason: 'No factions available for diplomatic relations'
+      };
+    }
+    return { met: true };
+  },
+
   /**
    * Pre-roll interaction: Select faction for diplomatic mission
    * NOTE: The filter function acts as the requirements check - if no factions

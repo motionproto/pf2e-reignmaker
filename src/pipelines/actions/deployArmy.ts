@@ -15,6 +15,17 @@ export const deployArmyPipeline: CheckPipeline = {
   checkType: 'action',
   category: 'military-operations',
 
+  // Requirements: Must have at least one army
+  requirements: (kingdom) => {
+    if (kingdom.armies.length === 0) {
+      return {
+        met: false,
+        reason: 'No armies available'
+      };
+    }
+    return { met: true };
+  },
+
   skills: [
     { skill: 'nature', description: 'natural pathways' },
     { skill: 'survival', description: 'wilderness navigation' },
@@ -109,5 +120,6 @@ export const deployArmyPipeline: CheckPipeline = {
       conditionsToApply,
       animationSpeed: 100
     });
+    return { success: true, message: 'Army deployed' };
   }
 };

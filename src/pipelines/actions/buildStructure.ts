@@ -16,6 +16,17 @@ export const buildStructurePipeline: CheckPipeline = {
   checkType: 'action',
   category: 'urban-planning',
 
+  // Requirements: Must have at least one settlement
+  requirements: (kingdom) => {
+    if (kingdom.settlements.length === 0) {
+      return {
+        met: false,
+        reason: 'No settlements available'
+      };
+    }
+    return { met: true };
+  },
+
   skills: [
     { skill: 'crafting', description: 'construction expertise' },
     { skill: 'society', description: 'organize workforce' },

@@ -16,6 +16,23 @@ export const repairStructurePipeline: CheckPipeline = {
   checkType: 'action',
   category: 'urban-planning',
 
+  // Requirements: Must have at least one damaged structure
+  requirements: (kingdom) => {
+    // Check if any settlement has damaged structures
+    const hasDamagedStructures = kingdom.settlements?.some(s => 
+      s.structureConditions && Object.values(s.structureConditions).some(condition => condition === 'damaged')
+    );
+    
+    if (!hasDamagedStructures) {
+      return {
+        met: false,
+        reason: 'No damaged structures to repair'
+      };
+    }
+    
+    return { met: true };
+  },
+
   skills: [
     { skill: 'crafting', description: 'construction expertise' },
     { skill: 'society', description: 'organize workforce' },

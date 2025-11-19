@@ -16,6 +16,17 @@ export const upgradeSettlementPipeline: CheckPipeline = {
   checkType: 'action',
   category: 'urban-planning',
 
+  // Requirements: Must have at least one settlement
+  requirements: (kingdom) => {
+    if (kingdom.settlements.length === 0) {
+      return {
+        met: false,
+        reason: 'No settlements to upgrade'
+      };
+    }
+    return { met: true };
+  },
+
   skills: [
     { skill: 'crafting', description: 'infrastructure expansion' },
     { skill: 'society', description: 'urban planning' },

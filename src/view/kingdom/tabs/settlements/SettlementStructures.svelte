@@ -38,8 +38,9 @@
    $: meetsRequirements = currentStructures >= requiredStructures;
    $: showWarning = !meetsRequirements && requiredStructures > 0 && !dismissedWarning;
    
-   // Get grouped structures for this settlement
+   // Get grouped structures for this settlement (existing view) and also by type
    $: groupedStructures = settlementStructureManagement.getSettlementStructuresGrouped(settlement);
+   $: groupedByType = settlementStructureManagement.getStructuresGroupedByTypeAndCategory();
    
    function toggleCategory(category: string) {
       if (expandedCategories.has(category)) {
@@ -201,92 +202,32 @@
    {:else}
       <table class="structures-table">
          <thead>
-               <tr>
-                  <th class="name-col">Name</th>
-                  <th class="tier-col">Tier</th>
-                  <th class="condition-col">Condition</th>
-                  <th class="actions-col">Actions</th>
+            <tr>
+               <th class="name-col">Name</th>
+               <th class="tier-col">Tier</th>
+               <th class="condition-col">Condition</th>
+               <th class="actions-col">Actions</th>
+            </tr>
+         </thead>
+         <tbody>
+            <!-- Support section divider -->
+            {#if groupedByType.support.some(cat => settlement.structureIds.some(id => cat.structures.map(s => s.id).includes(id)))}
+               <tr class="section-divider">
+                  <td colspan="4" class="section-label">Support Structures</td>
                </tr>
-            </thead>
-            <tbody>
-               {#each groupedStructures as group}
-                  <!-- Highest tier row -->
-                  <tr class="structure-row" class:damaged={getStructureCondition(group.highestTier.id) === StructureCondition.DAMAGED}>
-                     <td class="name-cell">
-                        <div class="name-content">
-                           {#if group.lowerTiers.length > 0}
-                              <button 
-                                 class="expand-button"
-                                 on:click={() => toggleCategory(group.category)}
-                                 title="Show lower tiers"
-                              >
-                                 <i class="fas fa-chevron-{expandedCategories.has(group.category) ? 'down' : 'right'}"></i>
-                              </button>
-                           {:else}
-                              <span class="no-expand-spacer"></span>
-                           {/if}
-                           <span class="structure-name">
-                              {group.highestTier.name}
-                              {#if getSkillsText(group.highestTier)}
-                                 <span class="skills-badge">({getSkillsText(group.highestTier)})</span>
-                              {/if}
-                           </span>
-                        </div>
-                     </td>
-                     <td class="tier-cell">
-                        <span class="tier-label">
-                           {group.highestTier.tier}
-                        </span>
-                     </td>
-                     <td class="condition-cell">
-                        <select 
-                           class="condition-select"
-                           class:condition-good={getStructureCondition(group.highestTier.id) === StructureCondition.GOOD}
-                           class:condition-damaged={getStructureCondition(group.highestTier.id) === StructureCondition.DAMAGED}
-                           value={getStructureCondition(group.highestTier.id)}
-                           on:change={(e) => handleConditionChange(group.highestTier.id, e)}
-                        >
-                           <option value={StructureCondition.GOOD}>-</option>
-                           <option value={StructureCondition.DAMAGED}>Damaged</option>
-                        </select>
-                     </td>
-                     <td class="actions-cell">
-                        <button 
-                           class="delete-button"
-                           on:click={(e) => {
-                              const groupIds = [group.highestTier.id, ...group.lowerTiers.map(s => s.id)];
-                              if (e.shiftKey && groupIds.length > 1) {
-                                 handleDeleteStructure(group.highestTier.id, group.highestTier.name, groupIds);
-                              } else {
-                                 handleDeleteStructure(group.highestTier.id, group.highestTier.name);
-                              }
-                           }}
-                           title={group.lowerTiers.length > 0 ? "Remove structure (SHIFT+click to remove entire group)" : "Remove structure"}
-                        >
-                           <i class="fas fa-trash"></i>
-                        </button>
-                     </td>
-                  </tr>
-                  
-                  <!-- Lower tiers (expandable) -->
-                  {#if expandedCategories.has(group.category)}
-                     {#each group.lowerTiers as structure}
-                        <tr class="structure-row lower-tier" class:damaged={getStructureCondition(structure.id) === StructureCondition.DAMAGED}>
+
+               {#each groupedByType.support as cat}
+                  {#each cat.structures as structure (structure.id)}
+                     {#if settlement.structureIds.includes(structure.id)}
+                        <tr class="structure-row" class:damaged={getStructureCondition(structure.id) === StructureCondition.DAMAGED}>
                            <td class="name-cell">
-                              <div class="name-content indented">
+                              <div class="name-content">
                                  <span class="no-expand-spacer"></span>
-                                 <span class="structure-name">
-                                    {structure.name}
-                                    {#if getSkillsText(structure)}
-                                       <span class="skills-badge">({getSkillsText(structure)})</span>
-                                    {/if}
-                                 </span>
+                                 <span class="structure-name">{structure.name}</span>
                               </div>
                            </td>
                            <td class="tier-cell">
-                              <span class="tier-label">
-                                 {structure.tier}
-                              </span>
+                              <span class="tier-label">{structure.tier}</span>
                            </td>
                            <td class="condition-cell">
                               <select 
@@ -301,18 +242,62 @@
                               </select>
                            </td>
                            <td class="actions-cell">
-                              <button 
-                                 class="delete-button"
-                                 on:click={() => handleDeleteStructure(structure.id, structure.name)}
-                                 title="Remove structure"
-                              >
+                              <button class="delete-button" on:click={() => handleDeleteStructure(structure.id, structure.name)} title="Remove structure">
                                  <i class="fas fa-trash"></i>
                               </button>
                            </td>
                         </tr>
-                     {/each}
-                  {/if}
+                     {/if}
+                  {/each}
                {/each}
+            {/if}
+
+            <!-- Skill section divider -->
+            {#if groupedByType.skill.some(cat => settlement.structureIds.some(id => cat.structures.map(s => s.id).includes(id)))}
+               <tr class="section-divider">
+                  <td colspan="4" class="section-label">Skill Structures</td>
+               </tr>
+
+               {#each groupedByType.skill as cat}
+                  {#each cat.structures as structure (structure.id)}
+                     {#if settlement.structureIds.includes(structure.id)}
+                        <tr class="structure-row" class:damaged={getStructureCondition(structure.id) === StructureCondition.DAMAGED}>
+                           <td class="name-cell">
+                              <div class="name-content">
+                                 <span class="no-expand-spacer"></span>
+                                 <span class="structure-name">
+                                    {structure.name}
+                                    {#if getSkillsText(structure)}
+                                       <span class="skills-badge">({getSkillsText(structure)})</span>
+                                    {/if}
+                                 </span>
+                              </div>
+                           </td>
+                           <td class="tier-cell">
+                              <span class="tier-label">{structure.tier}</span>
+                           </td>
+                           <td class="condition-cell">
+                              <select 
+                                 class="condition-select"
+                                 class:condition-good={getStructureCondition(structure.id) === StructureCondition.GOOD}
+                                 class:condition-damaged={getStructureCondition(structure.id) === StructureCondition.DAMAGED}
+                                 value={getStructureCondition(structure.id)}
+                                 on:change={(e) => handleConditionChange(structure.id, e)}
+                              >
+                                 <option value={StructureCondition.GOOD}>-</option>
+                                 <option value={StructureCondition.DAMAGED}>Damaged</option>
+                              </select>
+                           </td>
+                           <td class="actions-cell">
+                              <button class="delete-button" on:click={() => handleDeleteStructure(structure.id, structure.name)} title="Remove structure">
+                                 <i class="fas fa-trash"></i>
+                              </button>
+                           </td>
+                        </tr>
+                     {/if}
+                  {/each}
+               {/each}
+            {/if}
          </tbody>
       </table>
    {/if}
@@ -376,7 +361,7 @@
       overflow: hidden;
       
       thead {
-         background: var(--overlay-lower);
+         background: var(--surface);
          
          th {
             padding: var(--space-12);
@@ -462,7 +447,7 @@
                   }
                   
                   .no-expand-spacer {
-                     width: 1.25rem;
+                      width: 0.75rem;
                      display: inline-block;
                   }
                   
@@ -541,7 +526,21 @@
                   }
                }
             }
-         }
+      }
+
+      /* Section divider row inside single table */
+      .section-divider {
+         background: var(--surface);
+         border-bottom: 1px solid var(--border-subtle);
+      }
+
+      .section-label {
+         padding: var(--space-8) var(--space-12);
+         text-transform: uppercase;
+         font-weight: var(--font-weight-semibold);
+         color: var(--text-secondary);
+         background: transparent;
+      }
       }
    }
 </style>

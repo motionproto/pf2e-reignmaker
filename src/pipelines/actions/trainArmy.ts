@@ -16,6 +16,17 @@ export const trainArmyPipeline: CheckPipeline = {
   checkType: 'action',
   category: 'military-operations',
 
+  // Requirements: Must have at least one army
+  requirements: (kingdom) => {
+    if (kingdom.armies.length === 0) {
+      return {
+        met: false,
+        reason: 'No armies available'
+      };
+    }
+    return { met: true };
+  },
+
   skills: [
     { skill: 'intimidation', description: 'harsh discipline' },
     { skill: 'athletics', description: 'physical conditioning' },
@@ -88,5 +99,6 @@ export const trainArmyPipeline: CheckPipeline = {
   execute: async (ctx) => {
     const partyLevel = getPartyLevel();
     await trainArmyExecution(ctx.metadata.armyId, partyLevel, ctx.outcome);
+    return { success: true, message: 'Army training complete' };
   }
 };

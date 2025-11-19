@@ -16,6 +16,17 @@ export const outfitArmyPipeline: CheckPipeline = {
   checkType: 'action',
   category: 'military-operations',
 
+  // Requirements: Must have at least one army
+  requirements: (kingdom) => {
+    if (kingdom.armies.length === 0) {
+      return {
+        met: false,
+        reason: 'No armies available'
+      };
+    }
+    return { met: true };
+  },
+
   skills: [
     { skill: 'crafting', description: 'forge equipment' },
     { skill: 'society', description: 'requisition supplies' },

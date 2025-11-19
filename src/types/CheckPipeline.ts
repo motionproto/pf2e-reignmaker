@@ -14,6 +14,7 @@
 // Import existing types from codebase (don't redefine)
 import type { EventModifier, ResourceType } from './modifiers';
 import type { KingdomSkill } from './events';
+import type { KingdomData } from '../actors/KingdomActor';
 
 // Re-export for convenience
 export type { EventModifier, ResourceType, KingdomSkill };
@@ -121,6 +122,19 @@ export interface CheckPipeline {
 
   // Category (actions only)
   category?: string;
+
+  // Requirements (actions only) - Availability check
+  /**
+   * Check if this action is available to perform
+   * If not provided, action is always available (after resource cost check)
+   * @param kingdom - Current kingdom state
+   * @param context - Optional context (e.g., stored instance metadata)
+   * @returns Requirement check result
+   */
+  requirements?: (kingdom: KingdomData, context?: any) => {
+    met: boolean;
+    reason?: string;
+  };
 
   // Cost (actions only) - Upfront resource costs
   cost?: {
