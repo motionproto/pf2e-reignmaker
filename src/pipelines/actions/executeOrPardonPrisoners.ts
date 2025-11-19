@@ -43,10 +43,35 @@ export const executeOrPardonPrisonersPipeline: CheckPipeline = {
       type: 'entity-selection',
       entityType: 'settlement',
       label: 'Select Settlement with Imprisoned Unrest',
+      required: true,  // Cancelling this dialog should abort the action
       filter: (settlement: any) => {
         const imprisonedUnrest = settlement.imprisonedUnrest || 0;
         const capacity = structuresService.calculateImprisonedUnrestCapacity(settlement);
-        return imprisonedUnrest > 0 && capacity > 0;
+        
+        // Hide settlements with zero capacity
+        if (capacity === 0) {
+          return false;
+        }
+        
+        // Disable settlements at maximum capacity
+        if (imprisonedUnrest >= capacity) {
+          return {
+            eligible: false,
+            reason: 'Settlement at maximum capacity'
+          };
+        }
+        
+        // Must have some imprisoned unrest to be eligible
+        if (imprisonedUnrest === 0) {
+          return false;
+        }
+        
+        return true;
+      },
+      getSupplementaryInfo: (settlement: any) => {
+        const imprisoned = settlement.imprisonedUnrest || 0;
+        const capacity = structuresService.calculateImprisonedUnrestCapacity(settlement);
+        return `${imprisoned} / ${capacity} imprisoned`;
       }
     }
   ],

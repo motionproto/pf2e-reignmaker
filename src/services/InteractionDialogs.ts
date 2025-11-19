@@ -21,7 +21,8 @@ export async function showEntitySelectionDialog(
   entityType: 'settlement' | 'army' | 'faction',
   label?: string,
   filter?: (entity: any, kingdom?: any) => boolean | { eligible: boolean; reason?: string },
-  kingdomParam?: any
+  kingdomParam?: any,
+  getSupplementaryInfo?: ((entity: any) => string) | null
 ): Promise<string | null> {
   const kingdom = kingdomParam || get(kingdomData);
   if (!kingdom) {
@@ -118,7 +119,51 @@ export async function showEntitySelectionDialog(
     });
   }
 
-  // Use simple Foundry dialog for settlements and armies
+  // Use SettlementSelectionDialog for settlement selection
+  if (entityType === 'settlement') {
+    const SettlementSelectionDialog = await import('../view/kingdom/components/dialogs/SettlementSelectionDialog.svelte');
+
+    return new Promise((resolve) => {
+      // Create container element
+      const container = document.createElement('div');
+      container.id = 'settlement-selection-dialog-container';
+      document.body.appendChild(container);
+
+      // Create Svelte component instance
+      const dialog = new SettlementSelectionDialog.default({
+        target: container,
+        props: {
+          show: true,
+          title: label || `Select ${entityLabel}`,
+          filter,
+          getSupplementaryInfo,
+          kingdom
+        }
+      });
+
+      // Listen for confirm event
+      dialog.$on('confirm', (event: any) => {
+        const selectedId = event.detail.settlementId;
+        
+        // Cleanup
+        dialog.$destroy();
+        container.remove();
+        
+        resolve(selectedId || null);
+      });
+
+      // Listen for cancel event
+      dialog.$on('cancel', () => {
+        // Cleanup
+        dialog.$destroy();
+        container.remove();
+        
+        resolve(null);
+      });
+    });
+  }
+
+  // Use simple Foundry dialog for armies (can be upgraded later)
   const options = entities
     .map(e => `<option value="${e.id}">${e.name}</option>`)
     .join('');

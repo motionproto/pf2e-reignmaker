@@ -83,6 +83,19 @@ export class PipelineCoordinator {
       
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      // Handle user cancellation gracefully (not an error)
+      if (errorMessage === 'Action cancelled by user') {
+        log(context, 0, 'cancelled', `User cancelled ${actionId}`);
+        console.log(`⏭️ [PipelineCoordinator] User cancelled ${actionId}`);
+        
+        // Still rollback any partial changes
+        await this.rollback(context);
+        
+        throw error; // Re-throw so caller knows it was cancelled
+      }
+      
+      // Regular error handling
       log(context, 0, 'error', `Pipeline failed: ${errorMessage}`, error);
       console.error('❌ [PipelineCoordinator] Pipeline execution failed:', error);
       

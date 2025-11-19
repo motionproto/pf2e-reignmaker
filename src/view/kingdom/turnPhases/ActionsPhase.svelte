@@ -533,19 +533,30 @@
     }
     
     // Execute complete pipeline (Steps 1-9, pauses at Step 6 for user confirmation)
-    // NO FALLBACK: If this fails, we want to see the error
-    await pipelineCoordinator.executePipeline(action.id, {
-      actor: {
-        selectedSkill: skill,
-        fullActor: actingCharacter,
-        actorName: actingCharacter.name,
-        actorId: actingCharacter.id,
-        level: actingCharacter.level || 1,
-        proficiencyRank: 0 // TODO: Get from actor
+    try {
+      await pipelineCoordinator.executePipeline(action.id, {
+        actor: {
+          selectedSkill: skill,
+          fullActor: actingCharacter,
+          actorName: actingCharacter.name,
+          actorId: actingCharacter.id,
+          level: actingCharacter.level || 1,
+          proficiencyRank: 0 // TODO: Get from actor
+        }
+      });
+      
+      console.log(`✅ [ActionsPhase] Pipeline complete for ${action.id}`);
+    } catch (error: any) {
+      // Handle user cancellation gracefully (not an error)
+      if (error.message === 'Action cancelled by user') {
+        console.log(`⏭️ [ActionsPhase] User cancelled ${action.id}`);
+        return;
       }
-    });
-    
-    console.log(`✅ [ActionsPhase] Pipeline complete for ${action.id}`);
+      
+      // Re-throw actual errors
+      console.error(`❌ [ActionsPhase] Pipeline failed for ${action.id}:`, error);
+      throw error;
+    }
     
     // Clear aid modifiers for this action
     const actor = getKingdomActor();

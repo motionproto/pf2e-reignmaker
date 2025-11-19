@@ -112,6 +112,12 @@ export class UnifiedCheckHandler {
       // Execute interaction based on type
       const result = await this.executeInteraction(interaction, kingdom, metadata);
 
+      // Check if user cancelled a required interaction
+      if ((result === null || result === undefined) && interaction.required !== false) {
+        console.log(`❌ [UnifiedCheckHandler] Required interaction cancelled by user: ${interaction.type}`);
+        throw new Error('Action cancelled by user');
+      }
+
       // Store result in metadata
       if (interaction.id && result !== null && result !== undefined) {
         metadata[interaction.id] = result;
@@ -162,7 +168,8 @@ export class UnifiedCheckHandler {
       interaction.entityType,
       interaction.label,
       interaction.filter,
-      kingdom  // ✅ ADD: Pass kingdom data to filter
+      kingdom,  // ✅ Pass kingdom data to filter
+      interaction.getSupplementaryInfo  // ✅ Pass supplementary info function
     );
 
     if (!selectedId) {
