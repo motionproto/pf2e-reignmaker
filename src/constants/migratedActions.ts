@@ -3,6 +3,17 @@
  * 
  * Tracks which actions have been tested with the PipelineCoordinator.
  * Updates badge display in Actions tab UI.
+ * 
+ * Pipeline Steps (9-Step Architecture):
+ *   Step 1: Requirements Check (optional)
+ *   Step 2: Pre-Roll Interactions (optional)
+ *   Step 3: Execute Roll (always)
+ *   Step 4: Display Outcome (always)
+ *   Step 5: Outcome Interactions (optional)
+ *   Step 6: Wait For Apply (always)
+ *   Step 7: Post-Apply Interactions (optional)
+ *   Step 8: Execute Action (always)
+ *   Step 9: Cleanup (always)
  */
 
 export type ActionStatus = 'untested' | 'testing' | 'tested';
@@ -14,23 +25,23 @@ export type ActionStatus = 'untested' | 'testing' | 'tested';
  */
 export const ACTION_STATUS = new Map<string, ActionStatus>([
   // Phase 1: No Interactions
-  ['deal-with-unrest', 'tested'],  // #1
+  ['deal-with-unrest', 'testing'],  // #1
   
   // Phase 2: Post-Apply Map Interactions
-  ['claim-hexes', 'tested'],  // #2
-  ['build-roads', 'tested'],  // #3
-  ['fortify-hex', 'tested'],  // #4
-  ['create-worksite', 'tested'],  // #5
-  ['harvest-resources', 'tested'],  // #6
-  ['send-scouts', 'tested'],  // #7
+  ['claim-hexes', 'untested'],  // #2
+  ['build-roads', 'untested'],  // #3
+  ['fortify-hex', 'untested'],  // #4
+  ['create-worksite', 'untested'],  // #5
+  ['harvest-resources', 'untested'],  // #6
+  ['send-scouts', 'untested'],  // #7
   
   // Phase 3: Custom Components (graceful degradation)
-  ['sell-surplus', 'tested'],  // #8
-  ['purchase-resources', 'tested'],  // #9
+  ['sell-surplus', 'untested'],  // #8
+  ['purchase-resources', 'untested'],  // #9
   
   // Phase 4: Pre-Roll Entity Selection
-  ['collect-stipend', 'tested'],  // #10
-  ['execute-or-pardon-prisoners', 'tested'],  // #11
+  ['collect-stipend', 'untested'],  // #10
+  ['execute-or-pardon-prisoners', 'untested'],  // #11
   ['diplomatic-mission', 'untested'],  // #12
   ['request-economic-aid', 'untested'],  // #13
   ['request-military-aid', 'untested'],  // #14

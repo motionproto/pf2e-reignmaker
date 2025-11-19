@@ -152,6 +152,140 @@ Phase Flow: TurnManager.nextPhase() → Update currentPhase →
 - **PhaseControllerHelpers** = Utility functions (imported by controllers)
 - Utilities are implementation details, not separate architectural components
 
+### 8. Pipeline Architecture (9-Step Pattern for Actions)
+
+**⚠️ CRITICAL: Actions use PipelineCoordinator, NOT archived controllers**
+
+All player actions follow a standardized 9-step pipeline orchestrated by `PipelineCoordinator`:
+
+```
+Step 1: Requirements Check      (OPTIONAL - if pipeline.requirements defined)
+Step 2: Pre-Roll Interactions   (OPTIONAL - if pipeline.preRollInteractions defined)
+Step 3: Execute Roll            (ALWAYS - PF2e skill check with callback)
+Step 4: Display Outcome         (ALWAYS - create outcome preview for UI)
+Step 5: Outcome Interactions    (OPTIONAL - user interactions with outcome display)
+Step 6: Wait For Apply          (ALWAYS - pause until "Apply Result" clicked)
+Step 7: Post-Apply Interactions (OPTIONAL - if pipeline.postApplyInteractions defined)
+Step 8: Execute Action          (ALWAYS - apply state changes)
+Step 9: Cleanup                 (ALWAYS - track action + delete instance)
+```
+
+**Pipeline Definition Location:**
+- Actions defined in: `src/pipelines/actions/*.ts`
+- Registered in: `src/pipelines/PipelineRegistry.ts`
+- Coordinator: `src/services/PipelineCoordinator.ts`
+
+**Step Responsibilities (Separation of Concerns):**
+
+**Step 4** - Create instance ONLY:
+```typescript
+// OutcomePreviewService.createActionOutcomePreview()
+// - Create instance via createInstance()
+// - Store outcome with BASIC data (no preview calculation)
+// - Return instance ID
+// ❌ Does NOT calculate preview (Step 5's job)
+// ❌ Does NOT extract custom components (Step 7's job)
+// ❌ Does NOT process game commands (Step 8's job)
+```
+
+**Step 5** - Calculate preview ONLY:
+```typescript
+// UnifiedCheckHandler.calculatePreview()
+// - Build check context from pipeline + metadata
+// - Calculate what will happen (resource changes, entity operations)
+// - Format preview to special effects
+// - Update instance with formatted preview for UI display
+// ❌ Does NOT execute changes (Step 8's job)
+```
+
+**Step 6** - Wait for user:
+```typescript
+// Promise-based pause/resume pattern
+// - Store context in pendingContexts map
+// - Return promise that resolves when confirmApply() called
+// - OutcomeDisplay shows preview, user clicks "Apply Result"
+```
+
+**Step 7** - Post-apply interactions ONLY:
+```typescript
+// UnifiedCheckHandler.executePostApplyInteractions()
+// - Show custom components (if defined in pipeline)
+// - Collect user input after confirmation
+// - Return resolution data for Step 8
+```
+
+**Step 8** - Execute action ONLY:
+```typescript
+// UnifiedCheckHandler.executeCheck()
+// - Apply resource changes
+// - Execute game commands
+// - Create/modify entities
+// - Update kingdom state
+```
+
+**Clean Pipeline Example:**
+```typescript
+// src/pipelines/actions/example.ts
+export const examplePipeline: CheckPipeline = {
+  id: 'example-action',
+  name: 'Example Action',
+  
+  // Step 1 (optional)
+  requirements: (kingdom) => ({
+    met: kingdom.resources.gold >= 10,
+    reason: 'Need 10 gold'
+  }),
+  
+  // Step 2 (optional)
+  preRollInteractions: [
+    {
+      id: 'settlement',
+      type: 'entity-selection',
+      entityType: 'settlement',
+      required: true
+    }
+  ],
+  
+  // Step 3 (always runs)
+  skills: [
+    { skill: 'politics', description: 'convince the council' }
+  ],
+  
+  // Step 5 (optional)
+  preview: {
+    calculate: async (ctx) => ({
+      resources: [/* resource changes */],
+      specialEffects: [/* preview badges */]
+    })
+  },
+  
+  // Step 7 (optional)
+  postApplyInteractions: [
+    {
+      id: 'bonus-type',
+      type: 'configuration',
+      component: CustomBonusSelector
+    }
+  ],
+  
+  // Step 8 (always runs)
+  execute: async (ctx) => {
+    // Apply state changes
+    await updateKingdom(kingdom => {
+      kingdom.resources.gold -= 10;
+    });
+    return { success: true };
+  }
+};
+```
+
+**Key Architectural Benefits:**
+- ✅ **Separation of Concerns** - Each step has ONE job
+- ✅ **No Circular Dependencies** - Steps don't call each other
+- ✅ **Testable** - Each step can be tested independently
+- ✅ **Reusable** - UnifiedCheckHandler shared across all actions
+- ✅ **Clean Interfaces** - Simple, focused service methods
+
 ## Implementation Patterns
 
 ### Component Pattern (UI Only)
@@ -252,9 +386,15 @@ onMount(async () => {
 src/
 ├── view/                    # Svelte components (presentation only)
 ├── controllers/             # Business logic (phase operations, game rules)
+│   ├── actions/             # Action infrastructure (HOW to run actions)
 │   ├── events/              # Event types & providers
 │   ├── incidents/           # Incident types & providers
 │   └── shared/              # Shared controller utilities
+├── pipelines/               # Pipeline definitions (game content)
+│   ├── actions/             # Action definitions (WHAT each action does)
+│   ├── events/              # Event pipelines
+│   ├── incidents/           # Incident pipelines
+│   └── shared/              # Shared pipeline utilities
 ├── services/                # Complex operations (utilities, calculations)
 │   ├── domain/              # Domain services (events, incidents, unrest)
 │   │   ├── events/          # EventService (load from dist/events.json)
@@ -269,6 +409,11 @@ src/
 │   └── kingdomSync.ts       # Actor discovery and wrapping
 └── models/                  # TurnManager, Modifiers (data structures)
 ```
+
+**Key Separation:**
+- `controllers/actions/` = Infrastructure (HOW to run actions) - see README
+- `pipelines/actions/` = Definitions (WHAT each action does) - see README
+- Think: JavaScript engine vs JavaScript code
 
 ## Event & Incident System (Normalized Structure)
 

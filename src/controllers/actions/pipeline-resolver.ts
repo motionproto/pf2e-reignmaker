@@ -9,7 +9,7 @@
  * Use the new services directly for new code.
  */
 
-import type { PlayerAction } from './action-types';
+import type { PlayerAction } from './pipeline-types';
 import type { KingdomData } from '../../actors/KingdomActor';
 import { actionAvailabilityService, type ActionRequirement } from '../../services/actions/ActionAvailabilityService';
 import { actionExecutionService, type ActionOutcome } from '../../services/actions/ActionExecutionService';

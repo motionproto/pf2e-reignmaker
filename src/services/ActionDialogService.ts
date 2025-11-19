@@ -5,7 +5,6 @@
  * Replaces component-level pending state with centralized service.
  */
 
-import { getActionImplementation } from '../controllers/actions/implementations';
 import { logger } from '../utils/Logger';
 
 /**
@@ -46,30 +45,10 @@ export class ActionDialogService {
   ): Promise<void> {
     logger.info(`🎬 [ActionDialogService] Initiating action: ${actionId} with skill: ${skill}`);
     
-    // Get action implementation
-    const impl = getActionImplementation(actionId);
-    
-    // Check if action needs pre-roll dialog
-    if (impl?.preRollDialog) {
-      logger.info(`  📋 Action requires pre-roll dialog: ${impl.preRollDialog.dialogId}`);
-      
-      // Store pending action with skill
-      this.pendingActions.set(actionId, {
-        actionId,
-        skill,
-        timestamp: Date.now()
-      });
-      
-      // Show dialog (component handles mounting Svelte component)
-      callbacks.showDialog(impl.preRollDialog.dialogId);
-      
-      // Dialog completion will be handled by handleDialogComplete()
-      // which will then trigger the roll via callback
-    } else {
-      // Standard action - no dialog needed, proceed directly to roll
-      logger.info(`  ⏭️ No pre-roll dialog needed, proceeding to roll`);
-      await callbacks.onRollTrigger(skill, null);
-    }
+    // NOTE: Pre-roll dialogs now handled by PipelineCoordinator's preRollInteractions
+    // This legacy service is kept for backward compatibility but should not be used
+    logger.info(`  ⏭️ Proceeding to roll (dialogs handled by pipeline system)`);
+    await callbacks.onRollTrigger(skill, null);
   }
   
   /**
@@ -92,18 +71,9 @@ export class ActionDialogService {
       return;
     }
     
-    // Get action implementation to extract metadata
-    const impl = getActionImplementation(actionId);
-    
-    if (!impl?.preRollDialog) {
-      logger.error(`❌ Action ${actionId} has no preRollDialog config`);
-      return;
-    }
-    
-    // Extract metadata using action's extractor function
-    const metadata = impl.preRollDialog.extractMetadata 
-      ? impl.preRollDialog.extractMetadata(dialogResult)
-      : dialogResult;
+    // Extract metadata - just use dialog result directly
+    // (Pipeline system handles metadata extraction differently)
+    const metadata = dialogResult;
     
     // Update pending action with dialog result
     pending.dialogResult = metadata;

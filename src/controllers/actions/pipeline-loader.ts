@@ -1,4 +1,4 @@
-import type { PlayerAction, PlayerActionJson, SkillOption, ActionEffect } from './action-types';
+import type { PlayerAction, PlayerActionJson, SkillOption, ActionEffect } from './pipeline-types';
 import actionsData from '../../data-compiled/player-actions.json';
 import { logger } from '../../utils/Logger';
 

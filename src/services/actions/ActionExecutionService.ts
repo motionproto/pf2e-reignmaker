@@ -5,7 +5,7 @@
  * Separated from ActionResolver for Single Responsibility Principle.
  */
 
-import type { PlayerAction } from '../../controllers/actions/action-types';
+import type { PlayerAction } from '../../controllers/actions/pipeline-types';
 import type { KingdomData } from '../../actors/KingdomActor';
 import { createGameCommandsService, type OutcomeDegree } from '../GameCommandsService';
 import { logger } from '../../utils/Logger';

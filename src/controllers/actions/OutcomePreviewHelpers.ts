@@ -7,7 +7,7 @@
 
 import { createOutcomePreviewService } from '../../services/OutcomePreviewService';
 import { getKingdomActor, updateKingdom } from '../../stores/KingdomStore';
-import type { PlayerAction } from './action-types';
+import type { PlayerAction } from './pipeline-types';
 import type { Army } from '../../models/Army';
 
 /**
@@ -326,6 +326,13 @@ export async function createActionOutcomePreview(context: {
       const pipeline = unifiedCheckHandler.getCheck(actionId);
       console.log(`🔍 [OutcomePreviewHelpers] Pipeline for ${actionId}:`, pipeline);
       console.log(`🔍 [OutcomePreviewHelpers] Has postRollInteractions?`, !!pipeline?.postRollInteractions);
+      
+      // ✅ FIX: Skip preview calculation for actions with pre-roll interactions
+      // The PipelineCoordinator will calculate it properly in Step 5 with full metadata
+      if (pipeline?.preRollInteractions && pipeline.preRollInteractions.length > 0) {
+        console.log(`⏭️ [OutcomePreviewHelpers] Skipping early preview - action has pre-roll interactions, will calculate in PipelineCoordinator Step 5`);
+        return previewId;  // Skip to storing outcome
+      }
       
       // Extract custom component from postRollInteractions (for inline display)
       if (pipeline?.postRollInteractions) {

@@ -3,8 +3,7 @@
   import BaseCheckCard from '../../../kingdom/components/BaseCheckCard.svelte';
   import CommerceTierInfo from '../../../kingdom/components/CheckCard/components/CommerceTierInfo.svelte';
   import SectionHeader from './SectionHeader.svelte';
-  import { getCustomResolutionComponent } from '../../../../controllers/actions/implementations';
-  import type { PlayerAction } from '../../../../controllers/actions/action-types';
+  import type { PlayerAction } from '../../../../controllers/actions/pipeline-types';
   import { getActionStatus, getActionNumber } from '../../../../constants/migratedActions';
 
   const dispatch = createEventDispatcher();
@@ -73,7 +72,7 @@
     <div class="actions-list">
       {#each actions as action (action.id)}
         {@const actionStatus = getActionStatus(action.id)}
-        {@const actionNumber = getActionNumber(action.id)}
+        {@const actionNumber = getActionNumber(action.id) ?? undefined}
         {@const instanceId = currentActionInstances.get(action.id)}
         {@const checkInstance = instanceId ? activeCheckInstances?.find(i => i.previewId === instanceId) : null}
         {@const isResolved = !!(checkInstance && checkInstance.status !== 'pending')}
@@ -93,9 +92,7 @@
               component: checkInstance.appliedOutcome.customComponent, 
               props: checkInstance.appliedOutcome.customResolutionProps || {} 
             }
-          : (resolution && controller) 
-            ? getCustomResolutionComponent(action.id, resolution.outcome) 
-            : null}
+          : null}
         {@const isAvailable = controller ? isActionAvailable(action) : false}
         {@const missingRequirements = !isAvailable && controller ? getMissingRequirements(action) : []}
         {#key `${action.id}-${instanceId || 'none'}-${activeAidsCount}-${isAvailable}-${armyDataKey}-${resourcesKey}`}

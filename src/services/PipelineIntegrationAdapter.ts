@@ -8,7 +8,7 @@
 import { unifiedCheckHandler } from './UnifiedCheckHandler';
 import { pipelineRegistry } from '../pipelines/PipelineRegistry';
 import type { CheckContext, ResolutionData, CheckMetadata } from '../types/CheckContext';
-import type { PlayerAction } from '../controllers/actions/action-types';
+import type { PlayerAction } from '../controllers/actions/pipeline-types';
 import type { KingdomData } from '../actors/KingdomActor';
 import { logger } from '../utils/Logger';
 
@@ -142,7 +142,7 @@ export class PipelineIntegrationAdapter {
       }
 
       // Get the action (for check property in context)
-      const { actionLoader } = await import('../controllers/actions/action-loader');
+      const { actionLoader } = await import('../controllers/actions/pipeline-loader');
       const action = actionLoader.getAllActions().find(a => a.id === actionId);
       if (!action) {
         return { success: false, error: `Action ${actionId} not found` };
@@ -227,7 +227,7 @@ export class PipelineIntegrationAdapter {
       return null;
     }
 
-    const { actionLoader } = await import('../controllers/actions/action-loader');
+    const { actionLoader } = await import('../controllers/actions/pipeline-loader');
     const action = actionLoader.getAllActions().find(a => a.id === actionId);
     if (!action) {
       return null;

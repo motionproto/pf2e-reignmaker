@@ -304,3 +304,114 @@ export const outcomePreviewService = new OutcomePreviewService();
 export async function createOutcomePreviewService(): Promise<OutcomePreviewService> {
   return outcomePreviewService;
 }
+
+/**
+ * Create action outcome preview (Step 4 ONLY - minimal version)
+ * 
+ * This is a clean replacement for the archived OutcomePreviewHelpers.createActionOutcomePreview()
+ * that ONLY handles Step 4 responsibilities:
+ * - Create instance
+ * - Store outcome with basic data
+ * - Return instance ID
+ * 
+ * Does NOT handle (these belong in other steps):
+ * - Preview calculation (Step 5)
+ * - Custom component extraction (Step 7)
+ * - Game command execution (Step 8)
+ * - Complex placeholder replacement (formatting concern)
+ * 
+ * @param context - Minimal context for instance creation
+ * @returns Preview ID
+ */
+export async function createActionOutcomePreview(context: {
+  actionId: string;
+  action: any;
+  outcome: string;
+  actorName: string;
+  actorId?: string;
+  actorLevel?: number;
+  proficiencyRank?: number;
+  skillName?: string;
+  rollBreakdown?: any;
+  currentTurn: number;
+  metadata?: Record<string, any>;
+}): Promise<string> {
+  const {
+    actionId,
+    action,
+    outcome,
+    actorName,
+    actorId,
+    actorLevel,
+    proficiencyRank,
+    skillName,
+    rollBreakdown,
+    currentTurn,
+    metadata = {}
+  } = context;
+  
+  // Create instance with metadata
+  const previewId = await outcomePreviewService.createInstance(
+    'action',
+    actionId,
+    action,
+    currentTurn,
+    {
+      ...metadata,
+      // Add actor context if provided
+      actor: actorId ? {
+        actorId,
+        actorName,
+        level: actorLevel || 1,
+        selectedSkill: skillName || '',
+        proficiencyRank: proficiencyRank || 0
+      } : undefined
+    }
+  );
+  
+  // Get basic effect message (no placeholder replacement - that's a formatting concern)
+  const outcomeType = outcome as 'success' | 'criticalSuccess' | 'failure' | 'criticalFailure';
+  const outcomeData = (action as any).effects?.[outcomeType] || action[outcomeType];
+  const effectMessage = outcomeData?.description || 'Action completed';
+  
+  // Get basic modifiers (raw, unprocessed - preview calculation happens in Step 5)
+  const modifiers = outcomeData?.modifiers || [];
+  
+  // Build minimal resolution data (no processing, just raw data)
+  const resolutionData = {
+    diceRolls: {},
+    choices: {},
+    allocations: {},
+    textInputs: {},
+    compoundData: {},
+    numericModifiers: modifiers.map((m: any) => ({
+      resource: m.resource,
+      value: m.value,
+      type: m.type,
+      formula: m.formula,
+      operation: m.operation,
+      duration: m.duration
+    })),
+    manualEffects: [],
+    complexActions: [],
+    customComponentData: null
+  };
+  
+  // Store outcome with minimal data
+  await outcomePreviewService.storeOutcome(
+    previewId,
+    outcomeType,
+    resolutionData,
+    actorName,
+    skillName || '',
+    effectMessage,
+    rollBreakdown,
+    [],  // No special effects - calculated in Step 5
+    undefined,  // No custom component - extracted in Step 7
+    {}  // No custom props - handled in Step 7
+  );
+  
+  console.log(`✅ [OutcomePreviewService] Created minimal outcome preview: ${previewId}`);
+  
+  return previewId;
+}

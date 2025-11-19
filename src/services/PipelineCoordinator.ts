@@ -362,84 +362,33 @@ export class PipelineCoordinator {
   }
 
   /**
-   * Step 4: Create Check Instance
+   * Step 4: Display Outcome
    * 
-   * Create visual check instance card in UI
+   * Create visual outcome preview card in UI
    * ALWAYS RUNS
    * 
-   * Stores instance in kingdom.activeCheckInstances
+   * Stores instance in kingdom.pendingOutcomes
    * 
-   * NOTE: This step uses the existing CheckInstanceHelpers since
-   * check instance creation is complex and well-tested.
+   * Uses clean OutcomePreviewService.createActionOutcomePreview() - NO legacy dependencies
    */
   private async step4_createCheckInstance(ctx: PipelineContext): Promise<void> {
-    log(ctx, 4, 'createCheckInstance', 'Creating check instance');
+    log(ctx, 4, 'displayOutcome', 'Creating outcome preview');
     
     const pipeline = await getPipeline(ctx);
     const outcome = ctx.rollData?.outcome || 'success';
     
-    // Import OutcomePreviewHelpers
-    const { createActionOutcomePreview } = await import('../controllers/actions/OutcomePreviewHelpers');
-    
-    // Import action loader to get action definition
-    const { actionLoader } = await import('../controllers/actions/action-loader');
-    const action = actionLoader.getAllActions().find(a => a.id === ctx.actionId);
-    
-    if (!action) {
-      throw new Error(`Action not found: ${ctx.actionId}`);
-    }
+    // Import clean service (no legacy dependencies)
+    const { createActionOutcomePreview } = await import('./OutcomePreviewService');
     
     // Get current turn
     const { currentTurn } = await import('../stores/KingdomStore');
     const { get } = await import('svelte/store');
     const turn = get(currentTurn) || 1;
     
-    // Build pending actions state from metadata
-    // This is needed for placeholder replacement in CheckInstanceHelpers
-    const pendingActions = {
-      pendingBuildAction: ctx.metadata.structureId ? {
-        skill: ctx.actor?.selectedSkill || '',
-        structureId: ctx.metadata.structureId as string,
-        settlementId: ctx.metadata.settlementId as string
-      } : null,
-      pendingRepairAction: ctx.metadata.structureId ? {
-        skill: ctx.actor?.selectedSkill || '',
-        structureId: ctx.metadata.structureId as string,
-        settlementId: ctx.metadata.settlementId as string
-      } : null,
-      pendingUpgradeAction: ctx.metadata.settlementId ? {
-        skill: ctx.actor?.selectedSkill || '',
-        settlementId: ctx.metadata.settlementId as string
-      } : null,
-      pendingDiplomaticAction: ctx.metadata.factionId ? {
-        skill: ctx.actor?.selectedSkill || '',
-        factionId: ctx.metadata.factionId as string,
-        factionName: ctx.metadata.factionName as string
-      } : null,
-      pendingInfiltrationAction: ctx.metadata.factionId ? {
-        skill: ctx.actor?.selectedSkill || '',
-        factionId: ctx.metadata.factionId as string,
-        factionName: ctx.metadata.factionName as string
-      } : null,
-      pendingStipendAction: ctx.metadata.settlementId ? {
-        skill: ctx.actor?.selectedSkill || '',
-        settlementId: ctx.metadata.settlementId as string
-      } : null
-    };
-    
-    // Create controller mock with required methods
-    const controller = {
-      getActionModifiers: (action: any, outcome: string) => {
-        // Get modifiers from action outcome
-        const outcomeData = (action as any).effects?.[outcome] || action[outcome];
-        return outcomeData?.modifiers || [];
-      }
-    };
-    
-    // Create check instance
+    // Create check instance with minimal data (Step 4 only)
     const instanceId = await createActionOutcomePreview({
       actionId: ctx.actionId,
-      action,
+      action: pipeline,
       outcome,
       actorName: ctx.actor?.actorName || 'Unknown',
       actorId: ctx.actor?.actorId,
@@ -448,29 +397,17 @@ export class PipelineCoordinator {
       skillName: ctx.actor?.selectedSkill,
       rollBreakdown: ctx.rollData?.rollBreakdown || undefined,
       currentTurn: turn,
-      pendingActions,
-      controller
+      metadata: ctx.metadata
     });
     
     // Store instance ID in context
     ctx.instanceId = instanceId;
     
-    // Mark instance as coordinator-managed
-    const actor = getKingdomActor();
-    if (actor) {
-      await actor.updateKingdomData((kingdom: any) => {
-        const instance = kingdom.activeCheckInstances?.find((i: any) => i.instanceId === instanceId);
-        if (instance) {
-          instance.usePipelineCoordinator = true;
-        }
-      });
-    }
-    
-    log(ctx, 4, 'createCheckInstance', `Check instance created: ${instanceId} (coordinator-managed)`);
+    log(ctx, 4, 'createCheckInstance', `Check instance created: ${instanceId}`);
   }
 
   /**
-   * Step 5: Calculate Preview
+   * Step 5: Outcome Interactions
    * 
    * Calculate what will happen when action is applied
    * OPTIONAL - only runs if pipeline has preview.calculate
@@ -478,7 +415,7 @@ export class PipelineCoordinator {
    * Shows resource changes, entity operations, warnings
    */
   private async step5_calculatePreview(ctx: PipelineContext): Promise<void> {
-    log(ctx, 5, 'calculatePreview', 'Calculating preview');
+    log(ctx, 5, 'outcomeInteractions', 'Calculating preview for outcome interactions');
     
     const pipeline = await getPipeline(ctx);
     
@@ -511,11 +448,27 @@ export class PipelineCoordinator {
     // Store preview in context
     ctx.preview = preview;
     
-    log(ctx, 5, 'calculatePreview', 'Preview calculated', preview);
+    // Format preview to special effects for display
+    const formattedPreview = unifiedCheckHandler.formatPreview(ctx.actionId, preview);
+    
+    // Update instance with special effects
+    if (ctx.instanceId && formattedPreview.length > 0) {
+      const actor = getKingdomActor();
+      if (actor) {
+        await actor.updateKingdomData((kingdom: any) => {
+          const instance = kingdom.pendingOutcomes?.find((i: any) => i.previewId === ctx.instanceId);
+          if (instance?.appliedOutcome) {
+            instance.appliedOutcome.specialEffects = formattedPreview;
+          }
+        });
+      }
+    }
+    
+    log(ctx, 5, 'calculatePreview', 'Preview calculated and stored', { preview, formattedCount: formattedPreview.length });
   }
 
   /**
-   * Step 6: Wait for User Confirmation
+   * Step 6: Wait For Apply
    * 
    * Pause execution until user clicks "Apply Result" in OutcomeDisplay
    * ALWAYS RUNS
@@ -523,7 +476,7 @@ export class PipelineCoordinator {
    * Uses pause/resume pattern with promises
    */
   private async step6_waitForUserConfirmation(ctx: PipelineContext): Promise<void> {
-    log(ctx, 6, 'waitForUserConfirmation', 'Pausing for user confirmation');
+    log(ctx, 6, 'waitForApply', 'Pausing for user to apply result');
     
     if (!ctx.instanceId) {
       throw new Error('[PipelineCoordinator] Cannot wait for confirmation without instance ID');

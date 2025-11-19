@@ -5,10 +5,9 @@
  * Separated from ActionResolver for Single Responsibility Principle.
  */
 
-import type { PlayerAction } from '../../controllers/actions/action-types';
+import type { PlayerAction } from '../../controllers/actions/pipeline-types';
 import type { KingdomData } from '../../actors/KingdomActor';
 import { pipelineRegistry } from '../../pipelines/PipelineRegistry';
-import { checkCustomRequirements } from '../../controllers/actions/implementations';
 
 export interface ActionRequirement {
     met: boolean;
@@ -43,13 +42,7 @@ export class ActionAvailabilityService {
             return pipeline.requirements(kingdomData, instance);
         }
         
-        // 2. Check for custom implementation (deprecated but kept for compatibility)
-        const customCheck = checkCustomRequirements(action.id, kingdomData, instance);
-        if (customCheck !== null) {
-            return customCheck;
-        }
-        
-        // 3. Check resource costs using shared utility
+        // 2. Check resource costs using shared utility
         if (action.cost && action.cost.size > 0) {
             const resourceCheck = hasRequiredResources(kingdomData, action.cost);
             

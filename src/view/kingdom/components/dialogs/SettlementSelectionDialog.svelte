@@ -194,7 +194,8 @@
     gap: var(--space-8);
     max-height: 400px;
     overflow-y: auto;
-    padding-right: var(--space-4);
+    /* ✅ FIX: Add padding on all sides to prevent outline clipping */
+    padding: var(--space-4) var(--space-4) var(--space-4) var(--space-4);
   }
   
   .settlement-item {
@@ -213,7 +214,9 @@
     width: 100%;
     min-height: fit-content;
     height: auto;
+    /* ✅ FIX: Use outline-offset to prevent clipping */
     outline: 2px solid transparent;
+    outline-offset: -2px;
     
     &:hover:not(:disabled) {
       border-color: var(--border-strong);

@@ -10,7 +10,6 @@ import { logger } from '../utils/Logger';
 import { getKingdomActor } from '../stores/KingdomStore'
 import { get } from 'svelte/store'
 import { kingdomData } from '../stores/KingdomStore'
-import ArrestDissidentsResolution from '../view/kingdom/components/OutcomeDisplay/components/ArrestDissidentsResolution.svelte'
 import {
   reportPhaseStart,
   reportPhaseComplete,
@@ -22,12 +21,11 @@ import {
   isStepCompletedByIndex,
   resolvePhaseOutcome
 } from './shared/PhaseControllerHelpers'
-import { actionResolver } from './actions/action-resolver'
-import type { PlayerAction } from './actions/action-types'
+import { actionResolver } from './actions/pipeline-resolver'
+import type { PlayerAction } from './actions/pipeline-types'
 import type { KingdomData } from '../actors/KingdomActor'
 import { TurnPhase } from '../actors/KingdomActor'
 import { ActionPhaseSteps } from './shared/PhaseStepConstants'
-import { getCustomResolutionComponent } from './actions/implementations'
 import { PipelineIntegrationAdapter, shouldUsePipeline } from '../services/PipelineIntegrationAdapter'
 import type { CheckMetadata, ResolutionData as PipelineResolutionData } from '../types/CheckContext'
 
@@ -72,7 +70,7 @@ export async function createActionPhaseController() {
       instanceId?: string
     ) {
       // Validate action exists
-      const { actionLoader } = await import('./actions/action-loader');
+      const { actionLoader } = await import('./actions/pipeline-loader');
       const action = actionLoader.getAllActions().find(a => a.id === actionId);
       if (!action) {
         logger.error(`❌ [ActionPhaseController] Action ${actionId} not found`);
@@ -125,7 +123,7 @@ export async function createActionPhaseController() {
       const game = (window as any).game;
       if (game?.ui?.notifications) {
         // Get action name for better notification message
-        const { actionLoader } = await import('./actions/action-loader');
+        const { actionLoader } = await import('./actions/pipeline-loader');
         const action = actionLoader.getAllActions().find(a => a.id === actionId);
         const actionName = action?.name || actionId;
         
@@ -166,54 +164,6 @@ export async function createActionPhaseController() {
           `${actionId}-${outcome}`,
           TurnPhase.ACTIONS
         );
-      }
-      
-      // Check if action has custom resolution logic
-      const { hasCustomImplementation, executeCustomResolution } = await import('./actions/implementations');
-      const { getActionImplementation } = await import('./actions/implementations');
-      const impl = getActionImplementation(actionId);
-      
-      // Use custom resolution if available and needed for this outcome
-      if (impl?.customResolution && impl.needsCustomResolution?.(outcome)) {
-        console.log('🎯 [ActionPhaseController] Using custom resolution for:', actionId);
-        console.log('🎯 [ActionPhaseController] instanceId provided:', instanceId);
-        
-        // Get the stored instance from kingdom data to access its metadata
-        // Use instanceId if provided, otherwise fall back to checkId + status lookup
-        let storedInstance;
-        if (instanceId) {
-          storedInstance = kingdom.activeCheckInstances?.find(i => i.instanceId === instanceId);
-          console.log('🎯 [ActionPhaseController] Looking up by instanceId:', instanceId);
-        } else {
-          storedInstance = kingdom.activeCheckInstances?.find(i => 
-            i.checkId === actionId && i.status === 'resolved'
-          );
-          console.log('🎯 [ActionPhaseController] Looking up by checkId + status');
-        }
-        console.log('🎯 [ActionPhaseController] Stored instance:', storedInstance);
-        console.log('🎯 [ActionPhaseController] Stored instance metadata:', storedInstance?.metadata);
-        
-        // Create instance metadata for custom resolution, merging stored metadata with runtime data
-        const instance = {
-          metadata: {
-            ...storedInstance?.metadata,  // Include stored metadata (e.g., factionId, factionName)
-            ...resolutionData.customComponentData,  // CRITICAL: Include dialog selections (structureId, settlementId) and user choices (cost)
-            outcome,
-            actorName,
-            skillName,
-            playerId
-          }
-        };
-        console.log('🎯 [ActionPhaseController] Merged instance metadata:', instance.metadata);
-        console.log('🎯 [ActionPhaseController] customComponentData:', resolutionData.customComponentData);
-        
-        const result = await executeCustomResolution(actionId, resolutionData, instance);
-        
-        if (!result.success) {
-          logger.error(`❌ [ActionPhaseController] Custom resolution failed:`, result.error);
-        }
-        
-        return result;
       }
       
       // FIXED: Use ActionResolver.executeAction() instead of resolvePhaseOutcome()

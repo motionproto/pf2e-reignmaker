@@ -4,7 +4,7 @@
   import { createGameCommandsService } from '../../../services/GameCommandsService';
   import { createOutcomePreviewService } from '../../../services/OutcomePreviewService';
   import { createActionDialogService } from '../../../services/ActionDialogService';
-  import { actionLoader } from "../../../controllers/actions/action-loader";
+  import { actionLoader } from "../../../controllers/actions/pipeline-loader";
   import ActionDialogManager from "./components/ActionDialogManager.svelte";
   import ActionCategorySection from "./components/ActionCategorySection.svelte";
   import { createAidManager, type AidManager } from '../../../controllers/shared/AidSystemHelpers';
@@ -36,7 +36,16 @@
   import { createActionPhaseController } from '../../../controllers/ActionPhaseController';
   import { createCustomActionHandlers, type CustomActionHandlers } from '../../../controllers/actions/action-handlers-config';
   import { ACTION_CATEGORIES } from './action-categories-config';
-  import { createActionOutcomePreview, updateOutcomePreview, type PendingActionsState } from '../../../controllers/actions/OutcomePreviewHelpers';
+  
+  // Pending actions type (previously from OutcomePreviewHelpers, now local)
+  interface PendingActionsState {
+    pendingBuildAction?: { skill: string; structureId?: string; settlementId?: string } | null;
+    pendingRepairAction?: { skill: string; structureId?: string; settlementId?: string } | null;
+    pendingUpgradeAction?: { skill: string; settlementId?: string } | null;
+    pendingDiplomaticAction?: { skill: string; factionId?: string; factionName?: string } | null;
+    pendingInfiltrationAction?: { skill: string; factionId?: string; factionName?: string } | null;
+    pendingStipendAction?: { skill: string; settlementId?: string } | null;
+  }
 
   // Initialize controller and services
   let controller: any = null;
@@ -174,84 +183,8 @@
     expandedActions = new Set(expandedActions);
   }
 
-  // Use controller to handle action resolution properly
-  async function onActionResolved(
-    actionId: string,
-    outcome: string,
-    actorName: string,
-    checkType?: string,
-    skillName?: string,
-    proficiencyRank?: number,
-    rollBreakdown?: any,
-    actorId?: string,  // ✅ ADD: Actor ID from event
-    actorLevel?: number  // ✅ ADD: Actor level from event
-  ) {
-    // Only handle action type checks
-    if (checkType && checkType !== "action") {
-      return;
-    }
-
-    // Check if already resolved by current player
-    const existingInstanceId = currentActionInstances.get(actionId);
-    if (existingInstanceId) {
-      return;
-    }
-
-    // Find the action
-    const action = actionLoader.getAllActions().find(
-      (a) => a.id === actionId
-    );
-    if (!action) {
-      return;
-    }
-    
-    // Make sure the action is expanded FIRST
-    if (!expandedActions.has(actionId)) {
-      expandedActions.clear();
-      expandedActions.add(actionId);
-      expandedActions = new Set(expandedActions);
-    }
-    
-    // Create check instance using helper (handles all placeholder replacement, metadata, etc.)
-    const pendingActions: PendingActionsState = {
-      pendingBuildAction,
-      pendingRepairAction,
-      pendingUpgradeAction,
-      pendingDiplomaticAction,
-      pendingInfiltrationAction: pendingInfiltrationAction as any,
-      pendingStipendAction
-    };
-    
-    console.log('🎯 [ActionsPhase] About to create check instance for:', actionId);
-    try {
-      const instanceId = await createActionOutcomePreview({
-        actionId,
-        action,
-        outcome,
-        actorName,
-        actorId,  // ✅ ADD: Pass actor ID
-        actorLevel,  // ✅ ADD: Pass actor level
-        proficiencyRank,  // ✅ ADD: Pass proficiency rank
-        skillName,
-        rollBreakdown,
-        currentTurn: $currentTurn,
-        pendingActions,
-        controller
-      });
-      console.log('✅ [ActionsPhase] Created instance with ID:', instanceId);
-    
-      // Track instanceId for this action
-      currentActionInstances.set(actionId, instanceId);
-      currentActionInstances = currentActionInstances;  // Trigger reactivity
-
-      // Force Svelte to update
-      await tick();
-    } catch (error) {
-      console.error('❌ [ActionsPhase] Failed to create check instance:', error);
-    }
-  }
-
-  // Removed: Old resetAction call - instances are now managed via CheckInstanceService
+  // REMOVED: onActionResolved() - Dead code, never called
+  // All actions now use PipelineCoordinator which handles preview creation in Step 5
 
   // Apply the actual state changes when user confirms the resolution
   // NEW ARCHITECTURE: Receives ResolutionData from OutcomeDisplay via primary event
@@ -423,26 +356,7 @@
     pipelineCoordinator = await getPipelineCoordinator();
     console.log('✅ [ActionsPhase] PipelineCoordinator initialized');
     
-    // 🧹 CLEANUP: Remove any stale coordinator-managed instances from previous sessions
-    // This handles cases where instances weren't properly deleted before Step 9 fix
-    const actor = getKingdomActor();
-    if (actor) {
-      const staleInstances = $kingdomData.activeCheckInstances?.filter(
-        i => i.usePipelineCoordinator
-      ) || [];
-      
-      if (staleInstances.length > 0) {
-        console.log(`🧹 [ActionsPhase] Cleaning up ${staleInstances.length} stale coordinator instance(s) from previous sessions`);
-        await actor.updateKingdomData((kingdom: KingdomData) => {
-          if (kingdom.activeCheckInstances) {
-            kingdom.activeCheckInstances = kingdom.activeCheckInstances.filter(
-              i => !i.usePipelineCoordinator
-            );
-          }
-        });
-        console.log('✅ [ActionsPhase] Stale instances cleaned up');
-      }
-    }
+    // Cleanup removed - PipelineCoordinator manages its own instances
     
     // Initialize aid manager
     aidManager = createAidManager({
@@ -614,36 +528,8 @@
     }
   }
 
-  // Handle debug outcome change
-  async function handleDebugOutcomeChange(event: CustomEvent, action: any) {
-    const { outcome: newOutcome } = event.detail;
-
-    // Get instance
-    const instanceId = currentActionInstances.get(action.id);
-    if (!instanceId) return;
-    
-    const instance = $kingdomData.pendingOutcomes?.find(i => i.previewId === instanceId);
-    if (!instance) return;
-    
-    // Update instance using helper (handles placeholder replacement)
-    const pendingActions: PendingActionsState = {
-      pendingBuildAction,
-      pendingRepairAction,
-      pendingUpgradeAction,
-      pendingDiplomaticAction,
-      pendingInfiltrationAction: pendingInfiltrationAction as any
-    };
-    
-    await updateOutcomePreview({
-      previewId: instanceId,
-      actionId: action.id,
-      action,
-      newOutcome,
-      preview: instance,
-      pendingActions,
-      controller
-    });
-  }
+  // REMOVED: handleDebugOutcomeChange() - Dead code, never called
+  // Debug outcome changes are handled by OutcomeDisplay component directly
   
   // Handle performReroll from OutcomeDisplay (via BaseCheckCard)
   async function handlePerformReroll(event: CustomEvent, action: any) {
@@ -1335,7 +1221,6 @@
         on:toggle={(e) => toggleAction(e.detail.actionId)}
         on:executeSkill={(e) => handleExecuteSkill(e.detail.event, e.detail.action)}
         on:performReroll={(e) => handlePerformReroll(e.detail.event, e.detail.action)}
-        on:debugOutcomeChange={(e) => handleDebugOutcomeChange(e.detail.event, e.detail.action)}
         on:aid={handleAid}
         on:primary={applyActionEffects}
         on:cancel={(e) => handleActionResultCancel(e.detail.actionId)}

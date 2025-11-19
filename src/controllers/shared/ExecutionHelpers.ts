@@ -3,7 +3,7 @@ import {
   showCharacterSelectionDialog,
   performKingdomActionRoll
 } from '../../services/pf2e';
-import { actionLoader } from '../actions/action-loader';
+import { actionLoader } from '../actions/pipeline-loader';
 import { eventService } from '../events/event-loader';
 import { logger } from '../../utils/Logger';
 

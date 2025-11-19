@@ -3,7 +3,7 @@
  */
 
 import { getKingdomActor } from '../../stores/KingdomStore';
-import type { ActionRequirement } from './action-resolver';
+import type { ActionRequirement } from './pipeline-resolver';
 
 /**
  * Check if there are factions at least friendly or better
