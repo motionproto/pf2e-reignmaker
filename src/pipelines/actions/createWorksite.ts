@@ -10,6 +10,8 @@ import { createWorksiteExecution } from '../../execution/territory/createWorksit
 import { getKingdomData } from '../../stores/KingdomStore';
 import { validateCreateWorksiteForPipeline } from '../shared/worksiteValidator';
 import WorksiteTypeSelector from '../../services/hex-selector/WorksiteTypeSelector.svelte';
+import { PLAYER_KINGDOM } from '../../types/ownership';
+import { isHexClaimedByPlayer, hexHasSettlement } from '../shared/hexValidation';
 
 export const createWorksitePipeline: CheckPipeline = {
   id: 'create-worksite',
@@ -42,8 +44,45 @@ export const createWorksitePipeline: CheckPipeline = {
       },
       
       validation: (hexId: string, ctx: any) => {
-        // Basic hex validation (worksite type validated by custom component)
-        return validateCreateWorksiteForPipeline(hexId);
+        try {
+          // Basic hex validation with detailed error messages
+          // (worksite type terrain compatibility validated by custom component)
+          const kingdom = getKingdomData();
+          
+          if (!kingdom) {
+            return { valid: false, message: 'Kingdom data not loaded' };
+          }
+          
+          const hex = kingdom.hexes?.find(h => h.id === hexId);
+          
+          if (!hex) {
+            return { valid: false, message: 'Hex not found' };
+          }
+          
+          // ✅ CHECK SETTLEMENT FIRST (more specific error message)
+          // Cannot have a settlement (settlements block worksites)
+          if (hexHasSettlement(hexId, kingdom)) {
+            return { valid: false, message: 'Cannot build worksites in settlement hexes' };
+          }
+          
+          // ✅ THEN check if hex is claimed by player kingdom (uses PLAYER_KINGDOM constant)
+          if (!isHexClaimedByPlayer(hexId, kingdom)) {
+            return { valid: false, message: 'Must be in claimed territory' };
+          }
+          
+          // Cannot already have a worksite
+          if (hex.worksite) {
+            const worksiteType = hex.worksite.type || 'worksite';
+            return { valid: false, message: `Hex already has a ${worksiteType} (only one worksite per hex)` };
+          }
+          
+          // Valid hex - terrain compatibility will be checked by custom selector
+          return { valid: true, message: 'Select worksite type for this hex' };
+        } catch (error) {
+          console.error('[CreateWorksite] Validation error:', error);
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          return { valid: false, message: `Validation failed: ${errorMessage}` };
+        }
       },
       // Outcome-based adjustments
       outcomeAdjustment: {

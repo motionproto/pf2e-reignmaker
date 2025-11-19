@@ -69,17 +69,13 @@ export interface OutcomePreview {
     effectsApplied: boolean;     // Mark when "Apply Result" clicked
     isIgnored?: boolean;         // Flag for ignored events (hides reroll button)
     
-    // UI configuration (for OutcomeDisplay)
-    primaryButtonLabel?: string;
-    showFameReroll?: boolean;
-    debugMode?: boolean;
-    
     // Component-based rendering (unified pattern for standard and custom outcomes)
     component?: any;       // Svelte component for rendering (null = use StandardOutcomeDisplay)
     componentProps?: Record<string, any>;  // Props to pass to component
+    componentName?: string;  // Component name for registry lookup (serializable alternative to component class)
     
-    // Legacy aliases (deprecated - use component/componentProps instead)
-    /** @deprecated Use component instead */
+    // Legacy aliases (deprecated - use componentName/componentProps instead)
+    /** @deprecated Use componentName instead */
     customComponent?: any;
     /** @deprecated Use componentProps instead */
     customResolutionProps?: Record<string, any>;

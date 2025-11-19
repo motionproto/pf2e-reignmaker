@@ -324,21 +324,30 @@ export async function createActionOutcomePreview(context: {
       
       // Get the pipeline to extract postRollInteractions
       const pipeline = unifiedCheckHandler.getCheck(actionId);
+      console.log(`🔍 [OutcomePreviewHelpers] Pipeline for ${actionId}:`, pipeline);
+      console.log(`🔍 [OutcomePreviewHelpers] Has postRollInteractions?`, !!pipeline?.postRollInteractions);
       
       // Extract custom component from postRollInteractions (for inline display)
       if (pipeline?.postRollInteractions) {
+        console.log(`🔍 [OutcomePreviewHelpers] postRollInteractions:`, pipeline.postRollInteractions);
         for (const interaction of pipeline.postRollInteractions) {
+          console.log(`🔍 [OutcomePreviewHelpers] Checking interaction:`, interaction);
           // Check if this interaction has a custom component
           if (interaction.type === 'configuration' && interaction.component) {
+            console.log(`🔍 [OutcomePreviewHelpers] Found configuration interaction with component`);
             // Check condition if defined
-            if (!interaction.condition || interaction.condition({ outcome: outcomeType })) {
+            const conditionMet = !interaction.condition || interaction.condition({ outcome: outcomeType });
+            console.log(`🔍 [OutcomePreviewHelpers] Condition met for outcome ${outcomeType}?`, conditionMet);
+            if (conditionMet) {
               customComponent = interaction.component;
               customResolutionProps = interaction.componentProps || {};
-              console.log(`✅ [OutcomePreviewHelpers] Extracted custom component for inline display`);
+              console.log(`✅ [OutcomePreviewHelpers] Extracted custom component for inline display:`, customComponent);
               break;
             }
           }
         }
+      } else {
+        console.log(`⚠️ [OutcomePreviewHelpers] No postRollInteractions found for ${actionId}`);
       }
       
       // Build context for preview calculation

@@ -42,6 +42,7 @@ export interface RollData {
   rollBreakdown?: {
     d20Result: number;
     total: number;
+    dc: number;  // Include DC for OutcomeDisplay
     modifiers: any[];
   };
 }

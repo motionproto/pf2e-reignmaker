@@ -4,13 +4,14 @@
   
   export let showCancelButton: boolean = false;
   export let showFameRerollButton: boolean = false;
+  export let showPrimaryButton: boolean = true;  // New prop to control visibility
   export let effectivePrimaryLabel: string = '';
   export let primaryButtonDisabled: boolean = false;
   export let currentFame: number = 0;
   
   const dispatch = createEventDispatcher();
   
-  $: showAnyButton = showCancelButton || showFameRerollButton || effectivePrimaryLabel;
+  $: showAnyButton = showCancelButton || showFameRerollButton || showPrimaryButton;
   
   function handleCancel() {
     dispatch('cancel');
@@ -50,7 +51,7 @@
           <span class="fame-count">({currentFame} left)</span>
         </Button>
       {/if}
-      {#if effectivePrimaryLabel}
+      {#if showPrimaryButton && effectivePrimaryLabel}
         <Button
           variant="secondary"
           disabled={primaryButtonDisabled}

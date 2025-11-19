@@ -244,8 +244,8 @@ export class HexSelectorService {
         break;
         
       case 'worksite':
-        // Show territory border and existing worksites
-        actionViewOverlays = ['territories', 'territory-border', 'worksites'];
+        // Show territory border, existing worksites, and settlement icons (settlements block worksites)
+        actionViewOverlays = ['territories', 'territory-border', 'worksites', 'settlement-icons', 'settlement-labels'];
         break;
     }
     

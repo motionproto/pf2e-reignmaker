@@ -69,7 +69,7 @@
       ]
     },
     "criticalFailure": {
-      "description": "The treasury is empty.",
+      "description": "Your demands sparks outrage.",
       "modifiers": [
         {
           "type": "dice",

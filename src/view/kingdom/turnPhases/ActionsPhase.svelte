@@ -291,7 +291,8 @@
     // ✅ CHECK FOR PIPELINE COORDINATOR (new unified system)
     if (instance.checkType === 'action' && pipelineCoordinator) {
       console.log('🚀 [ActionsPhase] Coordinator-managed action, calling confirmApply()');
-      pipelineCoordinator.confirmApply(instanceId);
+      console.log('🚀 [ActionsPhase] Passing resolution data:', resolutionData);
+      pipelineCoordinator.confirmApply(instanceId, resolutionData);
       return; // Coordinator handles Steps 7-9
     }
 

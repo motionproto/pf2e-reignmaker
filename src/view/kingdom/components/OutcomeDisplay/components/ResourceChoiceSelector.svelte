@@ -1,49 +1,45 @@
 <script lang="ts">
   import { createEventDispatcher, onMount, onDestroy } from 'svelte';
-  import { kingdomData } from '../../../../../stores/KingdomStore';
   import type { ActiveCheckInstance } from '../../../../../models/CheckInstance';
-  import { 
-    updateInstanceResolutionState,
-    getInstanceResolutionState 
-  } from '../../../../../controllers/shared/ResolutionStateHelpers';
+  import type { ComponentResolutionData } from '../../../../../types/CustomComponentInterface';
   import { getResourceIcon } from '../../../../kingdom/utils/presentation';
   import { getValidationContext } from '../context/ValidationContext';
 
-  // Props
+  // ✅ STANDARD PROPS (CustomComponentInterface)
   export let instance: ActiveCheckInstance | null = null;
   export let outcome: string;
+  export let config: Record<string, any> = {};
 
-  const dispatch = createEventDispatcher();
+  const dispatch = createEventDispatcher<{ resolution: ComponentResolutionData }>();
   
-  // ✨ NEW: Register with validation context
+  // ✅ Register with validation context
   const validationContext = getValidationContext();
   const providerId = 'resource-choice-selector';
 
-  // Hardcoded resources (always the same for harvest action)
-  const resources = ['food', 'lumber', 'stone', 'ore'];
+  // Component-specific configuration
+  const resources = config.resources || ['food', 'lumber', 'stone', 'ore'];
   
   // Calculate amount based on outcome
   $: amount = outcome === 'criticalSuccess' ? 2 : 1;
 
-  // Get resolution state from instance
-  $: resolutionState = getInstanceResolutionState(instance);
-  $: selectedResource = resolutionState.customComponentData?.selectedResource || '';
+  // Local UI state (not persisted to instance)
+  let selectedResource = '';
 
   // Check if resolution is complete
   $: isResolved = !!selectedResource;
   
-  // ✨ NEW: Register validation on mount
+  // ✅ LIFECYCLE: Register validation on mount
   onMount(() => {
     if (validationContext) {
       validationContext.register(providerId, {
         id: providerId,
-        needsResolution: true,  // Always needs resource selection
-        isResolved: isResolved
+        needsResolution: true,
+        isResolved: false
       });
     }
   });
   
-  // ✨ NEW: Update validation state when selection changes
+  // ✅ LIFECYCLE: Update validation state when selection changes
   $: if (validationContext) {
     validationContext.update(providerId, {
       needsResolution: true,
@@ -51,7 +47,7 @@
     });
   }
   
-  // ✨ NEW: Unregister on destroy
+  // ✅ LIFECYCLE: Unregister on destroy
   onDestroy(() => {
     if (validationContext) {
       validationContext.unregister(providerId);
@@ -63,28 +59,27 @@
     return resource.charAt(0).toUpperCase() + resource.slice(1);
   }
 
-  async function handleResourceSelect(resource: string) {
-    if (!instance) return;
-
-    // Update instance resolution state
-    await updateInstanceResolutionState(instance.instanceId, {
-      customComponentData: { 
-        selectedResource: resource,
-        amount: amount
-      }
-    });
-
-    // Emit selection event with modifier format (for OutcomeDisplay to process)
-    dispatch('selection', { 
-      selectedResource: resource,
-      amount: amount,
+  // ✅ STANDARD EVENT: Emit 'resolution' with ComponentResolutionData
+  function handleResourceClick(resource: string) {
+    // Update local UI state
+    selectedResource = resource;
+    
+    // Emit standardized resolution event
+    const resolutionData: ComponentResolutionData = {
+      isResolved: true,
       modifiers: [{
         type: 'static',
         resource: resource,
         value: amount,
         duration: 'immediate'
-      }]
-    });
+      }],
+      metadata: {
+        selectedResource: resource,
+        amount: amount
+      }
+    };
+    
+    dispatch('resolution', resolutionData);
   }
 </script>
 
@@ -97,22 +92,25 @@
     </div>
   </div>
 
-  <div class="resource-grid">
+  <div class="resource-buttons">
     {#each resources as resource}
       <button
-        class="resource-option"
+        class="resource-button"
         class:selected={selectedResource === resource}
-        on:click={() => handleResourceSelect(resource)}
+        on:click={() => handleResourceClick(resource)}
       >
-        <div class="resource-amount">
-          +{amount}
-        </div>
-        <div class="resource-name">
-          {formatResourceName(resource)}
-        </div>
+        <i class="fas {getResourceIcon(resource)}"></i>
+        <span>{formatResourceName(resource)}</span>
       </button>
     {/each}
   </div>
+
+  {#if selectedResource}
+    <div class="selection-info">
+      <i class="fas fa-check-circle"></i>
+      <span>Selected: <strong>{formatResourceName(selectedResource)}</strong> (+{amount})</span>
+    </div>
+  {/if}
 
 </div>
 
@@ -150,36 +148,48 @@
     }
   }
 
-  .resource-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
-    gap: var(--space-12);
+  .resource-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-10);
     margin-bottom: var(--space-12);
   }
 
-  .resource-option {
+  .resource-button {
     display: flex;
-    flex-direction: row;
     align-items: center;
-    justify-content: center;
-    gap: var(--space-6);
-    padding: var(--space-12) var(--space-16);
+    gap: var(--space-8);
+    padding: var(--space-10) var(--space-16);
     background: var(--hover-low);
     border: 2px solid var(--border-strong, var(--border-default));
     border-radius: var(--radius-lg);
     cursor: pointer;
     transition: all 0.2s;
+    font-size: var(--font-md);
+    font-weight: 500;
+    color: var(--text-primary, #e0e0e0);
     
-    &:hover:not(:disabled) {
+    i {
+      font-size: var(--font-lg);
+      color: var(--text-secondary);
+      transition: color 0.2s;
+    }
+    
+    &:hover:not(:disabled):not(.selected) {
       background: var(--hover);
-      border-color: var(--color-green, #22c55e);
-      transform: translateY(-0.125rem);
+      transform: translateY(-0.0625rem);
+      box-shadow: 0 0.125rem 0.5rem var(--overlay-low);
     }
     
     &.selected {
       background: var(--surface-success-high);
       border-color: var(--color-green, #22c55e);
       border-width: 3px;
+      color: var(--color-green, #22c55e);
+      
+      i {
+        color: var(--color-green, #22c55e);
+      }
     }
     
     &:disabled {
@@ -188,39 +198,23 @@
     }
   }
 
-  .resource-name {
-    font-size: var(--font-md);
-    font-weight: 500;
-    color: var(--text-primary, #e0e0e0);
-  }
-
-  .resource-amount {
-    font-size: var(--font-md);
-    font-weight: 500;
-    color: var(--color-green, #22c55e);
-  }
-
-  .selection-confirmation {
+  .selection-info {
     display: flex;
     align-items: center;
-    gap: var(--space-8);
-    padding: var(--space-10);
+    gap: var(--space-10);
+    padding: var(--space-12);
     background: var(--surface-success-low);
     border-left: 3px solid var(--color-green, #22c55e);
     border-radius: var(--radius-md);
+    color: var(--text-primary, #e0e0e0);
     
     i {
       color: var(--color-green, #22c55e);
+      font-size: var(--font-lg);
     }
     
-    p {
-      margin: 0;
-      font-size: var(--font-md);
-      color: var(--text-secondary, #a0a0a0);
-      
-      strong {
-        color: var(--text-primary, #e0e0e0);
-      }
+    strong {
+      color: var(--color-green, #22c55e);
     }
   }
 </style>

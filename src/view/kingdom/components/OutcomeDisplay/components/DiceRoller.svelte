@@ -2,21 +2,25 @@
   import { createEventDispatcher, onMount, onDestroy } from 'svelte';
   import { detectDiceModifiers, rollDiceFormula, formatStateChangeLabel } from '../../../../../services/resolution';
   import { getValidationContext } from '../context/ValidationContext';
+  import { getResourceIcon } from '../../../utils/presentation';
   
   export let modifiers: any[] | undefined;
-  export let resolvedDice: Map<number | string, number>;
   
   const dispatch = createEventDispatcher();
   
-  // ✨ NEW: Register with validation context
+  // ✅ LOCAL STATE: Component manages its own rolled values
+  let rolledValues = new Map<number, number>();
+  
+  // ✨ Register with validation context
   const validationContext = getValidationContext();
   const providerId = 'dice-roller';
   
   $: diceModifiers = detectDiceModifiers(modifiers);
   $: hasDiceModifiers = diceModifiers.length > 0;
-  $: allResolved = hasDiceModifiers && diceModifiers.every(m => resolvedDice.has(m.originalIndex));
+  // ✅ Validation based on local state
+  $: allResolved = hasDiceModifiers && diceModifiers.every(m => rolledValues.has(m.originalIndex));
   
-  // ✨ NEW: Register validation on mount
+  // Register validation on mount
   onMount(() => {
     if (validationContext) {
       validationContext.register(providerId, {
@@ -27,7 +31,7 @@
     }
   });
   
-  // ✨ NEW: Update validation state when dice/resolution changes
+  // Update validation state when dice/resolution changes
   $: if (validationContext) {
     validationContext.update(providerId, {
       needsResolution: hasDiceModifiers,
@@ -35,7 +39,12 @@
     });
   }
   
-  // ✨ NEW: Unregister on destroy
+  // ✨ Notify parent when all dice are resolved (reactive)
+  $: if (allResolved && hasDiceModifiers && rolledValues.size > 0) {
+    notifyResolutionComplete();
+  }
+  
+  // Unregister on destroy
   onDestroy(() => {
     if (validationContext) {
       validationContext.unregister(providerId);
@@ -52,11 +61,39 @@
     // Apply negative flag if present (typed format)
     const finalResult = modifier.negative ? -rolled : rolled;
     
+    // ✅ Store in local state (instant UI update)
+    rolledValues.set(modifier.originalIndex, finalResult);
+    rolledValues = rolledValues;  // Trigger Svelte reactivity
+    
+    // Still dispatch 'roll' event for backward compatibility
     dispatch('roll', {
       modifierIndex: modifier.originalIndex,
-      formula: formula,
       result: finalResult,
       resource: modifier.resource
+    });
+    
+    // Note: Resolution notification happens reactively via the $: statement
+  }
+  
+  // ✨ STANDARD INTERFACE: Dispatch 'resolution' event per ComponentResolutionData
+  function notifyResolutionComplete() {
+    // Build modifiers array from rolled values
+    const resolvedModifiers = diceModifiers.map(mod => {
+      const rolledValue = rolledValues.get(mod.originalIndex) ?? 0;
+      return {
+        type: 'static',
+        resource: mod.resource,
+        value: rolledValue,
+        duration: 'immediate'
+      };
+    });
+    
+    dispatch('resolution', {
+      isResolved: true,
+      modifiers: resolvedModifiers,
+      metadata: {
+        rolledValues: Object.fromEntries(rolledValues)
+      }
     });
   }
   
@@ -70,81 +107,70 @@
 {#if hasDiceModifiers}
   <div class="dice-rollers">
     <div class="dice-rollers-header">
-      <i class="fas fa-dice-d20"></i>
       <span>Roll for Random Outcomes</span>
     </div>
-    {#each diceModifiers as modifier}
-      {@const isResolved = resolvedDice.has(modifier.originalIndex)}
-      {@const resolvedValue = resolvedDice.get(modifier.originalIndex) ?? 0}
-      <button 
-        class="dice-roller-button" 
-        class:resolved={isResolved}
-        on:click={() => handleRoll(modifier)}
-        disabled={isResolved}
-      >
-        {#if isResolved}
-          <i class="fas fa-check-circle"></i>
-          <span class="dice-result">{resolvedValue > 0 ? '+' : ''}{resolvedValue}</span>
-          <span class="dice-resource">{formatStateChangeLabel(modifier.resource)}</span>
-        {:else}
-          <i class="fas fa-dice-d20"></i>
-          <span class="dice-formula">{getDisplayFormula(modifier)}</span>
-          <span class="dice-resource">for {formatStateChangeLabel(modifier.resource)}</span>
-          <i class="fas fa-arrow-right"></i>
-        {/if}
-      </button>
-    {/each}
+    <div class="dice-rollers-grid">
+      {#each diceModifiers as modifier}
+        {@const isResolved = rolledValues.has(modifier.originalIndex)}
+        {@const resolvedValue = rolledValues.get(modifier.originalIndex) ?? 0}
+        <button 
+          class="dice-roller-button" 
+          class:resolved={isResolved}
+          on:click={() => handleRoll(modifier)}
+          disabled={isResolved}
+        >
+          {#if isResolved}
+            <span class="dice-result">{resolvedValue}</span>
+            <i class="fas {getResourceIcon(modifier.resource)}"></i>
+            <span class="dice-resource">{formatStateChangeLabel(modifier.resource)}</span>
+          {:else}
+            <i class="fas fa-dice-d20"></i>
+            <span class="dice-formula">{getDisplayFormula(modifier)}</span>
+            <span class="dice-resource">for {formatStateChangeLabel(modifier.resource)}</span>
+          {/if}
+        </button>
+      {/each}
+    </div>
   </div>
 {/if}
 
 <style lang="scss">
   .dice-rollers {
-    margin-top: var(--space-10);
-    padding: var(--space-12) var(--space-16);
-    background: linear-gradient(135deg, 
-      rgba(255, 255, 255, 0.08),
-      rgba(255, 255, 255, 0.03));
-    border: 2px solid var(--border-medium);
-    border-radius: var(--radius-sm);
+    margin-top: var(--space-8);
+    padding: var(--space-10) 0;
     
     .dice-rollers-header {
-      display: flex;
-      align-items: center;
-      gap: var(--space-8);
       font-size: var(--font-md);
       font-weight: var(--font-weight-semibold);
       color: var(--text-primary);
-      margin-bottom: var(--space-10);
-      
-      i {
-        font-size: var(--font-lg);
-      }
+      margin-bottom: var(--space-8);
+    }
+    
+    .dice-rollers-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-8);
     }
   }
   
   .dice-roller-button {
-    width: 100%;
     padding: var(--space-12) var(--space-16);
-    margin-bottom: var(--space-8);
     background: var(--hover-low);
-    border: 2px solid var(--border-faint);
+    border: 2px solid rgba(255, 255, 255, 0.3);
     border-radius: var(--radius-md);
     color: var(--text-primary);
     font-size: var(--font-md);
     font-weight: var(--font-weight-medium);
     cursor: pointer;
     transition: all var(--transition-fast);
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: var(--space-12);
-    
-    &:last-child {
-      margin-bottom: 0;
-    }
+    gap: var(--space-8);
+    white-space: nowrap;
     
     &:hover:not(:disabled) {
       background: var(--hover);
-      border-color: var(--border-subtle);
+      border-color: rgba(255, 255, 255, 0.5);
       transform: translateY(-0.125rem);
       box-shadow: 0 0.25rem 0.75rem var(--overlay);
     }
@@ -154,13 +180,10 @@
     }
     
     &.resolved {
-      background: var(--surface-success-subtle);
-      border-color: var(--border-success-subtle);
+      background: var(--surface-lowest);
+      border-color: rgba(255, 255, 255, 0.5);
       cursor: default;
-      
-      i.fa-check-circle {
-        color: var(--text-success);
-      }
+      opacity: 0.9;
     }
     
     i.fa-dice-d20 {
@@ -173,30 +196,21 @@
       font-size: var(--font-lg);
       font-weight: var(--font-weight-bold);
       color: var(--text-primary);
-      padding: var(--space-2) var(--space-8);
-      background: var(--hover);
-      border-radius: var(--radius-xs);
     }
     
     .dice-result {
       font-family: var(--font-code, monospace);
-      font-size: var(--font-lg);
+      font-size: var(--font-md);
       font-weight: var(--font-weight-bold);
-      color: var(--text-success);
-      padding: var(--space-2) var(--space-8);
-      background: var(--surface-success-subtle);
-      border-radius: var(--radius-xs);
+      color: var(--text-primary);
     }
     
     .dice-resource {
-      flex: 1;
-      text-align: left;
-      color: var(--text-secondary);
+      color: var(--text-primary);
     }
     
-    i.fa-arrow-right {
-      color: var(--text-secondary);
-      font-size: var(--font-sm);
+    i {
+      color: var(--text-primary);
     }
   }
 </style>

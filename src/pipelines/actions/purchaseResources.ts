@@ -8,7 +8,11 @@
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
+import { hasCommerceStructure, getBestTradeRates } from '../../services/commerce/tradeRates';
+import { get } from 'svelte/store';
+import { kingdomData } from '../../stores/KingdomStore';
+import { applyResourceChanges } from '../shared/InlineActionHelpers';
+import PurchaseResourceSelector from '../../view/kingdom/components/OutcomeDisplay/components/PurchaseResourceSelector.svelte';
 
 export const purchaseResourcesPipeline: CheckPipeline = {
   id: 'purchase-resources',
@@ -24,12 +28,37 @@ export const purchaseResourcesPipeline: CheckPipeline = {
     { skill: 'deception', description: 'misleading negotiations' }
   ],
 
-  // Pre-roll: Select resource to purchase and quantity
-  preRollInteractions: [
+  // Post-roll: Select resource and amount (AFTER roll, shown inline in outcome display)
+  postRollInteractions: [
     {
       type: 'configuration',
-      id: 'purchaseConfig',
-      label: 'Select resources to purchase'
+      id: 'resourceSelection',
+      component: PurchaseResourceSelector,  // Custom property for Svelte component
+      // Only show for successful purchases
+      condition: (ctx) => {
+        return ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess';
+      },
+      // Execute purchase when user confirms selection
+      onComplete: async (data: any, ctx: any) => {
+        console.log('🎯 [PurchaseResources] User selected:', data);
+        const { selectedResource, selectedAmount, goldCost } = data || {};
+        
+        if (!selectedResource || !selectedAmount || goldCost === undefined) {
+          throw new Error('No resource selection was made');
+        }
+        
+        // Apply resource changes
+        const result = await applyResourceChanges([
+          { resource: 'gold', amount: -goldCost },
+          { resource: selectedResource, amount: selectedAmount }
+        ], 'purchase-resources');
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to purchase resources');
+        }
+        
+        console.log('✅ [PurchaseResources] Resources purchased successfully');
+      }
     }
   ],
 
@@ -53,58 +82,23 @@ export const purchaseResourcesPipeline: CheckPipeline = {
   },
 
   preview: {
-    calculate: (ctx) => {
-      // Preview is provided by custom component
-      return {
-        resources: [],
-        specialEffects: [],
-        warnings: []
-      };
-    }
+    providedByInteraction: true  // Resource selector shows preview
   },
 
   // Execute function - explicitly handles ALL outcomes
   execute: async (ctx) => {
     switch (ctx.outcome) {
       case 'criticalSuccess':
-      case 'success': {
-        // Apply resource changes for successful purchases
-        const { selectedResource, selectedAmount, goldCost } = ctx.resolutionData.customComponentData || {};
-        
-        if (!selectedResource || !selectedAmount || goldCost === undefined) {
-          return {
-            success: false,
-            error: 'No resource selection was made'
-          };
-        }
-
-        // Import helper to apply resource changes
-        const { applyResourceChanges } = await import('../shared/InlineActionHelpers');
-        
-        // Apply resource changes
-        const result = await applyResourceChanges([
-          { resource: 'gold', amount: -goldCost },
-          { resource: selectedResource, amount: selectedAmount }
-        ], 'purchase-resources');
-        
-        if (!result.success) {
-          return {
-            success: false,
-            error: result.error || 'Failed to purchase resources'
-          };
-        }
-
-        // Build success message
-        const resourceName = selectedResource.charAt(0).toUpperCase() + selectedResource.slice(1);
-        return {
-          success: true,
-          message: `Purchased ${selectedAmount} ${resourceName} for ${goldCost} gold!`
-        };
-      }
+      case 'success':
+        // Resource selection and application handled by postRollInteractions.onComplete
+        // The onComplete handler already applied the resource changes during Step 7,
+        // so we just need to verify it ran successfully.
+        console.log('[PurchaseResources] ✅ Resources purchased via postRollInteractions');
+        return { success: true };
         
       case 'failure':
       case 'criticalFailure':
-        // Explicitly do nothing on failure (no modifiers defined)
+        // No action taken on failure
         return { success: true };
         
       default:

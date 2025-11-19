@@ -131,17 +131,16 @@
   }
   
   // Notify parent of current selection (enables Apply button, no persistence)
+  // ✨ STANDARD INTERFACE: Dispatch 'resolution' event per ComponentResolutionData
   function notifySelectionChanged() {
     if (!selectedResource) return;
     
     const sets = Math.ceil(selectedAmount / resourceGain);
     const cost = sets * goldCost;
     
-    // Just dispatch event - no actor update!
-    dispatch('selection', { 
-      selectedResource: selectedResource,
-      selectedAmount: selectedAmount,
-      goldCost: cost,
+    // Standard 'resolution' event per CustomComponentInterface
+    dispatch('resolution', { 
+      isResolved: isValid,
       modifiers: [
         {
           type: 'static',
@@ -155,7 +154,12 @@
           value: selectedAmount,
           duration: 'immediate'
         }
-      ]
+      ],
+      metadata: {
+        selectedResource,
+        selectedAmount,
+        goldCost: cost
+      }
     });
   }
   

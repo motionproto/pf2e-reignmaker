@@ -19,19 +19,19 @@ export const ACTION_STATUS = new Map<string, ActionStatus>([
   // Phase 2: Post-Apply Map Interactions
   ['claim-hexes', 'tested'],  // #2
   ['build-roads', 'tested'],  // #3
-  ['fortify-hex', 'testing'],  // #4
-  ['create-worksite', 'untested'],  // #5
-  ['harvest-resources', 'untested'],  // #6
-  ['send-scouts', 'untested'],  // #7
+  ['fortify-hex', 'tested'],  // #4
+  ['create-worksite', 'tested'],  // #5
+  ['harvest-resources', 'tested'],  // #6
+  ['send-scouts', 'tested'],  // #7
   
   // Phase 3: Custom Components (graceful degradation)
-  ['sell-surplus', 'untested'],  // #8
-  ['purchase-resources', 'untested'],  // #9
+  ['sell-surplus', 'tested'],  // #8
+  ['purchase-resources', 'tested'],  // #9
   
   // Phase 4: Pre-Roll Entity Selection
-  ['collect-stipend', 'untested'],  // #10
+  ['collect-stipend', 'testing'],  // #10
   ['execute-or-pardon-prisoners', 'untested'],  // #11
-  ['establish-diplomatic-relations', 'untested'],  // #12
+  ['diplomatic-mission', 'untested'],  // #12
   ['request-economic-aid', 'untested'],  // #13
   ['request-military-aid', 'untested'],  // #14
   ['train-army', 'untested'],  // #15
@@ -75,7 +75,7 @@ export const ACTION_NUMBERS = new Map<string, number>([
   // Phase 4: Pre-Roll Entity Selection (#10-16)
   ['collect-stipend', 10],
   ['execute-or-pardon-prisoners', 11],
-  ['establish-diplomatic-relations', 12],
+  ['diplomatic-mission', 12],
   ['request-economic-aid', 13],
   ['request-military-aid', 14],
   ['train-army', 15],

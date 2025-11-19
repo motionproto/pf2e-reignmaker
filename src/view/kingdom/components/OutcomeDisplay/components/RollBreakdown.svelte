@@ -14,7 +14,6 @@
       on:click={() => expanded = !expanded}
     >
       <div class="roll-result-large">
-        <i class="fas fa-dice-d20"></i>
         <span class="roll-number">{rollBreakdown.total}</span>
       </div>
       <span class="roll-dc-small">vs DC {rollBreakdown.dc}</span>
@@ -70,7 +69,7 @@
       cursor: pointer;
       display: flex;
       align-items: baseline;
-      gap: var(--space-12);
+      gap: var(--space-8);
       min-height: 2.5rem;
       transition: background var(--transition-fast);
       

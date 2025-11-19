@@ -26,7 +26,7 @@ import { sendScoutsPipeline } from './actions/sendScouts';
 // Week 6: Pre-roll Dialog Actions (7)
 import { collectStipendPipeline } from './actions/collectStipend';
 import { executeOrPardonPrisonersPipeline } from './actions/executeOrPardonPrisoners';
-import { establishDiplomaticRelationsPipeline } from './actions/establishDiplomaticRelations';
+import { establishDiplomaticRelationsPipeline } from './actions/diplomaticMission';
 import { requestEconomicAidPipeline } from './actions/requestEconomicAid';
 import { requestMilitaryAidPipeline } from './actions/requestMilitaryAid';
 import { trainArmyPipeline } from './actions/trainArmy';

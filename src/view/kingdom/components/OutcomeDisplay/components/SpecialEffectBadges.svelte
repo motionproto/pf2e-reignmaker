@@ -1,7 +1,14 @@
 <script lang="ts">
   import type { SpecialEffect } from '../../../../../types/special-effects';
+  import { getResourceIcon } from '../../../utils/presentation';
   
   export let effects: SpecialEffect[] = [];
+  
+  // Extract resource name from message (e.g., "Gained 1 Unrest" -> "unrest")
+  function extractResourceFromMessage(message: string): string | null {
+    const match = message.match(/(?:gained|lost|received)\s+\d+\s+(\w+)/i);
+    return match ? match[1].toLowerCase() : null;
+  }
   
   // Get icon for effect type if not explicitly provided
   function getEffectIcon(effect: SpecialEffect): string {
@@ -10,8 +17,14 @@
     switch (effect.type) {
       case 'attitude':
         return 'fa-handshake';
-      case 'resource':
-        return 'fa-coins';
+      case 'resource': {
+        // Try to extract resource type from message for specific icon
+        const resourceType = extractResourceFromMessage(effect.message);
+        if (resourceType) {
+          return getResourceIcon(resourceType);
+        }
+        return 'fa-coins'; // Fallback to generic coins icon
+      }
       case 'status':
         return 'fa-flag';
       case 'damage':

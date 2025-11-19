@@ -149,9 +149,9 @@ export const collectStipendPipeline: CheckPipeline = {
         kingdom.unrest = (kingdom.unrest || 0) + 1;
       });
     } else if (ctx.outcome === 'criticalFailure') {
-      // Roll 1d4 and apply that much unrest
-      const roll = await new Roll('1d4').evaluate();
-      const unrestAmount = roll.total || 0;
+      // ✅ Get already-rolled value from resolutionData (rolled in DiceRoller component)
+      const unrestModifier = ctx.resolutionData?.numericModifiers?.find((m: any) => m.resource === 'unrest');
+      const unrestAmount = unrestModifier?.value || 0;
       
       await updateKingdom(kingdom => {
         kingdom.unrest = (kingdom.unrest || 0) + unrestAmount;

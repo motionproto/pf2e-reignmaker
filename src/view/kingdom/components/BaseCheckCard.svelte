@@ -100,11 +100,8 @@
   // UI customization props
   export let canPerformMore: boolean = true;  // NOT used for blocking, only for parent logic
   export let currentFame: number = 0;
-  export let showFameReroll: boolean = true;
   export let resolvedBadgeText: string = 'Resolved';
-  export let primaryButtonLabel: string = 'OK';
   export let skillSectionTitle: string = 'Choose Skill:';
-  export let debugMode: boolean = false;
   export let statusBadge: { text: string; type: 'ongoing' | 'resolved' } | null = null;
   
   // Multi-player coordination props
@@ -118,7 +115,6 @@
   
   // Check if current user is GM
   $: isGM = (globalThis as any).game?.user?.isGM || false;
-  $: effectiveDebugMode = debugMode || isGM;
   
   // Computed: Don't show aid button on aid actions themselves
   $: isAidAction = id.startsWith('aid-');
@@ -152,14 +148,13 @@
       isIgnored: resolution.isIgnored || false,
       effectsApplied: outcomeApplied,
       
-      // Custom component support
-      component: customResolutionComponent,
-      componentProps: customResolutionProps,
-      
-      // UI configuration (pass through componentProps for backward compatibility)
-      primaryButtonLabel,
-      showFameReroll,
-      debugMode: effectiveDebugMode
+      // Custom component support - pass through componentName from resolution (stored in actor flags)
+      // OR extract from customResolutionComponent prop (legacy path)
+      componentName: (resolution as any).componentName || 
+        (customResolutionComponent 
+          ? (customResolutionComponent.name || '').replace(/^Proxy<(.+)>$/, '$1')
+          : undefined),
+      componentProps: customResolutionProps
     }
   } satisfies OutcomePreview : null;
   
@@ -319,12 +314,19 @@
   function handleApplyResult(event: CustomEvent) {
     // NEW ARCHITECTURE: Forward ResolutionData directly from OutcomeDisplay
     // event.detail is already a ResolutionData object (numericModifiers, manualEffects, complexActions)
+    console.log('🔵 [BaseCheckCard] handleApplyResult called', {
+      checkId: id,
+      checkType,
+      resolutionData: event.detail
+    });
 
     dispatch('primary', {
       checkId: id,
       checkType,
       resolution: event.detail  // ResolutionData from OutcomeDisplay
     });
+    
+    console.log('🔵 [BaseCheckCard] Dispatched primary event to parent');
     
     // ✅ DON'T reset state here - let PipelineCoordinator handle cleanup
     // PipelineCoordinator will delete the instance in step9_cleanup after Steps 7-9 complete

@@ -313,20 +313,19 @@ export async function createGameCommandsService() {
         
         const modifierLabel = `${params.sourceName} (${params.outcome})`;
         
-        // Check for pre-rolled value
-        let numericValue: number;
+        // ✅ ONLY APPLY PRE-ROLLED VALUES - Never roll here
+        let numericValue: number | undefined;
         if (params.preRolledValues && params.preRolledValues.has(modifierIndex)) {
           numericValue = params.preRolledValues.get(modifierIndex)!;
-
         } else if (params.preRolledValues && params.preRolledValues.has(`state:${modifier.resource}`)) {
           numericValue = params.preRolledValues.get(`state:${modifier.resource}`)!;
-
-        } else {
-          // Roll the dice
-          numericValue = this.evaluateDiceFormula(modifier.formula);
-          if (modifier.negative) {
-            numericValue = -numericValue;
-          }
+        }
+        
+        // If no pre-rolled value exists, this is a data error - dice should be rolled in UI
+        if (numericValue === undefined) {
+          logger.error(`❌ [GameCommands] Dice modifier has no pre-rolled value! Modifier index: ${modifierIndex}, resource: ${modifier.resource}, formula: ${modifier.formula}`);
+          logger.error(`❌ [GameCommands] Dice MUST be rolled in OutcomeDisplay before calling applyOutcome()`);
+          throw new Error(`Dice modifier "${modifier.resource}" has no pre-rolled value - dice must be rolled in UI before applying`);
         }
         
         await this.applyResourceChange(modifier.resource, numericValue, modifierLabel, result);
@@ -344,27 +343,6 @@ export async function createGameCommandsService() {
       // by the controller (not here) for continued tracking and application
     },
 
-    /**
-     * Evaluate dice formula (simple implementation for now)
-     * TODO: Integrate with Foundry VTT's dice roller
-     */
-    evaluateDiceFormula(formula: string): number {
-      // For now, just parse simple dice formulas like "1d4" or return 0
-      const match = formula.match(/^(\d+)d(\d+)$/);
-      if (match) {
-        const [, numDice, diceSides] = match.map(Number);
-        // Roll the dice (simple random)
-        let total = 0;
-        for (let i = 0; i < numDice; i++) {
-          total += Math.floor(Math.random() * diceSides) + 1;
-        }
-
-        return total;
-      }
-      // If it's not a dice formula, try parsing as a number
-      const num = parseInt(formula, 10);
-      return isNaN(num) ? 0 : num;
-    },
 
     /**
      * Apply a resource change to the kingdom

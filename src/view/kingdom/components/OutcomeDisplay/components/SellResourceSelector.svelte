@@ -26,6 +26,16 @@
   $: tradeRates = outcome === 'criticalSuccess' 
     ? getCriticalSuccessRates() 
     : getBestTradeRates();
+  
+  // Debug logging
+  $: console.log('🔍 [SellResourceSelector] Trade rates:', {
+    outcome,
+    isCritSuccess: outcome === 'criticalSuccess',
+    tier: tradeRates.tier,
+    sell: tradeRates.sell,
+    buy: tradeRates.buy
+  });
+  
   // Note: For selling, resourceCost is resources spent, goldGain is gold received
   $: resourceCost = tradeRates.sell.resourceCost;
   $: goldGain = tradeRates.sell.goldGain;
@@ -133,17 +143,16 @@
   }
   
   // Notify parent of current selection (enables Apply button, no persistence)
+  // ✨ STANDARD INTERFACE: Dispatch 'resolution' event per ComponentResolutionData
   function notifySelectionChanged() {
     if (!selectedResource) return;
     
     const sets = Math.floor(selectedAmount / resourceCost);
     const gold = sets * goldGain;
     
-    // Just dispatch event - no actor update!
-    dispatch('selection', { 
-      selectedResource: selectedResource,
-      selectedAmount: selectedAmount,
-      goldGained: gold,
+    // Standard 'resolution' event per CustomComponentInterface
+    dispatch('resolution', { 
+      isResolved: isValid,
       modifiers: [
         {
           type: 'static',
@@ -157,7 +166,12 @@
           value: gold,
           duration: 'immediate'
         }
-      ]
+      ],
+      metadata: {
+        selectedResource,
+        selectedAmount,
+        goldGained: gold
+      }
     });
   }
   

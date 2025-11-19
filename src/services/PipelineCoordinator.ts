@@ -128,8 +128,11 @@ export class PipelineCoordinator {
    * Confirm user clicked "Apply Result" - resolves Step 6 callback
    * 
    * Called from OutcomeDisplay when user clicks "Apply Result"
+   * 
+   * @param instanceId - Check instance ID
+   * @param resolutionData - Resolution data from OutcomeDisplay (includes customComponentData)
    */
-  confirmApply(instanceId: string): void {
+  confirmApply(instanceId: string, resolutionData?: any): void {
     const context = this.pendingContexts.get(instanceId);
     
     if (!context) {
@@ -139,9 +142,20 @@ export class PipelineCoordinator {
     
     log(context, 6, 'confirm', 'User confirmed outcome, continuing to Steps 7-9');
     console.log(`▶️ [PipelineCoordinator] User confirmed, resolving Step 6 callback`);
+    console.log(`📦 [PipelineCoordinator] Resolution data:`, resolutionData);
     
     // Mark as confirmed
     context.userConfirmed = true;
+    
+    // ✅ STORE RESOLUTION DATA (includes customComponentData from custom components)
+    if (resolutionData) {
+      context.resolutionData = {
+        ...context.resolutionData,
+        ...resolutionData
+      };
+      
+      console.log(`📦 [PipelineCoordinator] Stored resolution data in context:`, context.resolutionData);
+    }
     
     // Resolve the callback (continues execution to Step 7)
     if (context._resumeCallback) {
@@ -246,29 +260,72 @@ export class PipelineCoordinator {
     // Get skill (from actor context or first skill in pipeline)
     const skillName = (ctx.actor?.selectedSkill || pipeline.skills[0].skill) as KingdomSkill;
     
-    // Calculate DC based on character level
-    const characterLevel = actingCharacter.level || 1;
-    const dc = this.calculateDC(characterLevel, pipeline);
+    // Calculate DC based on party level (with character level fallback)
+    // IMPORTANT: Use ctx.actor.level if available (from reroll context), otherwise fallback to actor object
+    const characterLevel = ctx.actor?.level || actingCharacter.level || 1;
     
-    log(ctx, 3, 'executeRoll', `Rolling ${skillName} vs DC ${dc}`, { characterLevel, dc });
+    // Import getPartyLevel and getLevelBasedDC helpers
+    const { getPartyLevel, getLevelBasedDC } = await import('../pipelines/shared/ActionHelpers');
+    
+    // Get party level, falling back to character level if no party
+    const effectiveLevel = getPartyLevel(characterLevel);
+    const dc = getLevelBasedDC(effectiveLevel);
+    
+    // Store DC in context immediately so it's available throughout the pipeline
+    if (!ctx.rollData) {
+      ctx.rollData = {} as any;
+    }
+    ctx.rollData.dc = dc;
+    
+    log(ctx, 3, 'executeRoll', `Rolling ${skillName} vs DC ${dc}`, { characterLevel, effectiveLevel, dc });
     
     // CREATE CALLBACK that resumes pipeline
     const callback: CheckRollCallback = async (roll, outcome, message, event) => {
       console.log('✅ [Callback] Roll complete:', { outcome, total: roll.total });
       
-      // Update context with roll data
+      // Extract modifiers from PF2e message flags (NOT the roll object!)
+      // Per PF2e source (check.ts line 399): modifiers stored in message.flags.pf2e.modifiers
+      const modifiers = (message as any)?.flags?.pf2e?.modifiers || [];
+      
+      console.log('🎲 [PipelineCoordinator] Extracted modifiers from message.flags.pf2e.modifiers:', modifiers.length);
+      
+      // Log detailed modifier info
+      if (modifiers.length > 0) {
+        modifiers.forEach((mod: any, idx: number) => {
+          console.log(`  Modifier ${idx}:`, {
+            label: mod.label,
+            modifier: mod.modifier,
+            enabled: mod.enabled,
+            slug: mod.slug,
+            type: mod.type
+          });
+        });
+      } else {
+        console.log('ℹ️ [PipelineCoordinator] No modifiers in this roll (expected for rolls without modifiers)');
+      }
+      
+      // Update context with roll data (merge with existing DC if present)
       const d20Result = roll.dice[0]?.results[0]?.result || 0;
+      const existingDC = ctx.rollData?.dc || dc;
       ctx.rollData = {
         skill: skillName,
-        dc,
+        dc: existingDC,
         roll,
         outcome: (outcome ?? 'failure') as OutcomeType,
         rollBreakdown: {
           d20Result,
           total: roll.total,
-          modifiers: []
+          dc: existingDC,  // Include DC in rollBreakdown for OutcomeDisplay
+          modifiers: modifiers.map((mod: any) => ({
+            label: mod.label || '',
+            modifier: mod.modifier || 0,
+            enabled: mod.enabled ?? true,
+            ignored: mod.ignored ?? false
+          }))
         }
       };
+      
+      console.log('📊 [PipelineCoordinator] Stored rollBreakdown with modifiers:', ctx.rollData.rollBreakdown?.modifiers);
       
       // Resume pipeline at Step 4
       await this.resumeAfterRoll(ctx);
@@ -376,7 +433,7 @@ export class PipelineCoordinator {
       actorLevel: ctx.actor?.level,
       proficiencyRank: ctx.actor?.proficiencyRank,
       skillName: ctx.actor?.selectedSkill,
-      rollBreakdown: ctx.rollData?.rollBreakdown,
+      rollBreakdown: ctx.rollData?.rollBreakdown || undefined,
       currentTurn: turn,
       pendingActions,
       controller

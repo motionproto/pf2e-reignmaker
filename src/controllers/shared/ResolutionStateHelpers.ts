@@ -22,6 +22,7 @@ import { logger } from '../../utils/Logger';
 
 /**
  * Get resolution state from instance (NEW)
+ * Returns a new object each time to ensure Svelte reactivity
  */
 export function getInstanceResolutionState(instance: ActiveCheckInstance | null | undefined): ResolutionState {
   if (!instance) {
@@ -32,10 +33,18 @@ export function getInstanceResolutionState(instance: ActiveCheckInstance | null 
     };
   }
   
-  return instance.resolutionState || {
+  // Always return a new object to trigger Svelte reactivity
+  const state = instance.resolutionState || {
     selectedChoice: null,
     resolvedDice: {},
     selectedResources: {}
+  };
+  
+  return {
+    selectedChoice: state.selectedChoice,
+    resolvedDice: { ...state.resolvedDice },
+    selectedResources: { ...state.selectedResources },
+    customComponentData: state.customComponentData
   };
 }
 

@@ -8,6 +8,86 @@ import { ReignMakerMapLayer } from './ReignMakerMapLayer';
 import { logger } from '../../../utils/Logger';
 
 /**
+ * Switch to the kingdom map scene (same logic as hex selector)
+ */
+async function switchToKingdomScene(): Promise<void> {
+  console.log('[SceneControl] 🎬 Starting scene switch...');
+  
+  try {
+    const game = (globalThis as any).game;
+    
+    // Try to find kingdom scene in order of priority:
+    // 1. Configured setting (if set)
+    // 2. Auto-detect by name (Stolen Lands, Kingdom Map, etc.)
+    // 3. Stay on current scene
+    
+    let sceneId = game.settings?.get('pf2e-reignmaker', 'kingdomSceneId');
+    console.log('[SceneControl] 📍 Kingdom scene ID from settings:', sceneId || '(not configured)');
+
+    // If no setting, try to auto-detect kingdom scene
+    if (!sceneId) {
+      console.log('[SceneControl] 🔍 Auto-detecting kingdom scene...');
+      
+      // Common kingdom map names
+      const kingdomSceneNames = [
+        'Stolen Lands',
+        'stolen lands',
+        'Kingdom Map',
+        'kingdom map',
+        'Kingdom',
+        'Kingmaker'
+      ];
+      
+      // Search for scene by name
+      const detectedScene = game.scenes?.find((s: any) => 
+        kingdomSceneNames.some(name => s.name?.toLowerCase().includes(name.toLowerCase()))
+      );
+      
+      if (detectedScene) {
+        sceneId = detectedScene.id;
+        console.log('[SceneControl] ✅ Auto-detected kingdom scene:', `"${detectedScene.name}" (${sceneId})`);
+        
+        // Save for next time
+        await game.settings?.set('pf2e-reignmaker', 'kingdomSceneId', sceneId);
+        console.log('[SceneControl] 💾 Saved kingdom scene ID to settings');
+      } else {
+        console.warn('[SceneControl] ⚠️  Could not auto-detect kingdom scene, staying on current scene');
+        logger.warn('[SceneControl] ⚠️  Could not auto-detect kingdom scene - looking for scenes named "Stolen Lands" or "Kingdom Map"');
+        return;
+      }
+    }
+    
+    const scene = game.scenes?.get(sceneId);
+    console.log('[SceneControl] 🗺️  Found scene object:', scene ? `"${scene.name}" (${sceneId})` : 'NOT FOUND');
+
+    if (!scene) {
+      console.warn('[SceneControl] ⚠️  Kingdom scene not found:', sceneId);
+      logger.warn('[SceneControl] ⚠️  Kingdom scene not found:', sceneId);
+      return;
+    }
+    
+    // Only switch if not already viewing this scene
+    const currentSceneId = game.scenes?.active?.id;
+    const currentSceneName = game.scenes?.active?.name;
+    console.log('[SceneControl] 👁️  Current scene:', currentSceneName, `(${currentSceneId})`);
+
+    if (currentSceneId !== sceneId) {
+      console.log('[SceneControl] 🔄 Switching to kingdom scene...');
+      await scene.view();
+      console.log('[SceneControl] ✅ Scene switched successfully');
+
+      // Give the scene time to render
+      await new Promise(resolve => setTimeout(resolve, 300));
+    } else {
+      console.log('[SceneControl] ✅ Already on kingdom scene, no switch needed');
+    }
+  } catch (error) {
+    console.error('[SceneControl] ❌ Failed to switch scene:', error);
+    logger.warn('[SceneControl] ❌ Failed to switch scene:', error);
+  }
+}
+
+/**
  * Register the kingdom hex control button in the scene controls
  */
 export function registerKingdomHexControl(): void {
@@ -111,6 +191,9 @@ export function registerKingdomHexControl(): void {
         if (clickCount === 1) {
           clickTimer = window.setTimeout(async () => {
 
+            // Switch to kingdom scene first
+            await switchToKingdomScene();
+
             // Single click: toggle overlays
             // Check if map has been imported yet
             const kingdomActor = await getKingdomActor();
@@ -151,6 +234,9 @@ export function registerKingdomHexControl(): void {
           
           // Reset click state
           clickCount = 0;
+          
+          // Switch to kingdom scene first
+          await switchToKingdomScene();
           
           // Double click: open Kingdom UI
           const kingdomActor = await getKingdomActor();

@@ -331,7 +331,7 @@
       }
    }
    
-   async function executeSkillCheck(skill: string, targetInstanceId: string | null = null, enabledModifiers?: string[]) {
+   async function executeSkillCheck(skill: string, targetInstanceId: string | null = null) {
       if (!currentEvent || !checkHandler || !eventPhaseController) return;
       
       // Capture the event ID and instance ID for closure
@@ -342,12 +342,12 @@
       
       // Note: Action spending is handled by GameCommandsService.trackPlayerAction()
       // when the result is applied
+      // Note: Preserved modifiers are applied via PF2eSkillService module state
       
       await checkHandler.executeCheck({
          checkType: 'event',
          item: currentEvent,
          skill,
-         enabledModifiers,
          
          onStart: () => {
 
@@ -539,20 +539,18 @@
       // Note: Canceling doesn't add to actionLog, so player can still act
    }
    
-   // Event handler - perform reroll (OutcomeDisplay handles fame)
+   // Event handler - perform reroll (OutcomeDisplay handles fame and modifier extraction)
    async function handlePerformReroll(event: CustomEvent) {
       if (!currentEvent) return;
-      const { skill, previousFame, enabledModifiers } = event.detail;
+      const { skill, previousFame } = event.detail;
 
-      // Reset UI state for new roll
+      // Reset UI state for new roll (await completion to avoid race conditions)
       await handleCancel();
 
-      // Small delay to ensure UI updates
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Trigger new roll with preserved modifiers
+      // Trigger new roll - modifiers are preserved via PF2eSkillService.storeModifiersForReroll()
+      // called by OutcomeDisplay.handleReroll() before this event is dispatched
       try {
-         await executeSkillCheck(skill, null, enabledModifiers);
+         await executeSkillCheck(skill, null);
       } catch (error) {
          logger.error('[EventsPhase] Error during reroll:', error);
          // Restore fame if the roll failed

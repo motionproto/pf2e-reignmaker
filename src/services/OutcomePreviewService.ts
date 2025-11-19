@@ -80,6 +80,9 @@ export class OutcomePreviewService {
   
   /**
    * Store outcome (after skill check, before effects applied)
+   * 
+   * NOTE: customComponent is NOT serialized to actor flags (functions can't be JSON serialized)
+   * Instead, we store the component's name (string) which can be looked up in OutcomeDisplay's registry.
    */
   async storeOutcome(
     previewId: string,
@@ -94,9 +97,21 @@ export class OutcomePreviewService {
     customResolutionProps?: Record<string, any>
   ): Promise<void> {
     console.log('📦 [OutcomePreviewService] storeOutcome called with specialEffects:', specialEffects);
+    
+    // Extract component name if component provided
+    let componentName: string | undefined;
     if (customComponent) {
-      console.log('📦 [OutcomePreviewService] Custom component provided for inline rendering');
+      // Get raw name (may be wrapped in Proxy<...> during HMR)
+      let rawName = customComponent.name || customComponent.constructor?.name || '';
+      
+      // Strip Proxy<...> wrapper if present (HMR development mode)
+      componentName = rawName.replace(/^Proxy<(.+)>$/, '$1');
+      
+      console.log('📦 [OutcomePreviewService] Custom component provided:', rawName);
+      console.log('📦 [OutcomePreviewService] Extracted component name:', componentName);
+      console.log('📦 [OutcomePreviewService] Storing component name (not class) for registry lookup');
     }
+    
     await updateKingdom(kingdom => {
       const preview = kingdom.pendingOutcomes?.find(i => i.previewId === previewId);
       if (preview) {
@@ -111,11 +126,12 @@ export class OutcomePreviewService {
           shortfallResources: [],
           rollBreakdown,
           effectsApplied: false,
-          customComponent,  // Store custom component for inline rendering
-          customResolutionProps  // Store props for custom component
+          // ⚠️ CRITICAL: Store component NAME (string) not component CLASS
+          componentName,  // String = JSON serializable
+          componentProps: customResolutionProps || {}  // Renamed from customResolutionProps
         };
         preview.status = 'resolved';
-        console.log('✅ [OutcomePreviewService] Stored outcome with specialEffects:', preview.appliedOutcome.specialEffects);
+        console.log('✅ [OutcomePreviewService] Stored outcome with componentName:', componentName);
       } else {
         console.error(`❌ [OutcomePreviewService] Preview ${previewId} not found when storing outcome`);
       }

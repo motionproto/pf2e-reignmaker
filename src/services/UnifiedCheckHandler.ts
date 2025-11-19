@@ -647,6 +647,28 @@ export class UnifiedCheckHandler {
     console.log(`⚡ [UnifiedCheckHandler] Executing check: ${checkId}`);
 
     try {
+      // ✅ NEW: Execute postRollInteractions.onComplete handlers with customComponentData
+      // This allows actions like harvest-resources to apply user selections
+      if (pipeline.postRollInteractions && context.resolutionData?.customComponentData) {
+        console.log(`🎯 [UnifiedCheckHandler] Processing postRollInteractions with custom component data`);
+        
+        for (const interaction of pipeline.postRollInteractions) {
+          // Check if condition matches outcome
+          const conditionMet = !interaction.condition || interaction.condition(context);
+          
+          if (conditionMet && interaction.onComplete) {
+            console.log(`🎯 [UnifiedCheckHandler] Calling postRollInteractions.onComplete for ${interaction.id || interaction.type}`);
+            try {
+              await interaction.onComplete(context.resolutionData.customComponentData, context);
+              console.log(`✅ [UnifiedCheckHandler] onComplete handler succeeded`);
+            } catch (error) {
+              console.error(`❌ [UnifiedCheckHandler] onComplete handler failed:`, error);
+              throw error;
+            }
+          }
+        }
+      }
+      
       // Check if pipeline has custom execute function
       if (pipeline.execute) {
         console.log(`🎯 [UnifiedCheckHandler] Using custom execute function`);

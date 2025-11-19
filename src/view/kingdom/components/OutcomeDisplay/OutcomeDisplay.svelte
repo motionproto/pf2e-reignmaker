@@ -1,4 +1,83 @@
 <script lang="ts">
+  /**
+   * OutcomeDisplay - Universal outcome renderer for Actions, Events, and Incidents
+   * 
+   * ============================================================================
+   * AUTOMATIC COMPONENT INFERENCE RULES
+   * ============================================================================
+   * This component automatically selects UI components based on modifier types.
+   * No need to specify components explicitly in pipelines - they're inferred!
+   * 
+   * Modifier Type              → Component Rendered
+   * -------------------------------------------------------------------------
+   * { type: 'dice', ... }      → DiceRoller.svelte (interactive dice rolling)
+   * { type: 'choice', ... }    → ChoiceButtons.svelte or ResourceSelector.svelte
+   * { type: 'static', ... }    → StateChanges.svelte (display only, no interaction)
+   * 
+   * ============================================================================
+   * CUSTOM COMPONENT OVERRIDE
+   * ============================================================================
+   * For unique UI needs, pipelines can specify a custom component:
+   * 
+   * In pipeline's preview.calculate():
+   * ```typescript
+   * return {
+   *   resources: [...],
+   *   specialEffects: [...],
+   *   customComponent: {
+   *     name: 'MyUniqueComponent',  // Must be registered in COMPONENT_REGISTRY
+   *     props: { ...data }
+   *   }
+   * };
+   * ```
+   * 
+   * Example Usage:
+   * ```typescript
+   * // In executeOrPardonPrisoners.ts
+   * preview: {
+   *   calculate: async (ctx) => ({
+   *     customComponent: {
+   *       name: 'ExecuteOrPardonSelector',
+   *       props: { imprisonedUnrest: getTotalImprisoned(ctx.kingdom) }
+   *     }
+   *   })
+   * }
+   * 
+   * // Custom component provides resolution data
+   * dispatch('resolution', {
+   *   isResolved: true,
+   *   metadata: { decision: 'execute' },
+   *   modifiers: [{ resource: 'unrest', value: -3 }]
+   * });
+   * 
+   * // Pipeline consumes the result in execute()
+   * execute: async (ctx) => {
+   *   const decision = ctx.resolutionData?.customComponentData?.decision;
+   * }
+   * ```
+   * 
+   * ============================================================================
+   * COMPONENT REGISTRATION
+   * ============================================================================
+   * To add a new custom component:
+   * 
+   * 1. Create component in: src/view/kingdom/components/OutcomeDisplay/components/
+   * 2. Register in COMPONENT_REGISTRY below
+   * 3. Use in pipeline via customComponent.name
+   * 
+   * ============================================================================
+   * ARCHITECTURE BENEFITS
+   * ============================================================================
+   * ✅ DRY: ~87 pipelines share the same components
+   * ✅ Maintainability: One bug fix improves all actions
+   * ✅ Flexibility: Custom components available when needed
+   * ✅ Clean separation: Pipelines stay data-focused, no UI concerns
+   * 
+   * @see src/services/resolution/DiceRollingService.ts - Modifier detection
+   * @see src/types/CheckPipeline.ts - Pipeline type definitions
+   * @see src/pipelines/actions/executeOrPardonPrisoners.ts - Custom component example
+   */
+  
   import { createEventDispatcher } from 'svelte';
   import { kingdomData } from '../../../../stores/KingdomStore';
   import { structuresService } from '../../../../services/structures';
@@ -68,14 +147,15 @@
   export let preview: OutcomePreview;  // Contains ALL outcome data
   export let instance: ActiveCheckInstance | null = null;  // State management
   
-  // Optional UI overrides (with sensible defaults)
-  export let primaryButtonLabel: string = "Apply Result";
-  export let compact: boolean = false;
-  export let showFameReroll: boolean = true;
-  export let showCancel: boolean = true;
-  export let debugMode: boolean = false;
-  export let showIgnoreEvent: boolean = false;
-  export let ignoreEventDisabled: boolean = false;
+  // Derive UI configuration from preview.checkType and environment
+  $: isGM = (globalThis as any).game?.user?.isGM || false;
+  $: primaryButtonLabel = 'Apply Result';  // Same for all check types
+  $: compact = false;  // Can be made a prop if needed
+  $: showFameReroll = preview.checkType !== 'action';  // Only events/incidents can reroll with fame
+  $: showCancel = true;  // Can be made a prop if needed
+  $: debugMode = isGM;  // GMs get debug mode
+  $: showIgnoreEvent = preview.checkType === 'event';  // Only events can be ignored
+  $: ignoreEventDisabled = false;  // Can be made a prop if needed
   
   // Derive all data from preview
   $: outcome = preview.appliedOutcome?.outcome || 'success';
@@ -92,9 +172,48 @@
   $: isIgnored = false;  // Not tracked in OutcomePreview yet
   $: choices = preview.appliedOutcome?.choices;
   
-  // Custom component support (prefer new field names, fallback to legacy)
-  $: customComponent = preview.appliedOutcome?.component || preview.appliedOutcome?.customComponent || null;
-  $: customResolutionProps = preview.appliedOutcome?.componentProps || preview.appliedOutcome?.customResolutionProps || {};
+  // Debug logging for preview data
+  $: {
+    console.log('📊 [OutcomeDisplay] Preview data:', {
+      checkType: preview.checkType,
+      outcome,
+      rawOutcome: preview.appliedOutcome?.outcome,
+      effectiveOutcome,
+      debugOutcome,
+      debugMode,
+      effect,
+      modifiers,
+      stateChanges,
+      appliedOutcome: preview.appliedOutcome
+    });
+  }
+  
+  // Custom component registry - maps component names to actual component classes
+  import ResourceChoiceSelector from './components/ResourceChoiceSelector.svelte';
+  import SellResourceSelector from './components/SellResourceSelector.svelte';
+  import PurchaseResourceSelector from './components/PurchaseResourceSelector.svelte';
+  
+  const COMPONENT_REGISTRY: Record<string, any> = {
+    'ResourceChoiceSelector': ResourceChoiceSelector,
+    'SellResourceSelector': SellResourceSelector,
+    'PurchaseResourceSelector': PurchaseResourceSelector,
+    // Add more injectable components here as needed
+  };
+  
+  // Look up component by name from registry
+  $: customComponent = preview.appliedOutcome?.componentName 
+    ? COMPONENT_REGISTRY[preview.appliedOutcome.componentName] || null
+    : null;
+  
+  $: customResolutionProps = preview.appliedOutcome?.componentProps || 
+                              preview.appliedOutcome?.customResolutionProps || 
+                              {};
+  
+  // Debug logging
+  $: if (preview.appliedOutcome?.componentName) {
+    console.log('🔍 [OutcomeDisplay] Looking up component:', preview.appliedOutcome.componentName);
+    console.log('🔍 [OutcomeDisplay] Found in registry:', !!customComponent);
+  }
   
   const dispatch = createEventDispatcher();
   const DICE_PATTERN = /^-?\(?\\d+d\\d+([+-]\\d+)?\)?$|^-?\d+d\d+([+-]\d+)?$/;
@@ -122,14 +241,20 @@
       return [key, v];
     })
   );
+  
   $: selectedResources = new Map(
     Object.entries(resolutionState.selectedResources || {}).map(([k, v]) => [Number(k), v])
   );
   
   // Local UI-only state
-  let choiceResult: { effect: string; stateChanges: Record<string, any> } | null = null;
+  let componentResolutionData: { effect: string; stateChanges: Record<string, any> } | null = null;
   let customSelectionData: Record<string, any> | null = null;  // Raw custom selection data
-  let debugOutcome: OutcomeType = outcome as OutcomeType;
+  let debugOutcome: OutcomeType | undefined = undefined;
+  
+  // Initialize debugOutcome reactively once outcome is available
+  $: if (debugOutcome === undefined && outcome) {
+    debugOutcome = outcome as OutcomeType;
+  }
   
   // Parse special effects into readable messages
   function parseSpecialEffects(effects: string[] | undefined): string[] {
@@ -244,7 +369,8 @@
   }
   
   // Use debug outcome if in debug mode, otherwise use the prop
-  $: effectiveOutcome = debugMode ? debugOutcome : outcome;
+  // Fallback to outcome if debugOutcome is undefined
+  $: effectiveOutcome = debugMode ? (debugOutcome || outcome) : outcome;
   
   // Get outcome display properties
   $: outcomeProps = getOutcomeDisplayProps(effectiveOutcome);
@@ -293,33 +419,22 @@
   // Choices and dice modifiers can coexist (e.g., choice + 1d4 penalty)
   $: standaloneDiceModifiers = diceModifiers;
   $: hasDiceModifiers = standaloneDiceModifiers.length > 0;
-  $: diceResolved = hasDiceModifiers && standaloneDiceModifiers.every(m => resolvedDice.has(m.originalIndex));
   
   // Detect dice formulas in ORIGINAL stateChanges (not computed displayStateChanges)
   // This prevents circular dependency: displayStateChanges depends on resolvedDice
   $: stateChangeDice = detectStateChangeDice(stateChanges);
   $: hasStateChangeDice = stateChangeDice.length > 0;
-  $: stateChangeDiceResolved = hasStateChangeDice && stateChangeDice.every(d => resolvedDice.has(`state:${d.key}`));
   
-  // Determine if choices are present
-  $: hasChoices = effectiveChoices && effectiveChoices.length > 0;
-  $: choicesResolved = hasChoices && selectedChoice !== null;
-  
-  // Detect choice modifiers (type: "choice-dropdown") that need resource selection
-  // BREAKING CHANGE (2025-11-08): Only recognizes explicit type: "choice-dropdown"
-  $: choiceModifiers = (modifiers || [])
-    .map((m: any, idx: number) => ({ ...m, originalIndex: idx }))
-    .filter((m: any) => m.type === 'choice-dropdown' && Array.isArray(m.resources));
-  $: hasChoiceModifiers = choiceModifiers.length > 0;
-  $: choiceModifiersResolved = hasChoiceModifiers && choiceModifiers.every(m => selectedResources.has(m.originalIndex));
+  // ✨ REMOVED: Specific validation logic (diceResolved, choicesResolved, etc.)
+  // ✨ Components now register with ValidationContext and manage their own state
   
   // Determine if custom component requires resolution
   $: hasCustomComponent = customComponent !== null;
   $: customComponentResolved = !hasCustomComponent || (
-    // Check if choiceResult has data (for modifiers-based custom components)
-    (choiceResult !== null && 
-     choiceResult.stateChanges !== undefined && 
-     Object.keys(choiceResult.stateChanges).length > 0) ||
+    // Check if componentResolutionData has data (for modifiers-based custom components)
+    (componentResolutionData !== null && 
+     componentResolutionData.stateChanges !== undefined && 
+     Object.keys(componentResolutionData.stateChanges).length > 0) ||
     // OR check if customComponentData has data (for metadata-only custom components like outfit-army)
     (customComponentData && Object.keys(customComponentData).length > 0) ||
     // OR check local customSelectionData
@@ -333,10 +448,10 @@
     console.log('🔍 [OutcomeDisplay] Custom component validation:', {
       hasCustomComponent,
       customComponentResolved,
-      choiceResult,
+      componentResolutionData,
       customComponentData,
       customSelectionData,
-      choiceResultHasData: choiceResult !== null && choiceResult.stateChanges !== undefined && Object.keys(choiceResult.stateChanges).length > 0,
+      componentResolutionDataHasData: componentResolutionData !== null && componentResolutionData.stateChanges !== undefined && Object.keys(componentResolutionData.stateChanges).length > 0,
       customComponentDataHasData: customComponentData && Object.keys(customComponentData).length > 0,
       customSelectionDataHasData: customSelectionData && Object.keys(customSelectionData).length > 0
     });
@@ -344,11 +459,13 @@
   
   // Button visibility and state
   $: showCancelButton = showCancel && !applied && !isIgnored;
-  // Hide reroll button once user starts resolving (makes choices/rolls dice)
-  // They can reroll the base outcome, but not after committing to resolutions
-  $: hasAnyResolutionState = selectedChoice !== null || resolvedDice.size > 0 || selectedResources.size > 0;
-  $: showFameRerollButton = showFameReroll && !applied && !isIgnored && !hasAnyResolutionState;
-  $: effectivePrimaryLabel = applied ? '✓ Applied' : primaryButtonLabel;
+  // Reroll button should always be visible (but disabled if no fame)
+  // User can reroll even after making selections, using the same modifiers
+  $: showFameRerollButton = !applied && !isIgnored;
+  // Hide the primary button after it's been applied for ALL check types
+  // This causes the entire outcome section to revert to initial state
+  $: showPrimaryButton = !applied;
+  $: effectivePrimaryLabel = primaryButtonLabel;  // Always "Apply Result" (no "✓ Applied" state)
   
   // ✨ NEW: Validation via context (collects from all registered providers)
   $: unresolvedProviders = Array.from($validationContext.values()).filter(
@@ -364,7 +481,7 @@
     const hasNumericModifiers = modifiers && modifiers.length > 0;
     const hasStateChanges = stateChanges && Object.keys(stateChanges).length > 0;
     const hasCustomData = customComponentData && Object.keys(customComponentData).length > 0;
-    const hasChoiceResultData = choiceResult && Object.keys(choiceResult.stateChanges || {}).length > 0;
+    const hasChoiceResultData = componentResolutionData && Object.keys(componentResolutionData.stateChanges || {}).length > 0;
     const hasSpecialEffects = specialEffects && specialEffects.length > 0;
     const hasContent = hasMessage || hasManualEffects || hasNumericModifiers || hasStateChanges || hasCustomData || hasChoiceResultData || hasSpecialEffects;
     
@@ -384,7 +501,7 @@
   // Special handling for imprisoned unrest - inject settlement name
   // Special handling for economic aid - inject faction name
   $: displayEffect = (() => {
-    let baseEffect = hasChoices ? effect : (choiceResult ? choiceResult.effect : effect);
+    let baseEffect = effectiveChoices.length > 0 ? effect : (componentResolutionData ? componentResolutionData.effect : effect);
     
     // If we have imprisoned unrest modifier, inject settlement name
     if (modifiers?.some((m: any) => (m.resource as string) === 'imprisoned')) {
@@ -407,7 +524,7 @@
   })();
   $: displayStateChanges = computeDisplayStateChanges(
     stateChanges,
-    choiceResult,
+    componentResolutionData,
     resourceArrayModifiers,
     selectedResources,
     true, // resourceArraysResolved - always true since arrays are now choices
@@ -433,19 +550,22 @@
       return;
     }
 
-    // Extract enabled modifiers from rollBreakdown and store for next roll
-    // FILTER: Only preserve kingdom modifiers and custom modifiers, exclude system-generated ones
+    // Extract modifiers to preserve for reroll
+    // Preserve BOTH custom modifiers AND kingdom modifiers (unrest, infrastructure, aid)
+    // Exclude system-generated modifiers (ability scores, proficiency, level)
     const enabledModifiers: Array<{ label: string; modifier: number }> = [];
     if (rollBreakdown?.modifiers) {
       for (const mod of rollBreakdown.modifiers) {
         if (mod.enabled === true) {
           // Kingdom modifier patterns to preserve:
           const isUnrestPenalty = mod.label === 'Unrest Penalty';
-          const isInfrastructureBonus = mod.label.includes(' Infrastructure');
+          const isInfrastructureBonus = mod.label.includes(' Infrastructure') || 
+                                        (mod.label.includes(' ') && !mod.label.match(/^[A-Z][a-z]+$/)); // Settlement bonuses like "Capital Courthouse"
           const isAidBonus = mod.label.startsWith('Aid from ');
+          const isCustomModifier = (mod as any).custom === true;
           
-          // System-generated patterns to exclude (these are added automatically by PF2e):
-          const isSkillBonus = mod.label.match(/^\\+?\\d+\\s+[A-Z]/); // e.g., "+15 Diplomacy", "12 Society"
+          // System-generated patterns to exclude (these are auto-calculated by PF2e):
+          const isSkillBonus = mod.label.match(/^[+-]?\d+\s+[A-Z]/); // e.g., "+15 Diplomacy", "12 Society"
           const isAbilityScore = ['Strength', 'Dexterity', 'Constitution', 'Intelligence', 'Wisdom', 'Charisma'].some(
             ability => mod.label.includes(ability)
           );
@@ -459,7 +579,7 @@
           const isKingdomModifier = isUnrestPenalty || isInfrastructureBonus || isAidBonus;
           const isSystemGenerated = isSkillBonus || isAbilityScore || isProficiency || isProficiencyRank || isLevel;
           
-          if (isKingdomModifier || !isSystemGenerated) {
+          if (isKingdomModifier || (isCustomModifier && !isSystemGenerated)) {
             enabledModifiers.push({
               label: mod.label,
               modifier: mod.modifier
@@ -467,7 +587,6 @@
           }
         }
       }
-
     }
     
     // Store modifiers for the next roll (module-scoped state)
@@ -480,7 +599,7 @@
     }
     
     // Reset local UI state
-    choiceResult = null;
+    componentResolutionData = null;
 
     // Dispatch reroll request with skill info and previous fame
     // Note: Modifiers are now stored in module-scoped state, not passed as parameters
@@ -498,7 +617,7 @@
     const numericModifiers: Array<{ resource: ResourceType; value: number }> = [];
     
     // Case 1: Choice was made (resource arrays are replaced by choice)
-    if (selectedChoice !== null && choiceResult?.stateChanges) {
+    if (selectedChoice !== null && componentResolutionData?.stateChanges) {
 
       // Add non-resource-array modifiers (e.g., gold penalty in Trade War)
       if (modifiers) {
@@ -522,15 +641,15 @@
       }
       
       // Add choice modifiers (already rolled in ChoiceButtons)
-      for (const [resource, value] of Object.entries(choiceResult.stateChanges)) {
+      for (const [resource, value] of Object.entries(componentResolutionData.stateChanges)) {
         numericModifiers.push({ resource: resource as ResourceType, value: value as number });
 
       }
     }
     // Case 2: Custom component made a selection (e.g., HarvestResourcesAction)
-    else if (choiceResult?.stateChanges && Object.keys(choiceResult.stateChanges).length > 0) {
+    else if (componentResolutionData?.stateChanges && Object.keys(componentResolutionData.stateChanges).length > 0) {
       // Add modifiers from custom component selection
-      for (const [resource, value] of Object.entries(choiceResult.stateChanges)) {
+      for (const [resource, value] of Object.entries(componentResolutionData.stateChanges)) {
         numericModifiers.push({ resource: resource as ResourceType, value: value as number });
       }
     }
@@ -588,27 +707,26 @@
   }
   
   async function handlePrimary() {
+    console.log('🟢 [OutcomeDisplay] handlePrimary called');
+    console.log('🟢 [OutcomeDisplay] Validation state:', {
+      unresolvedProviders: unresolvedProviders.length,
+      componentResolutionData,
+      customSelectionData
+    });
 
-    // FIXED: Validate ALL interactive elements independently
-    if (hasChoices && !choicesResolved) {
-
-      return;
-    }
-    
-    if (hasDiceModifiers && !diceResolved) {
-
-      return;
-    }
-    
-    if (hasStateChangeDice && !stateChangeDiceResolved) {
-
+    // ✨ GENERIC VALIDATION: All components register with ValidationContext
+    // No need for specific checks - context handles everything
+    if (unresolvedProviders.length > 0) {
+      console.warn('⚠️ [OutcomeDisplay] Unresolved components:', unresolvedProviders.map(p => p.id));
       return;
     }
 
-    // NEW ARCHITECTURE: Compute complete resolution data
+    // Compute complete resolution data
     const resolutionData = computeResolutionData();
+    console.log('🟢 [OutcomeDisplay] Resolution data:', resolutionData);
 
     dispatch('primary', resolutionData);
+    console.log('🟢 [OutcomeDisplay] Dispatched primary event');
   }
   
   async function handleResourceSelect(event: CustomEvent) {
@@ -656,7 +774,7 @@
     if (selectedChoice === index) {
       // ✅ Clear choice in instance
       await updateInstanceResolutionState(instance.instanceId, { selectedChoice: null });
-      choiceResult = null;
+      componentResolutionData = null;
       return;
     }
     
@@ -667,7 +785,7 @@
     const resourceValues = rolledValues || {};
     
     // Build local UI result (for display)
-    choiceResult = {
+    componentResolutionData = {
       effect: effect,
       stateChanges: resourceValues
     };
@@ -675,7 +793,7 @@
     dispatch('choiceSelected', { 
       choiceIndex: index,
       choice: choice,
-      result: choiceResult
+      result: componentResolutionData
     });
   }
   
@@ -686,25 +804,25 @@
     }
     
     // Reset local UI state
-    choiceResult = null;
+    componentResolutionData = null;
     
     dispatch('cancel');
   }
   
-  async function handleCustomSelection(event: CustomEvent) {
-    const { modifiers, ...metadata } = event.detail;
+  // ✅ STANDARD EVENT: Handle 'resolution' from custom components
+  async function handleComponentResolution(event: CustomEvent) {
+    const { isResolved, modifiers, metadata } = event.detail;
 
-    // Store raw custom selection data (e.g., selectedResource, selectedAmount, goldCost)
+    console.log('✅ [OutcomeDisplay] Received resolution event:', {
+      isResolved,
+      modifiers,
+      metadata
+    });
+
+    // Store resolution data locally
     customSelectionData = metadata;
     
-    // ✅ Store in instance via helper (syncs to all clients)
-    if (instance) {
-      await updateInstanceResolutionState(instance.instanceId, {
-        customComponentData: metadata
-      });
-    }
-
-    // Convert modifiers to stateChanges (like choices do)
+    // Convert modifiers to stateChanges (for display in StateChanges component)
     if (modifiers && modifiers.length > 0) {
       const customStateChanges: Record<string, number> = {};
       
@@ -714,12 +832,11 @@
         }
       }
       
-      // Store as a "choice result" in LOCAL STATE ONLY (no persistence until Apply)
-      choiceResult = {
+      // Store as a "choice result" for display
+      componentResolutionData = {
         effect: effect,
         stateChanges: customStateChanges
       };
-
     }
     
     // Forward to parent
@@ -736,7 +853,7 @@
     }
     
     // Reset local UI state
-    choiceResult = null;
+    componentResolutionData = null;
     
     // Dispatch event to parent so they can update modifiers/effects
     dispatch('debugOutcomeChanged', { outcome: newOutcome });
@@ -746,7 +863,7 @@
 <div class="resolution-display {outcomeProps.colorClass} {compact ? 'compact' : ''}">
   {#if debugMode}
     <DebugResultSelector 
-      currentOutcome={debugOutcome} 
+      currentOutcome={debugOutcome || outcome} 
       on:outcomeSelected={handleDebugOutcomeChange} 
     />
   {/if}
@@ -764,7 +881,7 @@
     <OutcomeMessage effect={displayEffect} />
     <ShortageWarning {shortfallResources} />
     <SpecialEffectBadges effects={structuredEffects} />
-    <ChoiceButtons choices={effectiveChoices} {selectedChoice} {choicesResolved} on:select={handleChoiceSelect} />
+    <ChoiceButtons choices={effectiveChoices} {selectedChoice} on:select={handleChoiceSelect} />
     <ResourceSelector 
       {modifiers}
       {selectedResources}
@@ -772,8 +889,8 @@
     />
     <DiceRoller 
       modifiers={standaloneDiceModifiers} 
-      {resolvedDice} 
-      on:roll={handleDiceRoll} 
+      on:roll={handleDiceRoll}
+      on:resolution={handleComponentResolution}
     />
     <!-- Always show StateChanges (modifiers, costs, effects) -->
     <StateChanges 
@@ -783,7 +900,7 @@
       manualEffects={effectiveManualEffects} 
       automatedEffects={legacyParsedEffects}
       outcome={effectiveOutcome} 
-      hideResources={choiceResult ? Object.keys(choiceResult.stateChanges) : []}
+      hideResources={componentResolutionData ? Object.keys(componentResolutionData.stateChanges) : []}
       {customComponentData}
       on:roll={handleDiceRoll} 
     />
@@ -797,7 +914,7 @@
           {instance}
           {outcome}
           {...customResolutionProps}
-          on:selection={handleCustomSelection}
+          on:resolution={handleComponentResolution}
         />
       </div>
     {/if}
@@ -806,6 +923,7 @@
   <OutcomeActions
     {showCancelButton}
     {showFameRerollButton}
+    {showPrimaryButton}
     {effectivePrimaryLabel}
     {primaryButtonDisabled}
     {currentFame}

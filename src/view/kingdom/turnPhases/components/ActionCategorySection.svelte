@@ -85,7 +85,8 @@
           effect: checkInstance.appliedOutcome.effect || '',
           specialEffects: checkInstance.appliedOutcome.specialEffects || [],
           rollBreakdown: checkInstance.appliedOutcome.rollBreakdown,
-          effectsApplied: checkInstance.appliedOutcome.effectsApplied || false
+          effectsApplied: checkInstance.appliedOutcome.effectsApplied || false,
+          componentName: checkInstance.appliedOutcome.componentName  // ✅ CRITICAL: Preserve for OutcomeDisplay registry lookup
         } : undefined}
         {@const customResolution = (resolution && checkInstance?.appliedOutcome?.customComponent) 
           ? { 

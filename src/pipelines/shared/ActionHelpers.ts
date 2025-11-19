@@ -261,21 +261,22 @@ export function getLevelBasedDC(level: number): number {
 }
 
 /**
- * Get party level from game actors
+ * Get party level from game actors, with optional fallback
+ * @param fallbackLevel - Level to use if no party exists (e.g., acting character's level)
  */
-export function getPartyLevel(): number {
+export function getPartyLevel(fallbackLevel?: number): number {
   const game = (globalThis as any).game;
-  if (!game?.actors) return 1;
+  if (!game?.actors) return fallbackLevel || 1;
   
   // Find party actors and get their level
   const partyActors = Array.from(game.actors).filter((a: any) => 
     a.type === 'character' && a.hasPlayerOwner
   );
   
-  if (partyActors.length === 0) return 1;
+  if (partyActors.length === 0) return fallbackLevel || 1;
   
   // Use the first party member's level as reference
-  return (partyActors[0] as any).level || 1;
+  return (partyActors[0] as any).level || fallbackLevel || 1;
 }
 
 // ============================================================================

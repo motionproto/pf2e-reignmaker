@@ -52,9 +52,10 @@ export function getResourceIcon(resource: string): string {
     lumber: 'fa-tree',
     stone: 'fa-cube',
     ore: 'fa-mountain',
-    fame: 'fa-star'
+    fame: 'fa-star',
+    unrest: 'fa-fist-raised'
   };
-  return icons[resource] || 'fa-box';
+  return icons[resource.toLowerCase()] || 'fa-box';
 }
 
 /**

@@ -35,132 +35,6 @@
 
 ## ⚠️ Implementation Guidelines
 
-**CRITICAL: Pipeline-First Development**
-
-### Best Practices from Tested Actions
-
-**Learned from fortify-hex and other implementations:**
-
-#### 1. **`getHexInfo` Callback Pattern** ✨ 
-Show contextual information when user selects a hex:
-
-```typescript
-postApplyInteractions: [{
-  type: 'map-selection',
-  getHexInfo: (hexId: string) => {
-    // ✅ CORRECT: Synchronous callback returning HTML
-    const tierConfig = fortificationData.tiers[nextTier - 1];
-    
-    return `
-      <div style="font-size: 13px;">
-        <div>Building: ${tierConfig.name}</div>
-        <div>💰 Cost: ${costText}</div>
-        <div>🛡️ Benefits: ${benefitsText}</div>
-      </div>
-    `;
-  }
-}]
-```
-
-**Key points:**
-- Use ES6 imports at file level (synchronous access)
-- Return HTML string (NOT async!)
-- Include cost, benefits, warnings
-- Info persists in completion state
-
-**Apply to:** claim-hexes, build-roads, create-worksite, establish-settlement
-
-#### 2. **Detailed Validation Messages** ✅
-Return validation result with specific error messages:
-
-```typescript
-// ✅ CORRECT: Return detailed result
-export function validateMyHex(hexId: string): { valid: boolean; message?: string } {
-  if (currentTier >= 4) {
-    return { 
-      valid: false, 
-      message: 'Already a Fortress, cannot be upgraded further' 
-    };
-  }
-  
-  if (missingResources.length > 0) {
-    return { 
-      valid: false, 
-      message: `You need at least ${missingResources.join(' and ')} to build ${tierName}` 
-    };
-  }
-  
-  return { valid: true };
-}
-
-// ❌ WRONG: Vague boolean return
-export function validateMyHex(hexId: string): boolean {
-  return currentTier < 4 && hasResources;  // User doesn't know WHY it failed!
-}
-```
-
-**Update all validators in `src/pipelines/shared/*Validator.ts`**
-
-#### 3. **Reduce Notification Spam** 🔕
-Don't show success notifications when UI already shows the result:
-
-```typescript
-// ✅ CORRECT: No notification (floater shows build info)
-onComplete: async (selectedHexIds: string[], ctx: any) => {
-  await fortifyHexExecution(hexId, nextTier);
-  // No ui.notifications.info() - completion panel shows details
-}
-
-// ❌ WRONG: Redundant notification
-onComplete: async (selectedHexIds: string[], ctx: any) => {
-  await fortifyHexExecution(hexId, nextTier);
-  ui.notifications.info('Built Wooden Tower!');  // User already sees this in floater!
-}
-```
-
-**Only notify on:** Errors, warnings, or non-obvious changes
-
-#### 4. **Synchronous Data Access in Callbacks** ⚙️
-Use ES6 imports at file level for synchronous access:
-
-```typescript
-// ✅ CORRECT: Import at file level
-import fortificationData from '../../../data/player-actions/fortify-hex.json';
-
-getHexInfo: (hexId: string) => {
-  const tierConfig = fortificationData.tiers[nextTier - 1];
-  return `<div>Cost: ${tierConfig.cost}</div>`;
-}
-
-// ❌ WRONG: Async import inside callback
-getHexInfo: async (hexId: string) => {
-  const data = await import('../../../data/.../fortify-hex.json');
-  // HexSelector expects synchronous return!
-}
-```
-
-**Why:** Browser environment requires synchronous callbacks in hex-selector
-
-#### 5. **Completion Context Preservation** 📋
-HexSelector automatically preserves `getHexInfo` result in completion state:
-
-```typescript
-// When user clicks Done, the hex info is captured and shown in completion panel
-// No additional code needed - this is automatic!
-
-// Just provide getHexInfo callback, system handles the rest
-postApplyInteractions: [{
-  type: 'map-selection',
-  getHexInfo: (hexId: string) => {
-    return '<div>Build info here</div>';  // Auto-preserved in completion
-  }
-}]
-```
-
-**Benefit:** Users can review what they built after clicking OK
-
----
-
 ### Creating New Action Implementations
 
 **✅ CORRECT: Create new pipeline files**
@@ -208,6 +82,31 @@ export const myActionPipeline: CheckPipeline = {
 ## 🏗️ Architecture
 
 **Complete design documentation:** `docs/systems/pipeline-coordinator.md`
+
+### Custom Component Injection (New!)
+
+**When to use:** Actions needing post-roll user choices (select resource, choose cost, etc.)
+
+**Standard Interface:**
+```typescript
+// Component receives standard props
+export let instance: ActiveCheckInstance | null;
+export let outcome: string;
+export let config: Record<string, any> = {};
+
+// Component emits standard event
+dispatch('resolution', {
+  isResolved: true,
+  modifiers: [{ type: 'static', resource: 'lumber', value: 2 }],
+  metadata: { selectedResource: 'lumber', amount: 2 }
+});
+```
+
+**Examples:** harvest-resources, sell-surplus, purchase-resources, outfit-army
+
+**Full details:** See `docs/systems/pipeline-coordinator.md` - Section 5: Custom Component Injection
+
+---
 
 ### Unified PipelineCoordinator (9-Step Architecture)
 
