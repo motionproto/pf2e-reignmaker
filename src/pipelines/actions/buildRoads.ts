@@ -9,6 +9,7 @@ import type { CheckPipeline } from '../../types/CheckPipeline';
 import { buildRoadsExecution } from '../../execution/territory/buildRoads';
 import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 import { applyActionCost } from '../shared/applyActionCost';
+import { validateRoadHex } from '../shared/roadValidator';
 
 export const buildRoadsPipeline: CheckPipeline = {
   id: 'build-roads',
@@ -36,9 +37,7 @@ export const buildRoadsPipeline: CheckPipeline = {
       id: 'selectedHexes',
       mode: 'hex-selection',
       colorType: 'road',
-      validation: async (hexId: string, pendingHexes: string[]) => {
-        // Import validator at runtime to avoid circular dependencies
-        const { validateRoadHex } = await import('../shared/roadValidator');
+      validation: (hexId: string, pendingHexes: string[]) => {
         return validateRoadHex(hexId, pendingHexes);
       },
       // ✅ Execute road building when user completes hex selection

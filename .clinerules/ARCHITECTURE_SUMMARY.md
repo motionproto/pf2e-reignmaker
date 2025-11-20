@@ -21,7 +21,7 @@ await territoryService.syncFromKingmaker();  // Import hex data ONCE
 await updateKingdom(kingdom => {
   const hex = kingdom.hexes.find(h => h.id === hexId);
   if (hex) {
-    hex.claimedBy = 1;  // Update directly, reactive overlays auto-update
+    hex.claimedBy = PLAYER_KINGDOM;  // PLAYER_KINGDOM = "player" constant
   }
 });
 ```
@@ -91,8 +91,10 @@ const kingdom = actor.getFlag('pf2e-reignmaker', 'kingdom-data');
 **Available Derived Stores:**
 ```typescript
 // In KingdomStore.ts
+import { PLAYER_KINGDOM } from '../types/ownership';  // PLAYER_KINGDOM = "player"
+
 export const claimedHexes = derived(kingdomData, $data => 
-  $data.hexes.filter(h => h.claimedBy === 1)
+  $data.hexes.filter(h => h.claimedBy === PLAYER_KINGDOM)
 );
 
 export const claimedSettlements = derived(kingdomData, $data =>
@@ -100,7 +102,7 @@ export const claimedSettlements = derived(kingdomData, $data =>
     if (s.location.x === 0 && s.location.y === 0) return false;
     const hexId = /* calculate hex ID */;
     const hex = $data.hexes?.find(h => h.id === hexId);
-    return hex && hex.claimedBy === 1;
+    return hex && hex.claimedBy === PLAYER_KINGDOM;
   })
 );
 
@@ -125,7 +127,7 @@ const { claimedSettlements } = await import('../stores/KingdomStore');
 const settlements = get(claimedSettlements);
 
 // ❌ Wrong - don't duplicate filtering logic
-const claimed = kingdom.hexes.filter(h => h.claimedBy === 1);
+const claimed = kingdom.hexes.filter(h => h.claimedBy === PLAYER_KINGDOM);
 ```
 
 **Benefits:**

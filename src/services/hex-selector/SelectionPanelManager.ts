@@ -1,0 +1,437 @@
+/**
+ * SelectionPanelManager - Manages the floating selection panel UI
+ * including creation, updates, dragging, and completion display
+ */
+
+import type { HexSelectionConfig } from './types';
+import { getKingdomData } from '../../stores/KingdomStore';
+import { logger } from '../../utils/Logger';
+
+export class SelectionPanelManager {
+  private config: HexSelectionConfig | null = null;
+  private selectedHexes: string[] = [];
+  private panelMountPoint: HTMLElement | null = null;
+  private panelComponent: any = null;  // Svelte component instance
+  private panelState: 'selection' | 'revealing' | 'completed' = 'selection';
+  private completionHexInfo: string | null = null;
+  private selectedMetadata: any = null;
+  
+  // Callbacks
+  private onCancel: (() => void) | null = null;
+  private onDone: (() => void) | null = null;
+
+  /**
+   * Set configuration and callbacks
+   */
+  setConfig(
+    config: HexSelectionConfig,
+    selectedHexes: string[],
+    onCancel: () => void,
+    onDone: () => void
+  ): void {
+    this.config = config;
+    this.selectedHexes = selectedHexes;
+    this.onCancel = onCancel;
+    this.onDone = onDone;
+  }
+
+  /**
+   * Set selected metadata (for custom selectors)
+   */
+  setSelectedMetadata(metadata: any): void {
+    this.selectedMetadata = metadata;
+  }
+
+  /**
+   * Get selected metadata
+   */
+  getSelectedMetadata(): any {
+    return this.selectedMetadata;
+  }
+
+  /**
+   * Set panel state
+   */
+  setPanelState(state: 'selection' | 'revealing' | 'completed'): void {
+    this.panelState = state;
+  }
+
+  /**
+   * Set completion hex info
+   */
+  setCompletionHexInfo(info: string | null): void {
+    this.completionHexInfo = info;
+  }
+
+  /**
+   * Mount floating panel
+   */
+  mountPanel(): void {
+    // Create mount point
+    this.panelMountPoint = document.createElement('div');
+    this.panelMountPoint.id = 'hex-selection-panel-mount';
+    document.body.appendChild(this.panelMountPoint);
+    
+    this.createSimplePanel();
+  }
+
+  /**
+   * Create a simple HTML panel
+   */
+  private createSimplePanel(): void {
+    if (!this.panelMountPoint || !this.config) return;
+    
+    const panel = document.createElement('div');
+    panel.className = 'hex-selection-panel';
+    panel.style.cssText = `
+      position: fixed;
+      top: 50%;
+      right: 20px;
+      transform: translateY(-50%);
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.9);
+      border: 2px solid #D2691E;
+      border-radius: 8px;
+      padding: 16px;
+      min-width: 280px;
+      box-shadow: 0 4px 12px var(--overlay-high);
+      color: white;
+      font-family: system-ui, -apple-system, sans-serif;
+    `;
+    
+    panel.innerHTML = `
+      <div class="panel-header" style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #D2691E; cursor: move;">
+        <h3 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+          <i class="fas fa-map-marked-alt"></i>
+          ${this.config.title}
+        </h3>
+      </div>
+      <div id="hex-slots" style="margin-bottom: 12px;">
+        <!-- Slots will be added here -->
+      </div>
+      <div id="hex-info" style="margin-bottom: 12px; display: none;"></div>
+      <div style="display: flex; gap: 8px; padding-top: 12px; border-top: 1px solid #D2691E;">
+        <button id="btn-cancel" style="flex: 1; padding: 8px; background: #333; border: 1px solid #666; border-radius: 4px; color: white; cursor: pointer;">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+        <button id="btn-done" style="flex: 1; padding: 8px; background: #D2691E; border: none; border-radius: 4px; color: white; cursor: pointer;" disabled>
+          <i class="fas fa-check"></i> Done
+        </button>
+      </div>
+    `;
+    
+    this.panelMountPoint.appendChild(panel);
+    
+    // Wire up buttons
+    const btnCancel = panel.querySelector('#btn-cancel') as HTMLButtonElement;
+    const btnDone = panel.querySelector('#btn-done') as HTMLButtonElement;
+    
+    btnCancel?.addEventListener('click', () => this.onCancel?.());
+    btnDone?.addEventListener('click', () => this.onDone?.());
+    
+    // Add drag functionality
+    this.makePanelDraggable(panel);
+    
+    // Initial slot render
+    this.updatePanel();
+  }
+
+  /**
+   * Make panel draggable by the header
+   */
+  private makePanelDraggable(panel: HTMLElement): void {
+    const header = panel.querySelector('.panel-header') as HTMLElement;
+    if (!header) return;
+    
+    let isDragging = false;
+    let currentX = 0;
+    let currentY = 0;
+    let initialX = 0;
+    let initialY = 0;
+    
+    header.addEventListener('mousedown', (e: MouseEvent) => {
+      isDragging = true;
+      
+      const rect = panel.getBoundingClientRect();
+      initialX = e.clientX - rect.left;
+      initialY = e.clientY - rect.top;
+      
+      document.body.style.cursor = 'grabbing';
+      header.style.cursor = 'grabbing';
+    });
+    
+    document.addEventListener('mousemove', (e: MouseEvent) => {
+      if (!isDragging) return;
+      
+      e.preventDefault();
+      
+      currentX = e.clientX - initialX;
+      currentY = e.clientY - initialY;
+      
+      const maxX = window.innerWidth - panel.offsetWidth;
+      const maxY = window.innerHeight - panel.offsetHeight;
+      
+      currentX = Math.max(0, Math.min(currentX, maxX));
+      currentY = Math.max(0, Math.min(currentY, maxY));
+      
+      panel.style.left = `${currentX}px`;
+      panel.style.top = `${currentY}px`;
+      panel.style.right = 'auto';
+      panel.style.transform = 'none';
+    });
+    
+    document.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        document.body.style.cursor = '';
+        header.style.cursor = 'move';
+      }
+    });
+  }
+
+  /**
+   * Get terrain type for a hex
+   */
+  private getHexTerrain(hexId: string): string {
+    const kingdom = getKingdomData();
+    const hex = kingdom.hexes?.find((h: any) => h.id === hexId);
+    return hex?.terrain || 'Unknown';
+  }
+
+  /**
+   * Update hex info panel with hex-specific information
+   * @param hexId - Hex to show info for, or null to clear
+   */
+  updateHexInfo(hexId: string | null): void {
+    if (!this.panelMountPoint || !this.config) {
+      return;
+    }
+    
+    const hexInfoDiv = this.panelMountPoint.querySelector('#hex-info') as HTMLElement;
+    if (!hexInfoDiv) {
+      return;
+    }
+    
+    // If no getHexInfo callback, hide panel
+    if (!this.config.getHexInfo) {
+      hexInfoDiv.style.display = 'none';
+      return;
+    }
+    
+    // If no hex selected, hide panel
+    if (!hexId) {
+      hexInfoDiv.style.display = 'none';
+      return;
+    }
+    
+    // Get hex info from callback
+    const info = this.config.getHexInfo(hexId);
+    
+    if (!info) {
+      // No info available for this hex, hide panel
+      hexInfoDiv.style.display = 'none';
+    } else {
+      // Show panel with hex info
+      hexInfoDiv.style.display = 'block';
+      hexInfoDiv.innerHTML = info;
+    }
+  }
+
+  /**
+   * Update panel with current selection state or completion display
+   */
+  updatePanel(): void {
+    if (!this.panelMountPoint || !this.config) return;
+    
+    if (this.panelState === 'completed') {
+      this.renderCompletedState();
+      return;
+    }
+    
+    const slotsContainer = this.panelMountPoint.querySelector('#hex-slots');
+    const btnDone = this.panelMountPoint.querySelector('#btn-done') as HTMLButtonElement;
+    
+    if (!slotsContainer) return;
+    
+    // Render slots
+    slotsContainer.innerHTML = '';
+    for (let i = 0; i < this.config.count; i++) {
+      const slot = document.createElement('div');
+      const hexId = this.selectedHexes[i];
+      const terrain = hexId ? this.getHexTerrain(hexId) : '';
+      
+      slot.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px;
+        background: ${hexId ? 'rgba(210, 105, 30, 0.2)' : 'var(--hover-low)'};
+        border: 1px solid ${hexId ? '#D2691E' : '#333'};
+        border-radius: 4px;
+        margin-bottom: 4px;
+        cursor: ${hexId ? 'pointer' : 'default'};
+      `;
+      
+      slot.innerHTML = `
+        <span style="font-weight: bold; color: #999; min-width: 30px;">[${i + 1}]</span>
+        ${hexId 
+          ? `<span style="flex: 1; font-family: monospace; font-size: 16px; color: #D2691E;">${hexId} <span style="font-size: 12px; color: #999;">[${terrain}]</span></span>
+             <i class="fas fa-minus-circle" style="color: #999;"></i>`
+          : `<span style="flex: 1; font-family: monospace; color: #666; opacity: 0.5;">______</span>`
+        }
+      `;
+      
+      // Allow clicking to deselect (handled by parent)
+      if (hexId) {
+        slot.addEventListener('click', () => {
+          // Parent will handle deselection logic
+          const event = new CustomEvent('hex-deselected', { detail: { hexId } });
+          this.panelMountPoint?.dispatchEvent(event);
+        });
+      }
+      
+      slotsContainer.appendChild(slot);
+    }
+    
+    // Mount custom selector if provided and hex is selected
+    if (this.config.customSelector && this.selectedHexes.length > 0) {
+      this.mountCustomSelector(slotsContainer);
+    }
+    
+    // Update Done button
+    const isComplete = this.selectedHexes.length === this.config.count && 
+                       (!this.config.customSelector || this.selectedMetadata !== null);
+    if (btnDone) {
+      btnDone.disabled = !isComplete;
+      btnDone.style.opacity = isComplete ? '1' : '0.5';
+    }
+  }
+
+  /**
+   * Mount custom selector component (e.g., WorksiteTypeSelector)
+   */
+  private mountCustomSelector(container: Element): void {
+    if (!this.config?.customSelector) return;
+    
+    // Unmount previous instance if exists
+    if (this.panelComponent) {
+      this.panelComponent.$destroy();
+      this.panelComponent = null;
+    }
+    
+    // Create mount point for custom component
+    const customMount = document.createElement('div');
+    customMount.id = 'custom-selector-mount';
+    container.appendChild(customMount);
+    
+    // Import and mount the component
+    const ComponentConstructor = this.config.customSelector.component;
+    const selectedHex = this.selectedHexes[0];
+    
+    this.panelComponent = new ComponentConstructor({
+      target: customMount,
+      props: {
+        selectedHex,
+        onSelect: (metadata: any) => {
+          this.selectedMetadata = metadata;
+          this.updatePanel();
+        },
+        ...this.config.customSelector.props
+      }
+    });
+  }
+
+  /**
+   * Render completed state with hex list and OK button
+   */
+  private renderCompletedState(): void {
+    if (!this.panelMountPoint || !this.config) return;
+    
+    const panel = this.panelMountPoint.querySelector('.hex-selection-panel') as HTMLElement;
+    if (!panel) return;
+    
+    const actionMessages: Record<string, string> = {
+      scout: 'Hexes Revealed!',
+      claim: 'Hexes Claimed!',
+      road: 'Roads Built!',
+      settlement: 'Settlement Established!',
+      fortify: 'Hex Fortified!',
+      unclaim: 'Hexes Unclaimed!'
+    };
+    
+    const title = actionMessages[this.config.colorType] || 'Selection Complete!';
+    const icon = this.config.colorType === 'scout' ? 'fa-map-marked-alt' : 'fa-check-circle';
+    
+    panel.innerHTML = `
+      <div class="panel-header" style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #D2691E; cursor: move;">
+        <h3 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+          <i class="fas ${icon}"></i>
+          ${title}
+        </h3>
+      </div>
+      ${this.completionHexInfo ? `
+        <div style="margin-bottom: 12px; padding: 8px; background: var(--hover-low); border-radius: 4px; font-size: 13px;">
+          ${this.completionHexInfo}
+        </div>
+      ` : ''}
+      <div style="padding: 20px;">
+        <div style="background: var(--hover-low); border-radius: 4px; padding: 16px; margin-bottom: 16px;">
+          <div style="font-size: 12px; color: #999; margin-bottom: 8px;">Selected ${this.selectedHexes.length} ${this.selectedHexes.length === 1 ? 'hex' : 'hexes'}:</div>
+          <div style="max-height: 200px; overflow-y: auto;">
+            ${this.selectedHexes.map(hexId => {
+              const terrain = this.getHexTerrain(hexId);
+              return `
+                <div style="padding: 6px 8px; margin: 4px 0; background: rgba(210, 105, 30, 0.2); border-radius: 4px; font-family: monospace; font-size: 14px; color: #D2691E; display: flex; align-items: center; gap: 8px;">
+                  <i class="fas fa-check-circle" style="color: #4CAF50;"></i>
+                  ${hexId} <span style="font-size: 12px; color: #999;">[${terrain}]</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+          ${this.config.colorType === 'scout' ? `
+            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #666; font-size: 12px; color: #999; text-align: center;">
+              <i class="fas fa-eye"></i> Check the map to see newly revealed areas!
+            </div>
+          ` : ''}
+        </div>
+        <button id="btn-ok" style="width: 100%; padding: 12px; background: #4CAF50; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 16px; font-weight: bold;">
+          <i class="fas fa-check"></i> OK
+        </button>
+      </div>
+    `;
+    
+    // Wire up OK button (handled by parent through event)
+    const btnOk = panel.querySelector('#btn-ok') as HTMLButtonElement;
+    btnOk?.addEventListener('click', () => {
+      const event = new CustomEvent('completed-ok');
+      this.panelMountPoint?.dispatchEvent(event);
+    });
+    
+    // Make panel draggable
+    this.makePanelDraggable(panel);
+  }
+
+  /**
+   * Cleanup panel and reset all state
+   */
+  cleanup(): void {
+    if (this.panelMountPoint) {
+      this.panelMountPoint.remove();
+      this.panelMountPoint = null;
+    }
+    
+    if (this.panelComponent) {
+      this.panelComponent.$destroy();
+      this.panelComponent = null;
+    }
+    
+    // Reset all state for next use
+    this.panelState = 'selection';
+    this.completionHexInfo = null;
+    this.selectedMetadata = null;
+    this.config = null;
+    this.selectedHexes = [];
+    this.onCancel = null;
+    this.onDone = null;
+  }
+}

@@ -28,9 +28,9 @@ export const ACTION_STATUS = new Map<string, ActionStatus>([
   ['deal-with-unrest', 'tested'],  // #1
   
   // Phase 2: Post-Apply Map Interactions
-  ['claim-hexes', 'testing'],  // #2
-  ['build-roads', 'untested'],  // #3
-  ['fortify-hex', 'untested'],  // #4
+  ['claim-hexes', 'tested'],  // #2
+  ['build-roads', 'tested'],  // #3
+  ['fortify-hex', 'testing'],  // #4
   ['create-worksite', 'untested'],  // #5
   ['harvest-resources', 'untested'],  // #6
   ['send-scouts', 'untested'],  // #7

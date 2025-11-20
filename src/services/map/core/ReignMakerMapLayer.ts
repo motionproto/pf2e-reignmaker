@@ -730,7 +730,7 @@ export class ReignMakerMapLayer {
    * Draw road preview lines between a hex and its adjacent road hexes
    * Now draws on a graphics object instead of a layer container
    */
-  private drawRoadPreviewLines(
+  drawRoadPreviewLines(
     graphics: PIXI.Graphics,
     fromHexId: string,
     toHexIds: string[],

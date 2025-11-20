@@ -25,7 +25,7 @@ export const requestEconomicAidPipeline: CheckPipeline = {
     if (!hasAllies) {
       return {
         met: false,
-        reason: 'Requires diplomatic relations (Friendly or Helpful) with at least one faction'
+        reason: 'Requires friendly or helpful with at least one faction'
       };
     }
     

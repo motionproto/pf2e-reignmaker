@@ -9,6 +9,7 @@
 
 import { getKingdomActor } from '../main.kingdom';
 import { logger } from '../utils/Logger';
+import { PLAYER_KINGDOM } from '../types/ownership';
 
 export async function inspectProduction(): Promise<void> {
   console.log('=== PRODUCTION INSPECTION ===');
@@ -27,7 +28,7 @@ export async function inspectProduction(): Promise<void> {
   
   console.log('📊 Kingdom Data Overview:');
   console.log('  Total hexes:', kingdom.hexes?.length || 0);
-  console.log('  Claimed hexes:', kingdom.hexes?.filter((h: any) => h.claimedBy === 1).length || 0);
+  console.log('  Claimed hexes:', kingdom.hexes?.filter((h: any) => h.claimedBy === PLAYER_KINGDOM).length || 0);
   
   // Find hexes with worksites
   const hexesWithWorksites = kingdom.hexes?.filter((h: any) => h.worksite) || [];

@@ -10,6 +10,7 @@ import { fortifyHexExecution } from '../../execution/territory/fortifyHex';
 import { getKingdomData } from '../../stores/KingdomStore';
 import { validateFortifyHexForPipeline } from '../shared/fortifyHexValidator';
 import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
+import { PLAYER_KINGDOM } from '../../types/ownership';
 import fortificationData from '../../../data/player-actions/fortify-hex.json';
 
 export const fortifyHexPipeline: CheckPipeline = {
@@ -26,6 +27,28 @@ export const fortifyHexPipeline: CheckPipeline = {
     { skill: 'survival', description: 'wilderness defenses' }
   ],
 
+  // Step 1: Requirements Check - validate minimum resources
+  requirements: (kingdom) => {
+    // Must have at least 1 lumber (minimum cost for Tier 1 Earthworks)
+    if (!kingdom.resources || kingdom.resources.lumber < 1) {
+      return {
+        met: false,
+        reason: 'Need at least 1 lumber to build fortifications.'
+      };
+    }
+    
+    // Must have at least one claimed hex (using PLAYER_KINGDOM constant)
+    const claimedHexes = kingdom.hexes?.filter((h: any) => h.claimedBy === PLAYER_KINGDOM) || [];
+    if (claimedHexes.length === 0) {
+      return {
+        met: false,
+        reason: 'No claimed territory to fortify'
+      };
+    }
+    
+    return { met: true };
+  },
+
   // Post-apply: Select hex for fortification based on outcome (AFTER Apply button clicked)
   postApplyInteractions: [
     {
@@ -35,6 +58,7 @@ export const fortifyHexPipeline: CheckPipeline = {
       colorType: 'fortify',
       validation: (hexId: string) => {
         // Synchronous validation for hex selector
+        // Return full ValidationResult object so hex selector can display specific error message
         return validateFortifyHexForPipeline(hexId);
       },
       // Show cost/benefit info when hex is selected
