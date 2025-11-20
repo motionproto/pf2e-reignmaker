@@ -47,7 +47,7 @@
       font-size: var(--font-md);
       font-weight: var(--font-weight-medium);
       line-height: 1;
-      letter-spacing: 0.025rem;
+      letter-spacing: 0.0125rem;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -256,9 +256,9 @@
       
       // Danger variant
       &.danger {
-         background: var(--surface-danger-low);
+         background: var(--surface-danger);
          border: 1px solid var(--border-danger);
-         color: var(--text-danger-secondary);
+         color: var(--text-inverted);
          
          &::before {
             background: linear-gradient(90deg,
@@ -269,7 +269,7 @@
          
          &:hover:not(:disabled) {
             background: var(--surface-danger-high);
-            border-color: var(--border-danger-strong);
+            border-color: var(--border-danger-medium);
          }
          
          &:disabled {

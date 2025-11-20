@@ -164,11 +164,11 @@
   
   /* Danger (Bright Pink-Red) - Destructive actions, critical warnings, errors */
   --color-danger-red: hsla(350, 100%, 74%, 1);         /* Base danger color - bright pink-red */
-  --surface-danger-lower: hsla(348, 17%, 11%, 1);      /* Barely perceptible */
-  --surface-danger-low: hsla(351, 23%, 16%, 1);        /* Subtle */
-  --surface-danger: hsla(349, 26%, 21%, 1);            /* MIDPOINT - Default */
-  --surface-danger-high: hsla(350, 27%, 27%, 1);       /* More prominent */
-  --surface-danger-higher: hsla(350, 29%, 34%, 1);     /* Most prominent */
+  --surface-danger-lower: hsla(350, 27%, 27%, 1);      /* Barely perceptible - was high */
+  --surface-danger-low: hsla(350, 45%, 38%, 1);        /* Subtle */
+  --surface-danger: hsla(350, 62%, 48%, 1);            /* MIDPOINT - Default */
+  --surface-danger-high: hsla(350, 81%, 61%, 1);       /* More prominent */
+  --surface-danger-higher: hsla(350, 100%, 74%, 1);    /* Most prominent - matches danger-red */
   
   /* Base Text Colors - Hierarchy system */
   --text-primary: var(--color-gray-50);
