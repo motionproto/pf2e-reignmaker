@@ -123,10 +123,16 @@
             <span class="dice-result">{resolvedValue}</span>
             <i class="fas {getResourceIcon(modifier.resource)}"></i>
             <span class="dice-resource">{formatStateChangeLabel(modifier.resource)}</span>
+            {#if modifier.message}
+              <span class="dice-message">{modifier.message}</span>
+            {/if}
           {:else}
             <i class="fas fa-dice-d20"></i>
             <span class="dice-formula">{getDisplayFormula(modifier)}</span>
             <span class="dice-resource">for {formatStateChangeLabel(modifier.resource)}</span>
+            {#if modifier.message}
+              <span class="dice-message">{modifier.message}</span>
+            {/if}
           {/if}
         </button>
       {/each}

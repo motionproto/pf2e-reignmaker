@@ -46,6 +46,7 @@ export interface DiceValue {
  * Example:
  *   { type: 'dice', resource: 'gold', formula: '2d6', negative: true, duration: 'immediate' }
  *   { type: 'dice', resource: 'imprisoned', formula: '1d4', operation: 'subtract', duration: 'immediate' }
+ *   { type: 'dice', resource: 'imprisonedUnrest', formula: '1d4', operation: 'subtract', message: 'from Castle Aldori', duration: 'immediate' }
  */
 export interface DiceModifier {
   type: 'dice';
@@ -53,6 +54,7 @@ export interface DiceModifier {
   formula: string;  // e.g., '2d6', '1d4+1'
   negative?: boolean;  // true for formulas like '-2d6'
   operation?: 'add' | 'subtract';  // explicit operation (alternative to negative flag)
+  message?: string;  // Optional descriptive text to display alongside the roll
   duration?: ModifierDuration;
 }
 

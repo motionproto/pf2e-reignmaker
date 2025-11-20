@@ -39,7 +39,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Justice is served perfectly.",
+      "description": "The prison is emptied.",
       "modifiers": [
         {
           "type": "static",

@@ -85,21 +85,21 @@ export const executeOrPardonPrisonersPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'Justice is served perfectly',
+      description: 'The prison is emptied.',
       modifiers: [
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
       ]
     },
     success: {
-      description: 'Justice is served',
-      modifiers: []
+      description: 'Justice is served.',
+      modifiers: []  // Dice modifier added in preview.calculate based on settlement
     },
     failure: {
-      description: 'The prisoners you choose are inconsequential',
+      description: 'The prisoners you choose are inconsequential.',
       modifiers: []
     },
     criticalFailure: {
-      description: 'Your judgment causes outrage',
+      description: 'Your judgment causes outrage.',
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
@@ -108,173 +108,40 @@ export const executeOrPardonPrisonersPipeline: CheckPipeline = {
 
   preview: {
     calculate: async (ctx) => {
-      // Debug logging
-      console.log('🔍 [executeOrPardonPrisoners.preview] Context:', {
-        metadata: ctx.metadata,
-        settlementId: ctx.metadata?.settlement?.id,
-        settlementName: ctx.metadata?.settlement?.name,
-        hasKingdom: !!ctx.kingdom,
-        settlementsCount: ctx.kingdom?.settlements?.length
-      });
-      
-      // ✅ FIX: metadata.settlement is an object with {id, name}, not just an id
       const settlementId = ctx.metadata?.settlement?.id;
       const settlementName = ctx.metadata?.settlement?.name;
       
       if (!settlementId) {
-        console.warn('⚠️ [executeOrPardonPrisoners.preview] No settlement ID in metadata');
         return {
           resources: [],
-          specialEffects: [],
+          outcomeBadges: [],
           warnings: ['No settlement selected']
         };
       }
 
       const settlement = ctx.kingdom.settlements?.find((s: any) => s.id === settlementId);
-      if (!settlement) {
-        console.warn('⚠️ [executeOrPardonPrisoners.preview] Settlement not found in kingdom data:', settlementId);
-        // Use the name from metadata as fallback
-        const imprisonedBefore = 0;
-        const capacity = 0;
-        const effects: any[] = [];
-        
-        effects.push({
-          type: 'status' as const,
-          message: `${settlementName || 'Selected Settlement'} (data loading...)`,
-          variant: 'neutral' as const
-        });
-        
-        return {
-          resources: [],
-          specialEffects: effects,
-          warnings: []
-        };
-      }
-
-      const imprisonedBefore = settlement.imprisonedUnrest || 0;
-      const capacity = structuresService.calculateImprisonedUnrestCapacity(settlement);
-      const effects: any[] = [];
+      const outcomeBadges: Array<{ icon: string; message: string }> = [];
       
-      // Determine action type (execution vs pardon) based on skill
-      const skill = ctx.check?.skill || '';
-      const isPardon = ['diplomacy', 'religion', 'performance'].includes(skill);
-      const actionVerb = isPardon ? 'Pardoned' : 'Executed';
-
-      // Calculate reductions based on outcome
+      // Handle outcomes based on type
       if (ctx.outcome === 'criticalSuccess') {
-        const imprisonedAfter = 0;
-        
-        // Show settlement info with before/after
-        effects.push({
-          type: 'status' as const,
-          message: `${settlement.name} (${imprisonedBefore}/${capacity} imprisoned)`,
-          variant: 'neutral' as const
-        });
-        
-        // Show action taken
-        effects.push({
-          type: 'status' as const,
-          message: `${actionVerb} all ${imprisonedBefore} prisoners`,
-          variant: 'positive' as const
-        });
-        
-        // Show before → after
-        effects.push({
-          type: 'status' as const,
-          message: `Imprisoned: ${imprisonedBefore} → ${imprisonedAfter}`,
-          variant: 'positive' as const
-        });
-        
-        // Also show unrest reduction
-        effects.push({
-          type: 'resource' as const,
-          message: '-1 Unrest (bonus)',
-          variant: 'positive' as const
+        // Show outcome badge for all imprisoned cleared
+        const imprisonedCount = settlement?.imprisonedUnrest || 0;
+        outcomeBadges.push({
+          icon: 'fa-gavel',
+          message: `Remove all imprisoned unrest (${imprisonedCount}) from ${settlement?.name || settlementName || 'settlement'}`
         });
       } else if (ctx.outcome === 'success') {
-        // For success, show 1d4 reduction
-        const rolledAmount = ctx.resolutionData?.diceRolls?.imprisoned;
-        const imprisonedAfter = rolledAmount !== undefined 
-          ? Math.max(0, imprisonedBefore - rolledAmount)
-          : imprisonedBefore; // Don't know yet
-        
-        // Show settlement info
-        effects.push({
-          type: 'status' as const,
-          message: `${settlement.name} (${imprisonedBefore}/${capacity} imprisoned)`,
-          variant: 'neutral' as const
-        });
-        
-        if (rolledAmount !== undefined) {
-          // Roll has been made - show actual result
-          effects.push({
-            type: 'status' as const,
-            message: `${actionVerb} ${rolledAmount} prisoners`,
-            variant: 'positive' as const
-          });
-          
-          effects.push({
-            type: 'status' as const,
-            message: `Imprisoned: ${imprisonedBefore} → ${imprisonedAfter}`,
-            variant: 'positive' as const
-          });
-        } else {
-          // Roll not made yet - show potential
-          effects.push({
-            type: 'status' as const,
-            message: `Will ${actionVerb.toLowerCase()} 1d4 prisoners (1-4)`,
-            variant: 'positive' as const
-          });
-        }
-      } else if (ctx.outcome === 'failure') {
-        // Show settlement info
-        effects.push({
-          type: 'status' as const,
-          message: `${settlement.name} (${imprisonedBefore}/${capacity} imprisoned)`,
-          variant: 'neutral' as const
-        });
-        
-        effects.push({
-          type: 'status' as const,
-          message: 'The prisoners you choose are inconsequential',
-          variant: 'neutral' as const
-        });
-        
-        effects.push({
-          type: 'status' as const,
-          message: `Imprisoned: ${imprisonedBefore} → ${imprisonedBefore} (no change)`,
-          variant: 'neutral' as const
-        });
-      } else if (ctx.outcome === 'criticalFailure') {
-        // Show settlement info
-        effects.push({
-          type: 'status' as const,
-          message: `${settlement.name} (${imprisonedBefore}/${capacity} imprisoned)`,
-          variant: 'neutral' as const
-        });
-        
-        effects.push({
-          type: 'status' as const,
-          message: 'Your judgment causes outrage!',
-          variant: 'negative' as const
-        });
-        
-        effects.push({
-          type: 'status' as const,
-          message: `Imprisoned: ${imprisonedBefore} → ${imprisonedBefore} (no change)`,
-          variant: 'neutral' as const
-        });
-        
-        effects.push({
-          type: 'resource' as const,
-          message: '+1 Unrest (penalty)',
-          variant: 'negative' as const
+        // Show outcome badge with dice roll text
+        // Note: The actual dice roll will be handled in the execute function
+        outcomeBadges.push({
+          icon: 'fa-gavel',
+          message: `Remove 1d4 imprisoned unrest from ${settlement?.name || settlementName || 'settlement'}`
         });
       }
 
       return {
-        resources: [],  // Modifiers handle unrest changes
-        specialEffects: effects,
+        resources: [],  // Modifiers handle resource changes automatically
+        outcomeBadges,
         warnings: []
       };
     }
@@ -313,11 +180,13 @@ export const executeOrPardonPrisonersPipeline: CheckPipeline = {
 
       return { success: true, message: `All imprisoned unrest cleared in ${settlement.name}` };
     } else if (ctx.outcome === 'success') {
-      // Roll 1d4 and reduce that amount
-      const roll = await new Roll('1d4').evaluate();
-      const amount = roll.total || 0;
+      // Get rolled value from resolutionData (rolled by DiceRoller component)
+      const imprisonedModifier = ctx.resolutionData?.numericModifiers?.find((m: any) => m.resource === 'imprisonedUnrest');
+      const amount = Math.abs(imprisonedModifier?.value || 0);  // Use absolute value since it's a reduction
 
-      await reduceImprisonedExecution(settlementId, amount);
+      if (amount > 0) {
+        await reduceImprisonedExecution(settlementId, amount);
+      }
 
       return { success: true, message: `Reduced ${amount} imprisoned unrest in ${settlement.name}` };
     } else if (ctx.outcome === 'failure') {
