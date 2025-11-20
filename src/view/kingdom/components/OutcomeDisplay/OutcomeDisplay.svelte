@@ -61,7 +61,7 @@
   import DiceRoller from './components/DiceRoller.svelte';
   import ResourceSelector from './components/ResourceSelector.svelte';
   import ChoiceButtons from './components/ChoiceButtons.svelte';
-  import OutcomeBadges from './components/OutcomeBadges.svelte';
+  import OutcomeEffects from './components/OutcomeEffects.svelte';
   import ShortageWarning from './components/ShortageWarning.svelte';
   import OutcomeActions from './components/OutcomeActions.svelte';
   import DebugResultSelector from './components/DebugResultSelector.svelte';
@@ -656,7 +656,7 @@
       on:resolution={handleComponentResolution}
     />
     <!-- Always show OutcomeBadges (modifiers, costs, effects) -->
-    <OutcomeBadges 
+    <OutcomeEffects 
       stateChanges={displayStateChanges} 
       {modifiers} 
       {resolvedDice} 
