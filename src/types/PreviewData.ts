@@ -46,8 +46,8 @@ export interface PreviewData {
   // Entity operations
   entities?: EntityOperation[];
 
-  // Special effects (badges)
-  specialEffects: SpecialEffect[];
+  // Special effects (badges) - optional, most actions don't need this
+  specialEffects?: SpecialEffect[];
 
   // Warnings
   warnings?: string[];

@@ -234,16 +234,57 @@ await actor.updateKingdomData(kingdom => {
 **Known Issues:** None
 **Status:** [ ] PASS  [ ] FAIL
 
-#### #6 - harvest-resources ⚪ UNTESTED
-**Type:** In-preview resource choice
+#### #6 - harvest-resources ✅ TESTED
+**Type:** Inline custom component (postRollInteractions)
 **Test Steps:**
 1. Ensure kingdom has worksites
-2. Roll check → Success shows resource choice in preview
-3. Select resource type (lumber/ore/food)
+2. Roll check → Success shows ResourceChoiceSelector inline in outcome card
+3. Select resource type (lumber/ore/food) BEFORE clicking Apply
 4. Apply Result → Verify correct resource gained
-**Success Criteria:** Chosen resource increased by correct amount
+**Success Criteria:** Chosen resource increased by correct amount (1 for success, 2 for crit)
 **Known Issues:** None
-**Status:** [ ] PASS  [ ] FAIL
+**Status:** [x] PASS  [ ] FAIL
+
+**✨ New Pattern Discovered: Inline Custom Components**
+
+This was the **first successful inline custom component implementation**. Key learnings:
+
+**Architecture Changes Made:**
+1. **PipelineCoordinator Step 4** now extracts components from `postRollInteractions`
+2. **Preview.specialEffects** made optional in `PreviewData.ts` (most actions don't need it)
+3. **UnifiedCheckHandler** now handles undefined specialEffects safely
+
+**Pattern for Future Actions:**
+```typescript
+// In pipeline definition (e.g., harvestResources.ts)
+postRollInteractions: [
+  {
+    type: 'configuration',
+    id: 'resourceSelection',
+    component: YourCustomComponent,  // Svelte component
+    condition: (ctx) => ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess',
+    onComplete: async (data, ctx) => {
+      // Apply user selection
+      await applyResourceChanges([...]);
+    }
+  }
+]
+```
+
+**Important: Don't Create Redundant Special Effects**
+- Component displays inline automatically (no preview badges needed)
+- Return empty preview: `preview: { calculate: async (ctx) => ({ resources: [] }) }`
+- Don't manually create "pending selection" badges
+
+**When to Use This Pattern:**
+- User must make a choice BEFORE applying (e.g., which resource to harvest)
+- Choice affects what gets applied (component dispatches data to onComplete)
+- UI needs to be inline in outcome card (not a separate dialog)
+
+**Other Actions That Could Use This:**
+- sell-surplus: Inline resource selector for selling
+- purchase-resources: Inline resource selector for buying
+- Any action where user picks from limited options before confirming
 
 #### #7 - send-scouts ⚪ UNTESTED
 **Type:** Post-apply hex selection + World Explorer integration

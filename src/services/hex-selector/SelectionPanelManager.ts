@@ -1,6 +1,19 @@
 /**
  * SelectionPanelManager - Manages the floating selection panel UI
- * including creation, updates, dragging, and completion display
+ * 
+ * ## Two States of Hex Selection Dialog
+ * 
+ * ### State 1: Selection Panel (Interactive)
+ * - User actively selects hexes from the map
+ * - Custom selector components (like WorksiteTypeSelector) appear below hex slots
+ * - Buttons: Cancel | Done
+ * - Exit: Click "Done" → transitions to Completion Panel
+ * 
+ * ### State 2: Completion Panel (Review/Confirmation)
+ * - Shows summary of what was selected (hexes + metadata)
+ * - Displays completion message ("Worksite Created!", etc.)
+ * - Button: OK (single button)
+ * - Exit: Click "OK" → closes dialog, restores Reignmaker app
  */
 
 import type { HexSelectionConfig } from './types';
@@ -11,10 +24,10 @@ export class SelectionPanelManager {
   private config: HexSelectionConfig | null = null;
   private selectedHexes: string[] = [];
   private panelMountPoint: HTMLElement | null = null;
-  private panelComponent: any = null;  // Svelte component instance
+  private panelComponent: any = null;  // Svelte component instance (for custom selectors in Selection Panel)
   private panelState: 'selection' | 'revealing' | 'completed' = 'selection';
   private completionHexInfo: string | null = null;
-  private selectedMetadata: any = null;
+  private selectedMetadata: any = null;  // Custom selector data (e.g., worksite type)
   
   // Callbacks
   private onCancel: (() => void) | null = null;
@@ -253,7 +266,16 @@ export class SelectionPanelManager {
     
     if (!slotsContainer) return;
     
-    // Render slots
+    // 🔧 FIX: Preserve custom selector mount point if component is already mounted
+    let customSelectorMount: HTMLElement | null = null;
+    if (this.panelComponent) {
+      customSelectorMount = slotsContainer.querySelector('#custom-selector-mount') as HTMLElement;
+      if (customSelectorMount) {
+        customSelectorMount.remove(); // Temporarily remove from DOM to preserve it
+      }
+    }
+    
+    // Render slots (this clears slotsContainer)
     slotsContainer.innerHTML = '';
     for (let i = 0; i < this.config.count; i++) {
       const slot = document.createElement('div');
@@ -293,9 +315,15 @@ export class SelectionPanelManager {
       slotsContainer.appendChild(slot);
     }
     
-    // Mount custom selector if provided and hex is selected
+    // 🔧 FIX: Restore custom selector mount point or create new one
     if (this.config.customSelector && this.selectedHexes.length > 0) {
-      this.mountCustomSelector(slotsContainer);
+      if (customSelectorMount) {
+        // Re-attach preserved mount point
+        slotsContainer.appendChild(customSelectorMount);
+      } else if (!this.panelComponent) {
+        // Create new mount point and component
+        this.mountCustomSelector(slotsContainer);
+      }
     }
     
     // Update Done button
@@ -343,6 +371,7 @@ export class SelectionPanelManager {
 
   /**
    * Render completed state with hex list and OK button
+   * Shows both hex selections and any custom selector metadata (e.g., worksite type)
    */
   private renderCompletedState(): void {
     if (!this.panelMountPoint || !this.config) return;
@@ -356,11 +385,26 @@ export class SelectionPanelManager {
       road: 'Roads Built!',
       settlement: 'Settlement Established!',
       fortify: 'Hex Fortified!',
-      unclaim: 'Hexes Unclaimed!'
+      unclaim: 'Hexes Unclaimed!',
+      worksite: 'Worksite Created!'  // Add worksite-specific message
     };
     
     const title = actionMessages[this.config.colorType] || 'Selection Complete!';
     const icon = this.config.colorType === 'scout' ? 'fa-map-marked-alt' : 'fa-check-circle';
+    
+    // 🔧 FIX #2: Generate metadata display HTML if custom selector data exists
+    let metadataHTML = '';
+    if (this.selectedMetadata && this.selectedMetadata.worksiteType) {
+      metadataHTML = `
+        <div style="margin-bottom: 12px; padding: 12px; background: var(--surface-info-low); border-left: 3px solid var(--border-accent); border-radius: 4px;">
+          <div style="display: flex; align-items: center; gap: 8px; color: var(--text-primary);">
+            <i class="fas fa-industry" style="color: var(--color-accent);"></i>
+            <strong>Worksite Type:</strong>
+            <span style="color: var(--color-accent);">${this.selectedMetadata.worksiteType}</span>
+          </div>
+        </div>
+      `;
+    }
     
     panel.innerHTML = `
       <div class="panel-header" style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #D2691E; cursor: move;">
@@ -374,6 +418,7 @@ export class SelectionPanelManager {
           ${this.completionHexInfo}
         </div>
       ` : ''}
+      ${metadataHTML}
       <div style="padding: 20px;">
         <div style="background: var(--hover-low); border-radius: 4px; padding: 16px; margin-bottom: 16px;">
           <div style="font-size: 12px; color: #999; margin-bottom: 8px;">Selected ${this.selectedHexes.length} ${this.selectedHexes.length === 1 ? 'hex' : 'hexes'}:</div>

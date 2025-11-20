@@ -72,6 +72,5 @@
       ],
       "gameCommands": []
     }
-  },
-  "special": "Choose a controlled hex. Establish a valid Worksite (Farm, Quarry, Mine, or Lumbermill)"
+  }
 }

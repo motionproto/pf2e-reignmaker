@@ -131,9 +131,6 @@
           <div class="button-main">
             <i class="fas {getTypeIcon(type)} type-icon"></i>
             <span class="type-name">{type}</span>
-            {#if isSelected}
-              <i class="fas fa-check-circle selected-indicator"></i>
-            {/if}
           </div>
           {#if isValid && hexTerrain}
             {@const revenue = getWorksiteRevenue(type, hexTerrain)}
@@ -145,6 +142,14 @@
       </button>
     {/each}
   </div>
+
+  {#if selectedType && hexTerrain}
+    {@const revenue = getWorksiteRevenue(selectedType, hexTerrain)}
+    <div class="selection-info">
+      <i class="fas fa-check-circle"></i>
+      <span>Selected: <strong>{selectedType}</strong>{#if revenue} ({revenue}){/if}</span>
+    </div>
+  {/if}
 </div>
 
 <style lang="scss">
@@ -156,7 +161,7 @@
   .selector-header {
     font-size: var(--font-sm);
     color: var(--text-muted);
-    margin-bottom: var(--space-8);
+    margin-bottom: var(--space-12);
     display: flex;
     align-items: center;
     gap: var(--space-6);
@@ -169,44 +174,48 @@
   .type-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: var(--space-8);
+    gap: var(--space-10);
+    margin-bottom: var(--space-12);
   }
   
   .type-button {
     position: relative;
     display: flex;
     flex-direction: column;
-    padding: var(--space-14) var(--space-16);
+    padding: var(--space-10) var(--space-16);
+    
+    /* Choice-set pattern: Background */
     background: var(--hover-low);
-    border: 1px solid var(--color-border-low);
-    border-radius: var(--radius-md);
+    
+    /* Choice-set pattern: Border (visible on all states) */
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    
+    /* Choice-set pattern: Outline (overlay, doesn't affect size) */
+    outline: 2px solid transparent;
+    outline-offset: -1px;
+    
     cursor: pointer;
-    transition: border-color 0.2s ease, border-width 0.2s ease;
+    transition: all 0.2s;
     min-height: 52px;
     
-    &.valid {
-      // Hover only affects unselected buttons
-      &:hover:not(.selected) {
-        border-color: var(--border-strong, var(--border-default));
-      }
-      
-      // Selected state: locked, no hover changes
-      &.selected {
-        border-color: var(--color-accent);
-        border-width: 2px;
-        
-        // Prevent hover from affecting selected state
-        &:hover {
-          border-color: var(--color-accent);
-          border-width: 2px;
-        }
-      }
+    /* Choice-set pattern: Hover state (only for valid, unselected) */
+    &.valid:hover:not(.selected) {
+      background: var(--hover);
+      transform: translateY(-0.0625rem);
+      box-shadow: 0 0.125rem 0.5rem var(--overlay-low);
     }
     
+    /* Choice-set pattern: Selected state */
+    &.valid.selected {
+      background: var(--surface-success-high);
+      outline-color: var(--border-success);
+    }
+    
+    /* Choice-set pattern: Disabled state */
     &.invalid {
       opacity: 0.4;
       cursor: not-allowed;
-      filter: grayscale(0.8);
     }
   }
   
@@ -223,33 +232,19 @@
   
   .type-icon {
     font-size: var(--font-lg);
-    color: var(--color-accent);
+    color: var(--text-secondary);
     flex-shrink: 0;
     width: 20px;
     text-align: center;
-    
-    .invalid & {
-      color: var(--text-muted);
-    }
+    transition: color 0.2s;
   }
   
   .type-name {
-    font-weight: var(--font-weight-semibold);
-    font-size: var(--font-sm);
+    font-weight: 500;
+    font-size: var(--font-md);
     color: var(--text-primary);
     flex: 1;
     text-align: left;
-    
-    .invalid & {
-      color: var(--text-muted);
-    }
-  }
-  
-  .selected-indicator {
-    color: var(--color-success);
-    font-size: var(--font-md);
-    flex-shrink: 0;
-    animation: checkmark-appear 0.3s ease;
   }
   
   .revenue-text {
@@ -260,14 +255,23 @@
     text-align: left;
   }
   
-  @keyframes checkmark-appear {
-    from {
-      opacity: 0;
-      transform: scale(0.5);
+  .selection-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-10);
+    padding: var(--space-12);
+    background: var(--surface-success-low);
+    border-left: 3px solid var(--color-green, #22c55e);
+    border-radius: var(--radius-md);
+    color: var(--text-primary, #e0e0e0);
+    
+    i {
+      color: var(--color-green, #22c55e);
+      font-size: var(--font-lg);
     }
-    to {
-      opacity: 1;
-      transform: scale(1);
+    
+    strong {
+      color: var(--color-green, #22c55e);
     }
   }
 </style>

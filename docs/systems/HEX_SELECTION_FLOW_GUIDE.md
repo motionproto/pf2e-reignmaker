@@ -237,7 +237,298 @@ postApplyInteractions: [{
 
 ---
 
+## Custom Selector Components
+
+### Purpose
+
+Custom selector components allow actions to inject **interactive UI elements** into the hex selection panel, beyond just displaying information. This enables complex selection flows where users need to make additional choices related to their hex selection.
+
+### Architecture
+
+**Slot Injection:**
+```
+SelectionPanelManager
+  ├── Standard UI (title, count, buttons)
+  └── hex-info slot ← Custom component mounts here
+```
+
+**Data Flow:**
+```
+Custom Component → User Selection → Metadata Object → 
+onComplete({ hexIds: [...], metadata: {...} })
+```
+
+### When to Use
+
+**✅ Use Custom Selector when:**
+- Action requires user to choose between multiple options for the selected hex
+- Options affect execution logic (not just display)
+- User needs interactive controls (buttons, dropdowns, etc.)
+- Example: Choose worksite type (Farmstead vs Mine vs Quarry)
+
+**✅ Use Hex Info Panel when:**
+- Only need to display read-only information about the hex
+- No user interaction needed beyond hex selection
+- Example: Show fortification tier costs
+
+**Key Difference:**
+- **Hex Info Panel** = Read-only display (HTML string)
+- **Custom Selector** = Interactive component (Svelte component with state)
+
+### Implementation Pattern
+
+**1. Create Custom Selector Component**
+
+```svelte
+<!-- WorksiteTypeSelector.svelte -->
+<script lang="ts">
+  export let selectedHex: string;  // Receives currently selected hex
+  export let onSelect: (metadata: { worksiteType: string }) => void;  // Callback
+  
+  let selectedType: string | null = null;
+  
+  function handleSelect(type: string) {
+    selectedType = type;
+    onSelect({ worksiteType: type });  // Send metadata back
+  }
+</script>
+
+<div class="worksite-selector">
+  <h3>Choose Worksite Type</h3>
+  
+  <!-- Use choice-set styling pattern (docs/design-system/choice-buttons.md) -->
+  <div class="choice-set">
+    <button 
+      class="choice-button"
+      class:selected={selectedType === 'Farmstead'}
+      on:click={() => handleSelect('Farmstead')}
+    >
+      Farmstead
+    </button>
+    <!-- More buttons... -->
+  </div>
+  
+  <!-- Completion panel (shows after selection) -->
+  {#if selectedType}
+    <div class="completion-panel">
+      <i class="fas fa-check-circle"></i>
+      Selected: {selectedType}
+    </div>
+  {/if}
+</div>
+
+<style>
+  /* Apply choice-set styling pattern */
+  .choice-button {
+    border: 2px solid var(--border-medium);
+    outline: 1px solid transparent;
+  }
+  .choice-button.selected {
+    border-color: var(--color-success);
+    outline-color: var(--color-success);
+  }
+</style>
+```
+
+**2. Register in Pipeline**
+
+```typescript
+import WorksiteTypeSelector from '../../services/hex-selector/WorksiteTypeSelector.svelte';
+
+export const createWorksitePipeline: CheckPipeline = {
+  // ...
+  postApplyInteractions: [{
+    type: 'map-selection',
+    id: 'selectedHex',
+    mode: 'hex-selection',
+    count: 1,
+    
+    // ✅ Custom selector configuration
+    customSelector: {
+      component: WorksiteTypeSelector,
+      props: {}  // Optional additional props
+    },
+    
+    // ✅ Receive metadata from custom selector
+    onComplete: async (result: any) => {
+      const hexId = result.hexIds[0];
+      const worksiteType = result.metadata.worksiteType;
+      
+      await createWorksiteExecution(hexId, worksiteType);
+    }
+  }]
+};
+```
+
+### Metadata Return Format
+
+**Standard Format:**
+```typescript
+{
+  hexIds: string[],           // Selected hex IDs
+  metadata: {                 // Custom data from selector
+    [key: string]: any
+  }
+}
+```
+
+**Example - Worksite Type:**
+```typescript
+{
+  hexIds: ['hex-5-7'],
+  metadata: {
+    worksiteType: 'Farmstead'
+  }
+}
+```
+
+**Example - Multiple Values:**
+```typescript
+{
+  hexIds: ['hex-5-7'],
+  metadata: {
+    structureType: 'Castle',
+    structureTier: 2,
+    customName: 'Stronghold of the North'
+  }
+}
+```
+
+### Styling Guidelines
+
+**Use Choice-Set Pattern:**
+
+Custom selectors should follow the choice-set styling pattern from `docs/design-system/choice-buttons.md`:
+
+```scss
+.choice-button {
+  // Base state
+  border: 2px solid var(--border-medium);
+  outline: 1px solid transparent;
+  transition: all 0.2s ease;
+  
+  // Hover state
+  &:hover:not(:disabled) {
+    border-color: var(--border-strong);
+    transform: translateY(-1px);
+  }
+  
+  // Selected state
+  &.selected {
+    border-color: var(--color-success);
+    outline-color: var(--color-success);
+    outline-offset: 2px;
+  }
+}
+```
+
+**Visual Feedback:**
+- ✅ Show completion panel after selection
+- ✅ Disable "Done" button until selection made
+- ✅ Use icons for visual clarity (✓ for completion)
+- ✅ Maintain consistent spacing with design system
+
+### Current Implementation
+
+| Action | Custom Selector? | Purpose |
+|--------|-----------------|---------|
+| **Create Worksite** | ✅ Yes | Choose worksite type (Farmstead/Mine/Quarry/Logging Camp) |
+| **Other Actions** | ❌ No | Use hex info panels or no additional UI |
+
+### Custom Selector vs Hex Info Panel
+
+**Comparison:**
+
+| Feature | Custom Selector | Hex Info Panel |
+|---------|----------------|----------------|
+| **Interactivity** | ✅ Full (buttons, inputs, etc.) | ❌ Read-only |
+| **Component Type** | Svelte component | HTML string |
+| **State Management** | ✅ Yes (component state) | ❌ No |
+| **Metadata Return** | ✅ Yes (custom data) | ❌ No |
+| **Styling** | ✅ Full control | ⚠️ Inline styles only |
+| **Use Case** | User needs to choose options | Display info about hex |
+| **Example** | Worksite type selector | Fortification cost display |
+
+### Best Practices
+
+**1. Single Responsibility:**
+```typescript
+// ✅ GOOD - Component focuses on selection
+export let onSelect: (metadata: { type: string }) => void;
+
+// ❌ BAD - Component tries to execute action
+async function handleSelect(type: string) {
+  await executeAction(type);  // Should be in onComplete
+}
+```
+
+**2. Clear Visual Feedback:**
+```svelte
+<!-- ✅ GOOD - Shows what was selected -->
+{#if selectedType}
+  <div class="completion-panel">
+    <i class="fas fa-check-circle"></i>
+    Selected: {selectedType}
+  </div>
+{/if}
+
+<!-- ❌ BAD - No confirmation -->
+<button on:click={handleSelect}>Select</button>
+```
+
+**3. Validation Integration:**
+```typescript
+// ✅ GOOD - Combine custom selector with hex validation
+postApplyInteractions: [{
+  type: 'map-selection',
+  customSelector: { component: WorksiteTypeSelector },
+  validation: (hexId) => {
+    // Validate hex is suitable for ANY worksite type
+    if (hexHasSettlement(hexId)) {
+      return { valid: false, message: 'Cannot build in settlement hex' };
+    }
+    return { valid: true };
+  }
+}]
+
+// Custom selector then validates terrain compatibility for SPECIFIC type
+```
+
+**4. Metadata Structure:**
+```typescript
+// ✅ GOOD - Flat, simple structure
+metadata: {
+  worksiteType: 'Farmstead'
+}
+
+// ❌ BAD - Nested complexity
+metadata: {
+  selection: {
+    category: 'worksite',
+    subcategory: 'resource',
+    type: 'Farmstead'
+  }
+}
+```
+
+### Implementation Checklist
+
+**For New Custom Selectors:**
+- [ ] Create Svelte component in `src/services/hex-selector/`
+- [ ] Export `selectedHex: string` prop
+- [ ] Export `onSelect: (metadata: object) => void` callback
+- [ ] Apply choice-set styling pattern
+- [ ] Include completion panel for visual feedback
+- [ ] Register in pipeline with `customSelector` config
+- [ ] Handle metadata in `onComplete` handler
+- [ ] Test selection → completion → execution flow
+- [ ] Verify metadata persists correctly
+- [ ] Check styling consistency with design system
+
+---
+
 ## Actions Audit
+</parameter>
 
 ### Post-Apply Selection Actions
 

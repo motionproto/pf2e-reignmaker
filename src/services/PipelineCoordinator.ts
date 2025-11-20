@@ -403,6 +403,72 @@ export class PipelineCoordinator {
     // Store instance ID in context
     ctx.instanceId = instanceId;
     
+    // ✅ EXTRACT CUSTOM COMPONENT from postRollInteractions (for inline display in OutcomeDisplay)
+    let customComponent = null;
+    let customResolutionProps: Record<string, any> = {};
+    
+    if (pipeline.postRollInteractions) {
+      console.log(`🔍 [PipelineCoordinator] Checking postRollInteractions for custom component`);
+      
+      for (const interaction of pipeline.postRollInteractions) {
+        // Check if this is a configuration interaction with a component
+        if (interaction.type === 'configuration' && interaction.component) {
+          // Build context for condition evaluation
+          const conditionContext = {
+            outcome,
+            kingdom: ctx.kingdom,
+            metadata: ctx.metadata
+          };
+          
+          // Evaluate condition if defined
+          const conditionMet = !interaction.condition || interaction.condition(conditionContext);
+          console.log(`🔍 [PipelineCoordinator] Condition met for outcome ${outcome}?`, conditionMet);
+          
+          if (conditionMet) {
+            customComponent = interaction.component;
+            customResolutionProps = interaction.componentProps || {};
+            console.log(`✅ [PipelineCoordinator] Extracted custom component for inline display`);
+            break;
+          }
+        }
+      }
+    }
+    
+    // If custom component found, update the instance with it
+    if (customComponent) {
+      const outcomePreviewService = await createOutcomePreviewService();
+      const actor = getKingdomActor();
+      
+      if (actor) {
+        const kingdom = actor.getKingdomData();
+        const instance = outcomePreviewService.getInstance(instanceId, kingdom);
+        
+        if (instance?.appliedOutcome) {
+          // Update instance with custom component
+          await outcomePreviewService.storeOutcome(
+            instanceId,
+            outcome,
+            {
+              numericModifiers: (instance.appliedOutcome.modifiers || []) as any,
+              manualEffects: instance.appliedOutcome.manualEffects || [],
+              specialEffects: instance.appliedOutcome.specialEffects || [],
+              complexActions: [],
+              customComponentData: null
+            },
+            instance.appliedOutcome.actorName,
+            instance.appliedOutcome.skillName,
+            instance.appliedOutcome.effect,
+            instance.appliedOutcome.rollBreakdown,
+            instance.appliedOutcome.specialEffects,
+            customComponent,  // Pass custom component
+            customResolutionProps  // Pass custom props
+          );
+          
+          console.log(`✅ [PipelineCoordinator] Updated instance with custom component`);
+        }
+      }
+    }
+    
     log(ctx, 4, 'createCheckInstance', `Check instance created: ${instanceId}`);
   }
 

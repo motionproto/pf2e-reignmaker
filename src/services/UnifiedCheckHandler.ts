@@ -621,7 +621,9 @@ export class UnifiedCheckHandler {
     }
 
     // Add actual special effects (things that aren't simple resource changes)
-    effects.push(...preview.specialEffects);
+    if (preview.specialEffects) {
+      effects.push(...preview.specialEffects);
+    }
 
     // Add warnings
     for (const warning of preview.warnings || []) {

@@ -80,7 +80,9 @@ export const harvestResourcesPipeline: CheckPipeline = {
   },
   
   preview: {
-    providedByInteraction: true  // Resource selector shows preview
+    calculate: async (ctx) => ({
+      resources: []  // Component will show resource options, no preview needed
+    })
   },
 
   // Execute function - explicitly handles ALL outcomes
@@ -89,8 +91,8 @@ export const harvestResourcesPipeline: CheckPipeline = {
       case 'criticalSuccess':
       case 'success':
         // Resource selection and application handled by postRollInteractions.onComplete
-        // The onComplete handler already applied the resource changes during Step 7,
-        // so we just need to verify it ran successfully.
+        // The onComplete handler is called during Step 8 by UnifiedCheckHandler,
+        // which applies the resource changes based on user's selection.
         console.log('[HarvestResources] ✅ Resources harvested via postRollInteractions');
         return { success: true };
         
