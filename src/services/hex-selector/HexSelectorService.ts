@@ -230,14 +230,16 @@ export class HexSelectorService {
     // Give kingdom data update time to propagate to reactive overlays
     await new Promise(resolve => setTimeout(resolve, 100));
     
+    // Clear selection layer (permanent overlays show through now)
+    this.mapLayer.clearSelection();
+    this.selectedRoadConnections.clear();
+    
     // Set completion hex info (captured before changes were applied)
     if (completionHexInfo) {
       this.panelManager.setCompletionHexInfo(completionHexInfo);
     }
     
     // Switch to completed state - panel stays visible
-    // Note: Selection highlight remains visible until user clicks OK
-    // (cleanup() will clear it when they dismiss the completion panel)
     this.panelManager.setPanelState('completed');
     this.panelManager.updatePanel();
   }

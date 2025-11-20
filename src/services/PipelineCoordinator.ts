@@ -608,11 +608,27 @@ export class PipelineCoordinator {
     log(ctx, 8, 'executeAction', 'Executing action');
     
     const pipeline = await getPipeline(ctx);
+    const outcome = ctx.rollData?.outcome || 'success';
+    
+    // ✅ GLOBAL: Apply +1 fame for all critical successes (Kingdom Rule)
+    if (ctx.rollData && outcome === 'criticalSuccess') {
+      const { createGameCommandsService } = await import('./GameCommandsService');
+      const gameCommandsService = await createGameCommandsService();
+      
+      const tempResult = {
+        success: true,
+        applied: { resources: [], specialEffects: [] }
+      };
+      
+      await gameCommandsService.applyFameChange(1, 'Critical Success Bonus', tempResult);
+      console.log('✅ [PipelineCoordinator] Applied +1 fame for critical success');
+      log(ctx, 8, 'executeAction', 'Applied +1 fame for critical success');
+    }
     
     // Build check context for execution
     const checkContext = {
       check: pipeline,
-      outcome: ctx.rollData?.outcome || 'success',
+      outcome,
       kingdom: ctx.kingdom,
       actor: ctx.actor,
       resolutionData: ctx.resolutionData,
