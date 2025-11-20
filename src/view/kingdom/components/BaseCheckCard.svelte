@@ -126,37 +126,47 @@
   let isRolling: boolean = false;
   let localUsedSkill: string = '';
   
-  // Build OutcomePreview from resolution for OutcomeRenderer
-  $: outcomePreview = resolution ? {
+  // Build OutcomePreview from checkInstance (reactive to kingdom store) OR resolution (fallback)
+  // IMPORTANT: Use checkInstance when available as it's reactive to store updates in Step 5
+  $: outcomePreview = (checkInstance || resolution) ? (checkInstance ? {
+    // Use checkInstance (reactive to kingdom store updates)
+    previewId: checkInstance.previewId,
+    checkType: checkInstance.checkType,
+    checkId: checkInstance.checkId,
+    checkData: checkInstance.checkData,
+    createdTurn: checkInstance.createdTurn,
+    status: checkInstance.status,
+    appliedOutcome: checkInstance.appliedOutcome,
+    metadata: checkInstance.metadata
+  } as OutcomePreview : {
+    // Fallback to resolution (non-reactive)
     previewId: `${id}-${Date.now()}`,
     checkType: checkType,
     checkId: id,
-    checkData: { name, description },  // Minimal check data
+    checkData: { name, description },
     createdTurn: $kingdomData.currentTurn || 0,
     status: 'resolved' as const,
     appliedOutcome: {
-      outcome: resolution.outcome as any,
-      actorName: resolution.actorName,
+      outcome: resolution!.outcome as any,
+      actorName: resolution!.actorName,
       skillName: usedSkill,
-      effect: resolution.effect,
-      stateChanges: resolution.stateChanges || {},
-      modifiers: resolution.modifiers || [],
-      manualEffects: resolution.manualEffects || [],
-      specialEffects: resolution.specialEffects || [],
-      shortfallResources: resolution.shortfallResources || [],
-      rollBreakdown: resolution.rollBreakdown,
-      isIgnored: resolution.isIgnored || false,
+      effect: resolution!.effect,
+      stateChanges: resolution!.stateChanges || {},
+      modifiers: resolution!.modifiers || [],
+      manualEffects: resolution!.manualEffects || [],
+      specialEffects: resolution!.specialEffects || [],
+      shortfallResources: resolution!.shortfallResources || [],
+      rollBreakdown: resolution!.rollBreakdown,
+      isIgnored: resolution!.isIgnored || false,
       effectsApplied: outcomeApplied,
       
-      // Custom component support - pass through componentName from resolution (stored in actor flags)
-      // OR extract from customResolutionComponent prop (legacy path)
-      componentName: (resolution as any).componentName || 
+      componentName: (resolution! as any).componentName || 
         (customResolutionComponent 
           ? (customResolutionComponent.name || '').replace(/^Proxy<(.+)>$/, '$1')
           : undefined),
       componentProps: customResolutionProps
     }
-  } satisfies OutcomePreview : null;
+  } satisfies OutcomePreview) : null;
   
   // Internal confirmation dialog state
   let showOwnConfirmDialog: boolean = false;

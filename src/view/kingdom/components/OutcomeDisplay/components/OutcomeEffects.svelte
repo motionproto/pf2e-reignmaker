@@ -2,6 +2,7 @@
   import { createEventDispatcher } from 'svelte';
   import { formatStateChangeLabel, formatStateChangeValue, getChangeClass, rollDiceFormula } from '../../../../../services/resolution';
   import { getResourceIcon } from '../../../../kingdom/utils/presentation';
+  import type { SpecialEffect } from '../../../../../types/special-effects';
   
   export let stateChanges: Record<string, any> | undefined = undefined;
   export let modifiers: any[] | undefined = undefined;
@@ -11,6 +12,8 @@
   export let outcome: string | undefined = undefined;
   export let hideResources: string[] = []; // Resources to hide (handled elsewhere, e.g., in choice buttons)
   export let customComponentData: any = undefined; // For custom component data (e.g., upgrade cost)
+  export let outcomeBadges: Array<{ icon: string; message: string }> = []; // Custom outcome badges
+  export let specialEffects: SpecialEffect[] = []; // Special effects (narrative/qualitative effects)
   
   const dispatch = createEventDispatcher();
   const DICE_PATTERN = /^-?\d+d\d+([+-]\d+)?$/;
@@ -20,13 +23,15 @@
   $: hasAutomatedEffects = automatedEffects && automatedEffects.length > 0;
   $: showCriticalSuccessFame = outcome === 'criticalSuccess';
   $: hasCustomCost = customComponentData && typeof customComponentData.cost === 'number';
+  $: hasOutcomeBadges = outcomeBadges && outcomeBadges.length > 0;
+  $: hasSpecialEffects = specialEffects && specialEffects.length > 0;
   
   // StateChanges does NOT render dice rollers - that's DiceRoller.svelte's job
   // This component only shows RESOLVED dice results and static modifiers
   $: diceModifiersToShow = [];
   $: hasDiceModifiers = false;
   
-  $: hasAnyContent = hasStateChanges || hasManualEffects || hasAutomatedEffects || showCriticalSuccessFame || hasDiceModifiers || hasCustomCost;
+  $: hasAnyContent = hasStateChanges || hasManualEffects || hasAutomatedEffects || showCriticalSuccessFame || hasDiceModifiers || hasCustomCost || hasOutcomeBadges || hasSpecialEffects;
   
   // Detect if a value is a dice formula
   function isDiceFormula(value: any): boolean {
@@ -121,6 +126,47 @@
       return `${action} ${displayValue} ${resourceName}`;
     }
   }
+  
+  // Get icon for special effect type if not explicitly provided
+  function getSpecialEffectIcon(effect: SpecialEffect): string {
+    if (effect.icon) return effect.icon;
+    
+    switch (effect.type) {
+      case 'attitude':
+        return 'fa-handshake';
+      case 'resource': {
+        // Try to extract resource type from message for specific icon
+        const match = effect.message.match(/(?:gained|lost|received)\s+\d+\s+(\w+)/i);
+        const resourceType = match ? match[1].toLowerCase() : null;
+        if (resourceType) {
+          return getResourceIcon(resourceType);
+        }
+        return 'fa-coins'; // Fallback to generic coins icon
+      }
+      case 'status':
+        return 'fa-flag';
+      case 'damage':
+        return 'fa-hammer';
+      case 'hex':
+        return 'fa-map';
+      case 'info':
+      default:
+        return 'fa-info-circle';
+    }
+  }
+  
+  // Get variant class for special effect styling
+  function getSpecialEffectVariant(effect: SpecialEffect): string {
+    switch (effect.variant) {
+      case 'positive':
+        return 'variant-positive';
+      case 'negative':
+        return 'variant-negative';
+      case 'neutral':
+      default:
+        return 'variant-neutral';
+    }
+  }
 </script>
 
 <div class="state-changes">
@@ -154,32 +200,64 @@
       </div>
     {/if}
     
-    {#if hasStateChanges && stateChanges}
-      <!-- Show numeric state changes (non-dice) - card style -->
-      <!-- Filter out resources that are hidden (handled by DiceRoller, ChoiceButtons, or ResourceSelector) -->
-      {@const hiddenResources = new Set(hideResources)}
-      {@const nonDiceStateChanges = Object.entries(stateChanges).filter(([key]) => !hiddenResources.has(key))}
-      
-      {#if nonDiceStateChanges.length > 0}
-        <div class="dice-rollers-section">
-          <div class="dice-rollers-header">Outcome:</div>
-          <div class="outcome-cards">
-          {#each nonDiceStateChanges as [key, change]}
-            {@const icon = getResourceIcon(key)}
-            <div class="outcome-card static">
+    <!-- Show special effects (narrative/qualitative effects) -->
+    {#if hasSpecialEffects}
+      <div class="dice-rollers-section">
+        <div class="dice-rollers-header">Special Effects:</div>
+        <div class="outcome-cards">
+          {#each specialEffects as effect}
+            <div class="outcome-card static {getSpecialEffectVariant(effect)}">
               <div class="card-header">
-                {#if icon}
-                  <i class="fas {icon} resource-icon"></i>
-                {/if}
-                <div class="card-label">
-                  {getModifierLabel(key, change, change)}
-                </div>
+                <i class="fas {getSpecialEffectIcon(effect)} resource-icon"></i>
+                <div class="card-label">{effect.message}</div>
               </div>
             </div>
           {/each}
-          </div>
         </div>
-      {/if}
+      </div>
+    {/if}
+    
+    <!-- Show custom outcome badges AND state changes under ONE "Outcome:" header -->
+    {@const hiddenResources = new Set(hideResources)}
+    {@const nonDiceStateChanges = hasStateChanges && stateChanges 
+      ? Object.entries(stateChanges).filter(([key]) => !hiddenResources.has(key))
+      : []}
+    {@const hasOutcomeContent = hasOutcomeBadges || nonDiceStateChanges.length > 0}
+    
+    {#if hasOutcomeContent}
+      <div class="dice-rollers-section">
+        <div class="dice-rollers-header">Outcome:</div>
+        <div class="outcome-cards">
+          <!-- Show custom outcome badges first -->
+          {#if hasOutcomeBadges}
+            {#each outcomeBadges as badge}
+              <div class="outcome-card static">
+                <div class="card-header">
+                  <i class="fas {badge.icon} resource-icon"></i>
+                  <div class="card-label">{badge.message}</div>
+                </div>
+              </div>
+            {/each}
+          {/if}
+          
+          <!-- Then show numeric state changes -->
+          {#if nonDiceStateChanges.length > 0}
+            {#each nonDiceStateChanges as [key, change]}
+              {@const icon = getResourceIcon(key)}
+              <div class="outcome-card static">
+                <div class="card-header">
+                  {#if icon}
+                    <i class="fas {icon} resource-icon"></i>
+                  {/if}
+                  <div class="card-label">
+                    {getModifierLabel(key, change, change)}
+                  </div>
+                </div>
+              </div>
+            {/each}
+          {/if}
+        </div>
+      </div>
     {/if}
     
     <!-- Show custom cost (e.g., from upgrade settlement) -->
@@ -270,6 +348,33 @@
       
       .resource-icon {
         color: rgb(234, 179, 8);
+      }
+    }
+    
+    &.variant-positive {
+      background: rgba(34, 197, 94, 0.1);
+      border-color: var(--border-success-medium);
+      
+      .resource-icon {
+        color: var(--color-green);
+      }
+    }
+    
+    &.variant-negative {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: var(--border-primary-medium);
+      
+      .resource-icon {
+        color: var(--color-red);
+      }
+    }
+    
+    &.variant-neutral {
+      background: rgba(59, 130, 246, 0.1);
+      border-color: rgba(59, 130, 246, 0.4);
+      
+      .resource-icon {
+        color: rgb(59, 130, 246);
       }
     }
     

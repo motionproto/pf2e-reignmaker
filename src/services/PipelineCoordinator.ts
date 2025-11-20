@@ -270,6 +270,20 @@ export class PipelineCoordinator {
       throw new Error('No character available for roll');
     }
     
+    // ✅ CRITICAL FIX: Populate actor context with character name
+    if (!ctx.actor) {
+      ctx.actor = {} as ActorContext;
+    }
+    if (!ctx.actor.actorName) {
+      ctx.actor.actorName = actingCharacter.name || 'Unknown';
+    }
+    if (!ctx.actor.actorId) {
+      ctx.actor.actorId = actingCharacter.id;
+    }
+    if (!ctx.actor.fullActor) {
+      ctx.actor.fullActor = actingCharacter;
+    }
+    
     // Get skill (from actor context or first skill in pipeline)
     const skillName = (ctx.actor?.selectedSkill || pipeline.skills[0].skill) as KingdomSkill;
     
@@ -285,10 +299,10 @@ export class PipelineCoordinator {
     const dc = getLevelBasedDC(effectiveLevel);
     
     // Store DC in context immediately so it's available throughout the pipeline
-    if (!ctx.rollData) {
-      ctx.rollData = {} as any;
-    }
-    ctx.rollData.dc = dc;
+    ctx.rollData = {
+      ...(ctx.rollData || {}),
+      dc
+    } as any;
     
     log(ctx, 3, 'executeRoll', `Rolling ${skillName} vs DC ${dc}`, { characterLevel, effectiveLevel, dc });
     
@@ -517,20 +531,43 @@ export class PipelineCoordinator {
     // Format preview to special effects for display
     const formattedPreview = unifiedCheckHandler.formatPreview(ctx.actionId, preview);
     
-    // Update instance with special effects
-    if (ctx.instanceId && formattedPreview.length > 0) {
+    // Update instance with special effects AND outcome badges
+    if (ctx.instanceId) {
       const actor = getKingdomActor();
       if (actor) {
+        console.log('🔧 [PipelineCoordinator] Updating instance with preview data:', {
+          instanceId: ctx.instanceId,
+          formattedPreviewCount: formattedPreview.length,
+          outcomeBadgesCount: preview.outcomeBadges?.length || 0,
+          outcomeBadges: preview.outcomeBadges
+        });
+        
         await actor.updateKingdomData((kingdom: any) => {
           const instance = kingdom.pendingOutcomes?.find((i: any) => i.previewId === ctx.instanceId);
           if (instance?.appliedOutcome) {
-            instance.appliedOutcome.specialEffects = formattedPreview;
+            console.log('🔧 [PipelineCoordinator] Found instance, updating...');
+            
+            // Preserve both specialEffects and outcomeBadges
+            if (formattedPreview.length > 0) {
+              instance.appliedOutcome.specialEffects = formattedPreview;
+              console.log('✅ [PipelineCoordinator] Updated specialEffects');
+            }
+            if (preview.outcomeBadges && preview.outcomeBadges.length > 0) {
+              instance.appliedOutcome.outcomeBadges = preview.outcomeBadges;
+              console.log('✅ [PipelineCoordinator] Updated outcomeBadges:', instance.appliedOutcome.outcomeBadges);
+            }
+          } else {
+            console.warn('⚠️ [PipelineCoordinator] Instance or appliedOutcome not found');
           }
         });
       }
     }
     
-    log(ctx, 5, 'calculatePreview', 'Preview calculated and stored', { preview, formattedCount: formattedPreview.length });
+    log(ctx, 5, 'calculatePreview', 'Preview calculated and stored', { 
+      preview, 
+      formattedCount: formattedPreview.length,
+      outcomeBadgesCount: preview.outcomeBadges?.length || 0
+    });
   }
 
   /**

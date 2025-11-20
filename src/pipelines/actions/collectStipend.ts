@@ -43,21 +43,21 @@ export const collectStipendPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'Receive double stipend (based on highest settlement level and taxation)',
+      description: 'You are handsomely compensated.',
       modifiers: []
     },
     success: {
-      description: 'Receive standard stipend (based on highest settlement level and taxation)',
+      description: 'You receive your stipend.',
       modifiers: []
     },
     failure: {
-      description: 'Receive half stipend and gain 1 Unrest (based on highest settlement level and taxation)',
+      description: 'The treasury struggles to pay you.',
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
     },
     criticalFailure: {
-      description: 'Receive no stipend and gain 1d4 Unrest',
+      description: 'Your demands sparks outrage.',
       modifiers: [
         { type: 'dice', resource: 'unrest', formula: '1d4', duration: 'immediate' }
       ]
@@ -66,20 +66,20 @@ export const collectStipendPipeline: CheckPipeline = {
 
   preview: {
     calculate: async (ctx) => {
-      // Calculate based on settlement taxation tier
+      console.log('🪙 [collectStipend] preview.calculate called with ctx:', {
+        outcome: ctx.outcome,
+        actor: ctx.actor,
+        actorName: ctx.actor?.actorName
+      });
+      
       const multiplier = ctx.outcome === 'criticalSuccess' ? 2 :
                         ctx.outcome === 'success' ? 1 :
                         ctx.outcome === 'failure' ? 0.5 : 0;
 
-      // Note: Don't add resources for modifiers here - they're handled by the modifier system
-      // Preview only shows the gold badge
-
-      // Calculate actual gold amount
       let goldMessage = '';
       if (multiplier > 0) {
         const settlements = ctx.kingdom.settlements || [];
         if (settlements.length > 0) {
-          // Get highest level settlement
           const highestSettlement = settlements.reduce((highest: any, current: any) => {
             return current.level > highest.level ? current : highest;
           }, settlements[0]);
@@ -90,28 +90,30 @@ export const collectStipendPipeline: CheckPipeline = {
           if (taxationInfo) {
             const baseIncome = calculateIncome(highestSettlement.level, taxationInfo.tier);
             const goldAmount = Math.round(baseIncome * multiplier);
+            const characterName = ctx.actor?.actorName || 'Player';
+            goldMessage = `${characterName} receives ${goldAmount} gold`;
             
-            // Get character name from metadata
-            const characterName = ctx.metadata?.actor?.actorName || 'Player';
-            goldMessage = `${characterName} collects ${goldAmount} gold`;
-          } else {
-            const characterName = ctx.metadata?.actor?.actorName || 'Player';
-            goldMessage = `${characterName} collects gold (${multiplier}x stipend)`;
+            console.log('🪙 [collectStipend] Generated outcomeBadge:', {
+              characterName,
+              goldAmount,
+              goldMessage,
+              multiplier
+            });
           }
-        } else {
-          goldMessage = 'No settlements available';
         }
       }
 
-      return {
-        resources: [],  // Modifiers handle unrest changes
-        specialEffects: goldMessage ? [{
-          type: 'status' as const,
-          message: goldMessage,
-          variant: 'positive' as const
+      const result = {
+        resources: [],
+        outcomeBadges: goldMessage ? [{
+          icon: 'fa-coins',
+          message: goldMessage
         }] : [],
         warnings: []
       };
+      
+      console.log('🪙 [collectStipend] Returning preview:', result);
+      return result;
     }
   },
 

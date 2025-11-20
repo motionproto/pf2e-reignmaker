@@ -76,8 +76,15 @@ export const purchaseResourcesPipeline: CheckPipeline = {
       modifiers: []
     },
     criticalFailure: {
-      description: 'The negotiations fail catastrophically.',
-      modifiers: []
+      description: 'The deal falls through and funds are lost.',
+      modifiers: [
+        {
+          type: 'static',
+          resource: 'gold',
+          value: -1,
+          duration: 'immediate'
+        }
+      ]
     }
   },
 
@@ -97,8 +104,21 @@ export const purchaseResourcesPipeline: CheckPipeline = {
         return { success: true };
         
       case 'failure':
-      case 'criticalFailure':
         // No action taken on failure
+        return { success: true };
+        
+      case 'criticalFailure':
+        // Apply gold loss penalty
+        console.log('[PurchaseResources] ⚠️ Critical failure - losing 1 gold');
+        const result = await applyResourceChanges([
+          { resource: 'gold', amount: -1 }
+        ], 'purchase-resources');
+        
+        if (!result.success) {
+          console.error('[PurchaseResources] Failed to apply gold loss:', result.error);
+          return { success: false, error: result.error };
+        }
+        
         return { success: true };
         
       default:

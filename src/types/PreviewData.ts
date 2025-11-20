@@ -49,6 +49,9 @@ export interface PreviewData {
   // Special effects (badges) - optional, most actions don't need this
   specialEffects?: SpecialEffect[];
 
+  // Outcome badges - custom badges for specific outcome display (e.g., gold collection)
+  outcomeBadges?: Array<{ icon: string; message: string }>;
+
   // Warnings
   warnings?: string[];
 }

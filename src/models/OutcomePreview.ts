@@ -60,6 +60,7 @@ export interface OutcomePreview {
     modifiers: EventModifier[];  // Resolved static values
     manualEffects: string[];
     specialEffects: (string | import('../types/special-effects').SpecialEffect)[];    // Supports both legacy strings and new structured format
+    outcomeBadges?: Array<{ icon: string; message: string }>;  // Custom outcome badges (e.g., gold collection, status changes)
     gameCommands?: any[];  // Complex operations to execute on "Apply Result" (PreparedCommand pattern)
     choices?: any[];  // Explicit choices (if not auto-generated from resource arrays)
     

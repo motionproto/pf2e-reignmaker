@@ -2,80 +2,8 @@
   /**
    * OutcomeDisplay - Universal outcome renderer for Actions, Events, and Incidents
    * 
-   * ============================================================================
-   * AUTOMATIC COMPONENT INFERENCE RULES
-   * ============================================================================
-   * This component automatically selects UI components based on modifier types.
-   * No need to specify components explicitly in pipelines - they're inferred!
-   * 
-   * Modifier Type              → Component Rendered
-   * -------------------------------------------------------------------------
-   * { type: 'dice', ... }      → DiceRoller.svelte (interactive dice rolling)
-   * { type: 'choice', ... }    → ChoiceButtons.svelte or ResourceSelector.svelte
-   * { type: 'static', ... }    → StateChanges.svelte (display only, no interaction)
-   * 
-   * ============================================================================
-   * CUSTOM COMPONENT OVERRIDE
-   * ============================================================================
-   * For unique UI needs, pipelines can specify a custom component:
-   * 
-   * In pipeline's preview.calculate():
-   * ```typescript
-   * return {
-   *   resources: [...],
-   *   specialEffects: [...],
-   *   customComponent: {
-   *     name: 'MyUniqueComponent',  // Must be registered in COMPONENT_REGISTRY
-   *     props: { ...data }
-   *   }
-   * };
-   * ```
-   * 
-   * Example Usage:
-   * ```typescript
-   * // In executeOrPardonPrisoners.ts
-   * preview: {
-   *   calculate: async (ctx) => ({
-   *     customComponent: {
-   *       name: 'ExecuteOrPardonSelector',
-   *       props: { imprisonedUnrest: getTotalImprisoned(ctx.kingdom) }
-   *     }
-   *   })
-   * }
-   * 
-   * // Custom component provides resolution data
-   * dispatch('resolution', {
-   *   isResolved: true,
-   *   metadata: { decision: 'execute' },
-   *   modifiers: [{ resource: 'unrest', value: -3 }]
-   * });
-   * 
-   * // Pipeline consumes the result in execute()
-   * execute: async (ctx) => {
-   *   const decision = ctx.resolutionData?.customComponentData?.decision;
-   * }
-   * ```
-   * 
-   * ============================================================================
-   * COMPONENT REGISTRATION
-   * ============================================================================
-   * To add a new custom component:
-   * 
-   * 1. Create component in: src/view/kingdom/components/OutcomeDisplay/components/
-   * 2. Register in COMPONENT_REGISTRY below
-   * 3. Use in pipeline via customComponent.name
-   * 
-   * ============================================================================
-   * ARCHITECTURE BENEFITS
-   * ============================================================================
-   * ✅ DRY: ~87 pipelines share the same components
-   * ✅ Maintainability: One bug fix improves all actions
-   * ✅ Flexibility: Custom components available when needed
-   * ✅ Clean separation: Pipelines stay data-focused, no UI concerns
-   * 
-   * @see src/services/resolution/DiceRollingService.ts - Modifier detection
-   * @see src/types/CheckPipeline.ts - Pipeline type definitions
-   * @see src/pipelines/actions/executeOrPardonPrisoners.ts - Custom component example
+   * Automatically infers UI components from modifier types. Shared by ~87 pipelines.
+   * Architecture docs: docs/components/OutcomeDisplay.md
    */
   
   import { createEventDispatcher } from 'svelte';
@@ -91,21 +19,19 @@
   // ✨ NEW: Validation context for centralized validation
   import { setValidationContext } from './context/ValidationContext';
   
-  // Helper to get settlement name from pending state
-  function getSelectedSettlementName(): string | null {
-    const settlementId = (globalThis as any).__pendingExecuteOrPardonSettlement;
-    if (!settlementId) return null;
-    
-    const settlement = $kingdomData?.settlements?.find(s => s.id === settlementId);
-    return settlement?.name || null;
-  }
+  // Import helper functions
+  import {
+    getSelectedSettlementName,
+    getSelectedFactionName,
+    parseSpecialEffects
+  } from './utils/OutcomeDisplayHelpers';
   
-  // Helper to get faction name from pending state (economic aid or infiltration)
-  function getSelectedFactionName(): string | null {
-    return (globalThis as any).__pendingEconomicAidFactionName || 
-           (globalThis as any).__pendingInfiltrationFactionName || 
-           null;
-  }
+  // Import resolution builder
+  import { buildResolutionData } from './utils/ResolutionDataBuilder';
+  
+  // Import component registry
+  import { COMPONENT_REGISTRY } from './config/ComponentRegistry';
+  
   import {
     updateInstanceResolutionState,
     getInstanceResolutionState,
@@ -135,11 +61,10 @@
   import DiceRoller from './components/DiceRoller.svelte';
   import ResourceSelector from './components/ResourceSelector.svelte';
   import ChoiceButtons from './components/ChoiceButtons.svelte';
-  import StateChanges from './components/StateChanges.svelte';
+  import OutcomeBadges from './components/OutcomeBadges.svelte';
   import ShortageWarning from './components/ShortageWarning.svelte';
   import OutcomeActions from './components/OutcomeActions.svelte';
   import DebugResultSelector from './components/DebugResultSelector.svelte';
-  import SpecialEffectBadges from './components/SpecialEffectBadges.svelte';
   import type { SpecialEffect } from '../../../../types/special-effects';
   import { parseLegacyEffect } from '../../../../types/special-effects';
   
@@ -171,6 +96,7 @@
   $: applied = preview.appliedOutcome?.effectsApplied || false;
   $: isIgnored = false;  // Not tracked in OutcomePreview yet
   $: choices = preview.appliedOutcome?.choices;
+  $: outcomeBadges = preview.appliedOutcome?.outcomeBadges || [];
   
   // Debug logging for preview data
   $: {
@@ -184,21 +110,11 @@
       effect,
       modifiers,
       stateChanges,
+      outcomeBadges,
+      hasOutcomeBadges: outcomeBadges.length > 0,
       appliedOutcome: preview.appliedOutcome
     });
   }
-  
-  // Custom component registry - maps component names to actual component classes
-  import ResourceChoiceSelector from './components/ResourceChoiceSelector.svelte';
-  import SellResourceSelector from './components/SellResourceSelector.svelte';
-  import PurchaseResourceSelector from './components/PurchaseResourceSelector.svelte';
-  
-  const COMPONENT_REGISTRY: Record<string, any> = {
-    'ResourceChoiceSelector': ResourceChoiceSelector,
-    'SellResourceSelector': SellResourceSelector,
-    'PurchaseResourceSelector': PurchaseResourceSelector,
-    // Add more injectable components here as needed
-  };
   
   // Look up component by name from registry
   $: customComponent = preview.appliedOutcome?.componentName 
@@ -256,88 +172,14 @@
     debugOutcome = outcome as OutcomeType;
   }
   
-  // Parse special effects into readable messages
-  function parseSpecialEffects(effects: string[] | undefined): string[] {
-    if (!effects || effects.length === 0) return [];
-    
-    const messages: string[] = [];
-    
-    for (const effect of effects as string[]) {
-      // Parse structure_damaged:structureId:settlementId
-      if (effect.startsWith('structure_damaged:')) {
-        const parts = effect.split(':');
-        console.log('🔍 [OutcomeDisplay] Parsing structure_damaged effect:', { effect, parts });
-        
-        const [, structureId, settlementId] = parts;
-        console.log('🔍 [OutcomeDisplay] Extracted IDs:', { structureId, settlementId });
-        
-        const structure = structuresService.getStructure(structureId);
-        console.log('🔍 [OutcomeDisplay] Found structure:', structure);
-        
-        const settlement = $kingdomData?.settlements?.find(s => s.id === settlementId);
-        console.log('🔍 [OutcomeDisplay] Found settlement:', settlement);
-        
-        if (structure && settlement) {
-          const message = `${structure.name} in ${settlement.name} has been damaged and provides no bonuses until repaired.`;
-          console.log('✅ [OutcomeDisplay] Created message:', message);
-          messages.push(message);
-        } else {
-          console.warn('⚠️ [OutcomeDisplay] Failed to create message - missing structure or settlement', {
-            hasStructure: !!structure,
-            hasSettlement: !!settlement,
-            structureId,
-            settlementId,
-            availableSettlements: $kingdomData?.settlements?.map(s => ({ id: s.id, name: s.name }))
-          });
-        }
-      }
-      
-      // Parse structure_destroyed:structureId:settlementId
-      else if (effect.startsWith('structure_destroyed:')) {
-        const [, structureId, settlementId] = effect.split(':');
-        const structure = structuresService.getStructure(structureId);
-        const settlement = $kingdomData?.settlements?.find(s => s.id === settlementId);
-        
-        if (structure && settlement) {
-          if (structure.tier === 1) {
-            messages.push(`${structure.name} in ${settlement.name} has been completely destroyed and removed.`);
-          } else if (structure.upgradeFrom) {
-            const previousStructure = structuresService.getStructure(structure.upgradeFrom);
-            if (previousStructure) {
-              messages.push(`${structure.name} in ${settlement.name} has been destroyed, downgrading to ${previousStructure.name} (damaged).`);
-            }
-          }
-        }
-      }
-      
-      // Parse hex_claimed:count:hexList
-      else if (effect.startsWith('hex_claimed:')) {
-        const [, count, hexList] = effect.split(':');
-        const hexCount = parseInt(count, 10);
-        messages.push(`${hexCount} hex${hexCount !== 1 ? 'es' : ''} claimed: ${hexList}`);
-      }
-      
-      // Critical success fame is handled separately in StateChanges
-      else if (effect === 'critical_success_fame') {
-        // Skip - already displayed by StateChanges
-      }
-      
-      // Shortage penalties are handled separately
-      else if (effect.startsWith('shortage_penalty:')) {
-        // Skip - already displayed as shortfall warning
-      }
-      
-      // Imprisoned unrest effects
-      else if (effect === 'imprisoned_unrest_applied' || effect === 'imprisoned_unrest_allocated') {
-        // Skip - already shown in state changes
-      }
-      else if (effect === 'imprisoned_unrest_overflow') {
-        messages.push('Prison capacity exceeded - excess converted to regular unrest');
-      }
-    }
-    
-    return messages;
-  }
+  // Filter inline badges (status effects shown with outcome text)
+  // All other effects passed to OutcomeBadges
+  $: inlineBadges = structuredEffects.filter((effect: SpecialEffect) => 
+    effect.type === 'status'
+  );
+  $: standaloneEffects = structuredEffects.filter((effect: SpecialEffect) => 
+    effect.type !== 'status'
+  );
   
   // Get fame from kingdom state
   $: currentFame = $kingdomData?.fame || 0;
@@ -355,7 +197,9 @@
   
   // Separate legacy parsed string effects from new badge effects
   $: legacyParsedEffects = parseSpecialEffects(
-    specialEffects?.filter(e => typeof e === 'string') as string[] | undefined
+    specialEffects?.filter(e => typeof e === 'string') as string[] | undefined,
+    $kingdomData,
+    structuresService
   );
   $: effectiveManualEffects = manualEffects || [];  // Manual (requires GM action)
   
@@ -505,7 +349,7 @@
     
     // If we have imprisoned unrest modifier, inject settlement name
     if (modifiers?.some((m: any) => (m.resource as string) === 'imprisoned')) {
-      const settlementName = getSelectedSettlementName();
+      const settlementName = getSelectedSettlementName($kingdomData);
       if (settlementName) {
         baseEffect = baseEffect.replace('the settlement', settlementName);
         baseEffect = baseEffect.replace('in the settlement', `in ${settlementName}`);
@@ -610,100 +454,20 @@
   }
   
   /**
-   * NEW ARCHITECTURE: Compute complete resolution data
-   * This is the single source of truth for what gets applied to the kingdom
+   * Compute complete resolution data using extracted builder
    */
   function computeResolutionData(): ResolutionData {
-    const numericModifiers: Array<{ resource: ResourceType; value: number }> = [];
-    
-    // Case 1: Choice was made (resource arrays are replaced by choice)
-    if (selectedChoice !== null && componentResolutionData?.stateChanges) {
-
-      // Add non-resource-array modifiers (e.g., gold penalty in Trade War)
-      if (modifiers) {
-        for (let i = 0; i < modifiers.length; i++) {
-          const mod = modifiers[i] as any;
-          
-          // Skip resource arrays (they're replaced by the choice)
-          if (Array.isArray(mod.resources)) {
-
-            continue;
-          }
-          
-          // Get rolled value or use static value
-          const value = resolvedDice.get(i) ?? mod.value;
-          
-          if (typeof value === 'number') {
-            numericModifiers.push({ resource: mod.resource as ResourceType, value });
-
-          }
-        }
-      }
-      
-      // Add choice modifiers (already rolled in ChoiceButtons)
-      for (const [resource, value] of Object.entries(componentResolutionData.stateChanges)) {
-        numericModifiers.push({ resource: resource as ResourceType, value: value as number });
-
-      }
-    }
-    // Case 2: Custom component made a selection (e.g., HarvestResourcesAction)
-    else if (componentResolutionData?.stateChanges && Object.keys(componentResolutionData.stateChanges).length > 0) {
-      // Add modifiers from custom component selection
-      for (const [resource, value] of Object.entries(componentResolutionData.stateChanges)) {
-        numericModifiers.push({ resource: resource as ResourceType, value: value as number });
-      }
-    }
-    // Case 3: No choices, apply all modifiers
-    else {
-
-
-      if (modifiers) {
-        for (let i = 0; i < modifiers.length; i++) {
-          const mod = modifiers[i] as any;
-
-          // Handle ChoiceModifiers (type: "choice-dropdown" with resources array)
-          if (mod.type === 'choice-dropdown' && Array.isArray(mod.resources)) {
-            const selectedResource = selectedResources.get(i);
-            if (selectedResource) {
-              numericModifiers.push({ 
-                resource: selectedResource as ResourceType, 
-                value: mod.value as number 
-              });
-            }
-            continue;
-          }
-
-          // Skip resource arrays if no choice (shouldn't happen, but safety)
-          if (Array.isArray(mod.resources)) {
-            continue;
-          }
-          
-          // Get rolled value or use static value
-          let value = resolvedDice.get(i) ?? resolvedDice.get(`state:${mod.resource}`) ?? mod.value;
-
-          if (typeof value === 'number') {
-            numericModifiers.push({ resource: mod.resource as ResourceType, value });
-          }
-        }
-      }
-    }
-    
-    // Build complete resolution data
-    // For custom components: merge persisted selectedResource with local selection data
-    const mergedCustomData = customSelectionData ? {
-      ...customComponentData,  // selectedResource from instance
-      ...customSelectionData  // Contains the full selection (selectedAmount, goldCost, etc.)
-    } : customComponentData;
-    
-    const resolution: ResolutionData = {
-      numericModifiers,
-      manualEffects: manualEffects || [],
-      specialEffects: specialEffects || [],  // Include special effects (PreparedCommand pattern)
-      complexActions: [], // Phase 3 will add support for this
-      customComponentData: mergedCustomData  // Merged custom component data
-    };
-
-    return resolution;
+    return buildResolutionData({
+      selectedChoice,
+      componentResolutionData,
+      modifiers,
+      resolvedDice,
+      selectedResources,
+      customComponentData,
+      customSelectionData,
+      manualEffects,
+      specialEffects
+    });
   }
   
   async function handlePrimary() {
@@ -878,9 +642,8 @@
   />
   
   <div class="resolution-details">
-    <OutcomeMessage effect={displayEffect} />
+    <OutcomeMessage effect={displayEffect} inlineBadges={inlineBadges} />
     <ShortageWarning {shortfallResources} />
-    <SpecialEffectBadges effects={structuredEffects} />
     <ChoiceButtons choices={effectiveChoices} {selectedChoice} on:select={handleChoiceSelect} />
     <ResourceSelector 
       {modifiers}
@@ -892,8 +655,8 @@
       on:roll={handleDiceRoll}
       on:resolution={handleComponentResolution}
     />
-    <!-- Always show StateChanges (modifiers, costs, effects) -->
-    <StateChanges 
+    <!-- Always show OutcomeBadges (modifiers, costs, effects) -->
+    <OutcomeBadges 
       stateChanges={displayStateChanges} 
       {modifiers} 
       {resolvedDice} 
@@ -902,6 +665,8 @@
       outcome={effectiveOutcome} 
       hideResources={componentResolutionData ? Object.keys(componentResolutionData.stateChanges) : []}
       {customComponentData}
+      {outcomeBadges}
+      specialEffects={standaloneEffects}
       on:roll={handleDiceRoll} 
     />
     <RollBreakdown {rollBreakdown} />
