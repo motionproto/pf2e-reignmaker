@@ -2,6 +2,7 @@
   import { createEventDispatcher, onMount, onDestroy } from 'svelte';
   import type { ActiveCheckInstance } from '../../../../../models/CheckInstance';
   import type { ComponentResolutionData } from '../../../../../types/CustomComponentInterface';
+  import type { ResourceType } from '../../../../../types/events';
   import { getResourceIcon } from '../../../../kingdom/utils/presentation';
   import { getValidationContext } from '../context/ValidationContext';
 
@@ -17,7 +18,7 @@
   const providerId = 'resource-choice-selector';
 
   // Component-specific configuration
-  const resources = config.resources || ['food', 'lumber', 'stone', 'ore'];
+  const resources: ResourceType[] = config.resources || ['food', 'lumber', 'stone', 'ore'];
   
   // Calculate amount based on outcome
   $: amount = outcome === 'criticalSuccess' ? 2 : 1;
@@ -60,7 +61,7 @@
   }
 
   // ✅ STANDARD EVENT: Emit 'resolution' with ComponentResolutionData
-  function handleResourceClick(resource: string) {
+  function handleResourceClick(resource: ResourceType) {
     // Update local UI state
     selectedResource = resource;
     
@@ -161,8 +162,15 @@
     gap: var(--space-8);
     padding: var(--space-10) var(--space-16);
     background: var(--hover-low);
-    border: 2px solid var(--border-strong, var(--border-default));
+    
+    /* Border (visible on all states) */
+    border: 1px solid var(--border-default);
     border-radius: var(--radius-lg);
+    
+    /* Outline (invisible by default, shows on selection - doesn't affect size) */
+    outline: 2px solid transparent;
+    outline-offset: -1px;
+    
     cursor: pointer;
     transition: all 0.2s;
     font-size: var(--font-md);
@@ -183,13 +191,7 @@
     
     &.selected {
       background: var(--surface-success-high);
-      border-color: var(--color-green, #22c55e);
-      border-width: 3px;
-      color: var(--color-green, #22c55e);
-      
-      i {
-        color: var(--color-green, #22c55e);
-      }
+      outline-color: var(--border-success);
     }
     
     &:disabled {

@@ -46,7 +46,7 @@
       cursor: pointer;
       font-size: var(--font-md);
       font-weight: var(--font-weight-medium);
-      line-height: 1.2;
+      line-height: 1;
       letter-spacing: 0.025rem;
       display: inline-flex;
       align-items: center;
@@ -99,7 +99,7 @@
          padding: var(--space-8) var(--space-16);
          font-size: var(--font-sm);
          font-weight: var(--font-weight-semibold);
-         line-height: 1.5;
+         line-height: 1;
          
          :global(i) {
             font-size: var(--font-sm);
@@ -109,9 +109,9 @@
       
       // Primary variant (default)
       &.primary {
-         background: var(--btn-primary-bg);
-         color: var(--btn-primary-color);
-         border: 1px solid var(--btn-primary-border);
+         background: var(--surface-primary-high);
+         color: var(--text-primary);
+         border: 1px solid var(--border-primary);
          
          &::before {
             background: linear-gradient(90deg,
@@ -121,8 +121,8 @@
          }
          
          &:hover:not(:disabled) {
-            background: var(--btn-primary-hover);
-            border-color: var(--btn-primary-border-hover);
+            background: var(--surface-primary-higher);
+            border-color: var(--border-primary-strong);
          }
          
          &:active:not(:disabled) {
@@ -138,9 +138,9 @@
       
       // Secondary variant
       &.secondary {
-         background: var(--btn-secondary-bg);
+         background: var(--surface-high);
          color: var(--text-primary);
-         border: 1px solid var(--border-medium);
+         border: 1px solid var(--border-default);
          
          &::before {
             background: linear-gradient(90deg,
@@ -150,7 +150,7 @@
          }
          
          &:hover:not(:disabled) {
-            background: var(--btn-secondary-hover);
+            background: var(--surface-higher);
             border-color: var(--border-strong);
          }
          
@@ -165,7 +165,7 @@
       &.outline {
          background: transparent;
          color: var(--text-primary);
-         border: 1px solid var(--border-medium);
+         border: 1px solid var(--border-default);
          
          &::before {
             background: linear-gradient(90deg,
@@ -198,7 +198,7 @@
          border: 1px solid var(--border-default);
          font-size: var(--font-sm);
          font-weight: var(--font-weight-semibold);
-         line-height: 1.5;
+         line-height: 1;
          
          &::before {
             background: linear-gradient(90deg,
@@ -209,7 +209,7 @@
          
          &:hover:not(:disabled) {
             background: var(--hover-high);
-            border-color: var(--border-medium);
+            border-color: var(--border-strong);
          }
          
          &:active:not(:disabled) {
@@ -231,9 +231,9 @@
       
       // Success variant
       &.success {
-         background: var(--color-green);
-         border: 1px solid var(--color-green-dark);
-         color: var(--color-white);
+         background: var(--surface-success-high);
+         border: 1px solid var(--border-success);
+         color: var(--text-primary);
          
          &::before {
             background: linear-gradient(90deg,
@@ -243,8 +243,8 @@
          }
          
          &:hover:not(:disabled) {
-            background: var(--color-green-dark);
-            border-color: var(--color-green-darker);
+            background: var(--surface-success-higher);
+            border-color: var(--border-success-strong);
          }
          
          &:disabled {
@@ -256,20 +256,20 @@
       
       // Danger variant
       &.danger {
-         background: var(--color-red-darker);
-         border: 1px solid var(--color-red);
-         color: var(--color-red);
+         background: var(--surface-danger-low);
+         border: 1px solid var(--border-danger);
+         color: var(--text-danger-secondary);
          
          &::before {
             background: linear-gradient(90deg,
                transparent,
-               rgba(237, 67, 55, 0.15),
+               rgba(0, 0, 0, 0.15),
                transparent);
          }
          
          &:hover:not(:disabled) {
-            background: var(--color-red-dark);
-            border-color: var(--color-red);
+            background: var(--surface-danger-high);
+            border-color: var(--border-danger-strong);
          }
          
          &:disabled {
@@ -281,9 +281,9 @@
       
       // Warning variant
       &.warning {
-         background: var(--color-amber);
-         border: 1px solid var(--color-amber-dark);
-         color: var(--color-dark);
+         background: var(--surface-accent-high);
+         border: 1px solid var(--border-accent);
+         color: var(--text-primary);
          
          &::before {
             background: linear-gradient(90deg,
@@ -293,8 +293,8 @@
          }
          
          &:hover:not(:disabled) {
-            background: var(--color-amber-dark);
-            border-color: var(--color-amber-darker);
+            background: var(--surface-accent-higher);
+            border-color: var(--border-accent-strong);
          }
          
          &:disabled {
