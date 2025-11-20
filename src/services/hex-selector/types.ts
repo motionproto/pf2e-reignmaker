@@ -84,6 +84,6 @@ export const HEX_HIGHLIGHT_COLORS: Record<string, ColorConfig> = {
   
   // Worksite Creation
   existingWorksite: { color: 0x8B4513, alpha: 0.3 },  // Brown
-  newWorksite: { color: 0xD2691E, alpha: 0.5 },        // Orange
-  hoverWorksite: { color: 0xFFB347, alpha: 0.4 }       // Light orange (hover)
+  newWorksite: { color: 0x90EE90, alpha: 0.7 },        // Light green (selected) - matches fortify
+  hoverWorksite: { color: 0x90EE90, alpha: 0.4 }       // Light green (hover) - matches fortify
 };

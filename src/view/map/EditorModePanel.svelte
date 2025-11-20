@@ -550,6 +550,13 @@
           title="Quarry - Click to place (hills/mountains), Ctrl+Click to remove">
           <i class="fas fa-cube"></i>
         </button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'worksite-minus'}
+          on:click={() => setTool('worksite-minus')}
+          title="Remove - Click to clear worksite from hex">
+          <i class="fa-solid fa-minus"></i>
+        </button>
       </div>
     </section>
     {/if}

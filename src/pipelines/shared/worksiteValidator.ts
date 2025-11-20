@@ -20,7 +20,7 @@ export type WorksiteType = typeof WORKSITE_TYPES[number];
 const WORKSITE_TERRAIN_RULES: Record<string, string[]> = {
   'Farmstead': ['plains', 'forest', 'hills', 'swamp', 'desert', 'water'], // Universal
   'Logging Camp': ['forest'],
-  'Mine': ['hills', 'mountains'],
+  'Mine': ['mountains', 'swamp'], // Mountains (regular mine) or Swamp (bog mine)
   'Quarry': ['hills', 'mountains']
 };
 
@@ -46,7 +46,7 @@ function getInvalidPlacementMessage(worksiteType: string, terrain: string): stri
     case 'Logging Camp':
       return `Logging Camps can only be built in forest terrain`;
     case 'Mine':
-      return `Mines can only be built in hills or mountains`;
+      return `Mines can only be built in mountains or swamp terrain (bog mines)`;
     case 'Quarry':
       return `Quarries can only be built in hills or mountains`;
     case 'Farmstead':

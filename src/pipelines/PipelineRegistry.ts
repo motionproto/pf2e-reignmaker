@@ -312,10 +312,7 @@ export class PipelineRegistry {
       this.initialize();
     }
     
-    console.log(`🔍 [PipelineRegistry.getPipeline] Looking up: ${id}, initialized: ${this.initialized}`);
-    const result = unifiedCheckHandler.getCheck(id);
-    console.log(`🔍 [PipelineRegistry.getPipeline] Result for ${id}:`, result ? 'FOUND ✅' : 'NOT FOUND ❌');
-    return result;
+    return unifiedCheckHandler.getCheck(id);
   }
 
   /**

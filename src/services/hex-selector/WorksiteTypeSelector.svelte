@@ -14,6 +14,7 @@
   export let onSelect: (metadata: { worksiteType: WorksiteType }) => void;
   
   let selectedType: WorksiteType | null = null;
+  let lastSelectedHex: string = selectedHex; // ← Initialize with current value
   
   // Get valid types for this hex
   $: validTypes = selectedHex ? getValidWorksiteTypes(selectedHex) : [];
@@ -21,15 +22,31 @@
   // Get hex terrain for revenue calculation
   $: hexTerrain = selectedHex ? getHexTerrain(selectedHex) : null;
   
-  // Auto-call onSelect when type is selected
-  $: if (selectedType) {
-    onSelect({ worksiteType: selectedType });
+  // Reset selection only when hex prop actually changes (not on initial mount)
+  $: if (selectedHex !== lastSelectedHex && lastSelectedHex !== '') {
+    console.log('[WorksiteTypeSelector] Hex changed from', lastSelectedHex, 'to', selectedHex);
+    console.log('[WorksiteTypeSelector] Resetting selectedType from', selectedType);
+    selectedType = null;
+    lastSelectedHex = selectedHex;
+  } else if (lastSelectedHex === '') {
+    // Initial mount - just update lastSelectedHex without resetting
+    lastSelectedHex = selectedHex;
   }
   
+  // Call onSelect when type is selected (but don't auto-trigger on hex change)
   function handleTypeClick(type: WorksiteType) {
+    console.log('[WorksiteTypeSelector] Button clicked:', type);
+    console.log('[WorksiteTypeSelector] Current selectedType:', selectedType);
+    console.log('[WorksiteTypeSelector] Valid types:', validTypes);
+    
     const isValid = validTypes.includes(type);
     if (isValid) {
       selectedType = type;
+      console.log('[WorksiteTypeSelector] Set selectedType to:', selectedType);
+      // Explicitly call onSelect instead of reactive statement
+      onSelect({ worksiteType: selectedType });
+    } else {
+      console.warn('[WorksiteTypeSelector] Type not valid:', type);
     }
   }
   
@@ -159,27 +176,30 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    padding: var(--space-10) var(--space-12);
+    padding: var(--space-14) var(--space-16);
     background: var(--hover-low);
-    border: 2px solid var(--color-border-low);
+    border: 1px solid var(--color-border-low);
     border-radius: var(--radius-md);
     cursor: pointer;
-    transition: all 0.2s ease;
-    min-height: 44px;
+    transition: border-color 0.2s ease, border-width 0.2s ease;
+    min-height: 52px;
     
     &.valid {
-      border-color: var(--color-accent);
-      
-      &:hover {
-        background: var(--hover-mid);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px var(--overlay-mid);
+      // Hover only affects unselected buttons
+      &:hover:not(.selected) {
+        border-color: var(--border-strong, var(--border-default));
       }
       
+      // Selected state: locked, no hover changes
       &.selected {
-        background: rgba(210, 105, 30, 0.2);
         border-color: var(--color-accent);
-        box-shadow: 0 0 12px rgba(210, 105, 30, 0.4);
+        border-width: 2px;
+        
+        // Prevent hover from affecting selected state
+        &:hover {
+          border-color: var(--color-accent);
+          border-width: 2px;
+        }
       }
     }
     
@@ -187,10 +207,6 @@
       opacity: 0.4;
       cursor: not-allowed;
       filter: grayscale(0.8);
-      
-      &:hover {
-        transform: none;
-      }
     }
   }
   

@@ -32,20 +32,45 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "The worksite is established quickly.",
-      "modifiers": []
+      "description": "The worksite is established quickly and immediately produces resources.",
+      "modifiers": [],
+      "gameCommands": [
+        {
+          "type": "createWorksite",
+          "description": "Create worksite on selected hex (Farmstead/Logging Camp/Mine/Quarry)"
+        },
+        {
+          "type": "grantResources",
+          "description": "Immediately produce resources based on worksite type and terrain"
+        }
+      ]
     },
     "success": {
       "description": "The worksite is established.",
-      "modifiers": []
+      "modifiers": [],
+      "gameCommands": [
+        {
+          "type": "createWorksite",
+          "description": "Create worksite on selected hex (Farmstead/Logging Camp/Mine/Quarry)"
+        }
+      ]
     },
     "failure": {
       "description": "The workers make no progress.",
-      "modifiers": []
+      "modifiers": [],
+      "gameCommands": []
     },
     "criticalFailure": {
-      "description": "The work is abandoned.",
-      "modifiers": []
+      "description": "The work is abandoned and tensions rise.",
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "unrest",
+          "value": 1,
+          "duration": "immediate"
+        }
+      ],
+      "gameCommands": []
     }
   },
   "special": "Choose a controlled hex. Establish a valid Worksite (Farm, Quarry, Mine, or Lumbermill)"

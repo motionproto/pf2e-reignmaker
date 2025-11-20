@@ -33,8 +33,9 @@
         return 'Repair Structure';
       
       case 'createWorksite':
-        const worksiteType = command.worksiteType.charAt(0).toUpperCase() + command.worksiteType.slice(1);
-        return `Create ${worksiteType}`;
+        return command.worksiteType 
+          ? `Create ${command.worksiteType.charAt(0).toUpperCase() + command.worksiteType.slice(1)}`
+          : 'Create Worksite';
       
       // Military Operations
       case 'recruitArmy':

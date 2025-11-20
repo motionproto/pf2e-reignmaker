@@ -144,7 +144,7 @@ export const createWorksitePipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'The worksite is established quickly.',
+      description: 'The worksite is established quickly and immediately produces resources.',
       modifiers: []
     },
     success: {
@@ -156,8 +156,10 @@ export const createWorksitePipeline: CheckPipeline = {
       modifiers: []
     },
     criticalFailure: {
-      description: 'The work is abandoned.',
-      modifiers: []
+      description: 'The work is abandoned and tensions rise.',
+      modifiers: [
+        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
+      ]
     }
   },
 
@@ -172,5 +174,141 @@ export const createWorksitePipeline: CheckPipeline = {
         warnings: []
       };
     }
+  },
+
+  // Execute function - handles outcome-specific logic
+  execute: async (ctx) => {
+    console.log('[CreateWorksite] Execute called with outcome:', ctx.outcome);
+    console.log('[CreateWorksite] Resolution data:', JSON.stringify(ctx.resolutionData, null, 2));
+    
+    switch (ctx.outcome) {
+      case 'criticalSuccess': {
+        console.log('[CreateWorksite] Processing critical success...');
+        
+        // Worksite created by onComplete handler
+        // Grant immediate resources from worksite production
+        const selectedHexData = ctx.resolutionData?.compoundData?.selectedHex;
+        console.log('[CreateWorksite] selectedHexData:', selectedHexData);
+        
+        let hexId: string | undefined;
+        let worksiteType: string | undefined;
+        
+        // Handle both array and object formats
+        if (Array.isArray(selectedHexData)) {
+          // Old format: ["hexId"]
+          hexId = selectedHexData[0];
+          console.warn('[CreateWorksite] Got array format for selectedHex, cannot determine worksite type');
+        } else if (selectedHexData?.hexIds) {
+          // New format: { hexIds: ["hexId"], metadata: { worksiteType: "..." } }
+          hexId = selectedHexData.hexIds[0];
+          worksiteType = selectedHexData.metadata?.worksiteType;
+          console.log('[CreateWorksite] Extracted hexId:', hexId, 'worksiteType:', worksiteType);
+        }
+        
+        if (hexId && worksiteType) {
+          console.log('[CreateWorksite] Granting resources for', worksiteType, 'on hex', hexId);
+          
+          const { updateKingdom } = await import('../../stores/KingdomStore');
+          const kingdom = getKingdomData();
+          const hex = kingdom.hexes?.find((h: any) => h.id === hexId);
+          
+          if (hex) {
+            console.log('[CreateWorksite] Found hex with terrain:', hex.terrain);
+            
+            // Calculate production based on worksite type and terrain
+            const production = getWorksiteProduction(worksiteType, hex.terrain);
+            console.log('[CreateWorksite] Calculated production:', Array.from(production.entries()));
+            
+            if (production.size > 0) {
+              console.log('[CreateWorksite] Updating kingdom resources...');
+              
+              await updateKingdom(k => {
+                production.forEach((amount, resource) => {
+                  if (k.resources && resource in k.resources) {
+                    const oldValue = k.resources[resource];
+                    k.resources[resource] += amount;
+                    console.log(`[CreateWorksite] ${resource}: ${oldValue} → ${k.resources[resource]} (+${amount})`);
+                  } else {
+                    console.warn(`[CreateWorksite] Resource ${resource} not found in kingdom resources`);
+                  }
+                });
+              });
+              
+              // Notify user
+              const resourceText = Array.from(production.entries())
+                .map(([res, amt]) => `+${amt} ${res}`)
+                .join(', ');
+              ui.notifications?.info(`🎉 Critical success! Worksite immediately produces: ${resourceText}`);
+              console.log('[CreateWorksite] ✅ Resources granted successfully');
+            } else {
+              console.warn('[CreateWorksite] Production map is empty - no resources to grant');
+            }
+          } else {
+            console.error('[CreateWorksite] Hex not found:', hexId);
+          }
+        } else {
+          console.error('[CreateWorksite] Missing hexId or worksiteType:', { hexId, worksiteType });
+        }
+        return { success: true };
+      }
+      
+      case 'success':
+        // Worksite created by onComplete handler
+        // No additional effects
+        return { success: true };
+        
+      case 'failure':
+        // No effects on failure
+        return { success: true };
+        
+      case 'criticalFailure': {
+        // Apply +1 unrest modifier from pipeline
+        const { applyPipelineModifiers } = await import('../shared/applyPipelineModifiers');
+        await applyPipelineModifiers(createWorksitePipeline, ctx.outcome);
+        return { success: true };
+      }
+        
+      default:
+        return { success: false, error: `Unexpected outcome: ${ctx.outcome}` };
+    }
   }
 };
+
+/**
+ * Get immediate production from a worksite type on specific terrain
+ * Used for critical success bonus
+ */
+function getWorksiteProduction(worksiteType: string, terrain: string): Map<string, number> {
+  const normalizedTerrain = terrain.toLowerCase();
+  
+  switch (worksiteType) {
+    case 'Farmstead':
+      if (normalizedTerrain === 'plains') {
+        return new Map([['food', 2]]);
+      } else {
+        return new Map([['food', 1]]);
+      }
+      
+    case 'Logging Camp':
+      if (normalizedTerrain === 'forest') {
+        return new Map([['lumber', 2]]);
+      }
+      return new Map();
+      
+    case 'Quarry':
+      if (normalizedTerrain === 'hills' || normalizedTerrain === 'mountains') {
+        return new Map([['stone', 1]]);
+      }
+      return new Map();
+      
+    case 'Mine':
+    case 'Bog Mine':
+      if (normalizedTerrain === 'mountains' || normalizedTerrain === 'swamp') {
+        return new Map([['ore', 1]]);
+      }
+      return new Map();
+      
+    default:
+      return new Map();
+  }
+}

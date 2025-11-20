@@ -34,7 +34,7 @@ export type EditorTool =
   | 'road-edit' | 'road-scissors'
   | 'terrain-plains' | 'terrain-forest' | 'terrain-hills' | 'terrain-mountains' | 'terrain-swamp' | 'terrain-desert' | 'terrain-water'
   | 'bounty-food' | 'bounty-lumber' | 'bounty-stone' | 'bounty-ore' | 'bounty-gold' | 'bounty-minus'
-  | 'worksite-farm' | 'worksite-lumber-mill' | 'worksite-mine' | 'worksite-quarry'
+  | 'worksite-farm' | 'worksite-lumber-mill' | 'worksite-mine' | 'worksite-quarry' | 'worksite-minus'
   | 'settlement-place'
   | 'fortification-tier1' | 'fortification-tier2' | 'fortification-tier3' | 'fortification-tier4'
   | 'claimed-by'
@@ -77,6 +77,14 @@ export class EditorModeService {
   private paintedClaimHexes = new Set<string>();
   private currentClaimOwner: string | null = null;  // 'player' or faction ID
   private paintingClaimOwner: string | null = null;  // Owner being painted during current drag
+  
+  // Bounty painting state (drag-to-paint)
+  private isBountyPainting = false;
+  private paintedBountyHexes = new Set<string>();
+  
+  // Worksite painting state (drag-to-paint)
+  private isWorksitePainting = false;
+  private paintedWorksiteHexes = new Set<string>();
   
   // Handler modules
   private debugHandlers = new EditorDebugHandlers();
@@ -436,11 +444,21 @@ export class EditorModeService {
         this.paintedTerrainHexes.add(hexId);
         await this.refreshTerrainOverlay();
       } else if (this.currentTool.startsWith('bounty-')) {
-        // Bounty tool → Add/subtract commodity on hex
+        // Bounty tool → Start painting bounty (drag-to-paint mode)
+        this.isBountyPainting = true;
+        this.paintedBountyHexes.clear();
+        
+        // Paint the first hex
         await this.handleBountyEdit(hexId, event.ctrlKey);
+        this.paintedBountyHexes.add(hexId);
       } else if (this.currentTool.startsWith('worksite-')) {
-        // Worksite tool → Place/remove worksite on hex
+        // Worksite tool → Start painting worksite (drag-to-paint mode)
+        this.isWorksitePainting = true;
+        this.paintedWorksiteHexes.clear();
+        
+        // Paint the first hex
         await this.handleWorksiteEdit(hexId, event.ctrlKey);
+        this.paintedWorksiteHexes.add(hexId);
       } else if (this.currentTool === 'settlement-place') {
         // Settlement tool → Place/remove settlement
         await this.handleSettlementEdit(hexId, event.ctrlKey);
@@ -527,6 +545,40 @@ export class EditorModeService {
         this.paintedClaimHexes.add(hexId);
       }
     }
+    
+    // Handle bounty painting (drag-to-paint)
+    if (this.isBountyPainting && this.currentTool.startsWith('bounty-')) {
+      const canvas = (globalThis as any).canvas;
+      if (!canvas?.grid) return;
+      
+      const point = { x: event.clientX, y: event.clientY };
+      const canvasPos = canvas.canvasCoordinatesFromClient(point);
+      const offset = canvas.grid.getOffset(canvasPos);
+      const hexId = `${offset.i}.${offset.j}`;
+      
+      // Only paint if we haven't already painted this hex during this drag
+      if (!this.paintedBountyHexes.has(hexId)) {
+        await this.handleBountyEdit(hexId, false); // Don't pass ctrlKey, tool determines behavior
+        this.paintedBountyHexes.add(hexId);
+      }
+    }
+    
+    // Handle worksite painting (drag-to-paint)
+    if (this.isWorksitePainting && this.currentTool.startsWith('worksite-')) {
+      const canvas = (globalThis as any).canvas;
+      if (!canvas?.grid) return;
+      
+      const point = { x: event.clientX, y: event.clientY };
+      const canvasPos = canvas.canvasCoordinatesFromClient(point);
+      const offset = canvas.grid.getOffset(canvasPos);
+      const hexId = `${offset.i}.${offset.j}`;
+      
+      // Only paint if we haven't already painted this hex during this drag
+      if (!this.paintedWorksiteHexes.has(hexId)) {
+        await this.handleWorksiteEdit(hexId, false); // Don't pass ctrlKey, tool determines behavior
+        this.paintedWorksiteHexes.add(hexId);
+      }
+    }
   }
   
   /**
@@ -575,6 +627,32 @@ export class EditorModeService {
       event.stopPropagation();
       
       logger.info('[EditorModeService] 🖱️ Claim painting ended');
+      return;
+    }
+    
+    // Handle bounty painting stop
+    if (this.isBountyPainting) {
+      this.isBountyPainting = false;
+      this.paintedBountyHexes.clear();
+      
+      // CRITICAL: Stop event propagation
+      event.stopImmediatePropagation();
+      event.stopPropagation();
+      
+      logger.info('[EditorModeService] 🖱️ Bounty painting ended');
+      return;
+    }
+    
+    // Handle worksite painting stop
+    if (this.isWorksitePainting) {
+      this.isWorksitePainting = false;
+      this.paintedWorksiteHexes.clear();
+      
+      // CRITICAL: Stop event propagation
+      event.stopImmediatePropagation();
+      event.stopPropagation();
+      
+      logger.info('[EditorModeService] 🖱️ Worksite painting ended');
       return;
     }
     
@@ -824,10 +902,14 @@ export class EditorModeService {
    * Handle worksite edit - place/remove worksite on hex
    * - Normal click: Place worksite (validates terrain)
    * - Ctrl+Click: Remove worksite
+   * - Minus tool: Always remove (regardless of Ctrl)
    * Overlay automatically updates via reactive subscription
    */
   private async handleWorksiteEdit(hexId: string, isCtrlPressed: boolean): Promise<void> {
-    if (isCtrlPressed) {
+    // Determine if we're removing
+    const isRemoving = this.currentTool === 'worksite-minus' || isCtrlPressed;
+    
+    if (isRemoving) {
       // Remove mode - remove any worksite
       await this.worksiteHandlers.removeWorksite(hexId);
     } else {
@@ -1033,6 +1115,7 @@ export class EditorModeService {
         'worksite-lumber-mill': ['worksites'],
         'worksite-mine': ['worksites'],
         'worksite-quarry': ['worksites'],
+        'worksite-minus': ['worksites'],
         'settlement-place': ['settlements', 'settlement-labels'],  // Show both hex highlights and labels
         'fortification-tier1': ['fortifications'],
         'fortification-tier2': ['fortifications'],
