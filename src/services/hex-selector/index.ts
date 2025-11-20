@@ -450,9 +450,6 @@ export class HexSelectorService {
         const style = this.getSelectionStyle();
         this.renderSelection(hexId, style, roadConnections);
         
-        // Update hex info panel to show selected hex details
-        this.updateHexInfo(hexId);
-        
         this.updatePanel();
 
       }
@@ -612,7 +609,6 @@ export class HexSelectorService {
           ${this.config.title}
         </h3>
       </div>
-      <div id="hex-info" style="margin-bottom: 12px; padding: 8px; background: var(--hover-low); border-radius: 4px; font-size: 13px; min-height: 40px; display: block;">&nbsp;</div>
       <div id="hex-slots" style="margin-bottom: 12px;">
         <!-- Slots will be added here -->
       </div>
@@ -823,12 +819,6 @@ export class HexSelectorService {
             if (removed.length > 0) {
 
             }
-            
-            // Update hex info to show last remaining selected hex (or clear if none)
-            const lastSelected = this.selectedHexes.length > 0 
-              ? this.selectedHexes[this.selectedHexes.length - 1] 
-              : null;
-            this.updateHexInfo(lastSelected);
             
             this.updatePanel();
           }

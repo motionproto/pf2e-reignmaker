@@ -371,8 +371,24 @@ export async function createActionOutcomePreview(context: {
   
   // Get basic effect message (no placeholder replacement - that's a formatting concern)
   const outcomeType = outcome as 'success' | 'criticalSuccess' | 'failure' | 'criticalFailure';
-  const outcomeData = (action as any).effects?.[outcomeType] || action[outcomeType];
-  const effectMessage = outcomeData?.description || 'Action completed';
+  const outcomeData = (action as any).outcomes?.[outcomeType];
+  
+  // Validate pipeline configuration (fail fast instead of silent fallback)
+  let effectMessage: string;
+  
+  if (!outcomeData) {
+    const error = `Pipeline configuration error: Action "${actionId}" missing outcome definition for "${outcomeType}"`;
+    console.error(`❌ ${error}`, { actionId, outcomeType, availableOutcomes: Object.keys((action as any).outcomes || {}) });
+    (globalThis as any).ui?.notifications?.error(error);
+    effectMessage = 'ERROR: Missing outcome configuration';
+  } else if (!outcomeData.description) {
+    const error = `Pipeline configuration error: Action "${actionId}" outcome "${outcomeType}" missing description`;
+    console.error(`❌ ${error}`, { actionId, outcomeType, outcomeData });
+    (globalThis as any).ui?.notifications?.error(error);
+    effectMessage = 'ERROR: Missing outcome description';
+  } else {
+    effectMessage = outcomeData.description;
+  }
   
   // Get basic modifiers (raw, unprocessed - preview calculation happens in Step 5)
   const modifiers = outcomeData?.modifiers || [];

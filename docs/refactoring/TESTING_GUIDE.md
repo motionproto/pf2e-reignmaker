@@ -2,7 +2,7 @@
 
 **Purpose:** Systematically test and validate all 26 actions through the 9-step PipelineCoordinator
 
-**Status:** 1/26 actions tested (4% complete)
+**Status:** 0/26 actions tested (0% complete)
 
 ---
 
@@ -17,6 +17,24 @@ Common issues from real testing sessions:
 - Watch console for all 9 pipeline steps
 
 **📖 See DEBUGGING_GUIDE.md** for complete troubleshooting reference.
+
+---
+
+## Pipeline Steps Reference
+
+After rolling, you should see these steps in console (correct terminology):
+
+**Step 1: Requirements Check** (optional) - Validates prerequisites  
+**Step 2: Pre-Roll Interactions** (optional) - Dialogs before roll  
+**Step 3: Execute Roll** (always) - PF2e skill check  
+**Step 4: Display Outcome** (always) - ← Outcome card appears  
+**Step 5: Outcome Interactions** (optional) - ← Preview calculation  
+**Step 6: Wait For Apply** (always) - ← Waits for user to click "Apply Result"  
+**Step 7: Post-Apply Interactions** (optional) - Map selections, dialogs after apply  
+**Step 8: Execute Action** (always) - ← State changes applied  
+**Step 9: Cleanup** (always) - ← Card resets, action tracked  
+
+**If pipeline stops between steps, see DEBUGGING_GUIDE.md**
 
 ---
 
@@ -50,70 +68,105 @@ await actor.updateKingdomData(kingdom => {
 
 ## Testing Workflow (For Each Action)
 
-### Step 1: Execute Action
+### Pre-Test (Required Every Time)
 ```
-1. Expand action card in Kingdom Sheet
-2. Select a skill from the available options
-3. Click "Roll Check" button
-```
-
-**Expected:** PF2e roll dialog appears
-
-### Step 2: Complete Roll
-```
-4. Roll the dice (or use debug outcome selector if GM)
-5. Observe outcome in chat
+1. ✅ Full browser refresh (Ctrl+Shift+R)
+2. ✅ Open browser console (F12)
+3. ✅ Verify no stale instances in console:
+   const actor = game.actors.getName("Party");
+   const kingdom = actor.getFlag('pf2e-reignmaker', 'kingdom-data');
+   console.log('Pending outcomes:', kingdom.pendingOutcomes.length);  // Should be 0
 ```
 
-**Expected:** Roll completes, outcome determined
-
-### Step 3: Verify Outcome Display
+### Execute Action
 ```
-6. Check that OutcomeDisplay component mounted
-7. Verify outcome description matches roll result
-8. Check preview shows correct resource/entity changes
+4. Expand action card in Kingdom Sheet
+5. Select a skill from the available options
+6. Click "Roll Check" button
+7. ✅ VERIFY in console: "Starting pipeline for [action-id]"
+8. ✅ VERIFY in console: Steps 1-3 executing
+```
+
+**Expected:** 
+- PF2e roll dialog appears
+- Console shows pipeline initiation
+
+### Complete Roll
+```
+9. Roll the dice (or use debug outcome selector if GM)
+10. Observe outcome in chat
+11. ✅ VERIFY in console: "Step 4: displayOutcome"
+12. ✅ VERIFY in console: "Step 5: outcomeInteractions" (if applicable)
+```
+
+**Expected:** 
+- Roll completes, outcome determined
+- Console shows Steps 4-5 executing
+
+### Verify Outcome Display
+```
+13. Check that OutcomeDisplay component mounted
+14. Verify outcome description matches roll result
+15. Check preview shows correct resource/entity changes
+16. ✅ VERIFY in console: "Step 6: waitForApply"
 ```
 
 **Expected:** 
 - Outcome card appears in action card
 - Preview shows what will change (resources, modifiers, etc.)
 - No console errors
+- Pipeline paused at Step 6, waiting for user
 
-### Step 4: Apply Result
+### Apply Result
 ```
-9. Click "Apply Result" button
+17. Click "Apply Result" button
+18. ✅ VERIFY in console: "User confirmed, resolving Step 6 callback"
+19. ✅ VERIFY in console: Steps 7-9 executing
 ```
 
 **Expected (varies by action type):**
-- **No interactions:** State changes immediately
-- **Post-apply interactions:** Map/dialog appears for user input
+- **No interactions:** State changes immediately, Steps 7-9 execute
+- **Post-apply interactions:** Map/dialog appears for user input (Step 7)
 
-### Step 5: Complete Post-Apply Interactions (if any)
+### Complete Post-Apply Interactions (if any)
 ```
-10. Select hexes on map / configure options / etc.
-11. Confirm selection
+20. Select hexes on map / configure options / etc.
+21. Confirm selection
+22. ✅ VERIFY in console: "Step 8: executeAction"
+23. ✅ VERIFY in console: "Step 9: cleanup"
 ```
 
-**Expected:** Interaction completes, returns to outcome display
+**Expected:** 
+- Interaction completes
+- Steps 8-9 execute
+- "Pipeline execution complete" log appears
 
-### Step 6: Verify State Changes
+### Verify State Changes
 ```
-12. Check kingdom resources updated correctly
-13. Verify entities created/modified (settlements, armies, structures)
-14. Check modifiers applied to kingdom state
-15. Confirm action card resets to default state
+24. Check kingdom resources updated correctly
+25. Verify entities created/modified (settlements, armies, structures)
+26. Check modifiers applied to kingdom state
+27. Confirm action card resets to default state
+28. ✅ VERIFY in console: No errors
 ```
 
 **Expected:** All changes applied correctly, no stale data
 
-### Step 7: Update Status
+### Update Status
 ```
-15. Edit src/constants/migratedActions.ts
-16. Change action status from 'untested' to 'tested'
-17. Save file
+29. Edit src/constants/migratedActions.ts
+30. Change action status from 'untested' to 'tested'
+31. Save file
 ```
 
 **Expected:** Badge turns green ✓ in UI (after rebuild)
+
+### If Test Fails
+```
+32. Note which step failed in console (Step 1-9)
+33. Check DEBUGGING_GUIDE.md for that step
+34. Record issue in TEST_RESULTS.md with console logs
+```
 
 ---
 
@@ -206,6 +259,14 @@ await actor.updateKingdomData(kingdom => {
 ---
 
 ### Phase 3: Custom Components (Graceful Degradation) (Priority 3)
+
+**Note on "Graceful Degradation":**
+Custom components (#8, #9, #22-24) may not be fully implemented yet. These actions should:
+- ✅ **PASS** if custom component mounts and works correctly
+- ✅ **PASS** if component doesn't mount but action completes without errors
+- ❌ **FAIL** only if action throws errors or breaks the pipeline
+
+These actions won't be fully functional until custom components are implemented, but they should NOT prevent other actions from working or crash the system.
 
 #### #8 - sell-surplus ⚪ UNTESTED
 **Type:** Custom component (gracefully degrades)

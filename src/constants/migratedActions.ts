@@ -25,10 +25,10 @@ export type ActionStatus = 'untested' | 'testing' | 'tested';
  */
 export const ACTION_STATUS = new Map<string, ActionStatus>([
   // Phase 1: No Interactions
-  ['deal-with-unrest', 'testing'],  // #1
+  ['deal-with-unrest', 'tested'],  // #1
   
   // Phase 2: Post-Apply Map Interactions
-  ['claim-hexes', 'untested'],  // #2
+  ['claim-hexes', 'testing'],  // #2
   ['build-roads', 'untested'],  // #3
   ['fortify-hex', 'untested'],  // #4
   ['create-worksite', 'untested'],  // #5

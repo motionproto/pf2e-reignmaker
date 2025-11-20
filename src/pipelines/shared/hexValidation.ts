@@ -121,3 +121,32 @@ export function hexHasRoads(hexId: string, kingdom: KingdomData): boolean {
   // Check if hex has a settlement (settlements = roads)
   return hexHasSettlement(hexId, kingdom);
 }
+
+/**
+ * Check if a hex is explored (revealed in World Explorer)
+ * 
+ * @param hexId - The hex ID to check
+ * @returns true if hex is explored, false if not explored or World Explorer unavailable
+ */
+export function isHexExplored(hexId: string): boolean {
+  // Import dynamically to avoid circular dependencies
+  const canvas = (globalThis as any).canvas;
+  
+  // World Explorer not available or not enabled
+  if (!canvas?.worldExplorer?.enabled) {
+    return true; // Default to true if World Explorer not available (permissive)
+  }
+  
+  try {
+    const [i, j] = hexId.split('.').map(Number);
+    if (isNaN(i) || isNaN(j)) {
+      logger.warn(`[HexValidation] Invalid hex ID format: ${hexId}`);
+      return false;
+    }
+    
+    return canvas.worldExplorer.isRevealed({ offset: { i, j } });
+  } catch (error) {
+    logger.warn(`[HexValidation] Error checking exploration status for ${hexId}:`, error);
+    return true; // Default to true on error (permissive)
+  }
+}
