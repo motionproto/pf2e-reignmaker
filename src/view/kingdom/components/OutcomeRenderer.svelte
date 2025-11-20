@@ -16,12 +16,11 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import type { OutcomePreview } from '../../../models/OutcomePreview';
-  import type { ActiveCheckInstance } from '../../../models/CheckInstance';
   // StandardOutcomeDisplay will be created in next step - for now fallback to current OutcomeDisplay
   import OutcomeDisplay from './OutcomeDisplay/OutcomeDisplay.svelte';
   
   export let preview: OutcomePreview;
-  export let instance: ActiveCheckInstance | null = null;
+  export let instance: OutcomePreview | null = null;
   
   const dispatch = createEventDispatcher();
   

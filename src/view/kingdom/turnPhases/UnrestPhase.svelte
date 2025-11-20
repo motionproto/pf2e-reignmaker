@@ -495,7 +495,7 @@
                         outcomes={incidentOutcomes}
                         traits={currentIncident.traits || []}
                         checkType="incident"
-                        checkInstance={currentIncidentInstance}
+                        outcomePreview={currentIncidentInstance}
                         expandable={false}
                         showCompletions={false}
                         showAvailability={false}

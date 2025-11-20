@@ -90,7 +90,7 @@
           
           <BaseCheckCard
             id={instance.instanceId || instance.checkId}
-            checkInstance={instance}
+            outcomePreview={instance}
             name={eventData.name}
             description={eventData.description}
             skills={eventData.skills}

@@ -964,7 +964,7 @@
             outcomes={eventOutcomes}
             traits={currentEventInstance.checkData.traits || []}
             checkType="event"
-            checkInstance={currentEventInstance}
+            outcomePreview={currentEventInstance}
             expandable={false}
             showCompletions={false}
             showAvailability={false}
@@ -997,7 +997,7 @@
             {#each ongoingEventsWithOutcomes as item}
                <BaseCheckCard
                   id={item.instance.instanceId}
-                  checkInstance={item.instance}
+                  outcomePreview={item.instance}
                   name={item.event.name}
                   description={item.event.description}
                   skills={item.event.skills}

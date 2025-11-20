@@ -52,7 +52,7 @@
   }>;
   export let checkType: 'action' | 'event' | 'incident' = 'action';
   export let traits: string[] = [];  // For events/incidents
-  export let checkInstance: any | null = null;  // Full instance for resolution state (type from PipelineCoordinator)
+  export let outcomePreview: OutcomePreview | null = null;  // Full preview for resolution state
   
   // Feature flags
   export let expandable: boolean = false;  // Actions only
@@ -126,18 +126,18 @@
   let isRolling: boolean = false;
   let localUsedSkill: string = '';
   
-  // Build OutcomePreview from checkInstance (reactive to kingdom store) OR resolution (fallback)
-  // IMPORTANT: Use checkInstance when available as it's reactive to store updates in Step 5
-  $: outcomePreview = (checkInstance || resolution) ? (checkInstance ? {
-    // Use checkInstance (reactive to kingdom store updates)
-    previewId: checkInstance.previewId,
-    checkType: checkInstance.checkType,
-    checkId: checkInstance.checkId,
-    checkData: checkInstance.checkData,
-    createdTurn: checkInstance.createdTurn,
-    status: checkInstance.status,
-    appliedOutcome: checkInstance.appliedOutcome,
-    metadata: checkInstance.metadata
+  // Build display preview from outcomePreview (reactive to kingdom store) OR resolution (fallback)
+  // IMPORTANT: Use outcomePreview when available as it's reactive to store updates in Step 5
+  $: displayPreview = (outcomePreview || resolution) ? (outcomePreview ? {
+    // Use outcomePreview (reactive to kingdom store updates)
+    previewId: outcomePreview.previewId,
+    checkType: outcomePreview.checkType,
+    checkId: outcomePreview.checkId,
+    checkData: outcomePreview.checkData,
+    createdTurn: outcomePreview.createdTurn,
+    status: outcomePreview.status,
+    appliedOutcome: outcomePreview.appliedOutcome,
+    metadata: outcomePreview.metadata
   } as OutcomePreview : {
     // Fallback to resolution (non-reactive)
     previewId: `${id}-${Date.now()}`,
@@ -412,11 +412,11 @@
       <!-- Slot for content before completion tracking (e.g., CommerceTierInfo) -->
       <slot name="pre-completion-content"></slot>
       
-      {#if resolved && outcomePreview}
+      {#if resolved && displayPreview}
         <!-- After resolution: Show OutcomeRenderer -->
         <OutcomeRenderer
-          preview={outcomePreview}
-          instance={checkInstance}
+          preview={displayPreview}
+          instance={outcomePreview}
           on:primary={handleApplyResult}
           on:cancel={handleCancel}
           on:performReroll={handlePerformReroll}

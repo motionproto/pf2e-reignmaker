@@ -99,7 +99,7 @@
           <div class="action-card-wrapper">
             <BaseCheckCard
             id={action.id}
-            checkInstance={checkInstance || null}
+            outcomePreview={checkInstance || null}
             customResolutionComponent={customResolution?.component || null}
             customResolutionProps={customResolution?.props || {}}
             name={action.name}
