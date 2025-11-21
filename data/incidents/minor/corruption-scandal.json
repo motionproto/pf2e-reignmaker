@@ -21,7 +21,7 @@
       "description": "manage public relations"
     }
   ],
-  "effects": {
+  "outcomes": {
     "success": {
       "msg": "The scandal is contained.",
       "modifiers": [],

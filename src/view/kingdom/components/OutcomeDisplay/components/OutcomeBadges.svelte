@@ -18,16 +18,12 @@
   export let specialEffects: SpecialEffect[] = [];
   
   const dispatch = createEventDispatcher();
-  const DICE_PATTERN = /^-?\\d+d\\d+([+-]\\d+)?$/;
   
-  // Auto-convert dice modifiers to unified badge format
+  // Auto-convert typed dice modifiers to unified badge format
+  // Only supports typed format: { type: 'dice', formula: '1d4', resource: '...' }
   $: diceModifierBadges = (modifiers || [])
     .map((mod: any, index: number) => ({ ...mod, originalIndex: index }))
-    .filter((mod: any) => {
-      const hasLegacyDice = typeof mod.value === 'string' && DICE_PATTERN.test(mod.value);
-      const hasTypedDice = mod.type === 'dice' && mod.formula;
-      return hasLegacyDice || hasTypedDice;
-    })
+    .filter((mod: any) => mod.type === 'dice' && mod.formula)
     .map((mod: any): UnifiedOutcomeBadge => {
       const formula = mod.formula || mod.value;
       const resource = mod.resource;
@@ -83,14 +79,10 @@
   
   $: hasAnyContent = hasStateChanges || hasManualEffects || hasAutomatedEffects || showCriticalSuccessFame || hasDiceModifiers || hasCustomCost || hasOutcomeBadges || hasSpecialEffects;
   
-  function isDiceFormula(value: any): boolean {
-    return typeof value === 'string' && DICE_PATTERN.test(value);
-  }
-  
   function getResolvedValue(key: string): number | null {
     if (modifiers) {
       const modifierIndex = modifiers.findIndex(m => 
-        m.resource === key && typeof m.value === 'string' && DICE_PATTERN.test(m.value)
+        m.resource === key && m.type === 'dice' && m.formula
       );
       
       if (modifierIndex !== -1) {
@@ -215,15 +207,9 @@
   }
   
   function getSpecialEffectVariant(effect: SpecialEffect): string {
-    switch (effect.variant) {
-      case 'positive':
-        return 'variant-positive';
-      case 'negative':
-        return 'variant-negative';
-      case 'info':
-      default:
-        return 'variant-info';
-    }
+    if (effect.variant === 'positive') return 'variant-positive';
+    if (effect.variant === 'negative') return 'variant-negative';
+    return 'variant-info';
   }
   
   function getBadgeVariant(badge: UnifiedOutcomeBadge): string {
@@ -329,7 +315,7 @@
                 class:clickable={!isRolled && isDice}
                 class:variant-positive={badge.variant === 'positive'}
                 class:variant-negative={badge.variant === 'negative'}
-                class:variant-info={!badge.variant || badge.variant === 'info'}
+                class:variant-info={!badge.variant}
                 disabled={isRolled || !isDice}
                 on:click={() => !isRolled && isDice && badge.value?.type === 'dice' ? handleBadgeDiceRoll(index, badge.value.formula, badge) : null}
               >

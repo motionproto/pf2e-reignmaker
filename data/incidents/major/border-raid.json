@@ -21,7 +21,7 @@
       "description": "use terrain"
     }
   ],
-  "effects": {
+  "outcomes": {
     "success": {
       "msg": "The raiders are repelled.",
       "modifiers": [],

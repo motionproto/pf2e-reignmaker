@@ -26,7 +26,7 @@
       "description": "demonstrations of prowess"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "description": "Patriotic fervor spreads.",
       "modifiers": [

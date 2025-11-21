@@ -17,7 +17,7 @@
       "description": "quarantine measures"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "msg": "The plague is cured.",
       "modifiers": [

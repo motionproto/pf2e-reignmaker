@@ -17,7 +17,7 @@
       "description": "deny involvement"
     }
   ],
-  "effects": {
+  "outcomes": {
     "success": {
       "msg": "Relations are maintained.",
       "modifiers": [],

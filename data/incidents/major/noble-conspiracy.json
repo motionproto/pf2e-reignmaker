@@ -21,7 +21,7 @@
       "description": "divine truth"
     }
   ],
-  "effects": {
+  "outcomes": {
     "success": {
       "msg": "The conspiracy is exposed.",
       "modifiers": [],

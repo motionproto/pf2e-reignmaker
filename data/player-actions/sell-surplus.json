@@ -26,7 +26,7 @@
       "description": "black market"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "description": "You secure exceptional trade rates.",
       "modifiers": []

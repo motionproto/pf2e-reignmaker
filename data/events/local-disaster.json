@@ -17,7 +17,7 @@
       "description": "organize response"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "msg": "The disaster is contained.",
       "modifiers": [],

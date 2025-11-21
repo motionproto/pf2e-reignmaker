@@ -33,7 +33,7 @@
       "description": "navigate obstacles"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "description": "The scouts return with detailed information.",
       "modifiers": []

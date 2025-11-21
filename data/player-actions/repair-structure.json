@@ -18,7 +18,7 @@
       "description": "physical labor"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "description": "Citizens volunteer their time and materials. The {structure} is repaired for free!",
       "modifiers": [],

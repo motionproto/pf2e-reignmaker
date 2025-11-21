@@ -17,7 +17,7 @@
       "description": "coordinate relief"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "msg": "Damage is minimal.",
       "modifiers": [

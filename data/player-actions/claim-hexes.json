@@ -14,7 +14,7 @@
       "description": "administrative control"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "description": "Your kingdom expands rapidly.",
       "modifiers": []

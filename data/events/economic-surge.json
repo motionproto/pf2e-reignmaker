@@ -17,7 +17,7 @@
       "description": "increase production"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "msg": "Trade flourishes throughout the kingdom.",
       "modifiers": [

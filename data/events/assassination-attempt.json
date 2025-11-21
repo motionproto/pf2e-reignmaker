@@ -17,7 +17,7 @@
       "description": "survive wounds"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "msg": "The assassin is captured.",
       "modifiers": [],

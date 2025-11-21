@@ -22,7 +22,7 @@
       "description": "endurance exercises"
     }
   ],
-  "effects": {
+  "outcomes": {
   "criticalSuccess": {
     "description": "The troops train exceptionally well.",
     "modifiers": [],

@@ -21,7 +21,7 @@
       "description": "address health concerns"
     }
   ],
-  "effects": {
+  "outcomes": {
     "success": {
       "msg": "The workers return.",
       "modifiers": [],

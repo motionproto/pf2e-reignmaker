@@ -17,7 +17,7 @@
       "description": "negotiate claims"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "msg": "A legendary treasure is discovered.",
       "modifiers": [

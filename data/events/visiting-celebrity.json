@@ -17,7 +17,7 @@
       "description": "social events"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "msg": "The visit is spectacular.",
       "modifiers": [

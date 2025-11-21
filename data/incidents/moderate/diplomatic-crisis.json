@@ -17,7 +17,7 @@
       "description": "formal apology"
     }
   ],
-  "effects": {
+  "outcomes": {
     "success": {
       "msg": "Relations are maintained.",
       "modifiers": [],

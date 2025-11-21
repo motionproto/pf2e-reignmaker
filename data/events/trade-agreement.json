@@ -17,7 +17,7 @@
       "description": "leverage position"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "msg": "An exclusive trade deal is secured.",
       "modifiers": [

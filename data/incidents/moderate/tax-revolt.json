@@ -21,7 +21,7 @@
       "description": "creative accounting"
     }
   ],
-  "effects": {
+  "outcomes": {
     "success": {
       "msg": "Taxes are collected normally.",
       "modifiers": [],

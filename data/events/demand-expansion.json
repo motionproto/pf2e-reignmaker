@@ -17,7 +17,7 @@
       "description": "demand patience"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "msg": "The people are inspired by your vision of growth.",
       "modifiers": [

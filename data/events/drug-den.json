@@ -17,7 +17,7 @@
       "description": "crack down hard"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "msg": "The drug ring is destroyed.",
       "modifiers": [

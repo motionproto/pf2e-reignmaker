@@ -87,7 +87,7 @@
       "description": "wilderness defenses"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "description": "The fortification is constructed swiftly.",
       "modifiers": [

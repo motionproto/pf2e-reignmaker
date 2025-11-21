@@ -21,7 +21,7 @@
       "description": "appeal to faith"
     }
   ],
-  "effects": {
+  "outcomes": {
     "success": {
       "msg": "The rebellion is dispersed.",
       "modifiers": [],

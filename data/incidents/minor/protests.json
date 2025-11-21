@@ -21,7 +21,7 @@
       "description": "magical calming"
     }
   ],
-  "effects": {
+  "outcomes": {
     "success": {
       "msg": "The protests are resolved peacefully.",
       "modifiers": [],

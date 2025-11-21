@@ -406,7 +406,8 @@ export async function createActionOutcomePreview(context: {
       type: m.type,
       formula: m.formula,
       operation: m.operation,
-      duration: m.duration
+      duration: m.duration,
+      negative: m.negative
     })),
     manualEffects: [],
     complexActions: [],

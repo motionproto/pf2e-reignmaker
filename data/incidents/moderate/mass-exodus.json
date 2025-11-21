@@ -17,7 +17,7 @@
       "description": "spiritual guidance"
     }
   ],
-  "effects": {
+  "outcomes": {
     "success": {
       "msg": "The population remains.",
       "modifiers": [],

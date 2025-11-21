@@ -21,7 +21,7 @@
       "description": "divine the source"
     }
   ],
-  "effects": {
+  "outcomes": {
     "success": {
       "msg": "Crime is suppressed.",
       "modifiers": [],

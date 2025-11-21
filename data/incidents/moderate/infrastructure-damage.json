@@ -21,7 +21,7 @@
       "description": "magical restoration"
     }
   ],
-  "effects": {
+  "outcomes": {
     "success": {
       "msg": "Damage is prevented.",
       "modifiers": [],

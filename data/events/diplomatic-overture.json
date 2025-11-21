@@ -17,7 +17,7 @@
       "description": "gain advantage"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "msg": "Relations with the neighboring kingdom improve greatly.",
       "modifiers": [

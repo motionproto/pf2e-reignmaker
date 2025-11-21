@@ -21,7 +21,7 @@
       "description": "teleportation network"
     }
   ],
-  "effects": {
+  "outcomes": {
     "success": {
       "msg": "Trade continues.",
       "modifiers": [],
@@ -45,7 +45,7 @@
             "food",
             "stone"
           ],
-          "value": "2d4+1",
+          "formula": "2d4+1",
           "negative": true,
           "duration": "immediate"
         }
@@ -70,7 +70,7 @@
             "food",
             "stone"
           ],
-          "value": "2d4+1",
+          "formula": "2d4+1",
           "negative": true,
           "duration": "immediate"
         },

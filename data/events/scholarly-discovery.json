@@ -17,7 +17,7 @@
       "description": "social sciences"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "msg": "A revolutionary discovery is made.",
       "modifiers": [

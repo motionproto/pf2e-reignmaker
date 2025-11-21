@@ -30,7 +30,7 @@
       "description": "blessed endeavors"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "description": "The worksite is established quickly and immediately produces resources.",
       "modifiers": [],

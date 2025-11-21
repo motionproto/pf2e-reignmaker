@@ -17,7 +17,7 @@
       "description": "pageantry and ceremonies"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "msg": "The tournament is a spectacular success.",
       "modifiers": [

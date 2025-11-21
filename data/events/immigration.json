@@ -17,7 +17,7 @@
       "description": "find them land"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "msg": "A major influx of settlers arrives.",
       "modifiers": [

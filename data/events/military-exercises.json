@@ -17,7 +17,7 @@
       "description": "discipline and morale"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "msg": "The exercises forge elite forces.",
       "modifiers": [

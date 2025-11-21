@@ -26,7 +26,7 @@
       "description": "physical pursuit"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "description": "The troublemakers are swiftly arrested.",
       "modifiers": [],

@@ -37,7 +37,7 @@
       "description": "public ceremony (pardon)"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "description": "The prison is emptied.",
       "modifiers": [

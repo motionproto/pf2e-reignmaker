@@ -22,7 +22,7 @@
       "description": "acquire through subterfuge"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "description": "The army is outfitted with exceptional gear.",
       "cost": {

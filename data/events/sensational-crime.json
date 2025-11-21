@@ -17,7 +17,7 @@
       "description": "calm fears"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "msg": "The criminal is caught spectacularly.",
       "modifiers": [

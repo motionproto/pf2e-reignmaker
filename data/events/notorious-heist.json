@@ -17,7 +17,7 @@
       "description": "investigate connections"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "msg": "The thieves are captured with the stolen goods.",
       "modifiers": [

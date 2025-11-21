@@ -21,7 +21,7 @@
       "description": "magical displays"
     }
   ],
-  "effects": {
+  "outcomes": {
     "success": {
       "msg": "Tensions ease.",
       "modifiers": [],

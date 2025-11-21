@@ -21,7 +21,7 @@
       "description": "inspire loyalty"
     }
   ],
-  "effects": {
+  "outcomes": {
     "success": {
       "msg": "The independence movement is quelled.",
       "modifiers": [],

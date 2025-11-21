@@ -22,7 +22,7 @@
       "description": "misleading negotiations"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "description": "You secure exceptional trade rates.",
       "modifiers": []

@@ -22,7 +22,7 @@
       "description": "farewell ceremony"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "description": "The people welcome them home with honor.",
       "modifiers": [

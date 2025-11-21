@@ -17,7 +17,7 @@
       "description": "track them to their hideout"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "msg": "The bandits are captured and reformed.",
       "modifiers": [

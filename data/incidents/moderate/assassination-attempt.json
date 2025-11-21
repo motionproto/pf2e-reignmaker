@@ -17,7 +17,7 @@
       "description": "avoid the assassin"
     }
   ],
-  "effects": {
+  "outcomes": {
     "success": {
       "msg": "The assassination is prevented.",
       "modifiers": [],

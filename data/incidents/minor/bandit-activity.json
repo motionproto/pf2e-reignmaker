@@ -21,7 +21,7 @@
       "description": "scrying"
     }
   ],
-  "effects": {
+  "outcomes": {
     "success": {
       "msg": "The bandits are deterred.",
       "modifiers": [],

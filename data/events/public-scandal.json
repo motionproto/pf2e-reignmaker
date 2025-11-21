@@ -17,7 +17,7 @@
       "description": "silence critics"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "msg": "The scandal is deflected.",
       "modifiers": [],

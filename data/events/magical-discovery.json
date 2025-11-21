@@ -17,7 +17,7 @@
       "description": "unlock its secrets"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "msg": "A major magical boon is revealed.",
       "modifiers": [],

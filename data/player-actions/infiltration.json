@@ -30,7 +30,7 @@
       "description": "daring infiltration"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "description": "Valuable intel is gathered.",
       "modifiers": [

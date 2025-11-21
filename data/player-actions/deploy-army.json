@@ -22,7 +22,7 @@
       "description": "covert movement"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "description": "Your forces move swiftly into position, confident in their victory.",
       "modifiers": [],

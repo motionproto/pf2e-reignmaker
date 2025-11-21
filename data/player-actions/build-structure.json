@@ -22,7 +22,7 @@
       "description": "magically assisted construction"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "description": "The {structure} is constructed efficiently.",
       "modifiers": []

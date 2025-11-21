@@ -26,7 +26,7 @@
       "description": "humanitarian aid"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "description": "Your ally provides generous support.",
       "modifiers": [

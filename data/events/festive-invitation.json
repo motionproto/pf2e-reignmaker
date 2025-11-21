@@ -17,7 +17,7 @@
       "description": "navigate customs"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "msg": "Your leaders are the stars of the festival.",
       "modifiers": [

@@ -30,7 +30,7 @@
       "description": "sacred alliances"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "description": "The diplomatic mission is a resounding success.",
       "modifiers": [

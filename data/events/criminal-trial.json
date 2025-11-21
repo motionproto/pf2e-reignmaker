@@ -17,7 +17,7 @@
       "description": "legal proceedings"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "msg": "Justice triumphs.",
       "modifiers": [

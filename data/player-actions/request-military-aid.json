@@ -22,7 +22,7 @@
       "description": "magical pacts"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "description": "Your ally sends elite reinforcements to support your cause.",
       "modifiers": [],

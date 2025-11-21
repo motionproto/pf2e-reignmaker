@@ -21,7 +21,7 @@
       "description": "divine intervention"
     }
   ],
-  "effects": {
+  "outcomes": {
     "success": {
       "msg": "The economy is stabilized.",
       "modifiers": [],

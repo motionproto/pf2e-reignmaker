@@ -21,7 +21,7 @@
       "description": "public relations"
     }
   ],
-  "effects": {
+  "outcomes": {
     "success": {
       "msg": "The crisis is contained.",
       "modifiers": [],

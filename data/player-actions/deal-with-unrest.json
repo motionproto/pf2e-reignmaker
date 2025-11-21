@@ -34,7 +34,7 @@
       "description": "mystical demonstrations"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "description": "The people rally to your cause.",
       "modifiers": [

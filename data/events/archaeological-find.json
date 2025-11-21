@@ -17,7 +17,7 @@
       "description": "arcane investigation"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "msg": "A major discovery brings wealth and fame.",
       "modifiers": [

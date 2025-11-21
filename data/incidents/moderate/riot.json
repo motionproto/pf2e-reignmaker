@@ -21,7 +21,7 @@
       "description": "treat injured"
     }
   ],
-  "effects": {
+  "outcomes": {
     "success": {
       "msg": "The riot is quelled.",
       "modifiers": [],

@@ -17,7 +17,7 @@
       "description": "manipulate resolution"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "msg": "The families become allies.",
       "endsEvent": true,

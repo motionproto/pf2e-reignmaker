@@ -29,7 +29,7 @@
       "description": "public health improvements"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "description": "The settlement grows rapidly.",
       "modifiers": [

@@ -30,7 +30,7 @@
       "description": "skim the treasury"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "description": "You are handsomely compensated.",
       "modifiers": [],

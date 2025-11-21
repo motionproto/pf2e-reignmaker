@@ -17,7 +17,7 @@
       "description": "organize festivals"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "msg": "The blessing inspires the kingdom.",
       "modifiers": [

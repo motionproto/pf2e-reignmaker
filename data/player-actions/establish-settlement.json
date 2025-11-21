@@ -31,7 +31,7 @@
       "description": "healthy community planning"
     }
   ],
-  "effects": {
+  "outcomes": {
     "criticalSuccess": {
       "description": "The village is established quickly.",
       "modifiers": [
