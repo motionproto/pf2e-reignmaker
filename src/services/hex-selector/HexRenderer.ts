@@ -133,6 +133,8 @@ export class HexRenderer {
     const drawn = drawSingleHex(hexGraphics, hexId, style, canvas);
     if (drawn) {
       layer.addChild(hexGraphics);
+      // Critical: Make layer visible so selection renders
+      this.mapLayer.showLayer('interactive-selection');
     }
   }
 
@@ -157,5 +159,7 @@ export class HexRenderer {
     });
     
     layer.addChild(roadGraphics);
+    // Critical: Make layer visible so selection renders
+    this.mapLayer.showLayer('interactive-selection');
   }
 }

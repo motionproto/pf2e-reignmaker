@@ -40,11 +40,6 @@ export const buildRoadsPipeline: CheckPipeline = {
       validation: (hexId: string, pendingHexes: string[]) => {
         return validateRoadHex(hexId, pendingHexes);
       },
-      // ✅ Execute road building when user completes hex selection
-      onComplete: async (selectedHexIds: string[]) => {
-        console.log(`🛣️ [buildRoads] Building roads on ${selectedHexIds.length} hex(es)`);
-        await buildRoadsExecution(selectedHexIds);
-      },
       // Outcome-based adjustments
       outcomeAdjustment: {
         criticalSuccess: {
@@ -128,17 +123,16 @@ export const buildRoadsPipeline: CheckPipeline = {
     switch (ctx.outcome) {
       case 'criticalSuccess':
       case 'success':
-        // Check if user actually selected hexes (didn't cancel)
+        // Read hex selections from resolutionData (populated by postApplyInteractions)
         const selectedHexes = ctx.resolutionData?.compoundData?.selectedHexes;
         if (!selectedHexes || selectedHexes.length === 0) {
           console.log('⏭️ [buildRoads] User cancelled hex selection, skipping execution gracefully');
-          return { success: true };  // ✅ Graceful cancellation - no error thrown
+          return { success: true };  // Graceful cancellation - no error thrown
         }
         
-        // User completed hex selection - deduct costs
+        // Deduct costs and build roads
         await applyActionCost(buildRoadsPipeline);
-        
-        // Road building handled by postApplyInteractions onComplete handler
+        await buildRoadsExecution(selectedHexes);
         return { success: true };
         
       case 'failure':

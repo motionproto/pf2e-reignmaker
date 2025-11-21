@@ -143,45 +143,6 @@ export const fortifyHexPipeline: CheckPipeline = {
       // Condition: only show for success/criticalSuccess
       condition: (ctx: any) => {
         return ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess';
-      },
-      // Custom execution: Handle fortification upgrade
-      onComplete: async (selectedHexIds: string[], ctx: any) => {
-        if (!selectedHexIds || selectedHexIds.length === 0) {
-          console.log('[FortifyHex] No hexes selected');
-          return;
-        }
-
-        const hexId = selectedHexIds[0];
-        const kingdom = getKingdomData();
-
-        // Find the hex
-        const hex = kingdom.hexes.find((h: any) => h.id === hexId);
-        if (!hex) {
-          console.error(`[FortifyHex] Hex ${hexId} not found in kingdom data`);
-          ui.notifications?.error(`Hex ${hexId} not found`);
-          return;
-        }
-
-        console.log(`[FortifyHex] Found hex ${hexId}, current fortification:`, hex.fortification);
-
-        // Load fortification data
-        const fortificationDataModule = await import('../../../data/player-actions/fortify-hex.json');
-        const fortificationData = fortificationDataModule.default || fortificationDataModule;
-
-        // Determine next tier (validation already confirmed it's affordable)
-        const currentTier = hex.fortification?.tier || 0;
-        const nextTier = currentTier + 1;
-        const tierConfig = fortificationData.tiers[nextTier - 1];
-        
-        console.log(`[FortifyHex] Upgrading hex ${hexId} from tier ${currentTier} to tier ${nextTier}`);
-
-        // Execute fortification (validation already confirmed affordability)
-        await fortifyHexExecution(hexId, nextTier as 1 | 2 | 3 | 4);
-
-        console.log(`[FortifyHex] Fortification complete - checking hex data...`);
-        const updatedKingdom = getKingdomData();
-        const updatedHex = updatedKingdom.hexes.find((h: any) => h.id === hexId);
-        console.log(`[FortifyHex] Updated hex fortification:`, updatedHex?.fortification);
       }
     }
   ],
@@ -233,15 +194,39 @@ export const fortifyHexPipeline: CheckPipeline = {
   execute: async (ctx) => {
     switch (ctx.outcome) {
       case 'criticalSuccess':
-        // Fortification built by onComplete handler
-        // Apply -1 unrest modifier from pipeline
-        await applyPipelineModifiers(fortifyHexPipeline, ctx.outcome);
-        return { success: true };
+      case 'success': {
+        // Read hex selection from resolutionData (populated by postApplyInteractions)
+        const selectedHexes = ctx.resolutionData?.compoundData?.selectedHex;
+        if (!selectedHexes || selectedHexes.length === 0) {
+          console.log('[FortifyHex] No hexes selected');
+          return { success: true };  // Graceful cancellation
+        }
+
+        const hexId = Array.isArray(selectedHexes) ? selectedHexes[0] : selectedHexes;
+        const kingdom = getKingdomData();
+
+        // Find the hex
+        const hex = kingdom.hexes.find((h: any) => h.id === hexId);
+        if (!hex) {
+          console.error(`[FortifyHex] Hex ${hexId} not found in kingdom data`);
+          return { success: false, error: `Hex ${hexId} not found` };
+        }
+
+        // Determine next tier
+        const currentTier = hex.fortification?.tier || 0;
+        const nextTier = currentTier + 1;
         
-      case 'success':
-        // Fortification built by onComplete handler
-        // No modifiers defined in pipeline
+        console.log(`[FortifyHex] Upgrading hex ${hexId} from tier ${currentTier} to tier ${nextTier}`);
+
+        // Execute fortification
+        await fortifyHexExecution(hexId, nextTier as 1 | 2 | 3 | 4);
+
+        // Apply modifiers for critical success
+        if (ctx.outcome === 'criticalSuccess') {
+          await applyPipelineModifiers(fortifyHexPipeline, ctx.outcome);
+        }
         return { success: true };
+      }
         
       case 'failure':
         // Explicitly do nothing (no modifiers defined)

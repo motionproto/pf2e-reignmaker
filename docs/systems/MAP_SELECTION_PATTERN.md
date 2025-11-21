@@ -217,3 +217,21 @@ If you find an action with `onComplete`:
 - [ ] Update `execute()` to read from `ctx.resolutionData.compoundData[id]`
 - [ ] Test that hex selection visual persists correctly
 - [ ] Verify execution logic still works
+
+---
+
+## Actions Using This Pattern
+
+All these actions follow the correct pattern (as of 2025-11-21):
+
+| Action | Interaction ID | Color Type |
+|--------|---------------|------------|
+| Send Scouts | `selectedHexes` | scout |
+| Claim Hexes | `selectedHexes` | claim |
+| Build Roads | `selectedHexes` | road |
+| Fortify Hex | `selectedHex` | fortify |
+| Create Worksite | `selectedHex` | worksite |
+| Establish Settlement | `location` (pre-roll) | settlement |
+| Deploy Army | `path` (pre-roll) | movement |
+
+**Note:** Pre-roll interactions store in `ctx.metadata`, not `ctx.resolutionData`.

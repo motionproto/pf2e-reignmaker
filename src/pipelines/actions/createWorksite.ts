@@ -104,40 +104,6 @@ export const createWorksitePipeline: CheckPipeline = {
       // Condition: only show for success/criticalSuccess
       condition: (ctx: any) => {
         return ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess';
-      },
-      // Custom execution: Handle worksite creation
-      onComplete: async (result: any, ctx: any) => {
-        // Result can be either string[] (backward compat) or { hexIds, metadata }
-        let hexId: string;
-        let worksiteType: string;
-        
-        if (Array.isArray(result)) {
-          // Old format - shouldn't happen with custom selector, but handle gracefully
-          console.warn('[CreateWorksite] Received array format, expected object with metadata');
-          return;
-        } else {
-          // New format: { hexIds: string[], metadata: { worksiteType: string } }
-          hexId = result.hexIds[0];
-          worksiteType = result.metadata.worksiteType;
-        }
-
-        if (!hexId || !worksiteType) {
-          console.error('[CreateWorksite] Missing hex or worksite type:', { hexId, worksiteType });
-          ui.notifications?.error('Worksite selection incomplete');
-          return;
-        }
-
-        console.log(`[CreateWorksite] Creating ${worksiteType} on hex ${hexId}`);
-
-        // Execute worksite creation
-        await createWorksiteExecution(hexId, worksiteType);
-
-        // Show success notification
-        const message = ctx.outcome === 'criticalSuccess'
-          ? `Successfully created ${worksiteType} on hex ${hexId} (work completed swiftly!)`
-          : `Successfully created ${worksiteType} on hex ${hexId}`;
-
-        ui.notifications?.info(message);
       }
     }
   ],
@@ -182,80 +148,73 @@ export const createWorksitePipeline: CheckPipeline = {
     console.log('[CreateWorksite] Resolution data:', JSON.stringify(ctx.resolutionData, null, 2));
     
     switch (ctx.outcome) {
-      case 'criticalSuccess': {
-        console.log('[CreateWorksite] Processing critical success...');
-        
-        // Worksite created by onComplete handler
-        // Grant immediate resources from worksite production
+      case 'criticalSuccess':
+      case 'success': {
+        // Read hex selection from resolutionData (populated by postApplyInteractions)
+        // Custom selector returns { hexIds: [...], metadata: { worksiteType: "..." } }
         const selectedHexData = ctx.resolutionData?.compoundData?.selectedHex;
-        console.log('[CreateWorksite] selectedHexData:', selectedHexData);
+        
+        if (!selectedHexData) {
+          console.log('[CreateWorksite] No hex selected');
+          return { success: true };  // Graceful cancellation
+        }
         
         let hexId: string | undefined;
         let worksiteType: string | undefined;
         
         // Handle both array and object formats
         if (Array.isArray(selectedHexData)) {
-          // Old format: ["hexId"]
           hexId = selectedHexData[0];
           console.warn('[CreateWorksite] Got array format for selectedHex, cannot determine worksite type');
+          return { success: false, error: 'Worksite type not selected' };
         } else if (selectedHexData?.hexIds) {
-          // New format: { hexIds: ["hexId"], metadata: { worksiteType: "..." } }
           hexId = selectedHexData.hexIds[0];
           worksiteType = selectedHexData.metadata?.worksiteType;
-          console.log('[CreateWorksite] Extracted hexId:', hexId, 'worksiteType:', worksiteType);
         }
+
+        if (!hexId || !worksiteType) {
+          console.error('[CreateWorksite] Missing hex or worksite type:', { hexId, worksiteType });
+          return { success: false, error: 'Worksite selection incomplete' };
+        }
+
+        console.log(`[CreateWorksite] Creating ${worksiteType} on hex ${hexId}`);
+
+        // Execute worksite creation
+        await createWorksiteExecution(hexId, worksiteType);
+
+        // Show success notification
+        const message = ctx.outcome === 'criticalSuccess'
+          ? `Successfully created ${worksiteType} on hex ${hexId} (work completed swiftly!)`
+          : `Successfully created ${worksiteType} on hex ${hexId}`;
+        ui.notifications?.info(message);
         
-        if (hexId && worksiteType) {
-          console.log('[CreateWorksite] Granting resources for', worksiteType, 'on hex', hexId);
-          
+        // Grant immediate resources on critical success
+        if (ctx.outcome === 'criticalSuccess') {
           const { updateKingdom } = await import('../../stores/KingdomStore');
           const kingdom = getKingdomData();
           const hex = kingdom.hexes?.find((h: any) => h.id === hexId);
           
           if (hex) {
-            console.log('[CreateWorksite] Found hex with terrain:', hex.terrain);
-            
-            // Calculate production based on worksite type and terrain
             const production = getWorksiteProduction(worksiteType, hex.terrain);
-            console.log('[CreateWorksite] Calculated production:', Array.from(production.entries()));
             
             if (production.size > 0) {
-              console.log('[CreateWorksite] Updating kingdom resources...');
-              
               await updateKingdom(k => {
                 production.forEach((amount, resource) => {
                   if (k.resources && resource in k.resources) {
-                    const oldValue = k.resources[resource];
                     k.resources[resource] += amount;
-                    console.log(`[CreateWorksite] ${resource}: ${oldValue} → ${k.resources[resource]} (+${amount})`);
-                  } else {
-                    console.warn(`[CreateWorksite] Resource ${resource} not found in kingdom resources`);
                   }
                 });
               });
               
-              // Notify user
               const resourceText = Array.from(production.entries())
                 .map(([res, amt]) => `+${amt} ${res}`)
                 .join(', ');
               ui.notifications?.info(`🎉 Critical success! Worksite immediately produces: ${resourceText}`);
-              console.log('[CreateWorksite] ✅ Resources granted successfully');
-            } else {
-              console.warn('[CreateWorksite] Production map is empty - no resources to grant');
             }
-          } else {
-            console.error('[CreateWorksite] Hex not found:', hexId);
           }
-        } else {
-          console.error('[CreateWorksite] Missing hexId or worksiteType:', { hexId, worksiteType });
         }
         return { success: true };
       }
-      
-      case 'success':
-        // Worksite created by onComplete handler
-        // No additional effects
-        return { success: true };
         
       case 'failure':
         // No effects on failure
