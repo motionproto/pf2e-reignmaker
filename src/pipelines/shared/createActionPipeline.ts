@@ -18,6 +18,8 @@ interface ActionOverrides {
   preRollInteractions?: CheckPipeline['preRollInteractions'];
   /** TypeScript-only: Post-roll interactions */
   postRollInteractions?: CheckPipeline['postRollInteractions'];
+  /** TypeScript-only: Post-apply interactions */
+  postApplyInteractions?: CheckPipeline['postApplyInteractions'];
   /** TypeScript-only: Preview calculation */
   preview?: CheckPipeline['preview'];
   /** TypeScript-only: Execute function */
@@ -48,30 +50,30 @@ export function createActionPipeline(
 
     outcomes: {
       criticalSuccess: {
-        description: data.effects.criticalSuccess?.description || '',
-        modifiers: (data.effects.criticalSuccess?.modifiers || []) as EventModifier[]
+        description: data.outcomes.criticalSuccess?.description || '',
+        modifiers: (data.outcomes.criticalSuccess?.modifiers || []) as EventModifier[]
       },
       success: {
-        description: data.effects.success?.description || '',
-        modifiers: (data.effects.success?.modifiers || []) as EventModifier[]
+        description: data.outcomes.success?.description || '',
+        modifiers: (data.outcomes.success?.modifiers || []) as EventModifier[]
       },
       failure: {
-        description: data.effects.failure?.description || '',
-        modifiers: (data.effects.failure?.modifiers || []) as EventModifier[]
+        description: data.outcomes.failure?.description || '',
+        modifiers: (data.outcomes.failure?.modifiers || []) as EventModifier[]
       },
       criticalFailure: {
-        description: data.effects.criticalFailure?.description || '',
-        modifiers: (data.effects.criticalFailure?.modifiers || []) as EventModifier[]
+        description: data.outcomes.criticalFailure?.description || '',
+        modifiers: (data.outcomes.criticalFailure?.modifiers || []) as EventModifier[]
       }
     },
 
     // Default preview
-    preview: overrides.preview || { providedByInteraction: false },
 
     // Apply remaining TypeScript overrides
     ...(overrides.requirements && { requirements: overrides.requirements }),
     ...(overrides.preRollInteractions && { preRollInteractions: overrides.preRollInteractions }),
     ...(overrides.postRollInteractions && { postRollInteractions: overrides.postRollInteractions }),
+    ...(overrides.postApplyInteractions && { postApplyInteractions: overrides.postApplyInteractions }),
     ...(overrides.execute && { execute: overrides.execute })
   };
 }

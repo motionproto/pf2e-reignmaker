@@ -48,7 +48,6 @@ export const pilgrimagePipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

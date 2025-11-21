@@ -41,7 +41,6 @@ export const emigrationThreatPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

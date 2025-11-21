@@ -42,7 +42,6 @@ export const workStoppagePipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

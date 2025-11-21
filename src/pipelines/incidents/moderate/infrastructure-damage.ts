@@ -41,7 +41,6 @@ export const infrastructureDamagePipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

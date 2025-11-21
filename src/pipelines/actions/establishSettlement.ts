@@ -41,7 +41,6 @@ export const establishSettlementPipeline = createActionPipeline('establish-settl
   ],
 
   preview: {
-    providedByInteraction: true,
     calculate: (ctx) => {
       const resourceCost = ctx.outcome === 'failure' ? -1 : -2;
 

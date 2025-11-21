@@ -46,7 +46,6 @@ export const inquisitionPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

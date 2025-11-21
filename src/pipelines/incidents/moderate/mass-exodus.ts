@@ -43,7 +43,6 @@ export const massExodusPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

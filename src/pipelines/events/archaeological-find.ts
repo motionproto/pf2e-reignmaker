@@ -50,7 +50,6 @@ export const archaeologicalFindPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

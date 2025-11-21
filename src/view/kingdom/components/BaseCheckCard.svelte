@@ -364,13 +364,6 @@
     });
   }
   
-  function handleDebugOutcomeChange(event: CustomEvent) {
-    dispatch('debugOutcomeChanged', {
-      checkId: id,
-      outcome: event.detail.outcome
-    });
-  }
-  
   // Format possible outcomes for OutcomesSection (actions only)
   $: formattedOutcomes = outcomes.map(o => ({
     result: o.type,
@@ -420,7 +413,6 @@
           on:primary={handleApplyResult}
           on:cancel={handleCancel}
           on:performReroll={handlePerformReroll}
-          on:debugOutcomeChanged={handleDebugOutcomeChange}
           on:customSelection
         />
       {:else}

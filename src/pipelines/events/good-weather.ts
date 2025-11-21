@@ -47,7 +47,6 @@ export const goodWeatherPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

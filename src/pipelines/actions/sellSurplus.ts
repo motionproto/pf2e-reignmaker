@@ -67,7 +67,6 @@ export const sellSurplusPipeline = createActionPipeline('sell-surplus', {
   ],
 
   preview: {
-    providedByInteraction: true  // Resource selector shows preview
   },
 
   execute: async (ctx) => {

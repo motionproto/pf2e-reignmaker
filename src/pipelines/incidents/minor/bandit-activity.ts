@@ -42,7 +42,6 @@ export const banditActivityPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

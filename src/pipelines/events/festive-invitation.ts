@@ -47,7 +47,6 @@ export const festiveInvitationPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

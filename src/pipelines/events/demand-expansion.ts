@@ -46,7 +46,6 @@ export const demandExpansionPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

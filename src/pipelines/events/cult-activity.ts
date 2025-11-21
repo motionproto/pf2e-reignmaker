@@ -50,7 +50,6 @@ export const cultActivityPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

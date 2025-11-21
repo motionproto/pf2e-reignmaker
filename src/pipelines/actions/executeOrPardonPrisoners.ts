@@ -6,7 +6,8 @@
 import { createActionPipeline } from '../shared/createActionPipeline';
 import { structuresService } from '../../services/structures';
 import { reduceImprisonedExecution } from '../../execution';
-import type { UnifiedOutcomeBadge } from '../../types/OutcomeBadge';
+import { textBadge, diceBadge, valueBadge } from '../../types/OutcomeBadge';
+import { convertModifiersToBadges } from '../shared/convertModifiersToBadges';
 
 export const executeOrPardonPrisonersPipeline = createActionPipeline('execute-or-pardon-prisoners', {
   requirements: (kingdom) => {
@@ -54,7 +55,24 @@ export const executeOrPardonPrisonersPipeline = createActionPipeline('execute-or
     }
   ],
 
-  // Preview handled by typed modifiers system (auto-converted to badges in OutcomeBadges.svelte)
+  preview: {
+    calculate: (ctx) => {
+      const outcomeBadges = [];
+      const settlementName = ctx.metadata?.settlement?.name || 'settlement';
+      
+      if (ctx.outcome === 'criticalSuccess') {
+        outcomeBadges.push(textBadge(`Clear all imprisoned unrest from ${settlementName}`, 'fa-gavel', 'positive'));
+        outcomeBadges.push(valueBadge('Lose {{value}} Unrest', 'fa-fist-raised', 1, 'positive'));
+      } else if (ctx.outcome === 'success') {
+        outcomeBadges.push(diceBadge(`Remove {{value}} imprisoned unrest from ${settlementName}`, 'fa-gavel', '1d4', 'positive'));
+      } else if (ctx.outcome === 'criticalFailure') {
+        outcomeBadges.push(valueBadge('Gain {{value}} Unrest', 'fa-fist-raised', 1, 'negative'));
+      }
+      // failure: no badge needed (no effect)
+      
+      return { outcomeBadges };
+    }
+  },
 
   execute: async (ctx) => {
     console.log('🎯 [executeOrPardonPrisoners] Execute function called');
@@ -89,15 +107,11 @@ export const executeOrPardonPrisonersPipeline = createActionPipeline('execute-or
 
       return { success: true, message: `All imprisoned unrest cleared in ${settlement.name}` };
     } else if (ctx.outcome === 'success') {
-      // Get rolled value from resolutionData (rolled by DiceRoller component)
-      const imprisonedModifier = ctx.resolutionData?.numericModifiers?.find((m: any) => 
-        m.resource === 'imprisonedUnrest'
-      );
-      const amount = Math.abs(imprisonedModifier?.value || 0);  // Use absolute value since it's a reduction
+      // Roll 1d4 at execution time (gameCommand specifies amount: '1d4')
+      const { rollDiceFormula } = await import('../../services/resolution');
+      const amount = rollDiceFormula('1d4');
 
-      if (amount > 0) {
-        await reduceImprisonedExecution(settlementId, amount);
-      }
+      await reduceImprisonedExecution(settlementId, amount);
 
       return { success: true, message: `Reduced ${amount} imprisoned unrest in ${settlement.name}` };
     } else if (ctx.outcome === 'failure') {

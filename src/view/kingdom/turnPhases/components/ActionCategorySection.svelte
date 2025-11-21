@@ -45,9 +45,6 @@
     dispatch('performReroll', { event, action });
   }
 
-  function handleDebugOutcomeChange(event: CustomEvent, action: any) {
-    dispatch('debugOutcomeChange', { event, action });
-  }
 
   function handleAid(event: CustomEvent) {
     dispatch('aid', event.detail);
@@ -161,7 +158,6 @@
             on:toggle={() => handleToggle(action.id)}
             on:executeSkill={(e) => handleExecuteSkill(e, action)}
             on:performReroll={(e) => handlePerformReroll(e, action)}
-            on:debugOutcomeChanged={(e) => handleDebugOutcomeChange(e, action)}
             on:aid={handleAid}
             on:primary={handlePrimary}
             on:cancel={(e) => handleCancel(e.detail.checkId)}

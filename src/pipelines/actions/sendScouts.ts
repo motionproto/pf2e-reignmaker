@@ -17,7 +17,6 @@ export const sendScoutsPipeline = createActionPipeline('send-scouts', {
   },
 
   preview: {
-    providedByInteraction: true  // Map selection shows hexes in real-time
   },
 
   execute: async (ctx) => {

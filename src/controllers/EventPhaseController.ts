@@ -480,7 +480,7 @@ export async function createEventPhaseController(_eventService?: any) {
             
             const isBeneficial = event.traits?.includes('beneficial');
             const isDangerous = event.traits?.includes('dangerous');
-            const outcomeData = event.effects.failure;
+            const outcomeData = event.outcomes.failure;
             
             // Handle beneficial events: Apply failure outcome immediately
             if (isBeneficial && !isDangerous && outcomeData) {

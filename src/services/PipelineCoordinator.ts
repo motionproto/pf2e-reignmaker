@@ -490,7 +490,8 @@ export class PipelineCoordinator {
    * Step 5: Outcome Interactions
    * 
    * Calculate what will happen when action is applied
-   * OPTIONAL - only runs if pipeline has preview.calculate
+   * AUTOMATIC: Converts JSON modifiers to badges
+   * OPTIONAL: Calls pipeline.preview.calculate for custom badges
    * 
    * Shows resource changes, entity operations, warnings
    */
@@ -498,32 +499,45 @@ export class PipelineCoordinator {
     log(ctx, 5, 'outcomeInteractions', 'Calculating preview for outcome interactions');
     
     const pipeline = await getPipeline(ctx);
+    const outcome = ctx.rollData?.outcome || 'success';
     
-    // Check if preview is provided by interaction (map selection)
-    if (pipeline.preview.providedByInteraction) {
-      log(ctx, 5, 'calculatePreview', 'Preview provided by interaction, skipping calculation');
-      return;
+    // ✅ STEP 5A: Auto-convert JSON modifiers to badges (ALWAYS)
+    const { convertModifiersToBadges } = await import('../pipelines/shared/convertModifiersToBadges');
+    const outcomeData = pipeline.outcomes?.[outcome];
+    const modifiers = outcomeData?.modifiers || [];
+    const modifierBadges = convertModifiersToBadges(modifiers, ctx.metadata);
+    
+    log(ctx, 5, 'calculatePreview', `Converted ${modifiers.length} JSON modifiers to ${modifierBadges.length} badges`);
+    
+    // ✅ STEP 5B: Call custom preview.calculate if defined (OPTIONAL)
+    let customPreview: any = { resources: [], outcomeBadges: [] };
+    
+    if (pipeline.preview.calculate) {
+      // Build check context for preview calculation
+      const checkContext = {
+        check: pipeline,
+        outcome,
+        kingdom: ctx.kingdom,
+        actor: ctx.actor,
+        resolutionData: ctx.resolutionData,
+        metadata: ctx.metadata,
+        instanceId: ctx.instanceId
+      };
+      
+      // Calculate custom preview
+      customPreview = await unifiedCheckHandler.calculatePreview(ctx.actionId, checkContext);
+      log(ctx, 5, 'calculatePreview', `Custom preview returned ${customPreview.outcomeBadges?.length || 0} additional badges`);
     }
     
-    // Check if preview calculation is defined
-    if (!pipeline.preview.calculate) {
-      log(ctx, 5, 'calculatePreview', 'No preview calculation defined, skipping');
-      return;
-    }
-    
-    // Build check context for preview calculation
-    const checkContext = {
-      check: pipeline,
-      outcome: ctx.rollData?.outcome || 'success',
-      kingdom: ctx.kingdom,
-      actor: ctx.actor,
-      resolutionData: ctx.resolutionData,
-      metadata: ctx.metadata,
-      instanceId: ctx.instanceId
+    // ✅ STEP 5C: Merge JSON badges + custom badges
+    const preview = {
+      resources: customPreview.resources || [],
+      specialEffects: customPreview.specialEffects || [],
+      outcomeBadges: [
+        ...modifierBadges,  // JSON modifiers (ALWAYS)
+        ...(customPreview.outcomeBadges || [])  // Custom badges (OPTIONAL)
+      ]
     };
-    
-    // Calculate preview
-    const preview = await unifiedCheckHandler.calculatePreview(ctx.actionId, checkContext);
     
     // Store preview in context
     ctx.preview = preview;
@@ -677,7 +691,7 @@ export class PipelineCoordinator {
     await unifiedCheckHandler.executeCheck(
       ctx.actionId,
       checkContext,
-      ctx.preview || { resources: [], specialEffects: [] }
+      ctx.preview || { resources: [], outcomeBadges: [] }
     );
     
     // Store execution result

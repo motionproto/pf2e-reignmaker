@@ -46,7 +46,6 @@ export const criminalTrialPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

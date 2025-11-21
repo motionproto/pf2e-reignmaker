@@ -778,24 +778,6 @@
       }
    }
    
-   // Event handler - debug outcome change
-   async function handleDebugOutcomeChanged(event: CustomEvent) {
-      if (!currentEvent || !eventResolution) return;
-      
-      const newOutcome = event.detail.outcome;
-
-      // Fetch new modifiers for the new outcome
-      const outcomeData = eventPhaseController.getEventModifiers(currentEvent, newOutcome);
-      
-      // Update BOTH outcome AND modifiers
-      eventResolution = {
-         ...eventResolution,
-         outcome: newOutcome,
-         effect: outcomeData.msg,
-         modifiers: outcomeData.modifiers,
-         manualEffects: outcomeData.manualEffects
-      };
-   }
    
    // Deduplication tracking for roll events
    const processedRolls = new Set<string>();
@@ -984,7 +966,6 @@
             on:performReroll={handlePerformReroll}
             on:ignore={handleIgnore}
             on:aid={handleAid}
-            on:debugOutcomeChanged={handleDebugOutcomeChanged}
          />
       {/key}
    {/if}
@@ -1023,10 +1004,9 @@
                   on:executeSkill={handleExecuteSkill}
                   on:primary={handleApplyResult}
                   on:cancel={handleCancel}
-                  on:performReroll={handlePerformReroll}
-                  on:ignore={handleIgnore}
-                  on:aid={handleAid}
-                  on:debugOutcomeChanged={handleDebugOutcomeChanged}
+               on:performReroll={handlePerformReroll}
+               on:ignore={handleIgnore}
+               on:aid={handleAid}
                />
             {/each}
          </div>

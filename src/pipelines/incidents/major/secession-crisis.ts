@@ -43,7 +43,6 @@ export const secessionCrisisPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

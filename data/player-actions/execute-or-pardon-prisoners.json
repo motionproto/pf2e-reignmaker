@@ -40,14 +40,7 @@
   "outcomes": {
     "criticalSuccess": {
       "description": "The prison is emptied.",
-      "modifiers": [
-        {
-          "type": "static",
-          "resource": "unrest",
-          "value": -1,
-          "duration": "immediate"
-        }
-      ],
+      "modifiers": [],
       "gameCommands": [
         {
           "type": "reduceImprisoned",
@@ -57,19 +50,11 @@
     },
     "success": {
       "description": "Justice is served.",
-      "modifiers": [
-        {
-          "type": "dice",
-          "resource": "imprisonedUnrest",
-          "formula": "1d4",
-          "negative": true,
-          "duration": "immediate"
-        }
-      ],
+      "modifiers": [],
       "gameCommands": [
         {
           "type": "reduceImprisoned",
-          "amount": "rolled"
+          "amount": "1d4"
         }
       ]
     },
@@ -79,14 +64,7 @@
     },
     "criticalFailure": {
       "description": "Your judgment causes outrage.",
-      "modifiers": [
-        {
-          "type": "static",
-          "resource": "unrest",
-          "value": 1,
-          "duration": "immediate"
-        }
-      ]
+      "modifiers": []
     }
   },
   "failureCausesUnrest": true,

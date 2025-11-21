@@ -39,7 +39,6 @@ export const internationalCrisisPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

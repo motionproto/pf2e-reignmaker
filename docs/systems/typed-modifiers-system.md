@@ -347,14 +347,86 @@ appliedOutcome: {
 }
 ```
 
+### With PipelineCoordinator
+
+**Automatic Badge Conversion (Step 5):**
+
+All JSON modifiers are automatically converted to outcome badges during Step 5 (Calculate Preview) of the pipeline:
+
+```typescript
+// PipelineCoordinator.step5_calculatePreview()
+// STEP 5A: Auto-convert JSON modifiers to badges (ALWAYS)
+const modifierBadges = convertModifiersToBadges(modifiers, ctx.metadata);
+
+// STEP 5B: Call custom preview.calculate if defined (OPTIONAL)
+let customPreview = { resources: [], outcomeBadges: [] };
+if (pipeline.preview.calculate) {
+  customPreview = await unifiedCheckHandler.calculatePreview(...);
+}
+
+// STEP 5C: Merge JSON badges + custom badges
+const preview = {
+  outcomeBadges: [
+    ...modifierBadges,              // JSON modifiers (AUTOMATIC)
+    ...customPreview.outcomeBadges  // Custom badges (OPTIONAL)
+  ]
+};
+```
+
+**Benefits:**
+- ✅ **Zero boilerplate** - Actions don't need to call conversion manually
+- ✅ **Single source** - All badge creation happens in one place
+- ✅ **Consistent styling** - All resources use appropriate icons and colors
+- ✅ **Special cases** - Unrest color logic handled automatically (lose = green, gain = red)
+
+**Conversion Service:**
+- Location: `src/pipelines/shared/convertModifiersToBadges.ts`
+- Handles: Static modifiers, dice modifiers, special resources
+- Smart coloring: Unrest uses inverted logic (losing unrest is positive)
+- Always uses resource-appropriate icons from `getResourceIcon()`
+
+**Badge Color Logic:**
+
+Normal resources (gold, food, lumber, etc.):
+- Gain → 🟢 Green (positive variant)
+- Lose → 🔴 Red (negative variant)
+
+Unrest (special case):
+- Lose → 🟢 Green (positive variant) - Reducing unrest is beneficial!
+- Gain → 🔴 Red (negative variant) - Increasing unrest is harmful!
+
+```typescript
+// convertModifiersToBadges.ts
+if (resource === 'unrest') {
+  variant = isNegative ? 'positive' : 'negative';  // Inverted logic
+} else {
+  variant = isNegative ? 'negative' : 'positive';  // Normal logic
+}
+```
+
+**Critical Success Fame Badge:**
+
+All critical successes automatically display a +1 Fame badge with golden star icon (applied in PipelineCoordinator Step 8).
+
+```typescript
+// OutcomeBadges.svelte
+$: fameBadge = outcome === 'criticalSuccess' ? [{
+  icon: 'fa-star',
+  template: 'Fame increased by {{value}}',
+  value: { type: 'static', amount: 1 },
+  variant: 'positive'
+}] : [];
+```
+
 ### With OutcomeDisplay
 
-OutcomeDisplay automatically handles all modifier types:
-- Detects dice modifiers → auto-converts to clickable dice badges in OutcomeBadges
-- Detects choice modifiers → shows dropdown
-- Validates all resolved before enabling "Apply Result"
+OutcomeDisplay displays unified outcome badges:
+- Shows all badges in "Outcome:" section
+- Dice badges are interactive (click to roll)
+- Static badges display immediately
+- Validates all dice resolved before enabling "Apply Result"
 
-**Note:** Dice modifiers are automatically converted to unified badges at runtime (see `src/types/OutcomeBadge.ts`). The old DiceRoller component has been deprecated - all dice now display as interactive badges under the "Outcome:" section.
+**Note:** The old `stateChanges` and `modifiers` props have been removed. All outcome display now uses the unified `outcomeBadges` array populated by the pipeline.
 
 ### With GameEffectsService
 
@@ -452,6 +524,59 @@ python3 buildscripts/generate-types.py
 
 ---
 
+## Action Implementation Patterns
+
+### Simple Actions (JSON-only)
+
+For actions that only modify resources, JSON modifiers are sufficient:
+
+```typescript
+// src/pipelines/actions/dealWithUnrest.ts
+const pipeline = createActionPipeline('deal-with-unrest', {
+  requirements: () => ({ met: true }),
+  preview: undefined,  // Auto-converts JSON modifiers to badges!
+  execute: async (ctx) => {
+    await applyPipelineModifiers(pipeline, ctx.outcome);
+    return { success: true };
+  }
+});
+```
+
+**Key Points:**
+- ✅ Set `preview: undefined` - pipeline handles conversion automatically
+- ✅ JSON modifiers in `data/player-actions/*.json` become badges automatically
+- ✅ No need to manually call `convertModifiersToBadges()`
+- ✅ Zero boilerplate for simple resource changes
+
+### Complex Actions (Custom badges)
+
+For actions needing custom badges beyond JSON modifiers:
+
+```typescript
+// src/pipelines/actions/myAction.ts
+const pipeline = createActionPipeline('my-action', {
+  preview: {
+    calculate: (ctx) => {
+      // JSON modifiers already auto-converted by pipeline!
+      // Just return ADDITIONAL custom badges here
+      return {
+        outcomeBadges: [
+          textBadge(`Special effect for ${ctx.metadata.name}`, 'fa-star', 'positive')
+        ]
+      };
+    }
+  },
+  execute: async (ctx) => {
+    // Custom execution logic
+  }
+});
+```
+
+**Key Points:**
+- ✅ JSON modifiers → Automatic badges (always)
+- ✅ Custom badges → Added via preview.calculate (optional)
+- ✅ Final display → JSON badges + custom badges (merged by pipeline)
+
 ## Best Practices
 
 ### Data Authoring
@@ -460,6 +585,7 @@ python3 buildscripts/generate-types.py
 - ✅ Explicit negatives: `negative: true` for losses
 - ✅ Resource placeholders: Match `msg` to modifier resources
 - ✅ Manual effects: Clear instructions for GM
+- ✅ Let pipeline handle badge conversion (don't duplicate in code)
 
 ### Code Implementation
 
@@ -467,6 +593,8 @@ python3 buildscripts/generate-types.py
 - ✅ Use type guards for narrowing
 - ✅ Validate structure at build time
 - ✅ Handle all cases exhaustively
+- ✅ Set `preview: undefined` for simple actions
+- ✅ Only use `preview.calculate` when adding custom badges
 
 ### UI Implementation
 
@@ -474,6 +602,8 @@ python3 buildscripts/generate-types.py
 - ✅ Show dice before rolling
 - ✅ Disable "Apply" until all interactions complete
 - ✅ Display manual effects prominently
+- ✅ Never display stateChanges/modifiers props (removed)
+- ✅ Only display outcomeBadges array
 
 ---
 

@@ -46,7 +46,6 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

@@ -42,7 +42,6 @@ export const corruptionScandalPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

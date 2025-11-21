@@ -46,7 +46,6 @@ export const economicSurgePipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

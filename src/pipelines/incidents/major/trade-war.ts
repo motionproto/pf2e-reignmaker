@@ -44,7 +44,6 @@ export const tradeWarPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

@@ -42,7 +42,6 @@ export const crimeWavePipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

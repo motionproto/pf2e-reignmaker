@@ -41,7 +41,6 @@ export const productionStrikePipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

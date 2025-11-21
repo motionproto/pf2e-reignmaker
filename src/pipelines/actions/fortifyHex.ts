@@ -31,7 +31,6 @@ export const fortifyHexPipeline = createActionPipeline('fortify-hex', {
   },
 
   preview: {
-    providedByInteraction: true,  // Map selection shows fortifications in real-time
     calculate: (ctx) => {
       const resources = [];
 

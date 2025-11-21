@@ -47,7 +47,6 @@ export const visitingCelebrityPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

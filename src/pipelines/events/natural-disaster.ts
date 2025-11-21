@@ -48,7 +48,6 @@ export const naturalDisasterPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

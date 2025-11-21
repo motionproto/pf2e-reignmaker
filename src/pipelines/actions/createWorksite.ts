@@ -12,7 +12,6 @@ export const createWorksitePipeline = createActionPipeline('create-worksite', {
   requirements: () => ({ met: true }),
 
   preview: {
-    providedByInteraction: true,  // Map selection shows worksites in real-time
     calculate: (ctx) => {
       // No resource costs for worksites currently
       // Future: could add resource costs here if needed

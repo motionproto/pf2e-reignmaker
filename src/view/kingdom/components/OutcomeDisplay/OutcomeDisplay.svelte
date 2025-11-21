@@ -63,7 +63,6 @@
   import OutcomeBadges from './components/OutcomeBadges.svelte';
   import ShortageWarning from './components/ShortageWarning.svelte';
   import OutcomeActions from './components/OutcomeActions.svelte';
-  import DebugResultSelector from './components/DebugResultSelector.svelte';
   import type { SpecialEffect } from '../../../../types/special-effects';
   import { parseLegacyEffect } from '../../../../types/special-effects';
   
@@ -77,7 +76,6 @@
   $: compact = false;  // Can be made a prop if needed
   $: showFameReroll = preview.checkType !== 'action';  // Only events/incidents can reroll with fame
   $: showCancel = true;  // Can be made a prop if needed
-  $: debugMode = isGM;  // GMs get debug mode
   $: showIgnoreEvent = preview.checkType === 'event';  // Only events can be ignored
   $: ignoreEventDisabled = false;  // Can be made a prop if needed
   
@@ -103,9 +101,6 @@
       checkType: preview.checkType,
       outcome,
       rawOutcome: preview.appliedOutcome?.outcome,
-      effectiveOutcome,
-      debugOutcome,
-      debugMode,
       effect,
       modifiers,
       stateChanges,
@@ -149,13 +144,21 @@
 
   }
   // Convert string keys back to appropriate types for Maps
-  $: resolvedDice = new Map(
-    Object.entries(resolutionState.resolvedDice || {}).map(([k, v]) => {
-      // Keys can be numbers (modifier index) or strings (e.g., "state:food")
-      const key = k.startsWith('state:') ? k : (isNaN(Number(k)) ? k : Number(k));
-      return [key, v];
-    })
-  );
+  // Merge instance state with local state (local takes precedence for current session)
+  $: resolvedDice = (() => {
+    const instanceDice = new Map(
+      Object.entries(resolutionState.resolvedDice || {}).map(([k, v]) => {
+        // Keys can be numbers (modifier index) or strings (e.g., "state:food")
+        const key = k.startsWith('state:') ? k : (isNaN(Number(k)) ? k : Number(k));
+        return [key, v] as [number | string, number];
+      })
+    );
+    // Merge with local dice (local takes precedence)
+    for (const [k, v] of localResolvedDice) {
+      instanceDice.set(k, v);
+    }
+    return instanceDice;
+  })();
   
   $: selectedResources = new Map(
     Object.entries(resolutionState.selectedResources || {}).map(([k, v]) => [Number(k), v])
@@ -164,12 +167,6 @@
   // Local UI-only state
   let componentResolutionData: { effect: string; stateChanges: Record<string, any> } | null = null;
   let customSelectionData: Record<string, any> | null = null;  // Raw custom selection data
-  let debugOutcome: OutcomeType | undefined = undefined;
-  
-  // Initialize debugOutcome reactively once outcome is available
-  $: if (debugOutcome === undefined && outcome) {
-    debugOutcome = outcome as OutcomeType;
-  }
   
   // Filter inline badges (status effects shown with outcome text)
   // All other effects passed to OutcomeBadges
@@ -211,12 +208,8 @@
     }
   }
   
-  // Use debug outcome if in debug mode, otherwise use the prop
-  // Fallback to outcome if debugOutcome is undefined
-  $: effectiveOutcome = debugMode ? (debugOutcome || outcome) : outcome;
-  
   // Get outcome display properties
-  $: outcomeProps = getOutcomeDisplayProps(effectiveOutcome);
+  $: outcomeProps = getOutcomeDisplayProps(outcome);
   
   // Detect resource-array modifiers
   $: resourceArrayModifiers = detectResourceArrayModifiers(modifiers);
@@ -512,10 +505,18 @@
     });
   }
   
+  // Local dice roll storage - ALWAYS used for immediate reactivity
+  // Instance state is async and doesn't trigger Svelte reactivity immediately
+  let localResolvedDice = new Map<number | string, number>();
+  
   async function handleDiceRoll(event: CustomEvent) {
     const { modifierIndex, result } = event.detail;
     
-    // ✅ Store in instance via helper (syncs to all clients)
+    // ✅ ALWAYS store locally first for immediate reactivity
+    // This ensures resolvedDice is up-to-date when Apply Result is clicked
+    localResolvedDice = new Map(localResolvedDice).set(modifierIndex, result);
+    
+    // Also store in instance for persistence/sync across clients (if available)
     if (instance) {
       await updateInstanceResolutionState(instance.instanceId, {
         resolvedDice: {
@@ -605,34 +606,11 @@
     // Forward to parent
     dispatch('customSelection', event.detail);
   }
-  
-  async function handleDebugOutcomeChange(event: CustomEvent) {
-    const newOutcome = event.detail.outcome as OutcomeType;
-    debugOutcome = newOutcome;
-    
-    // ✅ Clear state in instance via helper (syncs to all clients)
-    if (instance) {
-      await clearInstanceResolutionState(instance.instanceId);
-    }
-    
-    // Reset local UI state
-    componentResolutionData = null;
-    
-    // Dispatch event to parent so they can update modifiers/effects
-    dispatch('debugOutcomeChanged', { outcome: newOutcome });
-  }
 </script>
 
 <div class="resolution-display {outcomeProps.colorClass} {compact ? 'compact' : ''}">
-  {#if debugMode}
-    <DebugResultSelector 
-      currentOutcome={debugOutcome || outcome} 
-      on:outcomeSelected={handleDebugOutcomeChange} 
-    />
-  {/if}
-  
   <OutcomeHeader 
-    outcome={effectiveOutcome} 
+    outcome={outcome} 
     {actorName} 
     {skillName}
     showIgnoreButton={showIgnoreEvent}
@@ -657,11 +635,12 @@
       {resolvedDice} 
       manualEffects={effectiveManualEffects} 
       automatedEffects={legacyParsedEffects}
-      outcome={effectiveOutcome} 
+      outcome={outcome} 
       hideResources={componentResolutionData ? Object.keys(componentResolutionData.stateChanges) : []}
       {customComponentData}
       {outcomeBadges}
       specialEffects={standaloneEffects}
+      instanceMetadata={instance?.metadata}
       on:roll={handleDiceRoll}
       on:badgeRoll={handleDiceRoll}
     />

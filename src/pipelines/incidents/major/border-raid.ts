@@ -41,7 +41,6 @@ export const borderRaidPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

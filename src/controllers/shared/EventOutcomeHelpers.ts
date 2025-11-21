@@ -18,31 +18,31 @@ export interface EventOutcome {
 export function buildEventOutcomes(event: EventData): EventOutcome[] {
   const outcomes: EventOutcome[] = [];
   
-  if (event.effects.criticalSuccess) {
+  if (event.outcomes.criticalSuccess) {
     outcomes.push({
       type: 'criticalSuccess',
-      description: event.effects.criticalSuccess.msg
+      description: event.outcomes.criticalSuccess.msg
     });
   }
   
-  if (event.effects.success) {
+  if (event.outcomes.success) {
     outcomes.push({
       type: 'success',
-      description: event.effects.success.msg
+      description: event.outcomes.success.msg
     });
   }
   
-  if (event.effects.failure) {
+  if (event.outcomes.failure) {
     outcomes.push({
       type: 'failure',
-      description: event.effects.failure.msg
+      description: event.outcomes.failure.msg
     });
   }
   
-  if (event.effects.criticalFailure) {
+  if (event.outcomes.criticalFailure) {
     outcomes.push({
       type: 'criticalFailure',
-      description: event.effects.criticalFailure.msg
+      description: event.outcomes.criticalFailure.msg
     });
   }
   

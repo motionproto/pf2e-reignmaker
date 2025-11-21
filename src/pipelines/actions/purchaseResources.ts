@@ -60,7 +60,6 @@ export const purchaseResourcesPipeline = createActionPipeline('purchase-resource
   ],
 
   preview: {
-    providedByInteraction: true  // Resource selector shows preview
   },
 
   execute: async (ctx) => {

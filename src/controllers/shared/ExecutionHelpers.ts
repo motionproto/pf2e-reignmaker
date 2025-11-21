@@ -76,10 +76,10 @@ export async function executeRoll(
     itemName = item.name;
     // Events use effects structure
     outcomes = {
-      criticalSuccess: item.effects.criticalSuccess,
-      success: item.effects.success,
-      failure: item.effects.failure,
-      criticalFailure: item.effects.criticalFailure
+      criticalSuccess: item.outcomes.criticalSuccess,
+      success: item.outcomes.success,
+      failure: item.outcomes.failure,
+      criticalFailure: item.outcomes.criticalFailure
     };
   }
 

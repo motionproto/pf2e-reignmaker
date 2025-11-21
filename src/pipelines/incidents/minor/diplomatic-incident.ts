@@ -36,7 +36,6 @@ export const diplomaticIncidentPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

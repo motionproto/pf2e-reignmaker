@@ -51,7 +51,6 @@
   on:primary={forwardEvent}
   on:cancel={forwardEvent}
   on:performReroll={forwardEvent}
-  on:debugOutcomeChanged={forwardEvent}
   on:customSelection={forwardEvent}
   on:resourceSelected={forwardEvent}
   on:diceRolled={forwardEvent}

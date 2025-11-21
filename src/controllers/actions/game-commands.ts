@@ -43,8 +43,6 @@ export type GameCommandType =
   | 'resolveEvent'
   | 'hireAdventurers'
   | 'arrestDissidents'
-  | 'executePrisoners'
-  | 'pardonPrisoners'
   
   // Support & Bonuses
   | 'aidBonus'
@@ -60,6 +58,7 @@ export type GameCommandType =
   
   // Unrest Management (Additional)
   | 'releaseImprisoned'
+  | 'reduceImprisoned'
   
   // Territory Management
   | 'removeBorderHexes';
@@ -242,20 +241,6 @@ export interface ArrestDissidentsCommand extends BaseGameCommand {
   dice?: string; // e.g., '1d4'
 }
 
-export interface ExecutePrisonersCommand extends BaseGameCommand {
-  type: 'executePrisoners';
-  removeAllImprisoned?: boolean;
-  removeAmount?: number | 'dice';
-  dice?: string;
-}
-
-export interface PardonPrisonersCommand extends BaseGameCommand {
-  type: 'pardonPrisoners';
-  removeAllImprisoned?: boolean;
-  removeAmount?: number | 'dice';
-  dice?: string;
-}
-
 /**
  * Support & bonus commands
  */
@@ -320,6 +305,15 @@ export interface ReleaseImprisonedCommand extends BaseGameCommand {
 }
 
 /**
+ * Reduce imprisoned unrest command
+ * Used by execute/pardon prisoners actions
+ */
+export interface ReduceImprisonedCommand extends BaseGameCommand {
+  type: 'reduceImprisoned';
+  amount: number | string | 'all'; // Specific number, dice formula (e.g., '1d4'), or 'all'
+}
+
+/**
  * Remove border hexes command
  * Used by incidents like border raids that cause loss of territory
  */
@@ -373,8 +367,6 @@ export type GameCommand =
   | ResolveEventCommand
   | HireAdventurersCommand
   | ArrestDissidentsCommand
-  | ExecutePrisonersCommand
-  | PardonPrisonersCommand
   | AidBonusCommand
   | GrantRerollCommand
   | GiveActorGoldCommand
@@ -385,4 +377,5 @@ export type GameCommand =
   | DamageStructureCommand
   | DestroyStructureCommand
   | ReleaseImprisonedCommand
+  | ReduceImprisonedCommand
   | RemoveBorderHexesCommand;

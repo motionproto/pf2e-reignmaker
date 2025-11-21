@@ -47,7 +47,6 @@ export const tradeAgreementPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

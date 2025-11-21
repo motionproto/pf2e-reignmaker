@@ -39,7 +39,6 @@ export const guerrillaMovementPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

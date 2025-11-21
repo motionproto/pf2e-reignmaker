@@ -42,7 +42,6 @@ export const taxRevoltPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

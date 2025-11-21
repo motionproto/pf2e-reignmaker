@@ -46,7 +46,6 @@ export const publicScandalPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

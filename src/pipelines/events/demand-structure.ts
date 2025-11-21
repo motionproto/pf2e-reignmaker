@@ -46,7 +46,6 @@ export const demandStructurePipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

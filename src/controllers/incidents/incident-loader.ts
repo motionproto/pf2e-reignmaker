@@ -60,33 +60,33 @@ export class IncidentLoader {
                 tier: raw.tier as 'minor' | 'moderate' | 'major', // Use tier from JSON (lowercase)
                 skills: raw.skills,
                 effects: {
-                    criticalSuccess: raw.effects.criticalSuccess ? {
-                        msg: raw.effects.criticalSuccess.msg,
+                    criticalSuccess: raw.outcomes.criticalSuccess ? {
+                        msg: raw.outcomes.criticalSuccess.msg,
                         endsEvent: true,
-                        modifiers: raw.effects.criticalSuccess.modifiers || [],
-                        manualEffects: (raw.effects.criticalSuccess as any).manualEffects || [],
-                        gameCommands: (raw.effects.criticalSuccess as any).gameCommands || []
+                        modifiers: raw.outcomes.criticalSuccess.modifiers || [],
+                        manualEffects: (raw.outcomes.criticalSuccess as any).manualEffects || [],
+                        gameCommands: (raw.outcomes.criticalSuccess as any).gameCommands || []
                     } : undefined,
-                    success: raw.effects.success ? {
-                        msg: raw.effects.success.msg,
+                    success: raw.outcomes.success ? {
+                        msg: raw.outcomes.success.msg,
                         endsEvent: true,
-                        modifiers: raw.effects.success.modifiers || [],
-                        manualEffects: (raw.effects.success as any).manualEffects || [],
-                        gameCommands: (raw.effects.success as any).gameCommands || []
+                        modifiers: raw.outcomes.success.modifiers || [],
+                        manualEffects: (raw.outcomes.success as any).manualEffects || [],
+                        gameCommands: (raw.outcomes.success as any).gameCommands || []
                     } : undefined,
-                    failure: raw.effects.failure ? {
-                        msg: raw.effects.failure.msg,
+                    failure: raw.outcomes.failure ? {
+                        msg: raw.outcomes.failure.msg,
                         endsEvent: true,
-                        modifiers: raw.effects.failure.modifiers || [],
-                        manualEffects: (raw.effects.failure as any).manualEffects || [],
-                        gameCommands: (raw.effects.failure as any).gameCommands || []
+                        modifiers: raw.outcomes.failure.modifiers || [],
+                        manualEffects: (raw.outcomes.failure as any).manualEffects || [],
+                        gameCommands: (raw.outcomes.failure as any).gameCommands || []
                     } : undefined,
-                    criticalFailure: raw.effects.criticalFailure ? {
-                        msg: raw.effects.criticalFailure.msg,
+                    criticalFailure: raw.outcomes.criticalFailure ? {
+                        msg: raw.outcomes.criticalFailure.msg,
                         endsEvent: true,
-                        modifiers: raw.effects.criticalFailure.modifiers || [],
-                        manualEffects: (raw.effects.criticalFailure as any).manualEffects || [],
-                        gameCommands: (raw.effects.criticalFailure as any).gameCommands || []
+                        modifiers: raw.outcomes.criticalFailure.modifiers || [],
+                        manualEffects: (raw.outcomes.criticalFailure as any).manualEffects || [],
+                        gameCommands: (raw.outcomes.criticalFailure as any).gameCommands || []
                     } : undefined,
                 }
             }));

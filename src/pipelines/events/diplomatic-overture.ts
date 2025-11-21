@@ -45,7 +45,6 @@ export const diplomaticOverturePipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

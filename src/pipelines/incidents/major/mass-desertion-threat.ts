@@ -38,7 +38,6 @@ export const massDesertionThreatPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

@@ -368,24 +368,6 @@
       }
    }
    
-   // Event handler - debug outcome change
-   async function handleDebugOutcomeChanged(event: CustomEvent) {
-      if (!currentIncident || !incidentResolution) return;
-      
-      const newOutcome = event.detail.outcome;
-
-      // Fetch new modifiers for the new outcome
-      const outcomeData = unrestPhaseController.getIncidentModifiers(currentIncident, newOutcome);
-      
-      // Update BOTH outcome AND modifiers
-      incidentResolution = {
-         ...incidentResolution,
-         outcome: newOutcome,
-         effect: outcomeData.msg,
-         modifiers: outcomeData.modifiers,
-         manualEffects: outcomeData.manualEffects
-      };
-   }
    
    // Use status class from provider
    $: tierClass = unrestStatus.statusClass;
@@ -512,7 +494,6 @@
                         on:primary={handleApplyResult}
                         on:cancel={handleCancel}
                         on:performReroll={handleReroll}
-                        on:debugOutcomeChanged={handleDebugOutcomeChanged}
                      />
             {/key}
          {:else}

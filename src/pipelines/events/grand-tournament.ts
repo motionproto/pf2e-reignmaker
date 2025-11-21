@@ -48,7 +48,6 @@ export const grandTournamentPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

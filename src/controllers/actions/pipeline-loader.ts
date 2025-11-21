@@ -36,53 +36,53 @@ export class ActionLoader {
                     description: raw.description,
                     skills: raw.skills,
                     criticalSuccess: {
-                        description: raw.effects.criticalSuccess?.description || '',
-                        modifiers: raw.effects.criticalSuccess?.modifiers,
-                        gameCommands: raw.effects.criticalSuccess?.gameCommands,
-                        choices: raw.effects.criticalSuccess?.choices
+                        description: raw.outcomes.criticalSuccess?.description || '',
+                        modifiers: raw.outcomes.criticalSuccess?.modifiers,
+                        gameCommands: raw.outcomes.criticalSuccess?.gameCommands,
+                        choices: raw.outcomes.criticalSuccess?.choices
                     },
                     success: {
-                        description: raw.effects.success?.description || '',
-                        modifiers: raw.effects.success?.modifiers,
-                        gameCommands: raw.effects.success?.gameCommands,
-                        choices: raw.effects.success?.choices
+                        description: raw.outcomes.success?.description || '',
+                        modifiers: raw.outcomes.success?.modifiers,
+                        gameCommands: raw.outcomes.success?.gameCommands,
+                        choices: raw.outcomes.success?.choices
                     },
                     failure: {
-                        description: raw.effects.failure?.description || '',
-                        modifiers: raw.effects.failure?.modifiers,
-                        gameCommands: raw.effects.failure?.gameCommands,
-                        choices: raw.effects.failure?.choices
+                        description: raw.outcomes.failure?.description || '',
+                        modifiers: raw.outcomes.failure?.modifiers,
+                        gameCommands: raw.outcomes.failure?.gameCommands,
+                        choices: raw.outcomes.failure?.choices
                     },
                     criticalFailure: {
-                        description: raw.effects.criticalFailure?.description || '',
-                        modifiers: raw.effects.criticalFailure?.modifiers,
-                        gameCommands: raw.effects.criticalFailure?.gameCommands,
-                        choices: raw.effects.criticalFailure?.choices
+                        description: raw.outcomes.criticalFailure?.description || '',
+                        modifiers: raw.outcomes.criticalFailure?.modifiers,
+                        gameCommands: raw.outcomes.criticalFailure?.gameCommands,
+                        choices: raw.outcomes.criticalFailure?.choices
                     },
                     effects: {  // Also populate nested effects property for UI compatibility
-                        criticalSuccess: raw.effects.criticalSuccess ? {
-                            description: raw.effects.criticalSuccess.description || '',
-                            modifiers: raw.effects.criticalSuccess.modifiers,
-                            gameCommands: raw.effects.criticalSuccess.gameCommands,
-                            choices: raw.effects.criticalSuccess.choices
+                        criticalSuccess: raw.outcomes.criticalSuccess ? {
+                            description: raw.outcomes.criticalSuccess.description || '',
+                            modifiers: raw.outcomes.criticalSuccess.modifiers,
+                            gameCommands: raw.outcomes.criticalSuccess.gameCommands,
+                            choices: raw.outcomes.criticalSuccess.choices
                         } : undefined,
-                        success: raw.effects.success ? {
-                            description: raw.effects.success.description || '',
-                            modifiers: raw.effects.success.modifiers,
-                            gameCommands: raw.effects.success.gameCommands,
-                            choices: raw.effects.success.choices
+                        success: raw.outcomes.success ? {
+                            description: raw.outcomes.success.description || '',
+                            modifiers: raw.outcomes.success.modifiers,
+                            gameCommands: raw.outcomes.success.gameCommands,
+                            choices: raw.outcomes.success.choices
                         } : undefined,
-                        failure: raw.effects.failure ? {
-                            description: raw.effects.failure.description || '',
-                            modifiers: raw.effects.failure.modifiers,
-                            gameCommands: raw.effects.failure.gameCommands,
-                            choices: raw.effects.failure.choices
+                        failure: raw.outcomes.failure ? {
+                            description: raw.outcomes.failure.description || '',
+                            modifiers: raw.outcomes.failure.modifiers,
+                            gameCommands: raw.outcomes.failure.gameCommands,
+                            choices: raw.outcomes.failure.choices
                         } : undefined,
-                        criticalFailure: raw.effects.criticalFailure ? {
-                            description: raw.effects.criticalFailure.description || '',
-                            modifiers: raw.effects.criticalFailure.modifiers,
-                            gameCommands: raw.effects.criticalFailure.gameCommands,
-                            choices: raw.effects.criticalFailure.choices
+                        criticalFailure: raw.outcomes.criticalFailure ? {
+                            description: raw.outcomes.criticalFailure.description || '',
+                            modifiers: raw.outcomes.criticalFailure.modifiers,
+                            gameCommands: raw.outcomes.criticalFailure.gameCommands,
+                            choices: raw.outcomes.criticalFailure.choices
                         } : undefined
                     },
                     proficiencyScaling: raw.proficiencyScaling 

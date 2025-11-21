@@ -43,7 +43,6 @@ export const diseaseOutbreakPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

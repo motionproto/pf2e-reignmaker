@@ -96,7 +96,9 @@ export function buildResolutionData(options: {
         let value = resolvedDice.get(i) ?? resolvedDice.get(`state:${mod.resource}`) ?? mod.value;
 
         if (typeof value === 'number') {
-          numericModifiers.push({ resource: mod.resource as string, value });
+          // Apply negative flag for dice modifiers (e.g., "Remove 1d4 imprisoned unrest")
+          const finalValue = mod.negative ? -Math.abs(value) : value;
+          numericModifiers.push({ resource: mod.resource as string, value: finalValue });
         }
       }
     }

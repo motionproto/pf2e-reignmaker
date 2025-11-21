@@ -33,7 +33,6 @@ export const deployArmyPipeline = createActionPipeline('deploy-army', {
   ],
 
   preview: {
-    providedByInteraction: true,
     calculate: (ctx) => {
       const path = ctx.metadata.path || [];
       const finalHex = path.length > 0 ? path[path.length - 1] : 'unknown';

@@ -1,66 +1,22 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { formatStateChangeLabel, formatStateChangeValue, getChangeClass, rollDiceFormula } from '../../../../../services/resolution';
+  import { rollDiceFormula } from '../../../../../services/resolution';
   import { getResourceIcon } from '../../../../kingdom/utils/presentation';
   import type { SpecialEffect } from '../../../../../types/special-effects';
   import type { UnifiedOutcomeBadge, LegacyOutcomeBadge, TemplateSegment } from '../../../../../types/OutcomeBadge';
-  import { isLegacyBadge, isUnifiedBadge, convertLegacyBadge, renderBadgeTemplate, renderBadgeToString } from '../../../../../types/OutcomeBadge';
+  import { isLegacyBadge, convertLegacyBadge, renderBadgeTemplate } from '../../../../../types/OutcomeBadge';
   
-  export let stateChanges: Record<string, any> | undefined = undefined;
-  export let modifiers: any[] | undefined = undefined;
-  export let resolvedDice: Map<number | string, number> = new Map();
   export let manualEffects: string[] | undefined = undefined;
   export let automatedEffects: string[] | undefined = undefined;
   export let outcome: string | undefined = undefined;
-  export let hideResources: string[] = [];
   export let customComponentData: any = undefined;
   export let outcomeBadges: Array<UnifiedOutcomeBadge | LegacyOutcomeBadge> = [];
   export let specialEffects: SpecialEffect[] = [];
   
   const dispatch = createEventDispatcher();
   
-  // Auto-convert typed dice modifiers to unified badge format
-  // Only supports typed format: { type: 'dice', formula: '1d4', resource: '...' }
-  $: diceModifierBadges = (modifiers || [])
-    .map((mod: any, index: number) => ({ ...mod, originalIndex: index }))
-    .filter((mod: any) => mod.type === 'dice' && mod.formula)
-    .map((mod: any): UnifiedOutcomeBadge => {
-      const formula = mod.formula || mod.value;
-      const resource = mod.resource;
-      const isNegative = mod.negative || (typeof mod.value === 'string' && mod.value.startsWith('-'));
-      
-      const rolled = resolvedDice.get(mod.originalIndex);
-      
-      if (resource === 'imprisonedUnrest') {
-        return {
-          icon: 'fa-gavel',
-          template: 'Remove {{value}} imprisoned unrest',
-          value: rolled !== undefined 
-            ? { type: 'static', amount: Math.abs(rolled) }
-            : { type: 'dice', formula: formula.replace(/^-/, '') },
-          variant: 'positive',
-          _modifierIndex: mod.originalIndex
-        } as any;
-      }
-      
-      const resourceName = resource.charAt(0).toUpperCase() + resource.slice(1);
-      const action = isNegative ? 'Lose' : 'Gain';
-      
-      return {
-        icon: getResourceIcon(resource),
-        template: `${action} {{value}} ${resourceName}`,
-        value: rolled !== undefined 
-          ? { type: 'static', amount: Math.abs(rolled) }
-          : { type: 'dice', formula: formula.replace(/^-/, '') },
-        variant: isNegative ? 'negative' : 'positive',
-        _modifierIndex: mod.originalIndex
-      } as any;
-    });
-  
-  $: hasStateChanges = stateChanges && Object.keys(stateChanges).length > 0;
   $: hasManualEffects = manualEffects && manualEffects.length > 0;
   $: hasAutomatedEffects = automatedEffects && automatedEffects.length > 0;
-  $: showCriticalSuccessFame = outcome === 'criticalSuccess';
   $: hasCustomCost = customComponentData && typeof customComponentData.cost === 'number';
   $: hasOutcomeBadges = outcomeBadges && outcomeBadges.length > 0;
   $: hasSpecialEffects = specialEffects && specialEffects.length > 0;
@@ -69,36 +25,27 @@
     isLegacyBadge(badge) ? convertLegacyBadge(badge) : badge
   );
   
-  $: allBadges = [...unifiedBadges, ...diceModifierBadges];
+  // Add critical success fame as a badge
+  $: fameBadge = outcome === 'criticalSuccess' ? [({
+    icon: 'fa-star',
+    template: 'Fame increased by {{value}}',
+    value: { type: 'static' as const, amount: 1 },
+    variant: 'positive' as const,
+    _isFame: true
+  } as UnifiedOutcomeBadge)] : [];
+  
+  $: allBadges = [...unifiedBadges, ...fameBadge];
   $: hasAllBadges = allBadges.length > 0;
   
   let rolledBadges = new Map<number, number>();
   
-  $: diceModifiersToShow = [];
-  $: hasDiceModifiers = false;
   
-  $: hasAnyContent = hasStateChanges || hasManualEffects || hasAutomatedEffects || showCriticalSuccessFame || hasDiceModifiers || hasCustomCost || hasOutcomeBadges || hasSpecialEffects;
-  
-  function getResolvedValue(key: string): number | null {
-    if (modifiers) {
-      const modifierIndex = modifiers.findIndex(m => 
-        m.resource === key && m.type === 'dice' && m.formula
-      );
-      
-      if (modifierIndex !== -1) {
-        const resolved = resolvedDice.get(modifierIndex);
-        if (resolved !== undefined) return resolved;
-      }
-    }
-    
-    const stateResolved = resolvedDice.get(`state:${key}`);
-    return stateResolved ?? null;
-  }
+  $: hasAnyContent = hasManualEffects || hasAutomatedEffects || hasAllBadges || hasCustomCost || hasOutcomeBadges || hasSpecialEffects;
   
   function handleBadgeDiceRoll(badgeIndex: number, formula: string, badge: any) {
     const result = rollDiceFormula(formula);
-    rolledBadges.set(badgeIndex, result);
-    rolledBadges = rolledBadges;
+    // Create new Map for proper Svelte reactivity
+    rolledBadges = new Map(rolledBadges).set(badgeIndex, result);
     
     if (badge._modifierIndex !== undefined) {
       dispatch('roll', {
@@ -113,70 +60,6 @@
         formula,
         result
       });
-    }
-  }
-  
-  function handleDiceRoll(key: string, formula: string) {
-    if (modifiers) {
-      const modifierIndex = modifiers.findIndex(m => 
-        m.resource === key && (m.value === formula || m.formula === formula)
-      );
-      
-      if (modifierIndex !== -1) {
-        const result = rollDiceFormula(formula);
-        
-        dispatch('roll', {
-          modifierIndex,
-          formula,
-          result,
-          resource: key
-        });
-        return;
-      }
-    }
-    
-    const result = rollDiceFormula(formula);
-    
-    dispatch('roll', {
-      modifierIndex: `state:${key}`,
-      formula,
-      result,
-      resource: key
-    });
-  }
-  
-  function getModifierLabel(resource: string | undefined, value: any, resolved?: number): string {
-    if (!resource) {
-      console.warn('[StateChanges] getModifierLabel called with undefined resource:', { resource, value, resolved });
-      return `Unknown modifier: ${value}`;
-    }
-    
-    if (resource === 'imprisoned') {
-      if (resolved !== undefined) {
-        return `Remove ${resolved} imprisoned unrest`;
-      } else {
-        let displayValue = value;
-        if (typeof displayValue === 'string') {
-          displayValue = displayValue.replace(/^-/, '').replace(/^\((.+)\)$/, '$1');
-        }
-        return `Remove ${displayValue} imprisoned unrest`;
-      }
-    }
-    
-    const isNegative = (typeof value === 'string' && value.startsWith('-')) || 
-                      (typeof value === 'number' && value < 0) ||
-                      (resolved !== undefined && resolved < 0);
-    const action = isNegative ? 'Lose' : 'Gain';
-    const resourceName = resource.charAt(0).toUpperCase() + resource.slice(1);
-    
-    if (resolved !== undefined) {
-      return `${action} ${Math.abs(resolved)} ${resourceName}`;
-    } else {
-      let displayValue = value;
-      if (typeof displayValue === 'string') {
-        displayValue = displayValue.replace(/^-/, '').replace(/^\((.+)\)$/, '$1');
-      }
-      return `${action} ${displayValue} ${resourceName}`;
     }
   }
   
@@ -247,13 +130,6 @@
 
 <div class="state-changes">
   {#if hasAnyContent}
-    {#if showCriticalSuccessFame}
-      <div class="critical-success-fame">
-        <i class="fas fa-star"></i>
-        <span>Fame increased by 1</span>
-      </div>
-    {/if}
-    
     {#if hasAutomatedEffects && automatedEffects}
       <div class="automated-effects">
         {#each automatedEffects as effect}
@@ -292,68 +168,46 @@
       </div>
     {/if}
     
-    {@const hiddenResources = new Set(hideResources)}
-    {@const nonDiceStateChanges = hasStateChanges && stateChanges 
-      ? Object.entries(stateChanges).filter(([key]) => !hiddenResources.has(key))
-      : []}
-    {@const hasOutcomeContent = hasAllBadges || nonDiceStateChanges.length > 0}
-    
-    {#if hasOutcomeContent}
+    {#if hasAllBadges}
       <div class="dice-rollers-section">
         <div class="dice-rollers-header">Outcome:</div>
         <div class="outcome-badges">
-          {#if hasAllBadges}
-            {#each allBadges as badge, index}
-              {@const isRolled = isBadgeRolled(index, badge)}
-              {@const isDice = badge.value?.type === 'dice'}
-              {@const segments = renderBadgeSegments(index, badge)}
-              
-              <button 
-                class="outcome-badge" 
-                class:static={isRolled}
-                class:rolled={isRolled && isDice}
-                class:clickable={!isRolled && isDice}
-                class:variant-positive={badge.variant === 'positive'}
-                class:variant-negative={badge.variant === 'negative'}
-                class:variant-info={!badge.variant}
-                disabled={isRolled || !isDice}
-                on:click={() => !isRolled && isDice && badge.value?.type === 'dice' ? handleBadgeDiceRoll(index, badge.value.formula, badge) : null}
-              >
-                <div class="content">
-                  <i class="fas {badge.icon} resource-icon"></i>
-                  <div class="text">
-                    {#each segments as segment}
-                      {#if segment.type === 'text'}
-                        {segment.content}
-                      {:else if segment.type === 'value'}
-                        {#if isDice && !isRolled && segment.value.type === 'dice'}
-                          <span class="dice-button">{segment.value.formula}</span>
-                        {:else}
-                          <span class="value">{getValueDisplay(segment.value)}</span>
-                        {/if}
+          {#key rolledBadges}
+          {#each allBadges as badge, index}
+            {@const isRolled = isBadgeRolled(index, badge)}
+            {@const isDice = badge.value?.type === 'dice'}
+            {@const segments = renderBadgeSegments(index, badge)}
+            
+            <button 
+              class="outcome-badge" 
+              class:static={isRolled}
+              class:rolled={isRolled && isDice}
+              class:clickable={!isRolled && isDice}
+              class:variant-positive={badge.variant === 'positive'}
+              class:variant-negative={badge.variant === 'negative'}
+              class:variant-info={!badge.variant}
+              disabled={isRolled || !isDice}
+              on:click={() => !isRolled && isDice && badge.value?.type === 'dice' ? handleBadgeDiceRoll(index, badge.value.formula, badge) : null}
+            >
+              <div class="content">
+                <i class="fas {badge.icon} resource-icon"></i>
+                <div class="text">
+                  {#each segments as segment}
+                    {#if segment.type === 'text'}
+                      {segment.content}
+                    {:else if segment.type === 'value'}
+                      {#if isDice && !isRolled && segment.value.type === 'dice'}
+                        <span class="dice-button">{segment.value.formula}</span>
+                      {:else}
+                        <span class="value">{getValueDisplay(segment.value)}</span>
                       {/if}
-                    {/each}
-                  </div>
-                </div>
-              </button>
-            {/each}
-          {/if}
-          
-          {#if nonDiceStateChanges.length > 0}
-            {#each nonDiceStateChanges as [key, change]}
-              {@const icon = getResourceIcon(key)}
-              <div class="outcome-badge static">
-                <div class="content">
-                  {#if icon}
-                    <i class="fas {icon} resource-icon"></i>
-                  {/if}
-                  <div class="text">
-                    {getModifierLabel(key, change, change)}
-                  </div>
+                    {/if}
+                  {/each}
                 </div>
               </div>
-            {/each}
-          {/if}
+            </button>
+          {/each}
+          {/key}
         </div>
       </div>
     {/if}
@@ -456,6 +310,11 @@
       
       .resource-icon {
         color: var(--color-green);
+        
+        // Special case: Fame star gets golden color
+        &.fa-star {
+          color: var(--icon-fame);
+        }
       }
       
       &.clickable {
@@ -556,26 +415,29 @@
   }
   
   .critical-success-fame {
-    padding: var(--space-12) var(--space-16);
-    background: linear-gradient(135deg, 
-      var(--surface-success-high),
-      var(--surface-success-low));
-    border: 2px solid var(--border-success-medium);
-    border-radius: var(--radius-sm);
     display: flex;
     align-items: center;
     gap: var(--space-10);
-    font-size: var(--font-md);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-green);
+    padding: var(--space-8);
+    background: var(--surface-success-lower);
+    border: 2px solid var(--border-success);
+    border-radius: var(--radius-md);
+    min-width: 12.5rem;
+    width: auto;
+    text-align: left;
+    min-height: 2.25rem;
     
     i {
-      font-size: var(--font-xl);
-      color: #fbbf24;
-      text-shadow: 0 0 0.5rem rgba(251, 191, 36, 0.6);
+      font-size: var(--font-lg);
+      color: var(--icon-fame);
+      flex-shrink: 0;
     }
     
     span {
+      font-size: var(--font-md);
+      font-weight: var(--font-weight-medium);
+      color: var(--text-primary);
+      line-height: 1.4;
       flex: 1;
     }
   }

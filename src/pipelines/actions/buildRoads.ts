@@ -5,9 +5,10 @@
 
 import { createActionPipeline } from '../shared/createActionPipeline';
 import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
+import { applyActionCost } from '../shared/applyActionCost';
+import { buildRoadsExecution } from '../../execution/territory/buildRoads';
+import { validateRoadHex } from '../shared/roadValidator';
 import { PLAYER_KINGDOM } from '../../types/ownership';
-
-import { textBadge } from '../../types/OutcomeBadge';
 export const buildRoadsPipeline = createActionPipeline('build-roads', {
   requirements: (kingdom) => {
     // Check resource costs
@@ -31,7 +32,6 @@ export const buildRoadsPipeline = createActionPipeline('build-roads', {
   },
 
   preview: {
-    providedByInteraction: true,  // Map selection shows roads in real-time
     calculate: (ctx) => {
       const resources = [];
       
@@ -39,10 +39,8 @@ export const buildRoadsPipeline = createActionPipeline('build-roads', {
       resources.push({ resource: 'lumber', value: -1 });
       resources.push({ resource: 'stone', value: -1 });
       
-      // Show unrest on critical failure
-      if (ctx.outcome === 'criticalFailure') {
-        resources.push({ resource: 'unrest', value: 1 });
-      }
+      // Critical failure unrest is automatically detected from pipeline JSON
+      // No need to manually add it here - convertModifiersToBadges handles it
       
       return {
         resources,
@@ -51,6 +49,42 @@ export const buildRoadsPipeline = createActionPipeline('build-roads', {
       };
     }
   },
+
+  postApplyInteractions: [
+    {
+      type: 'map-selection',
+      id: 'selectedHexes',
+      mode: 'hex-selection',
+      count: 1,  // Default for success
+      colorType: 'road',
+      condition: (ctx) => ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess',
+      validation: (hexId: string, pendingSelection: string[] = []) => {
+        // Use dedicated road validation (checks claimed status, existing roads, and adjacency)
+        const isValid = validateRoadHex(hexId, pendingSelection);
+        
+        if (!isValid) {
+          return {
+            valid: false,
+            message: 'Roads must be built in claimed territory, adjacent to existing roads or settlements'
+          };
+        }
+        
+        return { valid: true };
+      },
+      outcomeAdjustment: {
+        criticalSuccess: {
+          count: 2,  // Build roads on 2 hexes
+          title: 'Select hexes to build roads (Critical Success)'
+        },
+        success: {
+          count: 1,  // Build road on 1 hex
+          title: 'Select 1 hex to build a road'
+        },
+        failure: { count: 0 },  // No roads on failure
+        criticalFailure: { count: 0 }  // No roads on critical failure
+      }
+    }
+  ],
 
   execute: async (ctx) => {
     switch (ctx.outcome) {

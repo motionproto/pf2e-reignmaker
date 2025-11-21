@@ -46,7 +46,6 @@ export const undeadUprisingPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

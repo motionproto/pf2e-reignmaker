@@ -120,7 +120,6 @@
             on:performReroll
             on:ignore
             on:aid
-            on:debugOutcomeChanged
           />
         {/each}
       </div>

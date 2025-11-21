@@ -29,19 +29,19 @@ export const ACTION_STATUS = new Map<string, ActionStatus>([
   
   // Phase 2: Post-Apply Map Interactions
   ['claim-hexes', 'tested'],  // #2
-  ['build-roads', 'tested'],  // #3
-  ['fortify-hex', 'tested'],  // #4
-  ['create-worksite', 'tested'],  // #5
-  ['harvest-resources', 'tested'],  // #6
-  ['send-scouts', 'tested'],  // #7
+  ['build-roads', 'testing'],  // #3
+  ['fortify-hex', 'untested'],  // #4
+  ['create-worksite', 'untested'],  // #5
+  ['harvest-resources', 'untested'],  // #6
+  ['send-scouts', 'untested'],  // #7
   
   // Phase 3: Custom Components (graceful degradation)
-  ['sell-surplus', 'tested'],  // #8
-  ['purchase-resources', 'tested'],  // #9
+  ['sell-surplus', 'untested'],  // #8
+  ['purchase-resources', 'untested'],  // #9
   
   // Phase 4: Pre-Roll Entity Selection
-  ['collect-stipend', 'tested'],  // #10
-  ['execute-or-pardon-prisoners', 'testing'],  // #11
+  ['collect-stipend', 'untested'],  // #10
+  ['execute-or-pardon-prisoners', 'untested'],  // #11
   ['diplomatic-mission', 'untested'],  // #12
   ['request-economic-aid', 'untested'],  // #13
   ['request-military-aid', 'untested'],  // #14

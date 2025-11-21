@@ -93,7 +93,7 @@ export function computeDisplayStateChanges(
     });
   }
   
-  // Process all modifiers (static only - dice are handled by DiceRoller component)
+  // Process all modifiers (static only - dice are handled by OutcomeBadges component)
   if (modifiers && modifiers.length > 0) {
     modifiers.forEach((modifier, idx) => {
       // Handle choice-dropdown modifiers (need resource selection first)
@@ -108,17 +108,17 @@ export function computeDisplayStateChanges(
       // Skip other resource arrays (handled separately above)
       if (Array.isArray(modifier.resources)) return;
       
-      // Check if this modifier has a rolled value
-      const rolledValue = resolvedDice?.get(idx);
+      // Skip dice modifiers entirely - they're rendered as interactive badges
+      // in OutcomeBadges.svelte via diceModifierBadges
+      if (modifier.type === 'dice' && modifier.formula) return;
       
-      if (rolledValue !== undefined) {
-        // Use rolled value (from manual roll)
-        result[modifier.resource] = (result[modifier.resource] || 0) + rolledValue;
-      } else if (typeof modifier.value === 'number') {
-        // Use static value directly
+      // Also skip legacy dice format (value is a dice formula string)
+      if (typeof modifier.value === 'string' && /^-?\d+d\d+([+-]\d+)?$/.test(modifier.value)) return;
+      
+      // Use static value directly
+      if (typeof modifier.value === 'number') {
         result[modifier.resource] = (result[modifier.resource] || 0) + modifier.value;
       }
-      // Dice modifiers (both legacy and typed) are handled by DiceRoller component
     });
   }
   

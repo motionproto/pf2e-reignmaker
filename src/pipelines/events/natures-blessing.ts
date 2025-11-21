@@ -47,7 +47,6 @@ export const naturesBlessingPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

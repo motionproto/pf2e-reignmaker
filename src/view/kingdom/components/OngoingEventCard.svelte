@@ -120,7 +120,6 @@
           on:primary
           on:cancel
           on:reroll
-          on:debugOutcomeChanged
         />
       {:else}
         <p class="event-description">{instance.description || 'No description available'}</p>

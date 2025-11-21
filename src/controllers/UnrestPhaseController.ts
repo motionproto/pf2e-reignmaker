@@ -356,7 +356,7 @@ export async function createUnrestPhaseController() {
      */
     getIncidentModifiers(incident: any, outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure') {
       // For incidents, criticalSuccess falls back to success if not defined (by design)
-      const effectiveOutcome = outcome === 'criticalSuccess' && !incident.effects.criticalSuccess 
+      const effectiveOutcome = outcome === 'criticalSuccess' && !incident.outcomes.criticalSuccess 
         ? 'success' 
         : outcome;
       

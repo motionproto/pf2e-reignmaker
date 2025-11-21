@@ -40,7 +40,6 @@ export const settlementCrisisPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

@@ -107,7 +107,6 @@ export type Trait = 'ongoing' | 'dangerous' | 'beneficial';
 export interface PreviewConfig {
   calculate?: (context: any) => any | Promise<any>;  // Can be sync or async
   format?: (preview: any) => any[];
-  providedByInteraction?: boolean;  // True for map-selection actions
 }
 
 /**

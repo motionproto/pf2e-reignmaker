@@ -41,7 +41,6 @@ export const assassinationAttemptPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

@@ -50,7 +50,6 @@ export const foodShortagePipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

@@ -92,12 +92,6 @@
       case 'arrestDissidents':
         return 'Arrest Dissidents';
       
-      case 'executePrisoners':
-        return 'Execute Prisoners';
-      
-      case 'pardonPrisoners':
-        return 'Pardon Prisoners';
-      
       // Support & Bonuses
       case 'aidBonus':
         return 'Aid Bonus';
@@ -125,6 +119,11 @@
       case 'releaseImprisoned':
         const percentage = command.percentage === 'all' ? 'All' : `${command.percentage * 100}%`;
         return `Release ${percentage} Imprisoned`;
+      
+      case 'reduceImprisoned':
+        if (command.amount === 'all') return 'Clear all imprisoned';
+        // Show dice formula or number directly
+        return `Reduce imprisoned (${command.amount})`;
       
       // Territory Management
       case 'removeBorderHexes':

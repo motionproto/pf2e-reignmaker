@@ -36,7 +36,6 @@ export const prisonBreaksPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

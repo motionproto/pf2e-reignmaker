@@ -43,7 +43,6 @@ export const economicCrashPipeline: CheckPipeline = {
   },
 
   preview: {
-    providedByInteraction: false
   },
 
   execute: async (ctx) => {

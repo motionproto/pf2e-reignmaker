@@ -356,9 +356,6 @@
       
       &.collected {
          border: 2px solid var(--color-green);
-         background: linear-gradient(135deg,
-            var(--surface-success),
-            rgba(34, 197, 94, 0.08));
       }
    }
    

@@ -128,12 +128,6 @@
     });
   }
   
-  function handleDebugOutcomeChange(event: CustomEvent) {
-    dispatch('debugOutcomeChanged', {
-      checkId: item.id,
-      outcome: event.detail.outcome
-    });
-  }
 </script>
 
 <div class="event-card">
@@ -216,7 +210,6 @@
       on:primary={handleApplyResult}
       on:cancel={handleCancel}
       on:reroll={handleReroll}
-      on:debugOutcomeChanged={handleDebugOutcomeChange}
     />
   {/if}
 </div>
