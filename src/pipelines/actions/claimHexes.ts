@@ -57,14 +57,6 @@ export const claimHexesPipeline: CheckPipeline = {
       // Condition: only show for success/criticalSuccess
       condition: (ctx: any) => {
         return ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess';
-      },
-      // ✅ FIX: Execute claim logic immediately after user selects hexes
-      onComplete: async (selectedHexIds: string[], ctx: any) => {
-        console.log('🎯 [ClaimHexes] User selected hexes:', selectedHexIds);
-        if (selectedHexIds && selectedHexIds.length > 0) {
-          await claimHexesExecution(selectedHexIds);
-          console.log('✅ [ClaimHexes] Hexes claimed successfully');
-        }
       }
     }
   ],

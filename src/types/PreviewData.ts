@@ -7,6 +7,7 @@
  */
 
 import type { ResourceType } from './CheckPipeline';
+import type { UnifiedOutcomeBadge, LegacyOutcomeBadge } from './OutcomeBadge';
 
 /**
  * Resource change preview
@@ -50,7 +51,8 @@ export interface PreviewData {
   specialEffects?: SpecialEffect[];
 
   // Outcome badges - custom badges for specific outcome display (e.g., gold collection)
-  outcomeBadges?: Array<{ icon: string; message: string }>;
+  // Supports both unified format (with dice support) and legacy format (backward compatibility)
+  outcomeBadges?: Array<UnifiedOutcomeBadge | LegacyOutcomeBadge>;
 
   // Warnings
   warnings?: string[];

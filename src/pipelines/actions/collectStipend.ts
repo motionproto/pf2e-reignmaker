@@ -6,6 +6,7 @@
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
+import type { UnifiedOutcomeBadge } from '../../types/OutcomeBadge';
 import { giveActorGoldExecution } from '../../execution/resources/giveActorGold';
 
 export const collectStipendPipeline: CheckPipeline = {
@@ -91,24 +92,37 @@ export const collectStipendPipeline: CheckPipeline = {
             const baseIncome = calculateIncome(highestSettlement.level, taxationInfo.tier);
             const goldAmount = Math.round(baseIncome * multiplier);
             const characterName = ctx.actor?.actorName || 'Player';
-            goldMessage = `${characterName} receives ${goldAmount} gold`;
             
             console.log('🪙 [collectStipend] Generated outcomeBadge:', {
               characterName,
               goldAmount,
-              goldMessage,
               multiplier
             });
+
+            // ✅ NEW: Unified badge format
+            const badge: UnifiedOutcomeBadge = {
+              icon: 'fa-coins',
+              prefix: `${characterName} receives`,
+              value: { type: 'static', amount: goldAmount },
+              suffix: 'gold',
+              variant: 'positive'
+            };
+            
+            const result = {
+              resources: [],
+              outcomeBadges: [badge],
+              warnings: []
+            };
+            
+            console.log('🪙 [collectStipend] Returning preview:', result);
+            return result;
           }
         }
       }
 
       const result = {
         resources: [],
-        outcomeBadges: goldMessage ? [{
-          icon: 'fa-coins',
-          message: goldMessage
-        }] : [],
+        outcomeBadges: [],
         warnings: []
       };
       

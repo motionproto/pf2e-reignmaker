@@ -58,7 +58,6 @@
   import OutcomeHeader from './components/OutcomeHeader.svelte';
   import OutcomeMessage from './components/OutcomeMessage.svelte';
   import RollBreakdown from './components/RollBreakdown.svelte';
-  import DiceRoller from './components/DiceRoller.svelte';
   import ResourceSelector from './components/ResourceSelector.svelte';
   import ChoiceButtons from './components/ChoiceButtons.svelte';
   import OutcomeBadges from './components/OutcomeBadges.svelte';
@@ -650,12 +649,8 @@
       {selectedResources}
       on:select={handleResourceSelect}
     />
-    <DiceRoller 
-      modifiers={standaloneDiceModifiers} 
-      on:roll={handleDiceRoll}
-      on:resolution={handleComponentResolution}
-    />
     <!-- Always show OutcomeBadges (modifiers, costs, effects) -->
+    <!-- Note: OutcomeBadges now auto-converts dice modifiers to badges -->
     <OutcomeBadges 
       stateChanges={displayStateChanges} 
       {modifiers} 
@@ -667,7 +662,8 @@
       {customComponentData}
       {outcomeBadges}
       specialEffects={standaloneEffects}
-      on:roll={handleDiceRoll} 
+      on:roll={handleDiceRoll}
+      on:badgeRoll={handleDiceRoll}
     />
     <RollBreakdown {rollBreakdown} />
     

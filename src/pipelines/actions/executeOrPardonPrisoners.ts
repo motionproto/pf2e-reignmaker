@@ -6,6 +6,7 @@
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
+import type { UnifiedOutcomeBadge } from '../../types/OutcomeBadge';
 import { reduceImprisonedExecution } from '../../execution/unrest/reduceImprisoned';
 import { structuresService } from '../../services/structures';
 
@@ -120,7 +121,7 @@ export const executeOrPardonPrisonersPipeline: CheckPipeline = {
       }
 
       const settlement = ctx.kingdom.settlements?.find((s: any) => s.id === settlementId);
-      const outcomeBadges: Array<{ icon: string; message: string }> = [];
+      const outcomeBadges: UnifiedOutcomeBadge[] = [];
       
       // Handle outcomes based on type
       if (ctx.outcome === 'criticalSuccess') {
@@ -128,14 +129,19 @@ export const executeOrPardonPrisonersPipeline: CheckPipeline = {
         const imprisonedCount = settlement?.imprisonedUnrest || 0;
         outcomeBadges.push({
           icon: 'fa-gavel',
-          message: `Remove all imprisoned unrest (${imprisonedCount}) from ${settlement?.name || settlementName || 'settlement'}`
+          prefix: 'Remove all',
+          value: { type: 'static', amount: imprisonedCount },
+          suffix: `imprisoned unrest from ${settlement?.name || settlementName || 'settlement'}`,
+          variant: 'positive'
         });
       } else if (ctx.outcome === 'success') {
-        // Show outcome badge with dice roll text
-        // Note: The actual dice roll will be handled in the execute function
+        // ✅ NEW: Show dice badge that user can click to roll
         outcomeBadges.push({
           icon: 'fa-gavel',
-          message: `Remove 1d4 imprisoned unrest from ${settlement?.name || settlementName || 'settlement'}`
+          prefix: 'Remove',
+          value: { type: 'dice', formula: '1d4' },
+          suffix: `imprisoned unrest from ${settlement?.name || settlementName || 'settlement'}`,
+          variant: 'positive'
         });
       }
 

@@ -203,11 +203,6 @@ export class HexSelectorService {
     // Clear hover (but keep selection highlighted until user clicks OK)
     this.mapLayer.hideInteractiveHover();
     
-    // For scout actions, reveal hexes in World Explorer NOW
-    if (this.config.colorType === 'scout') {
-      await this.revealHexesInWorldExplorer();
-    }
-    
     // Capture hex info BEFORE applying changes (shows cost that was actually paid)
     let completionHexInfo: string | null = null;
     if (this.config.getHexInfo && this.selectedHexes.length > 0) {

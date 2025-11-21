@@ -48,7 +48,10 @@ export const sendScoutsPipeline: CheckPipeline = {
           
           // Can't select already-revealed hexes
           if (isRevealed) {
-            return false;
+            return {
+              valid: false,
+              message: 'This hex has already been scouted'
+            };
           }
           
           // Must be adjacent to at least one revealed hex
@@ -57,9 +60,16 @@ export const sendScoutsPipeline: CheckPipeline = {
             worldExplorerService.isRevealed(adjId)
           );
           
-          return hasRevealedAdjacent;
+          if (!hasRevealedAdjacent) {
+            return {
+              valid: false,
+              message: 'Can only scout hexes adjacent to revealed territory'
+            };
+          }
+          
+          return { valid: true };
         }
-        return true;  // If World Explorer not available, allow any hex
+        return { valid: true };  // If World Explorer not available, allow any hex
       },
       // Outcome-based adjustments
       outcomeAdjustment: {
@@ -118,8 +128,12 @@ export const sendScoutsPipeline: CheckPipeline = {
     switch (ctx.outcome) {
       case 'criticalSuccess':
       case 'success':
-        // Scouting handled by postApplyInteractions (reveals hexes via sendScoutsExecution)
-        // No modifiers defined in pipeline for these outcomes
+        // Read hex selections from resolutionData (populated by postApplyInteractions)
+        const hexIds = ctx.resolutionData.compoundData?.selectedHexes;
+        if (!hexIds || hexIds.length === 0) {
+          return { success: false, error: 'No hexes selected' };
+        }
+        await sendScoutsExecution(hexIds);
         return { success: true };
         
       case 'failure':
