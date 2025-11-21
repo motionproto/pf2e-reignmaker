@@ -1,22 +1,12 @@
 /**
- * Train Army Action Pipeline
- *
- * Improve unit levels up to party level.
- * Converted from data/player-actions/train-army.json
+ * trainArmy Action Pipeline
+ * Data from: data/player-actions/train-army.json
  */
 
-import type { CheckPipeline } from '../../types/CheckPipeline';
-import { trainArmyExecution } from '../../execution/armies/trainArmy';
-import { getPartyLevel } from '../../services/commands/armies/armyCommands';
+import { createActionPipeline } from '../shared/createActionPipeline';
 
-export const trainArmyPipeline: CheckPipeline = {
-  id: 'train-army',
-  name: 'Train Army',
-  description: 'Drill your troops in tactics and discipline to improve their combat effectiveness through various training methods',
-  checkType: 'action',
-  category: 'military-operations',
-
-  // Requirements: Must have at least one army
+import { textBadge } from '../../types/OutcomeBadge';
+export const trainArmyPipeline = createActionPipeline('train-army', {
   requirements: (kingdom) => {
     if (kingdom.armies.length === 0) {
       return {
@@ -27,14 +17,6 @@ export const trainArmyPipeline: CheckPipeline = {
     return { met: true };
   },
 
-  skills: [
-    { skill: 'intimidation', description: 'harsh discipline' },
-    { skill: 'athletics', description: 'physical conditioning' },
-    { skill: 'acrobatics', description: 'agility training' },
-    { skill: 'survival', description: 'endurance exercises' }
-  ],
-
-  // Pre-roll: Select army to train
   preRollInteractions: [
     {
       type: 'entity-selection',
@@ -44,55 +26,20 @@ export const trainArmyPipeline: CheckPipeline = {
     }
   ],
 
-  outcomes: {
-    criticalSuccess: {
-      description: 'The troops train exceptionally well.',
-      modifiers: [],
-      manualEffects: ['+2 to attack rolls and AC for 1 month']
-    },
-    success: {
-      description: 'The troops train well.',
-      modifiers: [],
-      manualEffects: ['+1 to attack rolls for 1 month']
-    },
-    failure: {
-      description: 'Your army does not improve.',
-      modifiers: [],
-      manualEffects: []
-    },
-    criticalFailure: {
-      description: 'The training goes poorly.',
-      modifiers: [],
-      manualEffects: []
-    }
-  },
-
   preview: {
     calculate: (ctx) => {
       const partyLevel = getPartyLevel();
-      const specialEffects = [];
+      const outcomeBadges = [];
 
-      specialEffects.push({
-        type: 'entity' as const,
-        message: `Will train ${ctx.metadata.armyName || 'army'} to level ${partyLevel}`,
-        variant: 'positive' as const
-      });
+      outcomeBadges.push(textBadge(`Will train ${ctx.metadata.armyName || 'army'} to level ${partyLevel}`, 'fa-shield-alt', 'positive'));
 
       if (ctx.outcome === 'criticalSuccess') {
-        specialEffects.push({
-          type: 'status' as const,
-          message: 'Elite Training: +2 attack/AC for 1 month',
-          variant: 'positive' as const
-        });
+        outcomeBadges.push(textBadge('Elite Training: +2 attack/AC for 1 month', 'fa-star', 'positive'));
       } else if (ctx.outcome === 'success') {
-        specialEffects.push({
-          type: 'status' as const,
-          message: 'Standard Training: +1 attack for 1 month',
-          variant: 'positive' as const
-        });
+        outcomeBadges.push(textBadge('Standard Training: +1 attack for 1 month', 'fa-check', 'positive'));
       }
 
-      return { resources: [], specialEffects, warnings: [] };
+      return { resources: [], outcomeBadges, warnings: [] };
     }
   },
 
@@ -101,4 +48,4 @@ export const trainArmyPipeline: CheckPipeline = {
     await trainArmyExecution(ctx.metadata.armyId, partyLevel, ctx.outcome);
     return { success: true, message: 'Army training complete' };
   }
-};
+});

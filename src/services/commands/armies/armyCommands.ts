@@ -13,7 +13,7 @@
 import { updateKingdom, getKingdomActor } from '../../../stores/KingdomStore';
 import type { Army } from '../../buildQueue/BuildProject';
 import { logger } from '../../../utils/Logger';
-import type { PreparedCommand } from '../../../services/GameCommandsResolver';
+import type { PreparedCommand } from '../../../types/game-commands';
 import type { ResolveResult } from '../types';
 import { calculateRandomNearbyHex, applyConditionToActor } from '../combat/conditionHelpers';
 
@@ -75,10 +75,11 @@ export async function recruitArmy(level: number, name?: string, exemptFromUpkeep
 
   // PHASE 2: RETURN - Preview data + commit function
   return {
-    specialEffect: {
-      type: 'status',
-      message: message,
+    outcomeBadge: {
       icon: exemptFromUpkeep ? 'fa-handshake' : 'fa-shield-alt',
+      prefix: exemptFromUpkeep ? 'Allied reinforcements:' : 'Recruited',
+      value: { type: 'static', amount: 1 },
+      suffix: armyName,
       variant: 'positive'
     },
     commit: async () => {
@@ -170,10 +171,11 @@ export async function disbandArmy(armyId: string, deleteActor: boolean = true): 
 
   // PHASE 2: RETURN - Preview data + commit function
   return {
-    specialEffect: {
-      type: 'status',
-      message: message,
+    outcomeBadge: {
       icon: 'fa-times-circle',
+          template: 'Disbanded {{value}}',
+      value: { type: 'static', amount: 1 },
+      suffix: army.name,
       variant: 'negative'
     },
     commit: async () => {
@@ -227,7 +229,7 @@ export async function trainArmy(armyId: string, outcome: string): Promise<Prepar
   // Determine preview message based on outcome
   let message: string;
   let icon: string;
-  let variant: 'positive' | 'negative' | 'neutral';
+  let variant: 'positive' | 'negative' | 'info';
 
   if (outcome === 'failure') {
     message = `Training had no effect on ${army.name}`;
@@ -240,7 +242,7 @@ export async function trainArmy(armyId: string, outcome: string): Promise<Prepar
   } else if (outcome === 'criticalFailure') {
     message = `${army.name} trained to level ${partyLevel} but is Frightened`;
     icon = 'fa-exclamation-triangle';
-    variant = 'neutral';
+    variant = 'info';
   } else {
     // Success
     message = `${army.name} trained to level ${partyLevel}`;
@@ -252,10 +254,11 @@ export async function trainArmy(armyId: string, outcome: string): Promise<Prepar
 
   // PHASE 2: RETURN - Preview data + commit function
   return {
-    specialEffect: {
-      type: 'status',
-      message: message,
+    outcomeBadge: {
       icon: icon,
+      prefix: outcome === 'failure' ? 'Training failed:' : 'Trained',
+      value: { type: 'static', amount: outcome === 'failure' ? 0 : partyLevel },
+      suffix: outcome === 'failure' ? army.name : `${army.name} to level`,
       variant: variant
     },
     commit: async () => {

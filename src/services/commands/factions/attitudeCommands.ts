@@ -135,10 +135,12 @@ export async function adjustFactionAttitude(
 
   // PHASE 2: RETURN - Preview data + commit function
   return {
-    specialEffect: {
-      type: 'attitude',
-      message: message,
+    outcomeBadge: {
       icon: 'fa-handshake',
+          template: '{{value}}',
+      prefix: steps > 0 ? 'Relations improved:' : 'Relations worsened:',
+      value: { type: 'static', amount: Math.abs(steps) },
+      suffix: `${faction.name} (${oldAttitude} → ${newAttitude})`,
       variant: variant
     },
     commit: async () => {

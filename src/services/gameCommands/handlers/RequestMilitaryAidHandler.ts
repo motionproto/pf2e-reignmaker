@@ -127,11 +127,12 @@ export class RequestMilitaryAidHandler extends BaseGameCommandHandler {
       
       // Return PreparedCommand with commit function that adds gold
       return {
-        specialEffect: {
-          type: 'resource',
-          message: 'No armies available to outfit - received 1 Gold instead',
+        outcomeBadge: {
           icon: 'fa-coins',
-          variant: 'neutral'
+          template: 'Received {{value}}',
+          value: { type: 'static', amount: 1 },
+          suffix: 'Gold (no armies to outfit)',
+          variant: 'info'
         },
         commit: async () => {
           console.log('[RequestMilitaryAidHandler] COMMITTING: Adding 1 gold');
@@ -194,10 +195,11 @@ export class RequestMilitaryAidHandler extends BaseGameCommandHandler {
     
     // Return PreparedCommand with commit function that actually applies equipment
     return {
-      specialEffect: {
-        type: 'status',
-        message: message,
+      outcomeBadge: {
         icon: 'fa-shield-alt',
+          template: 'Outfitting {{value}}',
+        value: { type: 'static', amount: 1 },
+        suffix: `${armyName} with ${equipmentName}`,
         variant: 'positive'
       },
       commit: async () => {

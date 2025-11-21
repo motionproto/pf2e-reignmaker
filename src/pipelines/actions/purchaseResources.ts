@@ -1,39 +1,36 @@
 /**
- * Purchase Resources Action Pipeline
- *
- * Purchase resources with gold based on commerce structure tier.
- * Converted from data/player-actions/purchase-resources.json
- *
- * NOTE: Actual execution logic is in custom implementation (commerce service)
+ * purchaseResources Action Pipeline
+ * Data from: data/player-actions/purchase-resources.json
  */
 
-import type { CheckPipeline } from '../../types/CheckPipeline';
-import { hasCommerceStructure, getBestTradeRates } from '../../services/commerce/tradeRates';
-import { get } from 'svelte/store';
-import { kingdomData } from '../../stores/KingdomStore';
+import { createActionPipeline } from '../shared/createActionPipeline';
 import { applyResourceChanges } from '../shared/InlineActionHelpers';
-import PurchaseResourceSelector from '../../view/kingdom/components/OutcomeDisplay/components/PurchaseResourceSelector.svelte';
+import { hasCommerceStructure, getBestTradeRates } from '../../services/commerce/tradeRates';
 
-export const purchaseResourcesPipeline: CheckPipeline = {
-  id: 'purchase-resources',
-  name: 'Purchase Resources',
-  description: 'Use the kingdom\'s treasury to acquire needed materials through your commerce infrastructure. Better commerce structures provide better trade rates.',
-  checkType: 'action',
-  category: 'economic-resources',
+export const purchaseResourcesPipeline = createActionPipeline('purchase-resources', {
+  requirements: (kingdom) => {
+    // Must have a commerce structure
+    if (!hasCommerceStructure()) {
+      return { met: false, reason: 'Requires a commerce structure' };
+    }
+    
+    // Must have enough gold for at least one transaction
+    const currentGold = kingdom.resources?.gold || 0;
+    const tradeRates = getBestTradeRates();
+    const goldCostPerTransaction = tradeRates.buy.goldGain;
+    
+    if (currentGold < goldCostPerTransaction) {
+      return { met: false, reason: `Requires at least ${goldCostPerTransaction} gold to purchase resources (current: ${currentGold})` };
+    }
+    
+    return { met: true };
+  },
 
-  skills: [
-    { skill: 'society', description: 'find suppliers' },
-    { skill: 'diplomacy', description: 'negotiate deals' },
-    { skill: 'intimidation', description: 'demand better prices' },
-    { skill: 'deception', description: 'misleading negotiations' }
-  ],
-
-  // Post-roll: Select resource and amount (AFTER roll, shown inline in outcome display)
   postRollInteractions: [
     {
       type: 'configuration',
       id: 'resourceSelection',
-      component: PurchaseResourceSelector,  // Custom property for Svelte component
+      component: 'PurchaseResourceSelector',  // Resolved via ComponentRegistry
       // Only show for successful purchases
       condition: (ctx) => {
         return ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess';
@@ -62,37 +59,10 @@ export const purchaseResourcesPipeline: CheckPipeline = {
     }
   ],
 
-  outcomes: {
-    criticalSuccess: {
-      description: 'You secure exceptional trade rates.',
-      modifiers: []
-    },
-    success: {
-      description: 'Resources are purchased.',
-      modifiers: []
-    },
-    failure: {
-      description: 'No trade is available.',
-      modifiers: []
-    },
-    criticalFailure: {
-      description: 'The deal falls through and funds are lost.',
-      modifiers: [
-        {
-          type: 'static',
-          resource: 'gold',
-          value: -1,
-          duration: 'immediate'
-        }
-      ]
-    }
-  },
-
   preview: {
     providedByInteraction: true  // Resource selector shows preview
   },
 
-  // Execute function - explicitly handles ALL outcomes
   execute: async (ctx) => {
     switch (ctx.outcome) {
       case 'criticalSuccess':
@@ -125,4 +95,4 @@ export const purchaseResourcesPipeline: CheckPipeline = {
         return { success: false, error: `Unexpected outcome: ${ctx.outcome}` };
     }
   }
-};
+});

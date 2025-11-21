@@ -1,133 +1,15 @@
 /**
- * Create Worksite Action Pipeline
- *
- * Establish farms, mines, quarries, or lumber camps.
- * Converted from data/player-actions/create-worksite.json
+ * createWorksite Action Pipeline
+ * Data from: data/player-actions/create-worksite.json
  */
 
-import type { CheckPipeline } from '../../types/CheckPipeline';
-import { createWorksiteExecution } from '../../execution/territory/createWorksite';
-import { getKingdomData } from '../../stores/KingdomStore';
-import { validateCreateWorksiteForPipeline } from '../shared/worksiteValidator';
-import WorksiteTypeSelector from '../../services/hex-selector/WorksiteTypeSelector.svelte';
-import { PLAYER_KINGDOM } from '../../types/ownership';
-import { isHexClaimedByPlayer, hexHasSettlement } from '../shared/hexValidation';
+import { createActionPipeline } from '../shared/createActionPipeline';
+import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
-export const createWorksitePipeline: CheckPipeline = {
-  id: 'create-worksite',
-  name: 'Create Worksite',
-  description: 'Establish resource extraction operations to harness the natural wealth of your territories',
-  checkType: 'action',
-  category: 'expand-borders',
-
-  skills: [
-    { skill: 'crafting', description: 'build infrastructure' },
-    { skill: 'nature', description: 'identify resources' },
-    { skill: 'survival', description: 'frontier operations' },
-    { skill: 'athletics', description: 'manual labor' },
-    { skill: 'arcana', description: 'magical extraction' },
-    { skill: 'religion', description: 'blessed endeavors' }
-  ],
-
-  // Post-apply: Select hex + worksite type via custom selector
-  postApplyInteractions: [
-    {
-      type: 'map-selection',
-      id: 'selectedHex',
-      mode: 'hex-selection',
-      colorType: 'worksite',
-      
-      // Custom selector component for worksite type selection
-      customSelector: {
-        component: WorksiteTypeSelector,
-        props: {} // No additional props needed
-      },
-      
-      validation: (hexId: string, ctx: any) => {
-        try {
-          // Basic hex validation with detailed error messages
-          // (worksite type terrain compatibility validated by custom component)
-          const kingdom = getKingdomData();
-          
-          if (!kingdom) {
-            return { valid: false, message: 'Kingdom data not loaded' };
-          }
-          
-          const hex = kingdom.hexes?.find(h => h.id === hexId);
-          
-          if (!hex) {
-            return { valid: false, message: 'Hex not found' };
-          }
-          
-          // ✅ CHECK SETTLEMENT FIRST (more specific error message)
-          // Cannot have a settlement (settlements block worksites)
-          if (hexHasSettlement(hexId, kingdom)) {
-            return { valid: false, message: 'Cannot build worksites in settlement hexes' };
-          }
-          
-          // ✅ THEN check if hex is claimed by player kingdom (uses PLAYER_KINGDOM constant)
-          if (!isHexClaimedByPlayer(hexId, kingdom)) {
-            return { valid: false, message: 'Must be in claimed territory' };
-          }
-          
-          // Cannot already have a worksite
-          if (hex.worksite) {
-            const worksiteType = hex.worksite.type || 'worksite';
-            return { valid: false, message: `Hex already has a ${worksiteType} (only one worksite per hex)` };
-          }
-          
-          // Valid hex - terrain compatibility will be checked by custom selector
-          return { valid: true, message: 'Select worksite type for this hex' };
-        } catch (error) {
-          console.error('[CreateWorksite] Validation error:', error);
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-          return { valid: false, message: `Validation failed: ${errorMessage}` };
-        }
-      },
-      // Outcome-based adjustments
-      outcomeAdjustment: {
-        criticalSuccess: {
-          count: 1,
-          title: 'Select 1 hex to create worksite (critical success!)'
-        },
-        success: {
-          count: 1,
-          title: 'Select 1 hex to create worksite'
-        },
-        failure: {
-          count: 0  // No interaction on failure
-        },
-        criticalFailure: {
-          count: 0  // No interaction on critical failure
-        }
-      },
-      // Condition: only show for success/criticalSuccess
-      condition: (ctx: any) => {
-        return ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess';
-      }
-    }
-  ],
-
-  outcomes: {
-    criticalSuccess: {
-      description: 'The worksite is established quickly and immediately produces resources.',
-      modifiers: []
-    },
-    success: {
-      description: 'The worksite is established.',
-      modifiers: []
-    },
-    failure: {
-      description: 'The workers make no progress.',
-      modifiers: []
-    },
-    criticalFailure: {
-      description: 'The work is abandoned and tensions rise.',
-      modifiers: [
-        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-      ]
-    }
-  },
+import { textBadge } from '../../types/OutcomeBadge';
+export const createWorksitePipeline = createActionPipeline('create-worksite', {
+  // No cost - always available
+  requirements: () => ({ met: true }),
 
   preview: {
     providedByInteraction: true,  // Map selection shows worksites in real-time
@@ -136,13 +18,12 @@ export const createWorksitePipeline: CheckPipeline = {
       // Future: could add resource costs here if needed
       return {
         resources: [],
-        specialEffects: [],
+        outcomeBadges: [],
         warnings: []
       };
     }
   },
 
-  // Execute function - handles outcome-specific logic
   execute: async (ctx) => {
     console.log('[CreateWorksite] Execute called with outcome:', ctx.outcome);
     console.log('[CreateWorksite] Resolution data:', JSON.stringify(ctx.resolutionData, null, 2));
@@ -231,43 +112,4 @@ export const createWorksitePipeline: CheckPipeline = {
         return { success: false, error: `Unexpected outcome: ${ctx.outcome}` };
     }
   }
-};
-
-/**
- * Get immediate production from a worksite type on specific terrain
- * Used for critical success bonus
- */
-function getWorksiteProduction(worksiteType: string, terrain: string): Map<string, number> {
-  const normalizedTerrain = terrain.toLowerCase();
-  
-  switch (worksiteType) {
-    case 'Farmstead':
-      if (normalizedTerrain === 'plains') {
-        return new Map([['food', 2]]);
-      } else {
-        return new Map([['food', 1]]);
-      }
-      
-    case 'Logging Camp':
-      if (normalizedTerrain === 'forest') {
-        return new Map([['lumber', 2]]);
-      }
-      return new Map();
-      
-    case 'Quarry':
-      if (normalizedTerrain === 'hills' || normalizedTerrain === 'mountains') {
-        return new Map([['stone', 1]]);
-      }
-      return new Map();
-      
-    case 'Mine':
-    case 'Bog Mine':
-      if (normalizedTerrain === 'mountains' || normalizedTerrain === 'swamp') {
-        return new Map([['ore', 1]]);
-      }
-      return new Map();
-      
-    default:
-      return new Map();
-  }
-}
+});

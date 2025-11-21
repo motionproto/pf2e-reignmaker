@@ -32,18 +32,18 @@ export class OutfitArmyHandler extends BaseGameCommandHandler {
     const result = await resolver.outfitArmy(armyId, equipmentType, resolverOutcome, fallbackToGold);
     
     // Check if result is ResolveResult (legacy) and convert to PreparedCommand
-    if (result && 'success' in result && !('specialEffect' in result)) {
-      // Legacy ResolveResult - convert to PreparedCommand format
+    if (result && 'success' in result && !('outcomeBadge' in result)) {
+      // Legacy ResolveResult - convert to PreparedCommand format with outcomeBadge
       if (result.success) {
         const message = result.data?.message || 'Army outfitted';
         const isNegative = result.data?.grantedGold === true;
         
         return {
-          specialEffect: {
-            type: 'status',
-            message: message,
-            icon: isNegative ? 'fa-coins' : 'fa-shield-alt',
-            variant: isNegative ? 'neutral' : 'positive'
+          outcomeBadge: {
+            icon: isNegative ? 'fa-coins' : 'fa-shield-alt'
+            value: { type: 'static', amount: 0 },
+            suffix: message,
+            variant: isNegative ? 'info' : 'positive'
           },
           commit: async () => {
             // Already executed by resolver (legacy pattern)

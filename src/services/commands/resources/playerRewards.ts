@@ -10,7 +10,7 @@
 import { updateKingdom, getKingdomActor } from '../../../stores/KingdomStore';
 import { logger } from '../../../utils/Logger';
 import type { ResolveResult } from '../types';
-import type { PreparedCommand } from '../../../services/GameCommandsResolver';
+import type { PreparedCommand } from '../../../types/game-commands';
 
 /**
  * Choose And Gain Resource - Prompt player to select a resource and add it to kingdom
@@ -155,10 +155,10 @@ export async function giveActorGold(multiplier: number, settlementId: string): P
 
   // PHASE 2: RETURN - Preview data + commit function
   return {
-    specialEffect: {
-      type: 'resource',
-      message: `${characterName} collected ${goldAmount} gp from ${settlementName}`,
+    outcomeBadge: {
       icon: 'fa-coins',
+      template: `Collected {{value}} gp (${characterName} from ${settlementName})`,
+      value: { type: 'static', amount: goldAmount },
       variant: 'positive'
     },
     commit: async () => {

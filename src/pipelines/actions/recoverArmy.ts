@@ -1,22 +1,12 @@
 /**
- * Recover Army Action Pipeline
- *
- * Heal and restore damaged units.
- * Converted from data/player-actions/recover-army.json
- *
- * NOTE: Custom implementation handles army healing calculations
+ * recoverArmy Action Pipeline
+ * Data from: data/player-actions/recover-army.json
  */
 
-import type { CheckPipeline } from '../../types/CheckPipeline';
+import { createActionPipeline } from '../shared/createActionPipeline';
 
-export const recoverArmyPipeline: CheckPipeline = {
-  id: 'recover-army',
-  name: 'Recover Army',
-  description: 'Tend to wounded troops, restore morale, and replenish ranks after battle losses',
-  checkType: 'action',
-  category: 'military',
-
-  // Requirements: Must have at least one army
+import { textBadge } from '../../types/OutcomeBadge';
+export const recoverArmyPipeline = createActionPipeline('recover-army', {
   requirements: (kingdom) => {
     if (kingdom.armies.length === 0) {
       return {
@@ -27,15 +17,6 @@ export const recoverArmyPipeline: CheckPipeline = {
     return { met: true };
   },
 
-  skills: [
-    { skill: 'medicine', description: 'heal the wounded' },
-    { skill: 'performance', description: 'boost morale' },
-    { skill: 'religion', description: 'spiritual restoration' },
-    { skill: 'nature', description: 'natural remedies' },
-    { skill: 'crafting', description: 'repair equipment' }
-  ],
-
-  // Pre-roll: Select wounded army
   preRollInteractions: [
     {
       type: 'entity-selection',
@@ -45,30 +26,9 @@ export const recoverArmyPipeline: CheckPipeline = {
     }
   ],
 
-  outcomes: {
-    criticalSuccess: {
-      description: 'The troops recover completely.',
-      modifiers: [],
-      manualEffects: ['Army fully healed']
-    },
-    success: {
-      description: 'The troops recover.',
-      modifiers: [],
-      manualEffects: ['Army partially healed']
-    },
-    failure: {
-      description: 'The troops fail to recover.',
-      modifiers: []
-    },
-    criticalFailure: {
-      description: 'The recovery effort fails.',
-      modifiers: []
-    }
-  },
-
   preview: {
     calculate: (ctx) => {
-      const specialEffects = [];
+      const outcomeBadges = [];
 
       if (ctx.outcome === 'criticalSuccess') {
         specialEffects.push({
@@ -84,9 +44,7 @@ export const recoverArmyPipeline: CheckPipeline = {
         });
       }
 
-      return { resources: [], specialEffects, warnings: [] };
+      return { resources: [], outcomeBadges, warnings: [] };
     }
   }
-
-  // NOTE: Execution handled by custom implementation (army healing logic)
-};
+});

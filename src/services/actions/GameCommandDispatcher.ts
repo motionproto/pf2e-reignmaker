@@ -93,7 +93,7 @@ export class GameCommandDispatcher {
                     }
                     
                     const imprisonedModifierIndex = modifiers.findIndex(m => 
-                        m.resource === 'imprisoned' && (m.type === 'dice' || m.formula)
+                        m.resource === 'imprisonedUnrest' && (m.type === 'dice' || m.formula)
                     );
                     
                     if (imprisonedModifierIndex === -1) {

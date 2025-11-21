@@ -1,22 +1,14 @@
 /**
- * Establish Diplomatic Relations Action Pipeline
- *
- * Send envoys to improve your kingdom's standing with neighboring powers and influential organizations.
- * Converted from data/player-actions/establish-diplomatic-relations.json
+ * diplomaticMission Action Pipeline
+ * Data from: data/player-actions/diplomatic-mission.json
  */
 
-import type { CheckPipeline } from '../../types/CheckPipeline';
+import { createActionPipeline } from '../shared/createActionPipeline';
 import { factionService } from '../../services/factions';
-import type { Faction } from '../../models/Faction';
+import type { Faction } from '../../types/factions';
 
-export const establishDiplomaticRelationsPipeline: CheckPipeline = {
-  id: 'diplomatic-mission',
-  name: 'Diplomatic Mission',
-  description: 'Send envoys to improve your kingdom\'s standing with neighboring powers and influential organizations',
-  checkType: 'action',
-  category: 'foreign-affairs',
-
-  // Requirements: Must have at least one faction
+import { textBadge } from '../../types/OutcomeBadge';
+export const establishDiplomaticRelationsPipeline = createActionPipeline('diplomatic-mission', {
   requirements: (kingdom) => {
     if (!kingdom.factions || kingdom.factions.length === 0) {
       return {
@@ -27,11 +19,6 @@ export const establishDiplomaticRelationsPipeline: CheckPipeline = {
     return { met: true };
   },
 
-  /**
-   * Pre-roll interaction: Select faction for diplomatic mission
-   * NOTE: The filter function acts as the requirements check - if no factions
-   * exist, the action is unavailable.
-   */
   preRollInteractions: [
     {
       id: 'faction',
@@ -74,50 +61,11 @@ export const establishDiplomaticRelationsPipeline: CheckPipeline = {
     }
   ],
 
-  /**
-   * Skills - various approaches to diplomacy
-   */
-  skills: [
-    { skill: 'diplomacy', description: 'formal negotiations' },
-    { skill: 'society', description: 'cultural exchange' },
-    { skill: 'performance', description: 'diplomatic ceremonies' },
-    { skill: 'deception', description: 'strategic positioning' },
-    { skill: 'occultism', description: 'mystical bonds' },
-    { skill: 'religion', description: 'sacred alliances' }
-  ],
-
-  outcomes: {
-    criticalSuccess: {
-      description: 'The diplomatic mission is a resounding success',
-      modifiers: [
-        { type: 'static', resource: 'gold', value: -2, duration: 'immediate' }
-      ]
-    },
-    success: {
-      description: 'Relations improve',
-      modifiers: [
-        { type: 'static', resource: 'gold', value: -4, duration: 'immediate' }
-      ]
-    },
-    failure: {
-      description: 'The diplomatic mission fails',
-      modifiers: [
-        { type: 'static', resource: 'gold', value: -2, duration: 'immediate' }
-      ]
-    },
-    criticalFailure: {
-      description: 'Your diplomats offend the faction',
-      modifiers: [
-        { type: 'static', resource: 'gold', value: -4, duration: 'immediate' }
-      ]
-    }
-  },
-
   preview: {
     // Custom format to avoid duplicate gold display
     // (Resources are already shown in Outcome section, only show attitude changes here)
     format: (preview) => {
-      return preview.specialEffects; // Only return special effects, skip resources
+      return preview.outcomeBadges; // Only return special effects, skip resources
     },
     
     calculate: async (ctx) => {
@@ -125,7 +73,7 @@ export const establishDiplomaticRelationsPipeline: CheckPipeline = {
       if (!factionId) {
         return {
           resources: [],
-          specialEffects: [],
+          outcomeBadges: [],
           warnings: ['No faction selected']
         };
       }
@@ -134,7 +82,7 @@ export const establishDiplomaticRelationsPipeline: CheckPipeline = {
       if (!faction) {
         return {
           resources: [],
-          specialEffects: [],
+          outcomeBadges: [],
           warnings: ['Faction not found']
         };
       }
@@ -300,4 +248,4 @@ export const establishDiplomaticRelationsPipeline: CheckPipeline = {
 
     return { success: true };
   }
-};
+});

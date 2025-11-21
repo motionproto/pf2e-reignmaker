@@ -7,7 +7,7 @@
  */
 
 import type { ResourceType } from './CheckPipeline';
-import type { UnifiedOutcomeBadge, LegacyOutcomeBadge } from './OutcomeBadge';
+import type { UnifiedOutcomeBadge } from './OutcomeBadge';
 
 /**
  * Resource change preview
@@ -28,16 +28,6 @@ export interface EntityOperation {
 }
 
 /**
- * Special effect (formatted for display)
- */
-export interface SpecialEffect {
-  type: 'resource' | 'entity' | 'status';
-  message: string;
-  icon?: string;
-  variant: 'positive' | 'negative' | 'neutral';
-}
-
-/**
  * Preview data structure
  */
 export interface PreviewData {
@@ -47,12 +37,8 @@ export interface PreviewData {
   // Entity operations
   entities?: EntityOperation[];
 
-  // Special effects (badges) - optional, most actions don't need this
-  specialEffects?: SpecialEffect[];
-
-  // Outcome badges - custom badges for specific outcome display (e.g., gold collection)
-  // Supports both unified format (with dice support) and legacy format (backward compatibility)
-  outcomeBadges?: Array<UnifiedOutcomeBadge | LegacyOutcomeBadge>;
+  // Outcome badges - custom badges for specific outcome display
+  outcomeBadges?: UnifiedOutcomeBadge[];
 
   // Warnings
   warnings?: string[];
@@ -65,7 +51,7 @@ export function createEmptyPreviewData(): PreviewData {
   return {
     resources: [],
     entities: [],
-    specialEffects: [],
+    outcomeBadges: [],
     warnings: []
   };
 }

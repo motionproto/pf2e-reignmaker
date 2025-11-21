@@ -1,36 +1,21 @@
-import type { CheckPipeline } from '../../types/CheckPipeline';
+/**
+ * harvestResources Action Pipeline
+ * Data from: data/player-actions/harvest-resources.json
+ */
+
+import { createActionPipeline } from '../shared/createActionPipeline';
 import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 import { applyResourceChanges } from '../shared/InlineActionHelpers';
-import ResourceChoiceSelector from '../../view/kingdom/components/OutcomeDisplay/components/ResourceChoiceSelector.svelte';
 
-/**
- * Harvest Resources - Choose resource type after seeing outcome
- * 
- * Post-roll interaction: User chooses resource type inline (before Apply)
- * - Critical Success: +2 of chosen resource
- * - Success: +1 of chosen resource
- * - Failure: Nothing
- * - Critical Failure: -1 gold
- */
-export const harvestResourcesPipeline: CheckPipeline = {
-  id: 'harvest-resources',
-  name: 'Harvest Resources',
-  description: 'Extract natural resources from your territory to stockpile materials.',
-  checkType: 'action',
-  category: 'resource-management',
-  
-  skills: [
-    { skill: 'nature', description: 'natural harvesting' },
-    { skill: 'survival', description: 'efficient extraction' },
-    { skill: 'crafting', description: 'process materials' }
-  ],
+export const harvestResourcesPipeline = createActionPipeline('harvest-resources', {
+  // No cost - always available. Requires worksite with resources (handled by component)
+  requirements: () => ({ met: true }),
 
-  // Post-roll: Select resource inline (BEFORE Apply button, shown in outcome display)
   postRollInteractions: [
     {
       type: 'configuration',
       id: 'resourceSelection',
-      component: ResourceChoiceSelector,  // Custom Svelte component
+      component: 'ResourceChoiceSelector',  // Resolved via ComponentRegistry
       // Only show for successful harvests
       condition: (ctx) => {
         return ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess';
@@ -57,35 +42,13 @@ export const harvestResourcesPipeline: CheckPipeline = {
       }
     }
   ],
-  
-  outcomes: {
-    criticalSuccess: {
-      description: 'The harvest is exceptional.',
-      modifiers: []
-    },
-    success: {
-      description: 'The harvest is good.',
-      modifiers: []
-    },
-    failure: {
-      description: 'The harvest yields nothing.',
-      modifiers: []
-    },
-    criticalFailure: {
-      description: 'Damaged equipment and wasted effort.',
-      modifiers: [
-        { type: 'static', resource: 'gold', value: -1 }
-      ]
-    }
-  },
-  
+
   preview: {
     calculate: async (ctx) => ({
       resources: []  // Component will show resource options, no preview needed
     })
   },
 
-  // Execute function - explicitly handles ALL outcomes
   execute: async (ctx) => {
     switch (ctx.outcome) {
       case 'criticalSuccess':
@@ -109,4 +72,4 @@ export const harvestResourcesPipeline: CheckPipeline = {
         return { success: false, error: `Unexpected outcome: ${ctx.outcome}` };
     }
   }
-};
+});

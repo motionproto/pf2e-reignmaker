@@ -4,29 +4,31 @@
  * Types for the prepare/commit pattern used in game command execution.
  */
 
-import type { SpecialEffect } from './special-effects';
+import type { UnifiedOutcomeBadge } from './OutcomeBadge';
 
 /**
  * PreparedCommand - Result of preparing a game command
  * 
  * The prepare/commit pattern allows game commands to:
- * 1. Generate a preview message (specialEffect) shown before Apply
+ * 1. Generate a preview badge (outcomeBadge) shown before Apply
  * 2. Defer execution until user clicks Apply (commit function)
  * 
  * This prevents premature state changes and allows user review.
  */
 export interface PreparedCommand {
   /**
-   * Special effect to display in preview
+   * Outcome badge to display in preview
    * Shows user what will happen when they click Apply
+   * Uses UnifiedOutcomeBadge format for consistency with other badges
    */
-  specialEffect: SpecialEffect;
+  outcomeBadge: UnifiedOutcomeBadge;
   
   /**
    * Commit function - executes when user clicks Apply
    * Should apply state changes to kingdom
    */
   commit: () => Promise<void>;
+  
 }
 
 /**

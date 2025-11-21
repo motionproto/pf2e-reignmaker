@@ -1,30 +1,15 @@
 /**
- * Infiltration Action Pipeline
- *
- * Gather intelligence through espionage.
- * Converted from data/player-actions/infiltration.json
+ * infiltration Action Pipeline
+ * Data from: data/player-actions/infiltration.json
  */
 
-import type { CheckPipeline } from '../../types/CheckPipeline';
-import { adjustFactionAttitudeExecution } from '../../execution/factions/adjustFactionAttitude';
+import { createActionPipeline } from '../shared/createActionPipeline';
 
-export const infiltrationPipeline: CheckPipeline = {
-  id: 'infiltration',
-  name: 'Infiltration',
-  description: 'Deploy spies and agents to gather intelligence on rival kingdoms or potential threats',
-  checkType: 'action',
-  category: 'foreign-affairs',
+import { textBadge } from '../../types/OutcomeBadge';
+export const infiltrationPipeline = createActionPipeline('infiltration', {
+  // No cost - always available
+  requirements: () => ({ met: true }),
 
-  skills: [
-    { skill: 'deception', description: 'false identities' },
-    { skill: 'stealth', description: 'covert operations' },
-    { skill: 'thievery', description: 'steal secrets' },
-    { skill: 'society', description: 'social infiltration' },
-    { skill: 'arcana', description: 'magical espionage' },
-    { skill: 'acrobatics', description: 'daring infiltration' }
-  ],
-
-  // Pre-roll: Select target faction
   preRollInteractions: [
     {
       type: 'entity-selection',
@@ -34,7 +19,6 @@ export const infiltrationPipeline: CheckPipeline = {
     }
   ],
 
-  // Post-roll: Dice for gold effects
   postRollInteractions: [
     {
       type: 'dice',
@@ -52,29 +36,6 @@ export const infiltrationPipeline: CheckPipeline = {
     }
   ],
 
-  outcomes: {
-    criticalSuccess: {
-      description: 'Valuable intel is gathered.',
-      modifiers: [],
-      manualEffects: ['The GM should disclose sensitive information']
-    },
-    success: {
-      description: 'Intel is gathered.',
-      modifiers: [],
-      manualEffects: ['The GM should disclose sensitive information']
-    },
-    failure: {
-      description: 'The mission fails.',
-      modifiers: []
-    },
-    criticalFailure: {
-      description: 'Your spies are captured.',
-      modifiers: [
-        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-      ]
-    }
-  },
-
   preview: {
     calculate: (ctx) => {
       const resources = [];
@@ -88,22 +49,14 @@ export const infiltrationPipeline: CheckPipeline = {
         resources.push({ resource: 'unrest', value: 1 });
       }
 
-      const specialEffects = [];
+      const outcomeBadges = [];
       if (ctx.outcome === 'criticalSuccess' || ctx.outcome === 'success') {
-        specialEffects.push({
-          type: 'status' as const,
-          message: 'GM will disclose sensitive information',
-          variant: 'positive' as const
-        });
+        outcomeBadges.push(textBadge('GM will disclose sensitive information', 'fa-user-secret', 'positive'));
       } else if (ctx.outcome === 'criticalFailure') {
-        specialEffects.push({
-          type: 'status' as const,
-          message: `Relations worsen with ${ctx.metadata.targetFactionName || 'faction'}`,
-          variant: 'negative' as const
-        });
+        outcomeBadges.push(textBadge(`Relations worsen with ${ctx.metadata.targetFactionName || 'faction'}`, 'fa-frown', 'negative'));
       }
 
-      return { resources, specialEffects, warnings: [] };
+      return { resources, outcomeBadges, warnings: [] };
     }
   },
 
@@ -113,4 +66,4 @@ export const infiltrationPipeline: CheckPipeline = {
     }
     // Gold is applied via modifiers/dice
   }
-};
+});

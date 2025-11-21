@@ -1071,12 +1071,33 @@ Some gameplay mechanics cannot be automated and require manual intervention:
 
 ## Prepare/Commit Pattern
 
-**Status:** Active (2025-11-11)  
+**Status:** Active (2025-11-21)  
 **Purpose:** Enable preview of game command effects before execution
 
 ### Overview
 
-The Prepare/Commit pattern allows game commands to display special effect badges (like "Collected 5 gp" or "Recruited Iron Guard") in the preview BEFORE the user clicks "Apply Result". This ensures users see exactly what will happen before committing to state changes.
+The Prepare/Commit pattern allows game commands to display outcome badges (like "Collected 50 gp" or "Recruited Iron Guard") in the preview BEFORE the user clicks "Apply Result". This ensures users see exactly what will happen before committing to state changes.
+
+### PreparedCommand Interface
+
+```typescript
+// src/types/game-commands.ts
+interface PreparedCommand {
+  outcomeBadge: UnifiedOutcomeBadge;  // Preview badge for OutcomeDisplay
+  commit: () => Promise<void>;         // Execute on "Apply Result"
+}
+
+// UnifiedOutcomeBadge from src/types/OutcomeBadge.ts
+interface UnifiedOutcomeBadge {
+  icon: string;           // FontAwesome class (e.g., 'fa-coins')
+  prefix?: string;        // Text before value (e.g., 'Collected')
+  value: BadgeValue;      // Static number or dice formula
+  suffix?: string;        // Text after value (e.g., 'gp from Castle')
+  variant?: 'positive' | 'negative' | 'neutral';
+}
+```
+
+**Note:** The legacy `specialEffect` property is deprecated. Use `outcomeBadge` for all new code.
 
 **Key Benefits:**
 - ✅ Preview accuracy - What you see is what you get
@@ -1103,7 +1124,7 @@ The Prepare/Commit pattern allows game commands to display special effect badges
 ```typescript
 /**
  * Your Command - Brief description
- * REFACTORED: Uses prepare/commit pattern
+ * Uses prepare/commit pattern with UnifiedOutcomeBadge
  */
 async yourCommand(param1: string): Promise<PreparedCommand> {
   logger.info(`🎯 [yourCommand] PREPARING with ${param1}`);
@@ -1119,12 +1140,13 @@ async yourCommand(param1: string): Promise<PreparedCommand> {
   
   logger.info(`🎯 [yourCommand] PREPARED: Will apply ${capturedValue}`);
 
-  // PHASE 2: RETURN - Preview + commit closure
+  // PHASE 2: RETURN - Preview badge + commit closure
   return {
-    specialEffect: {
-      type: 'resource',
-      message: `Action completed: ${capturedValue}`,
+    outcomeBadge: {
       icon: 'fa-icon',
+      prefix: 'Action completed:',
+      value: { type: 'static', amount: capturedValue },
+      suffix: 'units',
       variant: 'positive'
     },
     commit: async () => {

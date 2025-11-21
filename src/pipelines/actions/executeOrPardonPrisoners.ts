@@ -1,25 +1,14 @@
 /**
- * Execute or Pardon Prisoners Action Pipeline
- *
- * Deal with imprisoned unrest through justice (execution or pardon).
- * Converted from data/player-actions/execute-or-pardon-prisoners.json
+ * executeOrPardonPrisoners Action Pipeline
+ * Data from: data/player-actions/execute-or-pardon-prisoners.json
  */
 
-import type { CheckPipeline } from '../../types/CheckPipeline';
-import type { UnifiedOutcomeBadge } from '../../types/OutcomeBadge';
-import { reduceImprisonedExecution } from '../../execution/unrest/reduceImprisoned';
+import { createActionPipeline } from '../shared/createActionPipeline';
 import { structuresService } from '../../services/structures';
+import { reduceImprisonedExecution } from '../../execution';
+import type { UnifiedOutcomeBadge } from '../../types/OutcomeBadge';
 
-export const executeOrPardonPrisonersPipeline: CheckPipeline = {
-  id: 'execute-or-pardon-prisoners',
-  name: 'Execute or Pardon Prisoners',
-  description: 'Pass judgment on those who have threatened the kingdom\'s stability, choosing between mercy and justice',
-  checkType: 'action',
-  category: 'uphold-stability',
-
-  /**
-   * Requirements: At least one settlement with imprisoned unrest and capacity
-   */
+export const executeOrPardonPrisonersPipeline = createActionPipeline('execute-or-pardon-prisoners', {
   requirements: (kingdom) => {
     const hasEligibleSettlement = kingdom.settlements?.some((s: any) => {
       const imprisonedUnrest = s.imprisonedUnrest || 0;
@@ -33,11 +22,6 @@ export const executeOrPardonPrisonersPipeline: CheckPipeline = {
     };
   },
 
-  /**
-   * Pre-roll interaction: Select settlement with imprisoned unrest
-   * NOTE: The filter function acts as the requirements check - if no settlements
-   * pass the filter, the action is unavailable.
-   */
   preRollInteractions: [
     {
       id: 'settlement',
@@ -70,88 +54,7 @@ export const executeOrPardonPrisonersPipeline: CheckPipeline = {
     }
   ],
 
-  /**
-   * Skills - includes conditional pardon skills
-   * Note: Pardon skills (diplomacy/religion/performance) are conditionally available
-   * based on tier 3+ justice structure, but we include them here for skill list display.
-   * The actual availability check happens in the UI.
-   */
-  skills: [
-    { skill: 'intimidation', description: 'harsh justice (execute)' },
-    { skill: 'society', description: 'legal proceedings (execute)' },
-    { skill: 'diplomacy', description: 'clemency (pardon)' },
-    { skill: 'religion', description: 'divine forgiveness (pardon)' },
-    { skill: 'performance', description: 'public ceremony (pardon)' }
-  ],
-
-  outcomes: {
-    criticalSuccess: {
-      description: 'The prison is emptied.',
-      modifiers: [
-        { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
-      ]
-    },
-    success: {
-      description: 'Justice is served.',
-      modifiers: []  // Dice modifier added in preview.calculate based on settlement
-    },
-    failure: {
-      description: 'The prisoners you choose are inconsequential.',
-      modifiers: []
-    },
-    criticalFailure: {
-      description: 'Your judgment causes outrage.',
-      modifiers: [
-        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-      ]
-    }
-  },
-
-  preview: {
-    calculate: async (ctx) => {
-      const settlementId = ctx.metadata?.settlement?.id;
-      const settlementName = ctx.metadata?.settlement?.name;
-      
-      if (!settlementId) {
-        return {
-          resources: [],
-          outcomeBadges: [],
-          warnings: ['No settlement selected']
-        };
-      }
-
-      const settlement = ctx.kingdom.settlements?.find((s: any) => s.id === settlementId);
-      const outcomeBadges: UnifiedOutcomeBadge[] = [];
-      
-      // Handle outcomes based on type
-      if (ctx.outcome === 'criticalSuccess') {
-        // Show outcome badge for all imprisoned cleared
-        const imprisonedCount = settlement?.imprisonedUnrest || 0;
-        outcomeBadges.push({
-          icon: 'fa-gavel',
-          prefix: 'Remove all',
-          value: { type: 'static', amount: imprisonedCount },
-          suffix: `imprisoned unrest from ${settlement?.name || settlementName || 'settlement'}`,
-          variant: 'positive'
-        });
-      } else if (ctx.outcome === 'success') {
-        // ✅ NEW: Show dice badge that user can click to roll
-        outcomeBadges.push({
-          icon: 'fa-gavel',
-          prefix: 'Remove',
-          value: { type: 'dice', formula: '1d4' },
-          suffix: `imprisoned unrest from ${settlement?.name || settlementName || 'settlement'}`,
-          variant: 'positive'
-        });
-      }
-
-      return {
-        resources: [],  // Modifiers handle resource changes automatically
-        outcomeBadges,
-        warnings: []
-      };
-    }
-  },
+  // Preview handled by typed modifiers system (auto-converted to badges in OutcomeBadges.svelte)
 
   execute: async (ctx) => {
     console.log('🎯 [executeOrPardonPrisoners] Execute function called');
@@ -187,7 +90,9 @@ export const executeOrPardonPrisonersPipeline: CheckPipeline = {
       return { success: true, message: `All imprisoned unrest cleared in ${settlement.name}` };
     } else if (ctx.outcome === 'success') {
       // Get rolled value from resolutionData (rolled by DiceRoller component)
-      const imprisonedModifier = ctx.resolutionData?.numericModifiers?.find((m: any) => m.resource === 'imprisonedUnrest');
+      const imprisonedModifier = ctx.resolutionData?.numericModifiers?.find((m: any) => 
+        m.resource === 'imprisonedUnrest'
+      );
       const amount = Math.abs(imprisonedModifier?.value || 0);  // Use absolute value since it's a reduction
 
       if (amount > 0) {
@@ -209,4 +114,4 @@ export const executeOrPardonPrisonersPipeline: CheckPipeline = {
 
     return { success: true };
   }
-};
+});

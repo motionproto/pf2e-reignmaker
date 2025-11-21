@@ -1,22 +1,12 @@
 /**
- * Request Military Aid Action Pipeline
- *
- * Call for allied troops in battle.
- * Converted from data/player-actions/request-military-aid.json
+ * requestMilitaryAid Action Pipeline
+ * Data from: data/player-actions/request-military-aid.json
  */
 
-import type { CheckPipeline } from '../../types/CheckPipeline';
-import { factionService } from '../../services/factions';
-import type { Faction } from '../../models/Faction';
+import { createActionPipeline } from '../shared/createActionPipeline';
 
-export const requestMilitaryAidPipeline: CheckPipeline = {
-  id: 'request-military-aid',
-  name: 'Request Military Aid',
-  description: 'Call upon allies to provide troops or military support during conflicts',
-  checkType: 'action',
-  category: 'foreign-affairs',
-
-  // Requirements: Must have at least one Friendly or Helpful faction
+import { textBadge } from '../../types/OutcomeBadge';
+export const requestMilitaryAidPipeline = createActionPipeline('request-military-aid', {
   requirements: (kingdom) => {
     const hasAllies = kingdom.factions?.some(f => 
       f.attitude === 'Friendly' || f.attitude === 'Helpful'
@@ -32,10 +22,6 @@ export const requestMilitaryAidPipeline: CheckPipeline = {
     return { met: true };
   },
 
-  /**
-   * Pre-roll interaction: Select friendly/helpful faction
-   * Requirements: Diplomatic relations at least friendly
-   */
   preRollInteractions: [
     {
       id: 'faction',
@@ -56,42 +42,13 @@ export const requestMilitaryAidPipeline: CheckPipeline = {
     }
   ],
 
-  /**
-   * Skills - various approaches to requesting military support
-   */
-  skills: [
-    { skill: 'diplomacy', description: 'alliance obligations' },
-    { skill: 'intimidation', description: 'pressure tactics' },
-    { skill: 'society', description: 'mutual defense' },
-    { skill: 'arcana', description: 'magical pacts' }
-  ],
-
-  outcomes: {
-    criticalSuccess: {
-      description: 'Your ally sends elite reinforcements to support your cause',
-      modifiers: []
-    },
-    success: {
-      description: 'Your ally provides military equipment and supplies',
-      modifiers: []
-    },
-    failure: {
-      description: 'Your ally cannot help at this time',
-      modifiers: []
-    },
-    criticalFailure: {
-      description: 'Your ally is offended by the request',
-      modifiers: []
-    }
-  },
-
   preview: {
     calculate: async (ctx) => {
       const factionId = ctx.metadata?.faction?.id || ctx.metadata?.factionId;
       if (!factionId) {
         return {
           resources: [],
-          specialEffects: [],
+          outcomeBadges: [],
           warnings: ['No faction selected']
         };
       }
@@ -100,7 +57,7 @@ export const requestMilitaryAidPipeline: CheckPipeline = {
       if (!faction) {
         return {
           resources: [],
-          specialEffects: [],
+          outcomeBadges: [],
           warnings: ['Faction not found']
         };
       }
@@ -191,4 +148,4 @@ export const requestMilitaryAidPipeline: CheckPipeline = {
     // Critical success and success are handled by custom resolution
     return { success: true };
   }
-};
+});

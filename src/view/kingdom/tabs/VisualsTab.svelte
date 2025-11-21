@@ -2,6 +2,10 @@
   // Visual design system showcase
   // Displays surface gradient swatches for design reference
   import Button from '../components/baseComponents/Button.svelte';
+  import Notification from '../components/baseComponents/Notification.svelte';
+  import OutcomeBadges from '../components/OutcomeDisplay/components/OutcomeBadges.svelte';
+  import { textBadge, valueBadge, diceBadge, badge } from '../../../types/OutcomeBadge';
+  import type { UnifiedOutcomeBadge } from '../../../types/OutcomeBadge';
   
   interface Swatch {
     name: string;
@@ -14,8 +18,84 @@
     swatches: Swatch[];
   }
   
+  // Collapsible section state
+  let expandedSections: Record<string, boolean> = {
+    textColors: true,
+    choiceButtons: true,
+    standardButtons: true,
+    notifications: true,
+    outcomeBadges: true
+  };
+  
+  function toggleSection(section: string) {
+    expandedSections[section] = !expandedSections[section];
+  }
+  
   // Choice button state example
   let selectedChoice = 'option-2';
+  
+  // Track dice rolls for demo - use key to force remount
+  let demoResolvedDice = new Map<number | string, number>();
+  let diceBadgeKey = 0;
+  
+  // Outcome badge examples
+  const staticBadges: UnifiedOutcomeBadge[] = [
+    // Default variant (gray) - no variant specified or 'default'
+    textBadge('Action completed', 'fa-check', 'default'),
+    valueBadge('Costs {{value}} RP', 'fa-scroll', 2, 'default'),
+    // Positive variant (green)
+    textBadge('GM will disclose sensitive information', 'fa-user-secret', 'positive'),
+    valueBadge('Receive {{value}} gold', 'fa-coins', 50, 'positive'),
+    // Negative variant (red)
+    textBadge('Army arrives with penalties', 'fa-exclamation-triangle', 'negative'),
+    valueBadge('Lose {{value}} lumber', 'fa-tree', 10, 'negative'),
+    // Info variant (blue)
+    textBadge('Kingdom status unchanged', 'fa-info-circle', 'info'),
+    valueBadge('Note: {{value}} days remaining', 'fa-clock', 5, 'info'),
+    // With context
+    badge({ 
+      icon: 'fa-building', 
+      template: 'Founded {{name}} settlement', 
+      context: { name: 'Tuskwater' },
+      variant: 'positive'
+    }),
+    badge({
+      icon: 'fa-map-marker-alt',
+      template: 'Explored {{hex}} hex',
+      context: { hex: 'A4' },
+      variant: 'info'
+    }),
+  ];
+  
+  // Use $: to recreate badges when key changes (for reset)
+  $: diceBadges = diceBadgeKey >= 0 ? [
+    diceBadge('Gain {{value}} food', 'fa-wheat-awn', '1d6', 'positive'),
+    diceBadge('Lose {{value}} gold', 'fa-coins', '2d4', 'negative'),
+    badge({
+      icon: 'fa-gavel',
+      template: 'Remove {{value}} imprisoned unrest',
+      value: { formula: '1d4' },
+      variant: 'positive'
+    }),
+    badge({
+      icon: 'fa-handshake',
+      template: '{{faction}} sends {{value}} troops',
+      value: { formula: '1d6+2' },
+      context: { faction: 'Swordlords' },
+      variant: 'positive'
+    }),
+  ] : [];
+  
+  function handleDemoRoll(event: CustomEvent) {
+    const { badgeIndex, result } = event.detail;
+    demoResolvedDice.set(badgeIndex, result);
+    demoResolvedDice = demoResolvedDice;
+  }
+  
+  function resetDemoRolls() {
+    demoResolvedDice = new Map();
+    diceBadgeKey += 1; // Force component remount
+  }
   
   function handleChoiceClick(choice: string) {
     selectedChoice = choice;
@@ -199,85 +279,85 @@
     {
       title: 'Primary (Crimson)',
       swatches: [
-        { name: '', variable: null, description: 'Empty slot' },
+        { name: 'Lowest', variable: '--surface-primary-lowest', description: 'Deepest' },
         { name: 'Lower', variable: '--surface-primary-lower', description: 'Barely perceptible' },
         { name: 'Low', variable: '--surface-primary-low', description: 'Subtle' },
         { name: 'Primary', variable: '--surface-primary', description: 'Default' },
         { name: 'High', variable: '--surface-primary-high', description: 'More prominent' },
-        { name: 'Higher', variable: '--surface-primary-higher', description: 'Most prominent' },
-        { name: '', variable: null, description: 'Empty slot' }
+        { name: 'Higher', variable: '--surface-primary-higher', description: 'Very prominent' },
+        { name: 'Highest', variable: '--surface-primary-highest', description: 'Most prominent' }
       ]
     },
     {
       title: 'Success (Green)',
       swatches: [
-        { name: '', variable: null, description: 'Empty slot' },
+        { name: 'Lowest', variable: '--surface-success-lowest', description: 'Deepest' },
         { name: 'Lower', variable: '--surface-success-lower', description: 'Barely perceptible' },
         { name: 'Low', variable: '--surface-success-low', description: 'Subtle' },
         { name: 'Success', variable: '--surface-success', description: 'Default' },
         { name: 'High', variable: '--surface-success-high', description: 'More prominent' },
-        { name: 'Higher', variable: '--surface-success-higher', description: 'Most prominent' },
-        { name: '', variable: null, description: 'Empty slot' }
+        { name: 'Higher', variable: '--surface-success-higher', description: 'Very prominent' },
+        { name: 'Highest', variable: '--surface-success-highest', description: 'Most prominent' }
       ]
     },
     {
       title: 'Warning (Amber)',
       swatches: [
-        { name: '', variable: null, description: 'Empty slot' },
+        { name: 'Lowest', variable: '--surface-warning-lowest', description: 'Deepest' },
         { name: 'Lower', variable: '--surface-warning-lower', description: 'Barely perceptible' },
         { name: 'Low', variable: '--surface-warning-low', description: 'Subtle' },
         { name: 'Warning', variable: '--surface-warning', description: 'Default' },
         { name: 'High', variable: '--surface-warning-high', description: 'More prominent' },
-        { name: 'Higher', variable: '--surface-warning-higher', description: 'Most prominent' },
-        { name: '', variable: null, description: 'Empty slot' }
+        { name: 'Higher', variable: '--surface-warning-higher', description: 'Very prominent' },
+        { name: 'Highest', variable: '--surface-warning-highest', description: 'Most prominent' }
       ]
     },
     {
       title: 'Accent (Amber)',
       swatches: [
-        { name: '', variable: null, description: 'Empty slot' },
+        { name: 'Lowest', variable: '--surface-accent-lowest', description: 'Deepest' },
         { name: 'Lower', variable: '--surface-accent-lower', description: 'Barely perceptible' },
         { name: 'Low', variable: '--surface-accent-low', description: 'Subtle' },
         { name: 'Accent', variable: '--surface-accent', description: 'Default' },
         { name: 'High', variable: '--surface-accent-high', description: 'More prominent' },
-        { name: 'Higher', variable: '--surface-accent-higher', description: 'Most prominent' },
-        { name: '', variable: null, description: 'Empty slot' }
+        { name: 'Higher', variable: '--surface-accent-higher', description: 'Very prominent' },
+        { name: 'Highest', variable: '--surface-accent-highest', description: 'Most prominent' }
       ]
     },
     {
       title: 'Info (Blue)',
       swatches: [
-        { name: '', variable: null, description: 'Empty slot' },
+        { name: 'Lowest', variable: '--surface-info-lowest', description: 'Deepest' },
         { name: 'Lower', variable: '--surface-info-lower', description: 'Barely perceptible' },
         { name: 'Low', variable: '--surface-info-low', description: 'Subtle' },
         { name: 'Info', variable: '--surface-info', description: 'Default' },
         { name: 'High', variable: '--surface-info-high', description: 'More prominent' },
-        { name: 'Higher', variable: '--surface-info-higher', description: 'Most prominent' },
-        { name: '', variable: null, description: 'Empty slot' }
+        { name: 'Higher', variable: '--surface-info-higher', description: 'Very prominent' },
+        { name: 'Highest', variable: '--surface-info-highest', description: 'Most prominent' }
       ]
     },
     {
       title: 'Special (Purple)',
       swatches: [
-        { name: '', variable: null, description: 'Empty slot' },
+        { name: 'Lowest', variable: '--surface-special-lowest', description: 'Deepest' },
         { name: 'Lower', variable: '--surface-special-lower', description: 'Barely perceptible' },
         { name: 'Low', variable: '--surface-special-low', description: 'Subtle' },
         { name: 'Special', variable: '--surface-special', description: 'Default' },
         { name: 'High', variable: '--surface-special-high', description: 'More prominent' },
-        { name: 'Higher', variable: '--surface-special-higher', description: 'Most prominent' },
-        { name: '', variable: null, description: 'Empty slot' }
+        { name: 'Higher', variable: '--surface-special-higher', description: 'Very prominent' },
+        { name: 'Highest', variable: '--surface-special-highest', description: 'Most prominent' }
       ]
     },
     {
       title: 'Danger (Bright Red)',
       swatches: [
-        { name: '', variable: null, description: 'Empty slot' },
+        { name: 'Lowest', variable: '--surface-danger-lowest', description: 'Deepest' },
         { name: 'Lower', variable: '--surface-danger-lower', description: 'Barely perceptible' },
         { name: 'Low', variable: '--surface-danger-low', description: 'Subtle' },
         { name: 'Danger', variable: '--surface-danger', description: 'Default' },
         { name: 'High', variable: '--surface-danger-high', description: 'More prominent' },
-        { name: 'Higher', variable: '--surface-danger-higher', description: 'Most prominent' },
-        { name: '', variable: null, description: 'Empty slot' }
+        { name: 'Higher', variable: '--surface-danger-higher', description: 'Very prominent' },
+        { name: 'Highest', variable: '--surface-danger-highest', description: 'Most prominent' }
       ]
     },
     {
@@ -338,7 +418,11 @@
   
   <!-- Text Colors Section -->
   <div class="choice-button-demo">
-    <h2 class="group-title">Text Colors</h2>
+    <button class="collapsible-header" on:click={() => toggleSection('textColors')}>
+      <h2 class="group-title">Text Colors</h2>
+      <i class="fas fa-chevron-down chevron" class:collapsed={!expandedSections.textColors}></i>
+    </button>
+    {#if expandedSections.textColors}
     <p class="demo-description">
       Typography color system for consistent text hierarchy and states.
     </p>
@@ -365,11 +449,16 @@
         </div>
       </div>
     {/each}
+    {/if}
   </div>
   
   <!-- Choice Button Visual States Example -->
   <div class="choice-button-demo">
-    <h2 class="group-title">Button-Based Choice Sets</h2>
+    <button class="collapsible-header" on:click={() => toggleSection('choiceButtons')}>
+      <h2 class="group-title">Button-Based Choice Sets</h2>
+      <i class="fas fa-chevron-down chevron" class:collapsed={!expandedSections.choiceButtons}></i>
+    </button>
+    {#if expandedSections.choiceButtons}
     <p class="demo-description">
       Interactive example showing all 4 visual states. Click buttons to see selection state.
     </p>
@@ -450,11 +539,16 @@
         </div>
       </div>
     </div>
+    {/if}
   </div>
   
   <!-- Standard Button Component Showcase -->
   <div class="choice-button-demo">
-    <h2 class="group-title">Standard Button Component</h2>
+    <button class="collapsible-header" on:click={() => toggleSection('standardButtons')}>
+      <h2 class="group-title">Standard Button Component</h2>
+      <i class="fas fa-chevron-down chevron" class:collapsed={!expandedSections.standardButtons}></i>
+    </button>
+    {#if expandedSections.standardButtons}
     <p class="demo-description">
       Reusable button component with multiple variants and sizes. Import from <code>baseComponents/Button.svelte</code>
     </p>
@@ -544,6 +638,183 @@
         </div>
       </div>
     </div>
+    {/if}
+  </div>
+  <!-- Notification Components Section -->
+  <div class="choice-button-demo">
+    <button class="collapsible-header" on:click={() => toggleSection('notifications')}>
+      <h2 class="group-title">Notification Components</h2>
+      <i class="fas fa-chevron-down chevron" class:collapsed={!expandedSections.notifications}></i>
+    </button>
+    {#if expandedSections.notifications}
+    <p class="demo-description">
+      Contextual feedback notifications with multiple variants. Import from <code>baseComponents/Notification.svelte</code>
+    </p>
+    
+    <div class="demo-section">
+      <h3 class="demo-subtitle">Variants</h3>
+      <div class="notification-showcase">
+        <Notification
+          variant="info"
+          title="Information"
+          description="This is an informational message to keep you updated."
+        />
+        
+        <Notification
+          variant="success"
+          title="Success"
+          description="Your action was completed successfully."
+        />
+        
+        <Notification
+          variant="warning"
+          title="Warning"
+          description="Caution: This action may have unintended consequences."
+        />
+        
+        <Notification
+          variant="danger"
+          title="Danger"
+          description="Critical error: Please address this issue immediately."
+        />
+      </div>
+    </div>
+    
+    <div class="demo-section">
+      <h3 class="demo-subtitle">With Impact Text</h3>
+      <div class="notification-showcase">
+        <Notification
+          variant="warning"
+          title="Food Shortage"
+          description="Your kingdom is running low on food supplies."
+          impact="-2 to Economy until resolved"
+        />
+      </div>
+    </div>
+    
+    <div class="demo-section">
+      <h3 class="demo-subtitle">With Action Button</h3>
+      <div class="notification-showcase">
+        <Notification
+          variant="info"
+          title="Settlement Unmapped"
+          description="This settlement has not been placed on the map yet."
+          actionText="Place on Map"
+          actionIcon="fas fa-map-marker-alt"
+          onAction={() => {}}
+        />
+        
+        <Notification
+          variant="success"
+          title="Trade Agreement Available"
+          description="A neighboring faction has offered a trade deal."
+          actionText="View Details"
+          actionIcon="fas fa-handshake"
+          onAction={() => {}}
+          actionInline={true}
+        />
+      </div>
+    </div>
+    
+    <div class="demo-section">
+      <h3 class="demo-subtitle">Compact Size & Emphasis</h3>
+      <div class="notification-showcase">
+        <Notification
+          variant="info"
+          title="Compact Notification"
+          description="A smaller notification for tighter spaces."
+          size="compact"
+        />
+        
+        <Notification
+          variant="danger"
+          title="Emphasized Alert"
+          description="Important notifications can have emphasis styling."
+          emphasis={true}
+        />
+      </div>
+    </div>
+    
+    <div class="demo-section">
+      <h3 class="demo-subtitle">Dismissible</h3>
+      <div class="notification-showcase">
+        <Notification
+          variant="success"
+          title="Dismissible Notification"
+          description="Click the X to dismiss this notification."
+          dismissible={true}
+        />
+      </div>
+    </div>
+    {/if}
+  </div>
+  
+  <!-- Outcome Badges Section -->
+  <div class="choice-button-demo">
+    <button class="collapsible-header" on:click={() => toggleSection('outcomeBadges')}>
+      <h2 class="group-title">Outcome Badges</h2>
+      <i class="fas fa-chevron-down chevron" class:collapsed={!expandedSections.outcomeBadges}></i>
+    </button>
+    {#if expandedSections.outcomeBadges}
+    <p class="demo-description">
+      New template-based badge system using <code>{"{{value}}"}</code> placeholders. 
+      Supports static values, dice rolls, and context substitution.
+    </p>
+    
+    <div class="demo-section">
+      <h3 class="demo-subtitle">Static Badges (Text & Values)</h3>
+      <OutcomeBadges 
+        outcomeBadges={staticBadges}
+      />
+    </div>
+    
+    <div class="demo-section">
+      <h3 class="demo-subtitle">Interactive Dice Badges (Click to Roll)</h3>
+      <div class="dice-demo-controls">
+        <Button variant="small_secondary" on:click={resetDemoRolls}>Reset Rolls</Button>
+      </div>
+      {#key diceBadgeKey}
+        <OutcomeBadges 
+          outcomeBadges={diceBadges}
+          resolvedDice={demoResolvedDice}
+          on:badgeRoll={handleDemoRoll}
+        />
+      {/key}
+    </div>
+    
+    <div class="demo-section">
+      <h3 class="demo-subtitle">Badge Template Syntax</h3>
+      <div class="state-reference">
+        <div class="state-item">
+          <div class="state-label">Text Only</div>
+          <div class="state-details">
+            <code>textBadge('Message', 'fa-icon', 'variant')</code>
+          </div>
+        </div>
+        
+        <div class="state-item">
+          <div class="state-label">Static Value</div>
+          <div class="state-details">
+            <code>valueBadge('Gain {"{{value}}"} gold', 'fa-coins', 50)</code>
+          </div>
+        </div>
+        
+        <div class="state-item">
+          <div class="state-label">Dice Roll</div>
+          <div class="state-details">
+            <code>diceBadge('Roll {"{{value}}"} damage', 'fa-dice', '1d6')</code>
+          </div>
+        </div>
+        
+        <div class="state-item">
+          <div class="state-label">With Context</div>
+          <div class="state-details">
+            <code>badge({"{ template: '{{name}} founded', context: { name: 'Tuskwater' } }"})</code>
+          </div>
+        </div>
+      </div>
+    </div>
+    {/if}
   </div>
 </div>
 
@@ -558,7 +829,12 @@
     border-radius: var(--radius-lg);
     display: flex;
     flex-direction: column;
-    gap: var(--space-24);
+    gap: var(--space-16);
+  }
+  
+  /* No gap between collapsible sections */
+  .choice-button-demo + .choice-button-demo {
+    margin-top: calc(-1 * var(--space-12));
   }
   
   .swatch-group {
@@ -572,6 +848,32 @@
     font-weight: var(--font-weight-semibold);
     color: var(--text-secondary);
     margin: 0;
+  }
+  
+  .collapsible-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: var(--space-4) 0;
+    cursor: pointer;
+    text-align: left;
+  }
+  
+  .collapsible-header:hover .group-title {
+    color: var(--text-primary);
+  }
+  
+  .chevron {
+    color: var(--text-tertiary);
+    font-size: var(--font-sm);
+    transition: transform 0.2s ease;
+  }
+  
+  .chevron.collapsed {
+    transform: rotate(-90deg);
   }
   
   .swatches-grid {
@@ -635,9 +937,12 @@
   .choice-button-demo {
     display: flex;
     flex-direction: column;
-    gap: var(--space-16);
-    padding-top: var(--space-24);
+    padding: var(--space-4) 0;
     border-top: 1px solid var(--border-subtle);
+  }
+  
+  .choice-button-demo > *:not(.collapsible-header) {
+    margin-top: var(--space-12);
   }
   
   .demo-description {
@@ -649,7 +954,7 @@
   .demo-section {
     display: flex;
     flex-direction: column;
-    gap: var(--space-12);
+    gap: var(--space-8);
   }
   
   .demo-subtitle {
@@ -811,6 +1116,17 @@
     padding: var(--space-2) var(--space-4);
     border-radius: var(--radius-sm);
     font-family: 'Courier New', monospace;
+  }
+  
+  .dice-demo-controls {
+    margin-bottom: var(--space-12);
+  }
+  
+  /* Notification Showcase */
+  .notification-showcase {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
   }
   
   /* Text Colors Grid */

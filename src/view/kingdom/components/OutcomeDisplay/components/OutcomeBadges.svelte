@@ -3,29 +3,27 @@
   import { formatStateChangeLabel, formatStateChangeValue, getChangeClass, rollDiceFormula } from '../../../../../services/resolution';
   import { getResourceIcon } from '../../../../kingdom/utils/presentation';
   import type { SpecialEffect } from '../../../../../types/special-effects';
-  import type { UnifiedOutcomeBadge, LegacyOutcomeBadge } from '../../../../../types/OutcomeBadge';
-  import { isLegacyBadge, isUnifiedBadge, convertLegacyBadge } from '../../../../../types/OutcomeBadge';
+  import type { UnifiedOutcomeBadge, LegacyOutcomeBadge, TemplateSegment } from '../../../../../types/OutcomeBadge';
+  import { isLegacyBadge, isUnifiedBadge, convertLegacyBadge, renderBadgeTemplate, renderBadgeToString } from '../../../../../types/OutcomeBadge';
   
   export let stateChanges: Record<string, any> | undefined = undefined;
   export let modifiers: any[] | undefined = undefined;
   export let resolvedDice: Map<number | string, number> = new Map();
   export let manualEffects: string[] | undefined = undefined;
-  export let automatedEffects: string[] | undefined = undefined;  // Automated effects (already applied)
+  export let automatedEffects: string[] | undefined = undefined;
   export let outcome: string | undefined = undefined;
-  export let hideResources: string[] = []; // Resources to hide (handled elsewhere, e.g., in choice buttons)
-  export let customComponentData: any = undefined; // For custom component data (e.g., upgrade cost)
-  export let outcomeBadges: Array<UnifiedOutcomeBadge | LegacyOutcomeBadge> = []; // Custom outcome badges (NEW: unified format)
-  export let specialEffects: SpecialEffect[] = []; // Special effects (narrative/qualitative effects)
+  export let hideResources: string[] = [];
+  export let customComponentData: any = undefined;
+  export let outcomeBadges: Array<UnifiedOutcomeBadge | LegacyOutcomeBadge> = [];
+  export let specialEffects: SpecialEffect[] = [];
   
   const dispatch = createEventDispatcher();
-  const DICE_PATTERN = /^-?\d+d\d+([+-]\d+)?$/;
+  const DICE_PATTERN = /^-?\\d+d\\d+([+-]\\d+)?$/;
   
-  // ✅ AUTO-CONVERT dice modifiers to badges
-  // This makes ALL actions with dice modifiers automatically use the unified badge system
+  // Auto-convert dice modifiers to unified badge format
   $: diceModifierBadges = (modifiers || [])
     .map((mod: any, index: number) => ({ ...mod, originalIndex: index }))
     .filter((mod: any) => {
-      // Detect dice modifiers (both legacy and typed formats)
       const hasLegacyDice = typeof mod.value === 'string' && DICE_PATTERN.test(mod.value);
       const hasTypedDice = mod.type === 'dice' && mod.formula;
       return hasLegacyDice || hasTypedDice;
@@ -33,20 +31,31 @@
     .map((mod: any): UnifiedOutcomeBadge => {
       const formula = mod.formula || mod.value;
       const resource = mod.resource;
-      const resourceName = resource.charAt(0).toUpperCase() + resource.slice(1);
       const isNegative = mod.negative || (typeof mod.value === 'string' && mod.value.startsWith('-'));
-      const action = isNegative ? 'Lose' : 'Gain';
       
-      // Check if already rolled
       const rolled = resolvedDice.get(mod.originalIndex);
+      
+      if (resource === 'imprisonedUnrest') {
+        return {
+          icon: 'fa-gavel',
+          template: 'Remove {{value}} imprisoned unrest',
+          value: rolled !== undefined 
+            ? { type: 'static', amount: Math.abs(rolled) }
+            : { type: 'dice', formula: formula.replace(/^-/, '') },
+          variant: 'positive',
+          _modifierIndex: mod.originalIndex
+        } as any;
+      }
+      
+      const resourceName = resource.charAt(0).toUpperCase() + resource.slice(1);
+      const action = isNegative ? 'Lose' : 'Gain';
       
       return {
         icon: getResourceIcon(resource),
-        prefix: action,
+        template: `${action} {{value}} ${resourceName}`,
         value: rolled !== undefined 
           ? { type: 'static', amount: Math.abs(rolled) }
           : { type: 'dice', formula: formula.replace(/^-/, '') },
-        suffix: resourceName,
         variant: isNegative ? 'negative' : 'positive',
         _modifierIndex: mod.originalIndex
       } as any;
@@ -60,33 +69,25 @@
   $: hasOutcomeBadges = outcomeBadges && outcomeBadges.length > 0;
   $: hasSpecialEffects = specialEffects && specialEffects.length > 0;
   
-  // Convert all badges to unified format (for consistent rendering)
   $: unifiedBadges = outcomeBadges.map(badge => 
     isLegacyBadge(badge) ? convertLegacyBadge(badge) : badge
   );
   
-  // Combine explicit badges with auto-converted modifier badges
   $: allBadges = [...unifiedBadges, ...diceModifierBadges];
   $: hasAllBadges = allBadges.length > 0;
   
-  // Track rolled dice badges locally (badge index -> result)
   let rolledBadges = new Map<number, number>();
   
-  // StateChanges does NOT render dice rollers - that's DiceRoller.svelte's job
-  // This component only shows RESOLVED dice results and static modifiers
   $: diceModifiersToShow = [];
   $: hasDiceModifiers = false;
   
   $: hasAnyContent = hasStateChanges || hasManualEffects || hasAutomatedEffects || showCriticalSuccessFame || hasDiceModifiers || hasCustomCost || hasOutcomeBadges || hasSpecialEffects;
   
-  // Detect if a value is a dice formula
   function isDiceFormula(value: any): boolean {
     return typeof value === 'string' && DICE_PATTERN.test(value);
   }
   
-  // Get the resolved value for a dice formula (from modifiers or stateChanges)
   function getResolvedValue(key: string): number | null {
-    // First check if it's resolved via modifier index
     if (modifiers) {
       const modifierIndex = modifiers.findIndex(m => 
         m.resource === key && typeof m.value === 'string' && DICE_PATTERN.test(m.value)
@@ -98,21 +99,15 @@
       }
     }
     
-    // Check if it's resolved via stateChange key (prefixed with "state:")
     const stateResolved = resolvedDice.get(`state:${key}`);
     return stateResolved ?? null;
   }
   
-  // Handle dice roll for unified badges
   function handleBadgeDiceRoll(badgeIndex: number, formula: string, badge: any) {
     const result = rollDiceFormula(formula);
-    
-    // Store locally for UI update
     rolledBadges.set(badgeIndex, result);
-    rolledBadges = rolledBadges; // Trigger reactivity
+    rolledBadges = rolledBadges;
     
-    // Check if this is a modifier-based badge (auto-converted)
-    // If so, dispatch with modifier index for proper tracking
     if (badge._modifierIndex !== undefined) {
       dispatch('roll', {
         modifierIndex: badge._modifierIndex,
@@ -121,7 +116,6 @@
         resource: badge.suffix?.toLowerCase() || 'unknown'
       });
     } else {
-      // Explicit badge - use badge index
       dispatch('badgeRoll', {
         badgeIndex,
         formula,
@@ -130,9 +124,7 @@
     }
   }
   
-  // Handle dice roll for state changes (legacy)
   function handleDiceRoll(key: string, formula: string) {
-    // Check if this dice is from modifiers
     if (modifiers) {
       const modifierIndex = modifiers.findIndex(m => 
         m.resource === key && (m.value === formula || m.formula === formula)
@@ -151,7 +143,6 @@
       }
     }
     
-    // Otherwise it's from stateChanges - use string key with "state:" prefix
     const result = rollDiceFormula(formula);
     
     dispatch('roll', {
@@ -162,15 +153,12 @@
     });
   }
   
-  // Get label for a modifier (e.g., "Lose 2d4 Food")
   function getModifierLabel(resource: string | undefined, value: any, resolved?: number): string {
-    // Handle undefined or empty resource (should not happen after filtering)
     if (!resource) {
       console.warn('[StateChanges] getModifierLabel called with undefined resource:', { resource, value, resolved });
       return `Unknown modifier: ${value}`;
     }
     
-    // Special handling for "imprisoned" pseudo-resource (UI-only)
     if (resource === 'imprisoned') {
       if (resolved !== undefined) {
         return `Remove ${resolved} imprisoned unrest`;
@@ -200,7 +188,6 @@
     }
   }
   
-  // Get icon for special effect type if not explicitly provided
   function getSpecialEffectIcon(effect: SpecialEffect): string {
     if (effect.icon) return effect.icon;
     
@@ -208,13 +195,12 @@
       case 'attitude':
         return 'fa-handshake';
       case 'resource': {
-        // Try to extract resource type from message for specific icon
         const match = effect.message.match(/(?:gained|lost|received)\s+\d+\s+(\w+)/i);
         const resourceType = match ? match[1].toLowerCase() : null;
         if (resourceType) {
           return getResourceIcon(resourceType);
         }
-        return 'fa-coins'; // Fallback to generic coins icon
+        return 'fa-coins';
       }
       case 'status':
         return 'fa-flag';
@@ -228,49 +214,48 @@
     }
   }
   
-  // Get variant class for special effect styling
   function getSpecialEffectVariant(effect: SpecialEffect): string {
     switch (effect.variant) {
       case 'positive':
         return 'variant-positive';
       case 'negative':
         return 'variant-negative';
-      case 'neutral':
+      case 'info':
       default:
-        return 'variant-neutral';
+        return 'variant-info';
     }
   }
   
-  // Get variant class for unified badge
   function getBadgeVariant(badge: UnifiedOutcomeBadge): string {
     if (badge.variant === 'positive') return 'variant-positive';
     if (badge.variant === 'negative') return 'variant-negative';
-    return 'variant-neutral';
+    return 'variant-info';
   }
   
-  // Check if a badge has been rolled
   function isBadgeRolled(badgeIndex: number, badge: UnifiedOutcomeBadge): boolean {
-    if (badge.value.type === 'static') return true; // Static badges are always "rolled"
+    if (!badge.value) return true;
+    if (badge.value.type === 'static') return true;
     return badge.value.result !== undefined || rolledBadges.has(badgeIndex);
   }
   
-  // Get badge display value (static or rolled dice)
-  function getBadgeValue(badgeIndex: number, badge: UnifiedOutcomeBadge): string | number {
-    if (badge.value.type === 'static') {
-      return badge.value.amount;
-    }
-    
-    // Dice badge
-    if (badge.value.result !== undefined) {
-      return badge.value.result; // Already resolved in data
-    }
-    
+  function renderBadgeSegments(badgeIndex: number, badge: UnifiedOutcomeBadge): TemplateSegment[] {
+    const segments = renderBadgeTemplate(badge);
     const localResult = rolledBadges.get(badgeIndex);
-    if (localResult !== undefined) {
-      return localResult; // Resolved locally
+    if (localResult !== undefined && badge.value?.type === 'dice') {
+      return segments.map(seg => 
+        seg.type === 'value' 
+          ? { type: 'value', value: { type: 'static', amount: localResult } } as TemplateSegment
+          : seg
+      );
     }
     
-    return badge.value.formula; // Unrolled
+    return segments;
+  }
+  
+  function getValueDisplay(value: { type: string; amount?: number; formula?: string; result?: number }): string {
+    if (value.type === 'static') return String(value.amount ?? 0);
+    if (value.result !== undefined) return String(value.result);
+    return value.formula ?? '';
   }
 </script>
 
@@ -305,16 +290,15 @@
       </div>
     {/if}
     
-    <!-- Show special effects (narrative/qualitative effects) -->
     {#if hasSpecialEffects}
       <div class="dice-rollers-section">
         <div class="dice-rollers-header">Special Effects:</div>
-        <div class="outcome-cards">
+        <div class="outcome-badges">
           {#each specialEffects as effect}
-            <div class="outcome-card static {getSpecialEffectVariant(effect)}">
-              <div class="card-header">
+            <div class="outcome-badge static {getSpecialEffectVariant(effect)}">
+              <div class="content">
                 <i class="fas {getSpecialEffectIcon(effect)} resource-icon"></i>
-                <div class="card-label">{effect.message}</div>
+                <div class="text">{effect.message}</div>
               </div>
             </div>
           {/each}
@@ -322,7 +306,6 @@
       </div>
     {/if}
     
-    <!-- UNIFIED: Show custom outcome badges AND state changes under ONE "Outcome:" header -->
     {@const hiddenResources = new Set(hideResources)}
     {@const nonDiceStateChanges = hasStateChanges && stateChanges 
       ? Object.entries(stateChanges).filter(([key]) => !hiddenResources.has(key))
@@ -332,51 +315,53 @@
     {#if hasOutcomeContent}
       <div class="dice-rollers-section">
         <div class="dice-rollers-header">Outcome:</div>
-        <div class="outcome-cards">
-          <!-- Show unified outcome badges (static + dice) + auto-converted modifiers -->
+        <div class="outcome-badges">
           {#if hasAllBadges}
             {#each allBadges as badge, index}
               {@const isRolled = isBadgeRolled(index, badge)}
-              {@const displayValue = getBadgeValue(index, badge)}
-              {@const isDice = badge.value.type === 'dice'}
+              {@const isDice = badge.value?.type === 'dice'}
+              {@const segments = renderBadgeSegments(index, badge)}
               
               <button 
-                class="outcome-card" 
+                class="outcome-badge" 
                 class:static={isRolled}
                 class:rolled={isRolled && isDice}
-                class:clickable={!isRolled}
+                class:clickable={!isRolled && isDice}
                 class:variant-positive={badge.variant === 'positive'}
                 class:variant-negative={badge.variant === 'negative'}
-                class:variant-neutral={!badge.variant || badge.variant === 'neutral'}
-                disabled={isRolled}
-                on:click={() => !isRolled && isDice && badge.value.type === 'dice' ? handleBadgeDiceRoll(index, badge.value.formula, badge) : null}
+                class:variant-info={!badge.variant || badge.variant === 'info'}
+                disabled={isRolled || !isDice}
+                on:click={() => !isRolled && isDice && badge.value?.type === 'dice' ? handleBadgeDiceRoll(index, badge.value.formula, badge) : null}
               >
-                <div class="card-header">
+                <div class="content">
                   <i class="fas {badge.icon} resource-icon"></i>
-                  <div class="card-label">
-                    {#if badge.prefix}{badge.prefix}{/if}
-                    {#if isDice && !isRolled}
-                      <span class="dice-button">🎲 {displayValue}</span>
-                    {:else}
-                      <span class="value">{displayValue}</span>
-                    {/if}
-                    {#if badge.suffix}{badge.suffix}{/if}
+                  <div class="text">
+                    {#each segments as segment}
+                      {#if segment.type === 'text'}
+                        {segment.content}
+                      {:else if segment.type === 'value'}
+                        {#if isDice && !isRolled && segment.value.type === 'dice'}
+                          <span class="dice-button">{segment.value.formula}</span>
+                        {:else}
+                          <span class="value">{getValueDisplay(segment.value)}</span>
+                        {/if}
+                      {/if}
+                    {/each}
                   </div>
                 </div>
               </button>
             {/each}
           {/if}
           
-          <!-- Then show numeric state changes (legacy) -->
           {#if nonDiceStateChanges.length > 0}
             {#each nonDiceStateChanges as [key, change]}
               {@const icon = getResourceIcon(key)}
-              <div class="outcome-card static">
-                <div class="card-header">
+              <div class="outcome-badge static">
+                <div class="content">
                   {#if icon}
                     <i class="fas {icon} resource-icon"></i>
                   {/if}
-                  <div class="card-label">
+                  <div class="text">
                     {getModifierLabel(key, change, change)}
                   </div>
                 </div>
@@ -387,15 +372,14 @@
       </div>
     {/if}
     
-    <!-- Show custom cost (e.g., from upgrade settlement) -->
     {#if hasCustomCost && customComponentData.cost}
       <div class="dice-rollers-section">
         <div class="dice-rollers-header">Cost:</div>
-        <div class="outcome-cards">
-          <div class="outcome-card static cost-card">
-            <div class="card-header">
+        <div class="outcome-badges">
+          <div class="outcome-badge static cost-badge">
+            <div class="content">
               <i class="fas fa-coins resource-icon"></i>
-              <div class="card-label">
+              <div class="text">
                 {#if customComponentData.settlementName}
                   Lose {customComponentData.cost} Gold (upgrade {customComponentData.settlementName} {customComponentData.currentLevel} → {customComponentData.newLevel})
                 {:else}
@@ -427,17 +411,17 @@
     }
   }
   
-  .outcome-cards {
+  .outcome-badges {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-12);
   }
   
-  .outcome-card {
+  .outcome-badge {
     display: flex;
     flex-direction: column;
     padding: var(--space-8);
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--surface-low);
     border: 2px solid var(--border-medium);
     border-radius: var(--radius-md);
     transition: all var(--transition-fast);
@@ -448,9 +432,11 @@
     
     &.clickable {
       cursor: pointer;
+      background: var(--surface-higher);
+      border-color: var(--border-strong);
       
       &:hover {
-        background: rgba(255, 255, 255, 0.06);
+        background: var(--surface-highest);
         border-color: var(--border-strong);
         transform: translateY(-0.125rem);
         box-shadow: 0 0.25rem 0.75rem var(--overlay-low);
@@ -458,7 +444,7 @@
     }
     
     &.rolled {
-      background: rgba(255, 255, 255, 0.12);
+      background: var(--surface-higher);
       border-color: var(--border-strong);
       box-shadow: 0 0 1rem var(--hover-high);
       opacity: 1;
@@ -469,57 +455,84 @@
       cursor: default;
     }
     
-    &.cost-card {
-      background: rgba(234, 179, 8, 0.1);
-      border-color: rgba(234, 179, 8, 0.4);
+    &.cost-badge {
+      background: var(--surface-accent-low);
+      border-color: var(--border-accent-medium);
       
       .resource-icon {
-        color: rgb(234, 179, 8);
+        color: var(--color-amber);
       }
     }
     
     &.variant-positive {
-      background: rgba(34, 197, 94, 0.1);
-      border-color: var(--border-success-medium);
+      background: var(--surface-success-lower);
+      border-color: var(--border-success);
       
       .resource-icon {
         color: var(--color-green);
       }
+      
+      &.clickable {
+        background: var(--surface-success);
+        
+        &:hover {
+          background: var(--surface-success-high);
+          border-color: var(--border-success-strong);
+        }
+      }
     }
     
     &.variant-negative {
-      background: rgba(239, 68, 68, 0.1);
-      border-color: var(--border-primary-medium);
+      background: var(--surface-danger-lower);
+      border-color: var(--border-danger);
       
       .resource-icon {
         color: var(--color-red);
       }
+      
+      &.clickable {
+        background: var(--surface-danger);
+        
+        &:hover {
+          background: var(--surface-danger-high);
+          border-color: var(--border-danger-strong);
+        }
+      }
     }
     
-    &.variant-neutral {
-      background: rgba(59, 130, 246, 0.1);
-      border-color: rgba(59, 130, 246, 0.4);
+    &.variant-info {
+      background: var(--surface-info-lower);
+      border-color: var(--border-info);
       
       .resource-icon {
-        color: rgb(59, 130, 246);
+        color: var(--color-blue);
+      }
+      
+      &.clickable {
+        background: var(--surface-info);
+        
+        &:hover {
+          background: var(--surface-info-high);
+          border-color: var(--border-info-strong);
+        }
       }
     }
     
     &.no-effect {
-      background: rgba(128, 128, 128, 0.05);
+      background: var(--surface-low);
       border-color: var(--border-default);
       
       .resource-icon {
-        color: rgba(255, 255, 255, 0.5);
+        color: var(--text-muted);
       }
       
-      .card-label {
-        color: rgba(255, 255, 255, 0.6);
+      .text {
+        color: var(--text-muted);
         font-style: italic;
       }
     }
     
-    .card-header {
+    .content {
       display: flex;
       align-items: center;
       gap: var(--space-10);
@@ -530,14 +543,9 @@
         flex-shrink: 0;
       }
       
-      .dice-indicator {
-        color: var(--color-blue);
-        font-size: var(--font-lg);
-        margin-left: auto;
-      }
     }
     
-    .card-label {
+    .text {
       font-size: var(--font-md);
       font-weight: var(--font-weight-medium);
       color: var(--text-primary);
@@ -547,15 +555,16 @@
       .dice-button {
         display: inline-block;
         padding: 0.125rem 0.375rem;
-        background: rgba(59, 130, 246, 0.2);
+        background: var(--overlay-low);
         border-radius: var(--radius-sm);
         font-family: var(--font-code, monospace);
         font-weight: var(--font-weight-bold);
-        color: rgb(59, 130, 246);
+        color: var(--text-primary);
       }
       
       .value {
         font-weight: var(--font-weight-semibold);
+        color: var(--text-primary);
       }
     }
   }

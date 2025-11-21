@@ -58,17 +58,31 @@ export abstract class BaseGameCommandHandler implements GameCommandHandler {
   
   /**
    * Helper: Create PreparedCommand from resolver result
-   * Handles both PreparedCommand and legacy ResolveResult formats
+   * Handles both PreparedCommand (outcomeBadge) and legacy ResolveResult formats
    */
   protected normalizeResult(result: any, fallbackMessage: string): PreparedCommand | null {
     if (!result) return null;
     
-    // Already a PreparedCommand
-    if ('specialEffect' in result && 'commit' in result) {
+    // Already a PreparedCommand with outcomeBadge (new format)
+    if ('outcomeBadge' in result && 'commit' in result) {
       return result as PreparedCommand;
     }
     
-    // Legacy ResolveResult - convert to PreparedCommand
+    // Legacy PreparedCommand with specialEffect - convert to outcomeBadge
+    if ('specialEffect' in result && 'commit' in result) {
+      const effect = result.specialEffect;
+      return {
+        outcomeBadge: {
+          icon: effect.icon || 'fa-info-circle'
+          value: { type: 'static', amount: 0 },
+          suffix: effect.message,
+          variant: effect.variant || 'info'
+        },
+        commit: result.commit
+      };
+    }
+    
+    // Legacy ResolveResult - convert to PreparedCommand with outcomeBadge
     if ('success' in result) {
       if (!result.success) {
         console.error('[GameCommandHandler] Resolver returned failure:', result.error);
@@ -79,11 +93,11 @@ export abstract class BaseGameCommandHandler implements GameCommandHandler {
       const isNegative = result.data?.grantedGold === true;
       
       return {
-        specialEffect: {
-          type: 'status',
-          message,
-          icon: isNegative ? 'fa-coins' : 'fa-shield-alt',
-          variant: isNegative ? 'neutral' : 'positive'
+        outcomeBadge: {
+          icon: isNegative ? 'fa-coins' : 'fa-shield-alt'
+          value: { type: 'static', amount: 0 },
+          suffix: message,
+          variant: isNegative ? 'info' : 'positive'
         },
         commit: async () => {
           // Already applied by resolver (legacy pattern)

@@ -1,99 +1,33 @@
 /**
- * Build Roads Action Pipeline
- *
- * Connect territory with infrastructure.
- * Converted from data/player-actions/build-roads.json
+ * buildRoads Action Pipeline
+ * Data from: data/player-actions/build-roads.json
  */
 
-import type { CheckPipeline } from '../../types/CheckPipeline';
-import { buildRoadsExecution } from '../../execution/territory/buildRoads';
+import { createActionPipeline } from '../shared/createActionPipeline';
 import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
-import { applyActionCost } from '../shared/applyActionCost';
-import { validateRoadHex } from '../shared/roadValidator';
+import { PLAYER_KINGDOM } from '../../types/ownership';
 
-export const buildRoadsPipeline: CheckPipeline = {
-  id: 'build-roads',
-  name: 'Build Roads',
-  description: 'Construct pathways between settlements to improve trade, travel, and military movement. Roads must be built in claimed territory.',
-  checkType: 'action',
-  category: 'expand-borders',
-
-  cost: {
-    lumber: 1,  // JSON says "wood" but resource system uses "lumber"
-    stone: 1
-  },
-
-  skills: [
-    { skill: 'crafting', description: 'engineering expertise' },
-    { skill: 'survival', description: 'pathfinding routes' },
-    { skill: 'athletics', description: 'manual labor' },
-    { skill: 'nature', description: 'work with terrain' }
-  ],
-
-  // Post-apply: Select hexes for roads based on outcome (AFTER Apply button clicked)
-  postApplyInteractions: [
-    {
-      type: 'map-selection',
-      id: 'selectedHexes',
-      mode: 'hex-selection',
-      colorType: 'road',
-      validation: (hexId: string, pendingHexes: string[]) => {
-        return validateRoadHex(hexId, pendingHexes);
-      },
-      // Outcome-based adjustments
-      outcomeAdjustment: {
-        criticalSuccess: {
-          // ✅ DYNAMIC COUNT: Based on actor's proficiency rank
-          count: (ctx) => {
-            const proficiency = ctx.actor?.proficiencyRank || 0;
-            // Convert proficiency rank to number of road segments
-            // Critical success always gives at least 2 segments
-            // 0 = untrained (2 segments - minimum)
-            // 1 = trained (2 segments - minimum)
-            // 2 = expert (2 segments)
-            // 3 = master (3 segments)
-            // 4 = legendary (4 segments)
-            return Math.max(2, proficiency);
-          },
-          title: 'Select road segments to build (count based on proficiency)'
-        },
-        success: {
-          count: 1,
-          title: 'Select 1 hex for road segment'
-        },
-        failure: {
-          count: 0  // No interaction on failure
-        },
-        criticalFailure: {
-          count: 0  // No interaction on critical failure
-        }
-      },
-      // Condition: only show for success/criticalSuccess
-      condition: (ctx: any) => {
-        return ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess';
-      }
+import { textBadge } from '../../types/OutcomeBadge';
+export const buildRoadsPipeline = createActionPipeline('build-roads', {
+  requirements: (kingdom) => {
+    // Check resource costs
+    const lumber = kingdom.resources?.lumber || 0;
+    const stone = kingdom.resources?.stone || 0;
+    
+    if (lumber < 1 || stone < 1) {
+      const missing: string[] = [];
+      if (lumber < 1) missing.push(`Need 1 Lumber (have ${lumber})`);
+      if (stone < 1) missing.push(`Need 1 Stone (have ${stone})`);
+      return { met: false, reason: missing.join(', ') };
     }
-  ],
-
-  outcomes: {
-    criticalSuccess: {
-      description: 'Excellent roads are constructed.',
-      modifiers: []
-    },
-    success: {
-      description: 'A road is constructed.',
-      modifiers: []
-    },
-    failure: {
-      description: 'Construction fails.',
-      modifiers: []
-    },
-    criticalFailure: {
-      description: 'Work crews are lost.',
-      modifiers: [
-        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-      ]
+    
+    // Check if we have claimed hexes to build roads in
+    const claimedHexes = (kingdom.hexes || []).filter((h: any) => h.claimedBy === PLAYER_KINGDOM);
+    if (claimedHexes.length === 0) {
+      return { met: false, reason: 'No claimed territory to build roads in' };
     }
+    
+    return { met: true };
   },
 
   preview: {
@@ -112,13 +46,12 @@ export const buildRoadsPipeline: CheckPipeline = {
       
       return {
         resources,
-        specialEffects: [],
+        outcomeBadges: [],
         warnings: []
       };
     }
   },
 
-  // Execute function - explicitly handles ALL outcomes
   execute: async (ctx) => {
     switch (ctx.outcome) {
       case 'criticalSuccess':
@@ -150,4 +83,4 @@ export const buildRoadsPipeline: CheckPipeline = {
         return { success: false, error: `Unexpected outcome: ${ctx.outcome}` };
     }
   }
-};
+});

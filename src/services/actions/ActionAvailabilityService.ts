@@ -39,7 +39,12 @@ export class ActionAvailabilityService {
         // 1. Check pipeline requirements first (single source of truth)
         const pipeline = pipelineRegistry.getPipeline(action.id);
         if (pipeline?.requirements) {
-            return pipeline.requirements(kingdomData, instance);
+            try {
+                return pipeline.requirements(kingdomData, instance);
+            } catch (error) {
+                console.error(`[ActionAvailabilityService] Error checking requirements for ${action.id}:`, error);
+                return { met: false, reason: `Error checking requirements: ${(error as Error).message}` };
+            }
         }
         
         // 2. Check resource costs using shared utility

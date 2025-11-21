@@ -231,9 +231,9 @@
       
       // Success variant
       &.success {
-         background: var(--surface-success-high);
-         border: 1px solid var(--border-success);
-         color: var(--text-primary);
+         background: var(--surface-success-low);
+         border: 2px solid var(--border-success);
+         color: var(--text-success);
          
          &::before {
             background: linear-gradient(90deg,
@@ -245,6 +245,7 @@
          &:hover:not(:disabled) {
             background: var(--surface-success-higher);
             border-color: var(--border-success-strong);
+            color: var(--text-primary);
          }
          
          &:disabled {
@@ -256,9 +257,9 @@
       
       // Danger variant
       &.danger {
-         background: var(--surface-danger);
-         border: 1px solid var(--border-danger);
-         color: var(--text-inverted);
+         background: var(--surface-danger-low);
+         border: 2px solid var(--border-danger);
+         color: var(--text-danger);
          
          &::before {
             background: linear-gradient(90deg,
@@ -270,6 +271,7 @@
          &:hover:not(:disabled) {
             background: var(--surface-danger-high);
             border-color: var(--border-danger-medium);
+            color: var(--text-primary);
          }
          
          &:disabled {
@@ -281,9 +283,9 @@
       
       // Warning variant
       &.warning {
-         background: var(--surface-accent-high);
-         border: 1px solid var(--border-accent);
-         color: var(--text-primary);
+         background: var(--surface-warning-low);
+         border: 2px solid var(--border-warning);
+         color: var(--text-warning);
          
          &::before {
             background: linear-gradient(90deg,
@@ -293,8 +295,9 @@
          }
          
          &:hover:not(:disabled) {
-            background: var(--surface-accent-higher);
-            border-color: var(--border-accent-strong);
+            background: var(--surface-warning-high);
+            border-color: var(--border-warning-medium);
+            color: var(--text-primary);
          }
          
          &:disabled {

@@ -1,22 +1,12 @@
 /**
- * Repair Structure Action Pipeline
- *
- * Fix damaged buildings to restore functionality.
- * Converted from data/player-actions/repair-structure.json
- *
- * NOTE: Uses custom implementation for structure repair logic
+ * repairStructure Action Pipeline
+ * Data from: data/player-actions/repair-structure.json
  */
 
-import type { CheckPipeline } from '../../types/CheckPipeline';
+import { createActionPipeline } from '../shared/createActionPipeline';
 
-export const repairStructurePipeline: CheckPipeline = {
-  id: 'repair-structure',
-  name: 'Repair Structure',
-  description: 'Repair damaged structures within a settlement to restore its capabilities. Only the lowest tier damaged structure per category can be repaired.',
-  checkType: 'action',
-  category: 'urban-planning',
-
-  // Requirements: Must have at least one damaged structure
+import { textBadge } from '../../types/OutcomeBadge';
+export const repairStructurePipeline = createActionPipeline('repair-structure', {
   requirements: (kingdom) => {
     // Check if any settlement has damaged structures
     const hasDamagedStructures = kingdom.settlements?.some(s => 
@@ -33,13 +23,6 @@ export const repairStructurePipeline: CheckPipeline = {
     return { met: true };
   },
 
-  skills: [
-    { skill: 'crafting', description: 'construction expertise' },
-    { skill: 'society', description: 'organize workforce' },
-    { skill: 'athletics', description: 'physical labor' }
-  ],
-
-  // Pre-roll: Select settlement and damaged structure
   preRollInteractions: [
     {
       type: 'compound',
@@ -47,27 +30,6 @@ export const repairStructurePipeline: CheckPipeline = {
       label: 'Select settlement and damaged structure'
     }
   ],
-
-  outcomes: {
-    criticalSuccess: {
-      description: 'Citizens volunteer their time and materials. The structure is repaired for free!',
-      modifiers: []
-    },
-    success: {
-      description: 'The structure is repaired.',
-      modifiers: []
-    },
-    failure: {
-      description: 'Despite your efforts, the structure remains damaged.',
-      modifiers: []
-    },
-    criticalFailure: {
-      description: 'Time and money are wasted. The structure remains damaged.',
-      modifiers: [
-        { type: 'static', resource: 'gold', value: -1, duration: 'immediate' }
-      ]
-    }
-  },
 
   preview: {
     calculate: (ctx) => {
@@ -85,7 +47,7 @@ export const repairStructurePipeline: CheckPipeline = {
       }
       // Critical success = free
 
-      const specialEffects = [];
+      const outcomeBadges = [];
       if (ctx.outcome !== 'failure' && ctx.outcome !== 'criticalFailure') {
         specialEffects.push({
           type: 'entity' as const,
@@ -94,9 +56,7 @@ export const repairStructurePipeline: CheckPipeline = {
         });
       }
 
-      return { resources, specialEffects, warnings: [] };
+      return { resources, outcomeBadges, warnings: [] };
     }
   }
-
-  // NOTE: Execution handled by custom implementation
-};
+});

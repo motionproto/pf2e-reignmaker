@@ -119,56 +119,70 @@
   --hover: rgba(255, 255, 255, 0.1);        /* Standard hover effect */
   --hover-high: rgba(255, 255, 255, 0.15);  /* Prominent hover effect */
   
-  /* Colored Surfaces - 5-point scales for semantic states */
+  /* Colored Surfaces - 7-point scales for semantic states */
   /* Primary (Crimson/Red) - Danger, errors, critical states */
-  --surface-primary-lower: hsla(0, 16%, 7%, 1);      /* Barely perceptible */
-  --surface-primary-low: hsla(0, 24%, 10%, 1);       /* Subtle */
-  --surface-primary: hsla(0, 28%, 13%, 1);           /* MIDPOINT - Default */
-  --surface-primary-high: hsla(0, 30%, 17%, 1);      /* More prominent */
-  --surface-primary-higher: hsla(0, 33%, 23%, 1);    /* Most prominent */
+  --surface-primary-lowest: hsla(0, 20%, 8%, 1);     /* Deepest */
+  --surface-primary-lower: hsla(0, 26%, 12%, 1);     /* Barely perceptible */
+  --surface-primary-low: hsla(0, 32%, 17%, 1);       /* Subtle */
+  --surface-primary: hsla(0, 36%, 21%, 1);           /* MIDPOINT - Default */
+  --surface-primary-high: hsla(0, 40%, 26%, 1);      /* More prominent */
+  --surface-primary-higher: hsla(0, 44%, 30%, 1);    /* Very prominent */
+  --surface-primary-highest: hsla(0, 48%, 35%, 1);   /* Most prominent */
   
   /* Success (Green) - Success states, confirmations, positive feedback */
-  --surface-success-lower: hsla(142, 16%, 8%, 1);    /* Barely perceptible */
-  --surface-success-low: hsla(142, 24%, 11%, 1);     /* Subtle */
-  --surface-success: hsla(142, 28%, 15%, 1);         /* MIDPOINT - Default */
-  --surface-success-high: hsla(142, 31%, 19%, 1);    /* More prominent */
-  --surface-success-higher: hsla(142, 35%, 25%, 1);  /* Most prominent */
+  --surface-success-lowest: hsla(142, 50%, 8%, 1);   /* Deepest */
+  --surface-success-lower: hsla(142, 54%, 14%, 1);   /* Barely perceptible */
+  --surface-success-low: hsla(142, 58%, 20%, 1);     /* Subtle */
+  --surface-success: hsla(142, 62%, 26%, 1);         /* MIDPOINT - Default */
+  --surface-success-high: hsla(142, 66%, 34%, 1);    /* More prominent */
+  --surface-success-higher: hsla(142, 70%, 42%, 1);  /* Very prominent */
+  --surface-success-highest: hsla(142, 75%, 50%, 1); /* Most prominent */
   
-  /* Warning (Amber) - Warnings, cautions, attention needed */
-  --surface-warning-lower: hsla(38, 16%, 9%, 1);     /* Barely perceptible */
-  --surface-warning-low: hsla(38, 24%, 13%, 1);      /* Subtle */
-  --surface-warning: hsla(38, 28%, 18%, 1);          /* MIDPOINT - Default */
-  --surface-warning-high: hsla(38, 32%, 23%, 1);     /* More prominent */
-  --surface-warning-higher: hsla(38, 37%, 30%, 1);   /* Most prominent */
+  /* Warning (Orange) - Warnings, cautions, attention needed */
+  --surface-warning-lowest: hsla(25, 50%, 8%, 1);    /* Deepest */
+  --surface-warning-lower: hsla(25, 55%, 14%, 1);    /* Barely perceptible */
+  --surface-warning-low: hsla(25, 60%, 20%, 1);      /* Subtle */
+  --surface-warning: hsla(25, 65%, 26%, 1);          /* MIDPOINT - Default */
+  --surface-warning-high: hsla(25, 70%, 34%, 1);     /* More prominent */
+  --surface-warning-higher: hsla(25, 75%, 42%, 1);   /* Very prominent */
+  --surface-warning-highest: hsla(25, 80%, 50%, 1);  /* Most prominent */
   
   /* Accent (Amber) - Highlights, emphasis, featured content */
-  --surface-accent-lower: hsla(38, 16%, 9%, 1);      /* Barely perceptible */
-  --surface-accent-low: hsla(38, 24%, 13%, 1);       /* Subtle */
-  --surface-accent: hsla(38, 28%, 18%, 1);           /* MIDPOINT - Default */
-  --surface-accent-high: hsla(38, 32%, 23%, 1);      /* More prominent */
-  --surface-accent-higher: hsla(38, 37%, 30%, 1);    /* Most prominent */
+  --surface-accent-lowest: hsla(38, 18%, 6%, 1);     /* Deepest */
+  --surface-accent-lower: hsla(38, 24%, 9%, 1);      /* Barely perceptible */
+  --surface-accent-low: hsla(38, 32%, 13%, 1);       /* Subtle */
+  --surface-accent: hsla(38, 38%, 18%, 1);           /* MIDPOINT - Default */
+  --surface-accent-high: hsla(38, 44%, 23%, 1);      /* More prominent */
+  --surface-accent-higher: hsla(38, 50%, 30%, 1);    /* Very prominent */
+  --surface-accent-highest: hsla(38, 55%, 38%, 1);   /* Most prominent */
   
   /* Info (Blue) - Information, in-progress, neutral notifications */
-  --surface-info-lower: hsla(217, 16%, 9%, 1);       /* Barely perceptible */
-  --surface-info-low: hsla(217, 24%, 13%, 1);        /* Subtle */
-  --surface-info: hsla(217, 28%, 17%, 1);            /* MIDPOINT - Default */
-  --surface-info-high: hsla(217, 32%, 22%, 1);       /* More prominent */
-  --surface-info-higher: hsla(217, 37%, 29%, 1);     /* Most prominent */
+  --surface-info-lowest: hsla(217, 50%, 8%, 1);      /* Deepest */
+  --surface-info-lower: hsla(217, 54%, 14%, 1);      /* Barely perceptible */
+  --surface-info-low: hsla(217, 58%, 20%, 1);        /* Subtle */
+  --surface-info: hsla(217, 62%, 26%, 1);            /* MIDPOINT - Default */
+  --surface-info-high: hsla(217, 66%, 34%, 1);       /* More prominent */
+  --surface-info-higher: hsla(217, 70%, 42%, 1);     /* Very prominent */
+  --surface-info-highest: hsla(217, 75%, 50%, 1);    /* Most prominent */
   
   /* Special (Purple) - Special items, unique states, premium features */
+  --surface-special-lowest: hsla(267, 12%, 6%, 1);   /* Deepest */
   --surface-special-lower: hsla(267, 17%, 10%, 1);   /* Barely perceptible */
   --surface-special-low: hsla(267, 24%, 15%, 1);     /* Subtle */
   --surface-special: hsla(267, 28%, 19%, 1);         /* MIDPOINT - Default */
   --surface-special-high: hsla(267, 32%, 24%, 1);    /* More prominent */
-  --surface-special-higher: hsla(267, 37%, 31%, 1);  /* Most prominent */
+  --surface-special-higher: hsla(267, 37%, 31%, 1);  /* Very prominent */
+  --surface-special-highest: hsla(267, 42%, 39%, 1); /* Most prominent */
   
-  /* Danger (Bright Pink-Red) - Destructive actions, critical warnings, errors */
-  --color-danger-red: hsla(350, 100%, 74%, 1);         /* Base danger color - bright pink-red */
-  --surface-danger-lower: hsla(350, 27%, 27%, 1);      /* Barely perceptible - was high */
-  --surface-danger-low: hsla(350, 45%, 38%, 1);        /* Subtle */
-  --surface-danger: hsla(350, 62%, 48%, 1);            /* MIDPOINT - Default */
-  --surface-danger-high: hsla(350, 81%, 61%, 1);       /* More prominent */
-  --surface-danger-higher: hsla(350, 100%, 74%, 1);    /* Most prominent - matches danger-red */
+  /* Danger (Bright Pink-Red) - Destructive actions, critical warnings, errors - 7-point scale */
+  --color-danger-red: hsla(350, 100%, 80%, 1);         /* Base danger color - bright pink-red */
+  --surface-danger-lowest: hsla(350, 55%, 8%, 1);      /* Deepest - very dark */
+  --surface-danger-lower: hsla(350, 58%, 14%, 1);      /* Barely perceptible */
+  --surface-danger-low: hsla(350, 62%, 20%, 1);        /* Subtle */
+  --surface-danger: hsla(350, 68%, 28%, 1);            /* MIDPOINT - Default */
+  --surface-danger-high: hsla(350, 74%, 38%, 1);       /* More prominent */
+  --surface-danger-higher: hsla(350, 80%, 48%, 1);     /* Very prominent */
+  --surface-danger-highest: hsla(350, 85%, 57%, 1);    /* Most prominent */
   
   /* Base Text Colors - Hierarchy system */
   --text-primary: var(--color-gray-50);
@@ -181,32 +195,32 @@
   
   /* Semantic Text Colors - 5-point hierarchy matching base text structure */
   /* Success (Green) - Smooth ramp from bright to dim/desaturated - BOOSTED SATURATION */
-  --text-success: var(--color-green-light);        /* Primary - Main text color */
-  --text-success-secondary: hsla(132, 48%, 40%, 1); /* Secondary - Less prominent */
-  --text-success-tertiary: hsla(137, 38%, 34%, 1);  /* Tertiary - Subtle text */
-  --text-success-muted: hsla(140, 28%, 28%, 1);     /* Muted - De-emphasized */
-  --text-success-disabled: hsla(142, 18%, 22%, 1);  /* Disabled - Dim & desaturated */
+  --text-success: hsla(142, 85%, 62%, 1);           /* Primary - Main text color - bright green */
+  --text-success-secondary: hsla(142, 75%, 52%, 1); /* Secondary - Less prominent */
+  --text-success-tertiary: hsla(142, 62%, 44%, 1);  /* Tertiary - Subtle text */
+  --text-success-muted: hsla(142, 48%, 36%, 1);     /* Muted - De-emphasized */
+  --text-success-disabled: hsla(142, 32%, 28%, 1);  /* Disabled - Dim & desaturated */
   
   /* Danger (Bright Pink-Red) - Smooth ramp from bright to dim/desaturated - BOOSTED SATURATION */
-  --text-danger: var(--color-danger-red);          /* Primary - Main text color */
-  --text-danger-secondary: hsla(350, 92%, 62%, 1); /* Secondary - Less prominent */
-  --text-danger-tertiary: hsla(350, 76%, 50%, 1);  /* Tertiary - Subtle text */
-  --text-danger-muted: hsla(350, 58%, 42%, 1);     /* Muted - De-emphasized */
-  --text-danger-disabled: hsla(350, 38%, 32%, 1);  /* Disabled - Dim & desaturated */
+  --text-danger: hsla(350, 100%, 78%, 1);          /* Primary - Main text color - bright pink-red */
+  --text-danger-secondary: hsla(350, 90%, 68%, 1); /* Secondary - Less prominent */
+  --text-danger-tertiary: hsla(350, 78%, 56%, 1);  /* Tertiary - Subtle text */
+  --text-danger-muted: hsla(350, 62%, 46%, 1);     /* Muted - De-emphasized */
+  --text-danger-disabled: hsla(350, 44%, 36%, 1);  /* Disabled - Dim & desaturated */
   
-  /* Warning (Amber) - Smooth ramp from bright to dim/desaturated - BOOSTED SATURATION */
-  --text-warning: var(--color-amber);              /* Primary - Main text color */
-  --text-warning-secondary: hsla(38, 88%, 44%, 1); /* Secondary - Less prominent */
-  --text-warning-tertiary: hsla(38, 72%, 37%, 1);  /* Tertiary - Subtle text */
-  --text-warning-muted: hsla(38, 54%, 31%, 1);     /* Muted - De-emphasized */
-  --text-warning-disabled: hsla(38, 35%, 25%, 1);  /* Disabled - Dim & desaturated */
+  /* Warning (Orange) - Smooth ramp from bright to dim/desaturated - BOOSTED SATURATION, hue 25 matching surfaces */
+  --text-warning: hsla(25, 95%, 55%, 1);           /* Primary - Main text color */
+  --text-warning-secondary: hsla(25, 85%, 46%, 1); /* Secondary - Less prominent */
+  --text-warning-tertiary: hsla(25, 70%, 38%, 1);  /* Tertiary - Subtle text */
+  --text-warning-muted: hsla(25, 52%, 31%, 1);     /* Muted - De-emphasized */
+  --text-warning-disabled: hsla(25, 35%, 25%, 1);  /* Disabled - Dim & desaturated */
   
-  /* Info (Blue) - Smooth ramp from bright to dim/desaturated - BOOSTED SATURATION + REDUCED LUMINANCE */
-  --text-info: hsla(217, 100%, 75%, 1);            /* Primary - Main text color (slightly dimmer than base) */
-  --text-info-secondary: hsla(217, 95%, 68%, 1);   /* Secondary - Less prominent */
-  --text-info-tertiary: hsla(217, 82%, 58%, 1);    /* Tertiary - Subtle text */
-  --text-info-muted: hsla(217, 64%, 49%, 1);       /* Muted - De-emphasized */
-  --text-info-disabled: hsla(217, 44%, 40%, 1);    /* Disabled - Dim & desaturated */
+  /* Info (Blue) - Smooth ramp from bright to dim/desaturated - BOOSTED SATURATION */
+  --text-info: hsla(217, 100%, 78%, 1);            /* Primary - Main text color - bright blue */
+  --text-info-secondary: hsla(217, 95%, 70%, 1);   /* Secondary - Less prominent */
+  --text-info-tertiary: hsla(217, 85%, 60%, 1);    /* Tertiary - Subtle text */
+  --text-info-muted: hsla(217, 68%, 50%, 1);       /* Muted - De-emphasized */
+  --text-info-disabled: hsla(217, 48%, 42%, 1);    /* Disabled - Dim & desaturated */
   
   /* Special (Purple) - Smooth ramp from bright to dim/desaturated - BOOSTED SATURATION */
   --text-special: hsla(258, 90%, 66%, 1);          /* Primary - Main text color */
@@ -274,7 +288,7 @@
   /* Info (Blue) borders - 6-level scale - Extended dark range, capped bright at 82% */
   --border-info-faint: hsla(217, 30%, 14%, 1);       /* Darkest - human eye good at perceiving blue */
   --border-info-darker: hsla(217, 45%, 28%, 1);      /* Very dark - new level between faint and subtle */
-  --border-info-subtle: hsla(217, 70%, 48%, 1);      /* Low visibility - boosted saturation */
+  --border-info-subtle: hsla(217, 55%, 48%, 1);      /* Low visibility */
   --border-info: hsla(217, 100%, 68%, 1);             /* Standard (middle point) - highly saturated */
   --border-info-medium: hsla(217, 100%, 75%, 1);     /* More prominent - between default and strong */
   --border-info-strong: hsla(217, 100%, 82%, 1);     /* Brightest - capped to avoid white shift */
@@ -286,6 +300,13 @@
   --border-success-medium: hsla(142, 71%, 55%, 1);   /* More prominent */
   --border-success-strong: hsla(142, 71%, 65%, 1);   /* High contrast */
   
+  /* Warning (Orange) borders - 5-point scale (based on surface-warning-highest + 10% luminance) */
+  --border-warning-faint: hsla(25, 30%, 16%, 1);     /* Barely visible */
+  --border-warning-subtle: hsla(25, 45%, 26%, 1);    /* Low visibility */
+  --border-warning: hsla(25, 65%, 38%, 1);           /* Standard (middle point) */
+  --border-warning-medium: hsla(25, 75%, 48%, 1);    /* More prominent */
+  --border-warning-strong: hsla(25, 85%, 58%, 1);    /* High contrast - surface-warning-highest + 10% */
+  
   /* Special (Purple) borders - 5-point scale */
   --border-special-faint: hsla(258, 22%, 15%, 1);    /* Barely visible */
   --border-special-subtle: hsla(258, 38%, 31%, 1);   /* Low visibility */
@@ -293,12 +314,12 @@
   --border-special-medium: hsla(258, 90%, 75%, 1);   /* More prominent */
   --border-special-strong: hsla(258, 90%, 85%, 1);   /* High contrast */
   
-  /* Danger (Bright Pink-Red) borders - 5-point scale */
-  --border-danger-faint: hsla(350, 24%, 18%, 1);     /* Barely visible */
-  --border-danger-subtle: hsla(350, 42%, 35%, 1);    /* Low visibility */
-  --border-danger: var(--color-danger-red);            /* Standard (middle point) */
-  --border-danger-medium: hsla(350, 100%, 80%, 1);    /* More prominent */
-  --border-danger-strong: hsla(350, 100%, 86%, 1);    /* High contrast */
+  /* Danger (Bright Pink-Red) borders - 5-point scale (based on surface-danger-highest + 10% luminance) */
+  --border-danger-faint: hsla(350, 32%, 18%, 1);     /* Barely visible - slightly boosted saturation */
+  --border-danger-subtle: hsla(350, 55%, 32%, 1);    /* Low visibility */
+  --border-danger: hsla(350, 70%, 45%, 1);           /* Standard (middle point) */
+  --border-danger-medium: hsla(350, 80%, 55%, 1);    /* More prominent */
+  --border-danger-strong: hsla(350, 85%, 63%, 1);    /* High contrast - danger-highest + 10% luminance */
   
   /* Border Radius */
   --radius-sm: 0.125rem;    /* 2px */

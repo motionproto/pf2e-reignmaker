@@ -1,29 +1,30 @@
 /**
- * Establish Settlement Action Pipeline
- *
- * Found a new village.
- * Converted from data/player-actions/establish-settlement.json
+ * establishSettlement Action Pipeline
+ * Data from: data/player-actions/establish-settlement.json
  */
 
-import type { CheckPipeline } from '../../types/CheckPipeline';
-import { foundSettlementExecution } from '../../execution/settlements/foundSettlement';
+import { createActionPipeline } from '../shared/createActionPipeline';
 
-export const establishSettlementPipeline: CheckPipeline = {
-  id: 'establish-settlement',
-  name: 'Establish Settlement',
-  description: 'Found a new community where settlers can establish homes and begin building infrastructure',
-  checkType: 'action',
-  category: 'urban-planning',
+import { textBadge } from '../../types/OutcomeBadge';
+export const establishSettlementPipeline = createActionPipeline('establish-settlement', {
+  requirements: (kingdom) => {
+    const requirements: string[] = [];
+    
+    const resources = kingdom.resources || {};
+    const gold = resources.gold || 0;
+    const food = resources.food || 0;
+    const lumber = resources.lumber || 0;
+    
+    if (gold < 2) requirements.push(`Need 2 Gold (have ${gold})`);
+    if (food < 2) requirements.push(`Need 2 Food (have ${food})`);
+    if (lumber < 2) requirements.push(`Need 2 Lumber (have ${lumber})`);
+    
+    return {
+      met: requirements.length === 0,
+      reason: requirements.length > 0 ? requirements.join(', ') : undefined
+    };
+  },
 
-  skills: [
-    { skill: 'society', description: 'organized settlement' },
-    { skill: 'survival', description: 'frontier establishment' },
-    { skill: 'diplomacy', description: 'attract settlers' },
-    { skill: 'religion', description: 'blessed founding' },
-    { skill: 'medicine', description: 'healthy community planning' }
-  ],
-
-  // Pre-roll: Select hex location and provide settlement name
   preRollInteractions: [
     {
       type: 'map-selection',
@@ -38,47 +39,6 @@ export const establishSettlementPipeline: CheckPipeline = {
       label: 'Settlement name'
     }
   ],
-
-  outcomes: {
-    criticalSuccess: {
-      description: 'The village is established quickly.',
-      modifiers: [
-        { type: 'static', resource: 'gold', value: -2, duration: 'immediate' },
-        { type: 'static', resource: 'food', value: -2, duration: 'immediate' },
-        { type: 'static', resource: 'lumber', value: -2, duration: 'immediate' }
-      ],
-      manualEffects: [
-        'Place the new village on the hex map',
-        'Choose and add any Tier 1 structure to the new settlement'
-      ]
-    },
-    success: {
-      description: 'The village is established.',
-      modifiers: [
-        { type: 'static', resource: 'gold', value: -2, duration: 'immediate' },
-        { type: 'static', resource: 'food', value: -2, duration: 'immediate' },
-        { type: 'static', resource: 'lumber', value: -2, duration: 'immediate' }
-      ],
-      manualEffects: ['Place the new village on the hex map']
-    },
-    failure: {
-      description: 'Resources are wasted.',
-      modifiers: [
-        { type: 'static', resource: 'gold', value: -1, duration: 'immediate' },
-        { type: 'static', resource: 'food', value: -1, duration: 'immediate' },
-        { type: 'static', resource: 'lumber', value: -1, duration: 'immediate' }
-      ]
-    },
-    criticalFailure: {
-      description: 'The settlement attempt is a complete disaster.',
-      modifiers: [
-        { type: 'static', resource: 'gold', value: -2, duration: 'immediate' },
-        { type: 'static', resource: 'food', value: -2, duration: 'immediate' },
-        { type: 'static', resource: 'lumber', value: -2, duration: 'immediate' },
-        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-      ]
-    }
-  },
 
   preview: {
     providedByInteraction: true,
@@ -95,24 +55,16 @@ export const establishSettlementPipeline: CheckPipeline = {
         resources.push({ resource: 'unrest', value: 1 });
       }
 
-      const specialEffects = [];
+      const outcomeBadges = [];
       if (ctx.outcome !== 'failure' && ctx.outcome !== 'criticalFailure') {
-        specialEffects.push({
-          type: 'entity' as const,
-          message: `Will found ${ctx.metadata.settlementName || 'new settlement'}`,
-          variant: 'positive' as const
-        });
+        outcomeBadges.push(textBadge(`Will found ${ctx.metadata.settlementName || 'new settlement'}`, 'fa-building', 'positive'));
 
         if (ctx.outcome === 'criticalSuccess') {
-          specialEffects.push({
-            type: 'status' as const,
-            message: 'Grants free Tier 1 structure',
-            variant: 'positive' as const
-          });
+          outcomeBadges.push(textBadge('Grants free Tier 1 structure', 'fa-gift', 'positive'));
         }
       }
 
-      return { resources, specialEffects, warnings: [] };
+      return { resources, outcomeBadges, warnings: [] };
     }
   },
 
@@ -129,4 +81,4 @@ export const establishSettlementPipeline: CheckPipeline = {
       grantFreeStructure
     });
   }
-};
+});

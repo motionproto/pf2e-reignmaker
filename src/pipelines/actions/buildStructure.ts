@@ -1,22 +1,12 @@
 /**
- * Build Structure Action Pipeline
- *
- * Add markets, temples, barracks, and other structures.
- * Converted from data/player-actions/build-structure.json
- *
- * NOTE: Uses custom implementation for structure building logic
+ * buildStructure Action Pipeline
+ * Data from: data/player-actions/build-structure.json
  */
 
-import type { CheckPipeline } from '../../types/CheckPipeline';
+import { createActionPipeline } from '../shared/createActionPipeline';
 
-export const buildStructurePipeline: CheckPipeline = {
-  id: 'build-structure',
-  name: 'Build Structure',
-  description: 'Construct new buildings and infrastructure within a settlement to enhance its capabilities',
-  checkType: 'action',
-  category: 'urban-planning',
-
-  // Requirements: Must have at least one settlement
+import { textBadge } from '../../types/OutcomeBadge';
+export const buildStructurePipeline = createActionPipeline('build-structure', {
   requirements: (kingdom) => {
     if (kingdom.settlements.length === 0) {
       return {
@@ -27,14 +17,6 @@ export const buildStructurePipeline: CheckPipeline = {
     return { met: true };
   },
 
-  skills: [
-    { skill: 'crafting', description: 'construction expertise' },
-    { skill: 'society', description: 'organize workforce' },
-    { skill: 'athletics', description: 'physical labor' },
-    { skill: 'arcana', description: 'magically assisted construction' }
-  ],
-
-  // Pre-roll: Select settlement and structure
   preRollInteractions: [
     {
       type: 'compound',
@@ -43,33 +25,12 @@ export const buildStructurePipeline: CheckPipeline = {
     }
   ],
 
-  outcomes: {
-    criticalSuccess: {
-      description: 'The structure is constructed efficiently.',
-      modifiers: []
-    },
-    success: {
-      description: 'Construction begins on a structure.',
-      modifiers: []
-    },
-    failure: {
-      description: 'Construction of the structure fails.',
-      modifiers: []
-    },
-    criticalFailure: {
-      description: 'Accidents and disputes plague the project.',
-      modifiers: [
-        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-      ]
-    }
-  },
-
   preview: {
     calculate: (ctx) => {
       const resources = ctx.outcome === 'criticalFailure' ?
         [{ resource: 'unrest', value: 1 }] : [];
 
-      const specialEffects = [];
+      const outcomeBadges = [];
       if (ctx.outcome !== 'failure' && ctx.outcome !== 'criticalFailure') {
         specialEffects.push({
           type: 'entity' as const,
@@ -78,9 +39,7 @@ export const buildStructurePipeline: CheckPipeline = {
         });
       }
 
-      return { resources, specialEffects, warnings: [] };
+      return { resources, outcomeBadges, warnings: [] };
     }
   }
-
-  // NOTE: Execution handled by custom implementation
-};
+});

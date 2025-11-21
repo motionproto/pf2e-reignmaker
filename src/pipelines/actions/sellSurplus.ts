@@ -1,38 +1,43 @@
 /**
- * Sell Surplus Action Pipeline
- *
- * Trade resources for gold based on commerce structure tier.
- * Converted from data/player-actions/sell-surplus.json
+ * sellSurplus Action Pipeline
+ * Data from: data/player-actions/sell-surplus.json
  */
 
-import type { CheckPipeline } from '../../types/CheckPipeline';
-import { hasCommerceStructure, getBestTradeRates } from '../../services/commerce/tradeRates';
-import { get } from 'svelte/store';
-import { kingdomData } from '../../stores/KingdomStore';
+import { createActionPipeline } from '../shared/createActionPipeline';
 import { applyResourceChanges } from '../shared/InlineActionHelpers';
-import SellResourceSelector from '../../view/kingdom/components/OutcomeDisplay/components/SellResourceSelector.svelte';
+import { hasCommerceStructure, getBestTradeRates } from '../../services/commerce/tradeRates';
 
-export const sellSurplusPipeline: CheckPipeline = {
-  id: 'sell-surplus',
-  name: 'Sell Surplus',
-  description: 'Convert excess resources into gold through your kingdom\'s commerce infrastructure. Better commerce structures provide better trade rates. Requires at least one commerce structure.',
-  checkType: 'action',
-  category: 'economic-resources',
+export const sellSurplusPipeline = createActionPipeline('sell-surplus', {
+  requirements: (kingdom) => {
+    // Must have a commerce structure
+    if (!hasCommerceStructure()) {
+      return { met: false, reason: 'Requires a commerce structure' };
+    }
+    
+    // Need at least enough of any resource type to meet trade rate
+    const baseRates = getBestTradeRates();
+    const minAmount = baseRates.sell.resourceCost;
+    
+    const resources = kingdom.resources;
+    const hasEnough = resources && (
+      (resources.food || 0) >= minAmount ||
+      (resources.lumber || 0) >= minAmount ||
+      (resources.stone || 0) >= minAmount ||
+      (resources.ore || 0) >= minAmount
+    );
+    
+    if (!hasEnough) {
+      return { met: false, reason: `Need at least ${minAmount} of any resource to sell` };
+    }
+    
+    return { met: true };
+  },
 
-  skills: [
-    { skill: 'society', description: 'market knowledge' },
-    { skill: 'diplomacy', description: 'trade negotiations' },
-    { skill: 'deception', description: 'inflate value' },
-    { skill: 'performance', description: 'showcase goods' },
-    { skill: 'thievery', description: 'black market' }
-  ],
-
-  // Post-roll: Select resource and amount (BEFORE Apply button, shown inline in outcome display)
   postRollInteractions: [
     {
       type: 'configuration',
       id: 'resourceSelection',
-      component: SellResourceSelector,  // Custom property for Svelte component
+      component: 'SellResourceSelector',  // Resolved via ComponentRegistry
       // Only show for successful sales
       condition: (ctx) => {
         return ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess';
@@ -61,30 +66,10 @@ export const sellSurplusPipeline: CheckPipeline = {
     }
   ],
 
-  outcomes: {
-    criticalSuccess: {
-      description: 'You secure exceptional trade rates.',
-      modifiers: []
-    },
-    success: {
-      description: 'Resources are sold.',
-      modifiers: []
-    },
-    failure: {
-      description: 'No buyers are found.',
-      modifiers: []
-    },
-    criticalFailure: {
-      description: 'The market is closed.',
-      modifiers: []
-    }
-  },
-
   preview: {
     providedByInteraction: true  // Resource selector shows preview
   },
 
-  // Execute function - explicitly handles ALL outcomes
   execute: async (ctx) => {
     switch (ctx.outcome) {
       case 'criticalSuccess':
@@ -104,4 +89,4 @@ export const sellSurplusPipeline: CheckPipeline = {
         return { success: false, error: `Unexpected outcome: ${ctx.outcome}` };
     }
   }
-};
+});

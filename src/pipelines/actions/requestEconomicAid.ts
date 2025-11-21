@@ -1,22 +1,12 @@
 /**
- * Request Economic Aid Action Pipeline
- *
- * Ask allied nations for material support in times of need
- * Converted from data/player-actions/request-economic-aid.json
+ * requestEconomicAid Action Pipeline
+ * Data from: data/player-actions/request-economic-aid.json
  */
 
-import type { CheckPipeline } from '../../types/CheckPipeline';
-import { factionService } from '../../services/factions';
-import type { Faction } from '../../models/Faction';
+import { createActionPipeline } from '../shared/createActionPipeline';
 
-export const requestEconomicAidPipeline: CheckPipeline = {
-  id: 'request-economic-aid',
-  name: 'Request Economic Aid',
-  description: 'Appeal to allied nations for material support in times of need',
-  checkType: 'action',
-  category: 'foreign-affairs',
-
-  // Requirements: Must have at least one Friendly or Helpful faction
+import { textBadge } from '../../types/OutcomeBadge';
+export const requestEconomicAidPipeline = createActionPipeline('request-economic-aid', {
   requirements: (kingdom) => {
     const hasAllies = kingdom.factions?.some(f => 
       f.attitude === 'Friendly' || f.attitude === 'Helpful'
@@ -32,10 +22,6 @@ export const requestEconomicAidPipeline: CheckPipeline = {
     return { met: true };
   },
 
-  /**
-   * Pre-roll interaction: Select friendly/helpful faction
-   * Requirements: Diplomatic relations at least friendly
-   */
   preRollInteractions: [
     {
       id: 'faction',
@@ -56,47 +42,13 @@ export const requestEconomicAidPipeline: CheckPipeline = {
     }
   ],
 
-  /**
-   * Skills - various approaches to requesting aid
-   */
-  skills: [
-    { skill: 'diplomacy', description: 'formal request' },
-    { skill: 'society', description: 'leverage connections' },
-    { skill: 'performance', description: 'emotional appeal' },
-    { skill: 'deception', description: 'exaggerate need' },
-    { skill: 'medicine', description: 'humanitarian aid' }
-  ],
-
-  outcomes: {
-    criticalSuccess: {
-      description: 'Your ally provides generous support',
-      modifiers: [
-        { type: 'dice', resource: 'gold', formula: '2d6', duration: 'immediate' }
-      ]
-    },
-    success: {
-      description: 'Your ally provides support',
-      modifiers: [
-        { type: 'dice', resource: 'gold', formula: '1d4+1', duration: 'immediate' }
-      ]
-    },
-    failure: {
-      description: 'Your ally cannot help',
-      modifiers: []
-    },
-    criticalFailure: {
-      description: 'Your ally is offended',
-      modifiers: []
-    }
-  },
-
   preview: {
     calculate: async (ctx) => {
       const factionId = ctx.metadata?.faction?.id || ctx.metadata?.factionId;
       if (!factionId) {
         return {
           resources: [],
-          specialEffects: [],
+          outcomeBadges: [],
           warnings: ['No faction selected']
         };
       }
@@ -105,7 +57,7 @@ export const requestEconomicAidPipeline: CheckPipeline = {
       if (!faction) {
         return {
           resources: [],
-          specialEffects: [],
+          outcomeBadges: [],
           warnings: ['Faction not found']
         };
       }
@@ -214,4 +166,4 @@ export const requestEconomicAidPipeline: CheckPipeline = {
 
     return { success: true };
   }
-};
+});

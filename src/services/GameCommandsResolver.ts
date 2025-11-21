@@ -16,7 +16,7 @@
 import { updateKingdom, getKingdomActor } from '../stores/KingdomStore';
 import type { Army } from './buildQueue/BuildProject';
 import { logger } from '../utils/Logger';
-import type { SpecialEffect } from '../types/special-effects';
+import type { PreparedCommand } from '../types/game-commands';
 
 // Extracted command imports
 import { 
@@ -68,27 +68,8 @@ export interface ResolveResult {
   data?: any; // Action-specific return data
 }
 
-/**
- * Prepared game command using prepare/commit pattern
- * 
- * Commands return preview data + commit function instead of executing immediately.
- * This allows:
- * - Special effects to show in preview BEFORE "Apply Result" is clicked
- * - Clean cancellation (just discard commit, no undo needed)
- * - Single code path (no duplicate preview logic)
- * 
- * Flow:
- * 1. Roll completes → Execute game command to PREPARE (not commit)
- * 2. Store specialEffect in instance for preview display
- * 3. Store commit() function in instance
- * 4. OutcomeDisplay shows preview with special effects
- * 5. User clicks "Apply Result" → Execute all stored commit() functions
- * 6. User clicks "Cancel" → Discard commit functions (no undo needed)
- */
-export interface PreparedCommand {
-  specialEffect: SpecialEffect;     // Preview data for OutcomeDisplay
-  commit: () => Promise<void>;       // Function to execute on "Apply Result"
-}
+// PreparedCommand is now imported from types/game-commands.ts
+// Uses outcomeBadge: UnifiedOutcomeBadge instead of specialEffect
 
 /**
  * Create the game effects resolver service
@@ -171,10 +152,11 @@ export async function createGameCommandsResolver() {
           logger.info(`💰 [outfitArmy] PREPARED: Will grant 1 gold (no armies available)`);
 
           return {
-            specialEffect: {
-              type: 'resource',
-              message: 'No armies available to outfit - received 1 Gold instead',
+            outcomeBadge: {
               icon: 'fa-coins',
+          template: 'Received {{value}}',
+              value: { type: 'static', amount: 1 },
+              suffix: 'Gold (no armies to outfit)',
               variant: 'positive'
             },
             commit: async () => {

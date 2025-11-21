@@ -7,7 +7,7 @@ export interface SpecialEffect {
   type: 'attitude' | 'resource' | 'status' | 'info' | 'damage' | 'hex';
   message: string;
   icon?: string;
-  variant?: 'positive' | 'negative' | 'neutral';
+  variant?: 'positive' | 'negative' | 'info';
 }
 
 /**
@@ -117,6 +117,6 @@ export function parseLegacyEffect(message: string): SpecialEffect {
   return {
     type: 'info',
     message,
-    variant: 'neutral'
+    variant: 'info'
   };
 }

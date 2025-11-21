@@ -60,9 +60,9 @@
       "modifiers": [
         {
           "type": "dice",
-          "resource": "imprisoned",
+          "resource": "imprisonedUnrest",
           "formula": "1d4",
-          "operation": "subtract",
+          "negative": true,
           "duration": "immediate"
         }
       ],

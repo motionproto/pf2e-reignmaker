@@ -7,7 +7,7 @@
 
 import { updateKingdom, getKingdomActor } from '../../../stores/KingdomStore';
 import { logger } from '../../../utils/Logger';
-import type { PreparedCommand } from '../../../services/GameCommandsResolver';
+import type { PreparedCommand } from '../../../types/game-commands';
 
 /**
  * Found Settlement - Create a new village (Level 1)
@@ -49,10 +49,11 @@ export async function foundSettlement(
 
   // PHASE 2: RETURN - Preview data + commit function
   return {
-    specialEffect: {
-      type: 'hex',
-      message: message,
+    outcomeBadge: {
       icon: 'fa-home',
+          template: 'Founded {{value}}',
+      value: { type: 'static', amount: 1 },
+      suffix: `${trimmedName} (Village)${grantFreeStructure ? ' +1 free structure' : ''}`,
       variant: 'positive'
     },
     commit: async () => {
