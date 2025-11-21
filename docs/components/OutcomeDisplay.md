@@ -14,9 +14,63 @@ This component automatically selects UI components based on modifier types. No n
 
 | Modifier Type | Component | Behavior |
 |--------------|-----------|----------|
-| `{ type: 'dice', ... }` | DiceRoller.svelte | Interactive dice rolling |
+| `{ type: 'dice', ... }` | OutcomeBadges.svelte | Auto-converted to clickable dice badge |
 | `{ type: 'choice', ... }` | ChoiceButtons.svelte or ResourceSelector.svelte | User selection |
 | `{ type: 'static', ... }` | OutcomeBadges.svelte | Display only, no interaction |
+
+---
+
+## Unified Badge System
+
+All outcomes (static values and dice rolls) are now displayed in OutcomeBadges.svelte under a single "Outcome:" section.
+
+### Badge Types
+
+**Static Badge:**
+```typescript
+{
+  icon: 'fa-coins',
+  prefix: 'Receive',
+  value: { type: 'static', amount: 50 },
+  suffix: 'gold',
+  variant: 'positive'
+}
+// Renders: "🪙 Receive 50 gold"
+```
+
+**Dice Badge (interactive):**
+```typescript
+{
+  icon: 'fa-gavel',
+  prefix: 'Remove',
+  value: { type: 'dice', formula: '1d4' },
+  suffix: 'imprisoned unrest',
+  variant: 'positive'
+}
+// Renders: "🔨 Remove [🎲 1d4] imprisoned unrest" (clickable)
+// After roll: "🔨 Remove 3 imprisoned unrest"
+```
+
+### Auto-Conversion
+
+Dice modifiers in outcomes are automatically converted to badges:
+```typescript
+// This modifier in outcomes:
+{ type: 'dice', resource: 'gold', formula: '2d6' }
+
+// Is auto-converted to this badge:
+{
+  icon: 'fa-coins',
+  prefix: 'Gain',
+  value: { type: 'dice', formula: '2d6' },
+  suffix: 'Gold',
+  variant: 'positive'
+}
+```
+
+### Type Definition
+
+See `src/types/OutcomeBadge.ts` for full type definitions.
 
 ---
 

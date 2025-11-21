@@ -254,7 +254,8 @@ function processModifier(modifier: EventModifier) {
       return applyStatic(modifier.resource, modifier.value);
       
     case 'dice':
-      return showDiceRoller(modifier.formula, modifier.negative);
+      // Rendered as clickable badge in OutcomeBadges.svelte
+      return showDiceBadge(modifier.formula, modifier.negative);
       
     case 'choice':
       return showChoiceDropdown(modifier.resources, modifier.value);
@@ -349,9 +350,11 @@ appliedOutcome: {
 ### With OutcomeDisplay
 
 OutcomeDisplay automatically handles all modifier types:
-- Detects dice modifiers → shows dice roller
+- Detects dice modifiers → auto-converts to clickable dice badges in OutcomeBadges
 - Detects choice modifiers → shows dropdown
 - Validates all resolved before enabling "Apply Result"
+
+**Note:** Dice modifiers are automatically converted to unified badges at runtime (see `src/types/OutcomeBadge.ts`). The old DiceRoller component has been deprecated - all dice now display as interactive badges under the "Outcome:" section.
 
 ### With GameEffectsService
 
