@@ -44,6 +44,7 @@ export function createActionPipeline(
     description: data.description,
     category: data.category,
     checkType: 'action',
+    cost: data.cost as any,
 
     // Cast to proper types (JSON loses type narrowing)
     skills: data.skills as SkillOption[],

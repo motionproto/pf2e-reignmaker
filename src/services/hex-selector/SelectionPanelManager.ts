@@ -298,21 +298,26 @@ export class SelectionPanelManager {
         <span style="font-weight: bold; color: #999; min-width: 30px;">[${i + 1}]</span>
         ${hexId 
           ? `<span style="flex: 1; font-family: monospace; font-size: 16px; color: #D2691E;">${hexId} <span style="font-size: 12px; color: #999;">[${terrain}]</span></span>
-             <i class="fas fa-minus-circle" style="color: #999;"></i>`
+             <i class="fas fa-minus-circle delete-btn" style="color: #999; cursor: pointer;" title="Remove selection"></i>`
           : `<span style="flex: 1; font-family: monospace; color: #666; opacity: 0.5;">______</span>`
         }
       `;
       
-      // Allow clicking to deselect (handled by parent)
+      slotsContainer.appendChild(slot);
+
+      // Wire up delete button
       if (hexId) {
-        slot.addEventListener('click', () => {
-          // Parent will handle deselection logic
-          const event = new CustomEvent('hex-deselected', { detail: { hexId } });
+        const deleteBtn = slot.querySelector('.delete-btn');
+        deleteBtn?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          logger.info(`[SelectionPanel] Deselecting hex: ${hexId}`);
+          const event = new CustomEvent('hex-deselected', { 
+            detail: { hexId },
+            bubbles: true 
+          });
           this.panelMountPoint?.dispatchEvent(event);
         });
       }
-      
-      slotsContainer.appendChild(slot);
     }
     
     // 🔧 FIX: Restore custom selector mount point or create new one

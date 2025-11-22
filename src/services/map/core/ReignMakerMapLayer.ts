@@ -615,7 +615,8 @@ export class ReignMakerMapLayer {
     const layerId: LayerId = 'interactive-hover';
     
     // Create/get layer first (persists, stays visible)
-    const layer = this.createLayer(layerId, 15);
+    // High z-index (1000) ensures visibility above Fog of War / World Explorer layers
+    const layer = this.createLayer(layerId, 1000);
     
     // Clear previous hover content
     this.clearLayerContent(layerId);
@@ -670,7 +671,8 @@ export class ReignMakerMapLayer {
     
     const layerId: LayerId = 'interactive-selection';
     // Create/get layer first (persists, stays visible)
-    const layer = this.createLayer(layerId, 20); // Above hover
+    // High z-index (1005) ensures visibility above Fog of War / World Explorer layers
+    const layer = this.createLayer(layerId, 1005); // Above hover
     
     const canvas = (globalThis as any).canvas;
     if (!canvas?.grid) {

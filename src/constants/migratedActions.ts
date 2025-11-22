@@ -32,8 +32,8 @@ export const ACTION_STATUS = new Map<string, ActionStatus>([
   ['build-roads', 'tested'],  // #3
   ['fortify-hex', 'tested'],  // #4
   ['create-worksite', 'tested'],  // #5
-  ['harvest-resources', 'testing'],  // #6
-  ['send-scouts', 'untested'],  // #7
+  ['harvest-resources', 'tested'],  // #6
+  ['send-scouts', 'tested'],  // #7
   
   // Phase 3: Custom Components (graceful degradation)
   ['sell-surplus', 'untested'],  // #8

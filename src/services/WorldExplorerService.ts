@@ -14,6 +14,8 @@
  * ```
  */
 
+import { logger } from '../utils/Logger';
+
 export class WorldExplorerService {
   /**
    * Check if World Explorer module is installed, enabled, and active on current scene

@@ -35,7 +35,8 @@ import {
   createResourcesOverlay,
   createSettlementIconsOverlay,
   createSettlementLabelsOverlay,
-  createFortificationsOverlay
+  createFortificationsOverlay,
+  createInteractiveHoverOverlay
 } from '../overlays';
 
 /**
@@ -645,6 +646,9 @@ export class OverlayManager {
     this.registerOverlay(createSettlementIconsOverlay(this.mapLayer, boundIsActive));
     this.registerOverlay(createSettlementLabelsOverlay(this.mapLayer, boundIsActive));
     this.registerOverlay(createFortificationsOverlay(this.mapLayer, boundIsActive));
+    
+    // Internal overlays (used during map interactions, not shown in overlay panel)
+    this.registerOverlay(createInteractiveHoverOverlay(this.mapLayer, boundIsActive));
   }
 }
 

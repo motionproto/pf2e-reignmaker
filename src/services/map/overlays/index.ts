@@ -16,3 +16,4 @@ export { createResourcesOverlay } from './ResourcesOverlay';
 export { createSettlementIconsOverlay } from './SettlementIconsOverlay';
 export { createSettlementLabelsOverlay } from './SettlementLabelsOverlay';
 export { createFortificationsOverlay } from './FortificationsOverlay';
+export { createInteractiveHoverOverlay } from './InteractiveHoverOverlay';

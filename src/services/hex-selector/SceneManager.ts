@@ -125,41 +125,43 @@ export class SceneManager {
     switch (colorType) {
       case 'claim':
       case 'scout':
-        // Show territory for claiming/scouting
-        actionViewOverlays = ['territories', 'territory-border'];
+        // Show territory for claiming/scouting + interactive hover
+        actionViewOverlays = ['territories', 'territory-border', 'interactive-hover'];
         break;
         
       case 'road':
         // Show territory, existing roads, AND settlements for road building
-        // (settlements count as roads for adjacency)
-        actionViewOverlays = ['territories', 'territory-border', 'roads', 'settlement-icons', 'settlement-labels'];
+        // (settlements count as roads for adjacency) + interactive hover
+        actionViewOverlays = ['territories', 'territory-border', 'roads', 'settlement-icons', 'settlement-labels', 'interactive-hover'];
         break;
         
       case 'settlement':
-        // Show territory, existing settlements, and settlement icons/labels
-        actionViewOverlays = ['territories', 'territory-border', 'settlements', 'settlement-icons', 'settlement-labels'];
+        // Show territory, existing settlements, and settlement icons/labels + interactive hover
+        actionViewOverlays = ['territories', 'territory-border', 'settlements', 'settlement-icons', 'settlement-labels', 'interactive-hover'];
         break;
         
       case 'fortify':
-        // Show territory, roads, settlements, and existing fortifications
-        actionViewOverlays = ['territories', 'territory-border', 'roads', 'settlement-icons', 'settlement-labels', 'fortifications'];
+        // Show territory, roads, settlements, and existing fortifications + interactive hover
+        actionViewOverlays = ['territories', 'territory-border', 'roads', 'settlement-icons', 'settlement-labels', 'fortifications', 'interactive-hover'];
         break;
         
       case 'worksite':
-        // Show territory border, existing worksites, and settlement icons (settlements block worksites)
-        actionViewOverlays = ['territories', 'territory-border', 'worksites', 'settlement-icons', 'settlement-labels'];
+        // Show territory border, existing worksites, and settlement icons (settlements block worksites) + interactive hover
+        actionViewOverlays = ['territories', 'territory-border', 'worksites', 'settlement-icons', 'settlement-labels', 'interactive-hover'];
         break;
+    }
+
+    // ✅ CRITICAL: Ensure interactive-hover is ALWAYS enabled for map selection
+    // This is required for the hex selector to visualize hover states
+    if (!actionViewOverlays.includes('interactive-hover')) {
+      actionViewOverlays.push('interactive-hover');
     }
     
     // Apply temporary overlay configuration (saves current state automatically)
+    // The interactive-hover overlay is now managed by OverlayManager, so it will be
+    // automatically shown/hidden along with other overlays
     await this.overlayManager.setTemporaryOverlays(actionViewOverlays);
     logger.info(`[HexSelector] 📌 Applied action view overlays for '${colorType}':`, actionViewOverlays);
-    
-    // ✅ FIX: Ensure interactive-hover layer exists and is ready
-    // Create the layer now so it's properly initialized for mouse events
-    this.mapLayer.createLayer('interactive-hover', 15);
-    this.mapLayer.showLayer('interactive-hover');
-    logger.info('[HexSelector] ✅ Interactive hover layer initialized and ready');
   }
 
   /**
@@ -167,6 +169,6 @@ export class SceneManager {
    */
   async restoreOverlays(): Promise<void> {
     await this.overlayManager.popOverlayState();
-    logger.info('[HexSelector] 📍 Restored player overlay preferences');
+    logger.info('[HexSelector] � Restored player overlay preferences');
   }
 }
