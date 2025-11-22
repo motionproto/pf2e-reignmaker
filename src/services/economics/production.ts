@@ -125,7 +125,7 @@ function calculateHexProduction(hex: HexData): Map<string, number> {
  * @param terrain - Terrain type
  * @returns Map of resource to production amount
  */
-function getWorksiteBaseProduction(worksiteType: string, terrain: string): Map<string, number> {
+export function getWorksiteBaseProduction(worksiteType: string, terrain: string): Map<string, number> {
   const normalizedTerrain = terrain.toLowerCase();
   
   switch (worksiteType) {

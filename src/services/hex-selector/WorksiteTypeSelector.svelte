@@ -110,7 +110,6 @@
 
 <div class="worksite-type-selector">
   <div class="selector-header">
-    <i class="fas fa-industry"></i>
     Select Worksite Type
   </div>
   
@@ -143,37 +142,24 @@
     {/each}
   </div>
 
-  {#if selectedType && hexTerrain}
-    {@const revenue = getWorksiteRevenue(selectedType, hexTerrain)}
-    <div class="selection-info">
-      <i class="fas fa-check-circle"></i>
-      <span>Selected: <strong>{selectedType}</strong>{#if revenue} ({revenue}){/if}</span>
-    </div>
-  {/if}
 </div>
 
 <style lang="scss">
   .worksite-type-selector {
     padding: var(--space-12) 0;
-    border-top: 1px solid var(--color-border-low);
+    border-top: var(--border-width) solid var(--border-low);
   }
   
   .selector-header {
-    font-size: var(--font-sm);
-    color: var(--text-muted);
+    font-size: var(--font-lg);
+    color: var(--text-primary);
     margin-bottom: var(--space-12);
-    display: flex;
-    align-items: center;
-    gap: var(--space-6);
-    
-    i {
-      color: var(--color-accent);
-    }
+    font-weight: var(--font-weight-semibold);
   }
   
   .type-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-10);
     margin-bottom: var(--space-12);
   }
@@ -183,43 +169,56 @@
     display: flex;
     flex-direction: column;
     padding: var(--space-10) var(--space-16);
-    
-    /* Choice-set pattern: Background */
-    background: var(--hover-low);
-    
-    /* Choice-set pattern: Border (visible on all states) */
-    border: 1px solid var(--border-default);
-    border-radius: var(--radius-lg);
-    
-    /* Choice-set pattern: Outline (overlay, doesn't affect size) */
-    outline: 2px solid transparent;
-    outline-offset: -1px;
-    
+    border-radius: var(--radius-md);
     cursor: pointer;
-    transition: all 0.2s;
-    min-height: 52px;
+    font-weight: var(--font-weight-medium);
+    transition: all var(--transition-fast);
+    box-sizing: border-box;
+    min-width: 0;
+    min-height: max-content;
     
-    /* Choice-set pattern: Hover state (only for valid, unselected) */
+    /* Outline variant (deselected state) */
+    background: var(--surface-low);
+    border: 1px solid var(--border-strong);
+    color: var(--text-primary);
+    
+    /* Hover state (only for valid, unselected) */
     &.valid:hover:not(.selected) {
-      background: var(--hover);
+       background: var(--surface-low);
+      border-color: var(--border-strong);
       transform: translateY(-0.0625rem);
-      box-shadow: 0 0.125rem 0.5rem var(--overlay-low);
+      box-shadow: var(--shadow-md);
     }
     
-    /* Choice-set pattern: Selected state */
+    /* Success variant (selected state) */
     &.valid.selected {
-      background: var(--surface-success-high);
-      outline-color: var(--border-success);
+      background: var(--surface-success-lower);
+      border: 1px solid var(--border-strong);
+      outline: 2px solid var(--border-success);
+      outline-offset: 0;
+      color: var(--text-success);
+      
+      &:hover {
+        background: var(--surface-success-low);
+        outline-color: var(--border-success-medium);
+        color: var(--text-primary);
+      }
     }
     
-    /* Choice-set pattern: Disabled state */
+    /* Disabled state */
     &.invalid {
-      opacity: 0.4;
+      opacity: var(--opacity-disabled);
       cursor: not-allowed;
+      background: transparent;
+      border-color: var(--border-faint);
+      color: var(--text-tertiary);
     }
   }
   
   .button-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
     width: 100%;
   }
   
@@ -234,13 +233,12 @@
     font-size: var(--font-lg);
     color: var(--text-secondary);
     flex-shrink: 0;
-    width: 20px;
+    width: var(--space-16);
     text-align: center;
-    transition: color 0.2s;
   }
   
   .type-name {
-    font-weight: 500;
+    font-weight: var(--font-weight-semibold);
     font-size: var(--font-md);
     color: var(--text-primary);
     flex: 1;
@@ -248,30 +246,10 @@
   }
   
   .revenue-text {
-    font-size: var(--font-xs);
-    color: var(--text-muted);
-    margin-top: var(--space-4);
-    padding-left: 28px; /* Align with type name (icon 20px + gap 8px) */
+    font-size: var(--font-sm);
+    color: var(--text-secondary);
+    padding-left: calc(var(--space-20) + var(--space-8)); /* Align with type name (icon width + gap) */
     text-align: left;
   }
   
-  .selection-info {
-    display: flex;
-    align-items: center;
-    gap: var(--space-10);
-    padding: var(--space-12);
-    background: var(--surface-success-low);
-    border-left: 3px solid var(--color-green, #22c55e);
-    border-radius: var(--radius-md);
-    color: var(--text-primary, #e0e0e0);
-    
-    i {
-      color: var(--color-green, #22c55e);
-      font-size: var(--font-lg);
-    }
-    
-    strong {
-      color: var(--color-green, #22c55e);
-    }
-  }
 </style>

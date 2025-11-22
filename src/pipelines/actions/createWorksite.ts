@@ -5,8 +5,12 @@
 
 import { createActionPipeline } from '../shared/createActionPipeline';
 import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
-
+import { getKingdomData } from '../../stores/KingdomStore';
+import { createWorksiteExecution } from '../../execution/territory/createWorksite';
+import { getWorksiteBaseProduction } from '../../services/economics/production';
 import { textBadge } from '../../types/OutcomeBadge';
+import WorksiteTypeSelector from '../../services/hex-selector/WorksiteTypeSelector.svelte';
+
 export const createWorksitePipeline = createActionPipeline('create-worksite', {
   // No cost - always available
   requirements: () => ({ met: true }),
@@ -22,6 +26,21 @@ export const createWorksitePipeline = createActionPipeline('create-worksite', {
       };
     }
   },
+
+  postApplyInteractions: [
+    {
+      id: 'selectedHex',
+      type: 'map-selection',
+      mode: 'hex-selection',
+      count: 1,
+      title: 'Select a hex for the worksite',
+      colorType: 'worksite',
+      required: true,
+      customSelector: {
+        component: WorksiteTypeSelector
+      }
+    }
+  ],
 
   execute: async (ctx) => {
     console.log('[CreateWorksite] Execute called with outcome:', ctx.outcome);
@@ -75,7 +94,7 @@ export const createWorksitePipeline = createActionPipeline('create-worksite', {
           const hex = kingdom.hexes?.find((h: any) => h.id === hexId);
           
           if (hex) {
-            const production = getWorksiteProduction(worksiteType, hex.terrain);
+            const production = getWorksiteBaseProduction(worksiteType, hex.terrain);
             
             if (production.size > 0) {
               await updateKingdom(k => {

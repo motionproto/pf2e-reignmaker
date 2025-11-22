@@ -154,6 +154,12 @@ export class SceneManager {
     // Apply temporary overlay configuration (saves current state automatically)
     await this.overlayManager.setTemporaryOverlays(actionViewOverlays);
     logger.info(`[HexSelector] 📌 Applied action view overlays for '${colorType}':`, actionViewOverlays);
+    
+    // ✅ FIX: Ensure interactive-hover layer exists and is ready
+    // Create the layer now so it's properly initialized for mouse events
+    this.mapLayer.createLayer('interactive-hover', 15);
+    this.mapLayer.showLayer('interactive-hover');
+    logger.info('[HexSelector] ✅ Interactive hover layer initialized and ready');
   }
 
   /**

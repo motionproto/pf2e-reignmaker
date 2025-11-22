@@ -37,11 +37,7 @@
       "gameCommands": [
         {
           "type": "createWorksite",
-          "description": "Create worksite on selected hex (Farmstead/Logging Camp/Mine/Quarry)"
-        },
-        {
-          "type": "grantResources",
-          "description": "Immediately produce resources based on worksite type and terrain"
+          "description": "Create worksite on selected hex (Farmstead/Logging Camp/Mine/Quarry) and immediately produce resources"
         }
       ]
     },

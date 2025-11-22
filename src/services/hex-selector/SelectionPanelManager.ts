@@ -392,16 +392,23 @@ export class SelectionPanelManager {
     const title = actionMessages[this.config.colorType] || 'Selection Complete!';
     const icon = this.config.colorType === 'scout' ? 'fa-map-marked-alt' : 'fa-check-circle';
     
-    // 🔧 FIX #2: Generate metadata display HTML if custom selector data exists
+    // Generate metadata display HTML if custom selector data exists
     let metadataHTML = '';
     if (this.selectedMetadata && this.selectedMetadata.worksiteType) {
+      // Get production info from completionHexInfo if available
+      const productionMatch = this.completionHexInfo?.match(/\+\d+\s+\w+/);
+      const production = productionMatch ? productionMatch[0] : '';
+      
       metadataHTML = `
-        <div style="margin-bottom: 12px; padding: 12px; background: var(--surface-info-low); border-left: 3px solid var(--border-accent); border-radius: 4px;">
-          <div style="display: flex; align-items: center; gap: 8px; color: var(--text-primary);">
-            <i class="fas fa-industry" style="color: var(--color-accent);"></i>
-            <strong>Worksite Type:</strong>
-            <span style="color: var(--color-accent);">${this.selectedMetadata.worksiteType}</span>
+        <div style="margin-bottom: 16px;">
+          <div style="font-size: var(--font-2xl); font-weight: var(--font-weight-bold); color: var(--text-primary); margin-bottom: 4px;">
+            ${this.selectedMetadata.worksiteType}
           </div>
+          ${production ? `
+            <div style="font-size: var(--font-lg); color: var(--text-secondary);">
+              ${production}
+            </div>
+          ` : ''}
         </div>
       `;
     }
@@ -420,14 +427,13 @@ export class SelectionPanelManager {
       ` : ''}
       ${metadataHTML}
       <div style="padding: 20px;">
-        <div style="background: var(--hover-low); border-radius: 4px; padding: 16px; margin-bottom: 16px;">
-          <div style="font-size: 12px; color: #999; margin-bottom: 8px;">Selected ${this.selectedHexes.length} ${this.selectedHexes.length === 1 ? 'hex' : 'hexes'}:</div>
+        <div style="background: var(--hover-low); border-radius: 4px; padding: 8px; margin-bottom: 16px;">
+          <div style="font-size: 12px; color: #999; margin-bottom: 4px;">Selected ${this.selectedHexes.length} ${this.selectedHexes.length === 1 ? 'hex' : 'hexes'}:</div>
           <div style="max-height: 200px; overflow-y: auto;">
             ${this.selectedHexes.map(hexId => {
               const terrain = this.getHexTerrain(hexId);
               return `
-                <div style="padding: 6px 8px; margin: 4px 0; background: rgba(210, 105, 30, 0.2); border-radius: 4px; font-family: monospace; font-size: 14px; color: #D2691E; display: flex; align-items: center; gap: 8px;">
-                  <i class="fas fa-check-circle" style="color: #4CAF50;"></i>
+                <div style="padding: 2px 4px; font-family: monospace; font-size: var(--font-md); color: #D2691E;">
                   ${hexId} <span style="font-size: 12px; color: #999;">[${terrain}]</span>
                 </div>
               `;
