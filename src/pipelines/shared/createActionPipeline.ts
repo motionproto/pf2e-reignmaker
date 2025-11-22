@@ -67,10 +67,14 @@ export function createActionPipeline(
       }
     },
 
-    // Default preview
+    // Default preview (empty but defined)
+    preview: {
+      calculate: () => ({ resources: [], outcomeBadges: [] })
+    },
 
     // Apply remaining TypeScript overrides
     ...(overrides.requirements && { requirements: overrides.requirements }),
+    ...(overrides.preview && { preview: overrides.preview }),
     ...(overrides.preRollInteractions && { preRollInteractions: overrides.preRollInteractions }),
     ...(overrides.postRollInteractions && { postRollInteractions: overrides.postRollInteractions }),
     ...(overrides.postApplyInteractions && { postApplyInteractions: overrides.postApplyInteractions }),

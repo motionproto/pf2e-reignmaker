@@ -18,7 +18,7 @@
         "initiative": 0
       },
       "icon": "fortification_earthen.webp",
-      "description": "Basic earthen defensive positions with ditches and berms. Benefits: +1 AC to defending troops"
+      "description": "Basic earthen defensive positions with ditches and berms."
     },
     {
       "id": "wooden-tower",
@@ -33,7 +33,7 @@
         "initiative": 1
       },
       "icon": "fortification_tower_wood.webp",
-      "description": "Wooden watchtower with palisade defenses. Benefits: +1 AC, +1 Initiative to defending troops"
+      "description": "Wooden watchtower with palisade defenses."
     },
     {
       "id": "stone-tower",
@@ -49,7 +49,7 @@
         "initiative": 1
       },
       "icon": "fortification_tower_stone.webp",
-      "description": "Stone tower with reinforced defensive walls. Benefits: +2 AC, +1 Initiative to defending troops"
+      "description": "Stone tower with reinforced defensive walls."
     },
     {
       "id": "fortress",
@@ -65,7 +65,7 @@
         "initiative": 2
       },
       "icon": "fortification_keep.webp",
-      "description": "Massive fortified keep with multiple defensive layers. Benefits: +2 AC, +2 Initiative to defending troops. Units stationed here require no gold upkeep",
+      "description": "Massive fortified keep with multiple defensive layers.",
       "special": "Units stationed here require no gold upkeep"
     }
   ],
