@@ -418,7 +418,7 @@ export class PipelineCoordinator {
     ctx.instanceId = instanceId;
     
     // ✅ EXTRACT CUSTOM COMPONENT from postRollInteractions (for inline display in OutcomeDisplay)
-    let customComponent = null;
+    let customComponentName: string | null = null;
     let customResolutionProps: Record<string, any> = {};
     
     if (pipeline.postRollInteractions) {
@@ -439,9 +439,17 @@ export class PipelineCoordinator {
           console.log(`🔍 [PipelineCoordinator] Condition met for outcome ${outcome}?`, conditionMet);
           
           if (conditionMet) {
-            customComponent = interaction.component;
+            // Extract component NAME from component class (for registry lookup)
+            if (typeof interaction.component === 'string') {
+              // Already a string (legacy support)
+              customComponentName = interaction.component;
+            } else {
+              // Component class - extract name and strip Proxy wrapper if present (HMR)
+              const rawName = interaction.component.name || 'Unknown';
+              customComponentName = rawName.replace(/^Proxy<(.+)>$/, '$1');
+            }
             customResolutionProps = interaction.componentProps || {};
-            console.log(`✅ [PipelineCoordinator] Extracted custom component for inline display`);
+            console.log(`✅ [PipelineCoordinator] Extracted custom component name: ${customComponentName}`);
             break;
           }
         }
@@ -449,7 +457,7 @@ export class PipelineCoordinator {
     }
     
     // If custom component found, update the instance with it
-    if (customComponent) {
+    if (customComponentName) {
       const outcomePreviewService = await createOutcomePreviewService();
       const actor = getKingdomActor();
       
@@ -458,7 +466,7 @@ export class PipelineCoordinator {
         const instance = outcomePreviewService.getInstance(instanceId, kingdom);
         
         if (instance?.appliedOutcome) {
-          // Update instance with custom component
+          // Update instance with custom component NAME (string for registry lookup)
           await outcomePreviewService.storeOutcome(
             instanceId,
             outcome,
@@ -474,11 +482,11 @@ export class PipelineCoordinator {
             instance.appliedOutcome.effect,
             instance.appliedOutcome.rollBreakdown,
             instance.appliedOutcome.specialEffects,
-            customComponent,  // Pass custom component
+            customComponentName,  // Pass component NAME (string)
             customResolutionProps  // Pass custom props
           );
           
-          console.log(`✅ [PipelineCoordinator] Updated instance with custom component`);
+          console.log(`✅ [PipelineCoordinator] Updated instance with custom component name: ${customComponentName}`);
         }
       }
     }

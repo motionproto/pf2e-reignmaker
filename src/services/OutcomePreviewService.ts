@@ -101,15 +101,22 @@ export class OutcomePreviewService {
     // Extract component name if component provided
     let componentName: string | undefined;
     if (customComponent) {
-      // Get raw name (may be wrapped in Proxy<...> during HMR)
-      let rawName = customComponent.name || customComponent.constructor?.name || '';
-      
-      // Strip Proxy<...> wrapper if present (HMR development mode)
-      componentName = rawName.replace(/^Proxy<(.+)>$/, '$1');
-      
-      console.log('📦 [OutcomePreviewService] Custom component provided:', rawName);
-      console.log('📦 [OutcomePreviewService] Extracted component name:', componentName);
-      console.log('📦 [OutcomePreviewService] Storing component name (not class) for registry lookup');
+      // Handle both string (already a name) and component class
+      if (typeof customComponent === 'string') {
+        // Already a component name string
+        componentName = customComponent;
+        console.log('📦 [OutcomePreviewService] Component name provided as string:', componentName);
+      } else {
+        // Component class - extract name
+        let rawName = customComponent.name || customComponent.constructor?.name || '';
+        
+        // Strip Proxy<...> wrapper if present (HMR development mode)
+        componentName = rawName.replace(/^Proxy<(.+)>$/, '$1');
+        
+        console.log('📦 [OutcomePreviewService] Custom component class provided:', rawName);
+        console.log('📦 [OutcomePreviewService] Extracted component name:', componentName);
+      }
+      console.log('📦 [OutcomePreviewService] Storing component name for registry lookup:', componentName);
     }
     
     await updateKingdom(kingdom => {

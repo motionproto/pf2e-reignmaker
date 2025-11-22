@@ -630,17 +630,12 @@
     <!-- Always show OutcomeBadges (modifiers, costs, effects) -->
     <!-- Note: OutcomeBadges now auto-converts dice modifiers to badges -->
     <OutcomeBadges 
-      stateChanges={displayStateChanges} 
-      {modifiers} 
-      {resolvedDice} 
       manualEffects={effectiveManualEffects} 
       automatedEffects={legacyParsedEffects}
-      outcome={outcome} 
-      hideResources={componentResolutionData ? Object.keys(componentResolutionData.stateChanges) : []}
+      {outcome} 
       {customComponentData}
       {outcomeBadges}
       specialEffects={standaloneEffects}
-      instanceMetadata={instance?.metadata}
       on:roll={handleDiceRoll}
       on:badgeRoll={handleDiceRoll}
     />
@@ -653,7 +648,7 @@
           this={customComponent} 
           {instance}
           {outcome}
-          {...customResolutionProps}
+          config={customResolutionProps}
           on:resolution={handleComponentResolution}
         />
       </div>

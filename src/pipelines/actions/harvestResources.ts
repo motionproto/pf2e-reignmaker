@@ -15,7 +15,7 @@ export const harvestResourcesPipeline = createActionPipeline('harvest-resources'
     {
       type: 'configuration',
       id: 'resourceSelection',
-      component: 'ResourceChoiceSelector',  // Resolved via ComponentRegistry
+      component: 'ResourceChoiceSelector',  // String name (simple, reliable)
       // Only show for successful harvests
       condition: (ctx) => {
         return ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess';
