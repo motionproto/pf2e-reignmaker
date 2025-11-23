@@ -214,7 +214,7 @@ export class UnifiedCheckHandler {
         title: interaction.title,
         count: interaction.count,
         colorType: interaction.colorType || 'claim',
-        validationFn: interaction.validation,
+        validateHex: interaction.validateHex,  // ✅ Direct pass-through, no mapping
         customSelector: interaction.customSelector,  // ✅ Pass custom selector if provided
         getHexInfo: interaction.getHexInfo  // ✅ Pass hex info callback if provided
       });

@@ -7,6 +7,7 @@
 
 import { updateKingdom } from '../../stores/KingdomStore';
 import { logger } from '../../utils/Logger';
+import { validateCreateWorksite } from '../../pipelines/shared/worksiteValidator';
 
 /**
  * Execute worksite creation on a hex
@@ -24,6 +25,14 @@ export async function createWorksiteExecution(hexId: string, worksiteType: strin
 
   if (!worksiteType) {
     logger.warn('[createWorksiteExecution] No worksite type provided');
+    return;
+  }
+
+  // Validate worksite placement
+  const validation = await validateCreateWorksite(hexId, worksiteType);
+  if (!validation.valid) {
+    logger.error(`[createWorksiteExecution] Validation failed: ${validation.message}`);
+    ui.notifications?.error(`Cannot create worksite: ${validation.message}`);
     return;
   }
 

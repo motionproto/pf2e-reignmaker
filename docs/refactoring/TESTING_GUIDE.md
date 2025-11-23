@@ -517,6 +517,8 @@ These actions won't be fully functional until custom components are implemented,
 
 **📖 FULL TROUBLESHOOTING:** See `DEBUGGING_GUIDE.md` for complete solutions
 
+**📖 MODIFIER PATTERNS:** See `MODIFIER_PATTERNS.md` for guide on applying modifiers in execute functions
+
 **Quick Reference (most common issues):**
 
 ### Issue: Outcome doesn't appear after roll
@@ -564,9 +566,12 @@ These may still occur but are less common:
 **Cause:** Condition function returns false
 **Fix:** Check pipeline `postApplyInteractions[0].condition(ctx)`
 
-### Issue: Resources not deducting
-**Cause:** Execute step not applying modifiers
-**Fix:** Verify pipeline calls `applyPipelineModifiers()` in execute function
+### Issue: Resources not deducting OR "Dice modifier has no pre-rolled value" error
+**Cause:** Execute step not applying modifiers correctly
+**Fix:** See `MODIFIER_PATTERNS.md` for correct pattern:
+- **Static modifiers** (e.g., `-4 gold`): Use `applyPipelineModifiers()`
+- **Dice modifiers** (e.g., `2d6 gold`): Use `applyPreRolledModifiers()`
+**Details:** MODIFIER_PATTERNS.md - Complete guide with examples
 
 ### Issue: Console errors about missing metadata
 **Cause:** Pre-roll dialog didn't store metadata

@@ -45,7 +45,7 @@ export async function showEntitySelectionDialog(
       break;
     case 'faction':
       // ✅ FIX: Factions are managed by factionService, not stored in kingdom
-      const { factionService } = await import('./factions');
+      const { factionService } = await import('./factions/index');
       entities = factionService.getAllFactions();
       entityLabel = 'Faction';
       break;
@@ -55,12 +55,32 @@ export async function showEntitySelectionDialog(
   }
 
   // Apply filter if provided
-  if (filter) {
+  // For factions: Only pre-filter for basic qualification (attitude check)
+  // The dialog component will handle showing unavailable factions as grayed out
+  if (filter && entityType !== 'faction') {
     entities = entities.filter(e => {
       const result = filter(e, kingdom);
       // Handle both boolean and object returns
       if (typeof result === 'boolean') return result;
       return result.eligible;
+    });
+  } else if (filter && entityType === 'faction') {
+    // For factions: Only filter for basic qualification (Friendly/Helpful attitude)
+    // Don't filter out factions that have already provided aid - let dialog show them as grayed
+    entities = entities.filter(e => {
+      const result = filter(e, kingdom);
+      // Handle both boolean and object returns
+      const eligible = typeof result === 'boolean' ? result : result.eligible;
+      const reason = typeof result === 'object' ? result.reason : undefined;
+      
+      // Only filter out if the faction doesn't meet attitude requirement
+      // Check if the reason is about attitude (basic qualification)
+      if (!eligible && reason && reason.includes('Friendly')) {
+        return false;
+      }
+      
+      // Keep all other factions (even if already provided aid) - dialog will gray them out
+      return true;
     });
   }
 

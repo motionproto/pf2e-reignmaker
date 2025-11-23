@@ -85,7 +85,10 @@ export class CanvasInteractionHandler {
    * Handle canvas mousemove event (hover detection)
    */
   private handleCanvasMove(event: any): void {
-    if (!this.config) return;
+    if (!this.config) {
+      logger.warn('[CanvasInteractionHandler] handleCanvasMove called but config is null');
+      return;
+    }
     
     try {
       const position = event.data.getLocalPosition((globalThis as any).canvas.stage);
@@ -104,13 +107,17 @@ export class CanvasInteractionHandler {
       // Only redraw if different hex
       if (this.currentHoveredHex !== hexId) {
         this.currentHoveredHex = hexId;
+        logger.debug(`[CanvasInteractionHandler] Hovering hex: ${hexId}`);
         
-        // Validate hex if validation function provided
-        let isValid = true;
-        if (this.config.validationFn) {
-          const result = this.config.validationFn(hexId, this.selectedHexes);
-          isValid = typeof result === 'boolean' ? result : result.valid;
-        }
+      // Validate hex if validation function provided
+      let isValid = true;
+      if (this.config.validateHex) {
+        const result = this.config.validateHex(hexId, this.selectedHexes);
+        isValid = typeof result === 'boolean' ? result : result.valid;
+        logger.debug(`[CanvasInteractionHandler] Validation result for ${hexId}: ${isValid}`);
+      } else {
+        logger.warn('[CanvasInteractionHandler] No validateHex provided in config');
+      }
         
         if (isValid) {
           // Get road preview for 'road' type
@@ -119,15 +126,18 @@ export class CanvasInteractionHandler {
             : undefined;
           
           const style = this.renderer.getHoverStyle();
+          logger.debug(`[CanvasInteractionHandler] Showing valid hover (green) for ${hexId}`, style);
           this.mapLayer.showInteractiveHover(hexId, style, roadPreview);
         } else {
           // Show invalid hover (red)
           const invalidStyle = { fillColor: 0xFF0000, fillAlpha: 0.2 };
+          logger.debug(`[CanvasInteractionHandler] Showing invalid hover (red) for ${hexId}`);
           this.mapLayer.showInteractiveHover(hexId, invalidStyle);
         }
       }
     } catch (error) {
       // Silently fail for hover - might be outside valid hex area
+      logger.debug('[CanvasInteractionHandler] Hover failed (outside valid hex area):', error);
       if (this.currentHoveredHex !== null) {
         this.mapLayer.hideInteractiveHover();
         this.currentHoveredHex = null;
@@ -147,8 +157,8 @@ export class CanvasInteractionHandler {
       const hexId = hexToKingmakerId(offset);
 
       // Validate hex if validation function provided
-      if (this.config.validationFn) {
-        const result = this.config.validationFn(hexId, this.selectedHexes);
+      if (this.config.validateHex) {
+        const result = this.config.validateHex(hexId, this.selectedHexes);
         
         const isValid = typeof result === 'boolean' ? result : result.valid;
         const message = typeof result === 'boolean' 
@@ -174,6 +184,11 @@ export class CanvasInteractionHandler {
       } else if (this.selectedHexes.length < this.config.count) {
         // Not selected and room available - select
         this.onHexSelected?.(hexId);
+      } else if (this.config.count === 1 && this.selectedHexes.length === 1) {
+        // Single selection mode - replace current selection
+        const oldHexId = this.selectedHexes[0];
+        this.onHexDeselected?.(oldHexId);
+        this.onHexSelected?.(hexId);
       }
     } catch (error) {
       logger.error('[HexSelector] Error handling canvas click:', error);
@@ -187,7 +202,7 @@ export class CanvasInteractionHandler {
    * @returns Array of hexIds that were removed due to being invalid
    */
   validateAndPruneInvalidSelections(): string[] {
-    if (!this.config?.validationFn) {
+    if (!this.config?.validateHex) {
       return [];
     }
     
@@ -203,7 +218,7 @@ export class CanvasInteractionHandler {
         
         // Validate against current pending list (excluding this hex)
         const otherPending = this.selectedHexes.filter(id => id !== hexId);
-        const isValid = this.config.validationFn(hexId, otherPending);
+        const isValid = this.config.validateHex(hexId, otherPending);
         
         if (!isValid) {
           this.onHexDeselected?.(hexId);

@@ -10,6 +10,14 @@ import { createWorksiteExecution } from '../../execution/territory/createWorksit
 import { getWorksiteBaseProduction } from '../../services/economics/production';
 import { textBadge } from '../../types/OutcomeBadge';
 import WorksiteTypeSelector from '../../services/hex-selector/WorksiteTypeSelector.svelte';
+import { validateCreateWorksiteForPipeline } from '../shared/worksiteValidator';
+import {
+  validateClaimed,
+  validateNoSettlement,
+  safeValidation,
+  getFreshKingdomData,
+  type ValidationResult
+} from '../shared/hexValidators';
 
 export const createWorksitePipeline = createActionPipeline('create-worksite', {
   // No cost - always available
@@ -36,6 +44,33 @@ export const createWorksitePipeline = createActionPipeline('create-worksite', {
       title: 'Select a hex for the worksite',
       colorType: 'worksite',
       required: true,
+      condition: (ctx) => ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess',
+      validateHex: (hexId: string): ValidationResult => {
+        return safeValidation(() => {
+          // Basic validation without worksite type (type-specific validation happens in customSelector)
+          const kingdom = getFreshKingdomData();
+          const hex = kingdom.hexes?.find((h: any) => h.id === hexId);
+          
+          if (!hex) {
+            return { valid: false, message: 'Hex not found' };
+          }
+          
+          // Check if claimed
+          const claimedResult = validateClaimed(hexId, kingdom);
+          if (!claimedResult.valid) return claimedResult;
+          
+          // Check for settlement
+          const settlementResult = validateNoSettlement(hexId, kingdom);
+          if (!settlementResult.valid) return settlementResult;
+          
+          // Check for existing worksite
+          if (hex.worksite) {
+            return { valid: false, message: `Hex already has a ${hex.worksite.type}` };
+          }
+          
+          return { valid: true, message: 'Valid location for worksite' };
+        }, hexId, 'createWorksite validation');
+      },
       customSelector: {
         component: WorksiteTypeSelector
       }

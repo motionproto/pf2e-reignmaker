@@ -4,10 +4,13 @@
  */
 
 import { createActionPipeline } from '../shared/createActionPipeline';
+import { factionService } from '../../services/factions';
+import type { Faction } from '../../models/Faction';
 
 import { textBadge } from '../../types/OutcomeBadge';
 export const requestEconomicAidPipeline = createActionPipeline('request-economic-aid', {
   requirements: (kingdom) => {
+    // Check if there are any Friendly/Helpful factions
     const hasAllies = kingdom.factions?.some(f => 
       f.attitude === 'Friendly' || f.attitude === 'Helpful'
     );
@@ -16,6 +19,20 @@ export const requestEconomicAidPipeline = createActionPipeline('request-economic
       return {
         met: false,
         reason: 'Requires friendly or helpful with at least one faction'
+      };
+    }
+    
+    // Check if any Friendly/Helpful faction hasn't already provided aid this turn
+    const aidedThisTurn = kingdom.turnState?.actionsPhase?.factionsAidedThisTurn || [];
+    const availableFactions = kingdom.factions?.filter(f => 
+      (f.attitude === 'Friendly' || f.attitude === 'Helpful') && 
+      !aidedThisTurn.includes(f.id)
+    );
+    
+    if (!availableFactions || availableFactions.length === 0) {
+      return {
+        met: false,
+        reason: 'All friendly factions have already provided support this turn'
       };
     }
     
@@ -28,16 +45,25 @@ export const requestEconomicAidPipeline = createActionPipeline('request-economic
       type: 'entity-selection',
       entityType: 'faction',
       label: 'Select Faction for Economic Aid Request',
-      filter: (faction: Faction) => {
+      filter: (faction: Faction, kingdom: any) => {
         // Only Friendly or Helpful factions can provide aid
-        if (faction.attitude === 'Friendly' || faction.attitude === 'Helpful') {
-          return { eligible: true };
+        if (faction.attitude !== 'Friendly' && faction.attitude !== 'Helpful') {
+          return { 
+            eligible: false, 
+            reason: 'Relations must be at least Friendly'
+          };
         }
         
-        return { 
-          eligible: false, 
-          reason: 'Relations must be at least Friendly'
-        };
+        // Check if faction already provided aid this turn
+        const aidedThisTurn = kingdom.turnState?.actionsPhase?.factionsAidedThisTurn || [];
+        if (aidedThisTurn.includes(faction.id)) {
+          return {
+            eligible: false,
+            reason: 'Already provided support this turn'
+          };
+        }
+        
+        return { eligible: true };
       }
     }
   ],
@@ -119,27 +145,44 @@ export const requestEconomicAidPipeline = createActionPipeline('request-economic
       return { success: false, error: 'Faction not found' };
     }
 
-    // ✅ Read pre-rolled gold values from numericModifiers (rolled during Apply phase)
-    const goldModifier = ctx.resolutionData.numericModifiers.find((m: any) => m.resource === 'gold');
-    const goldAmount = goldModifier?.value || 0;
+    const { updateKingdom } = await import('../../stores/KingdomStore');
+    const { applyPreRolledModifiers } = await import('../shared/applyPreRolledModifiers');
 
-    // Apply gold if present (crit success or success)
-    if (goldAmount > 0) {
-      const { updateKingdom } = await import('../../stores/KingdomStore');
+    // Handle outcomes
+    if (ctx.outcome === 'criticalSuccess' || ctx.outcome === 'success') {
+      // ✅ Apply pre-rolled gold modifiers using helper
+      const result = await applyPreRolledModifiers(ctx);
       
+      if (!result.success) {
+        return { success: false, error: `Failed to apply gold: ${result.error}` };
+      }
+      
+      // Mark faction as having provided aid this turn
       await updateKingdom(k => {
-        if (k.resources && typeof k.resources.gold === 'number') {
-          k.resources.gold += goldAmount;
+        if (!k.turnState?.actionsPhase?.factionsAidedThisTurn) {
+          console.warn('[requestEconomicAid] turnState.actionsPhase.factionsAidedThisTurn not initialized, initializing now');
+          if (!k.turnState) {
+            console.error('[requestEconomicAid] ❌ turnState is null/undefined - cannot track faction aid');
+            return;
+          }
+          if (!k.turnState.actionsPhase) {
+            console.error('[requestEconomicAid] ❌ actionsPhase is null/undefined - cannot track faction aid');
+            return;
+          }
+          k.turnState.actionsPhase.factionsAidedThisTurn = [];
+        }
+        
+        if (!k.turnState.actionsPhase.factionsAidedThisTurn.includes(factionId)) {
+          k.turnState.actionsPhase.factionsAidedThisTurn.push(factionId);
         }
       });
       
       return { 
         success: true, 
-        message: `${faction.name} provides ${goldAmount} gold in support!` 
+        message: `${faction.name} provides economic support!` 
       };
     }
     
-    // Handle failures
     if (ctx.outcome === 'failure') {
       return { 
         success: true, 

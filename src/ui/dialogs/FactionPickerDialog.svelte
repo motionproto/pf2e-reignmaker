@@ -138,23 +138,25 @@
         {#each eligibleFactions as faction (faction.id)}
           {@const config = getAttitudeConfig(faction.attitude)}
           {@const eligibility = checkEligibility(faction)}
-          {#if eligibility.eligible}
-            <div
-              class="table-row"
-              class:selected={selectedFactionIds.has(faction.id)}
-              on:click={() => toggleFaction(faction)}
-            >
-              <div class="col-name">
-                <div class="name-text">{faction.name}</div>
-              </div>
-              <div class="col-attitude">
-                <div class="attitude-badge" style="border-color: {config.color};">
-                  <i class="fas {config.icon}" style="color: {config.color};"></i>
-                  <span>{config.displayName}</span>
-                </div>
+          <div
+            class="table-row"
+            class:selected={selectedFactionIds.has(faction.id)}
+            class:ineligible={!eligibility.eligible}
+            on:click={() => toggleFaction(faction)}
+          >
+            <div class="col-name">
+              <div class="name-text">{faction.name}</div>
+              {#if !eligibility.eligible && eligibility.reason}
+                <div class="ineligible-reason">{eligibility.reason}</div>
+              {/if}
+            </div>
+            <div class="col-attitude">
+              <div class="attitude-badge" style="border-color: {config.color};">
+                <i class="fas {config.icon}" style="color: {config.color};"></i>
+                <span>{config.displayName}</span>
               </div>
             </div>
-          {/if}
+          </div>
         {/each}
       </div>
     </div>
@@ -237,6 +239,21 @@
       background: var(--surface-info);
       border-left: 3px solid var(--color-primary);
       padding-left: 13px;
+    }
+    
+    &.ineligible {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: rgba(0, 0, 0, 0.1);
+      
+      &:hover {
+        background: rgba(0, 0, 0, 0.15);
+      }
+      
+      .name-text {
+        color: var(--text-tertiary);
+        text-decoration: line-through;
+      }
     }
     
     .col-name {

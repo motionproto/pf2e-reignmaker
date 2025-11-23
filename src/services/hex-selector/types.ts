@@ -40,7 +40,7 @@ export interface HexSelectionConfig {
   colorType: HexSelectionType;  // Action type for color coding
   existingHexes?: string[];   // Already selected hexes (for highlighting)
   allowToggle?: boolean;      // Allow clicking to deselect (default: true)
-  validationFn?: (hexId: string, pendingRoads?: string[]) => boolean | ValidationResult;  // Optional validation function (supports pending selections for chaining)
+  validateHex?: (hexId: string, pendingSelections?: string[]) => boolean | ValidationResult;  // Optional validation function (supports pending selections for chaining)
   customSelector?: CustomSelectorConfig;  // Optional custom component for additional selection (e.g., worksite type)
   getHexInfo?: (hexId: string) => string | null;  // Optional callback to provide hex-specific information (e.g., costs, requirements)
 }

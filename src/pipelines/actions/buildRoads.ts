@@ -58,7 +58,7 @@ export const buildRoadsPipeline = createActionPipeline('build-roads', {
       count: 1,  // Default for success
       colorType: 'road',
       condition: (ctx) => ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess',
-      validation: (hexId: string, pendingSelection: string[] = []) => {
+      validateHex: (hexId: string, pendingSelection: string[] = []) => {
         // Use dedicated road validation (checks claimed status, existing roads, and adjacency)
         const isValid = validateRoadHex(hexId, pendingSelection);
         

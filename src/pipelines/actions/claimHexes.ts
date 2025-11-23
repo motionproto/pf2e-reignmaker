@@ -6,29 +6,30 @@
 import { createActionPipeline } from '../shared/createActionPipeline';
 import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 import { claimHexesExecution } from '../../execution/territory/claimHexes';
-import { worldExplorerService } from '../../services/WorldExplorerService';
-import { getKingdomData } from '../../stores/KingdomStore';
-import { PLAYER_KINGDOM } from '../../types/ownership';
-import { getAdjacentHexes } from '../../utils/hexUtils';
-
-/**
- * Check if a hex is adjacent to any hex in the target list
- */
-function isAdjacentToAny(hexId: string, targetHexIds: string[]): boolean {
-  if (targetHexIds.length === 0) return false;
-  
-  const [i, j] = hexId.split('.').map(Number);
-  const neighbors = getAdjacentHexes(i, j);
-  const adjacentIds = neighbors.map((n) => `${n.i}.${n.j}`);
-  
-  return adjacentIds.some(id => targetHexIds.includes(id));
-}
+import {
+  validateUnclaimed,
+  validateNotPending,
+  validateExplored,
+  validateAdjacentToClaimed,
+  safeValidation,
+  getFreshKingdomData,
+  type ValidationResult
+} from '../shared/hexValidators';
 
 export const claimHexesPipeline = createActionPipeline('claim-hexes', {
   // No cost - always available. Adjacency enforced by hex selector.
   requirements: () => ({ met: true }),
 
   preview: {
+    calculate: (ctx) => {
+      // No resource costs for claiming hexes
+      // Critical failure unrest is automatically detected from pipeline JSON
+      return {
+        resources: [],
+        outcomeBadges: [],
+        warnings: []
+      };
+    }
   },
 
   postApplyInteractions: [
@@ -39,60 +40,30 @@ export const claimHexesPipeline = createActionPipeline('claim-hexes', {
       count: 1,  // Default count (used for success)
       colorType: 'claim',
       condition: (ctx) => ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess',
-      validation: (hexId: string, pendingClaims: string[] = []) => {
-        // Get fresh kingdom data
-        const kingdom = getKingdomData();
-        
-        // Check 1: Cannot claim already claimed hex
-        const hex = kingdom.hexes.find((h: any) => h.id === hexId);
-        if (hex?.claimedBy === PLAYER_KINGDOM) {
-          return {
-            valid: false,
-            message: 'This hex is already claimed by your kingdom'
-          };
-        }
-        
-        // Check 2: Cannot already be selected as pending claim
-        if (pendingClaims.includes(hexId)) {
-          return {
-            valid: false,
-            message: 'This hex is already selected'
-          };
-        }
-        
-        // Check 3: Cannot claim unexplored hex (requires World Explorer)
-        if (worldExplorerService.isAvailable()) {
-          const revealed = worldExplorerService.isRevealed(hexId);
-          if (revealed === false) {
-            return {
-              valid: false,
-              message: 'This hex has not been explored yet. Use "Send Scouts" to explore it first.'
-            };
-          }
-        }
-        
-        // Get all currently claimed hexes
-        const claimedHexIds = kingdom.hexes
-          .filter((h: any) => h.claimedBy === PLAYER_KINGDOM)
-          .map((h: any) => h.id);
-        
-        // Check 4: First claim (bootstrap rule) - any unclaimed, explored hex is valid
-        if (claimedHexIds.length === 0 && pendingClaims.length === 0) {
+      validateHex: (hexId: string, pendingClaims: string[] = []): ValidationResult => {
+        return safeValidation(() => {
+          // Get fresh kingdom data
+          const kingdom = getFreshKingdomData();
+          
+          // Check 1: Cannot claim already claimed hex
+          const unclaimedResult = validateUnclaimed(hexId, kingdom);
+          if (!unclaimedResult.valid) return unclaimedResult;
+          
+          // Check 2: Cannot already be selected as pending claim
+          const notPendingResult = validateNotPending(hexId, pendingClaims);
+          if (!notPendingResult.valid) return notPendingResult;
+          
+          // Check 3: Cannot claim unexplored hex (requires World Explorer)
+          const exploredResult = validateExplored(hexId);
+          if (!exploredResult.valid) return exploredResult;
+          
+          // Check 4 & 5: Must be adjacent to existing claimed OR pending claims
+          // (First claim bootstrap rule handled inside validateAdjacentToClaimed)
+          const adjacencyResult = validateAdjacentToClaimed(hexId, pendingClaims, kingdom);
+          if (!adjacencyResult.valid) return adjacencyResult;
+          
           return { valid: true };
-        }
-        
-        // Check 5: Must be adjacent to existing claimed OR pending claims
-        const allClaimedIds = [...claimedHexIds, ...pendingClaims];
-        const isAdjacent = isAdjacentToAny(hexId, allClaimedIds);
-        
-        if (!isAdjacent) {
-          return {
-            valid: false,
-            message: 'This hex must be adjacent to your existing territory'
-          };
-        }
-        
-        return { valid: true };
+        }, hexId, 'claimHexes validation');
       },
       outcomeAdjustment: {
         criticalSuccess: { 

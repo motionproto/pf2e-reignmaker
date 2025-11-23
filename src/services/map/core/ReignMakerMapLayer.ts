@@ -617,6 +617,13 @@ export class ReignMakerMapLayer {
     // Create/get layer first (persists, stays visible)
     // High z-index (1000) ensures visibility above Fog of War / World Explorer layers
     const layer = this.createLayer(layerId, 1000);
+    logger.debug(`[ReignMakerMapLayer] showInteractiveHover called for ${hexId}`, { 
+      style, 
+      roadPreview, 
+      layerVisible: layer.visible,
+      containerVisible: this.container?.visible,
+      layerChildren: layer.children.length
+    });
     
     // Clear previous hover content
     this.clearLayerContent(layerId);
@@ -639,6 +646,7 @@ export class ReignMakerMapLayer {
         dashed: false     // Solid line
       });
       layer.addChild(roadGraphics);
+      logger.debug(`[ReignMakerMapLayer] Added road preview graphics for ${hexId}`);
     } else {
       // Show hex fill (for non-road actions like fortify-hex, claim-hex, etc.)
       const hexGraphics = new PIXI.Graphics();
@@ -648,11 +656,18 @@ export class ReignMakerMapLayer {
       const drawn = this.drawSingleHex(hexGraphics, hexId, style, canvas);
       if (drawn) {
         layer.addChild(hexGraphics);
+        logger.debug(`[ReignMakerMapLayer] Added hex graphics for ${hexId}`, { 
+          fillColor: style.fillColor?.toString(16), 
+          fillAlpha: style.fillAlpha 
+        });
+      } else {
+        logger.warn(`[ReignMakerMapLayer] Failed to draw hex ${hexId}`);
       }
     }
     
     // Make layer visible (critical - without this, graphics won't render!)
     this.showLayer(layerId);
+    logger.debug(`[ReignMakerMapLayer] showInteractiveHover complete - layer now has ${layer.children.length} children`);
   }
   
   /**

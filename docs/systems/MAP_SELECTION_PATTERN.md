@@ -46,7 +46,7 @@ postApplyInteractions: [
     type: 'map-selection',
     id: 'selectedHexes',  // ← Stored in resolutionData.compoundData.selectedHexes
     colorType: 'scout',
-    validation: validateHex,
+    validateHex: validateHex,  // ✅ Use validateHex property (not validation)
     outcomeAdjustment: { /* ... */ }
     // ✅ NO onComplete handler needed
   }
@@ -134,7 +134,7 @@ export const sendScoutsPipeline: CheckPipeline = {
       mode: 'hex-selection',
       colorType: 'scout',
       
-      validation: (hexId: string) => {
+      validateHex: (hexId: string) => {
         const isValid = checkIfValid(hexId);
         return isValid 
           ? { valid: true }
@@ -185,7 +185,7 @@ export const sendScoutsPipeline: CheckPipeline = {
 **Return `ValidationResult` for better UX:**
 
 ```typescript
-validation: (hexId: string) => {
+validateHex: (hexId: string) => {
   // Check condition
   if (!isValid(hexId)) {
     return {

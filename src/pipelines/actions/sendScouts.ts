@@ -8,7 +8,13 @@ import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 import { applyActionCost } from '../shared/applyActionCost';
 import { sendScoutsExecution } from '../../execution/territory/sendScouts';
 import { worldExplorerService } from '../../services/WorldExplorerService';
-import { getAdjacentHexes } from '../../utils/hexUtils';
+import {
+  validateUnexplored,
+  validateNotPending,
+  validateAdjacentToExplored,
+  safeValidation,
+  type ValidationResult
+} from '../shared/hexValidators';
 
 export const sendScoutsPipeline = createActionPipeline('send-scouts', {
   requirements: (kingdom) => {
@@ -53,52 +59,22 @@ export const sendScoutsPipeline = createActionPipeline('send-scouts', {
       count: 1,  // Default count (used for success)
       colorType: 'scout',
       condition: (ctx) => ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess',
-      validation: (hexId: string, pendingSelections: string[] = []) => {
-        // Check 1: Cannot select already-revealed hex
-        if (worldExplorerService.isAvailable()) {
-          const isRevealed = worldExplorerService.isRevealed(hexId);
-          if (isRevealed === true) {
-            return {
-              valid: false,
-              message: 'This hex has already been explored'
-            };
-          }
-        }
-        
-        // Check 2: Cannot already be selected as pending
-        if (pendingSelections.includes(hexId)) {
-          return {
-            valid: false,
-            message: 'This hex is already selected'
-          };
-        }
-
-        // Check 3: Must be adjacent to explored hex or pending selection
-        if (worldExplorerService.isAvailable()) {
-          const [i, j] = hexId.split('.').map(Number);
-          const neighbors = getAdjacentHexes(i, j);
+      validateHex: (hexId: string, pendingSelections: string[] = []): ValidationResult => {
+        return safeValidation(() => {
+          // Check 1: Cannot select already-revealed hex
+          const unexploredResult = validateUnexplored(hexId);
+          if (!unexploredResult.valid) return unexploredResult;
           
-          const isAdjacentToValid = neighbors.some(neighbor => {
-            const neighborId = `${neighbor.i}.${neighbor.j}`;
-            
-            // Valid if neighbor is already explored
-            if (worldExplorerService.isRevealed(neighborId)) return true;
-            
-            // Valid if neighbor is being explored in this action
-            if (pendingSelections.includes(neighborId)) return true;
-            
-            return false;
-          });
+          // Check 2: Cannot already be selected as pending
+          const notPendingResult = validateNotPending(hexId, pendingSelections);
+          if (!notPendingResult.valid) return notPendingResult;
 
-          if (!isAdjacentToValid) {
-            return {
-              valid: false,
-              message: 'Must be adjacent to explored territory or other scouts'
-            };
-          }
-        }
-        
-        return { valid: true };
+          // Check 3: Must be adjacent to explored hex or pending selection
+          const adjacencyResult = validateAdjacentToExplored(hexId, pendingSelections);
+          if (!adjacencyResult.valid) return adjacencyResult;
+          
+          return { valid: true };
+        }, hexId, 'sendScouts validation');
       },
       outcomeAdjustment: {
         criticalSuccess: { 

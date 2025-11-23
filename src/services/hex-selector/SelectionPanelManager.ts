@@ -325,8 +325,8 @@ export class SelectionPanelManager {
       if (customSelectorMount) {
         // Re-attach preserved mount point
         slotsContainer.appendChild(customSelectorMount);
-      } else if (!this.panelComponent) {
-        // Create new mount point and component
+      } else {
+        // Create new mount point and component (always remount if not preserved)
         this.mountCustomSelector(slotsContainer);
       }
     }
