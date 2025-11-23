@@ -372,27 +372,10 @@ export async function showConfigurationDialog(
     // Create container element
     const container = document.createElement('div');
     container.id = 'configuration-dialog-container';
-    container.style.position = 'fixed';
-    container.style.top = '50%';
-    container.style.left = '50%';
-    container.style.transform = 'translate(-50%, -50%)';
-    container.style.zIndex = '10000';
-    container.style.maxWidth = '600px';
-    container.style.width = '90%';
     document.body.appendChild(container);
 
-    // Create backdrop
-    const backdrop = document.createElement('div');
-    backdrop.style.position = 'fixed';
-    backdrop.style.top = '0';
-    backdrop.style.left = '0';
-    backdrop.style.width = '100%';
-    backdrop.style.height = '100%';
-    backdrop.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-    backdrop.style.zIndex = '9999';
-    document.body.appendChild(backdrop);
-
     let selectedData: any = null;
+    let resolved = false;
 
     // Create Svelte component instance
     const instance = new component({
@@ -400,65 +383,35 @@ export async function showConfigurationDialog(
       props
     });
 
-    // Listen for selection event
+    // Cleanup function
+    function cleanup() {
+      if (!resolved) {
+        resolved = true;
+        instance.$destroy();
+        container.remove();
+      }
+    }
+
+    // Listen for 'confirm' event (full dialog components like RecruitArmyDialog)
+    instance.$on('confirm', (event: any) => {
+      console.log('[ConfigurationDialog] Confirm received:', event.detail);
+      selectedData = event.detail;
+      cleanup();
+      resolve(selectedData);
+    });
+
+    // Listen for 'cancel' event (full dialog components)
+    instance.$on('cancel', () => {
+      console.log('[ConfigurationDialog] Cancel received');
+      cleanup();
+      resolve(null);
+    });
+
+    // Listen for 'selection' event (inline components like ResourceChoiceSelector)
     instance.$on('selection', (event: any) => {
       selectedData = event.detail;
       console.log('[ConfigurationDialog] Selection received:', selectedData);
+      // Note: For inline components, we don't cleanup here - parent handles it
     });
-
-    // Add confirm button below component
-    const buttonContainer = document.createElement('div');
-    buttonContainer.style.marginTop = '16px';
-    buttonContainer.style.display = 'flex';
-    buttonContainer.style.gap = '8px';
-    buttonContainer.style.justifyContent = 'flex-end';
-
-    const confirmButton = document.createElement('button');
-    confirmButton.textContent = 'Confirm';
-    confirmButton.className = 'dialog-button dialog-button-yes';
-    confirmButton.style.padding = '8px 16px';
-    confirmButton.style.cursor = 'pointer';
-    confirmButton.onclick = () => {
-      cleanup();
-      resolve(selectedData);
-    };
-
-    const cancelButton = document.createElement('button');
-    cancelButton.textContent = 'Cancel';
-    cancelButton.className = 'dialog-button dialog-button-no';
-    cancelButton.style.padding = '8px 16px';
-    cancelButton.style.cursor = 'pointer';
-    cancelButton.onclick = () => {
-      cleanup();
-      resolve(null);
-    };
-
-    buttonContainer.appendChild(cancelButton);
-    buttonContainer.appendChild(confirmButton);
-    container.appendChild(buttonContainer);
-
-    // Cleanup function
-    function cleanup() {
-      instance.$destroy();
-      container.remove();
-      backdrop.remove();
-    }
-
-    // Handle escape key
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        cleanup();
-        resolve(null);
-        document.removeEventListener('keydown', handleEscape);
-      }
-    };
-    document.addEventListener('keydown', handleEscape);
-
-    // Handle backdrop click
-    backdrop.onclick = () => {
-      cleanup();
-      resolve(null);
-      document.removeEventListener('keydown', handleEscape);
-    };
   });
 }

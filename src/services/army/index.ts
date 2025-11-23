@@ -97,10 +97,10 @@ export class ArmyService {
       name,
       level,
       type,
-      ledBy: PLAYER_KINGDOM,
+      ledBy: faction,
       supportedBy: supportedBy || PLAYER_KINGDOM,
-      isSupported: false,
-      supportedBySettlementId: null,
+      isSupported: !!supportSettlement,
+      supportedBySettlementId: supportSettlement?.id || null,
       turnsUnsupported: 0,
       actorId,
       exemptFromUpkeep
@@ -189,7 +189,7 @@ export class ArmyService {
     }
     
     // Update army record
-    await updateKingdom(k => {
+    await updateKingdom((k: KingdomData) => {
       const army = k.armies.find((a: Army) => a.id === armyId);
       if (!army) {
         throw new Error('Army not found');
@@ -238,7 +238,7 @@ export class ArmyService {
     }
     
     // Remove actorId from army
-    await updateKingdom(k => {
+    await updateKingdom((k: KingdomData) => {
       const a = k.armies.find((army: Army) => army.id === armyId);
       if (a) {
         a.actorId = undefined;
@@ -500,6 +500,7 @@ export class ArmyService {
       system: {
         details: {
           level: { value: level },
+          alliance: "party", // Set as allied to party (cyan border)
           publicNotes: `Kingdom Army Unit - Level ${level}`
         },
         attributes: {

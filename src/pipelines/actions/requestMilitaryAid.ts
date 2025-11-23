@@ -4,8 +4,8 @@
  */
 
 import { createActionPipeline } from '../shared/createActionPipeline';
-
-import { textBadge } from '../../types/OutcomeBadge';
+import type { Faction } from '../../models/Faction';
+import { factionService } from '../../services/factions';
 export const requestMilitaryAidPipeline = createActionPipeline('request-military-aid', {
   requirements: (kingdom) => {
     const hasAllies = kingdom.factions?.some(f => 
@@ -72,9 +72,35 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
           variant: 'positive' as const
         });
       } else if (ctx.outcome === 'success') {
+        // Check if there are eligible armies
+        const armies = ctx.kingdom.armies || [];
+        const eligibleArmies = armies.filter((army: any) => {
+          if (!army.actorId) return false;
+          const equipmentCount = army.equipment 
+            ? Object.values(army.equipment).filter(Boolean).length 
+            : 0;
+          return equipmentCount < 4;
+        });
+
+        // If no armies available, show gold fallback
+        if (eligibleArmies.length === 0) {
+          return {
+            resources: [
+              { resource: 'gold', amount: 1 }
+            ],
+            specialEffects: [{
+              type: 'status' as const,
+              message: 'Your lack of military leaves little opportunity for support',
+              variant: 'neutral' as const
+            }],
+            warnings: []
+          };
+        }
+
+        // Otherwise show equipment message (will show post-roll interaction)
         effects.push({
           type: 'status' as const,
-          message: `${faction.name} will provide military equipment and supplies`,
+          message: `${faction.name} provides military equipment and supplies`,
           variant: 'positive' as const
         });
       } else if (ctx.outcome === 'criticalFailure') {
@@ -105,6 +131,40 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
     }
   },
 
+  postApplyInteractions: [
+    {
+      id: 'recruit-allied-army',
+      type: 'configuration',
+      condition: (ctx) => ctx.outcome === 'criticalSuccess',
+      component: 'RecruitArmyDialog',  // Resolved via ComponentRegistry
+      componentProps: {
+        show: true,
+        exemptFromUpkeep: true
+      }
+    },
+    {
+      id: 'outfit-army',
+      type: 'configuration',
+      condition: (ctx) => {
+        if (ctx.outcome !== 'success') return false;
+        
+        // Check if there are eligible armies (with available equipment slots)
+        const armies = ctx.kingdom.armies || [];
+        const eligibleArmies = armies.filter((army: any) => {
+          if (!army.actorId) return false;
+          const equipmentCount = army.equipment 
+            ? Object.values(army.equipment).filter(Boolean).length 
+            : 0;
+          return equipmentCount < 4;
+        });
+        
+        // Only show dialog if there are eligible armies
+        return eligibleArmies.length > 0;
+      },
+      component: 'OutfitArmySelectionDialog'  // Resolved via ComponentRegistry
+    }
+  ],
+
   execute: async (ctx) => {
     const factionId = ctx.metadata?.faction?.id || ctx.metadata?.factionId;
     
@@ -117,9 +177,153 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
       return { success: false, error: 'Faction not found' };
     }
 
-    // Note: Critical success and success outcomes are handled by custom resolution
-    // (RequestMilitaryAidAction.ts) which shows recruitment/equipment dialogs
-    // This execute() only handles failure and critical failure
+    const { getKingdomActor } = await import('../../stores/KingdomStore');
+    const actor = getKingdomActor();
+    if (!actor) {
+      return { success: false, error: 'No kingdom actor available' };
+    }
+
+    // Handle different outcomes
+    if (ctx.outcome === 'criticalSuccess') {
+      // Create allied army from postApplyInteractions resolution
+      const recruitmentData = ctx.resolution?.['recruit-allied-army'];
+      
+      // Handle cancellation gracefully (user cancelled recruitment dialog)
+      if (!recruitmentData) {
+        return { 
+          success: true, 
+          message: 'Army recruitment cancelled - no army was created',
+          cancelled: true 
+        };
+      }
+
+      // Create allied army via game command (uses prepare/commit pattern)
+      const { createGameCommandsResolver } = await import('../../services/GameCommandsResolver');
+      const resolver = await createGameCommandsResolver();
+      
+      const preparedCommand = await resolver.recruitArmy(
+        ctx.kingdom.level,
+        recruitmentData.name,
+        true // exemptFromUpkeep
+      );
+
+      // Commit the prepared command
+      if (preparedCommand.commit) {
+        await preparedCommand.commit();
+      }
+
+      // Mark faction as having provided aid this turn
+      await actor.updateKingdomData((kingdom: any) => {
+        if (!kingdom.turnState?.actionsPhase?.factionsAidedThisTurn) {
+          if (!kingdom.turnState) kingdom.turnState = { actionsPhase: { factionsAidedThisTurn: [] } };
+          if (!kingdom.turnState.actionsPhase) kingdom.turnState.actionsPhase = { factionsAidedThisTurn: [] };
+          if (!kingdom.turnState.actionsPhase.factionsAidedThisTurn) {
+            kingdom.turnState.actionsPhase.factionsAidedThisTurn = [];
+          }
+        }
+        if (!kingdom.turnState.actionsPhase.factionsAidedThisTurn.includes(factionId)) {
+          kingdom.turnState.actionsPhase.factionsAidedThisTurn.push(factionId);
+        }
+      });
+
+      return { 
+        success: true, 
+        message: `${faction.name} sent elite reinforcements (allied army exempt from upkeep)` 
+      };
+    }
+    
+    if (ctx.outcome === 'success') {
+      // Check if there are eligible armies
+      const armies = ctx.kingdom.armies || [];
+      const eligibleArmies = armies.filter((army: any) => {
+        if (!army.actorId) return false;
+        const equipmentCount = army.equipment 
+          ? Object.values(army.equipment).filter(Boolean).length 
+          : 0;
+        return equipmentCount < 4;
+      });
+
+      // If no eligible armies, grant 1 gold as fallback
+      if (eligibleArmies.length === 0) {
+        await actor.updateKingdomData((kingdom: any) => {
+          kingdom.resources.gold = (kingdom.resources.gold || 0) + 1;
+        });
+
+        // Mark faction as having provided aid this turn
+        await actor.updateKingdomData((kingdom: any) => {
+          if (!kingdom.turnState?.actionsPhase?.factionsAidedThisTurn) {
+            if (!kingdom.turnState) kingdom.turnState = { actionsPhase: { factionsAidedThisTurn: [] } };
+            if (!kingdom.turnState.actionsPhase) kingdom.turnState.actionsPhase = { factionsAidedThisTurn: [] };
+            if (!kingdom.turnState.actionsPhase.factionsAidedThisTurn) {
+              kingdom.turnState.actionsPhase.factionsAidedThisTurn = [];
+            }
+          }
+          if (!kingdom.turnState.actionsPhase.factionsAidedThisTurn.includes(factionId)) {
+            kingdom.turnState.actionsPhase.factionsAidedThisTurn.push(factionId);
+          }
+        });
+
+        return { 
+          success: true, 
+          message: `${faction.name} provided 1 gold (no armies available to outfit)` 
+        };
+      }
+
+      // Outfit army from postApplyInteractions resolution
+      const outfitData = ctx.resolution?.['outfit-army'];
+      
+      // Handle cancellation gracefully (user cancelled outfit dialog)
+      if (!outfitData) {
+        return { 
+          success: true, 
+          message: 'Army outfit cancelled - no equipment was applied',
+          cancelled: true 
+        };
+      }
+
+      // Apply equipment via game command
+      const { createGameCommandsResolver } = await import('../../services/GameCommandsResolver');
+      const resolver = await createGameCommandsResolver();
+      
+      // outfitArmy returns PreparedCommand | ResolveResult
+      const result = await resolver.outfitArmy(
+        outfitData.armyId,
+        outfitData.equipmentType,
+        'success', // outcome
+        false // fallbackToGold
+      );
+
+      // Check if it's a PreparedCommand (has commit function)
+      if ('commit' in result && typeof result.commit === 'function') {
+        // It's a PreparedCommand - commit it
+        await result.commit();
+      } else {
+        // It's a ResolveResult - type narrow and check if it succeeded
+        const resolveResult = result as { success: boolean; error?: string };
+        if (!resolveResult.success) {
+          return { success: false, error: resolveResult.error };
+        }
+      }
+
+      // Mark faction as having provided aid this turn
+      await actor.updateKingdomData((kingdom: any) => {
+        if (!kingdom.turnState?.actionsPhase?.factionsAidedThisTurn) {
+          if (!kingdom.turnState) kingdom.turnState = { actionsPhase: { factionsAidedThisTurn: [] } };
+          if (!kingdom.turnState.actionsPhase) kingdom.turnState.actionsPhase = { factionsAidedThisTurn: [] };
+          if (!kingdom.turnState.actionsPhase.factionsAidedThisTurn) {
+            kingdom.turnState.actionsPhase.factionsAidedThisTurn = [];
+          }
+        }
+        if (!kingdom.turnState.actionsPhase.factionsAidedThisTurn.includes(factionId)) {
+          kingdom.turnState.actionsPhase.factionsAidedThisTurn.push(factionId);
+        }
+      });
+
+      return { 
+        success: true, 
+        message: `${faction.name} provided military equipment and supplies` 
+      };
+    }
     
     if (ctx.outcome === 'failure') {
       return { 
@@ -145,7 +349,6 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
       }
     }
 
-    // Critical success and success are handled by custom resolution
     return { success: true };
   }
 });

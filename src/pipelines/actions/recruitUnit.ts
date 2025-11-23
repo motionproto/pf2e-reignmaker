@@ -5,30 +5,21 @@
 
 import { createActionPipeline } from '../shared/createActionPipeline';
 
-import { textBadge } from '../../types/OutcomeBadge';
 export const recruitUnitPipeline = createActionPipeline('recruit-unit', {
   // No cost - always available
   requirements: () => ({ met: true }),
-
-  preRollInteractions: [
-    {
-      type: 'compound',
-      id: 'armyDetails',
-      label: 'Configure army recruitment'
-    }
-  ],
 
   preview: {
     calculate: (ctx) => {
       const unrestChange = ctx.outcome === 'criticalSuccess' ? -1 :
                           ctx.outcome === 'criticalFailure' ? 1 : 0;
 
-      const outcomeBadges = [];
-      if (ctx.outcome !== 'failure' && ctx.outcome !== 'criticalFailure') {
-        const level = getPartyLevel();
+      const specialEffects = [];
+      
+      if (ctx.outcome === 'criticalSuccess' || ctx.outcome === 'success') {
         specialEffects.push({
           type: 'entity' as const,
-          message: `Will recruit ${ctx.metadata.armyName || 'new army'} (Level ${level})`,
+          message: 'Will recruit new army at party level',
           variant: 'positive' as const
         });
       }
@@ -41,20 +32,75 @@ export const recruitUnitPipeline = createActionPipeline('recruit-unit', {
     }
   },
 
+  postApplyInteractions: [
+    {
+      id: 'recruit-army',
+      type: 'configuration',
+      condition: (ctx) => ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess',
+      component: 'RecruitArmyDialog',  // Resolved via ComponentRegistry
+      componentProps: {
+        show: true,
+        exemptFromUpkeep: false
+      }
+    }
+  ],
+
   execute: async (ctx) => {
-    if (ctx.outcome === 'failure' || ctx.outcome === 'criticalFailure') {
-      return; // No army recruited
+    const { getKingdomActor } = await import('../../stores/KingdomStore');
+    const actor = getKingdomActor();
+    if (!actor) {
+      return { success: false, error: 'No kingdom actor available' };
     }
 
-    const { ARMY_TYPES } = await import('../../utils/armyHelpers');
-    const level = getPartyLevel();
+    // Handle different outcomes
+    if (ctx.outcome === 'failure' || ctx.outcome === 'criticalFailure') {
+      return { 
+        success: true, 
+        message: ctx.outcome === 'failure'
+          ? 'Failed to recruit troops'
+          : 'Recruitment attempt angered the populace'
+      };
+    }
 
-    await recruitArmyExecution({
-      name: ctx.metadata.armyName || 'New Army',
-      level,
-      type: ctx.metadata.armyType || 'infantry',
-      image: ARMY_TYPES[ctx.metadata.armyType as keyof typeof ARMY_TYPES]?.image || ARMY_TYPES.infantry.image,
-      settlementId: ctx.metadata.settlementId
-    });
+    // Get recruitment data from postApplyInteractions resolution
+    const recruitmentData = ctx.resolutionData?.customComponentData?.['recruit-army'];
+    
+    // Handle cancellation gracefully (user cancelled recruitment dialog)
+    if (!recruitmentData) {
+      return { 
+        success: true, 
+        message: 'Army recruitment cancelled - no army was created',
+        cancelled: true 
+      };
+    }
+
+    // Get party level (falls back to character level if no party)
+    const { createGameCommandsResolver } = await import('../../services/GameCommandsResolver');
+    const resolver = await createGameCommandsResolver();
+    const partyLevel = resolver.getPartyLevel();
+
+    // Store recruitment data in globalThis for recruitArmy command
+    (globalThis as any).__pendingRecruitArmy = {
+      name: recruitmentData.name,
+      armyType: recruitmentData.armyType,
+      settlementId: recruitmentData.settlementId || null
+    };
+
+    // Create army via game command (uses prepare/commit pattern)
+    const preparedCommand = await resolver.recruitArmy(
+      partyLevel,
+      recruitmentData.name,
+      false // not exempt from upkeep (regular recruitment)
+    );
+
+    // Commit the prepared command
+    if (preparedCommand.commit) {
+      await preparedCommand.commit();
+    }
+
+    return { 
+      success: true, 
+      message: `Successfully recruited ${recruitmentData.name}` 
+    };
   }
 });

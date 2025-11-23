@@ -219,8 +219,8 @@
     display: block;
     margin-bottom: var(--space-8);
     font-weight: 600;
-    color: var(--text-primary);
-    font-size: var(--font-sm);
+    color: var(--text-secondary);
+    font-size: var(--font-md);
   }
   
   .form-group input[type="text"],
@@ -231,7 +231,7 @@
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
-    font-size: var(--font-sm);
+    font-size: var(--font-md);
     font-family: inherit;
     height: auto;
     line-height: 1.75;
@@ -260,9 +260,9 @@
   .help-text {
     display: block;
     margin-top: var(--space-8);
-    font-size: var(--font-xs);
+    font-size: var(--font-sm);
     color: var(--text-secondary);
-    font-style: italic;
+    font-style: normal;
   }
   
   .warning-box {
@@ -299,7 +299,7 @@
   
   .allied-army-info span {
     color: var(--text-primary);
-    font-size: var(--font-sm);
+    font-size: var(--font-md);
   }
   
   .army-type-grid {
@@ -349,7 +349,7 @@
   }
   
   .army-type-card span {
-    font-size: var(--font-sm);
+    font-size: var(--font-md);
     color: var(--text-primary);
     font-weight: 600;
   }
