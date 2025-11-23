@@ -36,6 +36,12 @@
       if (actualPhase && !$viewingPhase) {
          setViewingPhase(actualPhase);
       }
+      
+      // Load hide untrained preference from localStorage
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored !== null) {
+         hideUntrainedSkills = stored === 'true';
+      }
    });
    $: phaseInfo = displayPhase ? TurnPhaseConfig[displayPhase] : TurnPhaseConfig[$kingdomData.currentPhase];
    
@@ -61,12 +67,14 @@
    // Helper to show if we're viewing a different phase than active
    $: isViewingDifferentPhase = displayPhase !== actualPhase;
    
-   // State for Actions Phase hide untrained setting
-   let actionsPhaseHideUntrained = true;
+   // State for hide untrained setting (shared across Actions, Events, Unrest)
+   const STORAGE_KEY = 'pf2e-reignmaker-hide-untrained-skills';
+   let hideUntrainedSkills = true;
    
-   // Handler for hide untrained toggle from Actions phase
-   function handleToggleUntrainedFromActions(value: boolean) {
-      actionsPhaseHideUntrained = value;
+   // Handler for hide untrained toggle (shared)
+   function handleToggleUntrained(value: boolean) {
+      hideUntrainedSkills = value;
+      localStorage.setItem(STORAGE_KEY, String(value));
    }
 </script>
 
@@ -85,9 +93,9 @@
          onNextPhase={handleAdvancePhase}
          isUpkeepPhase={actualPhase === TurnPhase.UPKEEP}
          isViewingActualPhase={displayPhase === actualPhase}
-         showUntrainedToggle={displayPhase === TurnPhase.ACTIONS}
-         hideUntrained={actionsPhaseHideUntrained}
-         onToggleUntrained={handleToggleUntrainedFromActions}
+         showUntrainedToggle={displayPhase === TurnPhase.ACTIONS || displayPhase === TurnPhase.EVENTS || displayPhase === TurnPhase.UNREST}
+         hideUntrained={hideUntrainedSkills}
+         onToggleUntrained={handleToggleUntrained}
       />
       
       <!-- Phase Bar underneath phase header -->
@@ -104,14 +112,21 @@
          {:else if displayPhase === TurnPhase.RESOURCES}
             <ResourcesPhase isViewingCurrentPhase={displayPhase === actualPhase} />
          {:else if displayPhase === TurnPhase.UNREST}
-            <UnrestPhase isViewingCurrentPhase={displayPhase === actualPhase} />
+            <UnrestPhase 
+               isViewingCurrentPhase={displayPhase === actualPhase}
+               bind:hideUntrainedSkills={hideUntrainedSkills}
+            />
          {:else if displayPhase === TurnPhase.EVENTS}
-            <EventsPhase isViewingCurrentPhase={displayPhase === actualPhase} />
+            <EventsPhase 
+               isViewingCurrentPhase={displayPhase === actualPhase}
+               bind:hideUntrainedSkills={hideUntrainedSkills}
+               onToggleUntrained={handleToggleUntrained}
+            />
          {:else if displayPhase === TurnPhase.ACTIONS}
             <ActionsPhase 
                isViewingCurrentPhase={displayPhase === actualPhase}
-               bind:hideUntrainedSkills={actionsPhaseHideUntrained}
-               onToggleUntrained={handleToggleUntrainedFromActions}
+               bind:hideUntrainedSkills={hideUntrainedSkills}
+               onToggleUntrained={handleToggleUntrained}
             />
          {:else if displayPhase === TurnPhase.UPKEEP}
             <UpkeepPhase isViewingCurrentPhase={displayPhase === actualPhase} />

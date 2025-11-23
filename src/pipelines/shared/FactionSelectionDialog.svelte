@@ -130,7 +130,8 @@
       return;
     }
     
-    selectedFactionId = faction.id;
+    // Toggle selection: if already selected, deselect; otherwise select
+    selectedFactionId = selectedFactionId === faction.id ? null : faction.id;
   }
   
   async function selectRandomFaction() {

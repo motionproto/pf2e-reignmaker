@@ -6,6 +6,8 @@
    
    // Props
    export let isViewingCurrentPhase: boolean = true;
+   export let hideUntrainedSkills: boolean = true;
+   export let onToggleUntrained: ((value: boolean) => void) | undefined = undefined;
    
    // Import controller instead of services/commands directly
    import { createEventPhaseController } from '../../../controllers/EventPhaseController';
@@ -960,6 +962,7 @@
             resolution={eventResolution}
             primaryButtonLabel="Apply Result"
             skillSectionTitle="Choose Your Response:"
+            {hideUntrainedSkills}
             on:executeSkill={handleExecuteSkill}
             on:primary={handleApplyResult}
             on:cancel={handleCancel}
@@ -998,6 +1001,7 @@
                   resolution={item.instance.appliedOutcome || null}
                   primaryButtonLabel="Apply Result"
                   skillSectionTitle="Choose Your Response:"
+                  {hideUntrainedSkills}
                   resolutionInProgress={item.isBeingResolved}
                   resolvingPlayerName={item.resolverName}
                   isBeingResolvedByOther={item.isResolvedByOther}
@@ -1036,6 +1040,7 @@
                   isViewingCurrentPhase={false}
                   possibleOutcomes={[]}
                   showAidButton={false}
+                  {hideUntrainedSkills}
                resolved={true}
                resolution={instance.appliedOutcome || null}
                primaryButtonLabel="Apply Result"

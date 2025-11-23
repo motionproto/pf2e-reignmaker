@@ -22,8 +22,7 @@
   // Import helper functions
   import {
     getSelectedSettlementName,
-    getSelectedFactionName,
-    parseSpecialEffects
+    getSelectedFactionName
   } from './utils/OutcomeDisplayHelpers';
   
   // Import resolution builder
@@ -63,8 +62,6 @@
   import OutcomeBadges from './components/OutcomeBadges.svelte';
   import ShortageWarning from './components/ShortageWarning.svelte';
   import OutcomeActions from './components/OutcomeActions.svelte';
-  import type { SpecialEffect } from '../../../../types/special-effects';
-  import { parseLegacyEffect } from '../../../../types/special-effects';
   
   // ✨ NEW UNIFIED INTERFACE: Only 2 required props
   export let preview: OutcomePreview;  // Contains ALL outcome data
@@ -87,7 +84,6 @@
   $: stateChanges = preview.appliedOutcome?.stateChanges;
   $: modifiers = preview.appliedOutcome?.modifiers;
   $: manualEffects = preview.appliedOutcome?.manualEffects;
-  $: specialEffects = preview.appliedOutcome?.specialEffects;
   $: rollBreakdown = preview.appliedOutcome?.rollBreakdown;
   $: shortfallResources = preview.appliedOutcome?.shortfallResources || [];
   $: applied = preview.appliedOutcome?.effectsApplied || false;
@@ -168,45 +164,10 @@
   let componentResolutionData: { effect: string; stateChanges: Record<string, any> } | null = null;
   let customSelectionData: Record<string, any> | null = null;  // Raw custom selection data
   
-  // Filter inline badges (status effects shown with outcome text)
-  // All other effects passed to OutcomeBadges
-  $: inlineBadges = structuredEffects.filter((effect: SpecialEffect) => 
-    effect.type === 'status'
-  );
-  $: standaloneEffects = structuredEffects.filter((effect: SpecialEffect) => 
-    effect.type !== 'status'
-  );
-  
   // Get fame from kingdom state
   $: currentFame = $kingdomData?.fame || 0;
   
-  // Parse special effects (handles both new structured format and legacy strings)
-  $: structuredEffects = specialEffects?.map((effect: any) => {
-    if (typeof effect === 'string') {
-      // Legacy string format - parse into structured effect
-      return parseLegacyEffect(effect);
-    } else {
-      // Already structured
-      return effect;
-    }
-  }) || [];
-  
-  // Separate legacy parsed string effects from new badge effects
-  $: legacyParsedEffects = parseSpecialEffects(
-    specialEffects?.filter(e => typeof e === 'string') as string[] | undefined,
-    $kingdomData,
-    structuresService
-  );
   $: effectiveManualEffects = manualEffects || [];  // Manual (requires GM action)
-  
-  // Debug logging
-  $: {
-    if (specialEffects && specialEffects.length > 0) {
-      console.log('🔍 [OutcomeDisplay] Raw specialEffects:', specialEffects);
-      console.log('🔍 [OutcomeDisplay] Structured effects:', structuredEffects);
-      console.log('🔍 [OutcomeDisplay] Legacy parsed effects:', legacyParsedEffects);
-    }
-  }
   
   // Get outcome display properties
   $: outcomeProps = getOutcomeDisplayProps(outcome);
@@ -274,9 +235,7 @@
     // OR check if customComponentData has data (for metadata-only custom components like outfit-army)
     (customComponentData && Object.keys(customComponentData).length > 0) ||
     // OR check local customSelectionData
-    (customSelectionData && Object.keys(customSelectionData).length > 0) ||
-    // OR check if specialEffects are present (for PreparedCommand pattern like request-military-aid)
-    (specialEffects && specialEffects.length > 0)
+    (customSelectionData && Object.keys(customSelectionData).length > 0)
   );
   
   // Debug logging for custom component resolution
@@ -318,8 +277,7 @@
     const hasStateChanges = stateChanges && Object.keys(stateChanges).length > 0;
     const hasCustomData = customComponentData && Object.keys(customComponentData).length > 0;
     const hasChoiceResultData = componentResolutionData && Object.keys(componentResolutionData.stateChanges || {}).length > 0;
-    const hasSpecialEffects = specialEffects && specialEffects.length > 0;
-    const hasContent = hasMessage || hasManualEffects || hasNumericModifiers || hasStateChanges || hasCustomData || hasChoiceResultData || hasSpecialEffects;
+    const hasContent = hasMessage || hasManualEffects || hasNumericModifiers || hasStateChanges || hasCustomData || hasChoiceResultData;
     
     // If there's no content at all, this is a data error
     if (!hasContent && !applied) {
@@ -458,7 +416,6 @@
       customComponentData,
       customSelectionData,
       manualEffects,
-      specialEffects,
       outcomeBadges
     });
   }
@@ -620,7 +577,7 @@
   />
   
   <div class="resolution-details">
-    <OutcomeMessage effect={displayEffect} inlineBadges={inlineBadges} />
+    <OutcomeMessage effect={displayEffect} />
     <ShortageWarning {shortfallResources} />
     <ChoiceButtons choices={effectiveChoices} {selectedChoice} on:select={handleChoiceSelect} />
     <ResourceSelector 
@@ -631,12 +588,10 @@
     <!-- Always show OutcomeBadges (modifiers, costs, effects) -->
     <!-- Note: OutcomeBadges now auto-converts dice modifiers to badges -->
     <OutcomeBadges 
-      manualEffects={effectiveManualEffects} 
-      automatedEffects={legacyParsedEffects}
+      manualEffects={effectiveManualEffects}
       {outcome} 
       {customComponentData}
       {outcomeBadges}
-      specialEffects={standaloneEffects}
       on:roll={handleDiceRoll}
       on:badgeRoll={handleDiceRoll}
     />

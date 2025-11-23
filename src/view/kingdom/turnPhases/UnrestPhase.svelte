@@ -7,6 +7,7 @@
    
    // Props
    export let isViewingCurrentPhase: boolean = true;
+   export let hideUntrainedSkills: boolean = true;
    
    // Import UI components
    import BaseCheckCard from '../components/BaseCheckCard.svelte';
@@ -490,6 +491,7 @@
                         resolution={incidentResolution}
                         primaryButtonLabel="Apply Result"
                         skillSectionTitle="Choose Your Response:"
+                        {hideUntrainedSkills}
                         on:executeSkill={handleExecuteSkill}
                         on:primary={handleApplyResult}
                         on:cancel={handleCancel}

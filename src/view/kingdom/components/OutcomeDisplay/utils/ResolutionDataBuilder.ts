@@ -20,7 +20,6 @@ export function buildResolutionData(options: {
   customComponentData: any;
   customSelectionData: Record<string, any> | null;
   manualEffects: string[] | undefined;
-  specialEffects: any[] | undefined;
   outcomeBadges?: any[] | undefined;
 }): any {
   const {
@@ -32,7 +31,6 @@ export function buildResolutionData(options: {
     customComponentData,
     customSelectionData,
     manualEffects,
-    specialEffects,
     outcomeBadges
   } = options;
 
@@ -168,7 +166,6 @@ export function buildResolutionData(options: {
   return {
     numericModifiers,
     manualEffects: manualEffects || [],
-    specialEffects: specialEffects || [],  // Include special effects (PreparedCommand pattern)
     complexActions: [], // Phase 3 will add support for this
     customComponentData: mergedCustomData  // Merged custom component data
   };

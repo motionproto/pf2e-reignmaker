@@ -5,17 +5,40 @@
 
 import { createActionPipeline } from '../shared/createActionPipeline';
 import { factionService } from '../../services/factions';
-import type { Faction } from '../../types/factions';
+import type { Faction } from '../../models/Faction';
 
 import { textBadge } from '../../types/OutcomeBadge';
 export const establishDiplomaticRelationsPipeline = createActionPipeline('diplomatic-mission', {
   requirements: (kingdom) => {
+    // Check if factions exist
     if (!kingdom.factions || kingdom.factions.length === 0) {
       return {
         met: false,
         reason: 'No factions available for diplomatic relations'
       };
     }
+    
+    // Check if there are improvable factions (not Helpful or Hostile)
+    const improvableFactions = kingdom.factions.filter(
+      (f: Faction) => f.attitude !== 'Helpful' && f.attitude !== 'Hostile'
+    );
+    
+    if (improvableFactions.length === 0) {
+      return {
+        met: false,
+        reason: 'No factions can be improved (all are Helpful or Hostile)'
+      };
+    }
+    
+    // Check gold (worst case is 4 gold for success/critical failure)
+    const availableGold = kingdom.resources?.gold || 0;
+    if (availableGold < 4) {
+      return {
+        met: false,
+        reason: 'Insufficient gold (need at least 4 gold)'
+      };
+    }
+    
     return { met: true };
   },
 
@@ -87,7 +110,7 @@ export const establishDiplomaticRelationsPipeline = createActionPipeline('diplom
         };
       }
 
-      const effects: any[] = [];
+      const badges: any[] = [];
 
       // Calculate new attitude using the adjustment utility
       const { adjustAttitudeBySteps } = await import('../../utils/faction-attitude-adjuster');
@@ -96,47 +119,47 @@ export const establishDiplomaticRelationsPipeline = createActionPipeline('diplom
       if (ctx.outcome === 'criticalSuccess') {
         const newAttitude = adjustAttitudeBySteps(faction.attitude, 1);
         if (newAttitude) {
-          effects.push({
-            type: 'status' as const,
-            message: `Attitude with ${faction.name} improves from ${faction.attitude} to ${newAttitude}`,
-            variant: 'positive' as const
-          });
+          badges.push(textBadge(
+            `Attitude with ${faction.name} improves from ${faction.attitude} to ${newAttitude}`,
+            'positive'
+          ));
         } else {
-          effects.push({
-            type: 'status' as const,
-            message: `Attitude with ${faction.name} cannot improve further (already ${faction.attitude})`,
-            variant: 'neutral' as const
-          });
+          badges.push(textBadge(
+            `Attitude with ${faction.name} cannot improve further (already ${faction.attitude})`,
+            'neutral'
+          ));
         }
       } else if (ctx.outcome === 'success') {
         const newAttitude = adjustAttitudeBySteps(faction.attitude, 1, { maxLevel: 'Friendly' });
         if (newAttitude) {
-          effects.push({
-            type: 'status' as const,
-            message: `Attitude with ${faction.name} improves from ${faction.attitude} to ${newAttitude}`,
-            variant: 'positive' as const
-          });
+          badges.push(textBadge(
+            `Attitude with ${faction.name} improves from ${faction.attitude} to ${newAttitude}`,
+            'positive'
+          ));
         } else {
-          effects.push({
-            type: 'status' as const,
-            message: `Attitude with ${faction.name} cannot improve further (already ${faction.attitude})`,
-            variant: 'neutral' as const
-          });
+          badges.push(textBadge(
+            `Attitude with ${faction.name} cannot improve further (already ${faction.attitude})`,
+            'neutral'
+          ));
         }
+      } else if (ctx.outcome === 'failure') {
+        // No attitude change, just gold cost
+        badges.push(textBadge(
+          `The diplomatic mission fails (no change to relations with ${faction.name})`,
+          'neutral'
+        ));
       } else if (ctx.outcome === 'criticalFailure') {
         const newAttitude = adjustAttitudeBySteps(faction.attitude, -1);
         if (newAttitude) {
-          effects.push({
-            type: 'status' as const,
-            message: `Attitude with ${faction.name} worsens from ${faction.attitude} to ${newAttitude}`,
-            variant: 'negative' as const
-          });
+          badges.push(textBadge(
+            `Attitude with ${faction.name} worsens from ${faction.attitude} to ${newAttitude}`,
+            'negative'
+          ));
         } else {
-          effects.push({
-            type: 'status' as const,
-            message: `Attitude with ${faction.name} cannot worsen further (already ${faction.attitude})`,
-            variant: 'neutral' as const
-          });
+          badges.push(textBadge(
+            `Attitude with ${faction.name} cannot worsen further (already ${faction.attitude})`,
+            'neutral'
+          ));
         }
       }
 
@@ -153,7 +176,7 @@ export const establishDiplomaticRelationsPipeline = createActionPipeline('diplom
 
       return {
         resources,
-        specialEffects: effects,
+        outcomeBadges: badges,
         warnings: []
       };
     }

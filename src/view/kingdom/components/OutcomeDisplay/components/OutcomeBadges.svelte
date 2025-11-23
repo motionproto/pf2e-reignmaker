@@ -12,7 +12,6 @@
   export let outcome: string | undefined = undefined;
   export let customComponentData: any = undefined;
   export let outcomeBadges: Array<UnifiedOutcomeBadge | LegacyOutcomeBadge> = [];
-  export let specialEffects: SpecialEffect[] = [];
   
   const dispatch = createEventDispatcher();
   const validationContext = getValidationContext();
@@ -22,7 +21,6 @@
   $: hasAutomatedEffects = automatedEffects && automatedEffects.length > 0;
   $: hasCustomCost = customComponentData && typeof customComponentData.cost === 'number';
   $: hasOutcomeBadges = outcomeBadges && outcomeBadges.length > 0;
-  $: hasSpecialEffects = specialEffects && specialEffects.length > 0;
   
   $: unifiedBadges = outcomeBadges.map(badge => 
     isLegacyBadge(badge) ? convertLegacyBadge(badge) : badge
@@ -78,7 +76,7 @@
   let rolledBadges = new Map<number, number>();
   
   
-  $: hasAnyContent = hasManualEffects || hasAutomatedEffects || hasAllBadges || hasCustomCost || hasOutcomeBadges || hasSpecialEffects;
+  $: hasAnyContent = hasManualEffects || hasAutomatedEffects || hasAllBadges || hasCustomCost || hasOutcomeBadges;
   
   function handleBadgeDiceRoll(badgeIndex: number, formula: string, badge: any) {
     const result = rollDiceFormula(formula);
@@ -100,38 +98,6 @@
         result
       });
     }
-  }
-  
-  function getSpecialEffectIcon(effect: SpecialEffect): string {
-    if (effect.icon) return effect.icon;
-    
-    switch (effect.type) {
-      case 'attitude':
-        return 'fa-handshake';
-      case 'resource': {
-        const match = effect.message.match(/(?:gained|lost|received)\s+\d+\s+(\w+)/i);
-        const resourceType = match ? match[1].toLowerCase() : null;
-        if (resourceType) {
-          return getResourceIcon(resourceType);
-        }
-        return 'fa-coins';
-      }
-      case 'status':
-        return 'fa-flag';
-      case 'damage':
-        return 'fa-hammer';
-      case 'hex':
-        return 'fa-map';
-      case 'info':
-      default:
-        return 'fa-info-circle';
-    }
-  }
-  
-  function getSpecialEffectVariant(effect: SpecialEffect): string {
-    if (effect.variant === 'positive') return 'variant-positive';
-    if (effect.variant === 'negative') return 'variant-negative';
-    return 'variant-info';
   }
   
   function getBadgeVariant(badge: UnifiedOutcomeBadge): string {
@@ -188,22 +154,6 @@
             <li>{effect}</li>
           {/each}
         </ul>
-      </div>
-    {/if}
-    
-    {#if hasSpecialEffects}
-      <div class="dice-rollers-section">
-        <div class="dice-rollers-header">Special Effects:</div>
-        <div class="outcome-badges">
-          {#each specialEffects as effect}
-            <div class="outcome-badge static {getSpecialEffectVariant(effect)}">
-              <div class="content">
-                <i class="fas {getSpecialEffectIcon(effect)} resource-icon"></i>
-                <div class="text">{effect.message}</div>
-              </div>
-            </div>
-          {/each}
-        </div>
       </div>
     {/if}
     

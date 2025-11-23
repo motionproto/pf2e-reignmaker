@@ -20,17 +20,9 @@
   // Props
   export let isViewingCurrentPhase: boolean = true;
 
-  // Hide untrained skills state (persisted per-user in localStorage)
-  const STORAGE_KEY = 'pf2e-reignmaker-hide-untrained-skills';
+  // Hide untrained skills state (now managed by parent TurnTab.svelte)
   export let hideUntrainedSkills: boolean = true;
   export let onToggleUntrained: ((value: boolean) => void) | undefined = undefined;
-
-  // Save preference to localStorage when changed internally
-  function handleToggleUntrainedInternal(value: boolean) {
-    hideUntrainedSkills = value;
-    localStorage.setItem(STORAGE_KEY, String(value));
-    onToggleUntrained?.(value);
-  }
 
   // Import controller
   import { createActionPhaseController } from '../../../controllers/ActionPhaseController';
@@ -337,13 +329,6 @@
   // Component lifecycle
   onMount(async () => {
     console.log('🔵 [ActionsPhase] Component mounting...');
-    
-    // Load preference from localStorage on mount
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored !== null) {
-      hideUntrainedSkills = stored === 'true';
-      onToggleUntrained?.(hideUntrainedSkills);
-    }
     
     // Initialize controller and service
     controller = await createActionPhaseController();
