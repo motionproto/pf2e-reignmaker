@@ -53,7 +53,9 @@ export class ArmyService {
     const armyId = `army-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
     // Create NPC actor in Foundry with army type image
-    const actorId = await this.createNPCActor(name, level, image, actorData);
+    // Determine alliance based on faction attitude
+    const factionId = ledBy || get(currentFaction) || PLAYER_KINGDOM;
+    const actorId = await this.createNPCActor(name, level, image, actorData, factionId);
     
     // Determine which settlement to assign to (for support tracking)
     let supportSettlement: Settlement | null = null;
@@ -481,12 +483,38 @@ export class ArmyService {
    * @param level - Actor level
    * @param image - Optional image path for portrait and token
    * @param customData - Optional custom actor data
+   * @param factionId - Optional faction ID to determine alliance
    * @returns Actor ID
    * @throws Error if Foundry not ready or creation fails
    */
-  async createNPCActor(name: string, level: number, image?: string, customData?: any): Promise<string> {
+  async createNPCActor(name: string, level: number, image?: string, customData?: any, factionId?: string): Promise<string> {
 
     const { createNPCInFolder } = await import('../actors/folderManager');
+    
+    // Determine alliance based on faction attitude
+    let alliance: "party" | "neutral" | "opposition" = "party";
+    
+    if (factionId && factionId !== PLAYER_KINGDOM) {
+      // Get faction attitude to determine alliance
+      const actor = getKingdomActor();
+      const kingdom = actor?.getKingdomData();
+      const faction = kingdom?.factions?.find((f: any) => f.id === factionId);
+      
+      if (faction) {
+        // Indifferent or better = neutral, worse than indifferent = opposition
+        const attitudeOrder = ['Helpful', 'Friendly', 'Indifferent', 'Unfriendly', 'Hostile'];
+        const attitudeIndex = attitudeOrder.indexOf(faction.attitude);
+        const indifferentIndex = attitudeOrder.indexOf('Indifferent');
+        
+        if (attitudeIndex >= indifferentIndex) {
+          // Indifferent or better
+          alliance = "neutral";
+        } else {
+          // Worse than indifferent
+          alliance = "opposition";
+        }
+      }
+    }
     
     // Build additional actor data for armies
     const additionalData = customData || {
@@ -500,7 +528,7 @@ export class ArmyService {
       system: {
         details: {
           level: { value: level },
-          alliance: "party", // Set as allied to party (cyan border)
+          alliance: alliance, // Set based on faction attitude
           publicNotes: `Kingdom Army Unit - Level ${level}`
         },
         attributes: {
