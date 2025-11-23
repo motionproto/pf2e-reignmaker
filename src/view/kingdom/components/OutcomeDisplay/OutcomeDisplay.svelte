@@ -458,7 +458,8 @@
       customComponentData,
       customSelectionData,
       manualEffects,
-      specialEffects
+      specialEffects,
+      outcomeBadges
     });
   }
   

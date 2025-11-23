@@ -26,6 +26,8 @@ export const purchaseResourcesPipeline = createActionPipeline('purchase-resource
     return { met: true };
   },
 
+  // ✅ CHANGED: Move to postRollInteractions for INLINE display in OutcomeDisplay
+  // This shows the component BEFORE clicking Apply, not as a dialog after
   postRollInteractions: [
     {
       type: 'configuration',
@@ -34,60 +36,70 @@ export const purchaseResourcesPipeline = createActionPipeline('purchase-resource
       // Only show for successful purchases
       condition: (ctx) => {
         return ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess';
-      },
-      // Execute purchase when user confirms selection
-      onComplete: async (data: any, ctx: any) => {
-        console.log('🎯 [PurchaseResources] User selected:', data);
-        const { selectedResource, selectedAmount, goldCost } = data || {};
-        
-        if (!selectedResource || !selectedAmount || goldCost === undefined) {
-          throw new Error('No resource selection was made');
-        }
-        
-        // Apply resource changes
-        const result = await applyResourceChanges([
-          { resource: 'gold', amount: -goldCost },
-          { resource: selectedResource, amount: selectedAmount }
-        ], 'purchase-resources');
-        
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to purchase resources');
-        }
-        
-        console.log('✅ [PurchaseResources] Resources purchased successfully');
       }
+      // NOTE: No onComplete handler here - execution happens in execute() function
+      // Component dispatches 'resolution' event which OutcomeDisplay captures
+      // Data is stored in ctx.resolutionData.customComponentData
     }
   ],
-
-  preview: {
-  },
 
   execute: async (ctx) => {
     switch (ctx.outcome) {
       case 'criticalSuccess':
       case 'success':
-        // Resource selection and application handled by postRollInteractions.onComplete
-        // The onComplete handler already applied the resource changes during Step 7,
-        // so we just need to verify it ran successfully.
-        console.log('[PurchaseResources] ✅ Resources purchased via postRollInteractions');
-        return { success: true };
+        // ✅ Get user selection from customComponentData (set by PurchaseResourceSelector)
+        const customData = ctx.resolutionData?.customComponentData;
+        console.log('[PurchaseResources] 🔍 customComponentData:', customData);
         
-      case 'failure':
-        // No action taken on failure
+        if (!customData?.selectedResource || !customData?.selectedAmount || customData?.goldCost === undefined) {
+          console.warn('[PurchaseResources] ⚠️ No resource selection - user might not have selected anything');
+          return { success: true };
+        }
+        
+        // Apply resource changes based on user selection
+        const purchaseResult = await applyResourceChanges([
+          { resource: 'gold', amount: -customData.goldCost },
+          { resource: customData.selectedResource, amount: customData.selectedAmount }
+        ], 'purchase-resources');
+        
+        if (!purchaseResult.success) {
+          throw new Error(purchaseResult.error || 'Failed to purchase resources');
+        }
+        
+        console.log(`[PurchaseResources] ✅ Purchased ${customData.selectedAmount} ${customData.selectedResource} for ${customData.goldCost} gold`);
         return { success: true };
         
       case 'criticalFailure':
-        // Apply gold loss penalty
-        console.log('[PurchaseResources] ⚠️ Critical failure - losing 1 gold');
-        const result = await applyResourceChanges([
-          { resource: 'gold', amount: -1 }
-        ], 'purchase-resources');
+        // DEBUG: Log what's actually in ctx.resolutionData
+        console.log('[PurchaseResources] 🔍 ctx.resolutionData:', ctx.resolutionData);
+        console.log('[PurchaseResources] 🔍 numericModifiers:', ctx.resolutionData?.numericModifiers);
         
-        if (!result.success) {
-          console.error('[PurchaseResources] Failed to apply gold loss:', result.error);
-          return { success: false, error: result.error };
+        // ✅ Apply ALL numericModifiers (includes rolled dice values)
+        // ResolutionDataBuilder auto-converts rolled badges to numericModifiers
+        const modifiers = ctx.resolutionData?.numericModifiers || [];
+        
+        console.log('[PurchaseResources] 🔍 Modifiers array length:', modifiers.length);
+        
+        if (modifiers.length === 0) {
+          console.log('[PurchaseResources] ⏳ No modifiers to apply yet');
+          console.log('[PurchaseResources] ⏳ Full context:', JSON.stringify(ctx, null, 2));
+          return { success: true };
         }
         
+        // Apply all modifiers (handles shortages → unrest conversion automatically)
+        const result = await applyResourceChanges(
+          modifiers.map((m: any) => ({ resource: m.resource, amount: m.value })),
+          'purchase-resources'
+        );
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to apply modifiers');
+        }
+        
+        console.log(`[PurchaseResources] ✅ Applied ${modifiers.length} modifier(s)`);
+        return { success: true };
+        
+      case 'failure':
         return { success: true };
         
       default:

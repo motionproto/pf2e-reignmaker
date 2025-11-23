@@ -39,7 +39,17 @@ export function convertModifiersToBadges(
       if (mod.type === 'dice') {
         const formula = mod.formula || mod.value;
         const resource = mod.resource;
-        const isNegative = mod.negative || (typeof mod.value === 'string' && mod.value.startsWith('-'));
+        // Check both mod.negative flag AND formula for minus sign
+        const isNegative = mod.negative || (typeof formula === 'string' && formula.startsWith('-'));
+        
+        // DEBUG: Log the values to trace the bug
+        console.log('🔍 [convertModifiersToBadges] Dice modifier:', {
+          formula,
+          resource,
+          negative: mod.negative,
+          isNegative,
+          rawMod: mod
+        });
         
         if (resource === 'imprisonedUnrest') {
           const settlementName = instanceMetadata?.settlement?.name || 'settlement';

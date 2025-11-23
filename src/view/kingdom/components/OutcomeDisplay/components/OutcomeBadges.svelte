@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount, onDestroy } from 'svelte';
   import { rollDiceFormula } from '../../../../../services/resolution';
   import { getResourceIcon } from '../../../../kingdom/utils/presentation';
   import type { SpecialEffect } from '../../../../../types/special-effects';
   import type { UnifiedOutcomeBadge, LegacyOutcomeBadge, TemplateSegment } from '../../../../../types/OutcomeBadge';
   import { isLegacyBadge, convertLegacyBadge, renderBadgeTemplate } from '../../../../../types/OutcomeBadge';
+  import { getValidationContext } from '../context/ValidationContext';
   
   export let manualEffects: string[] | undefined = undefined;
   export let automatedEffects: string[] | undefined = undefined;
@@ -14,6 +15,8 @@
   export let specialEffects: SpecialEffect[] = [];
   
   const dispatch = createEventDispatcher();
+  const validationContext = getValidationContext();
+  const providerId = 'outcome-badges';
   
   $: hasManualEffects = manualEffects && manualEffects.length > 0;
   $: hasAutomatedEffects = automatedEffects && automatedEffects.length > 0;
@@ -24,6 +27,41 @@
   $: unifiedBadges = outcomeBadges.map(badge => 
     isLegacyBadge(badge) ? convertLegacyBadge(badge) : badge
   );
+  
+  // Track which badges need dice rolls
+  $: diceBadges = allBadges.filter(badge => badge.value?.type === 'dice');
+  $: hasDiceBadges = diceBadges.length > 0;
+  
+  // Check if all dice badges are resolved
+  $: allDiceResolved = diceBadges.every((badge, index) => 
+    isBadgeRolled(index, badge)
+  );
+  
+  // Register with validation context
+  onMount(() => {
+    if (validationContext && hasDiceBadges) {
+      validationContext.register(providerId, {
+        id: providerId,
+        needsResolution: true,
+        isResolved: allDiceResolved
+      });
+    }
+  });
+  
+  // Update validation when dice are rolled
+  $: if (validationContext && hasDiceBadges) {
+    validationContext.update(providerId, {
+      needsResolution: true,
+      isResolved: allDiceResolved
+    });
+  }
+  
+  // Unregister on destroy
+  onDestroy(() => {
+    if (validationContext) {
+      validationContext.unregister(providerId);
+    }
+  });
   
   // Add critical success fame as a badge
   $: fameBadge = outcome === 'criticalSuccess' ? [({
@@ -55,8 +93,9 @@
         resource: badge.suffix?.toLowerCase() || 'unknown'
       });
     } else {
-      dispatch('badgeRoll', {
-        badgeIndex,
+      // Use badgeIndex as modifierIndex for auto-conversion
+      dispatch('roll', {
+        modifierIndex: badgeIndex,
         formula,
         result
       });

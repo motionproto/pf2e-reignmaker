@@ -40,8 +40,8 @@
 
 // Tier badge styling (used in multiple components)
 .tier-badge {
-   padding: 0.125rem 0.5rem;
-   border-radius: var(--radius-md);
+padding: 0.125rem 0.5rem;
+   border-radius: 9999px;  /* Pill-style: fully rounded edges */
    font-size: var(--font-md);
    font-weight: var(--font-weight-medium);
    

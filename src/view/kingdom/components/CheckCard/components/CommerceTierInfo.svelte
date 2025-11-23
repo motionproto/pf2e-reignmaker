@@ -93,7 +93,7 @@
     padding: var(--space-6) var(--space-12);
     background: var(--hover-low);
     border: 1px solid var(--border-medium);
-    border-radius: var(--radius-sm);
+    border-radius: 9999px;  /* Pill-style: fully rounded edges */
     font-size: var(--font-sm);
     color: var(--text-secondary);
     transition: all 0.2s ease;

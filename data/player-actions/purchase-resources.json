@@ -36,8 +36,16 @@
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "The negotiations fail catastrophically.",
-      "modifiers": []
+      "description": "The negotiations fail catastrophically. Theft and brokerage fees cost you gold.",
+      "modifiers": [
+        {
+          "type": "dice",
+          "resource": "gold",
+          "formula": "1d4",
+          "negative": true,
+          "duration": "immediate"
+        }
+      ]
     }
   }
 }

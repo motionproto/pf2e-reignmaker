@@ -36,11 +36,11 @@ export const ACTION_STATUS = new Map<string, ActionStatus>([
   ['send-scouts', 'tested'],  // #7
   
   // Phase 3: Custom Components (graceful degradation)
-  ['sell-surplus', 'untested'],  // #8
-  ['purchase-resources', 'untested'],  // #9
+  ['sell-surplus', 'tested'],  // #8
+  ['purchase-resources', 'tested'],  // #9
   
   // Phase 4: Pre-Roll Entity Selection
-  ['collect-stipend', 'untested'],  // #10
+  ['collect-stipend', 'testing'],  // #10
   ['execute-or-pardon-prisoners', 'untested'],  // #11
   ['diplomatic-mission', 'untested'],  // #12
   ['request-economic-aid', 'untested'],  // #13

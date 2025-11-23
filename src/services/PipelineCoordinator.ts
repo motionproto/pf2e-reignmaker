@@ -646,10 +646,21 @@ export class PipelineCoordinator {
       outcome
     );
     
-    // Merge resolution data into context
+    // ✅ FIX: Merge arrays properly instead of shallow merge
+    // This prevents empty arrays from overwriting populated ones
     ctx.resolutionData = {
       ...ctx.resolutionData,
-      ...resolutionData
+      ...resolutionData,
+      // Preserve numericModifiers from Step 6 if Step 7 returns empty array
+      numericModifiers: [
+        ...(ctx.resolutionData.numericModifiers || []),
+        ...(resolutionData.numericModifiers || [])
+      ],
+      // Preserve manualEffects from Step 6 if Step 7 returns empty array
+      manualEffects: [
+        ...(ctx.resolutionData.manualEffects || []),
+        ...(resolutionData.manualEffects || [])
+      ]
     };
     
     log(ctx, 7, 'postApplyInteractions', 'Post-apply interactions complete', resolutionData);

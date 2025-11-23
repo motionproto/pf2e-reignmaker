@@ -4,6 +4,8 @@
  */
 
 import { createActionPipeline } from '../shared/createActionPipeline';
+import { giveActorGoldExecution } from '../../execution';
+import type { UnifiedOutcomeBadge } from '../../types/OutcomeBadge';
 
 export const collectStipendPipeline = createActionPipeline('collect-stipend', {
   requirements: (kingdom) => {
@@ -59,9 +61,8 @@ export const collectStipendPipeline = createActionPipeline('collect-stipend', {
             // ✅ NEW: Unified badge format
             const badge: UnifiedOutcomeBadge = {
               icon: 'fa-coins',
-              prefix: `${characterName} receives`,
+              template: `${characterName} receives {{value}} gold`,
               value: { type: 'static', amount: goldAmount },
-              suffix: 'gold',
               variant: 'positive'
             };
             
@@ -141,11 +142,15 @@ export const collectStipendPipeline = createActionPipeline('collect-stipend', {
     } else if (ctx.outcome === 'criticalFailure') {
       // ✅ Get already-rolled value from resolutionData (rolled in DiceRoller component)
       const unrestModifier = ctx.resolutionData?.numericModifiers?.find((m: any) => m.resource === 'unrest');
-      const unrestAmount = unrestModifier?.value || 0;
       
-      await updateKingdom(kingdom => {
-        kingdom.unrest = (kingdom.unrest || 0) + unrestAmount;
-      });
+      if (unrestModifier) {
+        // Dice modifiers have 'result' property from DiceRoller, static modifiers have 'value'
+        const unrestAmount = Math.abs(unrestModifier.result || unrestModifier.value || 0);
+        
+        await updateKingdom(kingdom => {
+          kingdom.unrest = (kingdom.unrest || 0) + unrestAmount;
+        });
+      }
     }
 
     return { 

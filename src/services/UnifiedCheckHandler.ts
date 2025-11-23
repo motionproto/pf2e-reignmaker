@@ -240,9 +240,24 @@ export class UnifiedCheckHandler {
       return null;
     }
     
+    // Resolve component from registry if string provided
+    let componentClass = interaction.component;
+    if (typeof componentClass === 'string') {
+      console.log(`🔍 [UnifiedCheckHandler] Resolving component from registry: ${componentClass}`);
+      const { COMPONENT_REGISTRY } = await import('../view/kingdom/components/OutcomeDisplay/config/ComponentRegistry');
+      componentClass = COMPONENT_REGISTRY[componentClass];
+      
+      if (!componentClass) {
+        console.error(`[UnifiedCheckHandler] Component not found in registry: ${interaction.component}`);
+        return null;
+      }
+      
+      console.log(`✅ [UnifiedCheckHandler] Component resolved: ${interaction.component}`);
+    }
+    
     // Show configuration dialog with custom component
     const { showConfigurationDialog } = await import('./InteractionDialogs');
-    const result = await showConfigurationDialog(interaction.component, {
+    const result = await showConfigurationDialog(componentClass, {
       instance: null,  // Not used in new pipeline system
       outcome: interaction.outcome || 'success',
       ...interaction.componentProps  // Additional props if provided

@@ -283,8 +283,12 @@
     display: flex;
     align-items: center;
     gap: var(--space-8);
+    padding: var(--space-6) var(--space-12);
     font-size: var(--font-sm);
     color: var(--color-amber, #fbbf24);
+    background: var(--surface-accent-low);
+    border: 1px solid var(--border-accent-subtle);
+    border-radius: 9999px;  /* Pill-style: fully rounded edges */
     
     i {
       font-size: var(--font-sm);

@@ -35,21 +35,20 @@
   $: maxSets = Math.floor(availableGold / goldCost);
   $: maxResources = maxSets * resourceGain;
 
-  // Get resolution state from instance (only for selectedResource)
-  $: resolutionState = getInstanceResolutionState(instance);
-  $: selectedResource = resolutionState.customComponentData?.selectedResource || '';
+  // ✅ FIX: Use pure local state (no instance state for inline components)
+  // This component is shown inline in OutcomeDisplay, not as a dialog
+  let selectedResource = ''
+  let selectedAmount = 0;  // Will be initialized on mount
   
-  // Use local state for amount (no actor updates on every change)
-  // Initialize to default, then update reactively when resourceGain changes
-  let selectedAmount = 2;
-  
-  // Update selectedAmount when resourceGain changes (but only if current amount is invalid)
-  $: if (resourceGain > 0 && (!selectedAmount || selectedAmount < resourceGain)) {
-    selectedAmount = resourceGain;
-  }
+  // Initialize selectedAmount on mount (only once, not reactive)
+  onMount(() => {
+    if (resourceGain > 0) {
+      selectedAmount = resourceGain;
+    }
+  });
   
   // Validation
-  $: isValid = selectedResource && selectedAmount > 0 && selectedAmount <= maxResources && selectedAmount % resourceGain === 0;
+  $: isValid = !!selectedResource && selectedAmount > 0 && selectedAmount <= maxResources && selectedAmount % resourceGain === 0;
   $: totalCost = selectedAmount > 0 ? Math.ceil(selectedAmount / resourceGain) * goldCost : 0;
   
   // ✨ NEW: Register validation on mount
@@ -58,7 +57,7 @@
       validationContext.register(providerId, {
         id: providerId,
         needsResolution: true,  // Always needs resource + amount selection
-        isResolved: isValid
+        isResolved: !!selectedResource && selectedAmount > 0 && selectedAmount <= maxResources && selectedAmount % resourceGain === 0
       });
     }
   });
@@ -67,7 +66,7 @@
   $: if (validationContext) {
     validationContext.update(providerId, {
       needsResolution: true,
-      isResolved: isValid
+      isResolved: !!selectedResource && selectedAmount > 0 && selectedAmount <= maxResources && selectedAmount % resourceGain === 0
     });
   }
   
@@ -83,21 +82,11 @@
     return resource.charAt(0).toUpperCase() + resource.slice(1);
   }
 
-  async function handleResourceSelect(resource: string) {
-    if (!instance) return;
-
+  function handleResourceSelect(resource: string) {
     // Update local state
     selectedResource = resource;
     
-    // Persist selectedResource to metadata (for ActionPhaseController)
-    // This is a ONE-TIME persistence when selecting resource, not on every amount change
-    await updateInstanceResolutionState(instance.instanceId, {
-      customComponentData: { 
-        selectedResource: resource
-      }
-    });
-    
-    // Notify parent
+    // Notify parent (dispatches resolution event)
     notifySelectionChanged();
   }
   

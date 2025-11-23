@@ -21,6 +21,7 @@ export function buildResolutionData(options: {
   customSelectionData: Record<string, any> | null;
   manualEffects: string[] | undefined;
   specialEffects: any[] | undefined;
+  outcomeBadges?: any[] | undefined;
 }): any {
   const {
     selectedChoice,
@@ -31,10 +32,47 @@ export function buildResolutionData(options: {
     customComponentData,
     customSelectionData,
     manualEffects,
-    specialEffects
+    specialEffects,
+    outcomeBadges
   } = options;
 
   const numericModifiers: Array<{ resource: string; value: number }> = [];
+  
+  // ✨ AUTO-CONVERT OUTCOME BADGES: Extract resource from badge template
+  // This allows badges to work without manually creating matching modifiers
+  if (outcomeBadges && outcomeBadges.length > 0) {
+    for (let i = 0; i < outcomeBadges.length; i++) {
+      const badge = outcomeBadges[i];
+      
+      // Skip badges without dice values
+      if (!badge.value || badge.value.type !== 'dice') continue;
+      
+      // Skip fame badges (handled separately)
+      if ((badge as any)._isFame) continue;
+      
+      // Get badge index for rolled value lookup
+      const badgeIndex = (badge as any)._modifierIndex ?? i;
+      const rolledValue = resolvedDice.get(badgeIndex);
+      
+      // Skip if not rolled yet
+      if (rolledValue === undefined) continue;
+      
+      // Extract resource from template (e.g., "Lose {{value}} Lumber" -> "lumber")
+      const templateMatch = badge.template?.match(/(?:Lose|Gain)\s+\{\{value\}\}\s+(\w+)/i);
+      if (!templateMatch) continue;
+      
+      const resource = templateMatch[1].toLowerCase();
+      
+      // Determine if negative (lose vs gain)
+      const isNegative = badge.template?.toLowerCase().includes('lose') || 
+                         badge.variant === 'negative';
+      
+      const finalValue = isNegative ? -Math.abs(rolledValue) : rolledValue;
+      
+      numericModifiers.push({ resource, value: finalValue });
+      console.log(`✨ [ResolutionDataBuilder] Auto-converted badge: ${resource} = ${finalValue}`);
+    }
+  }
   
   // Case 1: Choice was made (resource arrays are replaced by choice)
   if (selectedChoice !== null && componentResolutionData?.stateChanges) {
@@ -42,6 +80,11 @@ export function buildResolutionData(options: {
     if (modifiers) {
       for (let i = 0; i < modifiers.length; i++) {
         const mod = modifiers[i] as any;
+        
+        // ⚠️ SKIP DICE MODIFIERS: Already converted from outcomeBadges above (lines 47-75)
+        if (mod.type === 'dice' && mod.formula) {
+          continue;
+        }
         
         // Skip resource arrays (they're replaced by the choice)
         if (Array.isArray(mod.resources)) {
@@ -75,6 +118,12 @@ export function buildResolutionData(options: {
       for (let i = 0; i < modifiers.length; i++) {
         const mod = modifiers[i] as any;
 
+        // ⚠️ SKIP DICE MODIFIERS: Already converted from outcomeBadges above (lines 47-75)
+        // This prevents double-application of penalties/bonuses
+        if (mod.type === 'dice' && mod.formula) {
+          continue;
+        }
+
         // Handle ChoiceModifiers (type: "choice-dropdown" with resources array)
         if (mod.type === 'choice-dropdown' && Array.isArray(mod.resources)) {
           const selectedResource = selectedResources.get(i);
@@ -96,7 +145,7 @@ export function buildResolutionData(options: {
         let value = resolvedDice.get(i) ?? resolvedDice.get(`state:${mod.resource}`) ?? mod.value;
 
         if (typeof value === 'number') {
-          // Apply negative flag for dice modifiers (e.g., "Remove 1d4 imprisoned unrest")
+          // Apply negative flag for static modifiers
           const finalValue = mod.negative ? -Math.abs(value) : value;
           numericModifiers.push({ resource: mod.resource as string, value: finalValue });
         }
