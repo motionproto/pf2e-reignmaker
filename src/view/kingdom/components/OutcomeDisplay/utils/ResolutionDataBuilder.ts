@@ -58,10 +58,15 @@ export function buildResolutionData(options: {
       if (rolledValue === undefined) continue;
       
       // Extract resource from template (e.g., "Lose {{value}} Lumber" -> "lumber")
-      const templateMatch = badge.template?.match(/(?:Lose|Gain)\s+\{\{value\}\}\s+(\w+)/i);
+      // Handles: "Lose/Gain/Remove {{value}} [resource]" patterns
+      const templateMatch = badge.template?.match(/(?:Lose|Gain|Remove)\s+\{\{value\}\}\s+(\w+)/i);
       if (!templateMatch) continue;
       
-      const resource = templateMatch[1].toLowerCase();
+      // Special case: "imprisoned unrest" -> "imprisoned" (our internal resource name)
+      let resource = templateMatch[1].toLowerCase();
+      if (resource === 'imprisoned') {
+        resource = 'imprisoned'; // Already correct
+      }
       
       // Determine if negative (lose vs gain)
       const isNegative = badge.template?.toLowerCase().includes('lose') || 

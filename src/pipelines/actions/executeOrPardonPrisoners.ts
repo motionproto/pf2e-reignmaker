@@ -59,11 +59,15 @@ export const executeOrPardonPrisonersPipeline = createActionPipeline('execute-or
     calculate: (ctx) => {
       const outcomeBadges = [];
       const settlementName = ctx.metadata?.settlement?.name || 'settlement';
+      const settlement = ctx.kingdom.settlements?.find((s: any) => s.id === ctx.metadata?.settlement?.id);
       
       if (ctx.outcome === 'criticalSuccess') {
+        // Show actual imprisoned count for "all"
+        const imprisonedCount = settlement?.imprisonedUnrest || 0;
         outcomeBadges.push(textBadge(`Clear all imprisoned unrest from ${settlementName}`, 'fa-gavel', 'positive'));
         outcomeBadges.push(valueBadge('Lose {{value}} Unrest', 'fa-fist-raised', 1, 'positive'));
       } else if (ctx.outcome === 'success') {
+        // Use dice badge for 1d4 roll
         outcomeBadges.push(diceBadge(`Remove {{value}} imprisoned unrest from ${settlementName}`, 'fa-gavel', '1d4', 'positive'));
       } else if (ctx.outcome === 'criticalFailure') {
         outcomeBadges.push(valueBadge('Gain {{value}} Unrest', 'fa-fist-raised', 1, 'negative'));
@@ -79,6 +83,7 @@ export const executeOrPardonPrisonersPipeline = createActionPipeline('execute-or
     console.log('🎯 [executeOrPardonPrisoners] Context:', ctx);
     console.log('🎯 [executeOrPardonPrisoners] Metadata:', ctx.metadata);
     console.log('🎯 [executeOrPardonPrisoners] Outcome:', ctx.outcome);
+    console.log('🎯 [executeOrPardonPrisoners] ResolutionData:', ctx.resolutionData);
     
     const settlementId = ctx.metadata?.settlement?.id;
     console.log('🎯 [executeOrPardonPrisoners] Settlement ID:', settlementId);
@@ -107,13 +112,27 @@ export const executeOrPardonPrisonersPipeline = createActionPipeline('execute-or
 
       return { success: true, message: `All imprisoned unrest cleared in ${settlement.name}` };
     } else if (ctx.outcome === 'success') {
-      // Roll 1d4 at execution time (gameCommand specifies amount: '1d4')
-      const { rollDiceFormula } = await import('../../services/resolution');
-      const amount = rollDiceFormula('1d4');
+      // ✅ Get already-rolled value from resolutionData (rolled in DiceRoller component)
+      // Find the imprisoned unrest modifier from the badge roll
+      const imprisonedModifier = ctx.resolutionData?.numericModifiers?.find((m: any) => 
+        m.resource === 'imprisonedUnrest' || m.resource === 'imprisoned'
+      );
+      
+      // Extract the rolled value (use absolute value since badges handle negation)
+      const amount = imprisonedModifier ? Math.abs(imprisonedModifier.value) : 0;
+      
+      console.log('🎯 [executeOrPardonPrisoners] Using rolled value from badge:', {
+        imprisonedModifier,
+        amount,
+        allModifiers: ctx.resolutionData?.numericModifiers
+      });
 
-      await reduceImprisonedExecution(settlementId, amount);
-
-      return { success: true, message: `Reduced ${amount} imprisoned unrest in ${settlement.name}` };
+      if (amount > 0) {
+        await reduceImprisonedExecution(settlementId, amount);
+        return { success: true, message: `Reduced ${amount} imprisoned unrest in ${settlement.name}` };
+      } else {
+        return { success: false, error: 'No valid dice roll found in resolution data' };
+      }
     } else if (ctx.outcome === 'failure') {
       // No change
       return { success: true, message: 'The prisoners you choose are inconsequential' };
