@@ -13,7 +13,8 @@
   // import ExecuteOrPardonSettlementDialog from '../../../../actions/execute-or-pardon-prisoners/SettlementSelectionDialog.svelte';
   import ArmySelectionDialog from '../../components/dialogs/ArmySelectionDialog.svelte';
   import DisbandArmyDialog from '../../components/dialogs/DisbandArmySelectionDialog.svelte';
-  import OutfitArmyDialog from '../../components/dialogs/OutfitArmySelectionDialog.svelte';
+  // REMOVED: OutfitArmyDialog - outfit-army migrated to pipeline system
+  // import OutfitArmyDialog from '../../components/dialogs/OutfitArmySelectionDialog.svelte';
   import RecruitArmyDialog from '../../../kingdom/components/RecruitArmyDialog.svelte';
   import EstablishSettlementNameDialog from '../../../kingdom/components/EstablishSettlementNameDialog.svelte';
   import StructureSelectionDialog from '../../../kingdom/components/StructureSelectionDialog.svelte';
@@ -190,11 +191,7 @@
   on:armySelected={handleArmySelectedForDisbanding}
 />
 
-<!-- Army Selection Dialog (Outfit Army) -->
-<OutfitArmyDialog
-  bind:show={showOutfitArmyDialog}
-  on:armySelected={handleArmySelectedForOutfitting}
-/>
+<!-- Army Selection Dialog (Outfit Army) - REMOVED: using pipeline system now -->
 
 <!-- Recruit Army Dialog -->
 <RecruitArmyDialog

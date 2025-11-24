@@ -408,10 +408,13 @@ export async function showConfigurationDialog(
     });
 
     // Listen for 'selection' event (inline components like ResourceChoiceSelector)
+    // Also used by postApplyInteractions components like OutfitArmyResolution
     instance.$on('selection', (event: any) => {
       selectedData = event.detail;
       console.log('[ConfigurationDialog] Selection received:', selectedData);
-      // Note: For inline components, we don't cleanup here - parent handles it
+      // For postApplyInteractions, resolve immediately with the selection data
+      cleanup();
+      resolve(selectedData);
     });
   });
 }

@@ -1,17 +1,14 @@
 <script lang="ts">
   import Notification from '../../baseComponents/Notification.svelte';
+  import CostDisplay from '../CostDisplay.svelte';
   
   export let special: string | null = '';
   export let cost: Map<string, number> | null = null;
   
-  // Build cost description string from Map
-  $: costDescription = cost 
-    ? Array.from(cost.entries())
-        .map(([resource, amount]) => 
-          `${amount} ${resource.charAt(0).toUpperCase() + resource.slice(1)}`
-        )
-        .join(', ')
-    : '';
+  // Convert Map to plain object for CostDisplay
+  $: costObject = cost 
+    ? Object.fromEntries(cost.entries())
+    : {};
 </script>
 
 {#if special || cost}
@@ -26,12 +23,7 @@
     {/if}
     
     {#if cost}
-      <Notification
-        variant="warning"
-        size="compact"
-        title="Cost"
-        description={costDescription}
-      />
+      <CostDisplay cost={costObject} />
     {/if}
   </div>
 {/if}

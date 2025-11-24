@@ -137,25 +137,23 @@
             showSpecial={true}
             showIgnoreButton={false}
             special={action.special}
-            cost={action.cost}
+            cost={action.cost instanceof Map ? action.cost : (action.cost ? new Map(Object.entries(action.cost)) : null)}
             expanded={expandedActions.has(action.id)}
+            on:toggle={() => handleToggle(action.id)}
             available={isAvailable}
             {missingRequirements}
             resolved={isResolved}
             {resolution}
             canPerformMore={actionsUsed < 4 && !isResolved}
             currentFame={currentFame}
-            showFameReroll={true}
             showAidButton={true}
             aidResult={getAidResultForAction(action.id)}
             {hideUntrainedSkills}
             resolvedBadgeText="Resolved"
-            primaryButtonLabel="Apply Result"
             skillSectionTitle="Choose Skill:"
             {isViewingCurrentPhase}
             {actionStatus}
             {actionNumber}
-            on:toggle={() => handleToggle(action.id)}
             on:executeSkill={(e) => handleExecuteSkill(e, action)}
             on:performReroll={(e) => handlePerformReroll(e, action)}
             on:aid={handleAid}

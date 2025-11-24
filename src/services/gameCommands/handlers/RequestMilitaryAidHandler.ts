@@ -129,9 +129,7 @@ export class RequestMilitaryAidHandler extends BaseGameCommandHandler {
       return {
         outcomeBadge: {
           icon: 'fa-coins',
-          template: 'Received {{value}}',
-          value: { type: 'static', amount: 1 },
-          suffix: 'Gold (no armies to outfit)',
+          template: 'Received 1 Gold (no armies to outfit)',
           variant: 'info'
         },
         commit: async () => {
@@ -146,8 +144,8 @@ export class RequestMilitaryAidHandler extends BaseGameCommandHandler {
       };
     }
     
-    // Import custom dialog dynamically
-    const { default: EquipmentSelectionDialog } = await import('../../../view/kingdom/components/dialogs/EquipmentSelectionDialog.svelte');
+    // Import OutfitArmyResolution (same component used by outfit-army action)
+    const { default: OutfitArmyResolution } = await import('../../../view/kingdom/components/OutfitArmyResolution.svelte');
     
     // Show dialog and wait for user selection
     const selection = await new Promise<{ armyId: string; equipmentType: string } | null>((resolve) => {
@@ -156,12 +154,15 @@ export class RequestMilitaryAidHandler extends BaseGameCommandHandler {
       const mount = document.createElement('div');
       document.body.appendChild(mount);
       
-      dialogComponent = new EquipmentSelectionDialog({
+      dialogComponent = new OutfitArmyResolution({
         target: mount,
-        props: { show: true }
+        props: { 
+          outcome: 'success',  // Always success for Request Military Aid
+          applied: false
+        }
       });
       
-      dialogComponent.$on('confirm', (event: CustomEvent) => {
+      dialogComponent.$on('selection', (event: CustomEvent) => {
         dialogComponent.$destroy();
         mount.remove();
         resolve(event.detail);
@@ -197,9 +198,7 @@ export class RequestMilitaryAidHandler extends BaseGameCommandHandler {
     return {
       outcomeBadge: {
         icon: 'fa-shield-alt',
-          template: 'Outfitting {{value}}',
-        value: { type: 'static', amount: 1 },
-        suffix: `${armyName} with ${equipmentName}`,
+        template: `Outfitting ${armyName} with ${equipmentName}`,
         variant: 'positive'
       },
       commit: async () => {

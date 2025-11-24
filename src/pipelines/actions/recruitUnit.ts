@@ -41,6 +41,12 @@ export const recruitUnitPipeline = createActionPipeline('recruit-unit', {
       componentProps: {
         show: true,
         exemptFromUpkeep: false
+      },
+      onComplete: async (data: any, ctx: any) => {
+        // Store recruitment data for execute step
+        ctx.resolutionData = ctx.resolutionData || {};
+        ctx.resolutionData.customComponentData = ctx.resolutionData.customComponentData || {};
+        ctx.resolutionData.customComponentData['recruit-army'] = data;
       }
     }
   ],

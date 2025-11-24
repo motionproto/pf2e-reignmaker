@@ -4,6 +4,10 @@
   "category": "military-operations",
   "brief": "Equip troops with armor, weapons, runes, or equipment",
   "description": "Equip your troops with superior arms, armor, and supplies to enhance their battlefield effectiveness",
+  "cost": {
+    "ore": 1,
+    "gold": 2
+  },
   "skills": [
     {
       "skill": "crafting",
@@ -24,57 +28,24 @@
   ],
   "outcomes": {
     "criticalSuccess": {
-      "description": "The army is outfitted with exceptional gear.",
-      "cost": {
-        "ore": 1,
-        "gold": 2
-      },
+      "description": "Army receives +2 equipment bonus",
       "modifiers": [],
-      "gameCommands": [
-        {
-          "type": "outfitArmy",
-          "outcome": "criticalSuccess"
-        }
-      ]
+      "gameCommands": []
     },
     "success": {
-      "description": "The army is outfitted.",
-      "cost": {
-        "ore": 1,
-        "gold": 2
-      },
+      "description": "Army receives +1 equipment bonus",
       "modifiers": [],
-      "gameCommands": [
-        {
-          "type": "outfitArmy",
-          "outcome": "success"
-        }
-      ]
+      "gameCommands": []
     },
     "failure": {
-      "description": "The effort is wasted.",
-      "cost": {},
+      "description": "Failed to find a suitable supplier",
       "modifiers": [],
-      "gameCommands": [
-        {
-          "type": "outfitArmy",
-          "outcome": "failure"
-        }
-      ]
+      "gameCommands": []
     },
     "criticalFailure": {
-      "description": "The suppliers take the gold.",
-      "cost": {
-        "gold": 2
-      },
+      "description": "Resources lost to corruption and waste",
       "modifiers": [],
-      "gameCommands": [
-        {
-          "type": "outfitArmy",
-          "outcome": "criticalFailure"
-        }
-      ]
+      "gameCommands": []
     }
-  },
-  "special": "Equipment types: armor (+1 AC), runes (+1 to hit), weapons (+1 damage dice), equipment (+1 saving throws)"
+  }
 }

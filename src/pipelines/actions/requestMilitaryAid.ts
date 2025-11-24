@@ -161,7 +161,16 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
         // Only show dialog if there are eligible armies
         return eligibleArmies.length > 0;
       },
-      component: 'OutfitArmySelectionDialog'  // Resolved via ComponentRegistry
+      component: 'OutfitArmyResolution',  // Use same component as outfit-army action
+      componentProps: {
+        outcome: 'success'  // Always success for Request Military Aid
+      },
+      onComplete: async (data: any, ctx: any) => {
+        // Store selection for execute step
+        ctx.resolutionData = ctx.resolutionData || {};
+        ctx.resolutionData.customComponentData = ctx.resolutionData.customComponentData || {};
+        ctx.resolutionData.customComponentData['outfit-army'] = data;
+      }
     }
   ],
 
