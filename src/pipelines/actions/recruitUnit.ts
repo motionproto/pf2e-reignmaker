@@ -4,8 +4,10 @@
  */
 
 import { createActionPipeline } from '../shared/createActionPipeline';
+import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
-export const recruitUnitPipeline = createActionPipeline('recruit-unit', {
+// Store reference for execute function
+const pipeline = createActionPipeline('recruit-unit', {
   // No cost - always available
   requirements: () => ({ met: true }),
 
@@ -51,12 +53,9 @@ export const recruitUnitPipeline = createActionPipeline('recruit-unit', {
     }
   ],
 
-  execute: async (ctx) => {
-    const { getKingdomActor } = await import('../../stores/KingdomStore');
-    const actor = getKingdomActor();
-    if (!actor) {
-      return { success: false, error: 'No kingdom actor available' };
-    }
+  execute: async (ctx: any) => {
+    // Apply modifiers (unrest changes) from JSON outcomes first
+    await applyPipelineModifiers(pipeline, ctx.outcome);
 
     // Handle different outcomes
     if (ctx.outcome === 'failure' || ctx.outcome === 'criticalFailure') {
@@ -110,3 +109,5 @@ export const recruitUnitPipeline = createActionPipeline('recruit-unit', {
     };
   }
 });
+
+export const recruitUnitPipeline = pipeline;

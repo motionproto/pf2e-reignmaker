@@ -35,9 +35,64 @@
   let selectedSettlementId: string = '';
   let selectedArmyType: ArmyType = 'infantry';
   let confirmDisabled = true; // Confirm disabled state
-  
+  let userHasEnteredName = false; // Track if user manually entered a name
+
   // Reactive validation: only require a name (allow exceeding capacity)
   $: confirmDisabled = !armyName.trim();
+  
+  // Generate a unique default name based on army type
+  function generateDefaultName(armyType: ArmyType): string {
+    const typeName = ARMY_TYPES[armyType].name;
+    const existingArmies = $kingdomData.armies || [];
+    
+    // Find existing armies with the same type
+    const sameTypeArmies = existingArmies.filter((army: any) => {
+      // Extract base name pattern (e.g., "Infantry 1" -> "Infantry")
+      const nameMatch = army.name.match(/^(.+?)\s+(\d+)$/);
+      if (nameMatch) {
+        const baseName = nameMatch[1];
+        return baseName === typeName;
+      }
+      // Also check exact match
+      return army.name === typeName;
+    });
+    
+    // Find the highest number used
+    let maxNumber = 0;
+    sameTypeArmies.forEach((army: any) => {
+      const match = army.name.match(/\s+(\d+)$/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxNumber) {
+          maxNumber = num;
+        }
+      } else if (army.name === typeName) {
+        // If there's an exact match, we'll use number 2
+        maxNumber = Math.max(maxNumber, 1);
+      }
+    });
+    
+    // Generate next number (at least 1)
+    const nextNumber = maxNumber + 1;
+    const defaultName = `${typeName} ${nextNumber}`;
+    
+    // Ensure uniqueness (check if this exact name exists)
+    const isUnique = !existingArmies.some((army: any) => army.name === defaultName);
+    
+    return isUnique ? defaultName : `${typeName} ${nextNumber + 1}`;
+  }
+  
+  // Track the last generated default name to detect if user has changed it
+  let lastDefaultName: string = '';
+  
+  // Update default name when army type changes (if user hasn't manually entered a name)
+  $: {
+    if (!userHasEnteredName) {
+      const newDefaultName = generateDefaultName(selectedArmyType);
+      lastDefaultName = newDefaultName;
+      armyName = newDefaultName;
+    }
+  }
   
   // Reactively calculate ALL claimed settlements (including at-capacity)
   $: allSettlements = $kingdomData.settlements
@@ -80,9 +135,11 @@
     : null;
   
   onMount(() => {
-    // Generate default army name
-    const armyNumber = ($kingdomData.armies?.length || 0) + 1;
-    armyName = `Army ${armyNumber}`;
+    // Generate default army name based on selected type
+    const defaultName = generateDefaultName(selectedArmyType);
+    armyName = defaultName;
+    lastDefaultName = defaultName;
+    userHasEnteredName = false;
     
     // For allied armies, auto-select capital
     if (exemptFromUpkeep && capitalSettlement) {
@@ -91,22 +148,63 @@
   });
   
   // Update capital selection when exemptFromUpkeep or capitalSettlement changes
-  $: if (exemptFromUpkeep && capitalSettlement && !selectedSettlementId) {
-    selectedSettlementId = capitalSettlement.id;
+  $: {
+    if (exemptFromUpkeep && capitalSettlement && !selectedSettlementId) {
+      selectedSettlementId = capitalSettlement.id;
+    }
   }
   
   function handleConfirm() {
     // Called by base Dialog component when confirm button clicked
-    if (armyName.trim()) {
-      dispatch('confirm', {
-        name: armyName.trim(),
-        settlementId: selectedSettlementId || null,
-        armyType: selectedArmyType
-      });
-    } else {
+    if (!armyName.trim()) {
       // Cancel if name is empty (shouldn't happen due to confirmDisabled)
       dispatch('cancel');
+      show = false;
+      return;
     }
+    
+    let finalName = armyName.trim();
+    const existingArmies = $kingdomData.armies || [];
+    
+    // If user hasn't entered a custom name, ensure the default name is unique
+    if (!userHasEnteredName || finalName === lastDefaultName) {
+      // Regenerate to ensure uniqueness (in case armies were added since last generation)
+      finalName = generateDefaultName(selectedArmyType);
+    }
+    
+    // Ensure final name is unique (whether default or user-entered)
+    let uniqueName = finalName;
+    let counter = 1;
+    
+    while (existingArmies.some((army: any) => army.name === uniqueName)) {
+      const typeName = ARMY_TYPES[selectedArmyType].name;
+      // Extract number if exists, otherwise start from 1
+      const match = finalName.match(/^(.+?)\s+(\d+)$/);
+      if (match) {
+        const baseName = match[1];
+        const num = parseInt(match[2], 10);
+        uniqueName = `${baseName} ${num + counter}`;
+      } else {
+        // Try to use the existing name as base, or fall back to type name
+        const baseName = finalName || typeName;
+        uniqueName = `${baseName} ${counter}`;
+      }
+      counter++;
+      
+      // Safety check to prevent infinite loop
+      if (counter > 1000) {
+        uniqueName = `${finalName || typeName} ${Date.now()}`;
+        break;
+      }
+    }
+    
+    finalName = uniqueName;
+    
+    dispatch('confirm', {
+      name: finalName,
+      settlementId: selectedSettlementId || null,
+      armyType: selectedArmyType
+    });
     show = false;
   }
   
@@ -120,6 +218,22 @@
     if (event.key === 'Enter') {
       event.preventDefault();
       (event.target as HTMLInputElement).blur();
+    }
+  }
+  
+  function handleInputChange(event: Event) {
+    // Mark that user has manually entered a name when they type
+    // Only track if they've actually typed something (not just the default)
+    const target = event.target as HTMLInputElement;
+    const currentValue = target.value;
+    const currentDefault = generateDefaultName(selectedArmyType);
+    
+    if (currentValue.trim() === '' || currentValue.trim() === currentDefault) {
+      // Empty or matches default - allow default to be updated when type changes
+      userHasEnteredName = false;
+    } else {
+      // User has typed something different - preserve their input
+      userHasEnteredName = true;
     }
   }
 </script>
@@ -142,6 +256,7 @@
       placeholder="Enter army name..." 
       autofocus
       on:keydown={handleInputKeydown}
+      on:input={handleInputChange}
     />
   </div>
   

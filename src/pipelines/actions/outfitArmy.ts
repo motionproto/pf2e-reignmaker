@@ -15,6 +15,28 @@ import type { Army } from '../../models/Army';
 
 export const outfitArmyPipeline = createActionPipeline('outfit-army', {
   requirements: (kingdom) => {
+    // Check 1: Resource costs (ore: 1, gold: 2)
+    const oreCost = 1;
+    const goldCost = 2;
+    const currentOre = kingdom.resources?.ore || 0;
+    const currentGold = kingdom.resources?.gold || 0;
+    
+    const missingResources: string[] = [];
+    if (currentOre < oreCost) {
+      missingResources.push(`${oreCost} Ore (have ${currentOre})`);
+    }
+    if (currentGold < goldCost) {
+      missingResources.push(`${goldCost} Gold (have ${currentGold})`);
+    }
+    
+    if (missingResources.length > 0) {
+      return {
+        met: false,
+        reason: `Insufficient resources: need ${missingResources.join(', ')}`
+      };
+    }
+
+    // Check 2: Army availability
     if (!kingdom.armies || kingdom.armies.length === 0) {
       return {
         met: false,
@@ -22,7 +44,7 @@ export const outfitArmyPipeline = createActionPipeline('outfit-army', {
       };
     }
 
-    // Check if any army has available equipment slots (< 4 upgrades) and has an actor
+    // Check 3: Eligible armies (available equipment slots and has actor)
     const eligibleArmies = kingdom.armies.filter((army: Army) => {
       const equipmentCount = army.equipment 
         ? Object.values(army.equipment).filter(Boolean).length 

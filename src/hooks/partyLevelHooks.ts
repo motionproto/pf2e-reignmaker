@@ -12,21 +12,35 @@ import type { KingdomData } from '../actors/KingdomActor';
 import { logger } from '../utils/Logger';
 
 /**
- * Get the highest level among all player characters
+ * Get party level from PF2e party actor
  * Exported for use during kingdom initialization
+ * 
+ * ✅ FIX: Uses PF2e's built-in party actor system.details.level property
+ * This is the official way to get party level in PF2e
  */
 export function getHighestPartyLevel(): number {
   const game = (globalThis as any).game;
   if (!game?.actors) return 1;
   
-  const playerCharacters = Array.from(game.actors).filter((a: any) => 
-    a.type === 'character' && a.hasPlayerOwner
-  );
+  // ✅ FIX: Get party level directly from PF2e party actor
+  // The party actor has system.details.level which tracks the party's level
+  const partyActors = Array.from(game.actors).filter((a: any) => a.type === 'party');
   
-  if (playerCharacters.length === 0) return 1;
+  if (partyActors.length === 0) return 1;
   
-  const maxLevel = Math.max(...playerCharacters.map((a: any) => a.level || 1));
-  return maxLevel;
+  // Use the first party actor (there should only be one)
+  const partyActor = partyActors[0];
+  
+  // Get level from PF2e party actor structure
+  if (partyActor.system?.details?.level !== undefined) {
+    // Could be a number or an object with a value property
+    const level = typeof partyActor.system.details.level === 'number' 
+      ? partyActor.system.details.level 
+      : partyActor.system.details.level.value || 1;
+    return level;
+  }
+  
+  return 1;
 }
 
 /**
@@ -58,12 +72,18 @@ export function initializePartyLevelHooks() {
     // Only track player character level changes
     if (actor.type !== 'character' || !actor.hasPlayerOwner) return;
     
-    // Check if level changed
-    if (changes.system?.details?.level?.value !== undefined) {
-      const oldLevel = actor.system.details.level.value - (changes.system.details.level.value - actor.level);
-      const newLevel = changes.system.details.level.value;
+    // Check if level changed - PF2e stores level in system.details.level.value
+    const levelChanged = changes.system?.details?.level?.value !== undefined;
+    
+    // Also check if the update data contains level changes (sometimes it's in the update object)
+    const updateData = changes.system?.details?.level || changes.system?.details;
+    const hasLevelUpdate = updateData?.value !== undefined || updateData?.level !== undefined;
+    
+    if (levelChanged || hasLevelUpdate) {
+      // Get the new level from the updated actor (it's already updated at this point)
+      const newLevel = actor.system?.details?.level?.value || actor.level || 1;
       
-      console.log(`📊 [PartyLevelHooks] Character "${actor.name}" leveled: ${oldLevel} → ${newLevel}`);
+      console.log(`📊 [PartyLevelHooks] Character "${actor.name}" level changed to ${newLevel}`);
       
       // Sync party level to kingdom
       await syncPartyLevel();

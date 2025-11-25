@@ -71,8 +71,7 @@
     display: flex;
     justify-content: space-between;
     gap: var(--space-12);
-    padding: var(--space-20);
-    background: var(--overlay-low);
+    padding: var(--space-16);
     border-top: 1px solid var(--border-faint);
     
     // Cancel button stays on the left

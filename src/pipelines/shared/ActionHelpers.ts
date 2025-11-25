@@ -261,22 +261,42 @@ export function getLevelBasedDC(level: number): number {
 }
 
 /**
- * Get party level from game actors, with optional fallback
+ * Get party level from PF2e party actor, with optional fallback
  * @param fallbackLevel - Level to use if no party exists (e.g., acting character's level)
+ * 
+ * ✅ FIX: Uses PF2e's built-in party actor system.details.level property
+ * This is the official way to get party level in PF2e
  */
 export function getPartyLevel(fallbackLevel?: number): number {
   const game = (globalThis as any).game;
-  if (!game?.actors) return fallbackLevel || 1;
+  if (!game?.actors) {
+    console.warn('[getPartyLevel] No game.actors available');
+    return fallbackLevel || 1;
+  }
   
-  // Find party actors and get their level
-  const partyActors = Array.from(game.actors).filter((a: any) => 
-    a.type === 'character' && a.hasPlayerOwner
-  );
+  // ✅ FIX: Get party level directly from PF2e party actor
+  // The party actor has system.details.level which tracks the party's level
+  const partyActors = Array.from(game.actors).filter((a: any) => a.type === 'party');
   
-  if (partyActors.length === 0) return fallbackLevel || 1;
+  if (partyActors.length === 0) {
+    console.warn('[getPartyLevel] No party actor found, using fallback');
+    return fallbackLevel || 1;
+  }
   
-  // Use the first party member's level as reference
-  return (partyActors[0] as any).level || fallbackLevel || 1;
+  // Use the first party actor (there should only be one)
+  const partyActor = partyActors[0];
+  
+  // Get level from PF2e party actor structure
+  let partyLevel = 1;
+  if (partyActor.system?.details?.level !== undefined) {
+    // Could be a number or an object with a value property
+    partyLevel = typeof partyActor.system.details.level === 'number' 
+      ? partyActor.system.details.level 
+      : partyActor.system.details.level.value || 1;
+  }
+  
+  console.log(`[getPartyLevel] Party level from party actor: ${partyLevel}`);
+  return partyLevel || fallbackLevel || 1;
 }
 
 // ============================================================================

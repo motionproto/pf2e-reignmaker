@@ -99,6 +99,7 @@
   
   // Create a reactive key that changes when army data OR party level changes
   // This forces action requirement checks to re-run when armies or party level are modified
+  // Party level is synced on mount, so stored value should be current
   $: armyDataKey = $kingdomData ? 
     `${$kingdomData.partyLevel || 1}|${$kingdomData.armies?.map(a => `${a.id}:${a.level}`).join(',') || ''}` : '';
   
@@ -329,6 +330,20 @@
   // Component lifecycle
   onMount(async () => {
     console.log('🔵 [ActionsPhase] Component mounting...');
+    
+    // ✅ Sync party level when component mounts (ensures requirements check has current level)
+    const { getHighestPartyLevel } = await import('../../../hooks/partyLevelHooks');
+    const actor = getKingdomActor();
+    if (actor) {
+      const currentPartyLevel = getHighestPartyLevel();
+      const kingdom = actor.getKingdomData();
+      if (kingdom && kingdom.partyLevel !== currentPartyLevel) {
+        console.log(`🎯 [ActionsPhase] Syncing party level on mount: ${kingdom.partyLevel} → ${currentPartyLevel}`);
+        await actor.updateKingdomData((k: any) => {
+          k.partyLevel = currentPartyLevel;
+        });
+      }
+    }
     
     // Initialize controller and service
     controller = await createActionPhaseController();

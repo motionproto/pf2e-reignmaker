@@ -5,7 +5,6 @@
   import type { ActiveCheckInstance } from '../../../models/CheckInstance';
   import { EQUIPMENT_ICONS, EQUIPMENT_NAMES, EQUIPMENT_BONUSES, type EquipmentType } from '../../../utils/presentation';
   import Dialog from './baseComponents/Dialog.svelte';
-  import CostDisplay from './CheckCard/CostDisplay.svelte';
 
   export let instance: ActiveCheckInstance | null = null;
   export let outcome: 'success' | 'criticalSuccess' = 'success';
@@ -141,8 +140,6 @@
       <p>Army will receive +1 equipment bonus</p>
     {/if}
   </div>
-
-  <CostDisplay cost={{ ore: 1, gold: 2 }} />
 
   {#if eligibleArmies.length === 0}
     <p class="error">⚠️ No armies available with equipment slots</p>

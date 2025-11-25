@@ -45,19 +45,19 @@ export const ACTION_STATUS = new Map<string, ActionStatus>([
   ['diplomatic-mission', 'tested'],  // #12
   ['request-economic-aid', 'tested'],  // #13
   ['request-military-aid', 'tested'],  // #14
-  ['train-army', 'untested'],  // #15
-  ['disband-army', 'untested'],  // #16
+  ['train-army', 'tested'],  // #15
+  ['disband-army', 'tested'],  // #16
   
   // Phase 5: Foundry Integration (gameCommands)
   ['recruit-unit', 'tested'],  // #17
-  ['deploy-army', 'untested'],  // #18
+  ['deploy-army', 'testing'],  // #18
   ['build-structure', 'untested'],  // #19
   ['repair-structure', 'untested'],  // #20
   ['upgrade-settlement', 'untested'],  // #21
   
   // Phase 6: Complex Custom Logic
   ['arrest-dissidents', 'untested'],  // #22
-  ['outfit-army', 'testing'],  // #23
+  ['outfit-army', 'tested'],  // #23
   ['infiltration', 'untested'],  // #24
   ['establish-settlement', 'untested'],  // #25
   ['recover-army', 'untested'],  // #26

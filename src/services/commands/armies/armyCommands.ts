@@ -77,9 +77,9 @@ export async function recruitArmy(level: number, name?: string, exemptFromUpkeep
   return {
     outcomeBadge: {
       icon: exemptFromUpkeep ? 'fa-handshake' : 'fa-shield-alt',
-      prefix: exemptFromUpkeep ? 'Allied reinforcements:' : 'Recruited',
+      template: exemptFromUpkeep ? 'Allied reinforcements: {{value}} {{name}}' : 'Recruited {{value}} {{name}}',
       value: { type: 'static', amount: 1 },
-      suffix: armyName,
+      context: { name: armyName },
       variant: 'positive'
     },
     commit: async () => {
@@ -173,9 +173,9 @@ export async function disbandArmy(armyId: string, deleteActor: boolean = true): 
   return {
     outcomeBadge: {
       icon: 'fa-times-circle',
-          template: 'Disbanded {{value}}',
+      template: 'Disbanded {{value}} {{name}}',
       value: { type: 'static', amount: 1 },
-      suffix: army.name,
+      context: { name: army.name },
       variant: 'negative'
     },
     commit: async () => {
@@ -256,9 +256,11 @@ export async function trainArmy(armyId: string, outcome: string): Promise<Prepar
   return {
     outcomeBadge: {
       icon: icon,
-      prefix: outcome === 'failure' ? 'Training failed:' : 'Trained',
-      value: { type: 'static', amount: outcome === 'failure' ? 0 : partyLevel },
-      suffix: outcome === 'failure' ? army.name : `${army.name} to level`,
+      template: outcome === 'failure' 
+        ? 'Training failed: {{name}}'
+        : 'Trained {{name}} to level {{value}}',
+      value: outcome === 'failure' ? undefined : { type: 'static', amount: partyLevel },
+      context: { name: army.name },
       variant: variant
     },
     commit: async () => {
@@ -338,11 +340,20 @@ export function createEquipmentEffect(equipmentType: string, bonus: number): any
     }
   };
 
+  // Icon paths for each equipment type
+  const equipmentIcons: Record<string, string> = {
+    armor: 'icons/equipment/shield/heater-steel-boss-red.webp',
+    runes: 'icons/magic/symbols/triangle-glowing-green.webp',
+    weapons: 'icons/weapons/swords/sword-guard-worn-purple.webp',
+    equipment: 'icons/containers/bags/pack-leather-black-brown.webp'
+  };
+
   switch (equipmentType) {
     case 'armor':
       return {
         ...baseEffect,
         name: `Army Equipment: Armor (+${bonus} AC)`,
+        img: equipmentIcons.armor,
         system: {
           ...baseEffect.system,
           rules: [{
@@ -358,6 +369,7 @@ export function createEquipmentEffect(equipmentType: string, bonus: number): any
       return {
         ...baseEffect,
         name: `Army Equipment: Runes (+${bonus} to hit)`,
+        img: equipmentIcons.runes,
         system: {
           ...baseEffect.system,
           rules: [{
@@ -373,6 +385,7 @@ export function createEquipmentEffect(equipmentType: string, bonus: number): any
       return {
         ...baseEffect,
         name: `Army Equipment: Weapons (+${bonus} damage dice)`,
+        img: equipmentIcons.weapons,
         system: {
           ...baseEffect.system,
           rules: [{
@@ -387,6 +400,7 @@ export function createEquipmentEffect(equipmentType: string, bonus: number): any
       return {
         ...baseEffect,
         name: `Army Equipment: Enhanced Gear (+${bonus} saves)`,
+        img: equipmentIcons.equipment,
         system: {
           ...baseEffect.system,
           rules: [{

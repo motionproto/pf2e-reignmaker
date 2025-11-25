@@ -10,6 +10,8 @@ import SellResourceSelector from '../components/SellResourceSelector.svelte';
 import PurchaseResourceSelector from '../components/PurchaseResourceSelector.svelte';
 import RecruitArmyDialog from '../../RecruitArmyDialog.svelte';
 import OutfitArmyResolution from '../../OutfitArmyResolution.svelte';
+import TrainArmyResolution from '../../TrainArmyResolution.svelte';
+import DisbandArmyResolution from '../../DisbandArmyResolution.svelte';
 
 export const COMPONENT_REGISTRY: Record<string, any> = {
   'ResourceChoiceSelector': ResourceChoiceSelector,
@@ -17,5 +19,7 @@ export const COMPONENT_REGISTRY: Record<string, any> = {
   'PurchaseResourceSelector': PurchaseResourceSelector,
   'RecruitArmyDialog': RecruitArmyDialog,
   'OutfitArmyResolution': OutfitArmyResolution,
+  'TrainArmyResolution': TrainArmyResolution,
+  'DisbandArmyResolution': DisbandArmyResolution,
   // Add more injectable components here as needed
 };

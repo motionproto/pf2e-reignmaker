@@ -1,7 +1,9 @@
 /**
- * Army Actor Deletion Hooks
- * Handles user attempts to delete army actors directly in Foundry
- * Warns users to use the Disband Army action, or cleans up kingdom data if they proceed
+ * Army Actor Hooks
+ * Handles army actor lifecycle events:
+ * - Actor deletion (with confirmation dialogs)
+ * - Actor updates (syncs name/level)
+ * - Item deletion (syncs equipment removal)
  */
 
 import { getKingdomData, updateKingdom } from '../stores/KingdomStore';
@@ -10,7 +12,7 @@ import { mountSvelteDialog } from '../utils/SvelteDialog';
 import DisbandArmyDialog from '../view/kingdom/components/DisbandArmyDialog.svelte';
 
 /**
- * Register army actor deletion hooks
+ * Register army actor hooks
  * Should be called during module initialization
  */
 export function registerArmyActorHooks(): void {
@@ -206,6 +208,58 @@ export function registerArmyActorHooks(): void {
     const ui = (globalThis as any).ui;
     ui?.notifications?.info(`Army "${actor.name}" removed from kingdom records.`);
 
+  });
+
+  /**
+   * Hook: preDeleteItem (runs before item deletion)
+   * Syncs equipment removal when army equipment effects are deleted from actors
+   * When an equipment effect is removed from an army actor, removes the corresponding
+   * equipment flag from the army's kingdom data
+   * 
+   * Uses preDeleteItem to capture item data before it's deleted
+   */
+  Hooks.on('preDeleteItem', async (item: any, options: any, userId: string) => {
+    // Check if this item is an army equipment effect
+    const itemSlug = item.system?.slug;
+    if (!itemSlug || !itemSlug.startsWith('army-equipment-')) {
+      return; // Not an army equipment effect, allow deletion
+    }
+
+    // Extract equipment type from slug (format: "army-equipment-{type}")
+    const equipmentType = itemSlug.replace('army-equipment-', '');
+    const validTypes = ['armor', 'runes', 'weapons', 'equipment'];
+    if (!validTypes.includes(equipmentType)) {
+      logger.warn(`⚠️ [ArmyActorHooks] Unknown equipment type in slug: ${equipmentType}`);
+      return; // Allow deletion anyway
+    }
+
+    // Get the parent actor (available before deletion)
+    const actor = item.parent;
+    if (!actor) {
+      logger.warn(`⚠️ [ArmyActorHooks] Item ${item.id} has no parent actor`);
+      return; // Allow deletion anyway
+    }
+
+    // Check if this actor is an army
+    const armyMetadata = actor.getFlag('pf2e-reignmaker', 'army-metadata');
+    if (!armyMetadata?.armyId) {
+      return; // Not an army actor, allow deletion
+    }
+
+    // Find the army in kingdom data and remove the equipment flag
+    await updateKingdom(kingdom => {
+      const army = kingdom.armies?.find((a: any) => a.id === armyMetadata.armyId);
+      if (army && army.equipment) {
+        // Remove the equipment type from the army's equipment object
+        delete army.equipment[equipmentType as keyof typeof army.equipment];
+        logger.info(`🔄 [ArmyActorHooks] Removed ${equipmentType} equipment from ${army.name} (effect deleted from actor)`);
+      } else {
+        logger.warn(`⚠️ [ArmyActorHooks] Army ${armyMetadata.armyId} not found or has no equipment data`);
+      }
+    });
+
+    // Allow the deletion to proceed
+    return true;
   });
 
 }

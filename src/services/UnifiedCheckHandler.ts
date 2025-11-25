@@ -141,7 +141,7 @@ export class UnifiedCheckHandler {
         return await this.executeEntitySelection(interaction, kingdom);
 
       case 'map-selection':
-        return await this.executeMapSelection(interaction, kingdom);
+        return await this.executeMapSelection(interaction, kingdom, metadata);
 
       case 'configuration':
         return await this.executeConfiguration(interaction, kingdom);
@@ -203,20 +203,94 @@ export class UnifiedCheckHandler {
   /**
    * Execute map selection interaction
    *
-   * Delegates to existing HexSelectorService
+   * Delegates to existing HexSelectorService or ArmyDeploymentPanel for hex-path mode
    */
-  private async executeMapSelection(interaction: any, kingdom: any): Promise<any> {
+  private async executeMapSelection(interaction: any, kingdom: any, metadata?: any): Promise<any> {
     console.log(`🗺️ [UnifiedCheckHandler] Map selection: ${interaction.mode}`);
 
+    // Special case: hex-path mode uses ArmyDeploymentPanel for integrated UX
+    // This provides the correct UX: army selection happens first, then path plotting
+    if (interaction.mode === 'hex-path') {
+      try {
+        const { armyDeploymentPanel } = await import('./army/ArmyDeploymentPanel');
+        const { getKingdomData } = await import('../stores/KingdomStore');
+        
+        // Use ArmyDeploymentPanel to handle army selection + path plotting together
+        // The panel shows army list, user selects army, then plots path
+        return new Promise((resolve) => {
+          let selectionResolved = false;
+          
+          // Create callback that intercepts the "Done" click
+          // The callback receives armyId and path as parameters
+          // Return selection data immediately but keep panel active to listen for roll completion
+          const onSelectionComplete = async (skill: string, armyId: string, path: string[]) => {
+            if (!armyId || !path || path.length < 2) {
+              if (!selectionResolved) {
+                selectionResolved = true;
+                resolve(null);
+              }
+              return;
+            }
+            
+            // Get army name
+            const kingdom = getKingdomData();
+            const army = kingdom?.armies?.find((a: any) => a.id === armyId);
+            
+            const result = {
+              armyId: armyId,
+              path: path,
+              armyName: army?.name || 'Unknown'
+            };
+            
+            if (!selectionResolved) {
+              selectionResolved = true;
+              
+              // Deactivate movement mode (no longer needed for path plotting)
+              // But DON'T clean up the panel - it needs to stay active to listen for roll completion
+              try {
+                const { armyMovementMode } = await import('./army/movementMode');
+                if (armyMovementMode.isActive()) {
+                  armyMovementMode.deactivate();
+                }
+              } catch (cleanupError) {
+                console.warn('[UnifiedCheckHandler] Error during movement mode cleanup:', cleanupError);
+              }
+              
+              // Resolve immediately with selection data so pipeline can proceed
+              // Panel will remain active and update when roll completes
+              resolve(result);
+            }
+          };
+          
+          // Start the panel with our callback
+          // When user clicks "Done", onSelectionComplete will be called with armyId and path
+          // We don't await the promise - it will resolve when callback is called
+          armyDeploymentPanel.selectArmyAndPlotPath(
+            'survival', // Skill doesn't matter - pipeline will handle the roll
+            onSelectionComplete
+          ).catch((error: any) => {
+            if (!selectionResolved) {
+              selectionResolved = true;
+              console.error(`❌ [UnifiedCheckHandler] Army deployment failed:`, error);
+              resolve(null);
+            }
+          });
+        });
+      } catch (error) {
+        console.error(`❌ [UnifiedCheckHandler] Failed to import ArmyDeploymentPanel:`, error);
+        return null;
+      }
+    }
+
+    // Default: Use HexSelectorService for other modes
     try {
-      // Use existing HexSelectorService
       const result = await hexSelectorService.selectHexes({
         title: interaction.title,
         count: interaction.count,
         colorType: interaction.colorType || 'claim',
-        validateHex: interaction.validateHex,  // ✅ Direct pass-through, no mapping
-        customSelector: interaction.customSelector,  // ✅ Pass custom selector if provided
-        getHexInfo: interaction.getHexInfo  // ✅ Pass hex info callback if provided
+        validateHex: interaction.validateHex,
+        customSelector: interaction.customSelector,
+        getHexInfo: interaction.getHexInfo
       });
 
       return result;
@@ -520,6 +594,11 @@ export class UnifiedCheckHandler {
   ): any {
     // Clone interaction to avoid mutating the pipeline
     const adjusted = { ...interaction };
+
+    // ✅ FIX: Set outcome on interaction for configuration components that need it
+    if (interaction.type === 'configuration') {
+      adjusted.outcome = outcome;
+    }
 
     // Special handling for map-selection interactions
     if (interaction.type === 'map-selection' && interaction.outcomeAdjustment) {

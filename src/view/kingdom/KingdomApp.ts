@@ -94,6 +94,10 @@ class KingdomApp extends SvelteApp<KingdomApp.Options>
       // Sync party level when app opens
       const actor = getKingdomActor();
       if (actor) {
+         // 🔍 INSPECT: Log party actor properties to discover PF2e's built-in party level
+         const { inspectPartyActor } = await import('../../utils/inspect-party-actor');
+         inspectPartyActor();
+         
          const kingdom = actor.getKingdomData();
          if (kingdom) {
             const currentPartyLevel = getHighestPartyLevel();

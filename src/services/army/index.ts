@@ -127,8 +127,10 @@ export class ArmyService {
     // Add metadata flag to actor for identification
     await this.addArmyMetadata(actorId, armyId, type);
     
-    // Place token at placement settlement location (capital for unsupported, support settlement otherwise)
-    if (placementSettlement && actorId) {
+    // Place token at placement settlement location (only for player kingdom armies)
+    // NPC faction armies don't need tokens on the map
+    const isPlayerArmy = faction === PLAYER_KINGDOM;
+    if (isPlayerArmy && placementSettlement && actorId) {
       const locationName = supportSettlement 
         ? `${placementSettlement.name} (support)` 
         : `${placementSettlement.name} (capital/default placement)`;
@@ -150,6 +152,8 @@ export class ArmyService {
           // Don't fail army creation if token placement fails
         }
       }
+    } else if (!isPlayerArmy) {
+      logger.info(`ℹ️ [ArmyService] Skipping token placement for NPC faction army ${name}`);
     } else {
       logger.warn(`⚠️ [ArmyService] Cannot place token - placementSettlement: ${!!placementSettlement}, actorId: ${!!actorId}`);
     }
@@ -477,24 +481,27 @@ export class ArmyService {
   
   /**
    * Create NPC actor in Foundry for an army
-   * Places actor in "ReignMaker/Armies" folder
+   * Places actor in "ReignMaker/Armies" folder for player armies
+   * Places actor in "ReignMaker/Armies/npcArmies" folder for NPC faction armies
    * 
    * @param name - Actor name
    * @param level - Actor level
    * @param image - Optional image path for portrait and token
    * @param customData - Optional custom actor data
-   * @param factionId - Optional faction ID to determine alliance
+   * @param factionId - Optional faction ID to determine alliance and folder
    * @returns Actor ID
    * @throws Error if Foundry not ready or creation fails
    */
   async createNPCActor(name: string, level: number, image?: string, customData?: any, factionId?: string): Promise<string> {
 
     const { createNPCInFolder } = await import('../actors/folderManager');
+    const game = (globalThis as any).game;
     
     // Determine alliance based on faction attitude
     let alliance: "party" | "neutral" | "opposition" = "party";
+    const isNPCFaction = factionId && factionId !== PLAYER_KINGDOM;
     
-    if (factionId && factionId !== PLAYER_KINGDOM) {
+    if (isNPCFaction) {
       // Get faction attitude to determine alliance
       const actor = getKingdomActor();
       const kingdom = actor?.getKingdomData();
@@ -540,10 +547,124 @@ export class ArmyService {
       }
     };
     
-    // Use shared folder manager to create actor
-    const npcActor = await createNPCInFolder(name, 'Armies', additionalData);
-
-    return npcActor.id;
+    // Determine folder: NPC faction armies go in "Armies/npcArmies", player armies in "Armies"
+    if (isNPCFaction) {
+      // For NPC factions, create nested folder structure and create actor directly
+      const npcArmiesFolderId = await this.ensureNestedArmyFolder();
+      const game = (globalThis as any).game;
+      
+      const actorData = {
+        name: name,
+        type: 'npc',
+        folder: npcArmiesFolderId,
+        ownership: {
+          default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER
+        },
+        ...additionalData
+      };
+      
+      const npcActor = await game.actors.documentClass.create(actorData);
+      
+      if (!npcActor?.id) {
+        throw new Error(`Failed to create NPC actor: ${name}`);
+      }
+      
+      logger.info(`✅ [ArmyService] Created NPC faction army actor "${name}" in ReignMaker/Armies/npcArmies`);
+      
+      // Add faction effect to NPC faction army
+      // Get actor fresh from game collection to ensure it's fully initialized
+      const refreshedActor = game.actors.get(npcActor.id);
+      
+      if (refreshedActor) {
+        try {
+          // Get faction name from kingdom data
+          const kingdomActor = getKingdomActor();
+          const kingdom = kingdomActor?.getKingdomData();
+          const faction = kingdom?.factions?.find((f: any) => f.id === factionId);
+          const factionName = faction?.name || factionId || 'Unknown Faction';
+          
+          logger.info(`🎯 [ArmyService] Attempting to add faction effect "${factionName}" to NPC faction army "${name}"`);
+          
+          const factionEffect = {
+            type: 'effect',
+            name: factionName,
+            img: 'icons/sundries/flags/banner-flag-white.webp',
+            system: {
+              slug: `faction-${factionId}`,
+              badge: null,
+              description: {
+                value: `<p>This army belongs to ${factionName}.</p>`
+              },
+              duration: {
+                value: -1,
+                unit: 'unlimited',
+                sustained: false,
+                expiry: null
+              },
+              rules: []
+            }
+          };
+          
+          await refreshedActor.createEmbeddedDocuments('Item', [factionEffect]);
+          logger.info(`✅ [ArmyService] Successfully added faction effect "${factionName}" to NPC faction army "${name}"`);
+        } catch (error) {
+          logger.error(`❌ [ArmyService] Failed to add faction effect to NPC faction army "${name}":`, error);
+          // Don't fail actor creation if effect addition fails - log and continue
+        }
+      } else {
+        logger.warn(`⚠️ [ArmyService] Could not find refreshed actor ${npcActor.id} after creation, skipping faction effect`);
+      }
+      
+      return npcActor.id;
+    } else {
+      // For player armies, use regular Armies folder
+      const npcActor = await createNPCInFolder(name, 'Armies', additionalData);
+      return npcActor.id;
+    }
+  }
+  
+  /**
+   * Ensure nested folder structure exists: ReignMaker/Armies/npcArmies
+   * @returns Folder ID for npcArmies subfolder
+   * @internal
+   */
+  private async ensureNestedArmyFolder(): Promise<string> {
+    const game = (globalThis as any).game;
+    const { ensureReignmakerFolder } = await import('../actors/folderManager');
+    
+    // First ensure "Armies" folder exists
+    const armiesFolderId = await ensureReignmakerFolder('Armies');
+    
+    // Then find or create "npcArmies" subfolder inside "Armies"
+    const parentFolder = game.folders.get(armiesFolderId);
+    if (!parentFolder) {
+      throw new Error('Armies folder not found');
+    }
+    
+    const npcArmiesFolderName = 'npcArmies';
+    let npcArmiesFolder = game.folders.find((f: any) =>
+      f.type === "Actor" && f.name === npcArmiesFolderName && f.folder?.id === armiesFolderId
+    );
+    
+    if (!npcArmiesFolder) {
+      logger.info(`📁 [ArmyService] Creating "Armies/${npcArmiesFolderName}" subfolder...`);
+      npcArmiesFolder = await game.folders.documentClass.create({
+        name: npcArmiesFolderName,
+        type: "Actor",
+        folder: armiesFolderId,
+        color: "#5e0000",
+        ownership: {
+          default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER
+        }
+      });
+      
+      if (!npcArmiesFolder) {
+        throw new Error(`Failed to create "${npcArmiesFolderName}" subfolder`);
+      }
+      logger.info(`✅ [ArmyService] Created "Armies/${npcArmiesFolderName}" subfolder`);
+    }
+    
+    return npcArmiesFolder.id;
   }
   
   /**

@@ -3,6 +3,25 @@
   
   export let gameCommands: GameCommand[];
   
+  // Get party level from PF2e party actor
+  function getPartyLevel(): number {
+    const game = (globalThis as any).game;
+    if (!game?.actors) return 1;
+    
+    const partyActors = Array.from(game.actors).filter((a: any) => a.type === 'party');
+    if (partyActors.length === 0) return 1;
+    
+    const partyActor = partyActors[0];
+    if (partyActor.system?.details?.level !== undefined) {
+      const level = typeof partyActor.system.details.level === 'number' 
+        ? partyActor.system.details.level 
+        : partyActor.system.details.level.value || 1;
+      return level;
+    }
+    
+    return 1;
+  }
+  
   // Format game command text based on type
   function formatGameCommand(command: GameCommand): string {
     switch (command.type) {
@@ -42,10 +61,27 @@
         return 'Recruit Army';
       
       case 'trainArmy':
-        return `Train Army (+${command.levelIncrease} level)`;
+        // ✅ FIX: Get party level and format based on outcome
+        const partyLevel = getPartyLevel();
+        const outcome = command.outcome || 'success';
+        
+        if (outcome === 'criticalSuccess') {
+          return `Train army to party level ${partyLevel}`;
+        } else if (outcome === 'success') {
+          return `Train army to party level ${partyLevel}`;
+        } else if (outcome === 'failure') {
+          return ''; // No badge for failure
+        } else if (outcome === 'criticalFailure') {
+          return 'Poorly trained: -1 to all saves';
+        }
+        
+        // Fallback for old format
+        return `Train Army${command.levelIncrease ? ` (+${command.levelIncrease} level)` : ''}`;
       
       case 'deployArmy':
-        return 'Deploy Army';
+        // Don't show "Deploy Army" badge - it's redundant since the action is already "Deploy Army"
+        // Only show additional effects (conditions, modifiers) which are displayed elsewhere
+        return '';
       
       case 'outfitArmy':
         return 'Outfit Army';

@@ -1,5 +1,6 @@
 <script lang="ts">
-   import { kingdomData, ledArmies } from '../../../stores/KingdomStore';
+   import { kingdomData, ledArmies, currentFaction } from '../../../stores/KingdomStore';
+   import { PLAYER_KINGDOM } from '../../../types/ownership';
    import type { Army } from '../../../models/Army';
    import { SettlementTierConfig, type SettlementTier } from '../../../models/Settlement';
    import Button from '../components/baseComponents/Button.svelte';
@@ -17,10 +18,15 @@
    
    // Inline editing state
    let editingArmyId: string | null = null;
-   let editingField: 'level' | 'settlement' | null = null;
+   let editingField: 'level' | 'settlement' | 'equipment' | null = null;
    let editedValue: string | number = '';
    let editedSettlementId: string = '';
    let isSaving = false;
+   
+   // Equipment editing state
+   let editingEquipmentArmyId: string | null = null;
+   let editingEquipment: Record<string, boolean> = {};
+   let originalEquipment: Record<string, boolean> = {};
    
    // Create army dialog state
    let showRecruitDialog = false;
@@ -97,14 +103,27 @@
    
    // Helper functions
    function getSupportStatusIcon(army: Army): string {
+      // Non-player armies don't have support status
+      if (army.ledBy !== PLAYER_KINGDOM) {
+         return 'fa-minus-circle';
+      }
       return army.isSupported ? 'fa-check-circle' : 'fa-exclamation-triangle';
    }
    
    function getSupportStatusColor(army: Army): string {
+      // Non-player armies don't have support status - use neutral color
+      if (army.ledBy !== PLAYER_KINGDOM) {
+         return 'status-neutral';
+      }
       return army.isSupported ? 'status-supported' : 'status-unsupported';
    }
    
    function getSupportStatusText(army: Army): string {
+      // Non-player armies (led by NPC factions) don't have support mechanics
+      if (army.ledBy !== PLAYER_KINGDOM) {
+         return 'None';
+      }
+      
       // Allied armies (exempt from upkeep) - show faction name instead of settlement
       if (army.exemptFromUpkeep) {
          // Look up faction name from ID
@@ -117,7 +136,7 @@
          return faction?.name || army.supportedBy; // Fallback to ID if faction not found
       }
       
-      // Regular armies - show settlement support status
+      // Regular player armies - show settlement support status
       if (!army.supportedBySettlementId) {
          return army.turnsUnsupported > 0 
             ? `Unsupported (${army.turnsUnsupported} turns)`
@@ -307,6 +326,110 @@
       editingArmyId = null;
       editingField = null;
       editedValue = '';
+      editingEquipmentArmyId = null;
+      editingEquipment = {};
+      originalEquipment = {};
+   }
+   
+   // Equipment editing functions
+   function startEditingEquipment(army: Army) {
+      if (!army.actorId) {
+         // @ts-ignore
+         ui.notifications?.warn('Army must have a linked actor to edit equipment');
+         return;
+      }
+      
+      editingArmyId = army.id;
+      editingField = 'equipment';
+      editingEquipmentArmyId = army.id;
+      
+      // Initialize editing state with current equipment
+      const current = army.equipment || {};
+      editingEquipment = {
+         armor: !!current.armor,
+         runes: !!current.runes,
+         weapons: !!current.weapons,
+         equipment: !!current.equipment
+      };
+      
+      // Store original state for cancel
+      originalEquipment = { ...editingEquipment };
+   }
+   
+   function toggleEquipment(equipmentType: 'armor' | 'runes' | 'weapons' | 'equipment') {
+      editingEquipment[equipmentType] = !editingEquipment[equipmentType];
+   }
+   
+   async function saveEquipmentEdit(armyId: string) {
+      const army = $kingdomData.armies.find(a => a.id === armyId);
+      if (!army || !army.actorId) {
+         // @ts-ignore
+         ui.notifications?.error('Army or actor not found');
+         cancelEdit();
+         return;
+      }
+      
+      isSaving = true;
+      try {
+         const { armyService } = await import('../../../services/army');
+         const { createEquipmentEffect } = await import('../../../services/commands/armies/armyCommands');
+         const { updateKingdom } = await import('../../../stores/KingdomStore');
+         const game = (globalThis as any).game;
+         const actor = game?.actors?.get(army.actorId);
+         
+         if (!actor) {
+            // @ts-ignore
+            ui.notifications?.error('Actor not found');
+            cancelEdit();
+            return;
+         }
+         
+         // Find items to add and remove
+         const equipmentTypes: Array<'armor' | 'runes' | 'weapons' | 'equipment'> = ['armor', 'runes', 'weapons', 'equipment'];
+         
+         for (const type of equipmentTypes) {
+            const shouldHave = editingEquipment[type];
+            const currentlyHas = originalEquipment[type];
+            
+            if (shouldHave && !currentlyHas) {
+               // Add equipment effect
+               const effectData = createEquipmentEffect(type, 1); // Default to +1 bonus
+               await armyService.addItemToArmy(army.actorId, effectData);
+               logger.info(`✅ [ArmiesTab] Added ${type} equipment to ${army.name}`);
+            } else if (!shouldHave && currentlyHas) {
+               // Remove equipment effect
+               const items = Array.from(actor.items.values());
+               const item = items.find((i: any) => i.system?.slug === `army-equipment-${type}`);
+               
+               if (item) {
+                  await armyService.removeItemFromArmy(army.actorId, item.id);
+                  logger.info(`✅ [ArmiesTab] Removed ${type} equipment from ${army.name}`);
+               }
+            }
+         }
+         
+         // Update kingdom data to reflect changes (the hook will also do this, but we do it here for immediate UI update)
+         await updateKingdom(kingdom => {
+            const a = kingdom.armies.find((a: Army) => a.id === armyId);
+            if (a) {
+               if (!a.equipment) a.equipment = {};
+               a.equipment.armor = editingEquipment.armor;
+               a.equipment.runes = editingEquipment.runes;
+               a.equipment.weapons = editingEquipment.weapons;
+               a.equipment.equipment = editingEquipment.equipment;
+            }
+         });
+         
+         // @ts-ignore
+         ui.notifications?.info('Equipment updated successfully');
+         cancelEdit();
+      } catch (error) {
+         logger.error('Failed to save equipment edit:', error);
+         // @ts-ignore
+         ui.notifications?.error(error instanceof Error ? error.message : 'Failed to save equipment changes');
+      } finally {
+         isSaving = false;
+      }
    }
    
    async function saveEdit(armyId: string) {
@@ -359,11 +482,17 @@
       try {
          const { armyService } = await import('../../../services/army');
          const { ARMY_TYPES } = await import('../../../utils/armyHelpers');
+         const { PLAYER_KINGDOM } = await import('../../../types/ownership');
          
-         // Create army with selected type and image
+         // Get the current faction (the one whose tab we're viewing)
+         const factionId = $currentFaction || PLAYER_KINGDOM;
+         
+         // Create army with selected type, image, and ledBy faction
+         // Token placement is handled by _createArmyInternal, so we don't need to do it here
          const army = await armyService.createArmy(name, userCharacterLevel, {
             type: armyType,
-            image: ARMY_TYPES[armyType as keyof typeof ARMY_TYPES].image
+            image: ARMY_TYPES[armyType as keyof typeof ARMY_TYPES].image,
+            ledBy: factionId  // Set the faction that leads this army
          });
          
          // Assign to selected settlement if provided
@@ -371,57 +500,8 @@
             await armyService.assignArmyToSettlement(army.id, settlementId);
          }
          
-         // Place token on map
-         if (army.actorId) {
-            const game = (globalThis as any).game;
-            const scene = game?.scenes?.current;
-            
-            logger.info(`🗺️ [ArmiesTab] Attempting token placement for ${name} (actorId: ${army.actorId})`);
-            
-            if (!scene) {
-               logger.warn('⚠️ [ArmiesTab] No active scene found, cannot place token');
-            } else {
-               try {
-                  let targetSettlement = null;
-                  
-                  if (settlementId) {
-                     // Supported: place at supporting settlement
-                     targetSettlement = $kingdomData.settlements.find(s => s.id === settlementId);
-                     logger.info(`🗺️ [ArmiesTab] Placing at supporting settlement: ${targetSettlement?.name}`);
-                  } else {
-                     // Unsupported: place at capital, or first settlement if no capital
-                     targetSettlement = $kingdomData.settlements.find(s => s.isCapital);
-                     if (!targetSettlement && $kingdomData.settlements.length > 0) {
-                        targetSettlement = $kingdomData.settlements[0];
-                        logger.info(`🗺️ [ArmiesTab] No capital defined, placing at first settlement: ${targetSettlement?.name}`);
-                     } else {
-                        logger.info(`🗺️ [ArmiesTab] No settlement selected, placing at capital: ${targetSettlement?.name}`);
-                     }
-                  }
-                  
-                  if (!targetSettlement) {
-                     logger.warn('⚠️ [ArmiesTab] No target settlement found for token placement');
-                  } else if (!targetSettlement.location) {
-                     logger.warn('⚠️ [ArmiesTab] Target settlement has no location data');
-                  } else {
-                     const hasLocation = targetSettlement.location.x !== 0 || targetSettlement.location.y !== 0;
-                     
-                     if (!hasLocation) {
-                        logger.warn(`⚠️ [ArmiesTab] Settlement ${targetSettlement.name} has invalid location (0,0)`);
-                     } else {
-                        // Use shared helper for token placement
-                        const { placeArmyTokenAtSettlement } = await import('../../../utils/armyHelpers');
-                        await placeArmyTokenAtSettlement(armyService, army.actorId, targetSettlement, name);
-                     }
-                  }
-               } catch (error) {
-                  logger.error('❌ [ArmiesTab] Failed to place token:', error);
-                  // Don't fail the whole action if token placement fails
-               }
-            }
-         } else {
-            logger.warn(`⚠️ [ArmiesTab] Army ${name} has no actorId, cannot place token`);
-         }
+         // Token placement is already handled in _createArmyInternal, so we don't need to do it here
+         // This prevents duplicate token placement
          
          // @ts-ignore
          ui.notifications?.info(`Recruited ${name}!`);
@@ -745,28 +825,85 @@
                      
                      <!-- Gear Column -->
                      <td>
-                        <div class="gear-icons">
-                           <i 
-                              class="{EQUIPMENT_ICONS.armor} gear-icon" 
-                              class:owned={army.equipment?.armor}
-                              title={army.equipment?.armor ? 'Armor equipped' : 'No armor'}
-                           ></i>
-                           <i 
-                              class="{EQUIPMENT_ICONS.runes} gear-icon" 
-                              class:owned={army.equipment?.runes}
-                              title={army.equipment?.runes ? 'Runes equipped' : 'No runes'}
-                           ></i>
-                           <i 
-                              class="{EQUIPMENT_ICONS.weapons} gear-icon" 
-                              class:owned={army.equipment?.weapons}
-                              title={army.equipment?.weapons ? 'Weapons equipped' : 'No weapons'}
-                           ></i>
-                           <i 
-                              class="{EQUIPMENT_ICONS.equipment} gear-icon" 
-                              class:owned={army.equipment?.equipment}
-                              title={army.equipment?.equipment ? 'Enhanced gear equipped' : 'No enhanced gear'}
-                           ></i>
-                        </div>
+                        {#if editingArmyId === army.id && editingField === 'equipment'}
+                           <!-- Edit mode: Toggleable icons with save/cancel -->
+                           <div class="gear-edit">
+                              <div class="gear-icons">
+                                 <button
+                                    class="gear-icon-btn"
+                                    class:active={editingEquipment.armor}
+                                    on:click={() => toggleEquipment('armor')}
+                                    title={editingEquipment.armor ? 'Armor equipped (click to remove)' : 'No armor (click to add)'}
+                                    disabled={isSaving}
+                                 >
+                                    <i class="{EQUIPMENT_ICONS.armor} gear-icon"></i>
+                                 </button>
+                                 <button
+                                    class="gear-icon-btn"
+                                    class:active={editingEquipment.runes}
+                                    on:click={() => toggleEquipment('runes')}
+                                    title={editingEquipment.runes ? 'Runes equipped (click to remove)' : 'No runes (click to add)'}
+                                    disabled={isSaving}
+                                 >
+                                    <i class="{EQUIPMENT_ICONS.runes} gear-icon"></i>
+                                 </button>
+                                 <button
+                                    class="gear-icon-btn"
+                                    class:active={editingEquipment.weapons}
+                                    on:click={() => toggleEquipment('weapons')}
+                                    title={editingEquipment.weapons ? 'Weapons equipped (click to remove)' : 'No weapons (click to add)'}
+                                    disabled={isSaving}
+                                 >
+                                    <i class="{EQUIPMENT_ICONS.weapons} gear-icon"></i>
+                                 </button>
+                                 <button
+                                    class="gear-icon-btn"
+                                    class:active={editingEquipment.equipment}
+                                    on:click={() => toggleEquipment('equipment')}
+                                    title={editingEquipment.equipment ? 'Enhanced gear equipped (click to remove)' : 'No enhanced gear (click to add)'}
+                                    disabled={isSaving}
+                                 >
+                                    <i class="{EQUIPMENT_ICONS.equipment} gear-icon"></i>
+                                 </button>
+                              </div>
+                              <InlineEditActions
+                                 onSave={() => saveEquipmentEdit(army.id)}
+                                 onCancel={cancelEdit}
+                                 disabled={isSaving}
+                              />
+                           </div>
+                        {:else}
+                           <!-- Display mode: Click to edit -->
+                           <button
+                              class="gear-display-btn"
+                              on:click={() => startEditingEquipment(army)}
+                              title="Click to edit equipment"
+                              disabled={!army.actorId}
+                           >
+                              <div class="gear-icons">
+                                 <i 
+                                    class="{EQUIPMENT_ICONS.armor} gear-icon" 
+                                    class:owned={army.equipment?.armor}
+                                    title={army.equipment?.armor ? 'Armor equipped' : 'No armor'}
+                                 ></i>
+                                 <i 
+                                    class="{EQUIPMENT_ICONS.runes} gear-icon" 
+                                    class:owned={army.equipment?.runes}
+                                    title={army.equipment?.runes ? 'Runes equipped' : 'No runes'}
+                                 ></i>
+                                 <i 
+                                    class="{EQUIPMENT_ICONS.weapons} gear-icon" 
+                                    class:owned={army.equipment?.weapons}
+                                    title={army.equipment?.weapons ? 'Weapons equipped' : 'No weapons'}
+                                 ></i>
+                                 <i 
+                                    class="{EQUIPMENT_ICONS.equipment} gear-icon" 
+                                    class:owned={army.equipment?.equipment}
+                                    title={army.equipment?.equipment ? 'Enhanced gear equipped' : 'No enhanced gear'}
+                                 ></i>
+                              </div>
+                           </button>
+                        {/if}
                      </td>
                      
                      <!-- Support Status Column -->
@@ -793,15 +930,24 @@
                               />
                            </div>
                         {:else}
-                           <!-- Display: Click to edit -->
-                           <button
-                              class="support-status-btn {getSupportStatusColor(army)}"
-                              on:click={() => startEditingSettlement(army)}
-                              title="Click to change settlement"
-                           >
-                              <i class="fas {getSupportStatusIcon(army)}"></i>
-                              {getSupportStatusText(army)}
-                           </button>
+                           <!-- Display: Click to edit (only for player armies) -->
+                           {#if army.ledBy !== PLAYER_KINGDOM}
+                              <!-- Non-player armies: Read-only, no support mechanics -->
+                              <div class="support-status-display {getSupportStatusColor(army)}">
+                                 <i class="fas {getSupportStatusIcon(army)}"></i>
+                                 {getSupportStatusText(army)}
+                              </div>
+                           {:else}
+                              <!-- Player armies: Editable -->
+                              <button
+                                 class="support-status-btn {getSupportStatusColor(army)}"
+                                 on:click={() => startEditingSettlement(army)}
+                                 title="Click to change settlement"
+                              >
+                                 <i class="fas {getSupportStatusIcon(army)}"></i>
+                                 {getSupportStatusText(army)}
+                              </button>
+                           {/if}
                         {/if}
                      </td>
                      
@@ -1251,8 +1397,29 @@
          color: #ffa500;
       }
       
+      &.status-neutral {
+         color: var(--color-text-dark-secondary, #7a7971);
+      }
+      
       &:hover {
          background: var(--hover);
+      }
+   }
+   
+   .support-status-display {
+      padding: var(--space-4) var(--space-8);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      gap: var(--space-8);
+      background: var(--overlay-low);
+      max-width: 250px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      
+      &.status-neutral {
+         color: var(--color-text-dark-secondary, #7a7971);
       }
    }
    
@@ -1486,6 +1653,80 @@
          &.owned {
             color: #90ee90;
          }
+      }
+   }
+   
+   .gear-display-btn {
+      background: transparent;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      transition: all 0.2s;
+      
+      &:hover:not(:disabled) {
+         background: var(--hover);
+         border-radius: var(--radius-md);
+         padding: var(--space-4);
+      }
+      
+      &:disabled {
+         cursor: not-allowed;
+         opacity: 0.5;
+      }
+   }
+   
+   .gear-edit {
+      display: flex;
+      gap: var(--space-16);
+      align-items: center;
+      
+      /* Add visual divider between equipment and action buttons */
+      .gear-icons {
+         margin-right: var(--space-8);
+      }
+   }
+   
+   .gear-icon-btn {
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      min-width: 2rem;
+      min-height: 2rem;
+      
+      .gear-icon {
+         font-size: var(--font-md);
+         color: rgba(255, 255, 255, 0.3);
+         transition: all 0.2s;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+      }
+      
+      &:hover:not(:disabled) {
+         background: var(--hover);
+         border-color: var(--border-default);
+      }
+      
+      &.active {
+         border-color: #90ee90;
+         background: rgba(144, 238, 144, 0.1);
+         
+         .gear-icon {
+            color: #90ee90;
+         }
+      }
+      
+      &:disabled {
+         opacity: 0.5;
+         cursor: not-allowed;
       }
    }
    

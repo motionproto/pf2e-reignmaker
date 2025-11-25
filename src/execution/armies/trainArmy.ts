@@ -34,90 +34,124 @@ export async function trainArmyExecution(
 
   const { armyService } = await import('../../services/army');
 
-  // Level up army to party level
-  await armyService.levelUpArmy(armyId, partyLevel);
-
-  // Apply training bonuses based on outcome
+  // Get army for applying effects
   const army = kingdom.armies?.find((a: any) => a.id === armyId);
   if (!army?.actorId) {
-    logger.warn(`⚠️ [trainArmyExecution] Army ${armyId} has no linked actor for training bonuses`);
+    logger.warn(`⚠️ [trainArmyExecution] Army ${armyId} has no linked actor for training effects`);
     return;
   }
 
-  const game = (globalThis as any).game;
-  const armyActor = game.actors.get(army.actorId);
-  if (!armyActor) {
-    logger.warn(`⚠️ [trainArmyExecution] Could not find actor for army ${armyId}`);
-    return;
+  // ✅ FIX: Only level up army on success or critical success
+  // Failure and critical failure: No level increase
+  if (outcome === 'criticalSuccess' || outcome === 'success') {
+    // Level up army to party level
+    await armyService.updateArmyLevel(armyId, partyLevel);
+    logger.info(`📈 [trainArmyExecution] Army leveled up to ${partyLevel}`);
+  } else {
+    logger.info(`⚠️ [trainArmyExecution] Training failed - no level increase`);
   }
 
-  // Apply training effect based on outcome
+  // Helper function to remove effect by slug
+  async function removeEffectBySlug(actorId: string, slug: string): Promise<void> {
+    const game = (globalThis as any).game;
+    const actor = game?.actors?.get(actorId);
+    if (!actor) {
+      logger.warn(`⚠️ [trainArmyExecution] Actor not found: ${actorId}`);
+      return;
+    }
+
+    // Find item by slug - actor.items is a Collection/Map
+    const items = Array.from(actor.items.values());
+    logger.info(`🔍 [trainArmyExecution] Searching for effect with slug "${slug}" in ${items.length} items on actor "${actor.name}"`);
+    
+    const item = items.find((i: any) => {
+      const itemSlug = i.system?.slug;
+      return itemSlug === slug;
+    });
+    
+    if (item) {
+      logger.info(`🗑️ [trainArmyExecution] Found effect "${item.name}" (id: ${item.id}), removing...`);
+      // Use armyService to remove item (handles permissions and HMR properly)
+      await armyService.removeItemFromArmy(actorId, item.id);
+      logger.info(`✅ [trainArmyExecution] Successfully removed effect "${item.name}" (slug: "${slug}")`);
+    } else {
+      logger.info(`ℹ️ [trainArmyExecution] No effect found with slug "${slug}" on actor "${actor.name}"`);
+    }
+  }
+
+  // Apply training effects based on outcome (permanent effects)
+  // ✅ FIX: Use armyService.addItemToArmy like outfit-army does (works with HMR)
   if (outcome === 'criticalSuccess') {
-    // +2 to attacks and AC for 1 month
-    await armyActor.createEmbeddedDocuments('Item', [{
+    // Remove Poorly Trained if it exists
+    await removeEffectBySlug(army.actorId, 'poorly-trained');
+    
+    // +1 to all saving throws (Well Trained effect - permanent)
+    const wellTrainedEffect = {
       type: 'effect',
-      name: 'Elite Training',
-      img: 'icons/skills/melee/blade-tips-triple-steel.webp',
+      name: 'Well Trained',
+      img: 'icons/magic/life/cross-worn-green.webp',
       system: {
-        slug: 'elite-training',
-        badge: { value: 2 },
-        description: {
-          value: '<p>Exceptional training provides +2 to attack rolls and AC.</p>'
-        },
-        duration: {
-          value: 1,
-          unit: 'months',
-          sustained: false,
-          expiry: 'turn-end'
-        },
-        rules: [
-          {
-            key: 'FlatModifier',
-            selector: 'attack',
-            value: 2,
-            type: 'circumstance'
-          },
-          {
-            key: 'FlatModifier',
-            selector: 'ac',
-            value: 2,
-            type: 'circumstance'
-          }
-        ]
-      }
-    }]);
-    logger.info(`✨ [trainArmyExecution] Applied Elite Training effect (+2 attack/AC)`);
-  } else if (outcome === 'success') {
-    // +1 to attacks for 1 month
-    await armyActor.createEmbeddedDocuments('Item', [{
-      type: 'effect',
-      name: 'Standard Training',
-      img: 'icons/skills/melee/sword-shield-stylized-white.webp',
-      system: {
-        slug: 'standard-training',
+        slug: 'well-trained',
         badge: { value: 1 },
         description: {
-          value: '<p>Standard training provides +1 to attack rolls.</p>'
+          value: '<p>Exceptional training provides +1 to all saving throws.</p>'
         },
         duration: {
-          value: 1,
-          unit: 'months',
+          value: -1,
+          unit: 'unlimited',
           sustained: false,
-          expiry: 'turn-end'
+          expiry: null
         },
         rules: [
           {
             key: 'FlatModifier',
-            selector: 'attack',
+            selector: 'saving-throw',
             value: 1,
             type: 'circumstance'
           }
         ]
       }
-    }]);
-    logger.info(`✨ [trainArmyExecution] Applied Standard Training effect (+1 attack)`);
+    };
+    await armyService.addItemToArmy(army.actorId, wellTrainedEffect);
+    logger.info(`✨ [trainArmyExecution] Applied Well Trained effect (+1 to all saving throws)`);
+  } else if (outcome === 'success') {
+    // Success: Only level up, no additional effect
+    logger.info(`✨ [trainArmyExecution] Army leveled up (no additional training effect)`);
+  } else if (outcome === 'criticalFailure') {
+    // Remove Well Trained if it exists
+    await removeEffectBySlug(army.actorId, 'well-trained');
+    
+    // -1 to all saving throws (Poorly Trained - permanent)
+    const poorlyTrainedEffect = {
+      type: 'effect',
+      name: 'Poorly Trained',
+      img: 'icons/magic/movement/chevrons-down-yellow.webp',
+      system: {
+        slug: 'poorly-trained',
+        badge: { value: -1 },
+        description: {
+          value: '<p>Poor training results in -1 to all saving throws.</p>'
+        },
+        duration: {
+          value: -1,
+          unit: 'unlimited',
+          sustained: false,
+          expiry: null
+        },
+        rules: [
+          {
+            key: 'FlatModifier',
+            selector: 'saving-throw',
+            value: -1,
+            type: 'circumstance'
+          }
+        ]
+      }
+    };
+    await armyService.addItemToArmy(army.actorId, poorlyTrainedEffect);
+    logger.info(`⚠️ [trainArmyExecution] Applied Poorly Trained effect (-1 to all saving throws)`);
   }
-  // Failure/critical failure: No bonus effect
+  // Failure: No effect
 
   logger.info(`✅ [trainArmyExecution] Successfully trained army`);
 }

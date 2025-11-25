@@ -354,6 +354,19 @@ export class PipelineCoordinator {
       
       console.log('📊 [PipelineCoordinator] Stored rollBreakdown with modifiers:', ctx.rollData.rollBreakdown?.modifiers);
       
+      // Dispatch kingdomRollComplete event for listeners (e.g., ArmyDeploymentPanel)
+      const rollCompleteEvent = new CustomEvent('kingdomRollComplete', {
+        detail: {
+          checkId: ctx.actionId,
+          checkType: 'action',
+          outcome: ctx.rollData.outcome,
+          actorName: ctx.actor?.actorName || 'Unknown',
+          skillName: skillName,
+          rollBreakdown: ctx.rollData.rollBreakdown
+        }
+      });
+      window.dispatchEvent(rollCompleteEvent);
+      
       // Resume pipeline at Step 4
       await this.resumeAfterRoll(ctx);
     };

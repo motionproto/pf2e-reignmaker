@@ -1,0 +1,115 @@
+# Cursor Rules for pf2e-reignmaker
+
+## Core Architecture Principles
+
+### 1. Single Source of Truth
+- **Party Actor Flags** = ONLY persistent data source
+- Kingdom data stored at: `actor.getFlag('pf2e-reignmaker', 'kingdom-data')`
+- All writes go through wrapped actor methods
+- Stores are derived/reactive, never written to directly
+
+### 2. Kingmaker Integration (IMPORT ONLY)
+**⚠️ CRITICAL: Kingmaker module is ONLY used for INITIAL IMPORT ⚠️**
+
+**DO NOT use Kingmaker for regular gameplay operations!**
+
+**Correct Usage:**
+```typescript
+// ✅ ONLY during initial setup
+await territoryService.syncFromKingmaker();  // Import hex data ONCE
+
+// ✅ All gameplay operations - update Kingdom Store directly
+await updateKingdom(kingdom => {
+  const hex = kingdom.hexes.find(h => h.id === hexId);
+  if (hex) {
+    hex.claimedBy = PLAYER_KINGDOM;  // PLAYER_KINGDOM = "player" constant
+  }
+});
+```
+
+**WRONG Usage:**
+```typescript
+// ❌ NEVER do this during gameplay
+await markHexesInKingmaker(hexIds);        // Write to Kingmaker
+await territoryService.syncFromKingmaker(); // Read from Kingmaker
+```
+
+### 3. Clean Separation of Concerns
+- **Svelte components** = Presentation only (UI, user interaction, display logic)
+- **Controllers** = Business logic only (phase operations, game rules, calculations)
+- **Services** = Complex operations (utilities, integrations, reusable logic)
+- **NO business logic in Svelte files** - components delegate to controllers/services
+
+### 4. Data Flow Pattern
+```
+Read:  Party Actor Flags → Wrapped Actor → KingdomStore → Component Display
+Write: Component Action → Controller → TurnManager → Wrapped Actor → Party Actor Flags → Foundry → All Clients
+```
+
+**Accessing Kingdom Data:**
+```typescript
+// ✅ Correct - use wrapped actor methods
+const kingdom = actor.getKingdomData();
+await actor.setKingdomData(data);
+await actor.updateKingdomData(kingdom => { kingdom.fame += 1; });
+
+// ❌ Wrong - don't call getFlag() directly in business logic
+const kingdom = actor.getFlag('pf2e-reignmaker', 'kingdom-data');
+```
+
+### 5. Static Assets - ES Module Imports Only
+**⚠️ CRITICAL: Always Use ES Module Imports for Static Assets**
+
+**DO NOT use hardcoded module paths** - they break during HMR development.
+
+```typescript
+// ❌ WRONG - Breaks during HMR (404 errors)
+const imagePath = 'modules/pf2e-reignmaker/img/my-image.webp';
+<img src="modules/pf2e-reignmaker/img/my-image.webp" alt="..." />
+
+// ✅ CORRECT - Works in both dev and production
+import myImage from '../path/to/my-image.webp';
+<img src={myImage} alt="..." />
+```
+
+### 6. Development Environment
+**DO NOT** run as standalone application with `npm start`, `vite`, etc.
+- **Development:** `npm run dev` (HMR for Foundry)
+- **Build:** `npm run build`
+- **DO NOT** create standalone HTML test pages - test within Foundry VTT
+
+### 7. Design System
+- Always use design system variables from `src/styles/variables.css`
+- Use `var(--font-md)` or larger for all font sizes (no `var(--font-sm)` or smaller)
+- Use `var(--space-*)` for spacing, `var(--radius-*)` for border radius
+- Use `var(--text-*)` for text colors, `var(--surface-*)` for backgrounds
+- Use `var(--border-*)` for borders
+- Form controls should use classes from `src/styles/form-controls.css` (e.g., `form-field-vertical`)
+
+### 8. Pipeline Architecture (9-Step Process)
+1. Requirements Check
+2. Pre-Roll Interactions
+3. Execute Roll
+4. Display Outcome
+5. Outcome Interactions
+6. Wait For Apply
+7. Post-Apply Interactions
+8. Execute Action
+9. Cleanup
+
+All actions follow this standardized pipeline through `PipelineCoordinator`.
+
+### 9. TypeScript & Code Quality
+- Use proper TypeScript types, avoid `any` when possible
+- Fix all linter errors before completing tasks
+- Use ES module imports, avoid CommonJS `require()`
+- Follow existing code patterns and conventions
+
+### 10. Testing
+- Test actions within Foundry VTT, not standalone
+- Use `src/constants/migratedActions.ts` to track testing status
+- Follow `docs/refactoring/TESTING_GUIDE.md` for systematic testing
+- Check `docs/refactoring/DEBUGGING_GUIDE.md` for common issues
+
+
+

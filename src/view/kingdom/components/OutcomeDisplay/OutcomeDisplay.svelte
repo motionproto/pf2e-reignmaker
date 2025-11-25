@@ -626,46 +626,27 @@
 
 <style lang="scss">
   .resolution-display {
-    margin: px 0;
+    margin: 0;
     padding: 0;
-    border-radius: var(--radius-md);
-    border: 2px solid var(--border-strong);
-    overflow: hidden;
-    box-shadow: 0 0.25rem 1rem var(--overlay-low);
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
     position: relative;
     
     &.compact {
-      margin: var(--space-12) 0;
-      border-width: 1px;
-      box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.15);
-      
       .resolution-details {
         padding: var(--space-12);
         gap: var(--space-10);
       }
     }
-    
-    &.critical-success {
-      border-color: var(--border-success-medium);
-    }
-    
-    &.success {
-      border-color: var(--border-success-subtle);
-    }
-    
-    &.failure {
-      border-color: var(--border-accent-subtle);
-    }
-    
-    &.critical-failure {
-      border-color: var(--border-primary-medium);
-    }
   }
   
   .resolution-details {
-    padding: .5rem var(--space-16);
+    padding: var(--space-16);
     display: flex;
     flex-direction: column;
     gap: var(--space-12);
+    flex: 1;
   }
 </style>

@@ -199,7 +199,7 @@
     padding: var(--space-8) var(--space-16);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
-    font-size: var(--font-sm);
+    font-size: var(--font-md);
     font-weight: var(--font-weight-medium);
     cursor: pointer;
     transition: all var(--transition-base);

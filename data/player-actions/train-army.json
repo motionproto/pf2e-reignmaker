@@ -31,6 +31,9 @@
         "type": "trainArmy",
         "outcome": "criticalSuccess"
       }
+    ],
+    "manualEffects": [
+      "Well trained: +1 to all saving throws"
     ]
   },
   "success": {
@@ -46,12 +49,7 @@
   "failure": {
     "description": "Your army does not improve.",
     "modifiers": [],
-    "gameCommands": [
-      {
-        "type": "trainArmy",
-        "outcome": "failure"
-      }
-    ]
+    "gameCommands": []
   },
   "criticalFailure": {
     "description": "The training goes poorly.",

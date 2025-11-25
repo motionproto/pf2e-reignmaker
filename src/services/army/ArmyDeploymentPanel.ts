@@ -175,30 +175,147 @@ export class ArmyDeploymentPanel {
       return;
     }
     
-    this.tokenClickHandler = (event: any) => {
-      // Check if we're clicking on a token
-      const target = event.target;
+    this.tokenClickHandler = async (event: any) => {
+      // Always check for token clicks first, regardless of movement mode state
+      const token = this.findTokenUnderPointer(event);
       
-      // Walk up the display object tree to find a token
-      let current = target;
-      while (current) {
-        if (current.document?.documentName === 'Token') {
-          const tokenDoc = current.document;
+      if (token) {
+        const armyId = await this.getArmyIdFromToken(token);
+        if (armyId) {
+          logger.info('[ArmyDeploymentPanel] Clicked army token:', armyId);
           
-          // Check if this token is an army
-          const armyMetadata = tokenDoc.actor?.getFlag('pf2e-reignmaker', 'army-metadata');
-          if (armyMetadata?.armyId) {
-            logger.info('[ArmyDeploymentPanel] Clicked army token:', armyMetadata.armyId);
-            this.selectArmy(armyMetadata.armyId);
-            return;
+          // Stop event propagation so movement mode doesn't handle this click
+          if (event.stopPropagation) {
+            event.stopPropagation();
           }
+          if (event.stopImmediatePropagation) {
+            event.stopImmediatePropagation();
+          }
+          
+          // Select the army (this will update the panel and movement mode if active)
+          await this.selectArmy(armyId);
+          return;
         }
-        current = current.parent;
       }
+      
+      // No token clicked - let other handlers (like movement mode) process the click
     };
     
-    canvas.stage.on('click', this.tokenClickHandler);
-    logger.info('[ArmyDeploymentPanel] Token click listener attached');
+    // Use pointerdown with capture phase to handle token clicks before other handlers
+    // This ensures token selection always works, even when movement mode is active
+    canvas.stage.on('pointerdown', this.tokenClickHandler);
+    logger.info('[ArmyDeploymentPanel] Token click listener attached (pointerdown)');
+  }
+  
+  /**
+   * Find token under pointer event
+   * Uses multiple methods to reliably detect token clicks
+   */
+  private findTokenUnderPointer(event: any): any {
+    const canvas = (globalThis as any).canvas;
+    if (!canvas?.tokens?.placeables) return null;
+    
+    // Method 1: Check if event target is directly a token or token child
+    let current = event.target;
+    while (current) {
+      if (current.document?.documentName === 'Token') {
+        return current;
+      }
+      // Check if it's a token sprite
+      if (current.constructor?.name === 'Token' || current.isToken) {
+        return current;
+      }
+      current = current.parent;
+    }
+    
+    // Method 2: Use pointer position to find tokens
+    let pointer: { x: number; y: number };
+    
+    if (event.data) {
+      // PIXI event - use getLocalPosition to get stage coordinates
+      const stage = canvas.stage;
+      const localPos = event.data.getLocalPosition(stage);
+      pointer = { x: localPos.x, y: localPos.y };
+    } else if (event.clientX !== undefined) {
+      // DOM event - convert to canvas coordinates
+      const point = { x: event.clientX, y: event.clientY };
+      const canvasPos = canvas.canvasCoordinatesFromClient?.(point) || point;
+      pointer = canvasPos;
+    } else {
+      return null;
+    }
+    
+    // Find tokens that contain the pointer position
+    const tokensAtPoint = canvas.tokens.placeables.filter((token: any) => {
+      if (!token || !token.visible) return false;
+      
+      // Use token's hitArea or bounds to check if point is inside
+      try {
+        if (token.hitArea && typeof token.hitArea.contains === 'function') {
+          // Convert pointer to token's local coordinates
+          const localPoint = token.toLocal?.(pointer) || pointer;
+          return token.hitArea.contains(localPoint.x, localPoint.y);
+        }
+      } catch (e) {
+        // Fall through to bounds check
+      }
+      
+      // Fallback: check bounds
+      const bounds = token.bounds;
+      if (bounds) {
+        return pointer.x >= bounds.x && pointer.x <= bounds.x + bounds.width &&
+               pointer.y >= bounds.y && pointer.y <= bounds.y + bounds.height;
+      }
+      
+      return false;
+    });
+    
+    // Return the topmost token (highest elevation/z-order)
+    if (tokensAtPoint.length > 0) {
+      // Sort by elevation (higher elevation = on top)
+      tokensAtPoint.sort((a: any, b: any) => {
+        const aElevation = a.document?.elevation ?? a.document?.z ?? 0;
+        const bElevation = b.document?.elevation ?? b.document?.z ?? 0;
+        return bElevation - aElevation;
+      });
+      return tokensAtPoint[0];
+    }
+    
+    return null;
+  }
+  
+  /**
+   * Get army ID from token document
+   */
+  private async getArmyIdFromToken(token: any): Promise<string | null> {
+    try {
+      const tokenDoc = token.document || token;
+      if (!tokenDoc) return null;
+      
+      // Method 1: Check actor flag for army metadata
+      const actor = tokenDoc.actor;
+      if (actor) {
+        const armyMetadata = await actor.getFlag('pf2e-reignmaker', 'army-metadata');
+        if (armyMetadata?.armyId) {
+          return armyMetadata.armyId;
+        }
+      }
+      
+      // Method 2: Find army by actor ID
+      const actorId = tokenDoc.actorId || tokenDoc.actor?.id;
+      if (actorId) {
+        const kingdom = getKingdomData();
+        const army = kingdom?.armies?.find((a: any) => a.actorId === actorId);
+        if (army) {
+          return army.id;
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      logger.error('[ArmyDeploymentPanel] Error getting army ID from token:', error);
+      return null;
+    }
   }
   
   /**
@@ -343,18 +460,18 @@ export class ArmyDeploymentPanel {
     
     panel.innerHTML = `
       <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #D2691E;">
-        <h3 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+        <h3 style="margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
           <i class="fas fa-chess-knight"></i>
           Deploy Army
         </h3>
-        <p style="margin: 8px 0 0 0; font-size: 12px; color: #999;">
+        <p style="margin: 8px 0 0 0; font-size: 0.875rem; color: #999;">
           Skill: <span style="color: #D2691E; font-weight: bold;">${this.skill}</span>
         </p>
       </div>
       <div id="army-list" style="margin-bottom: 12px; max-height: 400px; overflow-y: auto;">
         <!-- Armies will be added here -->
       </div>
-      <div id="movement-info" style="margin-bottom: 12px; padding: 8px; background: var(--hover-low); border-radius: 4px; font-size: 12px; color: #999; display: none;">
+      <div id="movement-info" style="margin-bottom: 12px; padding: 8px; background: var(--hover-low); border-radius: 4px; font-size: 0.875rem; color: #999; display: none;">
         <!-- Movement info will be shown here -->
       </div>
       <div style="display: flex; gap: 8px; padding-top: 12px; border-top: 1px solid #D2691E;">
@@ -417,9 +534,9 @@ export class ArmyDeploymentPanel {
     const deployedArmies = armiesOnMap.filter(a => a.deployed);
     
     if (armiesOnMap.length === 0) {
-      armyList.innerHTML = '<p style="color: #999; font-size: 12px; text-align: center; padding: 16px;">No armies found on current scene</p>';
+      armyList.innerHTML = '<p style="color: #999; font-size: 0.875rem; text-align: center; padding: 16px;">No armies found on current scene</p>';
     } else if (availableArmies.length === 0) {
-      armyList.innerHTML = '<p style="color: #ff6b6b; font-size: 12px; text-align: center; padding: 16px;"><i class="fas fa-exclamation-triangle"></i> All armies have already moved this turn</p>';
+      armyList.innerHTML = '<p style="color: #ff6b6b; font-size: 0.875rem; text-align: center; padding: 16px;"><i class="fas fa-exclamation-triangle"></i> All armies have already moved this turn</p>';
     } else {
       // Render available armies
       for (const { army, hexId, deployed } of availableArmies) {
@@ -438,13 +555,13 @@ export class ArmyDeploymentPanel {
         
         armyDiv.innerHTML = `
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-            <span style="font-weight: bold; font-size: 14px;">${army.name}</span>
+            <span style="font-weight: bold; font-size: 1rem;">${army.name}</span>
             ${isSelected ? '<i class="fas fa-check-circle" style="color: #4CAF50;"></i>' : ''}
           </div>
-          <div style="font-size: 12px; color: #999;">
+          <div style="font-size: 0.875rem; color: #999;">
             Level ${army.level} • ${army.isSupported ? '<span style="color: #4CAF50;">Supported</span>' : '<span style="color: #ff6b6b;">Unsupported</span>'}
           </div>
-          <div style="font-size: 11px; color: #666; font-family: monospace; margin-top: 4px;">
+          <div style="font-size: 0.875rem; color: #666; font-family: monospace; margin-top: 4px;">
             Hex: ${hexId || 'Unknown'}
           </div>
         `;
@@ -472,7 +589,7 @@ export class ArmyDeploymentPanel {
       if (deployedArmies.length > 0) {
         const divider = document.createElement('div');
         divider.style.cssText = 'margin: 16px 0; border-top: 1px solid #666; padding-top: 12px;';
-        divider.innerHTML = '<p style="font-size: 11px; color: #999; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 1px;">Already Deployed</p>';
+        divider.innerHTML = '<p style="font-size: 0.875rem; color: #999; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 1px;">Already Deployed</p>';
         armyList.appendChild(divider);
         
         for (const { army, hexId } of deployedArmies) {
@@ -489,13 +606,13 @@ export class ArmyDeploymentPanel {
           
           armyDiv.innerHTML = `
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-              <span style="font-weight: bold; font-size: 14px;">${army.name}</span>
+              <span style="font-weight: bold; font-size: 1rem;">${army.name}</span>
               <i class="fas fa-check" style="color: #4CAF50;"></i>
             </div>
-            <div style="font-size: 12px; color: #999;">
+            <div style="font-size: 0.875rem; color: #999;">
               Level ${army.level} • Already moved this turn
             </div>
-            <div style="font-size: 11px; color: #666; font-family: monospace; margin-top: 4px;">
+            <div style="font-size: 0.875rem; color: #666; font-family: monospace; margin-top: 4px;">
               Hex: ${hexId || 'Unknown'}
             </div>
           `;
@@ -555,15 +672,15 @@ export class ArmyDeploymentPanel {
     
     panel.innerHTML = `
       <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #D2691E;">
-        <h3 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+        <h3 style="margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
           <i class="fas fa-dice-d20"></i>
           Deploy Army - Rolling
         </h3>
       </div>
       <div style="padding: 40px 20px; text-align: center;">
         <i class="fas fa-spinner fa-spin" style="font-size: 48px; color: #D2691E; margin-bottom: 16px;"></i>
-        <p style="margin: 0; color: #999; font-size: 14px;">Waiting for roll to complete...</p>
-        <p style="margin: 8px 0 0 0; color: #666; font-size: 12px;">Complete the Foundry roll dialog</p>
+        <p style="margin: 0; color: #999; font-size: 1rem;">Waiting for roll to complete...</p>
+        <p style="margin: 8px 0 0 0; color: #666; font-size: 0.875rem;">Complete the Foundry roll dialog</p>
       </div>
     `;
   }
@@ -600,34 +717,71 @@ export class ArmyDeploymentPanel {
     const army = kingdom?.armies?.find((a: any) => a.id === this.selectedArmyId);
     const armyName = army?.name || 'Unknown Army';
     
+    // Get destination hex (last hex in path)
+    const destinationHex = this.plottedPath.length > 0 ? this.plottedPath[this.plottedPath.length - 1] : 'Unknown';
+    
+    // Get conditions/effects that will be applied based on outcome
+    const conditionsToApply = this.rollResult.outcome === 'criticalSuccess' ?
+      ['+1 initiative (status bonus)', '+1 saving throws (status bonus)', '+1 attack (status bonus)'] :
+      this.rollResult.outcome === 'failure' ?
+      ['-1 initiative (status penalty)', 'fatigued'] :
+      this.rollResult.outcome === 'criticalFailure' ?
+      ['-2 initiative (status penalty)', 'enfeebled 1', 'fatigued'] :
+      [];
+    
+    // Build effects display HTML
+    let effectsHTML = '';
+    if (conditionsToApply.length > 0) {
+      const effectItems = conditionsToApply.map(condition => {
+        // Style negative effects differently
+        const isNegative = condition.includes('penalty') || condition.includes('fatigued') || condition.includes('enfeebled');
+        const effectColor = isNegative ? '#ff9800' : '#4CAF50';
+        const icon = isNegative ? 'fa-exclamation-triangle' : 'fa-check-circle';
+        return `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+          <i class="fas ${icon}" style="color: ${effectColor}; font-size: var(--font-sm);"></i>
+          <span style="font-size: var(--font-md); color: white;">${condition}</span>
+        </div>`;
+      }).join('');
+      
+      effectsHTML = `
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+          <div style="font-size: var(--font-sm); color: #999; margin-bottom: 8px;">Effects Applied:</div>
+          <div>${effectItems}</div>
+        </div>
+      `;
+    }
+    
     panel.innerHTML = `
-      <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #D2691E;">
-        <h3 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+      <div style="margin-bottom: var(--space-12); padding-bottom: var(--space-12); border-bottom: 1px solid #D2691E;">
+        <h3 style="margin: 0; font-size: var(--font-lg); display: flex; align-items: center; gap: var(--space-8);">
           <i class="fas fa-check-circle"></i>
           Deployment Complete
         </h3>
       </div>
-      <div style="padding: 20px;">
-        <div style="background: var(--hover-low); border-radius: 4px; padding: 16px; margin-bottom: 16px;">
-          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+      <div style="padding: var(--space-20);">
+        <div style="background: var(--hover-low); border-radius: var(--radius-md); padding: var(--space-16); margin-bottom: var(--space-16);">
+          <div style="display: flex; align-items: center; gap: var(--space-12); margin-bottom: var(--space-12);">
             <div style="flex: 1;">
-              <div style="font-size: 12px; color: #999; margin-bottom: 4px;">Outcome</div>
-              <div style="font-size: 18px; font-weight: bold; color: ${outcomeColor};">${outcomeLabel}</div>
+              <div style="font-size: var(--font-sm); color: var(--text-muted); margin-bottom: var(--space-4);">Outcome</div>
+              <div style="font-size: var(--font-xl); font-weight: var(--font-weight-bold); color: ${outcomeColor};">${outcomeLabel}</div>
             </div>
-            <i class="fas fa-chess-knight" style="font-size: 32px; color: #D2691E; opacity: 0.5;"></i>
+            <i class="fas fa-chess-knight" style="font-size: var(--font-3xl); color: #D2691E; opacity: 0.5;"></i>
           </div>
-          <div style="font-size: 12px; color: #999; margin-bottom: 4px;">Rolled by</div>
-          <div style="font-size: 14px; color: white; margin-bottom: 12px;">${this.rollResult.actorName}</div>
-          <div style="font-size: 12px; color: #999; margin-bottom: 4px;">Army</div>
-          <div style="font-size: 14px; color: white; margin-bottom: 12px;">${armyName}</div>
-          <div style="font-size: 12px; color: #999; margin-bottom: 4px;">Path Length</div>
-          <div style="font-size: 14px; color: white;">${this.plottedPath.length} hexes (${this.plottedPath.length - 1} movement)</div>
+          <div style="font-size: var(--font-sm); color: var(--text-muted); margin-bottom: var(--space-4);">Rolled by</div>
+          <div style="font-size: var(--font-md); color: var(--text-primary); margin-bottom: var(--space-12);">${this.rollResult.actorName}</div>
+          <div style="font-size: var(--font-sm); color: var(--text-muted); margin-bottom: var(--space-4);">Army</div>
+          <div style="font-size: var(--font-md); color: var(--text-primary); margin-bottom: var(--space-12);">${armyName}</div>
+          <div style="font-size: var(--font-sm); color: var(--text-muted); margin-bottom: var(--space-4);">Destination</div>
+          <div style="font-size: var(--font-md); color: var(--text-primary); margin-bottom: var(--space-12);">Hex: ${destinationHex}</div>
+          <div style="font-size: var(--font-sm); color: var(--text-muted); margin-bottom: var(--space-4);">Path Length</div>
+          <div style="font-size: var(--font-md); color: var(--text-primary);">${this.plottedPath.length} hexes (${this.plottedPath.length - 1} movement)</div>
+          ${effectsHTML}
         </div>
-        <div style="display: flex; gap: 8px;">
-          <button id="btn-cancel" style="flex: 1; padding: 8px; background: #333; border: 1px solid #666; border-radius: 4px; color: white; cursor: pointer;">
+        <div style="display: flex; gap: var(--space-8);">
+          <button id="btn-cancel" style="flex: 1; padding: var(--space-8); background: var(--surface-low); border: 1px solid var(--border-faint); border-radius: var(--radius-md); color: var(--text-primary); cursor: pointer; font-size: var(--font-md);">
             <i class="fas fa-times"></i> Cancel
           </button>
-          <button id="btn-confirm" style="flex: 1; padding: 8px; background: #D2691E; border: none; border-radius: 4px; color: white; cursor: pointer;">
+          <button id="btn-confirm" style="flex: 1; padding: var(--space-8); background: var(--color-orange); border: none; border-radius: var(--radius-md); color: white; cursor: pointer; font-size: var(--font-md);">
             <i class="fas fa-check"></i> Confirm
           </button>
         </div>
@@ -660,8 +814,8 @@ export class ArmyDeploymentPanel {
       </div>
       <div style="padding: 40px 20px; text-align: center;">
         <i class="fas fa-spinner fa-spin" style="font-size: 48px; color: #4CAF50; margin-bottom: 16px;"></i>
-        <p style="margin: 0; color: #999; font-size: 14px;">Army is moving into position...</p>
-        <p style="margin: 8px 0 0 0; color: #666; font-size: 12px;">Watch the map for animation</p>
+        <p style="margin: 0; color: #999; font-size: 1rem;">Army is moving into position...</p>
+        <p style="margin: 8px 0 0 0; color: #666; font-size: 0.875rem;">Watch the map for animation</p>
       </div>
     `;
   }
@@ -699,33 +853,65 @@ export class ArmyDeploymentPanel {
     const armyName = army?.name || 'Unknown Army';
     
     // Get final hex
-    const finalHex = this.plottedPath[this.plottedPath.length - 1];
+    const finalHex = this.plottedPath.length > 0 ? this.plottedPath[this.plottedPath.length - 1] : 'Unknown';
     const movementCost = this.plottedPath.length - 1;
     
+    // Get conditions/effects that were applied based on outcome
+    const conditionsToApply = this.rollResult.outcome === 'criticalSuccess' ?
+      ['+1 initiative (status bonus)', '+1 saving throws (status bonus)', '+1 attack (status bonus)'] :
+      this.rollResult.outcome === 'failure' ?
+      ['-1 initiative (status penalty)', 'fatigued'] :
+      this.rollResult.outcome === 'criticalFailure' ?
+      ['-2 initiative (status penalty)', 'enfeebled 1', 'fatigued'] :
+      [];
+    
+    // Build effects display HTML
+    let effectsHTML = '';
+    if (conditionsToApply.length > 0) {
+      const effectItems = conditionsToApply.map(condition => {
+        // Style negative effects differently
+        const isNegative = condition.includes('penalty') || condition.includes('fatigued') || condition.includes('enfeebled');
+        const effectColor = isNegative ? '#ff9800' : '#4CAF50';
+        const icon = isNegative ? 'fa-exclamation-triangle' : 'fa-check-circle';
+        return `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+          <i class="fas ${icon}" style="color: ${effectColor}; font-size: var(--font-sm);"></i>
+          <span style="font-size: var(--font-md); color: white;">${condition}</span>
+        </div>`;
+      }).join('');
+      
+      effectsHTML = `
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+          <div style="font-size: var(--font-sm); color: #999; margin-bottom: 8px;">Effects Applied:</div>
+          <div>${effectItems}</div>
+        </div>
+      `;
+    }
+    
     panel.innerHTML = `
-      <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #D2691E;">
-        <h3 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+      <div style="margin-bottom: var(--space-12); padding-bottom: var(--space-12); border-bottom: 1px solid #D2691E;">
+        <h3 style="margin: 0; font-size: var(--font-lg); display: flex; align-items: center; gap: var(--space-8);">
           <i class="fas fa-check-circle"></i>
           Deployment Complete
         </h3>
       </div>
-      <div style="padding: 20px;">
-        <div style="background: var(--hover-low); border-radius: 4px; padding: 16px; margin-bottom: 16px;">
-          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+      <div style="padding: var(--space-20);">
+        <div style="background: var(--hover-low); border-radius: var(--radius-md); padding: var(--space-16); margin-bottom: var(--space-16);">
+          <div style="display: flex; align-items: center; gap: var(--space-12); margin-bottom: var(--space-12);">
             <div style="flex: 1;">
-              <div style="font-size: 12px; color: #999; margin-bottom: 4px;">Outcome</div>
-              <div style="font-size: 18px; font-weight: bold; color: ${outcomeColor};"><i class="fas fa-trophy" style="margin-right: 8px;"></i>${outcomeLabel}</div>
+              <div style="font-size: var(--font-sm); color: var(--text-muted); margin-bottom: var(--space-4);">Outcome</div>
+              <div style="font-size: var(--font-xl); font-weight: var(--font-weight-bold); color: ${outcomeColor};"><i class="fas fa-trophy" style="margin-right: var(--space-8);"></i>${outcomeLabel}</div>
             </div>
-            <i class="fas fa-chess-knight" style="font-size: 32px; color: #D2691E; opacity: 0.5;"></i>
+            <i class="fas fa-chess-knight" style="font-size: var(--font-3xl); color: #D2691E; opacity: 0.5;"></i>
           </div>
-          <div style="font-size: 12px; color: #999; margin-bottom: 4px;">Army</div>
-          <div style="font-size: 14px; color: white; margin-bottom: 12px;">${armyName}</div>
-          <div style="font-size: 12px; color: #999; margin-bottom: 4px;">Destination</div>
-          <div style="font-size: 14px; color: white; margin-bottom: 12px; font-family: monospace;">${finalHex}</div>
-          <div style="font-size: 12px; color: #999; margin-bottom: 4px;">Movement</div>
-          <div style="font-size: 14px; color: white;">${movementCost} hexes</div>
+          <div style="font-size: var(--font-sm); color: var(--text-muted); margin-bottom: var(--space-4);">Army</div>
+          <div style="font-size: var(--font-md); color: var(--text-primary); margin-bottom: var(--space-12);">${armyName}</div>
+          <div style="font-size: var(--font-sm); color: var(--text-muted); margin-bottom: var(--space-4);">Destination</div>
+          <div style="font-size: var(--font-md); color: var(--text-primary); margin-bottom: var(--space-12); font-family: monospace;">${finalHex}</div>
+          <div style="font-size: var(--font-sm); color: var(--text-muted); margin-bottom: var(--space-4);">Movement</div>
+          <div style="font-size: var(--font-md); color: var(--text-primary);">${movementCost} hexes</div>
+          ${effectsHTML}
         </div>
-        <button id="btn-ok" style="width: 100%; padding: 12px; background: #4CAF50; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 16px; font-weight: bold;">
+        <button id="btn-ok" style="width: 100%; padding: var(--space-12); background: #4CAF50; border: none; border-radius: var(--radius-md); color: white; cursor: pointer; font-size: var(--font-md); font-weight: bold;">
           <i class="fas fa-check"></i> OK
         </button>
       </div>
@@ -881,7 +1067,7 @@ export class ArmyDeploymentPanel {
     // Remove token click listener
     const canvas = (globalThis as any).canvas;
     if (this.tokenClickHandler) {
-      canvas?.stage?.off('click', this.tokenClickHandler);
+      canvas?.stage?.off('pointerdown', this.tokenClickHandler);
       this.tokenClickHandler = null;
     }
     
