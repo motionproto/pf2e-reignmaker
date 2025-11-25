@@ -97,11 +97,11 @@
   // Force UI update when active aids change
   $: activeAidsCount = $kingdomData?.turnState?.actionsPhase?.activeAids?.length || 0;
   
-  // Create a reactive key that changes when army data OR party level changes
-  // This forces action requirement checks to re-run when armies or party level are modified
+  // Create a reactive key that changes when army data OR party level OR deployed armies change
+  // This forces action requirement checks to re-run when armies, party level, or deployment status are modified
   // Party level is synced on mount, so stored value should be current
   $: armyDataKey = $kingdomData ? 
-    `${$kingdomData.partyLevel || 1}|${$kingdomData.armies?.map(a => `${a.id}:${a.level}`).join(',') || ''}` : '';
+    `${$kingdomData.partyLevel || 1}|${$kingdomData.armies?.map(a => `${a.id}:${a.level}`).join(',') || ''}|deployed:${($kingdomData.turnState?.actionsPhase?.deployedArmyIds || []).join(',')}` : '';
   
   // Create a reactive key that changes when resources change
   // This forces action requirement checks to re-run when gold, lumber, ore, etc. change
@@ -467,9 +467,21 @@
         return;
       }
       
-      // Re-throw actual errors
+      // Show user-friendly error notification
+      const ui = (globalThis as any).ui;
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      
+      // Show notification for requirements errors (these should be caught earlier, but show here as fallback)
+      if (errorMessage.includes('All armies have already moved') || 
+          errorMessage.includes('No armies available') ||
+          errorMessage.includes('Insufficient resources')) {
+        ui?.notifications?.warn(errorMessage);
+      } else {
+        ui?.notifications?.error(`Failed to execute ${action.name}: ${errorMessage}`);
+      }
+      
       console.error(`❌ [ActionsPhase] Pipeline failed for ${action.id}:`, error);
-      throw error;
+      // Don't re-throw - error has been shown to user
     }
     
     // Clear aid modifiers for this action

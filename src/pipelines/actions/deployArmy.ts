@@ -6,25 +6,49 @@
 import { createActionPipeline } from '../shared/createActionPipeline';
 import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 import { textBadge } from '../../types/OutcomeBadge';
+import { PLAYER_KINGDOM } from '../../types/ownership';
 
 // Store reference for execute function
 const pipeline = createActionPipeline('deploy-army', {
   requirements: (kingdom) => {
-    // Check if there are any armies at all
-    if (!kingdom.armies || kingdom.armies.length === 0) {
+    // Filter to only player-led armies (exclude other factions' armies)
+    const playerArmies = (kingdom.armies || []).filter((army: any) => army.ledBy === PLAYER_KINGDOM);
+    
+    if (playerArmies.length === 0) {
       return {
         met: false,
-        reason: 'No armies available'
+        reason: 'No player armies available'
       };
     }
     
-    // Check if all armies have already been deployed this turn
+    // Get list of armies that have already been deployed this turn
     const deployedArmyIds = kingdom.turnState?.actionsPhase?.deployedArmyIds || [];
-    if (deployedArmyIds.length >= kingdom.armies.length) {
-      return {
-        met: false,
-        reason: 'All armies have already moved this turn'
-      };
+    
+    // Find at least one player army that hasn't been deployed this turn AND has an actor
+    const availableArmies = playerArmies.filter((army: any) => 
+      !deployedArmyIds.includes(army.id) && army.actorId
+    );
+    
+    if (availableArmies.length === 0) {
+      // Check if it's because all player armies moved, or because armies are missing actors
+      const playerArmiesWithoutActors = playerArmies.filter((army: any) => !army.actorId);
+      
+      if (deployedArmyIds.length >= playerArmies.length) {
+        return {
+          met: false,
+          reason: 'All armies have already moved this turn'
+        };
+      } else if (playerArmiesWithoutActors.length === playerArmies.length) {
+        return {
+          met: false,
+          reason: 'No armies have linked actors (required for deployment)'
+        };
+      } else {
+        return {
+          met: false,
+          reason: 'No armies available to deploy (all moved or missing actors)'
+        };
+      }
     }
     
     return { met: true };
@@ -79,8 +103,9 @@ const pipeline = createActionPipeline('deploy-army', {
     const armyId = deployment.armyId || ctx.metadata.armyId;
     const path = deployment.path || ctx.metadata.path || [];
     
-    if (!armyId || !path || path.length === 0) {
-      return { success: false, error: 'Missing army or path data' };
+    // Path must have at least 2 hexes (start and end)
+    if (!armyId || !path || path.length < 2) {
+      return { success: false, error: 'Missing army or path data (path must have at least 2 hexes)' };
     }
     
     // Use execution function directly (deployArmyExecution handles everything)
