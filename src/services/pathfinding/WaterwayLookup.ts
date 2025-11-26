@@ -269,92 +269,62 @@ export class WaterwayLookup {
   }
   
   /**
-   * Build waterfall lookup (segment-based)
+   * Build waterfall lookup (connection-point-based)
    * Waterfalls block naval travel but not swimmers
    * 
-   * @param waterfalls - Array of segment-based waterfall features
-   * @param paths - River paths for segment resolution
+   * @param waterfalls - Array of connection-point-based waterfall features
+   * @param paths - River paths (unused now, kept for compatibility)
    */
-  private buildWaterfallLookup(waterfalls: Array<{ id: string; pathId: string; segmentIndex: number; position: number }>, paths: RiverPath[]): void {
+  private buildWaterfallLookup(waterfalls: Array<{ id: string; hexI: number; hexJ: number; edge?: string; isCenter?: boolean; cornerIndex?: number }>, paths: RiverPath[]): void {
     for (const waterfall of waterfalls) {
-      // Find the path this waterfall belongs to
-      const path = paths.find(p => p.id === waterfall.pathId);
-      if (!path) {
-        logger.warn(`[WaterwayLookup] Waterfall ${waterfall.id} references missing path ${waterfall.pathId}`);
-        continue;
-      }
-      
-      // Get segment points (sorted by order)
-      const sortedPoints = [...path.points].sort((a, b) => a.order - b.order);
-      const point1 = sortedPoints[waterfall.segmentIndex];
-      const point2 = sortedPoints[waterfall.segmentIndex + 1];
-      
-      if (!point1 || !point2) {
-        logger.warn(`[WaterwayLookup] Waterfall ${waterfall.id} has invalid segment index ${waterfall.segmentIndex}`);
-        continue;
-      }
-      
-      // Mark both hexes in the segment as having a waterfall
-      const hex1Key = this.getHexKey(point1.hexI, point1.hexJ);
-      const hex2Key = this.getHexKey(point2.hexI, point2.hexJ);
+      // Mark the hex at the connection point as having a waterfall
+      const hexKey = this.getHexKey(waterfall.hexI, waterfall.hexJ);
       
       // Create WaterFeature-like object for compatibility with existing code
       const waterfallFeature: WaterFeature = {
         id: waterfall.id,
-        hexI: point1.hexI,
-        hexJ: point1.hexJ
+        hexI: waterfall.hexI,
+        hexJ: waterfall.hexJ
       };
       
-      this.getOrCreateHexData(hex1Key).waterfalls.push(waterfallFeature);
+      this.getOrCreateHexData(hexKey).waterfalls.push(waterfallFeature);
       
-      // Only add to second hex if it's different from first
-      if (hex1Key !== hex2Key) {
-        const waterfallFeature2: WaterFeature = {
-          id: waterfall.id,
-          hexI: point2.hexI,
-          hexJ: point2.hexJ
-        };
-        this.getOrCreateHexData(hex2Key).waterfalls.push(waterfallFeature2);
+      // If waterfall is on an edge, also mark the adjacent hex that shares that edge
+      if (waterfall.edge && !waterfall.isCenter) {
+        const adjacentHex = this.getAdjacentHexForEdge(waterfall.hexI, waterfall.hexJ, waterfall.edge);
+        if (adjacentHex) {
+          const adjKey = this.getHexKey(adjacentHex.i, adjacentHex.j);
+          const waterfallFeature2: WaterFeature = {
+            id: waterfall.id,
+            hexI: adjacentHex.i,
+            hexJ: adjacentHex.j
+          };
+          this.getOrCreateHexData(adjKey).waterfalls.push(waterfallFeature2);
+        }
       }
     }
   }
   
   /**
-   * Build crossing lookup (bridges/fords, segment-based)
+   * Build crossing lookup (bridges/fords, connection-point-based)
    * Crossings allow grounded armies to cross water
    * 
-   * @param crossings - Array of segment-based crossing features
-   * @param paths - River paths for segment resolution
+   * @param crossings - Array of connection-point-based crossing features
+   * @param paths - River paths (unused now, kept for compatibility)
    */
   private buildCrossingLookup(crossings: RiverCrossing[], paths: RiverPath[]): void {
     for (const crossing of crossings) {
-      // Find the path this crossing belongs to
-      const path = paths.find(p => p.id === crossing.pathId);
-      if (!path) {
-        // Silently skip orphaned crossings (paths were deleted but crossing wasn't cleaned up)
-        // This is harmless - the crossing just won't be rendered or used for pathfinding
-        continue;
-      }
+      // Mark the hex at the connection point as having a crossing
+      const hexKey = this.getHexKey(crossing.hexI, crossing.hexJ);
+      this.getOrCreateHexData(hexKey).crossings.add(crossing.type);
       
-      // Get segment points (sorted by order)
-      const sortedPoints = [...path.points].sort((a, b) => a.order - b.order);
-      const point1 = sortedPoints[crossing.segmentIndex];
-      const point2 = sortedPoints[crossing.segmentIndex + 1];
-      
-      if (!point1 || !point2) {
-        logger.warn(`[WaterwayLookup] Crossing ${crossing.id} has invalid segment index ${crossing.segmentIndex}`);
-        continue;
-      }
-      
-      // Mark both hexes in the segment as having a crossing
-      const hex1Key = this.getHexKey(point1.hexI, point1.hexJ);
-      const hex2Key = this.getHexKey(point2.hexI, point2.hexJ);
-      
-      this.getOrCreateHexData(hex1Key).crossings.add(crossing.type);
-      
-      // Only add to second hex if it's different from first
-      if (hex1Key !== hex2Key) {
-        this.getOrCreateHexData(hex2Key).crossings.add(crossing.type);
+      // If crossing is on an edge, also mark the adjacent hex that shares that edge
+      if (crossing.edge && !crossing.isCenter) {
+        const adjacentHex = this.getAdjacentHexForEdge(crossing.hexI, crossing.hexJ, crossing.edge);
+        if (adjacentHex) {
+          const adjKey = this.getHexKey(adjacentHex.i, adjacentHex.j);
+          this.getOrCreateHexData(adjKey).crossings.add(crossing.type);
+        }
       }
     }
   }

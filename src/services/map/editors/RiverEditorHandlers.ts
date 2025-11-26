@@ -21,16 +21,13 @@ export class RiverEditorHandlers {
   // Preview graphics for drawing in progress
   private previewGraphics: PIXI.Graphics | null = null;
   
-  // Double-click detection
-  private lastClickTime: number = 0;
-  private lastClickConnector: { hexI: number; hexJ: number; edge?: string; isCenter?: boolean; cornerIndex?: number } | null = null;
 
   /**
    * Handle river click - sequential path system
    * Click to add points to the current path, creating a river line
-   * Double-click to end path
    */
   async handleRiverClick(hexId: string, position: { x: number; y: number }): Promise<void> {
+
     const canvas = (globalThis as any).canvas;
     if (!canvas?.grid) return;
 
@@ -61,26 +58,6 @@ export class RiverEditorHandlers {
       cornerIndex = connector.cornerIndex;
     }
 
-    // Check for double-click (within 300ms on same connector)
-    const now = Date.now();
-    const isDoubleClick = 
-      now - this.lastClickTime < 300 &&
-      this.isSameConnector(
-        { hexI, hexJ, edge, isCenter, cornerIndex },
-        this.lastClickConnector
-      );
-
-    if (isDoubleClick && this.currentPathId) {
-      // End current path
-      logger.info('[RiverEditorHandlers] 🏁 Double-click detected - ending path');
-      await this.endCurrentPath();
-      
-      // Show notification
-      const ui = (globalThis as any).ui;
-      ui?.notifications?.info('River path completed');
-      return;
-    }
-
     const kingdom = getKingdomData();
 
     // If we already have an active path, first see if this click is on one of its vertices.
@@ -100,9 +77,6 @@ export class RiverEditorHandlers {
           logger.info(
             `[RiverEditorHandlers] 🎯 Selected existing vertex index ${idx} on path ${this.currentPathId}`
           );
-          // Update double-click tracking
-          this.lastClickTime = now;
-          this.lastClickConnector = { hexI, hexJ, edge, isCenter, cornerIndex };
           return; // Selection only, no new point
         }
       }
@@ -142,8 +116,6 @@ export class RiverEditorHandlers {
           `[RiverEditorHandlers] ✏️ Editing existing river path: ${this.currentPathId}, selected vertex index ${existingIndex}`
         );
         // Do NOT fall through to creating a new point for this click
-        this.lastClickTime = now;
-        this.lastClickConnector = { hexI, hexJ, edge, isCenter, cornerIndex };
         return;
       } else {
         // Start a brand new path
@@ -152,6 +124,23 @@ export class RiverEditorHandlers {
         this.currentVertexIndex = null;
         logger.info(`[RiverEditorHandlers] 🆕 Starting new river path: ${this.currentPathId}`);
       }
+    }
+
+    // Check if adding this point would create a duplicate segment
+    const wouldCreateDuplicate = this.wouldCreateDuplicateSegment(
+      kingdom,
+      hexI,
+      hexJ,
+      edge,
+      isCenter,
+      cornerIndex
+    );
+    
+    if (wouldCreateDuplicate) {
+      logger.info('[RiverEditorHandlers] ⚠️ Cannot add point - would create duplicate segment');
+      const ui = (globalThis as any).ui;
+      ui?.notifications?.warn('Cannot create duplicate river segment');
+      return;
     }
 
     // Create point to insert
@@ -186,8 +175,15 @@ export class RiverEditorHandlers {
       }
       
       if (this.currentVertexIndex !== null && this.currentVertexIndex >= 0 && this.currentVertexIndex < path.points.length) {
-        // Insert after the active vertex
-        const targetIndex = this.currentVertexIndex + 1;
+        // Insert after the active vertex (or before if it's the first vertex)
+        let targetIndex: number;
+        if (this.currentVertexIndex === 0) {
+          // First vertex selected - insert before it (stretching back)
+          targetIndex = 0;
+        } else {
+          // Insert after the active vertex
+          targetIndex = this.currentVertexIndex + 1;
+        }
         path.points.splice(targetIndex, 0, point);
         insertedIndex = targetIndex;
       } else {
@@ -210,10 +206,6 @@ export class RiverEditorHandlers {
     }
     
     this.currentPathOrder += 10;
-    
-    // Update click tracking for double-click detection
-    this.lastClickTime = now;
-    this.lastClickConnector = { hexI, hexJ, edge, isCenter, cornerIndex };
   }
 
   /**
@@ -445,12 +437,123 @@ export class RiverEditorHandlers {
     this.currentPathOrder = 0;
     this.currentVertexIndex = null;
     
-    // Clear double-click tracking
-    this.lastClickTime = 0;
-    this.lastClickConnector = null;
+    // Destroy preview graphics
+    this.destroyPreviewGraphics();
+  }
+  
+  /**
+   * Delete the current path (public method for keyboard shortcuts)
+   */
+  async deleteCurrentPath(): Promise<void> {
+    if (!this.currentPathId) return;
+    
+    const pathId = this.currentPathId;
+    logger.info(`[RiverEditorHandlers] 🗑️ Deleting current river path: ${pathId}`);
+    
+    // Delete the path from kingdom data
+    await updateKingdom(kingdom => {
+      if (!kingdom.rivers?.paths) return;
+      const pathIndex = kingdom.rivers.paths.findIndex(p => p.id === pathId);
+      if (pathIndex !== -1) {
+        kingdom.rivers.paths.splice(pathIndex, 1);
+        logger.info(`[RiverEditorHandlers] ✅ Deleted path ${pathId}`);
+      }
+    });
+    
+    // Clear current path state
+    this.currentPathId = null;
+    this.currentPathOrder = 0;
+    this.currentVertexIndex = null;
     
     // Destroy preview graphics
     this.destroyPreviewGraphics();
+  }
+  
+  /**
+   * Check if adding a new point would create a duplicate segment
+   * A duplicate segment is one that already exists between the same two connector points
+   */
+  private wouldCreateDuplicateSegment(
+    kingdom: any,
+    newHexI: number,
+    newHexJ: number,
+    newEdge: string | undefined,
+    newIsCenter: boolean,
+    newCornerIndex: number | undefined
+  ): boolean {
+    // Get the point we're connecting FROM (either the active vertex or the last point in current path)
+    let fromPoint: RiverPathPoint | null = null;
+    
+    if (this.currentPathId) {
+      const activePath = kingdom.rivers?.paths?.find((p: any) => p.id === this.currentPathId);
+      if (activePath && activePath.points.length > 0) {
+        if (this.currentVertexIndex !== null && this.currentVertexIndex >= 0 && this.currentVertexIndex < activePath.points.length) {
+          // Connecting from the active vertex
+          fromPoint = activePath.points[this.currentVertexIndex];
+        } else {
+          // Connecting from the last point in the path
+          const sortedPoints = [...activePath.points].sort((a: any, b: any) => a.order - b.order);
+          fromPoint = sortedPoints[sortedPoints.length - 1];
+        }
+      }
+    }
+    
+    // If we don't have a from point, we're starting a new path - no duplicate possible
+    if (!fromPoint) {
+      return false;
+    }
+    
+    // Create the "to" point descriptor
+    const toPoint = {
+      hexI: newHexI,
+      hexJ: newHexJ,
+      edge: newEdge,
+      isCenter: newIsCenter,
+      cornerIndex: newCornerIndex
+    };
+    
+    // Check all paths for an existing segment between these two points
+    const paths = kingdom.rivers?.paths || [];
+    for (const path of paths) {
+      const sortedPoints = [...path.points].sort((a: any, b: any) => a.order - b.order);
+      
+      // Check each consecutive pair in this path
+      for (let i = 0; i < sortedPoints.length - 1; i++) {
+        const p1 = sortedPoints[i];
+        const p2 = sortedPoints[i + 1];
+        
+        // Check if this segment matches (in either direction)
+        const matchesForward = 
+          this.isSameConnectorPoint(p1, fromPoint) &&
+          this.isSameConnectorPoint(p2, toPoint);
+        
+        const matchesReverse = 
+          this.isSameConnectorPoint(p1, toPoint) &&
+          this.isSameConnectorPoint(p2, fromPoint);
+        
+        if (matchesForward || matchesReverse) {
+          return true; // Duplicate segment found
+        }
+      }
+    }
+    
+    return false; // No duplicate found
+  }
+  
+  /**
+   * Check if two connector points are the same
+   */
+  private isSameConnectorPoint(
+    a: { hexI: number; hexJ: number; edge?: string; isCenter?: boolean; cornerIndex?: number },
+    b: { hexI: number; hexJ: number; edge?: string; isCenter?: boolean; cornerIndex?: number }
+  ): boolean {
+    return (
+      a.hexI === b.hexI &&
+      a.hexJ === b.hexJ &&
+      a.edge === b.edge &&
+      a.isCenter === b.isCenter &&
+      a.cornerIndex === b.cornerIndex
+    );
   }
   
   /**
@@ -550,23 +653,6 @@ export class RiverEditorHandlers {
     logger.info(`  Neighbor match: ${isMatch}`);
     
     return isMatch;
-  }
-  
-  /**
-   * Check if two connectors are the same
-   */
-  private isSameConnector(
-    a: { hexI: number; hexJ: number; edge?: string; isCenter?: boolean; cornerIndex?: number } | null,
-    b: { hexI: number; hexJ: number; edge?: string; isCenter?: boolean; cornerIndex?: number } | null
-  ): boolean {
-    if (!a || !b) return false;
-    return (
-      a.hexI === b.hexI &&
-      a.hexJ === b.hexJ &&
-      a.edge === b.edge &&
-      a.isCenter === b.isCenter &&
-      a.cornerIndex === b.cornerIndex
-    );
   }
   
   /**

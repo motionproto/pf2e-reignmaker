@@ -144,13 +144,19 @@ class WaterwayGeometryService {
       return segments;
     }
     
-    // Build crossing lookup
-    const crossingSet = new Set<string>();
+    // Build crossing lookup (connection-point-based)
+    // Create a set of connection point keys that have crossings
+    const crossingPointSet = new Set<string>();
     for (const crossing of kingdom.rivers.crossings || []) {
-      if (crossing.pathId && crossing.segmentIndex !== undefined) {
-        crossingSet.add(`${crossing.pathId}:${crossing.segmentIndex}`);
-      }
+      // Create key from connection point coordinates
+      const key = `${crossing.hexI},${crossing.hexJ},${crossing.edge || ''},${crossing.isCenter || false},${crossing.cornerIndex ?? ''}`;
+      crossingPointSet.add(key);
     }
+    
+    // Helper function to create connection point key
+    const getPointKey = (point: any): string => {
+      return `${point.hexI},${point.hexJ},${point.edge || ''},${point.isCenter || false},${point.cornerIndex ?? ''}`;
+    };
     
     // Process each path
     for (const path of kingdom.rivers.paths) {
@@ -167,9 +173,8 @@ class WaterwayGeometryService {
         
         if (!pos1 || !pos2) continue;
         
-        // Check if this segment has a crossing
-        const crossingKey = `${path.id}:${i}`;
-        const hasCrossing = crossingSet.has(crossingKey);
+        // Check if either endpoint of this segment has a crossing
+        const hasCrossing = crossingPointSet.has(getPointKey(p1)) || crossingPointSet.has(getPointKey(p2));
         
         segments.push({
           pathId: path.id,

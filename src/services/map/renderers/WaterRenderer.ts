@@ -421,54 +421,34 @@ function drawHexFill(
 }
 
 /**
- * Render bridge and ford crossings (segment-based)
- * Bridges = brown rectangles spanning the river
- * Fords = blue rectangles indicating shallow crossing
+ * Render bridge and ford crossings (connection-point-based)
+ * Bridges = brown badges on connector dots
+ * Fords = blue badges on connector dots
  * 
  * @param layer - PIXI container to add graphics to
  * @param canvas - Foundry canvas object
- * @param paths - River paths
+ * @param paths - River paths (unused now, kept for compatibility)
  * @param crossings - Array of crossing features
  */
 function renderCrossings(
   layer: PIXI.Container,
   canvas: any,
   paths: Array<{ id: string; points: Array<{ hexI: number; hexJ: number; edge?: string; isCenter?: boolean; cornerIndex?: number; order: number }> }>,
-  crossings: Array<{ id: string; pathId: string; segmentIndex: number; position: number; type: 'bridge' | 'ford' }>
+  crossings: Array<{ id: string; hexI: number; hexJ: number; edge?: string; isCenter?: boolean; cornerIndex?: number; type: 'bridge' | 'ford' }>
 ): void {
   const crossingGraphics = new PIXI.Graphics();
   crossingGraphics.name = 'RiverCrossings';
   
   for (const crossing of crossings) {
-    // Find the path
-    const path = paths.find(p => p.id === crossing.pathId);
-    if (!path) continue;
+    // Get screen position for this connection point
+    const pos = getConnectorPosition(crossing, canvas);
+    if (!pos) continue;
     
-    // Get sorted points
-    const sortedPoints = [...path.points].sort((a, b) => a.order - b.order);
-    if (crossing.segmentIndex >= sortedPoints.length - 1) continue;
-    
-    // Get segment endpoints
-    const p1 = sortedPoints[crossing.segmentIndex];
-    const p2 = sortedPoints[crossing.segmentIndex + 1];
-    
-    // Get screen positions using unified connector model
-    const pos1 = getConnectorPosition(p1, canvas);
-    const pos2 = getConnectorPosition(p2, canvas);
-    
-    if (!pos1 || !pos2) continue;
-    
-    // Interpolate position along segment
-    const x = pos1.x + (pos2.x - pos1.x) * crossing.position;
-    const y = pos1.y + (pos2.y - pos1.y) * crossing.position;
-    
-    // Calculate segment angle for bridge orientation
-    const angle = Math.atan2(pos2.y - pos1.y, pos2.x - pos1.x);
-    
+    // Draw crossing badge at connection point
     if (crossing.type === 'bridge') {
-      drawBridgeSegment(crossingGraphics, x, y, angle);
+      drawBridgeBadge(crossingGraphics, pos.x, pos.y);
     } else if (crossing.type === 'ford') {
-      drawFord(crossingGraphics, x, y, angle);
+      drawFordBadge(crossingGraphics, pos.x, pos.y);
     }
   }
   
@@ -476,225 +456,140 @@ function renderCrossings(
 }
 
 /**
- * Draw a bridge crossing (segment-based)
- * Renders as a wide brown rectangle perpendicular to the river segment
- * The bridge extends across the river, visually cutting through it
+ * Draw a bridge crossing badge at a connection point
+ * Renders as a brown diamond badge on the connector dot
  * 
  * @param graphics - PIXI Graphics object
- * @param x - X position along segment
- * @param y - Y position along segment
- * @param angle - Angle of river segment (radians)
+ * @param x - X position of connection point
+ * @param y - Y position of connection point
  */
-function drawBridgeSegment(
+function drawBridgeBadge(
   graphics: PIXI.Graphics,
   x: number,
-  y: number,
-  angle: number
+  y: number
 ): void {
+  const badgeSize = 18; // Size of the badge
   
-  // Perpendicular angle (bridge crosses river at right angle)
-  const perpAngle = angle + Math.PI / 2;
+  // Draw brown diamond badge
+  graphics.lineStyle(0);
+  graphics.beginFill(BRIDGE_COLOR, 0.9);
   
-  // Calculate rectangle corners (perpendicular to river)
-  const halfWidth = BRIDGE_WIDTH / 2;  // Extends across river
-  const halfThickness = BRIDGE_THICKNESS / 2;  // Along river direction
-  
-  const cosPerp = Math.cos(perpAngle);
-  const sinPerp = Math.sin(perpAngle);
-  const cosRiver = Math.cos(angle);
-  const sinRiver = Math.sin(angle);
-  
-  const corners = [
-    { 
-      x: x - halfWidth * cosPerp - halfThickness * cosRiver, 
-      y: y - halfWidth * sinPerp - halfThickness * sinRiver 
-    },
-    { 
-      x: x + halfWidth * cosPerp - halfThickness * cosRiver, 
-      y: y + halfWidth * sinPerp - halfThickness * sinRiver 
-    },
-    { 
-      x: x + halfWidth * cosPerp + halfThickness * cosRiver, 
-      y: y + halfWidth * sinPerp + halfThickness * sinRiver 
-    },
-    { 
-      x: x - halfWidth * cosPerp + halfThickness * cosRiver, 
-      y: y - halfWidth * sinPerp + halfThickness * sinRiver 
-    }
-  ];
-  
-  // Draw bridge rectangle
-  graphics.beginFill(BRIDGE_COLOR, BRIDGE_ALPHA);
-  graphics.drawPolygon(corners.flatMap(c => [c.x, c.y]));
+  // Diamond shape: top, right, bottom, left
+  graphics.moveTo(x, y - badgeSize);
+  graphics.lineTo(x + badgeSize, y);
+  graphics.lineTo(x, y + badgeSize);
+  graphics.lineTo(x - badgeSize, y);
+  graphics.closePath();
   graphics.endFill();
   
   // Add dark border for definition
-  graphics.lineStyle(2, 0x000000, 0.6);
-  graphics.drawPolygon(corners.flatMap(c => [c.x, c.y]));
+  graphics.lineStyle(2, 0x000000, 0.8);
+  graphics.moveTo(x, y - badgeSize);
+  graphics.lineTo(x + badgeSize, y);
+  graphics.lineTo(x, y + badgeSize);
+  graphics.lineTo(x - badgeSize, y);
+  graphics.closePath();
 }
 
 /**
- * Draw a ford crossing
- * Renders as a thick blue rectangle perpendicular to the river
+ * Draw a ford crossing badge at a connection point
+ * Renders as a blue diamond badge on the connector dot
  * Indicates a natural shallow crossing point
  * 
  * @param graphics - PIXI Graphics object
- * @param x - X position along segment
- * @param y - Y position along segment
- * @param angle - Angle of river segment (radians)
+ * @param x - X position of connection point
+ * @param y - Y position of connection point
  */
-function drawFord(
+function drawFordBadge(
   graphics: PIXI.Graphics,
   x: number,
-  y: number,
-  angle: number
+  y: number
 ): void {
+  const badgeSize = 18; // Size of the badge
   
-  // Perpendicular angle (ford crosses river at right angle)
-  const perpAngle = angle + Math.PI / 2;
+  // Draw blue diamond badge
+  graphics.lineStyle(0);
+  graphics.beginFill(FORD_COLOR, 0.9);
   
-  // Calculate rectangle corners (perpendicular to river)
-  const halfWidth = FORD_WIDTH / 2;  // Extends across river
-  const halfThickness = FORD_THICKNESS / 2;  // Along river direction
-  
-  const cosPerp = Math.cos(perpAngle);
-  const sinPerp = Math.sin(perpAngle);
-  const cosRiver = Math.cos(angle);
-  const sinRiver = Math.sin(angle);
-  
-  const corners = [
-    { 
-      x: x - halfWidth * cosPerp - halfThickness * cosRiver, 
-      y: y - halfWidth * sinPerp - halfThickness * sinRiver 
-    },
-    { 
-      x: x + halfWidth * cosPerp - halfThickness * cosRiver, 
-      y: y + halfWidth * sinPerp - halfThickness * sinRiver 
-    },
-    { 
-      x: x + halfWidth * cosPerp + halfThickness * cosRiver, 
-      y: y + halfWidth * sinPerp + halfThickness * sinRiver 
-    },
-    { 
-      x: x - halfWidth * cosPerp + halfThickness * cosRiver, 
-      y: y - halfWidth * sinPerp + halfThickness * sinRiver 
-    }
-  ];
-  
-  // Draw ford rectangle (blue, same color as river)
-  graphics.beginFill(FORD_COLOR, FORD_ALPHA);
-  graphics.drawPolygon(corners.flatMap(c => [c.x, c.y]));
+  // Diamond shape: top, right, bottom, left
+  graphics.moveTo(x, y - badgeSize);
+  graphics.lineTo(x + badgeSize, y);
+  graphics.lineTo(x, y + badgeSize);
+  graphics.lineTo(x - badgeSize, y);
+  graphics.closePath();
   graphics.endFill();
   
   // Add lighter blue border for definition
-  graphics.lineStyle(2, 0x87CEEB, 0.7);  // Sky blue border
-  graphics.drawPolygon(corners.flatMap(c => [c.x, c.y]));
+  graphics.lineStyle(2, 0x87CEEB, 0.8);  // Sky blue border
+  graphics.moveTo(x, y - badgeSize);
+  graphics.lineTo(x + badgeSize, y);
+  graphics.lineTo(x, y + badgeSize);
+  graphics.lineTo(x - badgeSize, y);
+  graphics.closePath();
 }
 
 /**
- * Render waterfall features (segment-based)
- * Waterfalls = white cascading lines on segments (blocks boats)
+ * Render waterfall features (connection-point-based)
+ * Waterfalls = white cascading badges on connector dots (blocks boats)
  * 
  * @param layer - PIXI container to add graphics to
  * @param canvas - Foundry canvas object
- * @param paths - River paths
+ * @param paths - River paths (unused now, kept for compatibility)
  * @param waterfalls - Array of waterfall features
  */
 function renderWaterfalls(
   layer: PIXI.Container,
   canvas: any,
   paths: Array<{ id: string; points: Array<{ hexI: number; hexJ: number; edge?: string; isCenter?: boolean; order: number }> }>,
-  waterfalls: Array<{ id: string; pathId: string; segmentIndex: number; position: number }>
+  waterfalls: Array<{ id: string; hexI: number; hexJ: number; edge?: string; isCenter?: boolean; cornerIndex?: number }>
 ): void {
   const waterfallGraphics = new PIXI.Graphics();
   waterfallGraphics.name = 'Waterfalls';
   
   for (const waterfall of waterfalls) {
-    // Find the path
-    const path = paths.find(p => p.id === waterfall.pathId);
-    if (!path) continue;
+    // Get screen position for this connection point
+    const pos = getConnectorPosition(waterfall, canvas);
+    if (!pos) continue;
     
-    // Get sorted points
-    const sortedPoints = [...path.points].sort((a, b) => a.order - b.order);
-    if (waterfall.segmentIndex >= sortedPoints.length - 1) continue;
-    
-    // Get segment endpoints
-    const p1 = sortedPoints[waterfall.segmentIndex];
-    const p2 = sortedPoints[waterfall.segmentIndex + 1];
-    
-    // Get screen positions
-    const pos1 = p1.isCenter 
-      ? getHexCenter(p1.hexI, p1.hexJ, canvas)
-      : getEdgeMidpoint(p1.hexI, p1.hexJ, p1.edge as EdgeDirection, canvas);
-    
-    const pos2 = p2.isCenter
-      ? getHexCenter(p2.hexI, p2.hexJ, canvas)
-      : getEdgeMidpoint(p2.hexI, p2.hexJ, p2.edge as EdgeDirection, canvas);
-    
-    if (!pos1 || !pos2) continue;
-    
-    // Interpolate position along segment
-    const x = pos1.x + (pos2.x - pos1.x) * waterfall.position;
-    const y = pos1.y + (pos2.y - pos1.y) * waterfall.position;
-    
-    // Calculate segment angle
-    const angle = Math.atan2(pos2.y - pos1.y, pos2.x - pos1.x);
-    
-    drawWaterfallSegment(waterfallGraphics, x, y, angle);
+    // Draw waterfall badge at connection point
+    drawWaterfallBadge(waterfallGraphics, pos.x, pos.y);
   }
   
   layer.addChild(waterfallGraphics);
 }
 
 /**
- * Draw a waterfall indicator (segment-based)
- * Renders as white cascading lines perpendicular to the segment
+ * Draw a waterfall badge at a connection point
+ * Renders as a white diamond badge with waterfall effects
  * 
  * @param graphics - PIXI Graphics object
- * @param x - X position along segment
- * @param y - Y position along segment
- * @param angle - Angle of river segment (radians)
+ * @param x - X position of connection point
+ * @param y - Y position of connection point
  */
-function drawWaterfallSegment(
+function drawWaterfallBadge(
   graphics: PIXI.Graphics,
   x: number,
-  y: number,
-  angle: number
+  y: number
 ): void {
+  const badgeSize = 18; // Size of the badge
   
-  // Draw multiple cascading lines for waterfall effect
-  const lineCount = 5;
-  const lineSpacing = 6;
-  const lineLength = 30;
+  // Draw white diamond badge
+  graphics.lineStyle(0);
+  graphics.beginFill(WATERFALL_COLOR, 0.9);
   
-  graphics.lineStyle(3, WATERFALL_COLOR, WATERFALL_ALPHA);
+  // Diamond shape: top, right, bottom, left
+  graphics.moveTo(x, y - badgeSize);
+  graphics.lineTo(x + badgeSize, y);
+  graphics.lineTo(x, y + badgeSize);
+  graphics.lineTo(x - badgeSize, y);
+  graphics.closePath();
+  graphics.endFill();
   
-  const cos = Math.cos(angle);
-  const sin = Math.sin(angle);
-  
-  for (let i = 0; i < lineCount; i++) {
-    const offset = (i - (lineCount - 1) / 2) * lineSpacing;
-    
-    // Calculate line start and end (perpendicular to edge)
-    const startX = x + offset * cos - (lineLength / 2) * sin;
-    const startY = y + offset * sin + (lineLength / 2) * cos;
-    const endX = x + offset * cos + (lineLength / 2) * sin;
-    const endY = y + offset * sin - (lineLength / 2) * cos;
-    
-    graphics.moveTo(startX, startY);
-    graphics.lineTo(endX, endY);
-  }
-  
-  // Add blue tint behind for water context
-  graphics.lineStyle(5, FLOW_COLOR, 0.3);
-  for (let i = 0; i < lineCount; i++) {
-    const offset = (i - (lineCount - 1) / 2) * lineSpacing;
-    const startX = x + offset * cos - (lineLength / 2) * sin;
-    const startY = y + offset * sin + (lineLength / 2) * cos;
-    const endX = x + offset * cos + (lineLength / 2) * sin;
-    const endY = y + offset * sin - (lineLength / 2) * cos;
-    
-    graphics.moveTo(startX, startY);
-    graphics.lineTo(endX, endY);
-  }
+  // Add blue border for definition
+  graphics.lineStyle(2, FLOW_COLOR, 0.8);
+  graphics.moveTo(x, y - badgeSize);
+  graphics.lineTo(x + badgeSize, y);
+  graphics.lineTo(x, y + badgeSize);
+  graphics.lineTo(x - badgeSize, y);
+  graphics.closePath();
 }

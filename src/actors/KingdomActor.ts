@@ -234,27 +234,38 @@ export interface WaterFeature {
  * River crossing - allows grounded armies to cross water
  * Can be a bridge (built structure) or ford (natural crossing)
  * 
- * Segment-based storage: Crossings are attached to specific river path segments
- * This ensures crossings move/delete with their rivers and avoids orphaned data
+ * Connection-point-based storage: Crossings are placed on hex connection points
+ * (center, edge, or corner) matching the same system used by river paths.
+ * Crossings are independent features that persist regardless of river state.
  */
 export interface RiverCrossing {
   id: string;  // Unique identifier (uuid)
-  pathId: string;  // Which river path this crossing belongs to
-  segmentIndex: number;  // Which segment of the path (0 = between points[0] and points[1])
-  position: number;  // Position along segment (0.0 to 1.0, typically 0.5 for center)
+  hexI: number;  // Hex row coordinate
+  hexJ: number;  // Hex column coordinate
+  
+  // Connection point (one of these should be set)
+  isCenter?: boolean;  // Center connector
+  edge?: string;  // Edge connector ('e', 'se', 'sw', 'w', 'nw', 'ne')
+  cornerIndex?: number;  // Corner connector (0-5)
+  
   type: 'bridge' | 'ford';
   name?: string;  // Optional label (e.g., "Stone Bridge", "Miller's Ford")
 }
 
 /**
- * Waterfall feature - blocks naval travel on river segments
- * Uses same segment-based storage as crossings for consistency
+ * Waterfall feature - blocks naval travel on rivers
+ * Connection-point-based storage: Waterfalls are placed on hex connection points
+ * matching the same system used by river paths and crossings.
  */
 export interface RiverWaterfall {
   id: string;  // Unique identifier (uuid)
-  pathId: string;  // Which river path this waterfall is on
-  segmentIndex: number;  // Which segment of the path
-  position: number;  // Position along segment (0.0 to 1.0)
+  hexI: number;  // Hex row coordinate
+  hexJ: number;  // Hex column coordinate
+  
+  // Connection point (one of these should be set)
+  isCenter?: boolean;  // Center connector
+  edge?: string;  // Edge connector ('e', 'se', 'sw', 'w', 'nw', 'ne')
+  cornerIndex?: number;  // Corner connector (0-5)
 }
 
 /**

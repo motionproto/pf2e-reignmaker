@@ -8,20 +8,20 @@ import { waterFeatureService } from '../core/WaterFeatureService';
 
 export class CrossingEditorHandlers {
   /**
-   * Handle waterfall click - toggle waterfall on river segment
+   * Handle waterfall click - toggle waterfall on connection point
    * Waterfalls block naval travel but not swimmers
-   * Uses segment detection (like scissors tool)
+   * Uses connector detection (same as river editing)
    */
   async handleWaterfallClick(hexId: string, position: { x: number; y: number }): Promise<void> {
-    logger.info(`[CrossingEditorHandlers] 💧 Toggling waterfall at position (${position.x}, ${position.y})`);
+    logger.info(`[CrossingEditorHandlers] 💧 Toggling waterfall at hex ${hexId}, position (${position.x}, ${position.y})`);
 
-    // Toggle waterfall using segment detection
-    const result = await waterFeatureService.toggleWaterfall(position);
+    // Toggle waterfall using connector detection
+    const result = await waterFeatureService.toggleWaterfall(hexId, position);
 
     // Show notification
     const ui = (globalThis as any).ui;
     if (result === null) {
-      ui?.notifications?.warn('Click closer to a river segment to place a waterfall');
+      ui?.notifications?.warn('Click on a connector dot to place a waterfall');
     } else if (result) {
       ui?.notifications?.info('Waterfall added (blocks boats)');
     } else {
@@ -30,20 +30,20 @@ export class CrossingEditorHandlers {
   }
 
   /**
-   * Handle bridge click - toggle bridge crossing on river segment
+   * Handle bridge click - toggle bridge crossing on connection point
    * Bridges allow grounded armies to cross water
-   * Uses segment detection (like scissors tool)
+   * Uses connector detection (same as river editing)
    */
   async handleBridgeClick(hexId: string, position: { x: number; y: number }): Promise<void> {
-    logger.info(`[CrossingEditorHandlers] 🌉 Toggling bridge at position (${position.x}, ${position.y})`);
+    logger.info(`[CrossingEditorHandlers] 🌉 Toggling bridge at hex ${hexId}, position (${position.x}, ${position.y})`);
 
-    // Toggle bridge using segment detection
-    const result = await waterFeatureService.toggleBridge(position);
+    // Toggle bridge using connector detection
+    const result = await waterFeatureService.toggleBridge(hexId, position);
 
     // Show notification
     const ui = (globalThis as any).ui;
     if (result === null) {
-      ui?.notifications?.warn('Click closer to a river segment to place a bridge');
+      ui?.notifications?.warn('Click on a connector dot to place a bridge');
     } else if (result) {
       ui?.notifications?.info('Bridge added (allows crossing)');
     } else {
@@ -52,20 +52,20 @@ export class CrossingEditorHandlers {
   }
 
   /**
-   * Handle ford click - toggle ford crossing on river segment
+   * Handle ford click - toggle ford crossing on connection point
    * Fords allow grounded armies to cross water (natural shallow crossing)
-   * Uses segment detection (like scissors tool)
+   * Uses connector detection (same as river editing)
    */
   async handleFordClick(hexId: string, position: { x: number; y: number }): Promise<void> {
-    logger.info(`[CrossingEditorHandlers] 🚶 Toggling ford at position (${position.x}, ${position.y})`);
+    logger.info(`[CrossingEditorHandlers] 🚶 Toggling ford at hex ${hexId}, position (${position.x}, ${position.y})`);
 
-    // Toggle ford using segment detection
-    const result = await waterFeatureService.toggleFord(position);
+    // Toggle ford using connector detection
+    const result = await waterFeatureService.toggleFord(hexId, position);
 
     // Show notification
     const ui = (globalThis as any).ui;
     if (result === null) {
-      ui?.notifications?.warn('Click closer to a river segment to place a ford');
+      ui?.notifications?.warn('Click on a connector dot to place a ford');
     } else if (result) {
       ui?.notifications?.info('Ford added (allows crossing)');
     } else {

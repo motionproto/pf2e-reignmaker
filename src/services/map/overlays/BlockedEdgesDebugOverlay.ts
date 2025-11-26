@@ -217,29 +217,46 @@ export function createBlockedEdgesDebugOverlay(
       // Draw crossings as red diamonds
       if (kingdom.rivers?.crossings && kingdom.rivers.crossings.length > 0) {
         console.log('[BlockedEdgesDebug] Drawing', kingdom.rivers.crossings.length, 'crossings as red diamonds');
-        const segments = waterwayGeometryService.getSegments();
         
         for (const crossing of kingdom.rivers.crossings) {
-          // Find the segment this crossing is on
-          const segment = segments.find(s => 
-            s.pathId === crossing.pathId && s.segmentIndex === crossing.segmentIndex
-          );
+          // Get position directly from connection point
+          let pos: { x: number; y: number } | null = null;
           
-          if (segment) {
-            // Interpolate position along segment (position is 0-1)
-            const position = crossing.position || 0.5; // Default to middle if not specified
-            const x = segment.start.x + (segment.end.x - segment.start.x) * position;
-            const y = segment.start.y + (segment.end.y - segment.start.y) * position;
-            
-            // Draw red diamond outline (no fill) - centered on (x, y)
+          if (crossing.isCenter) {
+            // Center connector
+            const center = canvas.grid.getCenter(crossing.hexI, crossing.hexJ);
+            pos = { x: center.x, y: center.y };
+          } else if (crossing.edge) {
+            // Edge connector - get edge midpoint
+            const vertices = canvas.grid.getVertices({ i: crossing.hexI, j: crossing.hexJ });
+            if (vertices && vertices.length === 6) {
+              const edgeMap: Record<string, number> = { 'e': 0, 'se': 1, 'sw': 2, 'w': 3, 'nw': 4, 'ne': 5 };
+              const edgeIndex = edgeMap[crossing.edge];
+              if (edgeIndex !== undefined) {
+                const v1 = vertices[edgeIndex];
+                const v2 = vertices[(edgeIndex + 1) % 6];
+                pos = { x: (v1.x + v2.x) / 2, y: (v1.y + v2.y) / 2 };
+              }
+            }
+          } else if (crossing.cornerIndex !== undefined) {
+            // Corner connector
+            const vertices = canvas.grid.getVertices({ i: crossing.hexI, j: crossing.hexJ });
+            if (vertices && vertices.length > crossing.cornerIndex) {
+              const v = vertices[crossing.cornerIndex];
+              pos = { x: v.x, y: v.y };
+            }
+          }
+          
+          if (pos) {
+            // Draw red diamond outline (no fill) - centered on connection point
             const diamondSize = 25;
             graphics.lineStyle(4, 0xFF0000, 1.0);
             // Draw diamond: top -> right -> bottom -> left -> back to top
-            graphics.moveTo(x, y - diamondSize); // Top point
-            graphics.lineTo(x + diamondSize, y); // Right point
-            graphics.lineTo(x, y + diamondSize); // Bottom point
-            graphics.lineTo(x - diamondSize, y); // Left point
-            graphics.lineTo(x, y - diamondSize); // Close back to top
+            graphics.moveTo(pos.x, pos.y - diamondSize); // Top point
+            graphics.lineTo(pos.x + diamondSize, pos.y); // Right point
+            graphics.lineTo(pos.x, pos.y + diamondSize); // Bottom point
+            graphics.lineTo(pos.x - diamondSize, pos.y); // Left point
+            graphics.lineTo(pos.x, pos.y - diamondSize); // Close back to top
           }
         }
       }

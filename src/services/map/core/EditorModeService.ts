@@ -315,11 +315,19 @@ export class EditorModeService {
     // Ensure required overlays for this tool are visible (additive, not exclusive)
     await this.ensureToolOverlaysVisible(tool);
     
-    // Render connectors when river-edit tool is activated
-    if (tool === 'river-edit') {
+    // Render connectors when river-edit or crossing tools are activated
+    const needsConnectors = tool === 'river-edit' || 
+                           tool === 'bridge-toggle' || 
+                           tool === 'ford-toggle' || 
+                           tool === 'waterfall-toggle';
+    
+    logger.info(`[EditorModeService] Tool=${tool}, needsConnectors=${needsConnectors}`);
+    
+    if (needsConnectors) {
+      logger.info('[EditorModeService] Initializing connector layer...');
       await this.initializeConnectorLayer();
     } else {
-      // Completely destroy connector layer when switching away from river-edit
+      // Completely destroy connector layer when switching away from connector-based tools
       this.destroyConnectorLayer();
     }
   }
@@ -868,14 +876,17 @@ export class EditorModeService {
    */
   private async initializeConnectorLayer(): Promise<void> {
     const canvas = (globalThis as any).canvas;
-    if (!canvas?.grid) return;
+    if (!canvas?.grid) {
+      logger.warn('[EditorModeService] ❌ Canvas grid not available, cannot initialize connectors');
+      return;
+    }
 
     // Destroy existing layer if it exists (ensures fresh render)
     this.destroyConnectorLayer();
 
     const kingdom = getKingdomData();
     
-    logger.info('[EditorModeService] 📊 River editor initialized', {
+    logger.info('[EditorModeService] 📊 Initializing connector layer', {
       pathCount: kingdom.rivers?.paths?.length || 0,
       totalHexes: kingdom.hexes?.length || 0
     });
@@ -885,18 +896,22 @@ export class EditorModeService {
     this.connectorLayer.name = 'RiverConnectorLayer';
     this.connectorLayer.sortableChildren = true;
     this.connectorLayer.zIndex = 1000;
+    this.connectorLayer.visible = true;
     
     const primaryGroup = canvas.primary;
     if (primaryGroup) {
       primaryGroup.addChild(this.connectorLayer);
-      logger.info('[EditorModeService] ✅ Created fresh connector layer');
+      logger.info('[EditorModeService] ✅ Added connector layer to canvas.primary');
     } else {
       logger.error('[EditorModeService] ❌ canvas.primary not found!');
       canvas.stage.addChild(this.connectorLayer);
     }
 
     // Render all connector dots
+    logger.info('[EditorModeService] 🎨 Rendering river connectors...');
     await renderRiverConnectors(this.connectorLayer, canvas, null);
+    
+    logger.info('[EditorModeService] ✅ Connector layer initialized with', this.connectorLayer.children.length, 'children');
   }
 
   /**
