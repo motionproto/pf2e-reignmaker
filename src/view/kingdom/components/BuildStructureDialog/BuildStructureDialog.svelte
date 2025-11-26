@@ -16,8 +16,6 @@
   import CategoryList from './components/CategoryList.svelte';
   import StructureGrid from './components/StructureGrid.svelte';
   
-  export let show: boolean = false;
-  
   const dispatch = createEventDispatcher();
   
   // State
@@ -34,19 +32,12 @@
   let addToQueueOnly: boolean = false;
   let controller: Awaited<ReturnType<typeof createBuildStructureController>> | null = null;
   
-  // Initialize structures service and controller
+  // Initialize structures service and controller, and dialog state
   onMount(async () => {
     structuresService.initializeStructures();
     controller = await createBuildStructureController();
-  });
-  
-  // Check settlement capacity
-  $: capacityInfo = controller && selectedSettlementId 
-    ? controller.isSettlementAtCapacity(selectedSettlementId)
-    : { atCapacity: false, current: 0, max: 0 };
-  
-  // React to dialog open/close
-  $: if (show) {
+    
+    // Initialize dialog state when mounted
     settlements = $kingdomData.settlements;
     selectedStructureId = '';
     selectedSettlementId = settlements.length > 0 ? settlements[0].id : '';
@@ -56,7 +47,12 @@
     successMessage = '';
     addToQueueOnly = false;
     selectedCategory = '';
-  }
+  });
+  
+  // Check settlement capacity
+  $: capacityInfo = controller && selectedSettlementId 
+    ? controller.isSettlementAtCapacity(selectedSettlementId)
+    : { atCapacity: false, current: 0, max: 0 };
   
   // When settlement is selected OR settlements change, update available structures
   // This ensures the dialog reacts to manual structure additions/removals
@@ -148,8 +144,7 @@
   }
   
   function handleClose() {
-    show = false;
-    dispatch('close');
+    dispatch('cancel');  // Dialog will be unmounted by parent
   }
   
   // Handle build button click from structure card - just dispatch selection
@@ -162,11 +157,19 @@
       return;
     }
     
-    // Dispatch selection event (actual building happens after roll)
-    dispatch('structureQueued', {
+    // Get structure and settlement names for metadata
+    const structure = structuresService.getStructure(selectedStructureId);
+    const settlement = settlements.find(s => s.id === selectedSettlementId);
+    
+    // Dispatch confirm event (matches configuration dialog interface)
+    dispatch('confirm', {
       structureId: selectedStructureId,
-      settlementId: selectedSettlementId
+      settlementId: selectedSettlementId,
+      structureName: structure?.name || 'Unknown Structure',
+      settlementName: settlement?.name || 'Unknown Settlement'
     });
+    
+    // Parent will unmount the dialog after receiving confirm event
   }
   
   // Select a structure
@@ -184,8 +187,7 @@
   }
 </script>
 
-{#if show}
-  <div class="dialog-overlay" on:click={handleClose}>
+<div class="dialog-overlay" on:click={handleClose}>
     <div class="dialog-container" on:click|stopPropagation>
       <div class="dialog-header">
         <h2><i class="fas fa-hammer"></i> Build Structure</h2>
@@ -247,8 +249,7 @@
         {/if}
       </div>
     </div>
-  </div>
-{/if}
+</div>
 
 <style lang="scss">
   .dialog-overlay {
@@ -288,6 +289,7 @@
       margin: 0;
       color: var(--color-amber);
       font-size: var(--font-2xl);
+      font-family: var(--font-sans-rm);
       display: flex;
       align-items: center;
       gap: var(--space-12);
@@ -342,7 +344,7 @@
   
   // Left panel - Categories
   .categories-panel {
-    flex: 0 0 21.25rem;
+    flex: 0 0 26rem;  // Optimized width for category badges and names
     background: var(--overlay-low);
     border-right: 1px solid var(--border-subtle);
     padding: var(--space-16);

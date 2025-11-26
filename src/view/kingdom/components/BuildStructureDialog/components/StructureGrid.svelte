@@ -185,6 +185,7 @@
           margin: 0;
           color: var(--color-amber);
           font-size: var(--font-3xl);
+          font-family: var(--font-sans-rm);
           line-height: 1.2;
         }
         

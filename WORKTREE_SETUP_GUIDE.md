@@ -4,21 +4,24 @@
 
 You now have two working directories for the same repository:
 
-1. **Primary Directory** (Editor 1)
+1. **PRIMARY WORKTREE (THIS MACHINE - Editor 1)**
    - Path: `/Users/mark/Documents/repos/pf2e-reignmaker`
    - Branch: `actionbranch`
    - Purpose: Your current work on actions/pipelines
+   - **Status: ✅ THIS IS YOUR PRIMARY DEVELOPMENT ENVIRONMENT**
 
 2. **Secondary Directory** (Editor 2)
    - Path: `/Users/mark/Documents/repos/pf2e-reignmaker-editor2`
    - Branch: `editor2-branch`
    - Purpose: Second developer's work or parallel development
+   - **Status: Ready for second developer to use**
 
 ## How to Use Both Worktrees
 
-### For Editor 1 (Current Directory)
+### For THIS MACHINE (Primary - Editor 1)
 ```bash
-# Continue working as normal
+# You are already in the primary worktree
+# Continue working as normal in:
 cd /Users/mark/Documents/repos/pf2e-reignmaker
 # You're on actionbranch
 git add .
@@ -26,11 +29,18 @@ git commit -m "your changes"
 git push origin actionbranch
 ```
 
-### For Editor 2 (New Worktree)
+### For SECOND DEVELOPER (Editor 2 - Different Machine or Window)
 ```bash
-# Open in a new VS Code window
+# The second developer should:
+# 1. Either use the secondary worktree on this machine
 cd /Users/mark/Documents/repos/pf2e-reignmaker-editor2
-# You're on editor2-branch
+
+# 2. OR clone and checkout editor2-branch on their machine
+git clone https://github.com/motionproto/pf2e-reignmaker.git
+cd pf2e-reignmaker
+git checkout editor2-branch
+
+# Then work normally
 git add .
 git commit -m "editor 2 changes"
 git push origin editor2-branch
@@ -96,12 +106,12 @@ git log --oneline HEAD..origin/actionbranch  # See what actionbranch has that ed
 ## Best Practices for Parallel Development
 
 ### 1. Divide Work by Domain
-- **Editor 1 (actionbranch)**: Focus on pipelines and actions
+- **PRIMARY (THIS MACHINE - actionbranch)**: Focus on pipelines and actions
   - `/src/pipelines/actions/`
   - `/src/controllers/actions/`
   - `/src/services/PipelineCoordinator.ts`
 
-- **Editor 2 (editor2-branch)**: Focus on UI/UX
+- **SECONDARY (Editor 2 - editor2-branch)**: Focus on UI/UX
   - `/src/view/`
   - `/src/styles/`
   - `/src/stores/`

@@ -32,11 +32,11 @@
 <style lang="scss">
   .category-item {
     width: 100%;
-    padding: var(--space-8) var(--space-12);
+    padding: var(--space-6) var(--space-12);  // Reduced from var(--space-8)
     background: var(--overlay-high);
     border: 1px solid transparent;
     border-radius: var(--radius-sm);
-    margin-bottom: var(--space-8);
+    margin-bottom: var(--space-6);  // Reduced from var(--space-8)
     cursor: pointer;
     transition: all 0.15s;
     display: flex;
@@ -128,6 +128,7 @@
       .category-name {
         font-weight: var(--font-weight-semibold);
         font-size: var(--font-lg);
+        font-family: var(--font-sans-rm);
         color: var(--text-primary);
         word-wrap: break-word;
         margin-bottom: var(--space-4);
