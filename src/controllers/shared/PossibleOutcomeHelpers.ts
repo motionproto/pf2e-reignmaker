@@ -12,6 +12,7 @@ export interface PossibleOutcome {
   modifiers?: EventModifier[];
   manualEffects?: string[];
   gameCommands?: any[];
+  outcomeBadges?: any[];  // UnifiedOutcomeBadge[] for condition badges from pipeline
 }
 
 export interface OutcomeEffects {

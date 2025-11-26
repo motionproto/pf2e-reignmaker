@@ -72,22 +72,27 @@ export class PathfindingService {
   }
 
   /**
-   * Get movement cost for entering a hex (NEW: Uses waterways and movement traits)
+   * Get movement cost for entering a hex
    * 
    * Movement costs:
    * - Flying armies: Always 1 (ignores all terrain)
    * - Naval/Swimming armies on water: 1 (rivers, lakes) or 2 (swamps - difficult)
    *   - +1 penalty for upstream river travel
-   * - Grounded armies on water: Infinity (impassable unless crossing exists)
+   * - Grounded armies crossing rivers: Infinity (unless crossing exists on movement path)
+   * - Grounded armies on lakes/swamps: Infinity (unless can swim/has boats)
    * - Grounded armies on land:
    *   - Open terrain: 1
    *   - Difficult terrain: 2
    *   - Greater difficult terrain: 3
    *   - Roads reduce cost by 1 step (min 1)
    * 
+   * RIVER CROSSING: Rivers are edge-based features. Movement is only blocked
+   * if the movement path (from source hex to target hex) intersects a river
+   * line segment that doesn't have a crossing (bridge/ford).
+   * 
    * @param hexId - Target hex ID
    * @param traits - Army movement traits (canFly, canSwim, hasBoats)
-   * @param fromHexId - Optional source hex (for directional costs like upstream)
+   * @param fromHexId - Optional source hex (required for river crossing detection)
    * @returns Movement cost (or Infinity if hex doesn't exist or impassable)
    */
   getMovementCost(hexId: string, traits?: ArmyMovementTraits, fromHexId?: string): number {
@@ -107,18 +112,19 @@ export class PathfindingService {
     const hexI = parseInt(parts[0], 10);
     const hexJ = parseInt(parts[1], 10);
 
-    // Check waterways using new lookup service
-    const hasRiver = waterwayLookup.hasRiver(hexI, hexJ);
+    // Check waterways using lookup service
+    // Note: Rivers are now checked via line intersection, not hasRiver()
     const hasLake = waterwayLookup.hasLake(hexI, hexJ);
     const hasSwamp = waterwayLookup.hasSwamp(hexI, hexJ);
-    const hasCrossing = waterwayLookup.hasCrossing(hexI, hexJ);
     const hasWaterfall = waterwayLookup.hasWaterfall(hexI, hexJ);
     
-    // Check water terrain
+    // Check water terrain (lakes, not rivers)
     const isWaterTerrain = hex.terrain === 'water';
     
-    // Any waterway or water terrain = water hex
-    const isWaterHex = hasRiver || hasLake || hasSwamp || isWaterTerrain;
+    // Only lakes and water terrain are impassable hex-based water
+    // Swamps are NOT impassable - they just have high terrain cost (handled in land cost)
+    // Rivers use line intersection, not hex-based blocking
+    const isHexBasedWater = hasLake || isWaterTerrain;
 
     // Flying armies always cost 1 per hex (ignore all terrain)
     if (canFly) {
@@ -128,40 +134,36 @@ export class PathfindingService {
     // Amphibious units: Choose best cost between water and land movement
     const { amphibious = false } = traits || {};
     if (amphibious) {
-      // Calculate water movement cost
+      // Calculate water movement cost (for hex-based water only)
       let waterCost = Infinity;
-      if (isWaterHex) {
+      if (isHexBasedWater) {
         // Waterfalls block naval travel (but not swimmers)
         if (hasWaterfall && hasBoats && !canSwim) {
           waterCost = Infinity;
         } else if (canSwim || hasBoats) {
-          waterCost = hasSwamp ? 2 : 1;
-        } else if (hasCrossing) {
-          waterCost = 1;
+          waterCost = 1;  // Lakes/water terrain cost 1 for swimmers
         }
+      }
+      // Swamps are easier for amphibious (cost 2, not +1 difficulty)
+      if (hasSwamp && (canSwim || hasBoats)) {
+        waterCost = Math.min(waterCost, 2);
       }
       
       // Calculate land movement cost
-      let landCost = 1;
-      if (hex.travel === 'difficult') {
-        landCost = 2;
-      } else if (hex.travel === 'greater-difficult') {
-        landCost = 3;
-      }
+      let landCost = this.calculateLandCost(hex, hasSwamp);
       
-      // Roads reduce land cost by 1 step (min 1)
-      const hasRoad = hex.hasRoad === true;
-      const hasSettlement = hex.features?.some((f: any) => f.type === 'settlement') ?? false;
-      if (hasRoad || hasSettlement) {
-        landCost = Math.max(1, landCost - 1);
-      }
+      // Check if movement crosses a river (amphibious can cross rivers freely)
+      // Amphibious units can swim across rivers, so no blocking
       
       // Choose the better (lower) cost
       return Math.min(waterCost, landCost);
     }
 
-    // Handle water hexes (non-amphibious units)
-    if (isWaterHex) {
+    // Handle hex-based water (lakes, water terrain) for non-amphibious units
+    // Note: Swamps are NOT hex-based water - they just have high terrain cost
+    if (isHexBasedWater) {
+      logger.debug(`[Pathfinding] Hex ${hexId} is hex-based water: lake=${hasLake}, waterTerrain=${isWaterTerrain}`);
+      
       // Waterfalls block naval travel (boats cannot pass)
       // But swimmers can navigate waterfalls
       if (hasWaterfall && hasBoats && !canSwim) {
@@ -170,14 +172,15 @@ export class PathfindingService {
       
       // Naval or swimming armies can traverse water
       if (canSwim || hasBoats) {
-        // Base cost: Swamps are difficult (2), rivers/lakes are easy (1)
-        let waterCost = hasSwamp ? 2 : 1;
+        // Base cost: Lakes/water terrain cost 1
+        let waterCost = 1;
         
-        // Check for upstream travel penalty (only applies to rivers)
+        // Check for upstream travel penalty (only applies to rivers on water hexes)
+        const hasRiver = waterwayLookup.hasRiver(hexI, hexJ);
         if (hasRiver && fromHexId) {
-          const parts = fromHexId.split('.');
-          const fromHexI = parseInt(parts[0], 10);
-          const fromHexJ = parseInt(parts[1], 10);
+          const fromParts = fromHexId.split('.');
+          const fromHexI = parseInt(fromParts[0], 10);
+          const fromHexJ = parseInt(fromParts[1], 10);
           
           if (!isNaN(fromHexI) && !isNaN(fromHexJ)) {
             const isUpstreamTravel = waterwayLookup.isUpstream(fromHexI, fromHexJ, hexI, hexJ);
@@ -191,22 +194,52 @@ export class PathfindingService {
         return waterCost;
       }
       
-      // Grounded armies can cross if there's a bridge/ford
-      if (hasCrossing) {
-        return 1;  // Crossing allows passage at cost 1
-      }
-      
-      // Grounded army, no crossing = impassable
+      // Grounded army, hex-based water = impassable
+      logger.debug(`[Pathfinding] ${hexId} BLOCKED: grounded army on hex-based water`);
       return Infinity;
     }
 
-    // Land movement: Base cost from travel difficulty
+    // RIVER CROSSING CHECK (for grounded, non-swimming, non-amphibious units)
+    // Rivers are line-based obstacles - check if movement path crosses a river
+    const shouldCheckRiver = fromHexId && !canSwim && !hasBoats;
+    
+    if (shouldCheckRiver) {
+      const fromParts = fromHexId!.split('.');
+      const fromHexI = parseInt(fromParts[0], 10);
+      const fromHexJ = parseInt(fromParts[1], 10);
+      
+      if (!isNaN(fromHexI) && !isNaN(fromHexJ)) {
+        // Check if movement line intersects a river segment without a crossing
+        const crossesRiver = waterwayLookup.doesMovementCrossRiver(fromHexI, fromHexJ, hexI, hexJ);
+        if (crossesRiver) {
+          logger.info(`[Pathfinding] Movement ${fromHexId} → ${hexId} BLOCKED by river crossing`);
+          return Infinity;  // Movement blocked by river
+        }
+      }
+    }
+
+    // Land movement: Base cost from travel difficulty (swamps add +1)
+    return this.calculateLandCost(hex, hasSwamp);
+  }
+  
+  /**
+   * Calculate land movement cost for a hex
+   * @param hex - Hex data
+   * @param hasSwamp - Whether hex has swamp (adds difficulty)
+   * @returns Movement cost (1 for open, 2 for difficult, 3 for greater-difficult)
+   */
+  private calculateLandCost(hex: any, hasSwamp: boolean = false): number {
     let cost = 1; // open (default)
     
     if (hex.travel === 'difficult') {
       cost = 2;
     } else if (hex.travel === 'greater-difficult') {
       cost = 3;
+    }
+    
+    // Swamps add +1 difficulty (treated as difficult terrain for movement)
+    if (hasSwamp && cost < 3) {
+      cost += 1;
     }
 
     // Roads reduce cost by 1 step (min 1)

@@ -50,7 +50,7 @@
       ]
     },
     "failure": {
-      "description": "Your troops arrive tired and less prepared for combat. The army suffers a -1 penalty to initiative and becomes fatigued.",
+      "description": "Your troops arrive tired and less prepared for combat.",
       "modifiers": [],
       "gameCommands": [
         {
@@ -64,7 +64,7 @@
       ]
     },
     "criticalFailure": {
-      "description": "Your forces get lost and arrive exhausted. The army suffers a -2 penalty to initiative, becomes fatigued and enfeebled 1, and the kingdom's unrest increases by 1.",
+      "description": "Your forces get lost and arrive demoralized and exhausted.",
       "modifiers": [
         {
           "type": "static",

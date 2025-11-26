@@ -47,7 +47,6 @@ export class UnifiedCheckHandler {
     this.validatePipeline(pipeline);
 
     this.pipelines.set(id, pipeline);
-    console.log(`✅ [UnifiedCheckHandler] Registered ${pipeline.checkType}: ${id} (total: ${this.pipelines.size})`);
   }
 
   /**

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { writable } from 'svelte/store';
-  import { getEditorModeService, type EditorTool } from '../../services/map/core/EditorModeService';
+  import { getEditorModeService, type EditorTool, type EditorMode } from '../../services/map/core/EditorModeService';
   import SettlementEditorDialog from './SettlementEditorDialog.svelte';
   import { settlementEditorDialog } from '../../stores/SettlementEditorDialogStore';
   import { kingdomData } from '../../stores/KingdomStore';
@@ -71,7 +71,7 @@
   }
   
   // Handle section selection from dropdown
-  function handleSectionChange(event: Event) {
+  async function handleSectionChange(event: Event) {
     event.stopPropagation();
     const target = event.target as HTMLSelectElement;
     const newSection = target.value;
@@ -80,24 +80,8 @@
     selectedSection = newSection;
     localStorage.setItem('reignmaker-editor-panel-section', newSection);
     
-    // Ensure the tool is set for the new section
-    const defaultTools: Record<string, EditorTool> = {
-      'waterways': 'river-edit',
-      'crossings': 'waterfall-toggle',
-      'roads': 'road-edit',
-      'terrain': 'terrain-plains',
-      'bounty': 'bounty-food',
-      'worksites': 'worksite-farm',
-      'settlements': 'settlement-place',
-      'fortifications': 'fortification-tier1',
-      'territory': 'claimed-by'
-    };
-    
-    const tool = defaultTools[newSection];
-    if (tool) {
-      currentTool.set(tool);
-      editorService.setTool(tool);
-    }
+    // Select the section (applies editor mode and sets default tool)
+    await selectSection(newSection);
     
     setTimeout(() => { isChangingSection = false; }, 100);
   }
@@ -137,8 +121,12 @@
     return null;
   }
   
-  // Select section (set default tool for that section)
+  // Select section (applies editor mode and sets default tool)
   async function selectSection(section: string): Promise<void> {
+    // First, apply the editor mode (sets default overlay configuration)
+    await editorService.setEditorMode(section as EditorMode);
+    
+    // Then set the default tool for this section
     const defaultTools: Record<string, EditorTool> = {
       'waterways': 'river-edit',
       'crossings': 'waterfall-toggle',

@@ -22,6 +22,37 @@
     return 1;
   }
   
+  // Format condition text for deployArmy conditions
+  function formatCondition(condition: string): { text: string; variant: 'positive' | 'negative' } {
+    // Determine variant based on condition text
+    const isPositive = condition.includes('+') || condition.includes('bonus');
+    const variant = isPositive ? 'positive' : 'negative';
+    
+    // Clean up condition text for display
+    // Remove "(status bonus)" or "(status penalty)" suffix for cleaner display
+    let text = condition
+      .replace(/\s*\(status\s+(bonus|penalty)\)/gi, '')
+      .trim();
+    
+    return { text, variant };
+  }
+  
+  // Check if command has deployArmy conditions
+  function hasDeployArmyConditions(command: GameCommand): boolean {
+    return command.type === 'deployArmy' && 
+           'conditionsToApply' in command && 
+           Array.isArray((command as any).conditionsToApply) &&
+           (command as any).conditionsToApply.length > 0;
+  }
+  
+  // Get deployArmy conditions
+  function getDeployArmyConditions(command: GameCommand): string[] {
+    if (hasDeployArmyConditions(command)) {
+      return (command as any).conditionsToApply;
+    }
+    return [];
+  }
+  
   // Format game command text based on type
   function formatGameCommand(command: GameCommand): string {
     switch (command.type) {
@@ -80,7 +111,7 @@
       
       case 'deployArmy':
         // Don't show "Deploy Army" badge - it's redundant since the action is already "Deploy Army"
-        // Only show additional effects (conditions, modifiers) which are displayed elsewhere
+        // Conditions will be displayed separately below
         return '';
       
       case 'outfitArmy':
@@ -178,6 +209,16 @@
     {#if text}
       <span class="badge command-badge">{text}</span>
     {/if}
+    
+    <!-- Special handling for deployArmy: show conditions as badges -->
+    {#if hasDeployArmyConditions(command)}
+      {#each getDeployArmyConditions(command) as condition}
+        {@const formatted = formatCondition(condition)}
+        <span class="badge condition-badge" class:variant-positive={formatted.variant === 'positive'} class:variant-negative={formatted.variant === 'negative'}>
+          {formatted.text}
+        </span>
+      {/each}
+    {/if}
   {/each}
 {/if}
 
@@ -197,5 +238,23 @@
     background: var(--hover-low);
     color: var(--text-secondary);
     border: 1px solid var(--border-medium);
+  }
+  
+  .condition-badge {
+    background: var(--hover-low);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-medium);
+    
+    &.variant-positive {
+      background: var(--surface-success-lower);
+      color: var(--color-green);
+      border-color: var(--color-green-light);
+    }
+    
+    &.variant-negative {
+      background: var(--surface-primary-lower);
+      color: var(--color-red);
+      border-color: var(--color-red-light);
+    }
   }
 </style>

@@ -334,7 +334,9 @@ export class WaterFeatureService {
       if (existingIndex !== -1) {
         // Remove existing bridge
         kingdom.rivers.crossings.splice(existingIndex, 1);
-        logger.info(`[WaterFeatureService] ❌ Removed bridge from path ${pathId}, segment ${segmentIndex}`);
+        logger.info(
+          `[WaterFeatureService] ❌ Removed bridge from path ${pathId}, segment ${segmentIndex}`
+        );
         wasAdded = false;
       } else {
         // Remove ford if present (mutually exclusive)
@@ -343,7 +345,9 @@ export class WaterFeatureService {
         );
         if (fordIndex !== -1) {
           kingdom.rivers.crossings.splice(fordIndex, 1);
-          logger.info(`[WaterFeatureService] ⚠️ Removed ford from path ${pathId}, segment ${segmentIndex} (replaced by bridge)`);
+          logger.info(
+            `[WaterFeatureService] ⚠️ Removed ford from path ${pathId}, segment ${segmentIndex} (replaced by bridge)`
+          );
         }
 
         // Add bridge
@@ -354,7 +358,11 @@ export class WaterFeatureService {
           position,
           type: 'bridge'
         });
-        logger.info(`[WaterFeatureService] ✅ Added bridge to path ${pathId}, segment ${segmentIndex}, position ${position.toFixed(2)}`);
+        logger.info(
+          `[WaterFeatureService] ✅ Added bridge to path ${pathId}, segment ${segmentIndex}, position ${position.toFixed(
+            2
+          )}`
+        );
         wasAdded = true;
       }
     });
@@ -402,7 +410,9 @@ export class WaterFeatureService {
       if (existingIndex !== -1) {
         // Remove existing ford
         kingdom.rivers.crossings.splice(existingIndex, 1);
-        logger.info(`[WaterFeatureService] ❌ Removed ford from path ${pathId}, segment ${segmentIndex}`);
+        logger.info(
+          `[WaterFeatureService] ❌ Removed ford from path ${pathId}, segment ${segmentIndex}`
+        );
         wasAdded = false;
       } else {
         // Remove bridge if present (mutually exclusive)
@@ -411,7 +421,9 @@ export class WaterFeatureService {
         );
         if (bridgeIndex !== -1) {
           kingdom.rivers.crossings.splice(bridgeIndex, 1);
-          logger.info(`[WaterFeatureService] ⚠️ Removed bridge from path ${pathId}, segment ${segmentIndex} (replaced by ford)`);
+          logger.info(
+            `[WaterFeatureService] ⚠️ Removed bridge from path ${pathId}, segment ${segmentIndex} (replaced by ford)`
+          );
         }
 
         // Add ford
@@ -422,7 +434,11 @@ export class WaterFeatureService {
           position,
           type: 'ford'
         });
-        logger.info(`[WaterFeatureService] ✅ Added ford to path ${pathId}, segment ${segmentIndex}, position ${position.toFixed(2)}`);
+        logger.info(
+          `[WaterFeatureService] ✅ Added ford to path ${pathId}, segment ${segmentIndex}, position ${position.toFixed(
+            2
+          )}`
+        );
         wasAdded = true;
       }
     });

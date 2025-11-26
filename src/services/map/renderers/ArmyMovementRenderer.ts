@@ -10,7 +10,7 @@ import { logger } from '../../../utils/Logger';
  */
 const MOVEMENT_COLORS = {
   // Origin hex (where army starts)
-  origin: 0x4CAF50,         // Green
+  origin: 0x00FF00,         // Bright green
   originAlpha: 0.4,
   
   // Reachable hexes (movement range overlay)
@@ -45,7 +45,7 @@ export function renderOriginHex(
   const style = {
     fillColor: MOVEMENT_COLORS.origin,
     fillAlpha: MOVEMENT_COLORS.originAlpha,
-    borderWidth: 3,
+    borderWidth: 16,
     borderColor: MOVEMENT_COLORS.origin,
     borderAlpha: 1.0
   };

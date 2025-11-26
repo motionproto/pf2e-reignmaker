@@ -31,7 +31,20 @@
   const editorService = getEditorModeService();
 
   // Get all registered overlays (static list)
-  const overlays = overlayManager.getAllOverlays();
+  const allOverlays = overlayManager.getAllOverlays();
+  
+  // Filter overlays: show debug overlays only to GMs
+  const overlays = allOverlays.filter(overlay => {
+    // Debug overlays (contain "debug" in ID) only visible to GMs
+    if (overlay.id.includes('debug')) {
+      return isGM;
+    }
+    // Hide internal overlays (like hover)
+    if (overlay.id === 'interactive-hover') {
+      return false;
+    }
+    return true;
+  });
   
   // Subscribe to active overlays store for reactive UI updates
   const activeOverlaysStore = overlayManager.getActiveOverlaysStore();

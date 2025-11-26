@@ -1,6 +1,8 @@
 /**
  * WaterRenderer - Renders river segments using edge-to-edge connector system
  * Supports straight rivers and bent rivers (using center connector)
+ * 
+ * Also exports computed river segments for pathfinding use via notifySegmentsReady callback.
  */
 
 import { getKingdomActor } from '../../../main.kingdom';
@@ -8,6 +10,7 @@ import type { KingdomData } from '../../../actors/KingdomActor';
 import { logger } from '../../../utils/Logger';
 import { getEdgeMidpoint, getHexCenter, parseHexId } from '../../../utils/riverUtils';
 import type { RiverSegment, EdgeDirection } from '../../../models/Hex';
+import { waterwayGeometryService } from '../../pathfinding/WaterwayGeometryService';
 
 // River visual constants
 const RIVER_WIDTH = 20;
@@ -45,15 +48,45 @@ const WATERFALL_COLOR = 0xFFFFFF;  // White - waterfall spray
 const WATERFALL_ALPHA = 0.8;
 
 /**
+ * Convert a river path point into a world-space position using the unified
+ * hex connection point model (center, edge, or corner).
+ */
+function getConnectorPosition(
+  point: { hexI: number; hexJ: number; isCenter?: boolean; edge?: string; cornerIndex?: number },
+  canvas: any
+): { x: number; y: number } | null {
+  if (point.isCenter) {
+    return getHexCenter(point.hexI, point.hexJ, canvas);
+  }
+
+  if (point.edge) {
+    return getEdgeMidpoint(point.hexI, point.hexJ, point.edge as EdgeDirection, canvas);
+  }
+
+  if (point.cornerIndex !== undefined) {
+    const vertices = canvas.grid.getVertices({ i: point.hexI, j: point.hexJ });
+    if (!vertices || vertices.length <= point.cornerIndex) {
+      return null;
+    }
+    const v = vertices[point.cornerIndex];
+    return { x: v.x, y: v.y };
+  }
+
+  return null;
+}
+
+/**
  * Render all river segments across the map
  * Uses canonical edge map to prevent duplicate rendering
  * 
  * @param layer - PIXI container to add graphics to
  * @param canvas - Foundry canvas object
+ * @param activePathId - Optional ID of the path currently being edited (for highlight)
  */
 export async function renderWaterConnections(
   layer: PIXI.Container,
-  canvas: any
+  canvas: any,
+  activePathId?: string | null
 ): Promise<void> {
   if (!canvas?.grid) {
     logger.warn('[WaterRenderer] Canvas grid not available');
@@ -110,17 +143,11 @@ export async function renderWaterConnections(
     // Sort points by order
     const sortedPoints = [...path.points].sort((a, b) => a.order - b.order);
     
-    // Get positions for each point
-    const positions: Array<{x: number, y: number}> = [];
+    // Get positions for each point (center, edge, or corner)
+    const positions: Array<{ x: number; y: number }> = [];
     
     for (const point of sortedPoints) {
-      let pos;
-      if (point.isCenter) {
-        pos = getHexCenter(point.hexI, point.hexJ, canvas);
-      } else if (point.edge) {
-        pos = getEdgeMidpoint(point.hexI, point.hexJ, point.edge as EdgeDirection, canvas);
-      }
-      
+      const pos = getConnectorPosition(point, canvas);
       if (pos) {
         positions.push(pos);
       }
@@ -129,13 +156,15 @@ export async function renderWaterConnections(
     if (positions.length < 2) continue;
     
     // Determine color (use navigable property or default to blue)
-    const riverColor = path.navigable !== false ? FLOW_COLOR : FLOW_COLOR;
+    const isActive = !!activePathId && path.id === activePathId;
+    const riverColor = isActive ? 0x66CCFF : FLOW_COLOR; // brighter blue for active path
+    const riverAlpha = isActive ? Math.min(1, RIVER_ALPHA + 0.2) : RIVER_ALPHA;
     
     // Draw border
     drawRiverPath(borderGraphics, positions, RIVER_BORDER_WIDTH, RIVER_BORDER_COLOR, RIVER_BORDER_ALPHA);
     
     // Draw river
-    drawRiverPath(riverGraphics, positions, RIVER_WIDTH, riverColor, RIVER_ALPHA);
+    drawRiverPath(riverGraphics, positions, RIVER_WIDTH, riverColor, riverAlpha);
     
     // Draw flow arrows
     drawFlowArrows(arrowGraphics, positions);
@@ -150,8 +179,11 @@ export async function renderWaterConnections(
   if (kingdom.rivers?.crossings && kingdom.rivers.crossings.length > 0) {
     renderCrossings(layer, canvas, kingdom.rivers.paths || [], kingdom.rivers.crossings);
   }
+  
+  // Geometry is computed by WaterwayGeometryService, not here
+  // The service reactively rebuilds when kingdom data changes
+  logger.info(`[WaterRenderer] River rendering complete`);
 }
-
 
 /**
  * Draw a river path using PIXI graphics
@@ -401,7 +433,7 @@ function drawHexFill(
 function renderCrossings(
   layer: PIXI.Container,
   canvas: any,
-  paths: Array<{ id: string; points: Array<{ hexI: number; hexJ: number; edge?: string; isCenter?: boolean; order: number }> }>,
+  paths: Array<{ id: string; points: Array<{ hexI: number; hexJ: number; edge?: string; isCenter?: boolean; cornerIndex?: number; order: number }> }>,
   crossings: Array<{ id: string; pathId: string; segmentIndex: number; position: number; type: 'bridge' | 'ford' }>
 ): void {
   const crossingGraphics = new PIXI.Graphics();
@@ -420,14 +452,9 @@ function renderCrossings(
     const p1 = sortedPoints[crossing.segmentIndex];
     const p2 = sortedPoints[crossing.segmentIndex + 1];
     
-    // Get screen positions
-    const pos1 = p1.isCenter 
-      ? getHexCenter(p1.hexI, p1.hexJ, canvas)
-      : getEdgeMidpoint(p1.hexI, p1.hexJ, p1.edge as EdgeDirection, canvas);
-    
-    const pos2 = p2.isCenter
-      ? getHexCenter(p2.hexI, p2.hexJ, canvas)
-      : getEdgeMidpoint(p2.hexI, p2.hexJ, p2.edge as EdgeDirection, canvas);
+    // Get screen positions using unified connector model
+    const pos1 = getConnectorPosition(p1, canvas);
+    const pos2 = getConnectorPosition(p2, canvas);
     
     if (!pos1 || !pos2) continue;
     

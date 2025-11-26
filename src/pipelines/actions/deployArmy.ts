@@ -76,10 +76,24 @@ const pipeline = createActionPipeline('deploy-army', {
         textBadge(`Will deploy ${armyName} to ${finalHex}`, 'fa-flag', 'positive')
       ];
 
+      // Add specific condition badges based on outcome
       if (ctx.outcome === 'criticalSuccess') {
-        outcomeBadges.push(textBadge('Army gains combat bonuses', 'fa-star', 'positive'));
-      } else if (ctx.outcome === 'failure' || ctx.outcome === 'criticalFailure') {
-        outcomeBadges.push(textBadge('Army arrives with penalties', 'fa-exclamation-triangle', 'negative'));
+        outcomeBadges.push(
+          textBadge('+1 initiative (status bonus)', 'fa-bolt', 'positive'),
+          textBadge('+1 saving throws (status bonus)', 'fa-shield-alt', 'positive'),
+          textBadge('+1 attack (status bonus)', 'fa-sword', 'positive')
+        );
+      } else if (ctx.outcome === 'failure') {
+        outcomeBadges.push(
+          textBadge('-1 initiative (status penalty)', 'fa-bolt', 'negative'),
+          textBadge('fatigued', 'fa-tired', 'negative')
+        );
+      } else if (ctx.outcome === 'criticalFailure') {
+        outcomeBadges.push(
+          textBadge('-2 initiative (status penalty)', 'fa-bolt', 'negative'),
+          textBadge('enfeebled 1', 'fa-dizzy', 'negative'),
+          textBadge('fatigued', 'fa-tired', 'negative')
+        );
       }
 
       return { resources, outcomeBadges, warnings: [] };

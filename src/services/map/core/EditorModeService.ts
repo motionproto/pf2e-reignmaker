@@ -41,6 +41,36 @@ export type EditorTool =
   | 'inactive';
 
 /**
+ * High-level editor modes that group related tools and define default overlay configurations
+ */
+export type EditorMode = 
+  | 'waterways'      // Rivers, lakes, swamps
+  | 'crossings'      // Waterfalls, bridges, fords
+  | 'roads'          // Road network
+  | 'terrain'        // Terrain types
+  | 'bounty'         // Resource bounties
+  | 'worksites'      // Worksites
+  | 'settlements'    // Settlements
+  | 'fortifications' // Fortifications
+  | 'territory';     // Territory claims
+
+/**
+ * Default overlay configurations for each editor mode
+ * These overlays are shown when entering a mode, but users can toggle them freely
+ */
+const EDITOR_MODE_OVERLAYS: Record<EditorMode, string[]> = {
+  'waterways': ['water'],
+  'crossings': ['water'],
+  'roads': ['roads'],
+  'terrain': ['terrain'],
+  'bounty': ['resources'],
+  'worksites': ['worksites'],
+  'settlements': ['settlements', 'settlement-labels'],
+  'fortifications': ['fortifications'],
+  'territory': ['territories']
+};
+
+/**
  * Singleton service for map editing
  */
 export class EditorModeService {
@@ -48,6 +78,7 @@ export class EditorModeService {
   
   private active = false;
   private currentTool: EditorTool = 'inactive';
+  private currentMode: EditorMode | null = null;
   private backupKingdomData: KingdomData | null = null;
   private isDragging = false;
   
@@ -58,6 +89,10 @@ export class EditorModeService {
   
   // Store layer interactivity state for restoration
   private savedLayerInteractivity: Map<string, boolean> = new Map();
+  
+  // Store previous active scene control for restoration
+  private previousActiveControl: string | null = null;
+  private previousTokenActiveTool: string | null = null;
   
   // River editing state
   private connectorLayer: PIXI.Container | null = null;
@@ -153,6 +188,11 @@ export class EditorModeService {
   
   /**
    * Enter editor mode - backup kingdom data and take control of mouse interactions
+   * 
+   * OVERLAY MANAGEMENT:
+   * - Preserves user's current overlay state via overlay stack
+   * - Clears all graphics layers for clean slate
+   * - Does NOT set default overlays yet - wait for setEditorMode() call
    */
   async enterEditorMode(): Promise<void> {
     if (this.active) {
@@ -168,28 +208,39 @@ export class EditorModeService {
     
     this.active = true;
     this.currentTool = 'inactive';
+    this.currentMode = null;
     
     // Disable canvas layer interactivity (prevents token/tile selection)
     this.savedLayerInteractivity = disableCanvasLayerInteractivity();
     
-    // CRITICAL FIX: Clear ALL map layers before starting editor
-    // This ensures no stale graphics from any source (overlays, scene control, etc.)
+    // CRITICAL: Push current overlay state onto stack BEFORE any changes
+    // This allows us to restore user's exact overlay preferences on exit
+    const { getOverlayManager } = await import('./OverlayManager');
+    const overlayManager = getOverlayManager();
+    overlayManager.pushOverlayState();
+    logger.info('[EditorModeService] Saved user overlay state to stack');
+    
+    // Clear ALL map layers for clean slate (but don't touch overlay manager state yet)
     const { ReignMakerMapLayer } = await import('./ReignMakerMapLayer');
     const mapLayer = ReignMakerMapLayer.getInstance();
     mapLayer.clearAllLayers();
     logger.info('[EditorModeService] Cleared all map layer graphics before editor start');
     
-    // Also clear overlay manager state
-    const { getOverlayManager } = await import('./OverlayManager');
-    const overlayManager = getOverlayManager();
-    overlayManager.clearAll(false); // Don't preserve state, we'll set fresh overlays
+    // Disable Foundry token scene control by activating our custom control
+    this.disableTokenSceneControl();
     
     // Attach direct event listeners to canvas stage
     this.attachDirectEventListeners();
+    
+    // Note: Default overlays will be set when setEditorMode() is called
   }
   
   /**
-   * Exit editor mode - restore original mouse manager
+   * Exit editor mode - restore original mouse manager and user's overlay state
+   * 
+   * OVERLAY MANAGEMENT:
+   * - Restores user's pre-editor overlay configuration via overlay stack
+   * - Cleans up editor-only graphics layers
    */
   async exitEditorMode(): Promise<void> {
     if (!this.active) return;
@@ -206,24 +257,63 @@ export class EditorModeService {
     restoreCanvasLayerInteractivity(this.savedLayerInteractivity);
     this.savedLayerInteractivity.clear();
     
-    // Clean up water layer - refresh or clear based on overlay state
-    await this.cleanupWaterLayer();
+    // Restore previous active scene control
+    this.restoreTokenSceneControl();
+    
+    // CRITICAL: Restore user's pre-editor overlay state from stack
+    const { getOverlayManager } = await import('./OverlayManager');
+    const overlayManager = getOverlayManager();
+    const restored = await overlayManager.popOverlayState();
+    if (restored) {
+      logger.info('[EditorModeService] Restored user overlay state from stack');
+    } else {
+      logger.warn('[EditorModeService] No overlay state to restore (stack was empty)');
+    }
     
     this.active = false;
     this.currentTool = 'inactive';
+    this.currentMode = null;
     this.backupKingdomData = null;
     this.isDragging = false;
   }
   
   /**
+   * Set editor mode - applies default overlay configuration for the mode
+   * This is the high-level mode change (e.g., switching from waterways to roads)
+   * 
+   * @param mode - The editor mode to activate
+   */
+  async setEditorMode(mode: EditorMode): Promise<void> {
+    logger.info(`[EditorModeService] Setting editor mode: ${mode}`);
+    this.currentMode = mode;
+    
+    // Apply default overlay configuration for this mode using OverlayManager
+    const { getOverlayManager } = await import('./OverlayManager');
+    const overlayManager = getOverlayManager();
+    const defaultOverlays = EDITOR_MODE_OVERLAYS[mode];
+    
+    if (defaultOverlays && defaultOverlays.length > 0) {
+      // Use setActiveOverlays to establish the mode's default overlay set
+      // This is the ONLY place we use setActiveOverlays - not in per-tool changes
+      await overlayManager.setActiveOverlays(defaultOverlays);
+      logger.info(`[EditorModeService] Applied default overlays for ${mode}:`, defaultOverlays);
+    }
+  }
+  
+  /**
    * Set current editing tool
+   * This is a fine-grained tool change within a mode (e.g., river-edit to river-scissors)
+   * 
+   * OVERLAY BEHAVIOR:
+   * - Ensures required overlays for the tool are ON (additive)
+   * - Does NOT hide other overlays (respects user toggles)
    */
   async setTool(tool: EditorTool): Promise<void> {
     logger.info(`[EditorModeService] Setting tool: ${tool}`);
     this.currentTool = tool;
     
-    // Auto-toggle relevant overlay layer for the tool
-    await this.autoToggleOverlayForTool(tool);
+    // Ensure required overlays for this tool are visible (additive, not exclusive)
+    await this.ensureToolOverlaysVisible(tool);
     
     // Render connectors when river-edit tool is activated
     if (tool === 'river-edit') {
@@ -351,6 +441,107 @@ export class EditorModeService {
     }
     
     logger.info('[EditorModeService] ✅ Removed direct event listeners');
+  }
+  
+  /**
+   * Disable Foundry token scene control by activating a different control group
+   * Based on Foundry v13 API: SceneControl interface with activeTool property
+   * Reference: https://foundryvtt.com/api/interfaces/foundry.SceneControl.html
+   */
+  private disableTokenSceneControl(): void {
+    try {
+      const game = (globalThis as any).game;
+      const ui = (globalThis as any).ui;
+      
+      if (!game || !ui?.controls?.control) {
+        logger.warn('[EditorModeService] SceneControls not available');
+        return;
+      }
+      
+      const controls = ui.controls.control;
+      
+      // Save current active control group
+      this.previousActiveControl = controls.activeControl || null;
+      
+      // Save the token control's active tool if token control is currently active
+      const tokenControl = controls.controls?.['token'];
+      if (tokenControl && this.previousActiveControl === 'token') {
+        this.previousTokenActiveTool = tokenControl.activeTool || null;
+      } else {
+        this.previousTokenActiveTool = null;
+      }
+      
+      // Activate a neutral control group to deactivate token control
+      // In Foundry v13, only one control group can be active at a time
+      // Activating 'tiles' will automatically deactivate 'token'
+      const fallbackControls = ['tiles', 'walls', 'lighting', 'sounds'];
+      let activated = false;
+      
+      for (const controlName of fallbackControls) {
+        if (controls.controls?.[controlName]) {
+          controls.activeControl = controlName;
+          controls.render();
+          activated = true;
+          logger.info(`[EditorModeService] ✅ Disabled token scene control (switched to: ${controlName}, previous: ${this.previousActiveControl || 'none'})`);
+          break;
+        }
+      }
+      
+      if (!activated) {
+        // Last resort: try to clear activeControl (may not work in all Foundry versions)
+        controls.activeControl = null;
+        controls.render();
+        logger.info(`[EditorModeService] ✅ Disabled token scene control (cleared activeControl, previous: ${this.previousActiveControl || 'none'})`);
+      }
+    } catch (error) {
+      logger.warn('[EditorModeService] Failed to disable token scene control:', error);
+    }
+  }
+  
+  /**
+   * Restore previous active scene control and tool
+   * Based on Foundry v13 API: SceneControl interface with activeTool property
+   * Reference: https://foundryvtt.com/api/interfaces/foundry.SceneControl.html
+   */
+  private restoreTokenSceneControl(): void {
+    try {
+      const game = (globalThis as any).game;
+      const ui = (globalThis as any).ui;
+      
+      if (!game || !ui?.controls?.control) {
+        logger.warn('[EditorModeService] SceneControls not available for restore');
+        return;
+      }
+      
+      const controls = ui.controls.control;
+      
+      // Restore previous active control group if we saved one
+      if (this.previousActiveControl !== null) {
+        controls.activeControl = this.previousActiveControl;
+        
+        // If we're restoring the token control, also restore its active tool
+        if (this.previousActiveControl === 'token' && this.previousTokenActiveTool !== null) {
+          const tokenControl = controls.controls?.['token'];
+          if (tokenControl) {
+            tokenControl.activeTool = this.previousTokenActiveTool;
+          }
+        }
+        
+        controls.render();
+        logger.info(`[EditorModeService] ✅ Restored previous active control: ${this.previousActiveControl}${this.previousTokenActiveTool ? ` (tool: ${this.previousTokenActiveTool})` : ''}`);
+      } else {
+        // If no previous control, clear active control
+        controls.activeControl = null;
+        controls.render();
+        logger.info('[EditorModeService] ✅ Cleared active control (no previous state)');
+      }
+      
+      // Reset saved state
+      this.previousActiveControl = null;
+      this.previousTokenActiveTool = null;
+    } catch (error) {
+      logger.warn('[EditorModeService] Failed to restore token scene control:', error);
+    }
   }
   
   /**
@@ -670,6 +861,10 @@ export class EditorModeService {
   
   /**
    * Initialize connector layer and render all control points
+   * 
+   * EDITOR-ONLY GRAPHICS:
+   * - Creates a separate PIXI.Container for connector dots (not part of overlay system)
+   * - These graphics are editor-specific and don't interfere with overlay rendering
    */
   private async initializeConnectorLayer(): Promise<void> {
     const canvas = (globalThis as any).canvas;
@@ -706,6 +901,11 @@ export class EditorModeService {
 
   /**
    * Completely destroy connector layer and all its graphics
+   * 
+   * EDITOR-ONLY GRAPHICS CLEANUP:
+   * - Removes connector dots container from PIXI stage
+   * - Destroys preview graphics (orange path line)
+   * - These are separate from overlay-managed layers and must be cleaned up manually
    */
   private destroyConnectorLayer(): void {
     if (!this.connectorLayer) return;
@@ -997,57 +1197,53 @@ export class EditorModeService {
   /**
    * Refresh the water layer to show updated river segments
    * CRITICAL: Always clears before drawing to prevent graphics stacking
+   * OVERLAY-AWARE: Only draws if water overlay is active
    */
   private async refreshWaterLayer(): Promise<void> {
     try {
+      const { getOverlayManager } = await import('./OverlayManager');
       const { ReignMakerMapLayer } = await import('./ReignMakerMapLayer');
+      const overlayManager = getOverlayManager();
       const mapLayer = ReignMakerMapLayer.getInstance();
+      
+      // Check if water overlay is active before drawing
+      if (!overlayManager.isOverlayActive('water')) {
+        logger.info('[EditorModeService] Skipping water layer refresh (overlay inactive)');
+        return;
+      }
       
       // ✅ CRITICAL: Clear layer first to prevent stacking graphics
       // Each call to drawWaterConnections adds new graphics, so we must clear old ones
       mapLayer.clearLayer('water');
       
-      await mapLayer.drawWaterConnections();
+      // Highlight the currently edited river path (if any) by passing activePathId
+      const activePathId = this.currentTool === 'river-edit'
+        ? this.riverHandlers.getCurrentPathId()
+        : null;
+      
+      await mapLayer.drawWaterConnections('water', activePathId);
       logger.info('[EditorModeService] ✅ Refreshed water layer');
     } catch (error) {
       logger.error('[EditorModeService] ❌ Failed to refresh water layer:', error);
     }
   }
   
+
   /**
-   * Cleanup water layer when exiting editor
-   * Either refreshes or clears based on overlay state
+   * Refresh the road layer to show updated road segments
+   * OVERLAY-AWARE: Only draws if roads overlay is active
    */
-  private async cleanupWaterLayer(): Promise<void> {
+  private async refreshRoadLayer(): Promise<void> {
     try {
       const { getOverlayManager } = await import('./OverlayManager');
       const overlayManager = getOverlayManager();
       
-      // Check if water overlay is active
-      const isWaterActive = overlayManager.isOverlayActive('water');
-      
-      if (isWaterActive) {
-        // Refresh to show the saved state
-        await this.refreshWaterLayer();
-        logger.info('[EditorModeService] ✅ Refreshed water layer (overlay active)');
-      } else {
-        // Clear the water layer
-        const { ReignMakerMapLayer } = await import('./ReignMakerMapLayer');
-        const mapLayer = ReignMakerMapLayer.getInstance();
-        mapLayer.clearLayer('water');
-        mapLayer.hideLayer('water');
-        logger.info('[EditorModeService] ✅ Cleared water layer (overlay inactive)');
+      // Check if roads overlay is active before drawing
+      if (!overlayManager.isOverlayActive('roads')) {
+        logger.info('[EditorModeService] Skipping road layer refresh (overlay inactive)');
+        return;
       }
-    } catch (error) {
-      logger.error('[EditorModeService] ❌ Failed to cleanup water layer:', error);
-    }
-  }
-
-  /**
-   * Refresh the road layer to show updated road segments
-   */
-  private async refreshRoadLayer(): Promise<void> {
-    try {
+      
       const { getKingdomActor } = await import('../../../main.kingdom');
       const { ReignMakerMapLayer } = await import('./ReignMakerMapLayer');
       
@@ -1078,16 +1274,17 @@ export class EditorModeService {
   }
   
   /**
-   * Auto-toggle overlay layer for the current tool
-   * Shows the relevant overlay and hides others using centralized OverlayManager
+   * Ensure required overlays for a tool are visible (additive, not exclusive)
+   * This does NOT hide other overlays - it only ensures the tool's overlays are ON
+   * Users can still toggle overlays freely via the toolbar
    */
-  private async autoToggleOverlayForTool(tool: EditorTool): Promise<void> {
+  private async ensureToolOverlaysVisible(tool: EditorTool): Promise<void> {
     try {
       const { getOverlayManager } = await import('./OverlayManager');
       const overlayManager = getOverlayManager();
       
-      // Map tools to their corresponding overlay IDs (can be single or multiple)
-      const toolOverlayMap: Record<string, string[] | null> = {
+      // Map tools to their REQUIRED overlay IDs (minimal set needed for tool to function)
+      const toolRequiredOverlays: Record<string, string[]> = {
         'road-edit': ['roads'],
         'road-scissors': ['roads'],
         'river-edit': ['water'],
@@ -1116,54 +1313,60 @@ export class EditorModeService {
         'worksite-mine': ['worksites'],
         'worksite-quarry': ['worksites'],
         'worksite-minus': ['worksites'],
-        'settlement-place': ['settlements', 'settlement-labels'],  // Show both hex highlights and labels
+        'settlement-place': ['settlements', 'settlement-labels'],
         'fortification-tier1': ['fortifications'],
         'fortification-tier2': ['fortifications'],
         'fortification-tier3': ['fortifications'],
         'fortification-tier4': ['fortifications'],
-        'claimed-by': ['territories'],
-        'inactive': null
+        'claimed-by': ['territories']
       };
       
-      const requiredOverlays = toolOverlayMap[tool];
+      const requiredOverlays = toolRequiredOverlays[tool];
       
       if (requiredOverlays) {
-        // Use centralized setActiveOverlays to manage overlay state
-        await overlayManager.setActiveOverlays(requiredOverlays);
+        // Show each required overlay (additive - doesn't hide others)
+        for (const overlayId of requiredOverlays) {
+          if (!overlayManager.isOverlayActive(overlayId)) {
+            await overlayManager.showOverlay(overlayId);
+            logger.info(`[EditorModeService] Ensured overlay visible for tool: ${overlayId}`);
+          }
+        }
       }
     } catch (error) {
-      logger.error('[EditorModeService] ❌ Failed to auto-toggle overlay:', error);
+      logger.error('[EditorModeService] ❌ Failed to ensure tool overlays visible:', error);
     }
   }
   
   /**
    * Refresh the terrain overlay to show updated terrain types
+   * OVERLAY-AWARE: Only draws if terrain overlay is active
    */
   private async refreshTerrainOverlay(): Promise<void> {
     try {
       const { getOverlayManager } = await import('./OverlayManager');
       const overlayManager = getOverlayManager();
       
-      // Check if terrain overlay is active
-      const isTerrainActive = overlayManager.isOverlayActive('terrain');
-      
-      if (isTerrainActive) {
-        // Get kingdom data for hex terrain info
-        const kingdom = getKingdomData();
-        const hexData = kingdom.hexes?.map(h => ({
-          id: h.id,
-          terrain: h.terrain || 'plains'
-        })) || [];
-        
-        // Refresh terrain overlay using the map layer
-        const { ReignMakerMapLayer } = await import('./ReignMakerMapLayer');
-        const mapLayer = ReignMakerMapLayer.getInstance();
-        
-        // Clear and redraw terrain overlay
-        mapLayer.clearLayer('terrain-overlay');
-        mapLayer.drawTerrainOverlay(hexData);
-        logger.info('[EditorModeService] ✅ Refreshed terrain overlay');
+      // Check if terrain overlay is active before drawing
+      if (!overlayManager.isOverlayActive('terrain')) {
+        logger.info('[EditorModeService] Skipping terrain overlay refresh (overlay inactive)');
+        return;
       }
+      
+      // Get kingdom data for hex terrain info
+      const kingdom = getKingdomData();
+      const hexData = kingdom.hexes?.map(h => ({
+        id: h.id,
+        terrain: h.terrain || 'plains'
+      })) || [];
+      
+      // Refresh terrain overlay using the map layer
+      const { ReignMakerMapLayer } = await import('./ReignMakerMapLayer');
+      const mapLayer = ReignMakerMapLayer.getInstance();
+      
+      // Clear and redraw terrain overlay
+      mapLayer.clearLayer('terrain-overlay');
+      mapLayer.drawTerrainOverlay(hexData);
+      logger.info('[EditorModeService] ✅ Refreshed terrain overlay');
     } catch (error) {
       logger.error('[EditorModeService] ❌ Failed to refresh terrain overlay:', error);
     }

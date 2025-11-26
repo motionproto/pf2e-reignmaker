@@ -180,7 +180,8 @@ export class RendererOrchestrator {
    */
   async drawWaterConnections(
     ctx: RendererContext,
-    layerId: LayerId = 'water'
+    layerId: LayerId = 'water',
+    activePathId?: string | null
   ): Promise<void> {
     // Validate and clear content
     ctx.validateLayerEmpty(layerId);
@@ -190,7 +191,7 @@ export class RendererOrchestrator {
     
     // Delegate to renderer
     const { renderWaterConnections } = await import('../renderers/WaterRenderer');
-    await renderWaterConnections(layer, ctx.canvas);
+    await renderWaterConnections(layer, ctx.canvas, activePathId);
     
     // Show layer after drawing
     ctx.showLayer(layerId);

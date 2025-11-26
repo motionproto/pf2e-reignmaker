@@ -191,14 +191,30 @@ export interface RiverPath {
 
 /**
  * Single point in a river path
- * Can be an edge midpoint or hex center
+ * A river path is a polyline that connects hex connection points.
+ *
+ * Hex connection points:
+ * - Center  : hex center (isCenter === true)
+ * - Edge    : hex edge midpoint (edge set to 'e' | 'se' | 'sw' | 'w' | 'nw' | 'ne')
+ * - Corner  : hex vertex (cornerIndex 0–5, based on Foundry's getVertices order)
+ *
+ * Only one of (isCenter, edge, cornerIndex) should be set for a given point.
  */
 export interface RiverPathPoint {
   hexI: number;
   hexJ: number;
+
+  // Center connector
+  isCenter?: boolean;
+
+  // Edge connector
   edge?: string;  // Edge direction ('e', 'se', 'sw', 'w', 'nw', 'ne') if point is on edge
-  isCenter?: boolean;  // True if point is at hex center
-  order: number;  // Sequence order (increments of 10: 10, 20, 30, ...)
+
+  // Corner connector (0–5 index into canvas.grid.getVertices({i,j}))
+  cornerIndex?: number;
+
+  // Sequence order (increments of 10: 10, 20, 30, ...)
+  order: number;
 }
 
 /**

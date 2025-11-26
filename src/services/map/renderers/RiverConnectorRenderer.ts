@@ -13,11 +13,11 @@ import { getEdgeIdForDirection, parseCanonicalEdgeId, edgeNameToIndex } from '..
 
 // Connector colors
 const CONNECTOR_COLORS = {
-  source: 0x00FF00,      // 🟢 Green - river starts here
-  end: 0xFF0000,         // 🔴 Red - river terminates here
-  flow: 0x87CEEB,        // 🔵 Light Blue - river flows through
-  inactive: 0xFFFFFF,    // ⚪ White - no river
-  'flow-through': 0x87CEEB, // 🔵 Light Blue - center flow-through
+  source: 0x00FF00,      // 🟢 Green - river starts here (kept for legacy use)
+  end: 0xFF0000,         // 🔴 Red - river terminates here (kept for legacy use)
+  flow: 0x87CEEB,        // 🔵 Light Blue - river flows through (kept for legacy use)
+  inactive: 0xFFFFFF,    // ⚪ White - no river (kept for legacy use)
+  'flow-through': 0x87CEEB, // 🔵 Light Blue - center flow-through (kept for legacy use)
 };
 
 const CONNECTOR_ALPHA = {
@@ -174,6 +174,43 @@ export async function renderRiverConnectors(
     }
     
     renderCenterConnector(graphics, centerPos.x, centerPos.y, centerState, hex.isHovered);
+
+    // Draw hex ID label above center (green, semi-transparent) to match debug grid
+    const label = new PIXI.Text(hexId, {
+      fontFamily: 'Arial',
+      fontSize: 20,
+      fill: 0x00FF00,
+      alpha: 0.4,
+      align: 'center'
+    });
+    label.anchor.set(0.5, 1);
+    label.x = centerPos.x;
+    label.y = centerPos.y - 8;
+    layer.addChild(label);
+  }
+
+  // Render hex corners as additional hex connection points (pink, deduplicated)
+  const cornerPoints = new Map<string, { x: number; y: number }>();
+  for (const hex of hexesToRender) {
+    const vertices = canvas.grid.getVertices({ i: hex.i, j: hex.j });
+    if (!vertices || vertices.length !== 6) continue;
+
+    for (const v of vertices) {
+      const qx = Math.round(v.x);
+      const qy = Math.round(v.y);
+      const key = `${qx},${qy}`; // canonical corner ID shared across adjacent hexes
+      if (!cornerPoints.has(key)) {
+        cornerPoints.set(key, { x: v.x, y: v.y });
+      }
+    }
+  }
+
+  // Draw all unique corners as pink hollow circles (same radius as edges)
+  const cornerColor = 0xFF66FF; // bright pink
+  const cornerRadius = EDGE_DOT_RADIUS;
+  graphics.lineStyle(2, cornerColor, 1.0);
+  for (const { x, y } of cornerPoints.values()) {
+    graphics.drawCircle(x, y, cornerRadius);
   }
 
   layer.addChild(graphics);
@@ -337,23 +374,38 @@ function renderDot(
   graphics: PIXI.Graphics,
   x: number,
   y: number,
-  color: number,
+  _color: number,
   radius: number,
   alpha: number,
   isInactive: boolean,
   isHovered: boolean
 ): void {
-  // Draw outline (always white/black for visibility)
+  // Use unified hex connection-point color scheme:
+  // - Centers (radius === CENTER_DOT_RADIUS) = green
+  // - Edges   (radius === EDGE_DOT_RADIUS)   = yellow
+  // Filled   = used (active)
+  // Hollow   = unused (inactive)
+
+  const isCenter = radius === CENTER_DOT_RADIUS;
+  const baseColor = isCenter ? 0x00FF00 : 0xFFFF00; // centers green, edges yellow
+
+  const outlineAlpha = isHovered ? 1.0 : 0.6;
+
   graphics.lineStyle({
     width: OUTLINE_WIDTH,
-    color: isInactive ? 0x000000 : 0xFFFFFF,
-    alpha: isHovered ? 1.0 : 0.6,
+    color: baseColor,
+    alpha: outlineAlpha,
   });
-  
-  // Draw fill
-  graphics.beginFill(color, alpha);
-  graphics.drawCircle(x, y, radius);
-  graphics.endFill();
+
+  if (isInactive) {
+    // Hollow circle for inactive connectors
+    graphics.drawCircle(x, y, radius);
+  } else {
+    // Filled circle for active connectors
+    graphics.beginFill(baseColor, alpha);
+    graphics.drawCircle(x, y, radius);
+    graphics.endFill();
+  }
 }
 
 /**
@@ -434,7 +486,10 @@ export function getConnectorAtPosition(
   hexJ: number,
   clickPos: { x: number; y: number },
   canvas: any
-): { edge: EdgeDirection; state: ConnectorState } | { center: true; state: CenterConnectorState } | null {
+): { edge: EdgeDirection; state: ConnectorState }
+  | { center: true; state: CenterConnectorState }
+  | { cornerIndex: number }  // corners currently have no state (treated as available connectors)
+  | null {
   const CLICK_THRESHOLD = 15; // pixels
 
   // Check center first (larger click target)
@@ -491,6 +546,21 @@ export function getConnectorAtPosition(
       const edgeState: ConnectorState = edgeData?.state || 'inactive';
       
       return { edge, state: edgeState };
+    }
+  }
+
+  // Finally, check hex corners as additional connection points
+  const vertices = canvas.grid.getVertices({ i: hexI, j: hexJ });
+  if (vertices && vertices.length === 6) {
+    const CORNER_THRESHOLD = 10; // slightly smaller than center, similar to edges
+    for (let cornerIndex = 0; cornerIndex < vertices.length; cornerIndex++) {
+      const v = vertices[cornerIndex];
+      const dx = clickPos.x - v.x;
+      const dy = clickPos.y - v.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance <= CORNER_THRESHOLD) {
+        return { cornerIndex };
+      }
     }
   }
 

@@ -469,7 +469,7 @@ export class ReignMakerMapLayer {
    * Draw water/river connections between adjacent water hexes
    * Creates a network of blue lines connecting water hexes
    */
-  async drawWaterConnections(layerId: LayerId = 'water'): Promise<void> {
+  async drawWaterConnections(layerId: LayerId = 'water', activePathId?: string | null): Promise<void> {
     this.ensureInitialized();
     
     // Validate and clear content
@@ -481,7 +481,7 @@ export class ReignMakerMapLayer {
     
     // Delegate to renderer
     const { renderWaterConnections } = await import('../renderers/WaterRenderer');
-    await renderWaterConnections(layer, canvas);
+    await renderWaterConnections(layer, canvas, activePathId);
     
     // Show layer after drawing
     this.showLayer(layerId);

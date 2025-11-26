@@ -533,13 +533,7 @@
   
   // Get aid result for an action - read from kingdom state
   function getAidResultForAction(actionId: string): { outcome: string; bonus: number; characterName: string } | null {
-    const result = getAidResult(actionId, 'action');
-    console.log('[Aid Debug] getAidResultForAction called:', {
-      actionId,
-      result,
-      activeAids: $kingdomData?.turnState?.actionsPhase?.activeAids
-    });
-    return result;
+    return getAidResult(actionId, 'action');
   }
 
 </script>

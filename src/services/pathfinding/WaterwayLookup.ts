@@ -5,15 +5,34 @@
  * to quickly determine what waterway features are present on each hex.
  * 
  * Reactive: Automatically rebuilds when kingdom data changes.
+ * 
+ * River Crossing Detection:
+ * Uses WaterwayGeometryService for precomputed blocked edges.
+ * Movement between hexes is blocked if the movement path intersects a river segment
+ * without a crossing (bridge/ford).
  */
 
 import type { KingdomData, RiverPath, WaterFeature, RiverCrossing } from '../../actors/KingdomActor';
 import { kingdomData } from '../../stores/KingdomStore';
 import { logger } from '../../utils/Logger';
 import { getEdgeIdForDirection, edgeNameToIndex } from '../../utils/edgeUtils';
+import type { Point } from '../../utils/geometryUtils';
+import { waterwayGeometryService } from './WaterwayGeometryService';
 import type { EdgeDirection } from '../../models/Hex';
 
 export type WaterwayType = 'river' | 'lake' | 'swamp';
+
+/**
+ * River segment with pixel coordinates
+ * Used for geometric intersection testing
+ */
+export interface RiverSegment {
+  start: Point;
+  end: Point;
+  hasCrossing: boolean;  // If true, river "doesn't exist" here - movement allowed
+  pathId: string;
+  segmentIndex: number;
+}
 
 /**
  * Per-hex waterway data
@@ -22,6 +41,7 @@ interface HexWaterwayData {
   waterways: Set<WaterwayType>;
   crossings: Set<string>;  // Set of crossing types ('bridge', 'ford')
   waterfalls: WaterFeature[];  // Waterfalls on this hex's edges
+  riverSegments: RiverSegment[];  // River line segments passing through this hex
 }
 
 /**
@@ -47,11 +67,48 @@ export class WaterwayLookup {
   
   private unsubscribe: (() => void) | null = null;
   
+  // Track last kingdom data for reference
+  private lastKingdomData: KingdomData | null = null;
+  
+  // Track river data hash to avoid unnecessary rebuilds
+  private lastRiverDataHash: string = '';
+  
   constructor() {
     // Subscribe to kingdom data changes for automatic reactivity
     this.unsubscribe = kingdomData.subscribe(kingdom => {
+      this.lastKingdomData = kingdom;
       this.buildLookup(kingdom);
     });
+    
+    logger.info(`[WaterwayLookup] Initialized - segments will be read from RiverSegmentStore`);
+  }
+  
+  /**
+   * Calculate a simple hash of map data to detect changes
+   * Includes rivers, lakes, swamps
+   */
+  private getRiverDataHash(kingdom: KingdomData): string {
+    // Create a simple hash from path count, total points, and crossing count
+    const pathCount = kingdom.rivers?.paths?.length || 0;
+    const pointCount = kingdom.rivers?.paths?.reduce((sum, p) => sum + p.points.length, 0) || 0;
+    const crossingCount = kingdom.rivers?.crossings?.length || 0;
+    const waterfallCount = kingdom.rivers?.waterfalls?.length || 0;
+    const lakeCount = kingdom.waterFeatures?.lakes?.length || 0;
+    const swampCount = kingdom.waterFeatures?.swamps?.length || 0;
+    
+    return `r${pathCount}-p${pointCount}-c${crossingCount}-w${waterfallCount}-l${lakeCount}-s${swampCount}`;
+  }
+  
+  /**
+   * Force rebuild of all waterway data
+   * Call this from map editor after making changes
+   */
+  forceRebuild(): void {
+    this.lastRiverDataHash = ''; // Clear hash to force rebuild
+    if (this.lastKingdomData) {
+      logger.info('[WaterwayLookup] Forcing rebuild of waterway data');
+      this.buildLookup(this.lastKingdomData);
+    }
   }
   
   /**
@@ -69,7 +126,8 @@ export class WaterwayLookup {
       this.hexLookup.set(hexKey, {
         waterways: new Set(),
         crossings: new Set(),
-        waterfalls: []
+        waterfalls: [],
+        riverSegments: []
       });
     }
     return this.hexLookup.get(hexKey)!;
@@ -80,6 +138,16 @@ export class WaterwayLookup {
    * Called automatically when kingdom data changes
    */
   private buildLookup(kingdom: KingdomData): void {
+    // Check if river data actually changed (optimization)
+    const currentHash = this.getRiverDataHash(kingdom);
+    const riverDataChanged = currentHash !== this.lastRiverDataHash;
+    
+    // Only clear and rebuild if river/water data changed
+    if (!riverDataChanged && this.hexLookup.size > 0) {
+      return; // No changes to river data, skip rebuild
+    }
+    
+    this.lastRiverDataHash = currentHash;
     this.hexLookup.clear();
     this.flowEdges.clear();
     
@@ -108,7 +176,8 @@ export class WaterwayLookup {
       this.buildCrossingLookup(kingdom.rivers.crossings, kingdom.rivers.paths);
     }
     
-    // Lookup built successfully (logging removed - this is normal operation)
+    // Note: River segments are now received from WaterRenderer via callback
+    // This ensures canvas is ready when positions are calculated
   }
   
   /**
@@ -290,6 +359,9 @@ export class WaterwayLookup {
     }
   }
   
+  // Note: River segments are now received from WaterRenderer via receiveSegmentsFromRenderer()
+  // This ensures canvas is ready when positions are calculated
+  
   /**
    * Check if a hex has a waterfall on a specific edge
    * Waterfalls block naval travel but not swimmers
@@ -363,6 +435,40 @@ export class WaterwayLookup {
     return this.hasRiver(hexI, hexJ) || 
            this.hasLake(hexI, hexJ) || 
            this.hasSwamp(hexI, hexJ);
+  }
+  
+  
+  /**
+   * Check if movement between two hexes crosses a river (without a crossing)
+   * Uses precomputed blocked edge data from WaterwayGeometryService for O(1) lookup.
+   * 
+   * Blocked edges are computed by the geometry service when kingdom data changes,
+   * independently of rendering.
+   * 
+   * @param fromHexI - Source hex row
+   * @param fromHexJ - Source hex column
+   * @param toHexI - Destination hex row
+   * @param toHexJ - Destination hex column
+   * @returns true if movement crosses a river without a crossing
+   */
+  doesMovementCrossRiver(fromHexI: number, fromHexJ: number, toHexI: number, toHexJ: number): boolean {
+    // Check if geometry has been computed yet
+    if (!waterwayGeometryService.isGeometryReady()) {
+      logger.debug(`[WaterwayLookup] Geometry not ready yet (canvas may not be initialized)`);
+      return false;  // Can't block until we have geometry data
+    }
+    
+    // Convert to hex IDs and do O(1) lookup
+    const fromHexId = `${fromHexI}.${fromHexJ}`;
+    const toHexId = `${toHexI}.${toHexJ}`;
+    
+    const blocked = waterwayGeometryService.isEdgeBlocked(fromHexId, toHexId);
+    
+    if (blocked) {
+      logger.info(`[WaterwayLookup] Movement ${fromHexId} → ${toHexId} BLOCKED by river`);
+    }
+    
+    return blocked;
   }
   
   /**

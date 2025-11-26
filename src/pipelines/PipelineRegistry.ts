@@ -281,12 +281,6 @@ export class PipelineRegistry {
       return;
     }
 
-    console.log('[PipelineRegistry] 🔧 Initializing...');
-    console.log(`[PipelineRegistry] 📋 Total pipelines to register: ${ALL_PIPELINES.length}`);
-    console.log(`[PipelineRegistry] 📋   - Actions: ${ACTION_PIPELINES.length}`);
-    console.log(`[PipelineRegistry] 📋   - Events: ${EVENT_PIPELINES.length}`);
-    console.log(`[PipelineRegistry] 📋   - Incidents: ${INCIDENT_PIPELINES.length}`);
-
     // Register all pipelines
     let successCount = 0;
     for (const pipeline of ALL_PIPELINES) {
