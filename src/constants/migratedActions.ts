@@ -50,8 +50,8 @@ export const ACTION_STATUS = new Map<string, ActionStatus>([
   
   // Phase 5: Foundry Integration (gameCommands)
   ['recruit-unit', 'tested'],  // #17
-  ['deploy-army', 'testing'],  // #18
-  ['build-structure', 'untested'],  // #19
+  ['deploy-army', 'tested'],  // #18
+  ['build-structure', 'testing'],  // #19
   ['repair-structure', 'untested'],  // #20
   ['upgrade-settlement', 'untested'],  // #21
   

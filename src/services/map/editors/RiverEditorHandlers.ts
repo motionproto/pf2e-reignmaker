@@ -218,81 +218,117 @@ export class RiverEditorHandlers {
 
   /**
    * Handle river remove - Ctrl+Click to delete a vertex from current path
+   * Uses geometric distance to find the nearest vertex, works for all vertices including end points
    */
   async handleRiverRemove(hexId: string, position: { x: number; y: number }): Promise<void> {
     const canvas = (globalThis as any).canvas;
     if (!canvas?.grid) return;
 
-    // Parse hex ID
-    const parts = hexId.split('.');
-    if (parts.length !== 2) return;
-
-    const hexI = parseInt(parts[0], 10);
-    const hexJ = parseInt(parts[1], 10);
-    if (isNaN(hexI) || isNaN(hexJ)) return;
-
-    // Get connector at click position
-    const connector = getConnectorAtPosition(hexI, hexJ, position, canvas);
-    if (!connector) {
-      logger.info('[RiverEditorHandlers] ❌ No connector at click position');
-      return;
-    }
-
-    let isCenter = false;
-    let edge: string | undefined;
-    let cornerIndex: number | undefined;
-
-    if ('center' in connector) {
-      isCenter = true;
-    } else if ('edge' in connector) {
-      edge = connector.edge;
-    } else if ('cornerIndex' in connector) {
-      cornerIndex = connector.cornerIndex;
-    }
-
-    // Find and remove matching point from ANY river path (not just currentPath)
     const kingdom = getKingdomData();
     const paths = kingdom.rivers?.paths;
     if (!paths || paths.length === 0) return;
-    
+
+    const CLICK_THRESHOLD = 15; // pixels
     let deletedPoint = false;
-    await updateKingdom(kingdom => {
-      if (!kingdom.rivers?.paths) return;
-      
-      for (let pi = kingdom.rivers.paths.length - 1; pi >= 0; pi--) {
-        const path = kingdom.rivers.paths[pi];
-        const pointIndex = path.points.findIndex(pt => 
-          pt.hexI === hexI && 
-          pt.hexJ === hexJ &&
-          pt.edge === edge &&
-          pt.isCenter === isCenter &&
-          pt.cornerIndex === cornerIndex
-        );
-        
-        if (pointIndex !== -1) {
-          const desc = isCenter
-            ? 'center'
-            : (edge
-              ? `edge ${edge}`
-              : cornerIndex !== undefined
-                ? `corner ${cornerIndex}`
-                : 'unknown');
-          
-          path.points.splice(pointIndex, 1);
-          deletedPoint = true;
-          logger.info(`[RiverEditorHandlers] 🗑️ Deleted vertex from path ${path.id}: hex ${hexId}, ${desc}`);
-          
-          // If the path now has too few points, remove the path entirely
-          if (path.points.length < 2) {
-            logger.info('[RiverEditorHandlers] 🗑️ Path has too few points after deletion - removing path');
-            kingdom.rivers.paths.splice(pi, 1);
+    let deletedPathId: string | null = null;
+    let deletedVertexIndex: number | null = null;
+
+    await updateKingdom(kingdomState => {
+      if (!kingdomState.rivers?.paths) return;
+
+      let bestPathIndex = -1;
+      let bestVertexIndex = -1;
+      let bestDistance = Infinity;
+
+      // Find nearest vertex across all paths
+      for (let pi = 0; pi < kingdomState.rivers.paths.length; pi++) {
+        const path = kingdomState.rivers.paths[pi];
+
+        for (let vi = 0; vi < path.points.length; vi++) {
+          const pt = path.points[vi];
+
+          // Resolve point to pixel position
+          let ptPos: { x: number; y: number } | null = null;
+          if (pt.isCenter) {
+            ptPos = getHexCenter(pt.hexI, pt.hexJ, canvas);
+          } else if (pt.edge) {
+            ptPos = getEdgeMidpoint(pt.hexI, pt.hexJ, pt.edge as EdgeDirection, canvas);
+          } else if (pt.cornerIndex !== undefined) {
+            const vertices = canvas.grid.getVertices({ i: pt.hexI, j: pt.hexJ });
+            if (vertices && vertices.length > pt.cornerIndex) {
+              const v = vertices[pt.cornerIndex];
+              ptPos = { x: v.x, y: v.y };
+            }
           }
-          
-          // Only delete one matching point across all paths
-          break;
+
+          if (!ptPos) continue;
+
+          // Calculate distance from click to vertex
+          const dx = position.x - ptPos.x;
+          const dy = position.y - ptPos.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < CLICK_THRESHOLD && dist < bestDistance) {
+            bestDistance = dist;
+            bestPathIndex = pi;
+            bestVertexIndex = vi;
+          }
         }
       }
+
+      if (bestPathIndex === -1 || bestVertexIndex === -1) {
+        logger.info('[RiverEditorHandlers] ❌ No river vertex found near click position to delete');
+        return;
+      }
+
+      const targetPath = kingdomState.rivers.paths[bestPathIndex];
+      const targetPoint = targetPath.points[bestVertexIndex];
+
+      const desc = targetPoint.isCenter
+        ? 'center'
+        : (targetPoint.edge
+          ? `edge ${targetPoint.edge}`
+          : targetPoint.cornerIndex !== undefined
+            ? `corner ${targetPoint.cornerIndex}`
+            : 'unknown');
+
+      // Remove the vertex
+      targetPath.points.splice(bestVertexIndex, 1);
+      deletedPoint = true;
+      deletedPathId = targetPath.id;
+      deletedVertexIndex = bestVertexIndex;
+
+      logger.info(
+        `[RiverEditorHandlers] 🗑️ Deleted vertex from path ${targetPath.id}: ${desc} (distance=${bestDistance.toFixed(1)}px)`
+      );
+
+      // If the path now has too few points, remove the path entirely
+      if (targetPath.points.length < 2) {
+        logger.info('[RiverEditorHandlers] 🗑️ Path has too few points after deletion - removing path');
+        kingdomState.rivers.paths.splice(bestPathIndex, 1);
+      }
     });
+
+    if (!deletedPoint) return;
+
+    const updatedKingdom = getKingdomData();
+    const updatedPaths = updatedKingdom.rivers?.paths || [];
+
+    // Keep editing state consistent if we deleted from the active path
+    if (deletedPathId && deletedPathId === this.currentPathId) {
+      const updatedPath = updatedPaths.find(p => p.id === deletedPathId);
+      if (!updatedPath || updatedPath.points.length < 2) {
+        logger.info('[RiverEditorHandlers] 🔚 Active path has too few points after deletion - ending path');
+        await this.endCurrentPath();
+        const ui = (globalThis as any).ui;
+        ui?.notifications?.info('Path ended (too few points)');
+      } else if (deletedVertexIndex !== null) {
+        // Adjust currentVertexIndex if we deleted before it
+        if (this.currentVertexIndex !== null && deletedVertexIndex <= this.currentVertexIndex) {
+          this.currentVertexIndex = Math.max(0, this.currentVertexIndex - 1);
+        }
+      }
+    }
   }
 
   /**
