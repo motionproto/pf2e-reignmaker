@@ -79,11 +79,15 @@ export class UnifiedCheckHandler {
   /**
    * Execute pre-roll interactions (actions only)
    *
+   * @param checkId - The action/check ID
+   * @param kingdom - Kingdom data
+   * @param initialMetadata - Optional initial metadata (e.g., for rerolls where selections are already made)
    * @returns Metadata object with user selections
    */
   async executePreRollInteractions(
     checkId: string,
-    kingdom: any
+    kingdom: any,
+    initialMetadata?: CheckMetadata
   ): Promise<CheckMetadata> {
     const pipeline = this.getCheck(checkId);
     if (!pipeline) {
@@ -91,12 +95,13 @@ export class UnifiedCheckHandler {
     }
 
     if (!pipeline.preRollInteractions || pipeline.preRollInteractions.length === 0) {
-      return createEmptyMetadata();
+      return initialMetadata || createEmptyMetadata();
     }
 
     console.log(`🎯 [UnifiedCheckHandler] Executing pre-roll interactions for ${checkId}`);
 
-    const metadata: CheckMetadata = createEmptyMetadata();
+    // Start with initial metadata if provided (allows skipping interactions for rerolls)
+    const metadata: CheckMetadata = { ...createEmptyMetadata(), ...initialMetadata };
 
     // Execute each interaction sequentially
     for (const interaction of pipeline.preRollInteractions) {
@@ -211,6 +216,13 @@ export class UnifiedCheckHandler {
     // Special case: hex-path mode uses ArmyDeploymentPanel for integrated UX
     // This provides the correct UX: army selection happens first, then path plotting
     if (interaction.mode === 'hex-path') {
+      // Check if deployment data was already provided (e.g., for rerolls)
+      // This allows skipping the panel when we already have the selection
+      if (metadata?.deployment?.armyId && metadata?.deployment?.path?.length >= 2) {
+        console.log(`✅ [UnifiedCheckHandler] Using existing deployment metadata (reroll case)`);
+        return metadata.deployment;
+      }
+      
       try {
         const { armyDeploymentPanel } = await import('./army/ArmyDeploymentPanel');
         const { getKingdomData } = await import('../stores/KingdomStore');

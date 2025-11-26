@@ -84,17 +84,15 @@ const pipeline = createActionPipeline('recruit-unit', {
     const resolver = await createGameCommandsResolver();
     const partyLevel = resolver.getPartyLevel();
 
-    // Store recruitment data in globalThis for recruitArmy command
-    (globalThis as any).__pendingRecruitArmy = {
-      name: recruitmentData.name,
-      armyType: recruitmentData.armyType,
-      settlementId: recruitmentData.settlementId || null
-    };
-
     // Create army via game command (uses prepare/commit pattern)
+    // Pass recruitment data directly - no global state needed
     const preparedCommand = await resolver.recruitArmy(
       partyLevel,
-      recruitmentData.name,
+      {
+        name: recruitmentData.name,
+        armyType: recruitmentData.armyType,
+        settlementId: recruitmentData.settlementId || null
+      },
       false // not exempt from upkeep (regular recruitment)
     );
 

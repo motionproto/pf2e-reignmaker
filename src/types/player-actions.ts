@@ -21,6 +21,7 @@ export type ActionCategory =
   | "foreign-affairs"
   | "military"
   | "military-operations"
+  | "support"
   | "uphold-stability"
   | "urban-planning";
 

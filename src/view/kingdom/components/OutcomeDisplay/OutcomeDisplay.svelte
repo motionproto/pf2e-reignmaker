@@ -298,8 +298,9 @@
     let baseEffect = effectiveChoices.length > 0 ? effect : (componentResolutionData ? componentResolutionData.effect : effect);
     
     // If we have imprisoned unrest modifier, inject settlement name
+    // Uses preview.metadata (stored in kingdom actor) for proper multi-client sync
     if (modifiers?.some((m: any) => (m.resource as string) === 'imprisoned')) {
-      const settlementName = getSelectedSettlementName($kingdomData);
+      const settlementName = getSelectedSettlementName($kingdomData, preview);
       if (settlementName) {
         baseEffect = baseEffect.replace('the settlement', settlementName);
         baseEffect = baseEffect.replace('in the settlement', `in ${settlementName}`);
@@ -308,7 +309,8 @@
     }
     
     // If we have economic aid action, inject faction name
-    const factionName = getSelectedFactionName();
+    // Uses preview.metadata (stored in kingdom actor) for proper multi-client sync
+    const factionName = getSelectedFactionName(preview);
     if (factionName) {
       baseEffect = baseEffect.replace('your ally', factionName);
       baseEffect = baseEffect.replace('Your ally', factionName);

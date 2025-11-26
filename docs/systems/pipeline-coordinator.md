@@ -1,36 +1,8 @@
-# Pipeline Coordinator Design
+# Pipeline Coordinator
 
-## Problem Statement
+The `PipelineCoordinator` is the single entry point for all action execution. It orchestrates a 9-step pipeline that handles everything from pre-roll interactions to cleanup.
 
-### Current Fragmented Pipeline Execution
-
-The 14 migrated actions currently use a **fragmented approach** where different pipeline steps are called from different places in the codebase, without a central coordinator or persistent context object:
-
-**Current Flow (Fragmented):**
-1. **Pre-roll interactions** - Called from `ActionsPhase.handleExecuteSkill()`
-2. **Roll execution** - Handled by PF2e roll system with callback
-3. **Outcome preview creation** - Called from roll callback
-4. **Preview calculation** - Calculated in pipeline definition
-5. **OutcomeDisplay** - Mounted as Svelte component
-6. **Post-apply interactions** - Called from `ActionsPhase.applyActionEffects()`
-7. **Execute** - Called from `ActionPhaseController.resolveAction()`
-8. **Cleanup** - Scattered across multiple places
-
-### Problems with Current Architecture
-
-❌ **No central coordinator** - Steps are executed from 5+ different locations  
-❌ **No unified context** - Data scattered across `preview.metadata`, `resolutionData`, global state  
-❌ **Inconsistent logging** - Each integration point logs differently  
-❌ **Hard to debug** - No single place to trace execution flow  
-❌ **MIGRATED_ACTIONS branching** - Two parallel code paths instead of one  
-❌ **Silent failures** - Each integration point can fail without clear error handling  
-❌ **Data persistence issues** - Context doesn't flow cleanly through all steps  
-
----
-
-## Proposed Solution: Unified PipelineCoordinator
-
-### High-Level Architecture
+## Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -265,20 +237,6 @@ class PipelineCoordinator {
 **Execution Flow:**
 
 ```typescript
-// BEFORE (fragmented):
-async function handleAction(actionId) {
-  // Check if migrated
-  if (MIGRATED_ACTIONS.has(actionId)) {
-    // Do pipeline stuff
-    await someFunction();
-    await anotherFunction();
-    // ... scattered logic
-  } else {
-    // Do old custom action stuff
-  }
-}
-
-// AFTER (unified):
 async function handleAction(actionId) {
   const coordinator = new PipelineCoordinator();
   const context = await coordinator.executePipeline(actionId, {
@@ -286,7 +244,7 @@ async function handleAction(actionId) {
     actor: { selectedSkill: 'survival' }
   });
   
-  // Done! All 9 steps executed with persistent context
+  // All 9 steps executed with persistent context
 }
 ```
 
@@ -1130,31 +1088,11 @@ Test representative examples manually:
 - [x] Update all documentation
 - [x] Build verified successful
 
-### 🔄 Phase 3: Full Pipeline Integration (In Progress)
-
-**Goal:** Migrate ActionsPhase to use coordinator for ALL actions
-
-- [ ] Update ActionsPhase to call `executePipeline()` as single entry point
-- [ ] Remove `MIGRATED_ACTIONS` branching
-- [ ] Test all 26 actions with unified pipeline
-- [ ] Remove old helper methods
-
-### 📋 Phase 4: Cleanup (Pending)
-
-**Goal:** Remove old implementation system
-
-- [ ] Delete `src/actions/*/ActionClass.ts` files (24 files)
-- [ ] Delete `src/controllers/actions/implementations/index.ts`
-- [ ] Delete `src/actions/shared/InlineActionHelpers.ts`
-- [ ] Update documentation
-
----
-
 ## Benefits
 
 ### For Developers
 
-✅ **Single code path** - No more branching on `MIGRATED_ACTIONS`  
+✅ **Single code path** - All actions use the same pipeline  
 ✅ **Easy debugging** - Trace context object through all 9 steps  
 ✅ **Clear error handling** - Centralized try/catch with rollback  
 ✅ **Consistent logging** - All steps log in the same format  

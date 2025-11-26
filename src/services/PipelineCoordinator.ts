@@ -64,8 +64,12 @@ export class PipelineCoordinator {
     actionId: string,
     initialContext: Partial<PipelineContext>
   ): Promise<PipelineContext> {
+    // Use custom checkId if provided in metadata (for aid-another)
+    // Otherwise use actionId (normal behavior)
+    const checkId = (initialContext.metadata as any)?.checkId || actionId;
+    
     // Clean up any old instances for this action before starting new pipeline
-    await this.cleanupOldInstances(actionId);
+    await this.cleanupOldInstances(checkId);
     
     // Initialize context
     const context = this.initializeContext(actionId, initialContext);
@@ -239,9 +243,11 @@ export class PipelineCoordinator {
     }
     
     // Execute pre-roll interactions via UnifiedCheckHandler
+    // Pass existing context metadata (allows rerolls to skip interactions)
     const metadata = await unifiedCheckHandler.executePreRollInteractions(
       ctx.actionId,
-      ctx.kingdom
+      ctx.kingdom,
+      ctx.metadata
     );
     
     // Store metadata in context
@@ -412,9 +418,13 @@ export class PipelineCoordinator {
     const { get } = await import('svelte/store');
     const turn = get(currentTurn) || 1;
     
+    // Use metadata.checkId if provided (for aid-another to display on target action card)
+    // Otherwise use ctx.actionId (normal behavior)
+    const checkId = (ctx.metadata as any).checkId || ctx.actionId;
+    
     // Create check instance with minimal data (Step 4 only)
     const instanceId = await createActionOutcomePreview({
-      actionId: ctx.actionId,
+      actionId: checkId,  // Use custom checkId if provided
       action: pipeline,
       outcome,
       actorName: ctx.actor?.actorName || 'Unknown',

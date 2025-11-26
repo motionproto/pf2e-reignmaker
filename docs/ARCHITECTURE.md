@@ -38,8 +38,8 @@ Write: Component → Controller → KingdomActor → Foundry → All Clients
 - `src/controllers/actions/game-commands.ts` - 25+ typed game command definitions
 - `src/controllers/actions/action-loader.ts` - Load/query actions from JSON
 - `src/controllers/actions/action-execution.ts` - Execute actions, apply effects
-- `src/controllers/actions/ActionExecutionHelpers.ts` - Roll orchestration (NEW Oct 2025)
-- `src/actions/[action]/` - Custom action implementations (post-roll behavior)
+- `src/pipelines/actions/*.ts` - Action pipeline implementations
+- `src/services/PipelineCoordinator.ts` - Unified 9-step action execution
 - `data/player-actions/*.json` - 29 action definitions (structured effects)
 - **See:** `docs/systems/actions-architecture.md` for complete action lifecycle documentation
 

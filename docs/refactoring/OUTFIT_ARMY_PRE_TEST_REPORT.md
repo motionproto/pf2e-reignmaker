@@ -56,7 +56,6 @@ if (ctx.outcome === 'criticalSuccess' || ctx.outcome === 'success') {
 - Filters armies with available equipment slots (< 4 upgrades)
 - Shows equipment info (slots available, current equipment)
 - Validates army has linked actor
-- Stores selection in global state
 
 **Current Pipeline:** Missing entirely
 

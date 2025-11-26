@@ -34,7 +34,6 @@
    import { buildPossibleOutcomes } from '../../../controllers/shared/PossibleOutcomeHelpers';
    import { buildEventOutcomes } from '../../../controllers/shared/EventOutcomeHelpers';
    import { createEventContext, executeRoll } from '../../../controllers/shared/ExecutionHelpers';
-   import { createAidManager } from '../../../controllers/shared/AidSystemHelpers';
    
    // Initialize controller and service
    let eventPhaseController: any;

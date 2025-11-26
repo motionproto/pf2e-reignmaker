@@ -27,18 +27,26 @@ export class RecruitArmyHandler extends BaseGameCommandHandler {
     
     const exemptFromUpkeep = command.exemptFromUpkeep === true;
     
+    // ⚠️ VALIDATION: Recruitment data must be in context
+    const recruitmentData = ctx.pendingState.recruitmentData;
+    if (!recruitmentData) {
+      console.error('[RecruitArmyHandler] No recruitment data in context');
+      throw new Error('Army recruitment requires recruitment data - ensure army details are provided');
+    }
+    
     // ⚠️ VALIDATION: For allied armies, faction ID must be in context
     if (exemptFromUpkeep && !ctx.pendingState.factionId) {
       console.error('[RecruitArmyHandler] Allied army recruitment requires factionId in context');
       throw new Error('Allied army recruitment requires faction context - ensure faction is selected before recruitment');
     }
     
-    // TODO: Update resolver to accept recruitment data and faction ID as parameters
-    // For now, resolver still reads from global state (needs refactor)
-    console.warn('[RecruitArmyHandler] Resolver still uses global state - needs refactor to accept parameters');
-    
-    // Delegate to resolver
-    const result = await resolver.recruitArmy(level, undefined, exemptFromUpkeep);
+    // Pass recruitment data directly to resolver - no global state needed
+    const result = await resolver.recruitArmy(level, {
+      name: recruitmentData.name,
+      armyType: recruitmentData.armyType,
+      settlementId: recruitmentData.settlementId || null,
+      supportedBy: exemptFromUpkeep ? ctx.pendingState.factionName : undefined
+    }, exemptFromUpkeep);
     
     return this.normalizeResult(result, 'Army recruited');
   }

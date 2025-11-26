@@ -5,27 +5,42 @@
  * - Testability (can be unit tested independently)
  * - Reusability (shared across components)
  * - Maintainability (separate concerns)
+ * 
+ * NOTE: These functions now read from preview.metadata (stored in kingdom actor)
+ * instead of global state (__pending* variables).
  */
 
+import type { OutcomePreview } from '../../../../../models/OutcomePreview';
+
 /**
- * Get settlement name from pending state (globalThis)
- * Used for Execute/Pardon action
+ * Get settlement name from preview metadata
+ * Used for Execute/Pardon action and other settlement-based actions
  */
-export function getSelectedSettlementName(kingdomData: any): string | null {
-  const settlementId = (globalThis as any).__pendingExecuteOrPardonSettlement;
-  if (!settlementId) return null;
+export function getSelectedSettlementName(kingdomData: any, preview?: OutcomePreview | null): string | null {
+  // First try to get from preview metadata (pipeline system)
+  if (preview?.metadata?.settlement?.name) {
+    return preview.metadata.settlement.name;
+  }
   
-  const settlement = kingdomData?.settlements?.find((s: any) => s.id === settlementId);
-  return settlement?.name || null;
+  // Try to get settlementId from metadata and look up name
+  const settlementId = preview?.metadata?.settlement?.id;
+  if (settlementId) {
+    const settlement = kingdomData?.settlements?.find((s: any) => s.id === settlementId);
+    return settlement?.name || null;
+  }
+  
+  return null;
 }
 
 /**
- * Get faction name from pending state (globalThis)
- * Used for Economic Aid and Infiltration actions
+ * Get faction name from preview metadata
+ * Used for Economic Aid, Military Aid, Diplomatic Mission, and Infiltration actions
  */
-export function getSelectedFactionName(): string | null {
-  return (globalThis as any).__pendingEconomicAidFactionName || 
-         (globalThis as any).__pendingInfiltrationFactionName || 
+export function getSelectedFactionName(preview?: OutcomePreview | null): string | null {
+  // Get from preview metadata (pipeline system)
+  // Check various possible metadata paths
+  return preview?.metadata?.faction?.name || 
+         preview?.metadata?.factionName || 
          null;
 }
 

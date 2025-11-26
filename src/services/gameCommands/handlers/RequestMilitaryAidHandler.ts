@@ -78,32 +78,8 @@ export class RequestMilitaryAidHandler extends BaseGameCommandHandler {
       return null;
     }
     
-    // ══════════════════════════════════════════════════════════════════════
-    // ⚠️ TECHNICAL DEBT: Global State Write
-    // ══════════════════════════════════════════════════════════════════════
-    // 
-    // This is the ONLY remaining global state write in the handler system.
-    // 
-    // PROBLEM:
-    //   - We collect recruitment data from the dialog (name, type, etc.)
-    //   - GameCommandsResolver.recruitArmy() doesn't accept this as a parameter
-    //   - It reads from global state instead: (globalThis as any).__pendingRecruitArmy
-    // 
-    // SOLUTION (Action Overhaul):
-    //   - Update GameCommandsResolver.recruitArmy(level, recruitmentData, exemptFromUpkeep)
-    //   - Update resolver implementation to use parameter instead of global state
-    //   - Remove this global state write
-    // 
-    // TRACKING:
-    //   - Will be fixed during Action Overhaul refactor
-    //   - Search codebase for "__pendingRecruitArmy" to find all read locations
-    // 
-    // ══════════════════════════════════════════════════════════════════════
-    
-    (globalThis as any).__pendingRecruitArmy = recruitmentData;
-    
-    // Now prepare recruitment with the data
-    return await resolver.recruitArmy(level, undefined, exemptFromUpkeep);
+    // Pass recruitment data directly - no global state needed
+    return await resolver.recruitArmy(level, recruitmentData, exemptFromUpkeep);
   }
   
   /**

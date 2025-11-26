@@ -643,24 +643,35 @@ export class OutcomeDisplayController {
   }
   
   /**
-   * Helper to get settlement name from pending state (global state read)
-   * TODO: Refactor to pass as parameter during Action Overhaul
+   * Helper to get settlement name from preview metadata
+   * Reads from preview.metadata (stored in kingdom actor) for proper multi-client sync
    */
   private getSelectedSettlementName(): string | null {
-    const settlementId = (globalThis as any).__pendingExecuteOrPardonSettlement;
-    if (!settlementId) return null;
+    // Get from preview metadata
+    const metadata = this.preview.metadata;
+    if (metadata?.settlement?.name) {
+      return metadata.settlement.name;
+    }
     
-    // Note: This requires access to kingdom data - will be refactored
-    return null; // Placeholder - needs kingdom data access
+    // Try to look up by ID
+    const settlementId = metadata?.settlement?.id;
+    if (settlementId) {
+      const kingdom = this.getKingdom();
+      const settlement = kingdom?.settlements?.find((s: any) => s.id === settlementId);
+      return settlement?.name || null;
+    }
+    
+    return null;
   }
   
   /**
-   * Helper to get faction name from pending state (global state read)
-   * TODO: Refactor to pass as parameter during Action Overhaul
+   * Helper to get faction name from preview metadata
+   * Reads from preview.metadata (stored in kingdom actor) for proper multi-client sync
    */
   private getSelectedFactionName(): string | null {
-    return (globalThis as any).__pendingEconomicAidFactionName || 
-           (globalThis as any).__pendingInfiltrationFactionName || 
+    const metadata = this.preview.metadata;
+    return metadata?.faction?.name || 
+           metadata?.factionName || 
            null;
   }
   

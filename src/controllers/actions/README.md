@@ -11,7 +11,6 @@ This is the "game engine" layer for actions - it provides the plumbing that make
 - **action-loader.ts** - Loads action definitions from pipelines
 - **action-resolver.ts** - Executes actions through the pipeline coordinator
 - **action-types.ts** - Shared type definitions
-- **ActionExecutionHelpers.ts** - Helper utilities for execution
 - **game-commands.ts** - Game command utilities
 - **shared-requirements.ts** - Common requirement checks
 

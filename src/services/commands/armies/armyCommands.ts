@@ -18,16 +18,25 @@ import type { ResolveResult } from '../types';
 import { calculateRandomNearbyHex, applyConditionToActor } from '../combat/conditionHelpers';
 
 /**
+ * Recruitment data passed to recruitArmy
+ */
+export interface RecruitArmyData {
+  name: string;
+  armyType: string;
+  settlementId?: string | null;
+  supportedBy?: string;  // Faction name for allied armies
+}
+
+/**
  * Recruit Army - Create a new army unit at specified level with NPC actor
- * Uses pending data from globalThis.__pendingRecruitArmy (set by dialog)
- * REFACTORED: Uses prepare/commit pattern
+ * REFACTORED: Uses prepare/commit pattern with explicit parameters (no global state)
  * 
  * @param level - Army level (typically party level)
- * @param name - Optional custom name for the army (deprecated, use pending data)
+ * @param recruitmentData - Army recruitment data (name, type, settlement)
  * @param exemptFromUpkeep - If true, army is allied and exempt from upkeep costs
  * @returns PreparedCommand with preview + commit function
  */
-export async function recruitArmy(level: number, name?: string, exemptFromUpkeep?: boolean): Promise<PreparedCommand> {
+export async function recruitArmy(level: number, recruitmentData: RecruitArmyData, exemptFromUpkeep?: boolean): Promise<PreparedCommand> {
   logger.info(`🎖️ [recruitArmy] PREPARING recruitment at level ${level} (exempt: ${exemptFromUpkeep})`);
   
   // PHASE 1: PREPARE - Validate everything needed for preview (NO state changes)
@@ -40,12 +49,11 @@ export async function recruitArmy(level: number, name?: string, exemptFromUpkeep
     throw new Error('Army level must be at least 1');
   }
 
-  const pendingData = (globalThis as any).__pendingRecruitArmy;
-  if (!pendingData) {
+  if (!recruitmentData) {
     throw new Error('No army recruitment data available');
   }
 
-  const { name: armyName, settlementId, armyType } = pendingData;
+  const { name: armyName, settlementId, armyType, supportedBy } = recruitmentData;
 
   // Army limit validation is done at faction selection dialog (RequestMilitaryAidDialog.svelte)
   // so we don't need to check here - if we got this far, the faction is eligible
@@ -87,9 +95,6 @@ export async function recruitArmy(level: number, name?: string, exemptFromUpkeep
       
       const { armyService } = await import('../../army');
       
-      // Get supportedBy from pending data (for allied armies)
-      const supportedBy = pendingData.supportedBy || undefined;
-      
       const createdArmy = await armyService.createArmy(armyName, level, {
         type: armyType,
         image: ARMY_TYPES[armyType as keyof typeof ARMY_TYPES].image,
@@ -129,8 +134,6 @@ export async function recruitArmy(level: number, name?: string, exemptFromUpkeep
         }
       }
 
-      delete (globalThis as any).__pendingRecruitArmy;
-      
       logger.info(`✅ [recruitArmy] Successfully recruited ${armyName}`);
     }
   };

@@ -189,13 +189,14 @@ export class PipelineIntegrationAdapter {
    */
   static async executePreRollInteractions(
     actionId: string,
-    kingdom: KingdomData
+    kingdom: KingdomData,
+    initialMetadata?: CheckMetadata
   ): Promise<CheckMetadata> {
     if (PIPELINE_FEATURE_FLAGS.DEBUG) {
       logger.info(`🎯 [PipelineAdapter] Executing pre-roll interactions for ${actionId}`);
     }
 
-    return await unifiedCheckHandler.executePreRollInteractions(actionId, kingdom);
+    return await unifiedCheckHandler.executePreRollInteractions(actionId, kingdom, initialMetadata);
   }
 
   /**

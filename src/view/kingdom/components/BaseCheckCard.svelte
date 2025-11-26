@@ -94,7 +94,7 @@
   export let isViewingCurrentPhase: boolean = true;
   export let possibleOutcomes: any[] = [];
   export let showAidButton: boolean = false;
-  export let aidResult: { outcome: string; bonus: number } | null = null;
+  export let aidResult: { outcome: string; bonus: number; characterName?: string } | null = null;
   export let hideUntrainedSkills: boolean = true;
   
   // UI customization props
@@ -481,11 +481,11 @@
                     <i class="fas fa-hands-helping"></i>
                     <span>
                       {#if aidResult.outcome === 'criticalSuccess'}
-                        Aid - Critical (+{aidResult.bonus}, keep higher)
+                        Aid by {aidResult.characterName || 'Unknown'}: +{aidResult.bonus} (keep higher)
                       {:else if aidResult.bonus > 0}
-                        Aid - +{aidResult.bonus}
+                        Aid by {aidResult.characterName || 'Unknown'}: +{aidResult.bonus}
                       {:else}
-                        Aid - {aidResult.bonus} (penalty)
+                        Aid by {aidResult.characterName || 'Unknown'}: {aidResult.bonus}
                       {/if}
                     </span>
                   </div>
@@ -798,32 +798,44 @@
   }
   
   .aid-result-badge-inline {
-    padding: var(--space-10) var(--space-16);
-    border-radius: var(--radius-sm);
-    display: flex;
+    display: inline-flex;  /* Match SkillTag display */
     align-items: center;
-    justify-content: center;
-    gap: var(--space-8);
+    gap: var(--space-6);  /* Match SkillTag gap */
+    padding: var(--space-6) var(--space-16);
+    border-radius: 9999px;  /* Pill shape with fully rounded corners */
     font-size: var(--font-md);
     font-weight: var(--font-weight-medium);
+    line-height: 1;  /* Match SkillTag line-height */
     white-space: nowrap;
+    
+    /* Ensure nested span doesn't add height */
+    span {
+      line-height: 1;
+      display: inline;
+    }
+    
+    /* Match icon size to text to prevent extra height */
+    i {
+      line-height: 1;
+      font-size: var(--font-md);  /* Match text size */
+    }
   }
   
   .aid-result-badge-inline.critical-success {
-    background: var(--surface-info);
+    background: var(--surface-info-lower);
     border: 1px solid var(--border-info);
     color: rgb(59, 130, 246);
   }
   
   .aid-result-badge-inline.success {
-    background: var(--surface-success);
+    background: var(--surface-success-lower);
     border: 1px solid var(--border-success);
     color: rgb(34, 197, 94);
   }
   
   .aid-result-badge-inline.failure {
-    background: var(--surface-primary);
-    border: 1px solid var(--border-primary);
+    background: var(--surface-danger-lower);
+    border: 1px solid var(--border-danger);
     color: rgb(239, 68, 68);
   }
   

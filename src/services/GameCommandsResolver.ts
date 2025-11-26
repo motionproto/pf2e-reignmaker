@@ -76,8 +76,8 @@ export interface ResolveResult {
  */
 export async function createGameCommandsResolver() {
   return {
-    async recruitArmy(level: number, name?: string, exemptFromUpkeep?: boolean): Promise<PreparedCommand> {
-      return recruitArmyCommand(level, name, exemptFromUpkeep);
+    async recruitArmy(level: number, recruitmentData: { name: string; armyType: string; settlementId?: string | null; supportedBy?: string }, exemptFromUpkeep?: boolean): Promise<PreparedCommand> {
+      return recruitArmyCommand(level, recruitmentData, exemptFromUpkeep);
     },
 
     async disbandArmy(armyId: string, deleteActor: boolean = true): Promise<PreparedCommand> {

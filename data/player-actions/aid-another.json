@@ -1,0 +1,108 @@
+{
+  "id": "aid-another",
+  "name": "Aid Another",
+  "category": "support",
+  "brief": "Help another character with their check",
+  "description": "Use your skills to assist another character's kingdom check. If you succeed, you grant them a circumstance bonus based on your proficiency. A critical success grants +4 and allows them to keep the higher of two rolls.",
+  "disabled": true,
+  "dc": 15,
+  "skills": [
+    {
+      "skill": "agriculture",
+      "description": "farming expertise"
+    },
+    {
+      "skill": "arts",
+      "description": "cultural knowledge"
+    },
+    {
+      "skill": "boating",
+      "description": "maritime skills"
+    },
+    {
+      "skill": "defense",
+      "description": "military tactics"
+    },
+    {
+      "skill": "engineering",
+      "description": "construction knowledge"
+    },
+    {
+      "skill": "exploration",
+      "description": "reconnaissance"
+    },
+    {
+      "skill": "folklore",
+      "description": "local traditions"
+    },
+    {
+      "skill": "industry",
+      "description": "production expertise"
+    },
+    {
+      "skill": "intrigue",
+      "description": "political maneuvering"
+    },
+    {
+      "skill": "magic",
+      "description": "arcane knowledge"
+    },
+    {
+      "skill": "politics",
+      "description": "diplomatic insight"
+    },
+    {
+      "skill": "scholarship",
+      "description": "academic research"
+    },
+    {
+      "skill": "statecraft",
+      "description": "governance wisdom"
+    },
+    {
+      "skill": "trade",
+      "description": "economic acumen"
+    },
+    {
+      "skill": "warfare",
+      "description": "strategic planning"
+    },
+    {
+      "skill": "wilderness",
+      "description": "survival expertise"
+    }
+  ],
+  "outcomes": {
+    "criticalSuccess": {
+      "description": "You provide exceptional aid. The target gains a +4 circumstance bonus and can keep the higher of two d20 rolls.",
+      "modifiers": [],
+      "gameCommands": [],
+      "manualEffects": [
+        "+4 circumstance bonus to target's check",
+        "Target keeps higher of two rolls"
+      ]
+    },
+    "success": {
+      "description": "You provide helpful aid. The target gains a circumstance bonus based on your proficiency: +1 (untrained), +2 (trained/expert), +3 (master), or +4 (legendary).",
+      "modifiers": [],
+      "gameCommands": [],
+      "manualEffects": [
+        "Circumstance bonus based on proficiency"
+      ]
+    },
+    "failure": {
+      "description": "Your aid has no effect. You can try again using a different skill.",
+      "modifiers": [],
+      "gameCommands": []
+    },
+    "criticalFailure": {
+      "description": "Your attempt to aid actually hinders the target, imposing a -1 circumstance penalty to their check.",
+      "modifiers": [],
+      "gameCommands": [],
+      "manualEffects": [
+        "-1 circumstance penalty to target's check"
+      ]
+    }
+  }
+}
+

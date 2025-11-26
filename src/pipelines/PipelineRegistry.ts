@@ -46,6 +46,9 @@ import { infiltrationPipeline } from './actions/infiltration';
 import { establishSettlementPipeline } from './actions/establishSettlement';
 import { recoverArmyPipeline } from './actions/recoverArmy';
 
+// Special Actions
+import { aidAnotherPipeline } from './actions/aidAnother';
+
 // ==================================================
 // EVENT PIPELINES (37)
 // ==================================================
@@ -129,7 +132,7 @@ import { settlementCollapsePipeline } from './incidents/major/settlement-collaps
 import { tradeWarPipeline } from './incidents/major/trade-war';
 
 /**
- * All registered action pipelines (26 total)
+ * All registered action pipelines (27 total)
  */
 const ACTION_PIPELINES: CheckPipeline[] = [
   // Week 5: Simple Actions (9)
@@ -164,7 +167,10 @@ const ACTION_PIPELINES: CheckPipeline[] = [
   outfitArmyPipeline,
   infiltrationPipeline,
   establishSettlementPipeline,
-  recoverArmyPipeline
+  recoverArmyPipeline,
+
+  // Special Actions (1)
+  aidAnotherPipeline
 ];
 
 /**

@@ -45,14 +45,11 @@ export async function adjustFactionAttitude(
   // Import utilities
   const { factionService } = await import('../../factions/index');
 
-  // Get faction ID from parameter or pending state
+  // Get faction ID from parameter
+  // NOTE: Global state fallback removed - factionId should always be passed from pipeline
   let selectedFactionId = factionId;
-  if (!selectedFactionId) {
-    // Check for pending faction (set by pre-roll dialog or action)
-    selectedFactionId = (globalThis as any).__pendingEconomicAidFaction;
-  }
 
-  // Prompt user to select faction if not provided
+  // Prompt user to select faction if not provided (legacy fallback for non-pipeline calls)
   if (!selectedFactionId) {
     const eligibleFactions = kingdom.factions.filter((f: any) => f.attitude !== undefined);
     

@@ -207,12 +207,18 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
       }
 
       // Create allied army via game command (uses prepare/commit pattern)
+      // Pass recruitment data directly - no global state needed
       const { createGameCommandsResolver } = await import('../../services/GameCommandsResolver');
       const resolver = await createGameCommandsResolver();
       
       const preparedCommand = await resolver.recruitArmy(
         ctx.kingdom.level,
-        recruitmentData.name,
+        {
+          name: recruitmentData.name,
+          armyType: recruitmentData.armyType,
+          settlementId: recruitmentData.settlementId || null,
+          supportedBy: faction.name  // Allied army supported by faction
+        },
         true // exemptFromUpkeep
       );
 

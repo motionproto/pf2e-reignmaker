@@ -10,10 +10,17 @@
 
 import { logger } from '../../utils/Logger';
 import { armyMovementMode } from './movementMode';
-import { getKingdomData } from '../../stores/KingdomStore';
+import { getKingdomData, getKingdomActor } from '../../stores/KingdomStore';
 import type { Army } from '../../models/Army';
 import { appWindowManager } from '../ui/AppWindowManager';
 import { positionToOffset, hexToKingmakerId } from '../hex-selector/coordinates';
+import type { SvelteComponent } from 'svelte';
+import { 
+  canRerollWithFame, 
+  deductFameForReroll, 
+  restoreFameAfterFailedReroll 
+} from '../../controllers/shared/RerollHelpers';
+import { createOutcomePreviewService } from '../OutcomePreviewService';
 
 export interface DeploymentResult {
   armyId: string;
@@ -34,6 +41,7 @@ export class ArmyDeploymentPanel {
   private selectedArmyId: string | null = null;
   private plottedPath: string[] = [];
   private panelMountPoint: HTMLElement | null = null;
+  private component: SvelteComponent | null = null;
   private resolve: ((result: DeploymentResult | null) => void) | null = null;
   private tokenClickHandler: ((event: any) => void) | null = null;
   private keyDownHandler: ((event: KeyboardEvent) => void) | null = null;
@@ -71,8 +79,8 @@ export class ArmyDeploymentPanel {
         // 1. Minimize Reignmaker app
         this.minimizeReignmakerApp();
         
-        // 2. Mount floating panel
-        this.mountPanel();
+        // 2. Mount floating panel (Svelte component)
+        await this.mountPanel();
         
         // 3. Attach canvas token click listener
         this.attachTokenClickListener();
@@ -325,7 +333,7 @@ export class ArmyDeploymentPanel {
     this.keyDownHandler = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         logger.info('[ArmyDeploymentPanel] Escape pressed - cancelling');
-        this.handleCancel();
+        this.handleCancel().catch(err => logger.error('[ArmyDeploymentPanel] Error in cancel handler:', err));
       }
     };
     
@@ -336,7 +344,7 @@ export class ArmyDeploymentPanel {
    * Attach roll completion listener
    */
   private attachRollCompleteListener(): void {
-    this.rollCompleteHandler = (event: any) => {
+    this.rollCompleteHandler = async (event: any) => {
       const { checkId, outcome, actorName, skillName, rollBreakdown } = event.detail;
       
       // Only handle deploy-army rolls
@@ -356,7 +364,7 @@ export class ArmyDeploymentPanel {
       };
       
       this.panelState = 'showing-result';
-      this.updatePanel();
+      await this.updateComponentProps();
     };
     
     window.addEventListener('kingdomRollComplete', this.rollCompleteHandler as any);
@@ -409,7 +417,7 @@ export class ArmyDeploymentPanel {
     // Set up path change callback
     armyMovementMode.setPathChangedCallback((path: string[]) => {
       this.plottedPath = path;
-      this.updatePanel();
+      this.updateComponentProps();
     });
     
     // Set up path complete callback (double-click or max movement)
@@ -418,515 +426,221 @@ export class ArmyDeploymentPanel {
       await this.handleDone();
     });
     
-    // Update panel UI
-    this.updatePanel();
+    // Update component props
+    await this.updateComponentProps();
   }
   
   /**
-   * Mount floating panel
+   * Mount floating panel (Svelte component)
    */
-  private mountPanel(): void {
+  private async mountPanel(): Promise<void> {
     this.panelMountPoint = document.createElement('div');
     this.panelMountPoint.id = 'army-deployment-panel-mount';
     document.body.appendChild(this.panelMountPoint);
     
-    this.createPanel();
+    // Dynamically import and mount Svelte component
+    const { default: ArmyDeploymentPanelComponent } = await import('../../view/army/ArmyDeploymentPanel.svelte');
+    
+    const armiesOnMap = await this.getArmiesOnMap();
+    
+    this.component = new ArmyDeploymentPanelComponent({
+      target: this.panelMountPoint,
+      props: {
+        skill: this.skill,
+        selectedArmyId: this.selectedArmyId,
+        plottedPath: this.plottedPath,
+        panelState: this.panelState,
+        rollResult: this.rollResult,
+        armiesOnMap: armiesOnMap,
+        onCancel: () => { this.handleCancel().catch(err => logger.error('[ArmyDeploymentPanel] Error in cancel handler:', err)); },
+        onDone: () => this.handleDone(),
+        onConfirm: () => this.handleResultConfirm(),
+        onOk: () => { this.handleCompletedOk().catch(err => logger.error('[ArmyDeploymentPanel] Error in completed OK handler:', err)); },
+        onSelectArmy: (armyId: string) => this.selectArmy(armyId),
+        onReroll: () => this.handleReroll(),
+        currentFame: await this.getCurrentFame()
+      }
+    });
   }
   
   /**
-   * Create panel HTML
+   * Update component props when state changes
    */
-  private createPanel(): void {
-    if (!this.panelMountPoint) return;
+  private async updateComponentProps(): Promise<void> {
+    if (!this.component) return;
     
-    const panel = document.createElement('div');
-    panel.className = 'army-deployment-panel';
-    panel.style.cssText = `
-      position: fixed;
-      top: 50%;
-      right: 20px;
-      transform: translateY(-50%);
-      z-index: 1000;
-      background: rgba(0, 0, 0, 0.9);
-      border: 2px solid #D2691E;
-      border-radius: 8px;
-      padding: 16px;
-      min-width: 320px;
-      max-width: 400px;
-      box-shadow: 0 4px 12px var(--overlay-high);
-      color: white;
-      font-family: system-ui, -apple-system, sans-serif;
-    `;
+    const armiesOnMap = await this.getArmiesOnMap();
+    const currentFame = await this.getCurrentFame();
     
-    panel.innerHTML = `
-      <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #D2691E;">
-        <h3 style="margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
-          <i class="fas fa-chess-knight"></i>
-          Deploy Army
-        </h3>
-        <p style="margin: 8px 0 0 0; font-size: 0.875rem; color: #999;">
-          Skill: <span style="color: #D2691E; font-weight: bold;">${this.skill}</span>
-        </p>
-      </div>
-      <div id="army-list" style="margin-bottom: 12px; max-height: 400px; overflow-y: auto;">
-        <!-- Armies will be added here -->
-      </div>
-      <div id="movement-info" style="margin-bottom: 12px; padding: 8px; background: var(--hover-low); border-radius: 4px; font-size: 0.875rem; color: #999; display: none;">
-        <!-- Movement info will be shown here -->
-      </div>
-      <div style="display: flex; gap: 8px; padding-top: 12px; border-top: 1px solid #D2691E;">
-        <button id="btn-cancel" style="flex: 1; padding: 8px; background: #333; border: 1px solid #666; border-radius: 4px; color: white; cursor: pointer;">
-          <i class="fas fa-times"></i> Cancel
-        </button>
-        <button id="btn-done" style="flex: 1; padding: 8px; background: #D2691E; border: none; border-radius: 4px; color: white; cursor: pointer;" disabled>
-          <i class="fas fa-check"></i> Done
-        </button>
-      </div>
-    `;
-    
-    this.panelMountPoint.appendChild(panel);
-    
-    // Wire up buttons
-    const btnCancel = panel.querySelector('#btn-cancel') as HTMLButtonElement;
-    const btnDone = panel.querySelector('#btn-done') as HTMLButtonElement;
-    
-    btnCancel?.addEventListener('click', () => this.handleCancel());
-    btnDone?.addEventListener('click', async () => await this.handleDone());
-    
-    // Initial render
-    this.updatePanel();
+    this.component.$set({
+      selectedArmyId: this.selectedArmyId,
+      plottedPath: this.plottedPath,
+      panelState: this.panelState,
+      rollResult: this.rollResult,
+      armiesOnMap: armiesOnMap,
+      currentFame: currentFame
+    });
   }
   
   /**
-   * Update panel with current selection state or result display
+   * Get current kingdom fame
    */
-  private async updatePanel(): Promise<void> {
-    if (!this.panelMountPoint) return;
+  private async getCurrentFame(): Promise<number> {
+    const kingdom = getKingdomData();
+    return kingdom?.fame || 0;
+  }
+  
+  /**
+   * Get instance ID from pending outcomes
+   */
+  private getInstanceId(): string | null {
+    const kingdom = getKingdomData();
+    if (!kingdom?.pendingOutcomes) return null;
     
-    // Handle different panel states
-    if (this.panelState === 'waiting-for-roll') {
-      this.renderWaitingState();
-      return;
-    } else if (this.panelState === 'showing-result') {
-      this.renderResultState();
-      return;
-    } else if (this.panelState === 'animating') {
-      this.renderAnimatingState();
-      return;
-    } else if (this.panelState === 'completed') {
-      this.renderCompletedState();
+    const instance = kingdom.pendingOutcomes.find(
+      (i: any) => i.checkId === 'deploy-army' && i.checkType === 'action'
+    );
+    
+    return instance?.previewId || null;
+  }
+  
+  /**
+   * Handle reroll with fame
+   */
+  private async handleReroll(): Promise<void> {
+    if (!this.selectedArmyId || !this.plottedPath || this.plottedPath.length < 2) {
+      logger.error('[ArmyDeploymentPanel] Cannot reroll - missing army or path');
       return;
     }
     
-    // Default: selection state
-    const armyList = this.panelMountPoint.querySelector('#army-list');
-    const movementInfo = this.panelMountPoint.querySelector('#movement-info');
-    const btnDone = this.panelMountPoint.querySelector('#btn-done') as HTMLButtonElement;
+    // Check if reroll is possible
+    const fameCheck = await canRerollWithFame();
+    if (!fameCheck.canReroll) {
+      const ui = (globalThis as any).ui;
+      ui?.notifications?.warn(fameCheck.error || 'Not enough fame to reroll');
+      return;
+    }
     
-    if (!armyList) return;
+    // Deduct fame
+    const deductResult = await deductFameForReroll();
+    if (!deductResult.success) {
+      const ui = (globalThis as any).ui;
+      ui?.notifications?.error(deductResult.error || 'Failed to deduct fame');
+      return;
+    }
     
-    // Render army list
-    const armiesOnMap = await this.getArmiesOnMap();
-    armyList.innerHTML = '';
+    logger.info('[ArmyDeploymentPanel] Rerolling with fame, clearing instance and resetting to waiting state');
     
-    // Separate available and deployed armies
-    const availableArmies = armiesOnMap.filter(a => !a.deployed);
-    const deployedArmies = armiesOnMap.filter(a => a.deployed);
-    
-    if (armiesOnMap.length === 0) {
-      armyList.innerHTML = '<p style="color: #999; font-size: 0.875rem; text-align: center; padding: 16px;">No armies found on current scene</p>';
-    } else if (availableArmies.length === 0) {
-      armyList.innerHTML = '<p style="color: #ff6b6b; font-size: 0.875rem; text-align: center; padding: 16px;"><i class="fas fa-exclamation-triangle"></i> All armies have already moved this turn</p>';
-    } else {
-      // Render available armies
-      for (const { army, hexId, deployed } of availableArmies) {
-        const isSelected = army.id === this.selectedArmyId;
+    // Clear the current pipeline instance and ensure pipeline coordinator state is clean
+    const instanceId = this.getInstanceId();
+    if (instanceId) {
+      try {
+        const checkInstanceService = await createOutcomePreviewService();
+        await checkInstanceService.clearInstance(instanceId);
+        logger.info('[ArmyDeploymentPanel] Cleared pipeline instance for reroll:', instanceId);
         
-        const armyDiv = document.createElement('div');
-        armyDiv.style.cssText = `
-          padding: 12px;
-          margin-bottom: 8px;
-          background: ${isSelected ? 'rgba(210, 105, 30, 0.3)' : 'var(--hover-low)'};
-          border: 2px solid ${isSelected ? '#D2691E' : 'transparent'};
-          border-radius: 4px;
-          cursor: pointer;
-          transition: all 0.2s;
-        `;
-        
-        armyDiv.innerHTML = `
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-            <span style="font-weight: bold; font-size: 1rem;">${army.name}</span>
-            ${isSelected ? '<i class="fas fa-check-circle" style="color: #4CAF50;"></i>' : ''}
-          </div>
-          <div style="font-size: 0.875rem; color: #999;">
-            Level ${army.level} • ${army.isSupported ? '<span style="color: #4CAF50;">Supported</span>' : '<span style="color: #ff6b6b;">Unsupported</span>'}
-          </div>
-          <div style="font-size: 0.875rem; color: #666; font-family: monospace; margin-top: 4px;">
-            Hex: ${hexId || 'Unknown'}
-          </div>
-        `;
-        
-        armyDiv.addEventListener('click', () => {
-          this.selectArmy(army.id);
-        });
-        
-        armyDiv.addEventListener('mouseenter', () => {
-          if (!isSelected) {
-            (armyDiv as HTMLElement).style.background = 'var(--hover)';
-          }
-        });
-        
-        armyDiv.addEventListener('mouseleave', () => {
-          if (!isSelected) {
-            (armyDiv as HTMLElement).style.background = 'var(--hover-low)';
-          }
-        });
-        
-        armyList.appendChild(armyDiv);
+        // The pipeline coordinator's cleanupOldInstances will be called when executePipeline runs
+        // But we need to ensure the pending context is cleared now
+        // Since cleanupOldInstances is called at the start of executePipeline, triggering a new
+        // pipeline execution will clean up old instances automatically
+      } catch (error) {
+        logger.error('[ArmyDeploymentPanel] Failed to clear instance before reroll:', error);
+        // Continue anyway - the new roll should create a new instance
       }
+    }
+    
+    // Reset panel state
+    this.panelState = 'waiting-for-roll';
+    this.rollResult = null;
+    await this.updateComponentProps();
+    
+    // Re-trigger roll using pipeline coordinator directly (same approach as handlePerformReroll)
+    // This ensures we use the pipeline system and properly clean up old instances
+    try {
+      const { getPipelineCoordinator } = await import('../PipelineCoordinator');
+      const { getCurrentUserCharacter, showCharacterSelectionDialog } = await import('../pf2e');
+      const pipelineCoordinator = await getPipelineCoordinator();
       
-      // Show deployed armies section if any exist
-      if (deployedArmies.length > 0) {
-        const divider = document.createElement('div');
-        divider.style.cssText = 'margin: 16px 0; border-top: 1px solid #666; padding-top: 12px;';
-        divider.innerHTML = '<p style="font-size: 0.875rem; color: #999; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 1px;">Already Deployed</p>';
-        armyList.appendChild(divider);
-        
-        for (const { army, hexId } of deployedArmies) {
-          const armyDiv = document.createElement('div');
-          armyDiv.style.cssText = `
-            padding: 12px;
-            margin-bottom: 8px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 2px solid transparent;
-            border-radius: 4px;
-            opacity: 0.5;
-            cursor: not-allowed;
-          `;
-          
-          armyDiv.innerHTML = `
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-              <span style="font-weight: bold; font-size: 1rem;">${army.name}</span>
-              <i class="fas fa-check" style="color: #4CAF50;"></i>
-            </div>
-            <div style="font-size: 0.875rem; color: #999;">
-              Level ${army.level} • Already moved this turn
-            </div>
-            <div style="font-size: 0.875rem; color: #666; font-family: monospace; margin-top: 4px;">
-              Hex: ${hexId || 'Unknown'}
-            </div>
-          `;
-          
-          armyDiv.addEventListener('click', () => {
-            const ui = (globalThis as any).ui;
-            ui?.notifications?.warn(`${army.name} has already moved this turn`);
-          });
-          
-          armyList.appendChild(armyDiv);
+      // Get character for reroll
+      let actingCharacter = getCurrentUserCharacter();
+      if (!actingCharacter) {
+        actingCharacter = await showCharacterSelectionDialog();
+        if (!actingCharacter) {
+          // User cancelled - restore fame
+          if (deductResult.previousFame !== undefined) {
+            await restoreFameAfterFailedReroll(deductResult.previousFame);
+          }
+          this.panelState = 'showing-result';
+          await this.updateComponentProps();
+          return;
         }
       }
-    }
-    
-    // Update movement info
-    if (movementInfo instanceof HTMLElement) {
-      if (this.selectedArmyId && this.plottedPath.length > 0) {
-        movementInfo.style.display = 'block';
-        const hexCount = this.plottedPath.length;
-        const movement = hexCount - 1; // First hex is origin
-        
-        // Get max movement for this army
-        const maxMovement = armyMovementMode.isActive() ? (armyMovementMode as any).maxMovement : 20;
-        
-        movementInfo.innerHTML = `
-          <div style="display: flex; justify-content: space-between;">
-            <span>Path Length:</span>
-            <span style="color: #D2691E; font-weight: bold;">${hexCount} hexes</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; margin-top: 4px;">
-            <span>Movement Used:</span>
-            <span style="color: ${movement >= maxMovement ? '#4CAF50' : '#D2691E'}; font-weight: bold;">${movement} / ${maxMovement}</span>
-          </div>
-        `;
-      } else {
-        movementInfo.style.display = 'none';
+      
+      // Get army name for metadata
+      const kingdom = getKingdomData();
+      const army = kingdom?.armies?.find((a: any) => a.id === this.selectedArmyId);
+      
+      logger.info('[ArmyDeploymentPanel] Re-executing pipeline for reroll', {
+        skill: this.skill,
+        armyId: this.selectedArmyId,
+        pathLength: this.plottedPath.length
+      });
+      
+      // Re-execute complete pipeline (Steps 1-9, pauses at Step 6 for user confirmation)
+      // Pass deployment metadata directly - Step 2 will see it and skip opening the panel
+      await pipelineCoordinator.executePipeline('deploy-army', {
+        actor: {
+          selectedSkill: this.skill,
+          fullActor: actingCharacter,
+          actorName: actingCharacter.name,
+          actorId: actingCharacter.id,
+          level: actingCharacter.level || 1,
+          proficiencyRank: 0 // TODO: Get from actor
+        },
+        metadata: {
+          deployment: {
+            armyId: this.selectedArmyId,
+            path: this.plottedPath,
+            armyName: army?.name || 'Unknown'
+          }
+        }
+      });
+      
+      logger.info('[ArmyDeploymentPanel] Pipeline reroll complete - Foundry dialog should have opened');
+    } catch (error) {
+      logger.error('[ArmyDeploymentPanel] Error during reroll:', error);
+      
+      // Restore fame on error
+      if (deductResult.previousFame !== undefined) {
+        await restoreFameAfterFailedReroll(deductResult.previousFame);
       }
-    }
-    
-    // Update Done button
-    const canComplete = this.selectedArmyId && this.plottedPath.length > 1;
-    if (btnDone) {
-      btnDone.disabled = !canComplete;
-      btnDone.style.opacity = canComplete ? '1' : '0.5';
-      btnDone.style.cursor = canComplete ? 'pointer' : 'not-allowed';
-    }
-  }
-  
-  /**
-   * Render waiting for roll state
-   */
-  private renderWaitingState(): void {
-    if (!this.panelMountPoint) return;
-    
-    const panel = this.panelMountPoint.querySelector('.army-deployment-panel');
-    if (!panel) return;
-    
-    panel.innerHTML = `
-      <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #D2691E;">
-        <h3 style="margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
-          <i class="fas fa-dice-d20"></i>
-          Deploy Army - Rolling
-        </h3>
-      </div>
-      <div style="padding: 40px 20px; text-align: center;">
-        <i class="fas fa-spinner fa-spin" style="font-size: 48px; color: #D2691E; margin-bottom: 16px;"></i>
-        <p style="margin: 0; color: #999; font-size: 1rem;">Waiting for roll to complete...</p>
-        <p style="margin: 8px 0 0 0; color: #666; font-size: 0.875rem;">Complete the Foundry roll dialog</p>
-      </div>
-    `;
-  }
-  
-  /**
-   * Render result display state
-   */
-  private renderResultState(): void {
-    if (!this.panelMountPoint || !this.rollResult) return;
-    
-    const panel = this.panelMountPoint.querySelector('.army-deployment-panel');
-    if (!panel) return;
-    
-    // Get outcome styling
-    const outcomeColors: Record<string, string> = {
-      criticalSuccess: '#4CAF50',
-      success: '#8BC34A',
-      failure: '#ff9800',
-      criticalFailure: '#f44336'
-    };
-    
-    const outcomeLabels: Record<string, string> = {
-      criticalSuccess: 'Critical Success',
-      success: 'Success',
-      failure: 'Failure',
-      criticalFailure: 'Critical Failure'
-    };
-    
-    const outcomeColor = outcomeColors[this.rollResult.outcome] || '#999';
-    const outcomeLabel = outcomeLabels[this.rollResult.outcome] || this.rollResult.outcome;
-    
-    // Get army name
-    const kingdom = getKingdomData();
-    const army = kingdom?.armies?.find((a: any) => a.id === this.selectedArmyId);
-    const armyName = army?.name || 'Unknown Army';
-    
-    // Get destination hex (last hex in path)
-    const destinationHex = this.plottedPath.length > 0 ? this.plottedPath[this.plottedPath.length - 1] : 'Unknown';
-    
-    // Get conditions/effects that will be applied based on outcome
-    const conditionsToApply = this.rollResult.outcome === 'criticalSuccess' ?
-      ['+1 initiative (status bonus)', '+1 saving throws (status bonus)', '+1 attack (status bonus)'] :
-      this.rollResult.outcome === 'failure' ?
-      ['-1 initiative (status penalty)', 'fatigued'] :
-      this.rollResult.outcome === 'criticalFailure' ?
-      ['-2 initiative (status penalty)', 'enfeebled 1', 'fatigued'] :
-      [];
-    
-    // Build effects display HTML
-    let effectsHTML = '';
-    if (conditionsToApply.length > 0) {
-      const effectItems = conditionsToApply.map(condition => {
-        // Style negative effects differently
-        const isNegative = condition.includes('penalty') || condition.includes('fatigued') || condition.includes('enfeebled');
-        const effectColor = isNegative ? '#ff9800' : '#4CAF50';
-        const icon = isNegative ? 'fa-exclamation-triangle' : 'fa-check-circle';
-        return `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-          <i class="fas ${icon}" style="color: ${effectColor}; font-size: var(--font-sm);"></i>
-          <span style="font-size: var(--font-md); color: white;">${condition}</span>
-        </div>`;
-      }).join('');
       
-      effectsHTML = `
-        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-          <div style="font-size: var(--font-sm); color: #999; margin-bottom: 8px;">Effects Applied:</div>
-          <div>${effectItems}</div>
-        </div>
-      `;
-    }
-    
-    panel.innerHTML = `
-      <div style="margin-bottom: var(--space-12); padding-bottom: var(--space-12); border-bottom: 1px solid #D2691E;">
-        <h3 style="margin: 0; font-size: var(--font-lg); display: flex; align-items: center; gap: var(--space-8);">
-          <i class="fas fa-check-circle"></i>
-          Deployment Complete
-        </h3>
-      </div>
-      <div style="padding: var(--space-20);">
-        <div style="background: var(--hover-low); border-radius: var(--radius-md); padding: var(--space-16); margin-bottom: var(--space-16);">
-          <div style="display: flex; align-items: center; gap: var(--space-12); margin-bottom: var(--space-12);">
-            <div style="flex: 1;">
-              <div style="font-size: var(--font-sm); color: var(--text-muted); margin-bottom: var(--space-4);">Outcome</div>
-              <div style="font-size: var(--font-xl); font-weight: var(--font-weight-bold); color: ${outcomeColor};">${outcomeLabel}</div>
-            </div>
-            <i class="fas fa-chess-knight" style="font-size: var(--font-3xl); color: #D2691E; opacity: 0.5;"></i>
-          </div>
-          <div style="font-size: var(--font-sm); color: var(--text-muted); margin-bottom: var(--space-4);">Rolled by</div>
-          <div style="font-size: var(--font-md); color: var(--text-primary); margin-bottom: var(--space-12);">${this.rollResult.actorName}</div>
-          <div style="font-size: var(--font-sm); color: var(--text-muted); margin-bottom: var(--space-4);">Army</div>
-          <div style="font-size: var(--font-md); color: var(--text-primary); margin-bottom: var(--space-12);">${armyName}</div>
-          <div style="font-size: var(--font-sm); color: var(--text-muted); margin-bottom: var(--space-4);">Destination</div>
-          <div style="font-size: var(--font-md); color: var(--text-primary); margin-bottom: var(--space-12);">Hex: ${destinationHex}</div>
-          <div style="font-size: var(--font-sm); color: var(--text-muted); margin-bottom: var(--space-4);">Path Length</div>
-          <div style="font-size: var(--font-md); color: var(--text-primary);">${this.plottedPath.length} hexes (${this.plottedPath.length - 1} movement)</div>
-          ${effectsHTML}
-        </div>
-        <div style="display: flex; gap: var(--space-8);">
-          <button id="btn-cancel" style="flex: 1; padding: var(--space-8); background: var(--surface-low); border: 1px solid var(--border-faint); border-radius: var(--radius-md); color: var(--text-primary); cursor: pointer; font-size: var(--font-md);">
-            <i class="fas fa-times"></i> Cancel
-          </button>
-          <button id="btn-confirm" style="flex: 1; padding: var(--space-8); background: var(--color-orange); border: none; border-radius: var(--radius-md); color: white; cursor: pointer; font-size: var(--font-md);">
-            <i class="fas fa-check"></i> Confirm
-          </button>
-        </div>
-      </div>
-    `;
-    
-    // Wire up buttons
-    const btnCancel = panel.querySelector('#btn-cancel') as HTMLButtonElement;
-    const btnConfirm = panel.querySelector('#btn-confirm') as HTMLButtonElement;
-    
-    btnCancel?.addEventListener('click', () => this.handleCancel());
-    btnConfirm?.addEventListener('click', async () => await this.handleResultConfirm());
-  }
-  
-  /**
-   * Render animating state
-   */
-  private renderAnimatingState(): void {
-    if (!this.panelMountPoint) return;
-    
-    const panel = this.panelMountPoint.querySelector('.army-deployment-panel');
-    if (!panel) return;
-    
-    panel.innerHTML = `
-      <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #D2691E;">
-        <h3 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">
-          <i class="fas fa-route"></i>
-          Deploying Army
-        </h3>
-      </div>
-      <div style="padding: 40px 20px; text-align: center;">
-        <i class="fas fa-spinner fa-spin" style="font-size: 48px; color: #4CAF50; margin-bottom: 16px;"></i>
-        <p style="margin: 0; color: #999; font-size: 1rem;">Army is moving into position...</p>
-        <p style="margin: 8px 0 0 0; color: #666; font-size: 0.875rem;">Watch the map for animation</p>
-      </div>
-    `;
-  }
-  
-  /**
-   * Render completed state with outcome message and OK button
-   */
-  private renderCompletedState(): void {
-    if (!this.panelMountPoint || !this.rollResult) return;
-    
-    const panel = this.panelMountPoint.querySelector('.army-deployment-panel');
-    if (!panel) return;
-    
-    // Get outcome styling
-    const outcomeColors: Record<string, string> = {
-      criticalSuccess: '#4CAF50',
-      success: '#8BC34A',
-      failure: '#ff9800',
-      criticalFailure: '#f44336'
-    };
-    
-    const outcomeLabels: Record<string, string> = {
-      criticalSuccess: 'Critical Success',
-      success: 'Success',
-      failure: 'Failure',
-      criticalFailure: 'Critical Failure'
-    };
-    
-    const outcomeColor = outcomeColors[this.rollResult.outcome] || '#999';
-    const outcomeLabel = outcomeLabels[this.rollResult.outcome] || this.rollResult.outcome;
-    
-    // Get army name
-    const kingdom = getKingdomData();
-    const army = kingdom?.armies?.find((a: any) => a.id === this.selectedArmyId);
-    const armyName = army?.name || 'Unknown Army';
-    
-    // Get final hex
-    const finalHex = this.plottedPath.length > 0 ? this.plottedPath[this.plottedPath.length - 1] : 'Unknown';
-    const movementCost = this.plottedPath.length - 1;
-    
-    // Get conditions/effects that were applied based on outcome
-    const conditionsToApply = this.rollResult.outcome === 'criticalSuccess' ?
-      ['+1 initiative (status bonus)', '+1 saving throws (status bonus)', '+1 attack (status bonus)'] :
-      this.rollResult.outcome === 'failure' ?
-      ['-1 initiative (status penalty)', 'fatigued'] :
-      this.rollResult.outcome === 'criticalFailure' ?
-      ['-2 initiative (status penalty)', 'enfeebled 1', 'fatigued'] :
-      [];
-    
-    // Build effects display HTML
-    let effectsHTML = '';
-    if (conditionsToApply.length > 0) {
-      const effectItems = conditionsToApply.map(condition => {
-        // Style negative effects differently
-        const isNegative = condition.includes('penalty') || condition.includes('fatigued') || condition.includes('enfeebled');
-        const effectColor = isNegative ? '#ff9800' : '#4CAF50';
-        const icon = isNegative ? 'fa-exclamation-triangle' : 'fa-check-circle';
-        return `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-          <i class="fas ${icon}" style="color: ${effectColor}; font-size: var(--font-sm);"></i>
-          <span style="font-size: var(--font-md); color: white;">${condition}</span>
-        </div>`;
-      }).join('');
+      const ui = (globalThis as any).ui;
+      ui?.notifications?.error('Failed to reroll. Fame has been restored.');
       
-      effectsHTML = `
-        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-          <div style="font-size: var(--font-sm); color: #999; margin-bottom: 8px;">Effects Applied:</div>
-          <div>${effectItems}</div>
-        </div>
-      `;
+      // Return to result state
+      this.panelState = 'showing-result';
+      await this.updateComponentProps();
     }
-    
-    panel.innerHTML = `
-      <div style="margin-bottom: var(--space-12); padding-bottom: var(--space-12); border-bottom: 1px solid #D2691E;">
-        <h3 style="margin: 0; font-size: var(--font-lg); display: flex; align-items: center; gap: var(--space-8);">
-          <i class="fas fa-check-circle"></i>
-          Deployment Complete
-        </h3>
-      </div>
-      <div style="padding: var(--space-20);">
-        <div style="background: var(--hover-low); border-radius: var(--radius-md); padding: var(--space-16); margin-bottom: var(--space-16);">
-          <div style="display: flex; align-items: center; gap: var(--space-12); margin-bottom: var(--space-12);">
-            <div style="flex: 1;">
-              <div style="font-size: var(--font-sm); color: var(--text-muted); margin-bottom: var(--space-4);">Outcome</div>
-              <div style="font-size: var(--font-xl); font-weight: var(--font-weight-bold); color: ${outcomeColor};"><i class="fas fa-trophy" style="margin-right: var(--space-8);"></i>${outcomeLabel}</div>
-            </div>
-            <i class="fas fa-chess-knight" style="font-size: var(--font-3xl); color: #D2691E; opacity: 0.5;"></i>
-          </div>
-          <div style="font-size: var(--font-sm); color: var(--text-muted); margin-bottom: var(--space-4);">Army</div>
-          <div style="font-size: var(--font-md); color: var(--text-primary); margin-bottom: var(--space-12);">${armyName}</div>
-          <div style="font-size: var(--font-sm); color: var(--text-muted); margin-bottom: var(--space-4);">Destination</div>
-          <div style="font-size: var(--font-md); color: var(--text-primary); margin-bottom: var(--space-12); font-family: monospace;">${finalHex}</div>
-          <div style="font-size: var(--font-sm); color: var(--text-muted); margin-bottom: var(--space-4);">Movement</div>
-          <div style="font-size: var(--font-md); color: var(--text-primary);">${movementCost} hexes</div>
-          ${effectsHTML}
-        </div>
-        <button id="btn-ok" style="width: 100%; padding: var(--space-12); background: #4CAF50; border: none; border-radius: var(--radius-md); color: white; cursor: pointer; font-size: var(--font-md); font-weight: bold;">
-          <i class="fas fa-check"></i> OK
-        </button>
-      </div>
-    `;
-    
-    // Wire up OK button
-    const btnOk = panel.querySelector('#btn-ok') as HTMLButtonElement;
-    btnOk?.addEventListener('click', () => this.handleCompletedOk());
   }
   
   /**
    * Handle OK button click in completed state
    */
-  private handleCompletedOk(): void {
+  private async handleCompletedOk(): Promise<void> {
     logger.info('[ArmyDeploymentPanel] OK clicked, completing deployment');
+    
+    // Clear the pipeline instance to reset action card (safety check - pipeline Step 9 should have done this)
+    const instanceId = this.getInstanceId();
+    if (instanceId) {
+      try {
+        const checkInstanceService = await createOutcomePreviewService();
+        await checkInstanceService.clearInstance(instanceId);
+        logger.info('[ArmyDeploymentPanel] Cleared pipeline instance:', instanceId);
+      } catch (error) {
+        logger.error('[ArmyDeploymentPanel] Failed to clear instance:', error);
+      }
+    }
     
     // Complete successfully
     const deploymentResult: DeploymentResult = {
@@ -961,7 +675,7 @@ export class ArmyDeploymentPanel {
     
     // Switch to waiting state
     this.panelState = 'waiting-for-roll';
-    this.updatePanel();
+    await this.updateComponentProps();
     
     // Trigger the roll via callback
     if (this.onRollTrigger) {
@@ -970,7 +684,7 @@ export class ArmyDeploymentPanel {
       } catch (error) {
         logger.error('[ArmyDeploymentPanel] Roll trigger failed:', error);
         this.panelState = 'selection';
-        this.updatePanel();
+        await this.updateComponentProps();
         const ui = (globalThis as any).ui;
         ui?.notifications?.error('Failed to trigger roll');
       }
@@ -989,7 +703,7 @@ export class ArmyDeploymentPanel {
     
     // Switch to animating state
     this.panelState = 'animating';
-    this.updatePanel();
+    await this.updateComponentProps();
     
     try {
       // Get action data for game command
@@ -1022,7 +736,7 @@ export class ArmyDeploymentPanel {
       
       // Switch to completed state - user must click OK to dismiss
       this.panelState = 'completed';
-      this.updatePanel();
+      await this.updateComponentProps();
       
     } catch (error) {
       logger.error('[ArmyDeploymentPanel] Failed to apply effects:', error);
@@ -1031,7 +745,7 @@ export class ArmyDeploymentPanel {
       
       // Return to selection state on error
       this.panelState = 'selection';
-      this.updatePanel();
+      await this.updateComponentProps();
     }
   }
   
@@ -1052,8 +766,22 @@ export class ArmyDeploymentPanel {
   /**
    * Handle Cancel button click
    */
-  private handleCancel(): void {
+  private async handleCancel(): Promise<void> {
     logger.info('[ArmyDeploymentPanel] Deployment cancelled');
+    
+    // If in result state, clear the pipeline instance
+    if (this.panelState === 'showing-result' || this.panelState === 'animating' || this.panelState === 'completed') {
+      const instanceId = this.getInstanceId();
+      if (instanceId) {
+        try {
+          const checkInstanceService = await createOutcomePreviewService();
+          await checkInstanceService.clearInstance(instanceId);
+          logger.info('[ArmyDeploymentPanel] Cleared pipeline instance:', instanceId);
+        } catch (error) {
+          logger.error('[ArmyDeploymentPanel] Failed to clear instance:', error);
+        }
+      }
+    }
     
     const resolver = this.resolve;
     this.cleanup();
@@ -1088,7 +816,13 @@ export class ArmyDeploymentPanel {
       armyMovementMode.deactivate();
     }
     
-    // Remove panel
+    // Unmount component
+    if (this.component) {
+      this.component.$destroy();
+      this.component = null;
+    }
+    
+    // Remove panel mount point
     if (this.panelMountPoint) {
       this.panelMountPoint.remove();
       this.panelMountPoint = null;
