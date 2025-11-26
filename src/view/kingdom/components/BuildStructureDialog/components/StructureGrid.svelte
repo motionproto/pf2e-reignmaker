@@ -53,10 +53,9 @@
         <div class="text-container">
           <h2>{selectedCategory}</h2>
           {#if skillCategories.includes(selectedCategory)}
-            {@const skills = getSkillsForCategory(selectedCategory, availableStructures)}
-            {#if skills.length > 0}
+            {#if getSkillsForCategory(selectedCategory, availableStructures).length > 0}
               <p class="category-skills-label">
-                {formatSkillsString(skills)}
+                {formatSkillsString(getSkillsForCategory(selectedCategory, availableStructures))}
               </p>
             {/if}
           {/if}
@@ -98,10 +97,9 @@
       
       <!-- Show all structures (buildable and locked) -->
       {#each availableStructures as structure}
-        {@const locked = isStructureLocked(structure)}
         <AvailableStructureItem 
           {structure}
-          {locked}
+          locked={isStructureLocked(structure)}
           {selectedStructureId}
           {successMessage}
           {selectedSettlement}

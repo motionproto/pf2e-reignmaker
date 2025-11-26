@@ -87,10 +87,9 @@
           </h3>
           
           {#each skillCategories as category}
-            {@const skills = capitalizeSkills(getSkillsForCategory(category, allStructures))}
             <CategoryItem 
               {category}
-              {skills}
+              skills={capitalizeSkills(getSkillsForCategory(category, allStructures))}
               isSelected={$structureSelection.selectedCategory === category}
               on:click={() => setStructureCategory(category)}
             />
@@ -125,10 +124,9 @@
               <div class="text-container">
                 <h2>{$structureSelection.selectedCategory}</h2>
                 {#if isSkillCategory($structureSelection.selectedCategory, skillCategories)}
-                  {@const skills = getSkillsForCategory($structureSelection.selectedCategory, allStructures)}
-                  {#if skills.length > 0}
+                  {#if getSkillsForCategory($structureSelection.selectedCategory, allStructures).length > 0}
                     <p class="progression-description">
-                      {formatSkillsString(skills)}
+                      {formatSkillsString(getSkillsForCategory($structureSelection.selectedCategory, allStructures))}
                     </p>
                   {/if}
                 {/if}

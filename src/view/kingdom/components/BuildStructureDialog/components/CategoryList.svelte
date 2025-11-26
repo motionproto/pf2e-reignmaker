@@ -67,15 +67,12 @@
       <div class="category-type-section">
         <h3 class="section-title">Skill Structures</h3>
         
-        {#each allSkillCategories as category}
-          {@const skills = capitalizeSkills(getSkillsForCategory(category, allSkillStructures))}
-          {@const currentTier = getCurrentTier(category)}
-          {@const isUnavailable = isCategoryUnavailable(category, true)}
+        {#each allSkillCategories as category (category + selectedSettlementId)}
           <CategoryItem 
             {category}
-            {skills}
-            {currentTier}
-            {isUnavailable}
+            skills={capitalizeSkills(getSkillsForCategory(category, allSkillStructures))}
+            currentTier={getCurrentTier(category)}
+            isUnavailable={isCategoryUnavailable(category, true)}
             isSelected={selectedCategory === category}
             isInProgress={categoriesInProgress.has(category)}
             on:click={() => selectCategory(category)}
@@ -89,13 +86,11 @@
       <div class="category-type-section">
         <h3 class="section-title">Support Structures</h3>
         
-        {#each allSupportCategories as category}
-          {@const currentTier = getCurrentTier(category)}
-          {@const isUnavailable = isCategoryUnavailable(category, false)}
+        {#each allSupportCategories as category (category + selectedSettlementId)}
           <CategoryItem 
             {category}
-            {currentTier}
-            {isUnavailable}
+            currentTier={getCurrentTier(category)}
+            isUnavailable={isCategoryUnavailable(category, false)}
             isSelected={selectedCategory === category}
             isInProgress={categoriesInProgress.has(category)}
             showSkills={false}

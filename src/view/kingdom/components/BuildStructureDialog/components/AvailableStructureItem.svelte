@@ -3,6 +3,8 @@
   import StructureCard from '../../structures/StructureCard.svelte';
   import type { Structure } from '../../../../../models/Structure';
   import { kingdomData } from '../../../../../stores/KingdomStore';
+  import { generateEffectMessages } from '../../../../../models/Structure';
+  import { getResourceIcon, getResourceColor } from '../../../utils/presentation';
   
   export let structure: Structure;
   export let locked: boolean = false;
@@ -14,6 +16,9 @@
   const dispatch = createEventDispatcher();
   
   let expanded = true; // Default to expanded for available structures
+  
+  // Generate effect messages for benefits
+  $: effectMessages = generateEffectMessages(structure);
   
   // Check if structure is in build queue for this settlement
   $: isInBuildQueue = $kingdomData.buildQueue?.some(project => 
@@ -65,8 +70,49 @@
 >
   <!-- Header Row -->
   <div class="structure-header">
-    <h4>{structure.name}</h4>
+    <div class="header-left">
+      <h4>{structure.name}</h4>
+      
+      <!-- Benefits display -->
+      {#if (structure.modifiers && structure.modifiers.length > 0) || effectMessages.length > 0}
+        <div class="benefits-display">
+          {#if structure.modifiers && structure.modifiers.length > 0}
+            {#each structure.modifiers as modifier}
+              <div class="benefit-item">
+                <i class="fas fa-arrow-up" style="color: #4ade80;"></i>
+                <span>{modifier.value > 0 ? '+' : ''}{modifier.value} {modifier.resource}</span>
+              </div>
+            {/each}
+          {/if}
+          {#if effectMessages.length > 0}
+            {#each effectMessages as message}
+              <div class="benefit-item">
+                <i class="fas fa-bolt" style="color: var(--color-amber);"></i>
+                <span>{message}</span>
+              </div>
+            {/each}
+          {/if}
+        </div>
+      {/if}
+    </div>
+    
     <div class="badges">
+      <!-- Cost display -->
+      <div class="cost-display">
+        <span class="cost-label">Cost:</span>
+        {#each Object.entries(structure.constructionCost || {}) as [resource, amount]}
+          {#if amount && amount > 0}
+            <div class="cost-item">
+              <i class="fas {getResourceIcon(resource)}" style="color: {getResourceColor(resource)}"></i>
+              <span>{amount}</span>
+            </div>
+          {/if}
+        {/each}
+        {#if !structure.constructionCost || Object.values(structure.constructionCost).every(v => !v || v === 0)}
+          <span class="free-badge">Free</span>
+        {/if}
+      </div>
+      
       <span class="tier-badge">Tier {structure.tier || 1}</span>
       
       {#if locked && !atCapacity}
@@ -82,11 +128,6 @@
       {:else if isInBuildQueue}
         <span class="in-progress-badge">
           In Progress
-        </span>
-      {:else if !structureCanAfford}
-        <span class="build-queue">
-          <i class="fas fa-hourglass-half"></i>
-          Queue
         </span>
       {/if}
     </div>
@@ -141,7 +182,7 @@
   
   .structure-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: var(--space-12);
     padding: var(--space-16);
     padding-bottom: var(--space-8);
@@ -152,19 +193,77 @@
       background: var(--hover-low);
     }
     
+    .header-left {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-8);
+    }
+    
     h4 {
       margin: 0;
       color: var(--text-primary);
       font-size: var(--font-xl);
       font-family: var(--font-sans-rm);
       font-weight: var(--font-weight-semibold);
-      flex: 1;
+    }
+    
+    
+    .benefits-display {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      
+      .benefit-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-6);
+        font-size: var(--font-sm);
+        color: var(--text-secondary);
+        
+        i {
+          font-size: var(--font-sm);
+          width: 0.875rem;
+          text-align: center;
+        }
+      }
     }
     
     .badges {
       display: flex;
       align-items: center;
       gap: var(--space-8);
+      
+      .cost-display {
+        display: flex;
+        gap: var(--space-8);
+        flex-wrap: wrap;
+        align-items: center;
+        
+        .cost-label {
+          font-size: var(--font-md);
+          color: var(--text-secondary);
+          font-weight: var(--font-weight-medium);
+        }
+        
+        .cost-item {
+          display: flex;
+          align-items: center;
+          gap: var(--space-4);
+          font-size: var(--font-md);
+          color: var(--text-primary);
+          
+          i {
+            font-size: var(--font-md);
+          }
+        }
+        
+        .free-badge {
+          font-size: var(--font-xs);
+          color: var(--text-tertiary);
+          font-style: italic;
+        }
+      }
       
       .tier-badge,
       .locked-badge,
