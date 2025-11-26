@@ -21,8 +21,9 @@ const pipeline = createActionPipeline('build-structure', {
 
   preRollInteractions: [
     {
-      type: 'compound',
+      type: 'configuration',
       id: 'buildingDetails',
+      component: 'BuildStructureDialog',
       label: 'Select settlement and structure'
     }
   ],
@@ -36,8 +37,10 @@ const pipeline = createActionPipeline('build-structure', {
       
       // Add building badge for success/critical success
       if (ctx.outcome !== 'failure' && ctx.outcome !== 'criticalFailure') {
-        const structureName = ctx.metadata.structureName || 'structure';
-        const settlementName = ctx.metadata.settlementName || 'settlement';
+        // Extract from buildingDetails (where configuration interaction stores it)
+        const buildingDetails = ctx.metadata.buildingDetails || {};
+        const structureName = buildingDetails.structureName || 'structure';
+        const settlementName = buildingDetails.settlementName || 'settlement';
         outcomeBadges.push(
           textBadge(`Will build ${structureName} in ${settlementName}`, 'fa-hammer', 'positive')
         );
@@ -58,9 +61,10 @@ const pipeline = createActionPipeline('build-structure', {
     // Apply modifiers (unrest changes) from JSON outcomes first
     await applyPipelineModifiers(pipeline, ctx.outcome);
 
-    // Get structure and settlement IDs from metadata
-    const structureId = ctx.metadata.structureId;
-    const settlementId = ctx.metadata.settlementId;
+    // Get structure and settlement IDs from buildingDetails (where configuration interaction stores it)
+    const buildingDetails = ctx.metadata.buildingDetails || {};
+    const structureId = buildingDetails.structureId;
+    const settlementId = buildingDetails.settlementId;
     
     if (!structureId || !settlementId) {
       return { success: false, error: 'Missing structure or settlement data' };

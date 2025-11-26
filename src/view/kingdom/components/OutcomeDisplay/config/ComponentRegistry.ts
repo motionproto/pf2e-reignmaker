@@ -12,6 +12,7 @@ import RecruitArmyDialog from '../../RecruitArmyDialog.svelte';
 import OutfitArmyResolution from '../../OutfitArmyResolution.svelte';
 import TrainArmyResolution from '../../TrainArmyResolution.svelte';
 import DisbandArmyResolution from '../../DisbandArmyResolution.svelte';
+import BuildStructureDialog from '../../BuildStructureDialog/BuildStructureDialog.svelte';
 
 export const COMPONENT_REGISTRY: Record<string, any> = {
   'ResourceChoiceSelector': ResourceChoiceSelector,
@@ -21,5 +22,6 @@ export const COMPONENT_REGISTRY: Record<string, any> = {
   'OutfitArmyResolution': OutfitArmyResolution,
   'TrainArmyResolution': TrainArmyResolution,
   'DisbandArmyResolution': DisbandArmyResolution,
+  'BuildStructureDialog': BuildStructureDialog,
   // Add more injectable components here as needed
 };

@@ -156,6 +156,7 @@
       margin: 0;
       color: var(--text-primary);
       font-size: var(--font-xl);
+      font-family: var(--font-sans-rm);
       font-weight: var(--font-weight-semibold);
       flex: 1;
     }

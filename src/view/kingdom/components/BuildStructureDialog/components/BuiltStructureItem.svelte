@@ -45,7 +45,7 @@
       display: flex;
       align-items: center;
       gap: var(--space-12);
-      padding: var(--space-16);
+      padding: var(--space-8);
       cursor: pointer;
       transition: background 0.2s ease;
       
@@ -56,6 +56,7 @@
       .structure-built-name {
         flex: 1;
         font-size: var(--font-xl);
+        font-family: var(--font-sans-rm);
         color: var(--text-secondary);
         font-weight: var(--font-weight-semibold);
       }
