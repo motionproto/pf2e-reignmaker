@@ -10,7 +10,6 @@
   <select 
     id="settlement-select"
     bind:value={selectedSettlementId}
-    class="settlement-dropdown"
   >
     {#each settlements as settlement}
       <option value={settlement.id}>
@@ -21,37 +20,51 @@
 </div>
 
 <style lang="scss">
+  /* Horizontal layout with label on left, dropdown on right */
   .settlement-selector {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: var(--space-10);
+    gap: var(--space-8);
+  }
+  
+  label {
+    margin-bottom: 0;
+    font-size: var(--font-md);
+    color: var(--text-primary);
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
+  }
+  
+  select {
+    padding: var(--space-2) var(--space-16);
+    min-height: 2rem;
+    background: var(--surface-high);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-family: var(--font-sans-rm);
+    font-size: var(--font-md);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-normal);
+    cursor: pointer;
+    transition: all var(--transition-fast);
     
-    label {
-      color: var(--text-secondary);
-      font-size: var(--font-md);
-      white-space: nowrap;
+    &:hover:not(:disabled) {
+      background: var(--surface-higher);
+      border-color: var(--border-strong);
+      transform: translateY(-0.0625rem);
+      box-shadow: var(--shadow-md);
     }
     
-    .settlement-dropdown {
-      padding: var(--space-6) var(--space-12);
-      background: rgba(0, 0, 0, 0.4);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary);
-      font-size: var(--font-md);
-      cursor: pointer;
-      min-width: 12.5rem;
-      
-      &:hover {
-        border-color: var(--border-strong);
-        background: var(--overlay-high);
-      }
-      
-      &:focus {
-        outline: none;
-        border-color: var(--color-amber);
-        box-shadow: 0 0 0 0.125rem var(--surface-accent-high);
-      }
+    &:focus {
+      outline: none;
+      border-color: var(--border-strong);
+      box-shadow: 0 0 0 3px hsla(240, 5%, 38%, 0.2);
+    }
+    
+    &:active:not(:disabled) {
+      transform: translateY(0);
     }
   }
 </style>

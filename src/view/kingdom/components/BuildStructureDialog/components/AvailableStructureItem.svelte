@@ -241,7 +241,8 @@
     }
   }
   
-  // Disable hover effects on nested StructureCard when locked or in-progress
+  // Disable hover effects on nested StructureCard when selected, locked or in-progress
+  .structure-card-with-build.selected .structure-content :global(.structure-card:hover),
   .structure-card-with-build.locked .structure-content :global(.structure-card:hover),
   .structure-card-with-build.in-progress .structure-content :global(.structure-card:hover) {
     box-shadow: none;

@@ -17,8 +17,29 @@
 <div class="structure-card">
   <!-- Header -->
   <div class="structure-card-header">
-    <h4>{structure.name}</h4>
-    <span class="tier-badge">Tier {structure.tier || tier}</span>
+    <div class="header-left">
+      <h4>{structure.name}</h4>
+    </div>
+    
+    <div class="badges">
+      <!-- Cost display -->
+      <div class="cost-display">
+        <span class="cost-label">Cost:</span>
+        {#each Object.entries(structure.constructionCost || {}) as [resource, amount]}
+          {#if amount && amount > 0}
+            <div class="cost-item">
+              <i class="fas {getResourceIcon(resource)}" style="color: {getResourceColor(resource)}"></i>
+              <span>{amount}</span>
+            </div>
+          {/if}
+        {/each}
+        {#if !structure.constructionCost || Object.values(structure.constructionCost).every(v => !v || v === 0)}
+          <span class="free-badge">Free</span>
+        {/if}
+      </div>
+      
+      <span class="tier-badge">Tier {structure.tier || tier}</span>
+    </div>
   </div>
   
   <!-- Split Layout: Thumbnail | Info -->
@@ -38,24 +59,6 @@
           {structure.description}
         </div>
       {/if}
-      
-      <!-- Cost Section -->
-      <div class="structure-card-cost">
-        <div class="cost-label">Cost</div>
-        <div class="resource-list">
-          {#each Object.entries(structure.constructionCost || {}) as [resource, amount]}
-            {#if amount && amount > 0}
-              <div class="resource-item">
-                <i class="fas {getResourceIcon(resource)} resource-icon" style="color: {getResourceColor(resource)}"></i>
-                <span>{amount} {resource}</span>
-              </div>
-            {/if}
-          {/each}
-          {#if !structure.constructionCost || Object.values(structure.constructionCost).every(v => !v || v === 0)}
-            <span class="no-cost">Free</span>
-          {/if}
-        </div>
-      </div>
       
       <!-- Effect Messages (gameEffects and manualEffects with msg support) -->
       {#if effectMessages.length > 0}
@@ -97,20 +100,17 @@
   /* Header Styles */
   .structure-card-header {
     display: flex;
-    align-items: baseline;
+    align-items: flex-start;
     gap: var(--space-12);
     margin-bottom: var(--space-16);
     border-bottom: 1px solid var(--border-faint);
     padding-bottom: var(--space-8);
     
-    .tier-badge {
-      font-size: var(--font-md);
-      font-weight: var(--font-weight-semibold);
-      color: var(--text-secondary);
-      background: var(--surface-accent-low);
-      padding: var(--space-4) var(--space-8);
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border-faint);
+    .header-left {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-8);
     }
     
     h4 {
@@ -118,7 +118,53 @@
       color: var(--text-primary);
       font-size: var(--font-xl);
       font-weight: var(--font-weight-semibold);
-      flex: 1;
+    }
+    
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: var(--space-8);
+      
+      .cost-display {
+        display: flex;
+        gap: var(--space-8);
+        flex-wrap: wrap;
+        align-items: center;
+        margin-right: var(--space-16);
+        
+        .cost-label {
+          font-size: var(--font-md);
+          color: var(--text-secondary);
+          font-weight: var(--font-weight-medium);
+        }
+        
+        .cost-item {
+          display: flex;
+          align-items: center;
+          gap: var(--space-4);
+          font-size: var(--font-md);
+          color: var(--text-primary);
+          
+          i {
+            font-size: var(--font-md);
+          }
+        }
+        
+        .free-badge {
+          font-size: var(--font-md);
+          color: var(--text-secondary);
+        }
+      }
+      
+      .tier-badge {
+        font-size: var(--font-md);
+        font-weight: var(--font-weight-semibold);
+        color: var(--text-secondary);
+        background: var(--surface-high);
+        padding: var(--space-4) var(--space-8);
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-medium);
+      }
     }
   }
   
@@ -136,7 +182,7 @@
     .thumbnail-placeholder {
       width: 6.25rem;
       height: 6.25rem;
-      background: var(--surface-lower);
+    
       border: 1px solid var(--border-faint);
       border-radius: var(--radius-sm);
       display: flex;

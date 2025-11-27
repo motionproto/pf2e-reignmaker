@@ -1,114 +1,135 @@
 /* Form Controls - Global Styling for Dropdowns, Selects, Inputs */
 /* Ensures consistent, legible styling across the application */
+/* Namespaced with rm- prefix to avoid Foundry conflicts */
 
 /* ========================================
    Form Field Layouts
    ======================================== */
 
 /* Vertical Layout - Label Above Input/Select */
-/* Usage: Add .form-field-vertical to container div wrapping label + input/select */
-#pf2e-reignmaker .form-field-vertical {
+/* Usage: Add .rm-form-field-vertical to container div wrapping label + input/select */
+#pf2e-reignmaker .rm-form-field-vertical {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: var(--space-4);
 }
 
-#pf2e-reignmaker .form-field-vertical label {
+#pf2e-reignmaker .rm-label {
   margin-bottom: 0;
   font-size: var(--font-md);
-  color: var(--text-muted);
+  color: var(--text-primary);
   font-weight: var(--font-weight-medium);
 }
 
 /* Horizontal Layout - Label Beside Input/Select */
-/* Usage: Add .form-field-horizontal to container div wrapping label + input/select */
-#pf2e-reignmaker .form-field-horizontal {
+/* Usage: Add .rm-form-field-horizontal to container div wrapping label + input/select */
+#pf2e-reignmaker .rm-form-field-horizontal {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: var(--space-8);
 }
 
-#pf2e-reignmaker .form-field-horizontal label {
-  margin-bottom: 0;
-  font-size: var(--font-md);
-  color: var(--text-muted);
-  font-weight: var(--font-weight-medium);
+#pf2e-reignmaker .rm-form-field-horizontal .rm-label {
   white-space: nowrap;
+}
+
+/* Inline Layout - Label and Input/Select Close Together */
+/* Usage: Add .rm-form-field-inline to container div wrapping label + input/select */
+#pf2e-reignmaker .rm-form-field-inline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+#pf2e-reignmaker .rm-form-field-inline .rm-label {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+#pf2e-reignmaker .rm-form-field-inline .rm-select,
+#pf2e-reignmaker .rm-form-field-inline .rm-input {
+  flex-shrink: 0;
 }
 
 /* ========================================
    Form Control Styling
    ======================================== */
 
-/* Select/Dropdown Styling */
-#pf2e-reignmaker select {
-  /* Base styling */
-  padding: var(--space-8) var(--space-12);
+/* Select/Dropdown Styling - Matches Secondary Button */
+/* Namespaced as .rm-select to avoid Foundry conflicts */
+#pf2e-reignmaker .rm-select {
+  /* Base styling - matches .button.secondary */
+  padding: var(--space-10) var(--space-16);
   min-height: 2.5rem;
-  background: var(--surface-lowest);
+  background: var(--surface-high);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
   color: var(--text-primary);
   font-family: var(--font-sans-rm);
   font-size: var(--font-md);
-  line-height: var(--line-height-normal);
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
   vertical-align: middle;
   cursor: pointer;
-  transition: border-color var(--transition-fast);
+  transition: all var(--transition-fast);
   /* Prevent clipping */
   overflow: visible !important;
   box-sizing: border-box !important;
-  /* Override browser default highlight color */
-  accent-color: var(--color-primary);
 }
 
-#pf2e-reignmaker select:hover:not(:disabled) {
-  border-color: var(--border-medium);
+#pf2e-reignmaker .rm-select:hover:not(:disabled) {
+  background: var(--surface-higher);
+  border-color: var(--border-strong);
+  transform: translateY(-0.0625rem);
+  box-shadow: var(--shadow-md);
 }
 
-#pf2e-reignmaker select:focus {
+#pf2e-reignmaker .rm-select:focus {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: var(--shadow-focus);
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 3px hsla(240, 5%, 38%, 0.2);
 }
 
-#pf2e-reignmaker select:focus-visible {
-  outline: 2px solid var(--color-primary);
+#pf2e-reignmaker .rm-select:focus-visible {
+  outline: 2px solid var(--border-strong);
   outline-offset: 2px;
 }
 
-#pf2e-reignmaker select:disabled {
-  opacity: var(--opacity-disabled, 0.6);
+#pf2e-reignmaker .rm-select:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+#pf2e-reignmaker .rm-select:disabled {
+  background: var(--color-gray-700);
+  border-color: var(--border-faint);
+  color: var(--text-tertiary);
+  opacity: 1;
   cursor: not-allowed;
 }
 
 /* Option Styling - Critical for Legibility */
 /* Note: Most option styling is controlled by browser/OS and cannot be overridden */
 /* These styles apply where browsers allow (limited support) */
-#pf2e-reignmaker select option {
-  background-color: var(--surface-lowest) !important;
-  color: var(--text-primary) !important;
-  padding: var(--space-8) var(--space-12) !important;
-  min-height: 2rem !important;
-  font-size: var(--font-md) !important;
-  font-family: var(--font-sans-rm) !important;
-  line-height: var(--line-height-normal) !important;
+#pf2e-reignmaker .rm-select option {
+  background-color: var(--surface-lowest);
+  color: var(--text-primary);
+  padding: var(--space-8) var(--space-12);
+  min-height: 2rem;
+  font-size: var(--font-md);
+  font-family: var(--font-sans-rm);
+  line-height: var(--line-height-normal);
 }
 
 /* Disabled options */
-#pf2e-reignmaker select option:disabled {
-  color: var(--text-disabled) !important;
+#pf2e-reignmaker .rm-select option:disabled {
+  color: var(--text-disabled);
   opacity: var(--opacity-disabled);
 }
 
-/* Input Field Styling (for consistency) */
-#pf2e-reignmaker input[type="text"],
-#pf2e-reignmaker input[type="number"],
-#pf2e-reignmaker input[type="email"],
-#pf2e-reignmaker input[type="password"],
-#pf2e-reignmaker textarea {
+/* Input Field Styling - Namespaced as .rm-input */
+#pf2e-reignmaker .rm-input {
   padding: var(--space-8);
   background: var(--surface-lowest);
   border: 1px solid var(--border-default);
@@ -119,57 +140,45 @@
   transition: border-color var(--transition-fast);
 }
 
-#pf2e-reignmaker input[type="text"]:hover:not(:disabled),
-#pf2e-reignmaker input[type="number"]:hover:not(:disabled),
-#pf2e-reignmaker input[type="email"]:hover:not(:disabled),
-#pf2e-reignmaker input[type="password"]:hover:not(:disabled),
-#pf2e-reignmaker textarea:hover:not(:disabled) {
-  border-color: var(--border-medium);
+#pf2e-reignmaker .rm-input:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  background: var(--surface-low);
 }
 
-#pf2e-reignmaker input[type="text"]:focus,
-#pf2e-reignmaker input[type="number"]:focus,
-#pf2e-reignmaker input[type="email"]:focus,
-#pf2e-reignmaker input[type="password"]:focus,
-#pf2e-reignmaker textarea:focus {
+#pf2e-reignmaker .rm-input:focus {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: var(--shadow-focus);
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 3px hsla(240, 5%, 38%, 0.2);
 }
 
-#pf2e-reignmaker input[type="text"]:disabled,
-#pf2e-reignmaker input[type="number"]:disabled,
-#pf2e-reignmaker input[type="email"]:disabled,
-#pf2e-reignmaker input[type="password"]:disabled,
-#pf2e-reignmaker textarea:disabled {
+#pf2e-reignmaker .rm-input:disabled {
   opacity: var(--opacity-disabled);
   cursor: not-allowed;
 }
 
 /* Placeholder text styling */
-#pf2e-reignmaker input::placeholder,
-#pf2e-reignmaker textarea::placeholder {
+#pf2e-reignmaker .rm-input::placeholder {
   color: var(--text-muted);
   opacity: var(--opacity-muted);
 }
 
 /* Number input spinner buttons */
-#pf2e-reignmaker input[type="number"]::-webkit-inner-spin-button,
-#pf2e-reignmaker input[type="number"]::-webkit-outer-spin-button {
+#pf2e-reignmaker .rm-input[type="number"]::-webkit-inner-spin-button,
+#pf2e-reignmaker .rm-input[type="number"]::-webkit-outer-spin-button {
   opacity: 1;
 }
 
-/* Checkbox and Radio Styling (for completeness) */
-#pf2e-reignmaker input[type="checkbox"],
-#pf2e-reignmaker input[type="radio"] {
+/* Checkbox and Radio Styling */
+#pf2e-reignmaker .rm-checkbox,
+#pf2e-reignmaker .rm-radio {
   cursor: pointer;
   width: var(--space-16);
   height: var(--space-16);
-  accent-color: var(--color-primary);
+  accent-color: var(--color-gray-400);
 }
 
-#pf2e-reignmaker input[type="checkbox"]:disabled,
-#pf2e-reignmaker input[type="radio"]:disabled {
+#pf2e-reignmaker .rm-checkbox:disabled,
+#pf2e-reignmaker .rm-radio:disabled {
   cursor: not-allowed;
   opacity: var(--opacity-disabled);
 }

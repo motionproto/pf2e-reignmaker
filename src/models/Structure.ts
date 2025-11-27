@@ -350,10 +350,26 @@ export function parseStructureFromJSON(data: any): Structure {
 
 /**
  * Generate effect messages for a structure
- * Returns an array of effect messages (for gameEffects and manualEffects)
+ * Returns an array of effect messages (for gameEffects, manualEffects, and modifiers)
  */
 export function generateEffectMessages(structure: Structure): string[] {
   const messages: string[] = [];
+  
+  // Generate messages for modifiers (capacity changes)
+  if (structure.modifiers && structure.modifiers.length > 0) {
+    for (const modifier of structure.modifiers) {
+      if (modifier.type === 'static' && modifier.duration === 'permanent') {
+        // Format capacity modifier messages
+        if (modifier.resource === 'foodCapacity') {
+          messages.push(`+${modifier.value} Food Storage`);
+        } else if (modifier.resource === 'imprisonedUnrestCapacity') {
+          messages.push(`Can hold ${modifier.value} Imprisoned Unrest`);
+        } else if (modifier.resource === 'armyCapacity') {
+          messages.push(`+${modifier.value} Army Capacity`);
+        }
+      }
+    }
+  }
   
   // Generate messages for gameEffects
   if (structure.gameEffects && structure.gameEffects.length > 0) {
@@ -367,7 +383,9 @@ export function generateEffectMessages(structure: Structure): string[] {
           const actionNames = effect.actions.join(', ');
           messages.push(`Unlocks: ${actionNames}`);
         } else if (effect.type === 'ruleMod') {
-          messages.push(`Modifies rule: ${effect.rule}`);
+          // Skip ruleMod effects without custom messages - they're system-level
+          // The actual outcome is covered by modifiers or manualEffects
+          continue;
         }
       }
     }
