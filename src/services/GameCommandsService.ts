@@ -28,8 +28,6 @@ import { structureTargetingService } from './structures/targeting';
 import { eventStructureTargetingConfigs } from '../data-compiled/event-structure-targeting';
 import { StructureCondition } from '../models/Settlement';
 import { PLAYER_KINGDOM } from '../types/ownership';
-import type { SpecialEffect } from '../types/special-effects';
-import { parseLegacyEffect } from '../types/special-effects';
 
 /**
  * Source type for the outcome
@@ -73,7 +71,6 @@ export interface ApplyOutcomeResult {
   error?: string;
   applied: {
     resources: Array<{ resource: ResourceType; value: number }>;
-    specialEffects: SpecialEffect[];
   };
 }
 
@@ -102,8 +99,7 @@ export async function createGameCommandsService() {
       const result: ApplyOutcomeResult = {
         success: true,
         applied: {
-          resources: [],
-          specialEffects: []
+          resources: []
         }
       };
       
@@ -111,7 +107,6 @@ export async function createGameCommandsService() {
         // Apply critical success fame bonus (applies to all rolls)
         if (outcome === 'criticalSuccess') {
           await this.applyFameChange(1, 'Critical Success Bonus', result);
-          result.applied.specialEffects.push(parseLegacyEffect('critical_success_fame'));
         }
         
         // Step 1: Accumulate modifiers by resource type
@@ -152,7 +147,6 @@ export async function createGameCommandsService() {
           logger.warn(`  ⚠️ Accumulated unrest penalty: +${totalUnrestPenalty}`);
           
           await this.applyUnrestChange(totalUnrestPenalty, 'Resource shortfall', result);
-          result.applied.specialEffects.push(...shortfallResources.map(r => parseLegacyEffect(`shortage_penalty:${r}`)));
         }
 
         return result;
@@ -233,8 +227,7 @@ export async function createGameCommandsService() {
       const result: ApplyOutcomeResult = {
         success: true,
         applied: {
-          resources: [],
-          specialEffects: []
+          resources: []
         }
       };
 
@@ -242,7 +235,6 @@ export async function createGameCommandsService() {
         // Apply critical success fame bonus (applies to all rolls)
         if (params.outcome === 'criticalSuccess') {
           await this.applyFameChange(1, 'Critical Success Bonus', result);
-          result.applied.specialEffects.push(parseLegacyEffect('critical_success_fame'));
         }
 
         // Apply all modifiers with their indices
@@ -397,7 +389,6 @@ export async function createGameCommandsService() {
       if (hasShortfall && !skipShortfallCheck) {
         logger.warn(`  ⚠️ Shortfall detected for ${resource}: gained +1 unrest`);
         await this.applyUnrestChange(1, `${modifierName} (shortage)`, result);
-        result.applied.specialEffects.push(parseLegacyEffect(`shortage_penalty:${resource}`));
       }
 
       result.applied.resources.push({ resource, value });
@@ -474,7 +465,6 @@ export async function createGameCommandsService() {
         // No capacity - convert to regular unrest
         logger.warn(`  ⚠️ No prison capacity available - converting ${value} imprisoned unrest to regular unrest`);
         await this.applyUnrestChange(value, `${modifierName} (no prisons)`, result);
-        result.applied.specialEffects.push(parseLegacyEffect('imprisoned_unrest_overflow'));
         return;
       }
 
@@ -501,13 +491,11 @@ export async function createGameCommandsService() {
       });
 
       result.applied.resources.push({ resource: 'imprisonedUnrest', value: amountToImprison });
-      result.applied.specialEffects.push(parseLegacyEffect('imprisoned_unrest_applied'));
 
       // Handle overflow if any
       if (overflow > 0) {
         logger.warn(`  ⚠️ Prison capacity exceeded by ${overflow} - converting to regular unrest`);
         await this.applyUnrestChange(overflow, `${modifierName} (overflow)`, result);
-        result.applied.specialEffects.push(parseLegacyEffect('imprisoned_unrest_overflow'));
       }
     },
 
@@ -598,7 +586,6 @@ export async function createGameCommandsService() {
         speaker: { alias: 'Kingdom Management' }
       });
 
-      result.applied.specialEffects.push(parseLegacyEffect(`structure_damaged:${target.structure.id}:${target.settlement.id}`));
     },
 
     /**
@@ -700,7 +687,6 @@ export async function createGameCommandsService() {
         speaker: { alias: 'Kingdom Management' }
       });
 
-      result.applied.specialEffects.push(parseLegacyEffect(`structure_destroyed:${target.structure.id}:${target.settlement.id}`));
     },
 
     /**
@@ -716,8 +702,7 @@ export async function createGameCommandsService() {
       const result: ApplyOutcomeResult = {
         success: true,
         applied: {
-          resources: [],
-          specialEffects: []
+          resources: []
         }
       };
 
@@ -767,7 +752,6 @@ export async function createGameCommandsService() {
 
         // Record in result
         result.applied.resources.push({ resource: 'unrest', value: -totalToAllocate });
-        result.applied.specialEffects.push(parseLegacyEffect('imprisoned_unrest_allocated'));
 
         return result;
 
@@ -833,7 +817,6 @@ export async function createGameCommandsService() {
         speaker: { alias: 'Kingdom Management' }
       });
       
-      result.applied.specialEffects.push(parseLegacyEffect(`hex_claimed:${hexCount}:${hexList}`));
     }
   };
 }

@@ -88,21 +88,17 @@ export const requestEconomicAidPipeline = createActionPipeline('request-economic
         };
       }
 
-      const effects: any[] = [];
+      const outcomeBadges: any[] = [];
 
       // Show gold gain message based on outcome
       if (ctx.outcome === 'criticalSuccess') {
-        effects.push({
-          type: 'status' as const,
-          message: `${faction.name} provides generous support (2d6 gold)`,
-          variant: 'positive' as const
-        });
+        outcomeBadges.push(
+          textBadge(`${faction.name} provides generous support (2d6 gold)`, 'fa-coins', 'positive')
+        );
       } else if (ctx.outcome === 'success') {
-        effects.push({
-          type: 'status' as const,
-          message: `${faction.name} provides support (1d4+1 gold)`,
-          variant: 'positive' as const
-        });
+        outcomeBadges.push(
+          textBadge(`${faction.name} provides support (1d4+1 gold)`, 'fa-coins', 'positive')
+        );
       }
 
       // Show attitude warning on crit failure (matches establish-diplomatic-relations pattern)
@@ -111,23 +107,19 @@ export const requestEconomicAidPipeline = createActionPipeline('request-economic
         const newAttitude = adjustAttitudeBySteps(faction.attitude, -1);
         
         if (newAttitude) {
-          effects.push({
-            type: 'status' as const,
-            message: `Attitude with ${faction.name} worsens from ${faction.attitude} to ${newAttitude}`,
-            variant: 'negative' as const
-          });
+          outcomeBadges.push(
+            textBadge(`Attitude with ${faction.name} worsens from ${faction.attitude} to ${newAttitude}`, 'fa-handshake', 'negative')
+          );
         } else {
-          effects.push({
-            type: 'status' as const,
-            message: `Attitude with ${faction.name} cannot worsen further (already ${faction.attitude})`,
-            variant: 'neutral' as const
-          });
+          outcomeBadges.push(
+            textBadge(`Attitude with ${faction.name} cannot worsen further (already ${faction.attitude})`, 'fa-handshake', 'info')
+          );
         }
       }
 
       return {
         resources: [],
-        specialEffects: effects,
+        outcomeBadges,
         warnings: []
       };
     }

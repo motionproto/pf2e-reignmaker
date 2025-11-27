@@ -83,7 +83,7 @@ For unique UI needs, pipelines can specify a custom component:
 ```typescript
 return {
   resources: [...],
-  specialEffects: [...],
+  outcomeBadges: [...],
   customComponent: {
     name: 'MyUniqueComponent',  // Must be registered in COMPONENT_REGISTRY
     props: { ...data }

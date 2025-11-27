@@ -46,7 +46,7 @@ export const sendScoutsPipeline = createActionPipeline('send-scouts', {
             reason: 'Scout expedition cost'
           }
         ],
-        specialEffects: []
+        outcomeBadges: []
       };
     }
   },

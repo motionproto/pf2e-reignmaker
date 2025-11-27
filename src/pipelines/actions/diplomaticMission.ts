@@ -6,7 +6,8 @@
 import { createActionPipeline } from '../shared/createActionPipeline';
 import { factionService } from '../../services/factions';
 import type { Faction } from '../../models/Faction';
-
+import { createGameCommandsService } from '../../services/GameCommandsService';
+import type { ResourceType } from '../../types/modifiers';
 import { textBadge } from '../../types/OutcomeBadge';
 export const establishDiplomaticRelationsPipeline = createActionPipeline('diplomatic-mission', {
   requirements: (kingdom) => {
@@ -201,21 +202,27 @@ export const establishDiplomaticRelationsPipeline = createActionPipeline('diplom
       return { success: false, error: 'Faction not found' };
     }
 
-    const { updateKingdom } = await import('../../stores/KingdomStore');
-
-    // Apply gold cost from outcome modifiers
+    // ✅ Apply gold cost using GameCommandsService for proper shortfall tracking
     const outcomeKey = ctx.outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
     const goldModifier = (establishDiplomaticRelationsPipeline.outcomes[outcomeKey]?.modifiers || []).find(
       (m: any) => m.resource === 'gold' && m.type === 'static'
     );
     
     if (goldModifier && 'value' in goldModifier && typeof goldModifier.value === 'number') {
-      await updateKingdom(k => {
-        if (k.resources && typeof k.resources.gold === 'number') {
-          k.resources.gold += goldModifier.value as number;
-          console.log(`💰 [establishDiplomaticRelations] Applied ${goldModifier.value} gold (new value: ${k.resources.gold})`);
-        }
+      const gameCommandsService = await createGameCommandsService();
+      await gameCommandsService.applyOutcome({
+        type: 'action',
+        sourceId: 'diplomatic-mission',
+        sourceName: `Diplomatic Mission with ${faction.name}`,
+        outcome: ctx.outcome,
+        modifiers: [{
+          type: 'static',
+          resource: 'gold' as ResourceType,
+          value: goldModifier.value as number,
+          duration: 'immediate'
+        }]
       });
+      console.log(`💰 [establishDiplomaticRelations] Applied ${goldModifier.value} gold via applyOutcome`);
     }
 
     // Handle outcomes (gold costs are handled by modifiers)

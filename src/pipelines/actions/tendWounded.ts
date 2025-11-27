@@ -1,12 +1,12 @@
 /**
- * recoverArmy Action Pipeline
- * Data from: data/player-actions/recover-army.json
+ * tendWounded Action Pipeline
+ * Data from: data/player-actions/tend-wounded.json
  */
 
 import { createActionPipeline } from '../shared/createActionPipeline';
 
 import { textBadge } from '../../types/OutcomeBadge';
-export const recoverArmyPipeline = createActionPipeline('recover-army', {
+export const tendWoundedPipeline = createActionPipeline('tend-wounded', {
   requirements: (kingdom) => {
     if (kingdom.armies.length === 0) {
       return {
@@ -31,17 +31,13 @@ export const recoverArmyPipeline = createActionPipeline('recover-army', {
       const outcomeBadges = [];
 
       if (ctx.outcome === 'criticalSuccess') {
-        specialEffects.push({
-          type: 'status' as const,
-          message: `${ctx.metadata.armyName || 'Army'} will be fully healed`,
-          variant: 'positive' as const
-        });
+        outcomeBadges.push(
+          textBadge(`${ctx.metadata.armyName || 'Army'} will be fully healed`, 'fa-heart', 'positive')
+        );
       } else if (ctx.outcome === 'success') {
-        specialEffects.push({
-          type: 'status' as const,
-          message: `${ctx.metadata.armyName || 'Army'} will be partially healed`,
-          variant: 'positive' as const
-        });
+        outcomeBadges.push(
+          textBadge(`${ctx.metadata.armyName || 'Army'} will be partially healed`, 'fa-heart', 'positive')
+        );
       }
 
       return { resources: [], outcomeBadges, warnings: [] };

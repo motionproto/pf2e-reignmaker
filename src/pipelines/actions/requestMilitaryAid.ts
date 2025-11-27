@@ -6,6 +6,7 @@
 import { createActionPipeline } from '../shared/createActionPipeline';
 import type { Faction } from '../../models/Faction';
 import { factionService } from '../../services/factions';
+import { textBadge } from '../../types/OutcomeBadge';
 export const requestMilitaryAidPipeline = createActionPipeline('request-military-aid', {
   requirements: (kingdom) => {
     const hasAllies = kingdom.factions?.some(f => 
@@ -62,15 +63,13 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
         };
       }
 
-      const effects: any[] = [];
+      const outcomeBadges: any[] = [];
 
       // Show appropriate message based on outcome
       if (ctx.outcome === 'criticalSuccess') {
-        effects.push({
-          type: 'entity' as const,
-          message: `${faction.name} will send elite reinforcements (allied army, exempt from upkeep)`,
-          variant: 'positive' as const
-        });
+        outcomeBadges.push(
+          textBadge(`${faction.name} will send elite reinforcements (allied army, exempt from upkeep)`, 'fa-shield-alt', 'positive')
+        );
       } else if (ctx.outcome === 'success') {
         // Check if there are eligible armies
         const armies = ctx.kingdom.armies || [];
@@ -88,44 +87,36 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
             resources: [
               { resource: 'gold', amount: 1 }
             ],
-            specialEffects: [{
-              type: 'status' as const,
-              message: 'Your lack of military leaves little opportunity for support',
-              variant: 'neutral' as const
-            }],
+            outcomeBadges: [
+              textBadge('Your lack of military leaves little opportunity for support', 'fa-coins', 'info')
+            ],
             warnings: []
           };
         }
 
         // Otherwise show equipment message (will show post-roll interaction)
-        effects.push({
-          type: 'status' as const,
-          message: `${faction.name} provides military equipment and supplies`,
-          variant: 'positive' as const
-        });
+        outcomeBadges.push(
+          textBadge(`${faction.name} provides military equipment and supplies`, 'fa-shield', 'positive')
+        );
       } else if (ctx.outcome === 'criticalFailure') {
         // Show attitude warning on crit failure (matches establish-diplomatic-relations pattern)
         const { adjustAttitudeBySteps } = await import('../../utils/faction-attitude-adjuster');
         const newAttitude = adjustAttitudeBySteps(faction.attitude, -1);
         
         if (newAttitude) {
-          effects.push({
-            type: 'status' as const,
-            message: `Attitude with ${faction.name} worsens from ${faction.attitude} to ${newAttitude}`,
-            variant: 'negative' as const
-          });
+          outcomeBadges.push(
+            textBadge(`Attitude with ${faction.name} worsens from ${faction.attitude} to ${newAttitude}`, 'fa-handshake', 'negative')
+          );
         } else {
-          effects.push({
-            type: 'status' as const,
-            message: `Attitude with ${faction.name} cannot worsen further (already ${faction.attitude})`,
-            variant: 'neutral' as const
-          });
+          outcomeBadges.push(
+            textBadge(`Attitude with ${faction.name} cannot worsen further (already ${faction.attitude})`, 'fa-handshake', 'info')
+          );
         }
       }
 
       return {
         resources: [],
-        specialEffects: effects,
+        outcomeBadges,
         warnings: []
       };
     }

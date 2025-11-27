@@ -46,11 +46,9 @@ export const arrestDissidentsPipeline = createActionPipeline('arrest-dissidents'
 
       return {
         resources: [],
-        specialEffects: [{
-          type: 'status' as const,
-          message: 'Will convert unrest to imprisoned unrest',
-          variant: 'positive' as const
-        }],
+        outcomeBadges: [
+          textBadge('Will convert unrest to imprisoned unrest', 'fa-gavel', 'positive')
+        ],
         warnings: []
       };
     }

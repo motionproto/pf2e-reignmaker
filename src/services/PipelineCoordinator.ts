@@ -496,7 +496,6 @@ export class PipelineCoordinator {
             {
               numericModifiers: (instance.appliedOutcome.modifiers || []) as any,
               manualEffects: instance.appliedOutcome.manualEffects || [],
-              specialEffects: instance.appliedOutcome.specialEffects || [],
               complexActions: [],
               customComponentData: null
             },
@@ -504,7 +503,6 @@ export class PipelineCoordinator {
             instance.appliedOutcome.skillName,
             instance.appliedOutcome.effect,
             instance.appliedOutcome.rollBreakdown,
-            instance.appliedOutcome.specialEffects,
             customComponentName,  // Pass component NAME (string)
             customResolutionProps  // Pass custom props
           );
@@ -560,29 +558,24 @@ export class PipelineCoordinator {
       log(ctx, 5, 'calculatePreview', `Custom preview returned ${customPreview.outcomeBadges?.length || 0} additional badges`);
     }
     
-    // ✅ STEP 5C: Merge JSON badges + custom badges
+    // ✅ STEP 5C: Merge JSON badges + custom badges - no specialEffects conversion
     const preview = {
       resources: customPreview.resources || [],
-      specialEffects: customPreview.specialEffects || [],
       outcomeBadges: [
-        ...modifierBadges,  // JSON modifiers (ALWAYS)
-        ...(customPreview.outcomeBadges || [])  // Custom badges (OPTIONAL)
+        ...modifierBadges,  // From JSON
+        ...(customPreview.outcomeBadges || [])  // From custom preview
       ]
     };
     
     // Store preview in context
     ctx.preview = preview;
     
-    // Format preview to special effects for display
-    const formattedPreview = unifiedCheckHandler.formatPreview(ctx.actionId, preview);
-    
-    // Update instance with special effects AND outcome badges
+    // Update instance with outcome badges only
     if (ctx.instanceId) {
       const actor = getKingdomActor();
       if (actor) {
         console.log('🔧 [PipelineCoordinator] Updating instance with preview data:', {
           instanceId: ctx.instanceId,
-          formattedPreviewCount: formattedPreview.length,
           outcomeBadgesCount: preview.outcomeBadges?.length || 0,
           outcomeBadges: preview.outcomeBadges
         });
@@ -592,11 +585,6 @@ export class PipelineCoordinator {
           if (instance?.appliedOutcome) {
             console.log('🔧 [PipelineCoordinator] Found instance, updating...');
             
-            // Preserve both specialEffects and outcomeBadges
-            if (formattedPreview.length > 0) {
-              instance.appliedOutcome.specialEffects = formattedPreview;
-              console.log('✅ [PipelineCoordinator] Updated specialEffects');
-            }
             if (preview.outcomeBadges && preview.outcomeBadges.length > 0) {
               instance.appliedOutcome.outcomeBadges = preview.outcomeBadges;
               console.log('✅ [PipelineCoordinator] Updated outcomeBadges:', instance.appliedOutcome.outcomeBadges);
@@ -610,7 +598,6 @@ export class PipelineCoordinator {
     
     log(ctx, 5, 'calculatePreview', 'Preview calculated and stored', { 
       preview, 
-      formattedCount: formattedPreview.length,
       outcomeBadgesCount: preview.outcomeBadges?.length || 0
     });
   }
@@ -710,7 +697,7 @@ export class PipelineCoordinator {
       
       const tempResult = {
         success: true,
-        applied: { resources: [], specialEffects: [] }
+        applied: { resources: [] }
       };
       
       await gameCommandsService.applyFameChange(1, 'Critical Success Bonus', tempResult);

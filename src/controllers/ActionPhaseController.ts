@@ -21,13 +21,13 @@ import {
   isStepCompletedByIndex,
   resolvePhaseOutcome
 } from './shared/PhaseControllerHelpers'
-import { actionResolver } from './actions/pipeline-resolver'
 import type { PlayerAction } from './actions/pipeline-types'
 import type { KingdomData } from '../actors/KingdomActor'
 import { TurnPhase } from '../actors/KingdomActor'
 import { ActionPhaseSteps } from './shared/PhaseStepConstants'
 import { PipelineIntegrationAdapter, shouldUsePipeline } from '../services/PipelineIntegrationAdapter'
 import type { CheckMetadata, ResolutionData as PipelineResolutionData } from '../types/CheckContext'
+import { actionAvailabilityService } from '../services/actions/ActionAvailabilityService'
 
 export async function createActionPhaseController() {
   return {
@@ -116,125 +116,36 @@ export async function createActionPhaseController() {
         return result;
       }
 
-      // FALLBACK: Use legacy system for actions not yet migrated
-      logger.info(`🔄 [ActionPhaseController] Using legacy system for ${actionId}`);
-
-      // ⚠️ WARN: Action not yet migrated to pipeline system
+      // Action not migrated to pipeline system - show error
+      logger.error(`❌ [ActionPhaseController] Action ${actionId} not found in pipeline system`);
+      
       const game = (window as any).game;
       if (game?.ui?.notifications) {
-        // Get action name for better notification message
-        const { actionLoader } = await import('./actions/pipeline-loader');
-        const action = actionLoader.getAllActions().find(a => a.id === actionId);
         const actionName = action?.name || actionId;
-        
-        game.ui.notifications.warn(
-          `⚠️ Action "${actionName}" not yet migrated to pipeline system. Basic functionality only.`,
+        game.ui.notifications.error(
+          `Action "${actionName}" is not available. Please report this issue.`,
           { permanent: false }
         );
-        
-        console.warn(`⚠️ [ActionPhaseController] Unmigrated action: ${actionName} (${actionId})`);
-      }
-
-      // Check requirements
-      const kingdom = get(kingdomData);
-      
-      // Get the stored instance for context-aware requirement checks (e.g., gold fallback detection)
-      let storedInstance;
-      if (instanceId) {
-        storedInstance = kingdom.activeCheckInstances?.find(i => i.instanceId === instanceId);
       }
       
-      const requirements = this.getActionRequirements(action, kingdom, storedInstance);
-      if (!requirements.met) {
-        return { success: false, error: requirements.reason || 'Action requirements not met' };
-      }
-      
-      // Track player action (action-specific logic before resolution)
-      if (playerId) {
-        const { createGameCommandsService } = await import('../services/GameCommandsService');
-        const gameCommands = await createGameCommandsService();
-        const game = (window as any).game;
-        const user = game?.users?.get(playerId);
-        const playerName = user?.name || 'Unknown Player';
-        
-        await gameCommands.trackPlayerAction(
-          playerId,
-          playerName,
-          actorName || playerName,
-          `${actionId}-${outcome}`,
-          TurnPhase.ACTIONS
-        );
-      }
-      
-      // FIXED: Use ActionResolver.executeAction() instead of resolvePhaseOutcome()
-      // This ensures game commands from action JSON are executed (e.g., reduceImprisoned)
-      
-      // Convert ResolutionData.numericModifiers back to preRolledValues Map
-      // The UI has already rolled all dice and stored results in numericModifiers
-      const preRolledValues = new Map<number | string, number>();
-      
-      // Get modifiers from action to match indices
-      const actionModifiers = this.getActionModifiers(action, outcome);
-      
-      // Map rolled values back to their modifier indices
-      if (resolutionData.numericModifiers && actionModifiers) {
-        resolutionData.numericModifiers.forEach(rolled => {
-          // Find matching modifier by resource
-          const modifierIndex = actionModifiers.findIndex(m => m.resource === rolled.resource);
-          if (modifierIndex !== -1) {
-            preRolledValues.set(modifierIndex, rolled.value);
-          }
-        });
-      }
-      
-      // Execute action via ActionResolver (handles BOTH modifiers AND game commands)
-      const result = await actionResolver.executeAction(
-        action,
-        outcome,
-        kingdom,
-        preRolledValues
-      );
-      
-      // ✅ CLEANUP: Clear pipeline metadata after successful execution
-      if (result.success && playerId) {
-        try {
-          const { pipelineMetadataStorage } = await import('../services/PipelineMetadataStorage');
-          pipelineMetadataStorage.clear(actionId, playerId);
-          console.log(`📦 [ActionPhaseController] Cleared pipeline metadata for ${actionId}`);
-        } catch (error) {
-          console.error('❌ [ActionPhaseController] Failed to clear pipeline metadata:', error);
-        }
-      }
-      
-      return result;
+      return { 
+        success: false, 
+        error: `Action ${actionId} not migrated to pipeline system` 
+      };
     },
 
     /**
-     * Check if an action can be performed (delegates to actionResolver)
+     * Check if an action can be performed
      */
     canPerformAction(action: PlayerAction, kingdom: KingdomData): boolean {
-      return actionResolver.checkActionRequirements(action, kingdom).met;
+      return actionAvailabilityService.checkRequirements(action, kingdom).met;
     },
 
     /**
-     * Get action requirements (delegates to actionResolver)
+     * Get action requirements
      */
     getActionRequirements(action: PlayerAction, kingdom: KingdomData, instance?: any) {
-      return actionResolver.checkActionRequirements(action, kingdom, instance);
-    },
-
-    /**
-     * Get modifiers for an action outcome (delegates to actionResolver)
-     */
-    getActionModifiers(action: PlayerAction, outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure') {
-      return actionResolver.getOutcomeModifiers(action, outcome);
-    },
-
-    /**
-     * Get DC for an action based on character level (delegates to actionResolver)
-     */
-    getActionDC(characterLevel: number): number {
-      return actionResolver.getActionDC(characterLevel);
+      return actionAvailabilityService.checkRequirements(action, kingdom, instance);
     }
   }
 }

@@ -44,7 +44,7 @@ import { arrestDissidentsPipeline } from './actions/arrestDissidents';
 import { outfitArmyPipeline } from './actions/outfitArmy';
 import { infiltrationPipeline } from './actions/infiltration';
 import { establishSettlementPipeline } from './actions/establishSettlement';
-import { recoverArmyPipeline } from './actions/recoverArmy';
+import { tendWoundedPipeline } from './actions/tendWounded';
 
 // Special Actions
 import { aidAnotherPipeline } from './actions/aidAnother';
@@ -167,7 +167,7 @@ const ACTION_PIPELINES: CheckPipeline[] = [
   outfitArmyPipeline,
   infiltrationPipeline,
   establishSettlementPipeline,
-  recoverArmyPipeline,
+  tendWoundedPipeline,
 
   // Special Actions (1)
   aidAnotherPipeline

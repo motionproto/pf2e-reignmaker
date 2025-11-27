@@ -7,7 +7,7 @@
 
 import type { KingdomData } from '../../actors/KingdomActor';
 import type { Settlement } from '../../models/Settlement';
-import { SettlementTier } from '../../models/Settlement';
+import { SettlementTier, SettlementTierConfig } from '../../models/Settlement';
 import type { Army } from '../../services/buildQueue/BuildProject';
 import { structuresService } from '../../services/structures';
 import { logger } from '../../utils/Logger';
@@ -138,15 +138,10 @@ export function findSettlementByName(
 
 /**
  * Get max structures for settlement tier (internal helper)
+ * Uses the centralized SettlementTierConfig for consistency
  */
 function getMaxStructuresForTier(tier: SettlementTier): number {
-  switch (tier) {
-    case SettlementTier.VILLAGE: return 2;
-    case SettlementTier.TOWN: return 4;
-    case SettlementTier.CITY: return 8;
-    case SettlementTier.METROPOLIS: return Infinity;
-    default: return 0;
-  }
+  return SettlementTierConfig[tier]?.maxStructures || 0;
 }
 
 // ============================================================================

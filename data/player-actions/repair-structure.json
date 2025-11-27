@@ -20,31 +20,19 @@
   ],
   "outcomes": {
     "criticalSuccess": {
-      "description": "Citizens volunteer their time and materials. The {structure} is repaired for free!",
-      "modifiers": [],
-      "gameEffects": [
-        {
-          "type": "repairStructure",
-          "cost": "free"
-        }
-      ]
+      "description": "Structure repaired for free.",
+      "modifiers": []
     },
     "success": {
-      "description": "The {structure} is repaired.",
-      "modifiers": [],
-      "gameEffects": [
-        {
-          "type": "repairStructure",
-          "cost": "choice"
-        }
-      ]
+      "description": "Structure repaired.",
+      "modifiers": []
     },
     "failure": {
-      "description": "Despite your efforts, the {structure} remains damaged.",
+      "description": "Structure remains damaged.",
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "Time and money are wasted. The {structure} remains damaged.",
+      "description": "Time and money wasted.",
       "modifiers": [
         {
           "type": "static",

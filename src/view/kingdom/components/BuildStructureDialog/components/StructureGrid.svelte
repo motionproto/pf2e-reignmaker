@@ -90,7 +90,7 @@
       {#if capacityInfo.atCapacity}
         <div class="capacity-warning">
           <i class="fas fa-exclamation-triangle"></i>
-          Settlement at capacity ({capacityInfo.current}/{capacityInfo.max})
+          Settlement at tier limit ({capacityInfo.current}/{capacityInfo.max} structures)
         </div>
       {/if}
       

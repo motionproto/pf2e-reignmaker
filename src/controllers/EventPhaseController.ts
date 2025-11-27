@@ -331,10 +331,6 @@ export async function createEventPhaseController(_eventService?: any) {
 
             }
             
-            // Execute game commands if present (structure damage, etc.)
-            const { executeGameCommands } = await import('./shared/GameCommandHelpers');
-            const gameCommandEffects = await executeGameCommands(outcomeData?.gameCommands || []);
-            
             // Use unified resolution wrapper (consolidates duplicate logic)
             const result = await resolvePhaseOutcome(
                 eventId,
@@ -343,17 +339,6 @@ export async function createEventPhaseController(_eventService?: any) {
                 resolutionData,
                 [EventsPhaseSteps.RESOLVE_EVENT, EventsPhaseSteps.APPLY_MODIFIERS]  // Type-safe step indices
             );
-            
-            // Merge gameCommand results into specialEffects for display
-            if (gameCommandEffects.length > 0) {
-                if (!result.applied) {
-                    result.applied = { specialEffects: [] };
-                }
-                if (!result.applied.specialEffects) {
-                    result.applied.specialEffects = [];
-                }
-                result.applied.specialEffects.push(...gameCommandEffects);
-            }
             
             // Store appliedOutcome and mark effects as applied (NEW system)
             if (shouldCreateInstance || existingInstance) {
@@ -382,10 +367,7 @@ export async function createEventPhaseController(_eventService?: any) {
                             effect: outcomeData?.msg || '',
                             modifiers: resolvedModifiers,  // ✅ RESOLVED values, not raw modifiers
                             manualEffects: outcomeData?.manualEffects || [],
-                            specialEffects: result.applied?.specialEffects || [],  // ✅ FIXED: Correct path to specialEffects
-                            shortfallResources: result.applied?.specialEffects
-                                ?.filter((e: any) => typeof e === 'string' && e.startsWith('shortage_penalty:'))
-                                ?.map((e: string) => e.split(':')[1]) || [],
+                            gameCommands: outcomeData?.gameCommands || [],
                             effectsApplied: true  // ✅ Mark effects as applied inside appliedOutcome (syncs across clients)
                         };
                         
@@ -542,8 +524,7 @@ export async function createEventPhaseController(_eventService?: any) {
                         effect: outcomeData.msg,
                         modifiers: outcomeData.modifiers || [],
                         manualEffects: outcomeData.manualEffects || [],
-                        specialEffects: [],  // No special effects for ignored events
-                        shortfallResources: [],
+                        gameCommands: outcomeData.gameCommands || [],
                         effectsApplied: false,
                         isIgnored: true  // Flag to hide reroll button
                     };

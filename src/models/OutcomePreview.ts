@@ -59,7 +59,6 @@ export interface OutcomePreview {
     stateChanges?: Record<string, number>;  // Pre-computed state changes (synced for display)
     modifiers: EventModifier[];  // Resolved static values
     manualEffects: string[];
-    specialEffects: (string | import('../types/special-effects').SpecialEffect)[];    // Supports both legacy strings and new structured format
     outcomeBadges?: Array<{ icon: string; message: string }>;  // Custom outcome badges (e.g., gold collection, status changes)
     gameCommands?: any[];  // Complex operations to execute on "Apply Result" (PreparedCommand pattern)
     choices?: any[];  // Explicit choices (if not auto-generated from resource arrays)

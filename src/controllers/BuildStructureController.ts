@@ -11,7 +11,7 @@ import { structuresService } from '../services/structures';
 import type { Structure } from '../models/Structure';
 import type { BuildProject } from '../services/buildQueue';
 import { BuildProjectManager } from '../services/buildQueue';
-import { SettlementTier } from '../models/Settlement';
+import { SettlementTier, SettlementTierConfig } from '../models/Settlement';
 import { logger } from '../utils/Logger';
 
 export interface AvailabilityCheck {
@@ -40,15 +40,10 @@ function settlementTierToNumber(tier: SettlementTier): number {
 
 /**
  * Get maximum structures allowed for settlement tier
+ * Uses the centralized SettlementTierConfig for consistency
  */
 function getMaxStructuresForTier(tier: SettlementTier): number {
-  switch (tier) {
-    case SettlementTier.VILLAGE: return 2;
-    case SettlementTier.TOWN: return 4;
-    case SettlementTier.CITY: return 8;
-    case SettlementTier.METROPOLIS: return Infinity;
-    default: return 0;
-  }
+  return SettlementTierConfig[tier]?.maxStructures || 0;
 }
 
 export async function createBuildStructureController() {

@@ -3,6 +3,7 @@
    import { updateKingdom, kingdomData } from '../../../../stores/KingdomStore';
    import { settlementService } from '../../../../services/settlements';
    import { getSettlementStatusIcon } from '../../utils/presentation';
+   import { SettlementTierConfig, getNextTier, getNextTierRequirements } from '../../../../models/Settlement';
    import Dialog from '../../components/baseComponents/Dialog.svelte';
    
    export let settlement: Settlement;
@@ -16,22 +17,32 @@
       ? settlementService.canUpgradeSettlement(settlement)
       : null;
    
-   // Calculate structure progress towards next tier
-   $: structureProgress = settlement ? (() => {
+   // Calculate structure capacity status using centralized config
+   $: capacityStatus = settlement ? (() => {
       const currentCount = settlement.structureIds.length;
+      const currentLevel = settlement.level || 1;
+      const config = SettlementTierConfig[settlement.tier];
+      const maxStructures = config.maxStructures;
+      const nextTier = getNextTier(settlement.tier);
+      const reqs = getNextTierRequirements(settlement.tier);
       
-      switch (settlement.tier) {
-         case 'Village':
-            return { current: currentCount, required: 3, nextTier: 'Town' };
-         case 'Town':
-            return { current: currentCount, required: 6, nextTier: 'City' };
-         case 'City':
-            return { current: currentCount, required: 9, nextTier: 'Metropolis' };
-         case 'Metropolis':
-            return null; // Max tier
-         default:
-            return null;
-      }
+      // Check if over capacity (soft limit - warning only)
+      const isOverCapacity = maxStructures !== Infinity && currentCount > maxStructures;
+      const isAtCapacity = maxStructures !== Infinity && currentCount >= maxStructures;
+      
+      // Check if tier upgrade requirements are met (structure count only - level is not a blocker)
+      const canUpgradeTier = reqs && currentCount >= reqs.minStructures;
+      
+      return {
+         current: currentCount,
+         max: maxStructures,
+         currentLevel,
+         isOverCapacity,
+         isAtCapacity,
+         nextTier,
+         requirements: reqs,
+         canUpgradeTier
+      };
    })() : null;
    
    
@@ -185,22 +196,50 @@
             </div>
          {/if}
          
-         <!-- Structure Progress towards next tier -->
-         {#if structureProgress}
-            <div class="status-item" class:ready={structureProgress.current >= structureProgress.required}>
-               {#if structureProgress.current >= structureProgress.required}
-                  <i class="fas fa-hammer status-good"></i>
-                  <span>{structureProgress.current}/{structureProgress.required} structures (ready for {structureProgress.nextTier})</span>
-               {:else}
-                  <i class="fas fa-hammer status-warning"></i>
-                  <span>{structureProgress.current}/{structureProgress.required} structures required for {structureProgress.nextTier}</span>
-               {/if}
-            </div>
-         {:else if settlement.tier === 'Metropolis'}
-            <div class="status-item">
-               <i class="fas fa-crown status-good"></i>
-               <span>Maximum tier reached</span>
-            </div>
+         <!-- Structure Capacity Status with warnings -->
+         {#if capacityStatus}
+            {#if capacityStatus.nextTier}
+               <!-- Show capacity progress and tier requirements -->
+               <div class="status-item" 
+                  class:ready={capacityStatus.canUpgradeTier}
+                  class:warning={capacityStatus.isAtCapacity || capacityStatus.isOverCapacity}>
+                  {#if capacityStatus.isOverCapacity}
+                     <i class="fas fa-exclamation-triangle status-bad"></i>
+                     <span>
+                        {capacityStatus.current}/{capacityStatus.max === Infinity ? '∞' : capacityStatus.max} structures 
+                        (⚠️ exceeds tier limit)
+                     </span>
+                  {:else if capacityStatus.canUpgradeTier}
+                     <i class="fas fa-check-circle status-good"></i>
+                     <span>
+                        {capacityStatus.current}/{capacityStatus.max === Infinity ? '∞' : capacityStatus.max} structures 
+                        (ready for {capacityStatus.nextTier})
+                     </span>
+                  {:else if capacityStatus.isAtCapacity}
+                     <i class="fas fa-exclamation-circle status-warning"></i>
+                     <span>
+                        {capacityStatus.current}/{capacityStatus.max === Infinity ? '∞' : capacityStatus.max} structures 
+                        (at tier limit)
+                     </span>
+                  {:else}
+                     <i class="fas fa-hammer status-info"></i>
+                     <span>
+                        {capacityStatus.current}/{capacityStatus.max === Infinity ? '∞' : capacityStatus.max} structures
+                        {#if capacityStatus.requirements}
+                           | Need {capacityStatus.requirements.minStructures} structures for {capacityStatus.nextTier}
+                        {/if}
+                     </span>
+                  {/if}
+               </div>
+            {:else}
+               <!-- Metropolis - show current count only -->
+               <div class="status-item">
+                  <i class="fas fa-crown status-good"></i>
+                  <span>
+                     {capacityStatus.current} structures (Metropolis - no limit)
+                  </span>
+               </div>
+            {/if}
          {/if}
       </div>
    </div>

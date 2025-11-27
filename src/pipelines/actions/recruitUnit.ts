@@ -5,6 +5,7 @@
 
 import { createActionPipeline } from '../shared/createActionPipeline';
 import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
+import { textBadge } from '../../types/OutcomeBadge';
 
 // Store reference for execute function
 const pipeline = createActionPipeline('recruit-unit', {
@@ -16,19 +17,17 @@ const pipeline = createActionPipeline('recruit-unit', {
       const unrestChange = ctx.outcome === 'criticalSuccess' ? -1 :
                           ctx.outcome === 'criticalFailure' ? 1 : 0;
 
-      const specialEffects = [];
+      const outcomeBadges = [];
       
       if (ctx.outcome === 'criticalSuccess' || ctx.outcome === 'success') {
-        specialEffects.push({
-          type: 'entity' as const,
-          message: 'Will recruit new army at party level',
-          variant: 'positive' as const
-        });
+        outcomeBadges.push(
+          textBadge('Will recruit new army at party level', 'fa-shield-alt', 'positive')
+        );
       }
 
       return {
         resources: unrestChange !== 0 ? [{ resource: 'unrest', value: unrestChange }] : [],
-        specialEffects,
+        outcomeBadges,
         warnings: []
       };
     }

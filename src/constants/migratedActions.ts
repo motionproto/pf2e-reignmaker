@@ -51,16 +51,17 @@ export const ACTION_STATUS = new Map<string, ActionStatus>([
   // Phase 5: Foundry Integration (gameCommands)
   ['recruit-unit', 'tested'],  // #17
   ['deploy-army', 'tested'],  // #18
-  ['build-structure', 'testing'],  // #19
-  ['repair-structure', 'untested'],  // #20
-  ['upgrade-settlement', 'untested'],  // #21
+  ['build-structure', 'tested'],  // #19
+  ['repair-structure', 'tested'],  // #20
+  ['upgrade-settlement', 'testing'],  // #21
   
   // Phase 6: Complex Custom Logic
   ['arrest-dissidents', 'untested'],  // #22
   ['outfit-army', 'tested'],  // #23
   ['infiltration', 'untested'],  // #24
   ['establish-settlement', 'untested'],  // #25
-  ['recover-army', 'untested'],  // #26
+  ['tend-wounded', 'untested'],  // #26
+  
 ]);
 
 /**
@@ -104,7 +105,7 @@ export const ACTION_NUMBERS = new Map<string, number>([
   ['outfit-army', 23],
   ['infiltration', 24],
   ['establish-settlement', 25],
-  ['recover-army', 26],
+  ['tend-wounded', 26],
 ]);
 
 /**

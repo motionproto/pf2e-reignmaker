@@ -218,3 +218,160 @@ All actions use one of these patterns:
 - Single `PipelineContext` object persists through all 9 steps
 - Optional steps are automatically skipped
 - Centralized error handling with rollback support
+
+---
+
+## Resource Modification Best Practices
+
+### ⚠️ CRITICAL: Always Use `applyOutcome()` for Resource Changes
+
+**DO NOT modify resources directly via `updateKingdom()`** - this bypasses the debt tracking system.
+
+### ❌ Wrong (Direct Modification):
+```typescript
+// BAD - No debt tracking, no shortfall penalties
+await updateKingdom(k => {
+  k.resources.gold -= 10;
+  k.resources.lumber -= 5;
+});
+```
+
+### ✅ Correct (Using applyOutcome):
+```typescript
+// GOOD - Automatic debt tracking and shortfall penalties
+import { createGameCommandsService } from '../../services/GameCommandsService';
+
+const gameCommandsService = await createGameCommandsService();
+await gameCommandsService.applyOutcome({
+  type: 'action',
+  sourceId: 'your-action-id',
+  sourceName: 'Your Action Name',
+  outcome: 'success',
+  modifiers: [
+    {
+      type: 'static',
+      resource: 'gold',
+      value: -10,  // Negative to deduct
+      duration: 'immediate'
+    },
+    {
+      type: 'static',
+      resource: 'lumber',
+      value: -5,
+      duration: 'immediate'
+    }
+  ]
+});
+```
+
+### Why This Matters
+
+**Automatic Shortfall Handling:**
+- If you have enough resources → Deducts normally
+- If you DON'T have enough resources:
+  - Resources go negative (debt)
+  - +1 Unrest per resource type you can't afford
+  - Action still completes (realistic kingdom management)
+  - Debt tracked for upkeep phase
+
+**Example Scenario:**
+```typescript
+// Kingdom has: Gold: 3, Lumber: 0
+// Action costs: Gold: 10, Lumber: 5
+
+// After applyOutcome():
+// - Gold: -7 (debt)
+// - Lumber: -5 (debt)
+// - Unrest: +2 (one per resource type)
+// - Action completes successfully
+
+// Without applyOutcome():
+// - Manual check blocks action
+// - No consistent debt tracking
+// - Unrest penalty inconsistent
+```
+
+### Common Use Cases
+
+**1. Fixed Costs (Action Costs):**
+```typescript
+// From pipeline.cost definition
+const modifiers = Object.entries(cost)
+  .map(([resource, amount]) => ({
+    type: 'static' as const,
+    resource: resource as ResourceType,
+    value: -(amount as number),
+    duration: 'immediate' as const
+  }));
+
+await gameCommandsService.applyOutcome({
+  type: 'action',
+  sourceId: pipeline.id,
+  sourceName: pipeline.name,
+  outcome: 'success',
+  modifiers
+});
+```
+
+**2. Variable Costs (User Selection):**
+```typescript
+// From custom component data
+const costData = ctx.resolutionData?.customComponentData?.['repairCost'];
+const cost = costData.cost as Record<string, number>;
+
+const modifiers = Object.entries(cost)
+  .filter(([_, amount]) => amount > 0)
+  .map(([resource, amount]) => ({
+    type: 'static' as const,
+    resource: resource as ResourceType,
+    value: -(amount as number),
+    duration: 'immediate' as const
+  }));
+
+await gameCommandsService.applyOutcome({
+  type: 'action',
+  sourceId: 'repair-structure',
+  sourceName: `Repair ${structureName}`,
+  outcome: 'success',
+  modifiers
+});
+```
+
+**3. Penalties (Critical Failures):**
+```typescript
+// Even single resource penalties should use applyOutcome
+await gameCommandsService.applyOutcome({
+  type: 'action',
+  sourceId: 'repair-structure',
+  sourceName: `Repair ${structureName} (failed)`,
+  outcome: 'criticalFailure',
+  modifiers: [{
+    type: 'static',
+    resource: 'gold',
+    value: -1,
+    duration: 'immediate'
+  }]
+});
+```
+
+### Migration Checklist for Each Action
+
+When migrating an action, search for:
+
+1. ✅ **Direct `updateKingdom()` calls that modify resources**
+   - Replace with `applyOutcome()`
+   
+2. ✅ **Manual affordability checks**
+   - Remove them - `applyOutcome()` handles this
+   
+3. ✅ **Custom unrest penalties for shortfalls**
+   - Remove them - `applyOutcome()` auto-applies +1 per resource type
+
+4. ✅ **Actions that block when resources unavailable**
+   - Let them proceed - debt system is intentional
+
+### References
+
+- **Repair Structure Example:** `src/pipelines/actions/repairStructure.ts` (all three cost paths)
+- **Service Implementation:** `src/services/GameCommandsService.ts`
+- **Shortfall Detection:** Search for `shortfallResources` in GameCommandsService.ts

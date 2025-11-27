@@ -28,35 +28,100 @@ export enum SettlementTier {
 }
 
 /**
+ * Tier upgrade requirements interface
+ */
+export interface TierUpgradeRequirements {
+  minLevel: number;
+  minStructures: number;
+}
+
+/**
  * Settlement tier configuration
  * Storage and capacity values now come from structures
+ * 
+ * HARD STRUCTURE CAPS:
+ * - Village: Max 2 structures (must upgrade to Town for more)
+ * - Town: Max 5 structures (must upgrade to City for more)
+ * - City: Max 8 structures (must upgrade to Metropolis for more)
+ * - Metropolis: Unlimited structures (endgame tier)
+ * 
+ * TIER UPGRADE REQUIREMENTS (Structure-Based Only):
+ * - Village → Town: 2+ structures (level can be any value)
+ * - Town → City: 5+ structures (level can be any value)
+ * - City → Metropolis: 8+ structures (level can be any value)
+ * 
+ * Note: Settlement level is separate from tier and does NOT block tier upgrades.
+ * You can upgrade level freely (costs gold), tier upgrades happen automatically when structure count is met.
  */
 export const SettlementTierConfig = {
   [SettlementTier.VILLAGE]: { 
     displayName: 'Village', 
-    maxStructures: 4, 
+    maxStructures: 2,
+    upgradeRequirements: null, // Starting tier - no upgrade needed
     foodConsumption: 1, 
     armySupport: 1
   },
   [SettlementTier.TOWN]: { 
     displayName: 'Town', 
-    maxStructures: 8, 
+    maxStructures: 5,
+    upgradeRequirements: { minLevel: 0, minStructures: 2 }, // minLevel=0 means no level requirement
     foodConsumption: 4, 
     armySupport: 2
   },
   [SettlementTier.CITY]: { 
     displayName: 'City', 
-    maxStructures: 12, 
+    maxStructures: 8,
+    upgradeRequirements: { minLevel: 0, minStructures: 5 }, // minLevel=0 means no level requirement
     foodConsumption: 8, 
     armySupport: 3
   },
   [SettlementTier.METROPOLIS]: { 
     displayName: 'Metropolis', 
-    maxStructures: 20, 
+    maxStructures: Infinity,
+    upgradeRequirements: { minLevel: 0, minStructures: 8 }, // minLevel=0 means no level requirement
     foodConsumption: 12, 
     armySupport: 4
   }
 };
+
+/**
+ * Get next tier for a settlement
+ * @param currentTier - Current settlement tier
+ * @returns Next tier, or null if already at max tier
+ */
+export function getNextTier(currentTier: SettlementTier): SettlementTier | null {
+  switch (currentTier) {
+    case SettlementTier.VILLAGE: return SettlementTier.TOWN;
+    case SettlementTier.TOWN: return SettlementTier.CITY;
+    case SettlementTier.CITY: return SettlementTier.METROPOLIS;
+    case SettlementTier.METROPOLIS: return null; // Max tier
+  }
+}
+
+/**
+ * Get upgrade requirements for a settlement's next tier
+ * @param currentTier - Current settlement tier
+ * @returns Upgrade requirements, or null if already at max tier
+ */
+export function getNextTierRequirements(currentTier: SettlementTier): TierUpgradeRequirements | null {
+  const nextTier = getNextTier(currentTier);
+  if (!nextTier) return null;
+  
+  return SettlementTierConfig[nextTier].upgradeRequirements;
+}
+
+/**
+ * Check if settlement meets requirements to upgrade to next tier
+ * @param settlement - Settlement to check
+ * @returns True if settlement meets both level and structure requirements
+ */
+export function canUpgradeToNextTier(settlement: Settlement): boolean {
+  const reqs = getNextTierRequirements(settlement.tier);
+  if (!reqs) return false; // Already at max tier
+  
+  return settlement.level >= reqs.minLevel && 
+         settlement.structureIds.length >= reqs.minStructures;
+}
 
 /**
  * Structure condition states

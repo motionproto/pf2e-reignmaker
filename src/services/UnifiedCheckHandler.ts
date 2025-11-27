@@ -12,7 +12,7 @@
 
 import type { CheckPipeline, CheckType, OutcomeType } from '../types/CheckPipeline';
 import type { CheckContext, CheckMetadata, ResolutionData } from '../types/CheckContext';
-import type { PreviewData, SpecialEffect } from '../types/PreviewData';
+import type { PreviewData } from '../types/PreviewData';
 import { createEmptyMetadata, createEmptyResolutionData } from '../types/CheckContext';
 import { createEmptyPreviewData } from '../types/PreviewData';
 
@@ -125,6 +125,19 @@ export class UnifiedCheckHandler {
       // Store result in metadata
       if (interaction.id && result !== null && result !== undefined) {
         metadata[interaction.id] = result;
+      }
+
+      // Call onComplete handler if defined (allows custom metadata processing)
+      if (interaction.onComplete && result !== null && result !== undefined) {
+        console.log(`🎯 [UnifiedCheckHandler] Calling onComplete handler for pre-roll interaction: ${interaction.id}`);
+        try {
+          // Create temp context for onComplete (metadata + kingdom)
+          const tempContext: any = { metadata, kingdom };
+          await interaction.onComplete(result, tempContext);
+        } catch (error) {
+          console.error(`❌ [UnifiedCheckHandler] onComplete handler failed:`, error);
+          throw error;
+        }
       }
     }
 
@@ -658,7 +671,7 @@ export class UnifiedCheckHandler {
     console.log(`🔍 [UnifiedCheckHandler] Calculating preview for ${checkId}`);
 
     // If preview is provided by interaction (map selection), skip calculation
-    if (pipeline.preview.providedByInteraction) {
+    if ((pipeline.preview as any).providedByInteraction) {
       console.log(`⏭️ [UnifiedCheckHandler] Preview provided by interaction`);
       return createEmptyPreviewData();
     }
@@ -678,75 +691,6 @@ export class UnifiedCheckHandler {
     // Default: No preview
     console.warn(`⚠️ [UnifiedCheckHandler] No preview calculation defined for ${checkId}`);
     return createEmptyPreviewData();
-  }
-
-  /**
-   * Format preview data into special effects for display
-   */
-  formatPreview(
-    checkId: string,
-    preview: PreviewData
-  ): SpecialEffect[] {
-    const pipeline = this.getCheck(checkId);
-    if (!pipeline) {
-      throw new Error(`[UnifiedCheckHandler] Unknown check: ${checkId}`);
-    }
-
-    // Call custom formatter if defined
-    if (pipeline.preview.format) {
-      try {
-        return pipeline.preview.format(preview);
-      } catch (error) {
-        console.error(`❌ [UnifiedCheckHandler] Preview formatting failed:`, error);
-        return [];
-      }
-    }
-
-    // Default formatter: Convert preview to badges
-    return this.defaultFormatPreview(preview);
-  }
-
-  /**
-   * Default preview formatter
-   * 
-   * NOTE: Resources are already shown in StateChanges component,
-   * so we DON'T convert them into special effects (avoids duplication).
-   * Only actual special effects, entity operations, and warnings are formatted.
-   */
-  private defaultFormatPreview(preview: PreviewData): SpecialEffect[] {
-    const effects: SpecialEffect[] = [];
-
-    // ❌ REMOVED: Don't convert resource changes into special effects
-    // Resources are already displayed in StateChanges component
-    // This was causing duplication
-
-    // Format entity operations (create/modify/delete entities)
-    for (const entity of preview.entities || []) {
-      const actionVerb = entity.action === 'create' ? 'Will create' :
-                         entity.action === 'modify' ? 'Will modify' :
-                         'Will delete';
-      effects.push({
-        type: 'entity',
-        message: `${actionVerb} ${entity.name}`,
-        variant: entity.action === 'delete' ? 'negative' : 'positive'
-      });
-    }
-
-    // Add actual special effects (things that aren't simple resource changes)
-    if (preview.specialEffects) {
-      effects.push(...preview.specialEffects);
-    }
-
-    // Add warnings
-    for (const warning of preview.warnings || []) {
-      effects.push({
-        type: 'status',
-        message: warning,
-        variant: 'negative'
-      });
-    }
-
-    return effects;
   }
 
   /**

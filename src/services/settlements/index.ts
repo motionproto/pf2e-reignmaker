@@ -881,6 +881,10 @@ export class SettlementService {
   /**
    * Update settlement level with automatic tier transitions
    * 
+   * Uses centralized tier requirements from SettlementTierConfig.
+   * Tier transitions occur automatically when structure requirements are met.
+   * Level is NOT a blocker - you can upgrade level freely (up to 20), tier upgrades require structures.
+   * 
    * @param settlementId - Settlement ID
    * @param newLevel - New settlement level (1-20)
    */
@@ -910,18 +914,19 @@ export class SettlementService {
     const structureCount = settlement.structureIds?.length || 0;
     const oldTier = settlement.tier;
     
-    // Determine new tier based on level and structure count
-    let newTier = settlement.tier;
+    // Import helper functions from Settlement model
+    const { getNextTier, getNextTierRequirements } = await import('../../models/Settlement');
     
-    if (newLevel >= 8 && structureCount >= 9 && oldTier !== SettlementTier.METROPOLIS) {
-      newTier = SettlementTier.METROPOLIS;
-
-    } else if (newLevel >= 5 && structureCount >= 6 && oldTier === SettlementTier.TOWN) {
-      newTier = SettlementTier.CITY;
-
-    } else if (newLevel >= 2 && structureCount >= 3 && oldTier === SettlementTier.VILLAGE) {
-      newTier = SettlementTier.TOWN;
-
+    // Determine new tier based on structure count ONLY
+    let newTier = settlement.tier;
+    const nextTier = getNextTier(oldTier);
+    
+    if (nextTier) {
+      const reqs = getNextTierRequirements(oldTier);
+      // Only check structure count - level is not a blocker
+      if (reqs && structureCount >= reqs.minStructures) {
+        newTier = nextTier;
+      }
     }
     
     // Check if settlement is using the old tier's default image
@@ -936,7 +941,6 @@ export class SettlementService {
       // Update to new tier's default image if settlement was using old default
       if (isUsingDefaultImage) {
         updates.imagePath = getDefaultSettlementImage(newTier);
-
       }
     }
     

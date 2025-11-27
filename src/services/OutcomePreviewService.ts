@@ -92,11 +92,9 @@ export class OutcomePreviewService {
     skillName: string,
     effect: string,
     rollBreakdown?: any,
-    specialEffects?: any[],
     customComponent?: any,
     customResolutionProps?: Record<string, any>
   ): Promise<void> {
-    console.log('📦 [OutcomePreviewService] storeOutcome called with specialEffects:', specialEffects);
     
     // Extract component name if component provided
     let componentName: string | undefined;
@@ -129,7 +127,6 @@ export class OutcomePreviewService {
           effect,
           modifiers: resolutionData.numericModifiers as any,
           manualEffects: resolutionData.manualEffects,
-          specialEffects: specialEffects || [],
           shortfallResources: [],
           rollBreakdown,
           effectsApplied: false,
@@ -430,7 +427,6 @@ export async function createActionOutcomePreview(context: {
     skillName || '',
     effectMessage,
     rollBreakdown,
-    [],  // No special effects - calculated in Step 5
     undefined,  // No custom component - extracted in Step 7
     {}  // No custom props - handled in Step 7
   );

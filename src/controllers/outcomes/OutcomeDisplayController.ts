@@ -469,7 +469,6 @@ export class OutcomeDisplayController {
     return {
       numericModifiers,
       manualEffects: this.preview.appliedOutcome?.manualEffects || [],
-      specialEffects: this.preview.appliedOutcome?.specialEffects || [],
       complexActions: this.preview.appliedOutcome?.gameCommands || [],  // ✅ Extract gameCommands for execution
       customComponentData: mergedCustomData
     };
@@ -599,7 +598,7 @@ export class OutcomeDisplayController {
        Object.keys(choiceResult.stateChanges).length > 0) ||
       (customComponentData && Object.keys(customComponentData).length > 0) ||
       (customSelectionData && Object.keys(customSelectionData).length > 0) ||
-      (this.preview.appliedOutcome?.specialEffects && this.preview.appliedOutcome.specialEffects.length > 0)
+      (this.preview.appliedOutcome?.gameCommands && this.preview.appliedOutcome.gameCommands.length > 0)
     );
   }
   
@@ -607,9 +606,9 @@ export class OutcomeDisplayController {
     const hasMessage = this.preview.appliedOutcome?.effect && this.preview.appliedOutcome.effect.trim().length > 0;
     const hasManualEffects = this.preview.appliedOutcome?.manualEffects && this.preview.appliedOutcome.manualEffects.length > 0;
     const hasNumericModifiers = this.preview.appliedOutcome?.modifiers && this.preview.appliedOutcome.modifiers.length > 0;
-    const hasSpecialEffects = this.preview.appliedOutcome?.specialEffects && this.preview.appliedOutcome.specialEffects.length > 0;
+    const hasGameCommands = this.preview.appliedOutcome?.gameCommands && this.preview.appliedOutcome.gameCommands.length > 0;
     
-    return hasMessage || hasManualEffects || hasNumericModifiers || hasSpecialEffects;
+    return hasMessage || hasManualEffects || hasNumericModifiers || hasGameCommands;
   }
   
   private computeDisplayEffect(choiceResult: any): string {

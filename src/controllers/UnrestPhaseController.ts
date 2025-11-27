@@ -228,18 +228,6 @@ export async function createUnrestPhaseController() {
       console.log('🔍 [resolveIncident] OutcomeData:', outcomeData);
       console.log('🔍 [resolveIncident] GameCommands:', (outcomeData as any)?.gameCommands);
       
-      // Execute game commands if present (structure damage, etc.)
-      const { executeGameCommands } = await import('./shared/GameCommandHelpers');
-      const gameCommandEffects = await executeGameCommands((outcomeData as any)?.gameCommands || []);
-      
-      // Merge gameCommand effects into resolutionData
-      if (gameCommandEffects.length > 0) {
-        resolutionData.specialEffects = [
-          ...(resolutionData.specialEffects || []),
-          ...gameCommandEffects
-        ];
-      }
-      
       // Use unified resolution wrapper (consolidates duplicate logic)
       return await resolvePhaseOutcome(
         incidentId,
