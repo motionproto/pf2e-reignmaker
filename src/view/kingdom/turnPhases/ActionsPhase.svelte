@@ -361,8 +361,16 @@
   async function handlePerformReroll(event: CustomEvent, action: any) {
     const { skill, previousFame } = event.detail;
 
-    // Clear instance for this action
+    // ✅ PRESERVE METADATA: Get existing instance to preserve context
     const instanceId = currentActionInstances.get(action.id);
+    const instance = instanceId 
+      ? $kingdomData.pendingOutcomes?.find(i => i.previewId === instanceId)
+      : null;
+    const preservedMetadata = instance?.metadata || {};
+    
+    console.log(`🔄 [ActionsPhase] Reroll preserving metadata:`, preservedMetadata);
+    
+    // Clear instance for this action
     if (instanceId && checkInstanceService) {
       await checkInstanceService.clearInstance(instanceId);
       currentActionInstances.delete(action.id);
@@ -397,6 +405,7 @@
     
     try {
       // Re-execute complete pipeline (Steps 1-9, pauses at Step 6 for user confirmation)
+      // ✅ PASS PRESERVED METADATA: This makes Step 2 skip pre-roll interactions
       await pipelineCoordinator.executePipeline(action.id, {
         actor: {
           selectedSkill: skill,
@@ -405,7 +414,8 @@
           actorId: actingCharacter.id,
           level: actingCharacter.level || 1,
           proficiencyRank: 0 // TODO: Get from actor
-        }
+        },
+        metadata: preservedMetadata  // ← Preserves buildingDetails, settlement selection, etc.
       });
       
       console.log(`✅ [ActionsPhase] Pipeline reroll complete for ${action.id}`);

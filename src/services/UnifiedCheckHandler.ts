@@ -148,7 +148,7 @@ export class UnifiedCheckHandler {
         return await this.executeMapSelection(interaction, kingdom, metadata);
 
       case 'configuration':
-        return await this.executeConfiguration(interaction, kingdom);
+        return await this.executeConfiguration(interaction, kingdom, metadata);
 
       case 'text-input':
         return await this.executeTextInput(interaction);
@@ -316,8 +316,15 @@ export class UnifiedCheckHandler {
    *
    * Shows custom Svelte component dialog and waits for user input
    */
-  private async executeConfiguration(interaction: any, kingdom: any): Promise<any> {
+  private async executeConfiguration(interaction: any, kingdom: any, metadata?: CheckMetadata): Promise<any> {
     console.log(`⚙️ [UnifiedCheckHandler] Configuration: ${interaction.id || 'unknown'}`);
+    
+    // ✅ REROLL OPTIMIZATION: Skip if metadata already has this interaction's data
+    // This allows rerolls to preserve selections (e.g., BuildStructureDialog doesn't re-show)
+    if (interaction.id && metadata && metadata[interaction.id]) {
+      console.log(`⏭️ [UnifiedCheckHandler] Skipping configuration (metadata already exists): ${interaction.id}`);
+      return metadata[interaction.id];
+    }
     
     // Check if component is provided
     if (!interaction.component) {

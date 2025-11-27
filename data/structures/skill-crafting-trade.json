@@ -16,6 +16,9 @@
           "skill": "crafting",
           "value": 1
         }
+      ],
+      "manualEffects": [
+        "Supports: Crafting"
       ]
     },
     {
@@ -37,6 +40,9 @@
           "skill": "lore",
           "value": 1
         }
+      ],
+      "manualEffects": [
+        "Supports: Crafting, Lore"
       ]
     },
     {
@@ -64,12 +70,15 @@
           "skill": "society",
           "value": 2
         }
+      ],
+      "manualEffects": [
+        "Supports: Crafting, Lore, Society"
       ]
     },
     {
       "id": "masterworks-foundry",
       "name": "Masterworks Foundry",
-      "description": "Elite crafting facility for legendary works",
+      "description": "The pinnacle of craftsmanship, where master artisans create legendary works",
       "cost": {
         "lumber": 4,
         "stone": 4,
@@ -91,6 +100,10 @@
           "skill": "society",
           "value": 3
         }
+      ],
+      "manualEffects": [
+        "Supports: Crafting, Lore, Society",
+        "Reroll 1 failed skill check per turn"
       ]
     }
   ],

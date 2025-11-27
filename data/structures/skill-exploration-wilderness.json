@@ -16,6 +16,9 @@
           "skill": "survival",
           "value": 1
         }
+      ],
+      "manualEffects": [
+        "Supports: Survival"
       ]
     },
     {
@@ -37,6 +40,9 @@
           "skill": "nature",
           "value": 1
         }
+      ],
+      "manualEffects": [
+        "Supports: Survival, Nature"
       ]
     },
     {
@@ -64,6 +70,9 @@
           "skill": "stealth",
           "value": 2
         }
+      ],
+      "manualEffects": [
+        "Supports: Survival, Nature, Stealth"
       ]
     },
     {
@@ -91,6 +100,10 @@
           "skill": "stealth",
           "value": 3
         }
+      ],
+      "manualEffects": [
+        "Supports: Survival, Nature, Stealth",
+        "Reroll 1 failed skill check per turn"
       ]
     }
   ],

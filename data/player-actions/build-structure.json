@@ -24,19 +24,19 @@
   ],
   "outcomes": {
     "criticalSuccess": {
-      "description": "The {structure} is constructed efficiently.",
+      "description": "The structure is constructed efficiently.",
       "modifiers": []
     },
     "success": {
-      "description": "Construction begins on a {structure}.",
+      "description": "Construction begins on the structure.",
       "modifiers": []
     },
     "failure": {
-      "description": "Construction of the {structure} fails.",
+      "description": "Construction of the structure fails.",
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "Accidents and disputes plague the {structure} project.",
+      "description": "Accidents and disputes plague the structure project.",
       "modifiers": [
          {
           "type": "static",

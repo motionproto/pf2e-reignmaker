@@ -9,13 +9,10 @@
   export let structure: Structure;
   export let locked: boolean = false;
   export let selectedStructureId: string;
-  export let successMessage: string;
   export let selectedSettlement: any;
   export let atCapacity: boolean = false;
   
   const dispatch = createEventDispatcher();
-  
-  let expanded = true; // Default to expanded for available structures
   
   // Generate effect messages for benefits
   $: effectMessages = generateEffectMessages(structure);
@@ -25,22 +22,6 @@
     project.structureId === structure.id && 
     project.settlementName === selectedSettlement?.name
   ) || false;
-  
-  // Calculate affordability
-  $: structureMissing = new Map<string, number>();
-  $: available = $kingdomData.resources;
-  $: {
-    structureMissing.clear();
-    for (const [resource, needed] of Object.entries(structure.constructionCost)) {
-      if (needed && needed > 0) {
-        const avail = available[resource] || 0;
-        if (avail < needed) {
-          structureMissing.set(resource, needed - avail);
-        }
-      }
-    }
-  }
-  $: structureCanAfford = structureMissing.size === 0;
   
   function selectStructure() {
     // If locked, only allow deselection
@@ -56,44 +37,16 @@
       dispatch('select', structure.id);
     }
   }
-  
-  function toggleExpanded(event: MouseEvent) {
-    event.stopPropagation(); // Prevent selecting when toggling
-    expanded = !expanded;
-  }
 </script>
 
 <div 
   class="structure-card-with-build {selectedStructureId === structure.id ? 'selected' : ''} {isInBuildQueue ? 'in-progress' : ''} {locked ? 'locked' : ''}"
-  class:expanded
   on:click={selectStructure}
 >
   <!-- Header Row -->
   <div class="structure-header">
     <div class="header-left">
       <h4>{structure.name}</h4>
-      
-      <!-- Benefits display -->
-      {#if (structure.modifiers && structure.modifiers.length > 0) || effectMessages.length > 0}
-        <div class="benefits-display">
-          {#if structure.modifiers && structure.modifiers.length > 0}
-            {#each structure.modifiers as modifier}
-              <div class="benefit-item">
-                <i class="fas fa-arrow-up" style="color: #4ade80;"></i>
-                <span>{modifier.value > 0 ? '+' : ''}{modifier.value} {modifier.resource}</span>
-              </div>
-            {/each}
-          {/if}
-          {#if effectMessages.length > 0}
-            {#each effectMessages as message}
-              <div class="benefit-item">
-                <i class="fas fa-bolt" style="color: var(--color-amber);"></i>
-                <span>{message}</span>
-              </div>
-            {/each}
-          {/if}
-        </div>
-      {/if}
     </div>
     
     <div class="badges">
@@ -115,12 +68,7 @@
       
       <span class="tier-badge">Tier {structure.tier || 1}</span>
       
-      {#if locked && !atCapacity}
-        <span class="locked-badge">
-          <i class="fas fa-lock"></i>
-          Locked
-        </span>
-      {:else if atCapacity && !isInBuildQueue}
+      {#if atCapacity && !isInBuildQueue}
         <span class="capacity-badge">
           <i class="fas fa-exclamation-triangle"></i>
           At Capacity
@@ -134,21 +82,19 @@
   </div>
   
   <!-- Content Row -->
-  {#if expanded}
-    <div class="structure-content">
-      <StructureCard 
-        {structure} 
-        tier={structure.tier}
-      />
-    </div>
-  {/if}
+  <div class="structure-content">
+    <StructureCard 
+      {structure} 
+      tier={structure.tier}
+    />
+  </div>
 </div>
 
 <style lang="scss">
   .structure-card-with-build {
     display: flex;
     flex-direction: column;
-    background: var(--overlay-low);
+    background: var(--surface-low);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     cursor: pointer;
@@ -168,7 +114,7 @@
     
     &.locked {
       opacity: 0.5;
-      background: rgba(255, 255, 255, 0.03);
+      background: var(--surface-lowest);
       border-color: var(--border-faint);
       filter: grayscale(0.4);
       cursor: pointer; // Allow clicking to deselect
@@ -189,10 +135,6 @@
     border-bottom: 1px solid var(--border-faint);
     transition: background 0.2s ease;
     
-    &:hover {
-      background: var(--hover-low);
-    }
-    
     .header-left {
       flex: 1;
       display: flex;
@@ -208,27 +150,6 @@
       font-weight: var(--font-weight-semibold);
     }
     
-    
-    .benefits-display {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-4);
-      
-      .benefit-item {
-        display: flex;
-        align-items: center;
-        gap: var(--space-6);
-        font-size: var(--font-sm);
-        color: var(--text-secondary);
-        
-        i {
-          font-size: var(--font-sm);
-          width: 0.875rem;
-          text-align: center;
-        }
-      }
-    }
-    
     .badges {
       display: flex;
       align-items: center;
@@ -239,6 +160,7 @@
         gap: var(--space-8);
         flex-wrap: wrap;
         align-items: center;
+        margin-right: var(--space-16);
         
         .cost-label {
           font-size: var(--font-md);
@@ -259,58 +181,46 @@
         }
         
         .free-badge {
-          font-size: var(--font-xs);
-          color: var(--text-tertiary);
-          font-style: italic;
+          font-size: var(--font-md);
+          color: var(--text-secondary);
         }
       }
       
       .tier-badge,
-      .locked-badge,
       .capacity-badge,
-      .in-progress-badge,
-      .build-queue {
-        font-size: var(--font-xs);
+      .in-progress-badge {
+        font-size: var(--font-md);
         font-weight: var(--font-weight-semibold);
         padding: var(--space-4) var(--space-8);
         border-radius: var(--radius-sm);
-        border: 1px solid var(--border-faint);
+        border: 1px solid var(--border-medium);
         display: flex;
         align-items: center;
         gap: var(--space-6);
         white-space: nowrap;
         
         i {
-          font-size: var(--font-xs);
+          font-size: var(--font-md);
         }
       }
       
       .tier-badge {
         color: var(--text-secondary);
-        background: var(--surface-accent-low);
-      }
-      
-      .locked-badge {
-        color: var(--text-tertiary);
-        background: var(--hover-low);
+        background: var(--surface-high);
+        
       }
       
       .capacity-badge {
-        color: var(--warning-text);
-        background: rgba(255, 191, 0, 0.1);
-        border-color: var(--border-accent-subtle);
+        color: var(--text-secondary);
+        background: var(--surface-high);
       }
       
       .in-progress-badge {
-        color: var(--info-text);
-        background: var(--info-background);
-        border-color: var(--info-border);
+        color: var(--text-success);
+        background: var(--surface-success-low);
+        border-color: var(--border-success-medium);
       }
       
-      .build-queue {
-        color: var(--color-amber);
-        background: var(--surface-accent-lower);
-      }
     }
   }
   
@@ -325,5 +235,16 @@
     :global(.structure-card-header) {
       display: none;
     }
+    
+    :global(.structure-card-cost) {
+      display: none;
+    }
+  }
+  
+  // Disable hover effects on nested StructureCard when locked or in-progress
+  .structure-card-with-build.locked .structure-content :global(.structure-card:hover),
+  .structure-card-with-build.in-progress .structure-content :global(.structure-card:hover) {
+    box-shadow: none;
+    background: transparent;
   }
 </style>

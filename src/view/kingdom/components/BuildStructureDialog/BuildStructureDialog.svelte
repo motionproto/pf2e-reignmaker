@@ -190,7 +190,16 @@
 <div class="dialog-overlay" on:click={handleClose}>
     <div class="dialog-container" on:click|stopPropagation>
       <div class="dialog-header">
-        <h2><i class="fas fa-hammer"></i> Build Structure</h2>
+        <h2>
+          <i class="fas fa-hammer"></i>
+          <span class="title-text">
+            {#if selectedSettlement}
+              Build Structure in {selectedSettlement.name}
+            {:else}
+              Build Structure
+            {/if}
+          </span>
+        </h2>
         <div class="header-controls">
           <!-- Settlement Selector -->
           <SettlementSelector bind:selectedSettlementId {settlements} />
@@ -258,51 +267,59 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: var(--overlay-higher);
-    z-index: 1000;
+    background: var(--overlay-high);
+    z-index: var(--z-overlay);
     display: flex;
     align-items: center;
     justify-content: center;
   }
   
   .dialog-container {
-    background: var(--color-gray-900);
+    background: var(--empty);
     border-radius: var(--radius-lg);
-    border: 1px solid var(--border-strong);
+    border: 2px solid var(--border-strong);
     max-width: 75rem;
     width: 90%;
     height: 80vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 0.5rem 2rem var(--overlay-high);
+    box-shadow: var(--shadow-overlay);
   }
   
   .dialog-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--space-16) var(--space-20);
-    border-bottom: 1px solid var(--border-medium);
-    background: linear-gradient(135deg, rgba(31, 31, 35, 0.8), rgba(15, 15, 17, 0.6));
+    padding: var(--space-16) var(--space-24);
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--surface-high);
     
     h2 {
       margin: 0;
-      color: var(--color-amber);
-      font-size: var(--font-2xl);
+      color: var(--text-primary);
+      font-size: var(--font-3xl);
       font-family: var(--font-sans-rm);
+      font-weight: var(--font-weight-semibold);
       display: flex;
       align-items: center;
       gap: var(--space-12);
       
       i {
         font-size: var(--font-xl);
+        color: var(--color-amber);
+        margin-right: var(--space-8);
+      }
+      
+      .title-text {
+        color: var(--text-primary);
+        text-transform: capitalize;
       }
     }
     
     .header-controls {
       display: flex;
       align-items: center;
-      gap: var(--space-20);
+      gap: var(--space-16);
     }
     
     .close-button {
@@ -317,8 +334,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: var(--radius-sm);
-      transition: all 0.2s ease;
+      border-radius: var(--radius-md);
+      transition: all var(--transition-base);
+      margin-right: calc(-1 * var(--space-8));
       
       &:hover {
         background: var(--hover);
@@ -344,9 +362,8 @@
   
   // Left panel - Categories
   .categories-panel {
-    flex: 0 0 26rem;  // Optimized width for category badges and names
-    background: var(--overlay-low);
-    border-right: 1px solid var(--border-subtle);
+    flex: 0 0 24rem;
+    background: var(--empty);
     padding: var(--space-16);
     overflow-y: auto;
   }
@@ -354,7 +371,7 @@
   // Right panel - Structure selection
   .selection-panel {
     flex: 1;
-    background: var(--overlay-lower);
+    background: var(--empty);
     overflow-y: auto;
     position: relative;
   }

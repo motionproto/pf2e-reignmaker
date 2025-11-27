@@ -16,6 +16,9 @@
           "skill": "religion",
           "value": 1
         }
+      ],
+      "manualEffects": [
+        "Supports: Religion"
       ]
     },
     {
@@ -37,6 +40,9 @@
           "skill": "medicine",
           "value": 1
         }
+      ],
+      "manualEffects": [
+        "Supports: Religion, Medicine"
       ]
     },
     {
@@ -64,6 +70,9 @@
           "skill": "nature",
           "value": 2
         }
+      ],
+      "manualEffects": [
+        "Supports: Religion, Medicine, Nature"
       ]
     },
     {
@@ -91,6 +100,10 @@
           "skill": "nature",
           "value": 3
         }
+      ],
+      "manualEffects": [
+        "Supports: Religion, Medicine, Nature",
+        "Reroll 1 failed skill check per turn"
       ]
     }
   ],

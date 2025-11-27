@@ -14,7 +14,7 @@
   >
     {#each settlements as settlement}
       <option value={settlement.id}>
-        {settlement.name} (Tier {settlement.tier})
+        {settlement.name} ({settlement.tier})
       </option>
     {/each}
   </select>

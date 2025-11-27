@@ -23,7 +23,7 @@ export interface AidResult {
 export function getAidResult(
   targetId: string, 
   checkType: 'action' | 'event'
-): { outcome: string; bonus: number } | null {
+): { outcome: string; bonus: number; characterName: string } | null {
   const actor = getKingdomActor();
   if (!actor) return null;
 

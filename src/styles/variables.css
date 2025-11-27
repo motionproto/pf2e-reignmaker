@@ -96,14 +96,14 @@
   --empty: var(--color-gray-950);  /* 6% - Base application background */
   
   /* Surfaces - Perceptually uniform interpolation using color-mix() in oklch space */
-  /* 7-point scale from gray-900 (10%) to gray-850 (15%) - compressed for subtle differentiation */
-  --surface-lowest: var(--color-gray-900);                                                    /* 10% - Deepest surface layer */
-  --surface-lower: color-mix(in oklch, var(--color-gray-900) 86%, var(--color-gray-850) 14%); /* ~11% - Very subtle lift */
-  --surface-low: color-mix(in oklch, var(--color-gray-900) 71%, var(--color-gray-850) 29%);   /* ~12% - Subtle panels */
-  --surface: color-mix(in oklch, var(--color-gray-900) 57%, var(--color-gray-850) 43%);       /* ~13% - MIDPOINT - Standard surface */
-  --surface-high: color-mix(in oklch, var(--color-gray-900) 43%, var(--color-gray-850) 57%);  /* ~14% - Elevated panels */
-  --surface-higher: color-mix(in oklch, var(--color-gray-900) 29%, var(--color-gray-850) 71%);/* ~14.5% - Prominent elements */
-  --surface-highest: var(--color-gray-850);                                                   /* 15% - Most elevated (modals, tooltips) */
+  /* 7-point scale from gray-900 (10%) to gray-800 (22%) - expanded range for better differentiation */
+  --surface-lowest: color-mix(in oklch, var(--color-gray-900) 86%, var(--color-gray-850) 14%); /* ~11% - Deepest surface layer (was 10%) */
+  --surface-lower: color-mix(in oklch, var(--color-gray-900) 71%, var(--color-gray-850) 29%);   /* ~12% - Very subtle lift */
+  --surface-low: color-mix(in oklch, var(--color-gray-900) 57%, var(--color-gray-850) 43%);     /* ~13% - Subtle panels */
+  --surface: color-mix(in oklch, var(--color-gray-900) 43%, var(--color-gray-850) 57%);         /* ~14% - MIDPOINT - Standard surface */
+  --surface-high: color-mix(in oklch, var(--color-gray-900) 29%, var(--color-gray-850) 71%);    /* ~14.5% - Elevated panels */
+  --surface-higher: var(--color-gray-850);                                                       /* 16% - Prominent elements */
+  --surface-highest: color-mix(in oklch, var(--color-gray-850) 71%, var(--color-gray-800) 29%); /* ~18% - Most elevated (modals, tooltips) */
   
   /* Semi-Transparent Overlays - 7-point scale */
   --overlay-lowest: rgba(0, 0, 0, 0.05);    /* Barely visible tint */
@@ -191,12 +191,25 @@
   --text-muted: var(--color-gray-500);
   --text-disabled: var(--color-gray-600);
   --text-inverted: var(--color-gray-900);  /* Dark text for light backgrounds */
-  --text-accent: var(--color-amber);
   
   /* Semantic Text Colors - 5-point hierarchy matching base text structure */
+  /* Brand/Primary (Crimson) - Smooth ramp from bright to dim/desaturated - BOOSTED SATURATION */
+  --text-brand: hsla(0, 82%, 65%, 1);           /* Primary - Main text color - brighter crimson */
+  --text-brand-secondary: var(--color-crimson-light); /* Secondary - Less prominent (0, 78%, 57%) */
+  --text-brand-tertiary: hsla(0, 64%, 42%, 1);  /* Tertiary - Subtle text */
+  --text-brand-muted: hsla(0, 52%, 34%, 1);     /* Muted - De-emphasized */
+  --text-brand-disabled: hsla(0, 38%, 26%, 1);  /* Disabled - Dim & desaturated */
+  
+  /* Accent (Amber) - Smooth ramp from bright to dim/desaturated - BOOSTED SATURATION */
+  --text-accent-primary: hsla(38, 95%, 58%, 1);           /* Primary - Main text color - brighter amber */
+  --text-accent-secondary: var(--color-amber);            /* Secondary - Less prominent (38, 91%, 50%) */
+  --text-accent-tertiary: hsla(38, 75%, 38%, 1);          /* Tertiary - Subtle text */
+  --text-accent-muted: hsla(38, 60%, 32%, 1);             /* Muted - De-emphasized */
+  --text-accent-disabled: hsla(38, 42%, 26%, 1);          /* Disabled - Dim & desaturated */
+  
   /* Success (Green) - Smooth ramp from bright to dim/desaturated - BOOSTED SATURATION */
-  --text-success: hsla(142, 85%, 62%, 1);           /* Primary - Main text color - bright green */
-  --text-success-secondary: hsla(142, 75%, 52%, 1); /* Secondary - Less prominent */
+  --text-success: hsla(142, 90%, 70%, 1);           /* Primary - Main text color - brighter green */
+  --text-success-secondary: hsla(142, 85%, 62%, 1); /* Secondary - Less prominent */
   --text-success-tertiary: hsla(142, 62%, 44%, 1);  /* Tertiary - Subtle text */
   --text-success-muted: hsla(142, 48%, 36%, 1);     /* Muted - De-emphasized */
   --text-success-disabled: hsla(142, 32%, 28%, 1);  /* Disabled - Dim & desaturated */
@@ -223,8 +236,8 @@
   --text-info-disabled: hsla(217, 48%, 42%, 1);    /* Disabled - Dim & desaturated */
   
   /* Special (Purple) - Smooth ramp from bright to dim/desaturated - BOOSTED SATURATION */
-  --text-special: hsla(258, 90%, 66%, 1);          /* Primary - Main text color */
-  --text-special-secondary: hsla(258, 84%, 58%, 1); /* Secondary - Less prominent */
+  --text-special: hsla(258, 95%, 74%, 1);          /* Primary - Main text color - brighter purple */
+  --text-special-secondary: hsla(258, 90%, 66%, 1); /* Secondary - Less prominent */
   --text-special-tertiary: hsla(258, 70%, 49%, 1);  /* Tertiary - Subtle text */
   --text-special-muted: hsla(258, 52%, 42%, 1);     /* Muted - De-emphasized */
   --text-special-disabled: hsla(258, 34%, 34%, 1);  /* Disabled - Dim & desaturated */
@@ -283,7 +296,7 @@
   --border-accent-subtle: hsla(38, 35%, 26%, 1);     /* Low visibility */
   --border-accent: var(--color-amber);                /* Standard (middle point) */
   --border-accent-medium: hsla(41, 95%, 58%, 1);     /* More prominent */
-  --border-accent-strong: hsla(44, 100%, 65%, 1);    /* High contrast */
+  --border-accent-strong: hsla(44, 100%, 70%, 1);    /* High contrast */
   
   /* Info (Blue) borders - 6-level scale - Extended dark range, capped bright at 82% */
   --border-info-faint: hsla(217, 30%, 14%, 1);       /* Darkest - human eye good at perceiving blue */

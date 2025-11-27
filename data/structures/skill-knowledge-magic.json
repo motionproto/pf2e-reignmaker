@@ -16,6 +16,9 @@
           "skill": "lore",
           "value": 1
         }
+      ],
+      "manualEffects": [
+        "Supports: Lore"
       ]
     },
     {
@@ -37,6 +40,9 @@
           "skill": "arcana",
           "value": 1
         }
+      ],
+      "manualEffects": [
+        "Supports: Lore, Arcana"
       ]
     },
     {
@@ -64,6 +70,9 @@
           "skill": "occultism",
           "value": 2
         }
+      ],
+      "manualEffects": [
+        "Supports: Lore, Arcana, Occultism"
       ]
     },
     {
@@ -91,6 +100,10 @@
           "skill": "occultism",
           "value": 3
         }
+      ],
+      "manualEffects": [
+        "Supports: Lore, Arcana, Occultism",
+        "Reroll 1 failed skill check per turn"
       ]
     }
   ],

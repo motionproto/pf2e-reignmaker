@@ -1,22 +1,20 @@
 <script lang="ts">
-  import { getCategoryIcon } from '../../utils/presentation';
-  
+  import { getCategoryIcon } from "../../utils/presentation";
+
   export let category: string;
   export let skills: string[] = [];
   export let isSelected: boolean = false;
   export let isInProgress: boolean = false;
-  export let isUnavailable: boolean = false;
   export let showSkills: boolean = true;
   export let currentTier: number | undefined = undefined;
 </script>
 
 <button
-  class="category-item {isSelected ? 'selected' : ''} {isInProgress ? 'in-progress' : ''} {isUnavailable ? 'unavailable' : ''}"
+  class="category-item {isSelected ? 'selected' : ''} {isInProgress
+    ? 'in-progress'
+    : ''}"
   on:click
 >
-  {#if isUnavailable}
-    <i class="fas fa-lock unavailable-icon"></i>
-  {/if}
   {#if currentTier !== undefined}
     <span class="tier-badge">Tier {currentTier}</span>
   {/if}
@@ -24,7 +22,7 @@
   <div class="category-info">
     <div class="category-name">{category}</div>
     {#if showSkills && skills.length > 0}
-      <div class="category-skills">{skills.join(', ')}</div>
+      <div class="category-skills">{skills.join(", ")}</div>
     {/if}
   </div>
 </button>
@@ -32,11 +30,11 @@
 <style lang="scss">
   .category-item {
     width: 100%;
-    padding: var(--space-6) var(--space-12);  // Reduced from var(--space-8)
-    background: var(--overlay-high);
-    border: 1px solid transparent;
-    border-radius: var(--radius-sm);
-    margin-bottom: var(--space-6);  // Reduced from var(--space-8)
+    padding: var(--space-8) var(--space-12);
+    background: var(--surface-low);
+    border: 1px solid;
+    border-radius: var(--radius-xl);
+    margin-bottom: var(--space-8);
     cursor: pointer;
     transition: all 0.15s;
     display: flex;
@@ -44,74 +42,38 @@
     gap: var(--space-12);
     text-align: left;
     min-height: fit-content;
-    border-color: var(--border-faint);
+    border-color: var(--border-subtle);
     position: relative;
-    
+
     &:hover {
-      background: var(--overlay);
-      border-color: var(--border-subtle);
+      background: var(--surface-high);
+      border-color: var(--border-default);
     }
-    
+
     &.selected {
       background: var(--surface-accent-low);
-      border-color: var(--color-amber);
-      
-      .arrow {
-        color: var(--color-amber);
-      }
+      border-color: var(--border-accent);
     }
-    
+
     &.in-progress {
-      background: var(--info-background);
-      border-color: var(--info-border);
-      
+      background: var(--surface-success-lowest);
+      border-color: var(--border-success-medium);
+
       &:hover {
-        background: var(--info-background-hover);
-        border-color: var(--info-border-hover);
+        background: var(--surface-success-lower);
+        border-color: var(--border-success-medium);
       }
-      
+
+      &.selected {
+        background: var(--surface-success-low);
+        border-color: var(--border-success-medium);
+      }
+
       .category-icon {
-        color: var(--info-icon);
-      }
-      
-      .arrow {
-        color: var(--info-icon);
+        color: var(--text-success);
       }
     }
-    
-    &.unavailable {
-      opacity: 0.5;
-      background: var(--overlay);
-      border-color: var(--border-faint);
-      
-      &:hover {
-        opacity: 0.65;
-        background: rgba(0, 0, 0, 0.25);
-        border-color: var(--border-subtle);
-      }
-      
-      .category-icon {
-        color: var(--text-tertiary);
-      }
-      
-      .category-name {
-        color: var(--text-secondary);
-      }
-      
-      .category-skills {
-        color: var(--text-tertiary);
-      }
-    }
-    
-    .unavailable-icon {
-      position: absolute;
-      top: 0.5rem;
-      right: 0.5rem;
-      font-size: var(--font-xs);
-      color: var(--text-tertiary);
-      z-index: 1;
-    }
-    
+
     .category-icon {
       font-size: var(--font-xl);
       color: var(--color-amber);
@@ -120,11 +82,11 @@
       text-align: center;
       flex-shrink: 0;
     }
-    
+
     .category-info {
       flex: 1;
       min-width: 0;
-      
+
       .category-name {
         font-weight: var(--font-weight-semibold);
         font-size: var(--font-lg);
@@ -133,14 +95,14 @@
         word-wrap: break-word;
         margin-bottom: var(--space-4);
       }
-      
+
       .category-skills {
-        color: var(--text-tertiary);
+        color: var(--text-secondary);
         word-wrap: break-word;
         font-size: var(--font-sm);
       }
     }
-    
+
     .tier-badge {
       position: absolute;
       top: 0.5rem;

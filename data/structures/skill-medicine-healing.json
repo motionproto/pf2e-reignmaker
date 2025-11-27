@@ -16,6 +16,9 @@
           "skill": "medicine",
           "value": 1
         }
+      ],
+      "manualEffects": [
+        "Supports: Medicine"
       ]
     },
     {
@@ -37,6 +40,9 @@
           "skill": "lore",
           "value": 1
         }
+      ],
+      "manualEffects": [
+        "Supports: Medicine, Lore"
       ]
     },
     {
@@ -64,6 +70,9 @@
           "skill": "arcana",
           "value": 2
         }
+      ],
+      "manualEffects": [
+        "Supports: Medicine, Lore, Arcana"
       ]
     },
     {
@@ -91,6 +100,10 @@
           "skill": "arcana",
           "value": 3
         }
+      ],
+      "manualEffects": [
+        "Supports: Medicine, Lore, Arcana",
+        "Reroll 1 failed skill check per turn"
       ]
     }
   ],

@@ -247,6 +247,24 @@
          </div>
          
          <div class="card-content">
+            <div class="button-area">
+            {#if !consumeCompleted}
+               <Button 
+                  variant="secondary"
+                  fullWidth={true}
+                  disabled={processingFood}
+                  icon={processingFood ? "fas fa-spinner spinning" : "fas fa-utensils"}
+                  on:click={handleFeedSettlements}
+               >
+                  {processingFood ? "Processing..." : "Feed Settlements"}
+               </Button>
+            {:else}
+               <div class="auto-status">
+                  <i class="fas fa-check"></i> Settlements Fed
+               </div>
+            {/if}
+            </div>
+            
             <div class="content-area">
             <div class="consumption-display">
                <ResourceStat 
@@ -321,24 +339,6 @@
                {/if}
             {/if}
             </div>
-            
-            <div class="button-area">
-            {#if !consumeCompleted}
-               <Button 
-                  variant="secondary"
-                  fullWidth={true}
-                  disabled={processingFood}
-                  icon={processingFood ? "fas fa-spinner spinning" : "fas fa-utensils"}
-                  on:click={handleFeedSettlements}
-               >
-                  {processingFood ? "Processing..." : "Feed Settlements"}
-               </Button>
-            {:else}
-               <div class="auto-status">
-                  <i class="fas fa-check"></i> Settlements Fed
-               </div>
-            {/if}
-            </div>
          </div>
       </div>
       
@@ -355,6 +355,30 @@
          </div>
          
          <div class="card-content">
+            <div class="button-area">
+            {#if armyCount > 0 || fortificationCount > 0}
+               {#if !militaryCompleted}
+                  <Button 
+                     variant="secondary"
+                     fullWidth={true}
+                     disabled={processingMilitary}
+                     icon={processingMilitary ? "fas fa-spinner spinning" : "fas fa-shield-alt"}
+                     on:click={handleMilitarySupport}
+                  >
+                     {processingMilitary ? "Processing..." : armyCount > 0 && fortificationCount > 0 ? "Pay Armies & Fortifications" : armyCount > 0 ? "Pay Armies" : "Pay Fortifications"}
+                  </Button>
+               {:else}
+                  <div class="auto-status">
+                     <i class="fas fa-check"></i> Military Support Processed
+                  </div>
+               {/if}
+            {:else}
+               <div class="auto-status">
+                  <i class="fas fa-check"></i> No Military Support Needed
+               </div>
+            {/if}
+            </div>
+            
             <div class="content-area">
             {#if armyCount > 0 || fortificationCount > 0}
                <!-- 1. Food Requirements -->
@@ -448,30 +472,6 @@
                <div class="info-text">No armies or fortifications requiring maintenance</div>
             {/if}
             </div>
-            
-            <div class="button-area">
-            {#if armyCount > 0 || fortificationCount > 0}
-               {#if !militaryCompleted}
-                  <Button 
-                     variant="secondary"
-                     fullWidth={true}
-                     disabled={processingMilitary}
-                     icon={processingMilitary ? "fas fa-spinner spinning" : "fas fa-shield-alt"}
-                     on:click={handleMilitarySupport}
-                  >
-                     {processingMilitary ? "Processing..." : armyCount > 0 && fortificationCount > 0 ? "Pay Armies & Fortifications" : armyCount > 0 ? "Pay Armies" : "Pay Fortifications"}
-                  </Button>
-               {:else}
-                  <div class="auto-status">
-                     <i class="fas fa-check"></i> Military Support Processed
-                  </div>
-               {/if}
-            {:else}
-               <div class="auto-status">
-                  <i class="fas fa-check"></i> No Military Support Needed
-               </div>
-            {/if}
-            </div>
          </div>
       </div>
       
@@ -488,6 +488,30 @@
          </div>
          
          <div class="card-content">
+            <div class="button-area">
+            {#if $kingdomData.buildQueue?.length > 0}
+               {#if !buildCompleted}
+                  <Button 
+                     variant="secondary"
+                     fullWidth={true}
+                     disabled={processingBuild}
+                     icon={processingBuild ? "fas fa-spinner spinning" : "fas fa-hammer"}
+                     on:click={handleBuildQueue}
+                  >
+                     {processingBuild ? "Processing..." : "Process Build Queue"}
+                  </Button>
+               {:else}
+                  <div class="auto-status">
+                     <i class="fas fa-check"></i> Build Queue Processed
+                  </div>
+               {/if}
+            {:else}
+               <div class="auto-status">
+                  <i class="fas fa-check"></i> No Projects
+               </div>
+            {/if}
+            </div>
+            
             <div class="content-area">
             {#if $kingdomData.buildQueue?.length > 0}
                <div class="build-resources-available">
@@ -510,30 +534,6 @@
                
             {:else}
                <div class="info-text">No construction projects in queue</div>
-            {/if}
-            </div>
-            
-            <div class="button-area">
-            {#if $kingdomData.buildQueue?.length > 0}
-               {#if !buildCompleted}
-                  <Button 
-                     variant="secondary"
-                     fullWidth={true}
-                     disabled={processingBuild}
-                     icon={processingBuild ? "fas fa-spinner spinning" : "fas fa-hammer"}
-                     on:click={handleBuildQueue}
-                  >
-                     {processingBuild ? "Processing..." : "Process Build Queue"}
-                  </Button>
-               {:else}
-                  <div class="auto-status">
-                     <i class="fas fa-check"></i> Build Queue Processed
-                  </div>
-               {/if}
-            {:else}
-               <div class="auto-status">
-                  <i class="fas fa-check"></i> No Projects
-               </div>
             {/if}
             </div>
          </div>
@@ -694,6 +694,7 @@
    .button-area {
       margin-top: auto;
       padding-top: var(--space-12);
+      margin-bottom: var(--space-16);
       display: flex;
       flex-direction: column;
       
@@ -917,7 +918,8 @@
       display: flex;
       flex-direction: column;
       gap: var(--space-10);
-      max-height: 12.5rem;
+      min-height: 12.5rem;
+      flex: 1;
       overflow-y: auto;
       width: 100%;
    }

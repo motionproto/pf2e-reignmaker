@@ -16,6 +16,9 @@
           "skill": "athletics",
           "value": 1
         }
+      ],
+      "manualEffects": [
+        "Supports: Athletics"
       ]
     },
     {
@@ -37,6 +40,9 @@
           "skill": "acrobatics",
           "value": 1
         }
+      ],
+      "manualEffects": [
+        "Supports: Athletics, Acrobatics"
       ]
     },
     {
@@ -64,6 +70,9 @@
           "skill": "intimidation",
           "value": 2
         }
+      ],
+      "manualEffects": [
+        "Supports: Athletics, Acrobatics, Intimidation"
       ]
     },
     {
@@ -91,6 +100,10 @@
           "skill": "intimidation",
           "value": 3
         }
+      ],
+      "manualEffects": [
+        "Supports: Athletics, Acrobatics, Intimidation",
+        "Reroll 1 failed skill check per turn"
       ]
     }
   ],

@@ -122,8 +122,27 @@
         { name: 'Tertiary', variable: '--text-tertiary', description: 'Subtle text' },
         { name: 'Muted', variable: '--text-muted', description: 'De-emphasized text' },
         { name: 'Disabled', variable: '--text-disabled', description: 'Disabled state text' },
-        { name: 'Inverted', variable: '--text-inverted', description: 'Dark text for light backgrounds' },
-        { name: 'Accent', variable: '--text-accent', description: 'Highlighted text' }
+        { name: 'Inverted', variable: '--text-inverted', description: 'Dark text for light backgrounds' }
+      ]
+    },
+    {
+      title: 'Brand Text Colors (Crimson)',
+      colors: [
+        { name: 'Brand', variable: '--text-brand', description: 'Primary - Main text color' },
+        { name: 'Brand Secondary', variable: '--text-brand-secondary', description: 'Secondary - Less prominent' },
+        { name: 'Brand Tertiary', variable: '--text-brand-tertiary', description: 'Tertiary - Subtle text' },
+        { name: 'Brand Muted', variable: '--text-brand-muted', description: 'Muted - De-emphasized' },
+        { name: 'Brand Disabled', variable: '--text-brand-disabled', description: 'Disabled - Disabled state' }
+      ]
+    },
+    {
+      title: 'Accent Text Colors (Amber)',
+      colors: [
+        { name: 'Accent', variable: '--text-accent-primary', description: 'Primary - Main text color' },
+        { name: 'Accent Secondary', variable: '--text-accent-secondary', description: 'Secondary - Less prominent' },
+        { name: 'Accent Tertiary', variable: '--text-accent-tertiary', description: 'Tertiary - Subtle text' },
+        { name: 'Accent Muted', variable: '--text-accent-muted', description: 'Muted - De-emphasized' },
+        { name: 'Accent Disabled', variable: '--text-accent-disabled', description: 'Disabled - Disabled state' }
       ]
     },
     {

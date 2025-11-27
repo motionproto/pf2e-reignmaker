@@ -45,7 +45,8 @@
       display: flex;
       align-items: center;
       gap: var(--space-12);
-      padding: var(--space-8);
+      padding: var(--space-16);
+      padding-bottom: var(--space-8);
       cursor: pointer;
       transition: background 0.2s ease;
       
@@ -94,6 +95,10 @@
       }
       
       :global(.structure-card-header) {
+        display: none;
+      }
+      
+      :global(.structure-card-cost) {
         display: none;
       }
     }

@@ -16,6 +16,9 @@
           "skill": "thievery",
           "value": 1
         }
+      ],
+      "manualEffects": [
+        "Supports: Thievery"
       ]
     },
     {
@@ -37,6 +40,9 @@
           "skill": "deception",
           "value": 1
         }
+      ],
+      "manualEffects": [
+        "Supports: Thievery, Deception"
       ]
     },
     {
@@ -64,6 +70,9 @@
           "skill": "stealth",
           "value": 2
         }
+      ],
+      "manualEffects": [
+        "Supports: Thievery, Deception, Stealth"
       ]
     },
     {
@@ -91,6 +100,10 @@
           "skill": "stealth",
           "value": 3
         }
+      ],
+      "manualEffects": [
+        "Supports: Thievery, Deception, Stealth",
+        "Reroll 1 failed skill check per turn"
       ]
     }
   ],

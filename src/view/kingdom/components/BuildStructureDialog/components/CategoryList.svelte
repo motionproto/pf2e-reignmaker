@@ -43,12 +43,6 @@
   $: allSkillCategories = getUniqueCategories(allSkillStructures);
   $: allSupportCategories = getUniqueCategories(allSupportStructures);
   
-  // Since we now show ALL structures (built, buildable, and locked), 
-  // categories are never "unavailable" - they just might only have locked structures
-  function isCategoryUnavailable(category: string, isSkillCategory: boolean): boolean {
-    return false; // Always show categories as available
-  }
-  
   function selectCategory(category: string) {
     dispatch('select', category);
   }
@@ -72,7 +66,6 @@
             {category}
             skills={capitalizeSkills(getSkillsForCategory(category, allSkillStructures))}
             currentTier={getCurrentTier(category)}
-            isUnavailable={isCategoryUnavailable(category, true)}
             isSelected={selectedCategory === category}
             isInProgress={categoriesInProgress.has(category)}
             on:click={() => selectCategory(category)}
@@ -90,7 +83,6 @@
           <CategoryItem 
             {category}
             currentTier={getCurrentTier(category)}
-            isUnavailable={isCategoryUnavailable(category, false)}
             isSelected={selectedCategory === category}
             isInProgress={categoriesInProgress.has(category)}
             showSkills={false}
@@ -136,13 +128,11 @@
   
   .category-type-section {
     .section-title {
-      margin: 0 0 var(--space-12) 0;
-      color: var(--color-amber);
-      font-size: var(--font-md);
+      margin: var(--space-8) 0 var(--space-20) var(--space-8);
+      color: var(--text-accent-primary);
+      font-size: var(--font-xl);
       font-weight: var(--font-weight-semibold);
       text-transform: uppercase;
-      letter-spacing: 0.0312rem;
-      opacity: 0.8;
     }
   }
 </style>

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import Button from '../../baseComponents/Button.svelte';
   import BuiltStructureItem from './BuiltStructureItem.svelte';
   import AvailableStructureItem from './AvailableStructureItem.svelte';
   import type { Structure } from '../../../../../models/Structure';
@@ -63,21 +64,24 @@
       </div>
       
       <div class="header-actions">
-        <button 
-          class="cancel-button"
+        <Button 
+          variant="outline"
+          size="small"
           on:click={handleCancel}
         >
           Cancel
-        </button>
+        </Button>
         
-        <button 
-          class="build-button" 
-          on:click={() => handleBuild(new CustomEvent('build', { detail: selectedStructureId }))}
+        <Button 
+          variant="primary"
+          size="small"
+          icon="fas fa-hammer"
+          iconPosition="left"
           disabled={!selectedStructureId || !!successMessage}
+          on:click={() => handleBuild(new CustomEvent('build', { detail: selectedStructureId }))}
         >
-          <i class="fas fa-hammer"></i>
           Build
-        </button>
+        </Button>
       </div>
     </div>
     
@@ -148,16 +152,14 @@
   }
   
   .selection-header {
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(0.5rem);
-    padding: var(--space-24);
+    background: var(--surface-lower);
+    padding: var(--space-4) var(--space-24);
     border-bottom: 1px solid var(--border-subtle);
-    box-shadow: 0 0.125rem 0.5rem var(--overlay-low);
-    min-height: 5.625rem;
+    box-shadow: var(--shadow-md);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--space-24);
+    gap: var(--space-12);
     
     .header-content {
       display: flex;
@@ -184,28 +186,29 @@
           color: var(--color-amber);
           font-size: var(--font-3xl);
           font-family: var(--font-sans-rm);
-          line-height: 1.2;
+          font-weight: var(--font-weight-semibold);
+          line-height: var(--line-height-snug);
         }
         
         .category-skills-label {
           margin: 0;
           color: var(--text-secondary);
           font-size: var(--font-sm);
-          line-height: 1.4;
+          line-height: var(--line-height-normal);
         }
         
         .capacity-warning {
           margin: 0;
           margin-top: var(--space-8);
-          color: var(--warning-text);
+          color: var(--text-warning);
           font-size: var(--font-sm);
-          line-height: 1.4;
+          line-height: var(--line-height-normal);
           display: flex;
           align-items: center;
           gap: var(--space-8);
           padding: var(--space-8) var(--space-12);
-          background: rgba(255, 191, 0, 0.1);
-          border: 1px solid var(--border-accent-subtle);
+          background: var(--surface-warning-lowest);
+          border: 1px solid var(--border-warning-subtle);
           border-radius: var(--radius-sm);
           
           i {
@@ -219,59 +222,6 @@
       display: flex;
       gap: var(--space-12);
       align-items: center;
-      
-      .cancel-button {
-        padding: var(--space-12) var(--space-24);
-        background: var(--hover);
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--radius-sm);
-        color: var(--text-secondary);
-        font-size: var(--font-sm);
-        font-weight: var(--font-weight-medium);
-        cursor: pointer;
-        transition: all 0.2s ease;
-        white-space: nowrap;
-        
-        &:hover {
-          background: var(--hover-high);
-          border-color: var(--border-strong);
-          color: var(--text-primary);
-        }
-      }
-      
-      .build-button {
-        padding: var(--space-12) var(--space-24);
-        background: var(--color-amber);
-        border: 1px solid var(--color-amber);
-        border-radius: var(--radius-sm);
-        color: var(--color-gray-900);
-        font-size: var(--font-sm);
-        font-weight: var(--font-weight-semibold);
-        cursor: pointer;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: var(--space-8);
-        white-space: nowrap;
-        
-        i {
-          font-size: var(--font-sm);
-        }
-        
-        &:hover:not(:disabled) {
-          background: var(--color-amber-light);
-          box-shadow: 0 0.125rem 0.5rem var(--surface-accent-higher);
-        }
-        
-        &:disabled {
-          background: transparent;
-          border-color: var(--color-amber);
-          color: var(--color-amber);
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-      }
     }
   }
   
@@ -284,15 +234,15 @@
     gap: var(--space-12);
     
     .capacity-warning {
-      color: var(--warning-text);
+      color: var(--text-warning);
       font-size: var(--font-sm);
-      line-height: 1.4;
+      line-height: var(--line-height-normal);
       display: flex;
       align-items: center;
       gap: var(--space-8);
       padding: var(--space-12) var(--space-16);
-      background: rgba(255, 191, 0, 0.1);
-      border: 1px solid var(--border-accent-subtle);
+      background: var(--surface-warning-lowest);
+      border: 1px solid var(--border-warning-subtle);
       border-radius: var(--radius-md);
       margin-bottom: var(--space-8);
       
@@ -306,7 +256,7 @@
       align-items: flex-start;
       gap: var(--space-16);
       padding: var(--space-20) var(--space-24);
-      background: rgba(100, 100, 100, 0.15);
+      background: var(--overlay-low);
       border: 1px solid var(--border-default);
       border-radius: var(--radius-md);
       margin-top: var(--space-8);
@@ -318,15 +268,15 @@
         flex-shrink: 0;
         
         &.fa-check-circle {
-          color: rgba(100, 200, 100, 0.8);
+          color: var(--text-success);
         }
         
         &.fa-lock {
-          color: rgba(200, 150, 50, 0.8);
+          color: var(--text-warning);
         }
         
         &.fa-info-circle {
-          color: rgba(100, 150, 200, 0.8);
+          color: var(--text-info);
         }
       }
       
@@ -344,7 +294,7 @@
           margin: 0;
           font-size: var(--font-sm);
           color: var(--text-secondary);
-          line-height: 1.5;
+          line-height: var(--line-height-relaxed);
         }
       }
     }

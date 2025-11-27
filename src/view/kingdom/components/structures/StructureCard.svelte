@@ -57,23 +57,9 @@
         </div>
       </div>
       
-      <!-- Modifiers (from structure.modifiers array) -->
-      {#if structure.modifiers && structure.modifiers.length > 0}
-        <div class="structure-modifiers">
-          <div class="effect-label">Modifiers</div>
-          {#each structure.modifiers as modifier}
-            <div class="effect-item">
-              <i class="fas fa-arrow-up" style="color: #4ade80;"></i>
-              <span>{modifier.value > 0 ? '+' : ''}{modifier.value} {modifier.resource}</span>
-            </div>
-          {/each}
-        </div>
-      {/if}
-      
       <!-- Effect Messages (gameEffects and manualEffects with msg support) -->
       {#if effectMessages.length > 0}
         <div class="structure-effect-messages">
-          <div class="effect-label">Effects</div>
           {#each effectMessages as message}
             <div class="effect-message-item">
               <i class="fas fa-bolt"></i>
@@ -96,15 +82,15 @@
 
 <style lang="scss">
   .structure-card {
-    background: var(--overlay-low);
+    background: var(--surface-lowest);
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     padding: var(--space-16);
     transition: all 0.2s;
     
     &:hover {
-      box-shadow: 0 0.125rem 0.5rem var(--overlay);
-      background: var(--overlay);
+      box-shadow: 0 0.125rem 0.5rem var(--overlay-low);
+      background: var(--surface);
     }
   }
   
@@ -118,7 +104,7 @@
     padding-bottom: var(--space-8);
     
     .tier-badge {
-      font-size: var(--font-size-md);
+      font-size: var(--font-md);
       font-weight: var(--font-weight-semibold);
       color: var(--text-secondary);
       background: var(--surface-accent-low);
@@ -140,6 +126,7 @@
   .structure-details {
     display: flex;
     gap: var(--space-16);
+  
   }
   
   .structure-thumbnail {
@@ -149,14 +136,14 @@
     .thumbnail-placeholder {
       width: 6.25rem;
       height: 6.25rem;
-      background: var(--overlay);
+      background: var(--surface-lower);
       border: 1px solid var(--border-faint);
       border-radius: var(--radius-sm);
       display: flex;
       align-items: center;
       justify-content: center;
       color: var(--text-tertiary);
-      font-size: var(--font-s);
+      font-size: var(--font-md);
     }
   }
   
@@ -164,22 +151,21 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: var(--space-16);
+    gap: var(--space-12);
   }
   
   /* Description */
   .structure-description {
     font-size: var(--font-md);
+    font-weight: var(--font-weight-light);
     color: var(--text-secondary);
-    font-style: italic;
-    padding-bottom: var(--space-8);
-    border-bottom: 1px solid var(--border-faint);
+    padding-right: var(--space-16);
   }
   
   /* Cost Section */
   .structure-card-cost {
     .cost-label {
-      font-size: var(--font-sm);
+      font-size: var(--font-md);
       font-weight: var(--font-weight-semibold);
       color: var(--text-secondary);
       margin-bottom: var(--space-4);
@@ -206,56 +192,24 @@
     .no-cost {
       color: var(--text-tertiary);
       font-style: italic;
-      font-size: var(--font-m);
-    }
-  }
-  
-  /* Modifiers Section */
-  .structure-modifiers {
-    .effect-label {
-      font-size: var(--font-sm);
-      font-weight: var(--font-weight-semibold);
-      color: var(--text-secondary);
-      margin-bottom: var(--space-4);
-    }
-    
-    .effect-item {
-      display: flex;
-      align-items: center;
-      gap: var(--space-8);
-      margin: var(--space-4) 0;
-      font-size: var(--font-sm);
-      color: var(--text-primary);
-      
-      i {
-        width: 1rem;
-        text-align: center;
-        font-size: var(--font-sm);
-      }
+      font-size: var(--font-md);
     }
   }
   
   /* Effect Messages Section */
   .structure-effect-messages {
-    .effect-label {
-      font-size: var(--font-sm);
-      font-weight: var(--font-weight-semibold);
-      color: var(--text-secondary);
-      margin-bottom: var(--space-4);
-    }
-    
     .effect-message-item {
       display: flex;
       align-items: flex-start;
       gap: var(--space-8);
       margin: var(--space-4) 0;
-      font-size: var(--font-sm);
+      font-size: var(--font-md);
       color: var(--text-primary);
       
       i {
         width: 1rem;
         text-align: center;
-        font-size: var(--font-sm);
+        font-size: var(--font-md);
         margin-top: var(--space-2);
         color: var(--color-amber);
       }
@@ -269,7 +223,7 @@
     background: var(--surface-accent-lower);
     border-left: 2px solid var(--color-amber);
     font-size: var(--font-md);
-    color: var(--text-accent);
+    color: var(--text-accent-primary);
     display: flex;
     align-items: flex-start;
     gap: var(--space-12);
