@@ -2,20 +2,68 @@
 
 **Purpose:** Learn when and how to create custom resolution UI components for player actions.
 
-**Last Updated:** 2025-11-08  
+**Last Updated:** 2025-11-28  
 **Difficulty:** Intermediate
+
+---
+
+## ⚠️ CRITICAL: Quick Reference
+
+**Use this when stuck - these are the non-negotiable requirements:**
+
+### Event Structure (REQUIRED)
+```typescript
+// ✅ CORRECT - Use this exact pattern
+dispatch('resolution', {
+  isResolved: boolean,        // Controls Apply button state
+  metadata: { ...yourData },  // Accessed via ctx.resolutionData.customComponentData
+  modifiers: [...]            // Optional: for preview display
+});
+
+// ❌ WRONG - Don't use 'selection' event
+dispatch('selection', { ... });
+
+// ❌ WRONG - Don't put data at top level
+dispatch('resolution', { yourData });
+```
+
+### Pipeline Configuration (REQUIRED)
+```typescript
+// ✅ CORRECT - Use postRollInteractions (shows BEFORE Apply clicked)
+postRollInteractions: [
+  {
+    type: 'configuration',
+    id: 'your-component',
+    component: YourComponent
+  }
+]
+
+// ❌ WRONG - Don't use postApplyInteractions (shows AFTER Apply clicked)
+postApplyInteractions: [ ... ]
+```
+
+### Data Access in Execute (REQUIRED)
+```typescript
+// ✅ CORRECT - Read from customComponentData
+execute: async (ctx) => {
+  const data = ctx.resolutionData?.customComponentData?.yourDataKey;
+}
+
+// ❌ WRONG - Don't try to access from other locations
+const data = ctx.metadata?.yourDataKey;
+```
 
 ---
 
 ## Table of Contents
 
 1. [When to Use Custom UI](#when-to-use-custom-ui)
-2. [The Simple Pattern (Recommended)](#the-simple-pattern-recommended)
-3. [The Complex Pattern (Rarely Needed)](#the-complex-pattern-rarely-needed)
+2. [Data Flow (READ THIS FIRST)](#data-flow-read-this-first)
+3. [Complete Working Example](#complete-working-example)
 4. [Step-by-Step Implementation](#step-by-step-implementation)
-5. [Common Pitfalls](#common-pitfalls)
-6. [Working Examples](#working-examples)
-7. [Troubleshooting](#troubleshooting)
+5. [Common Mistakes](#common-mistakes)
+6. [Debugging Checklist](#debugging-checklist)
+7. [Performance Optimization](#performance-optimization)
 
 ---
 
@@ -40,7 +88,7 @@ Does action need player selection after roll outcome?
 ### When Custom UI is Needed
 
 ✅ **Use custom component when:**
-- Multiple inputs needed (e.g., settle allocations across multiple settlements)
+- Multiple inputs needed (e.g., allocate unrest across settlements)
 - Complex validation (e.g., can't exceed capacity)
 - Dynamic options based on kingdom state (e.g., only settlements with prisons)
 - Rich visual feedback needed (e.g., capacity bars, previews)
@@ -50,160 +98,246 @@ Does action need player selection after roll outcome?
 - Single resource selection → Use `choice-dropdown` modifier
 - No user input needed → Use static/dice modifiers
 
-### Comparison Table
+---
 
-| Pattern | JSON Only? | Example Use Case | Complexity |
-|---------|-----------|------------------|------------|
-| `choice-buttons` | ✅ Yes | Harvest Resources: "Gain 2 food OR lumber OR stone OR ore" | Low |
-| `choice-dropdown` | ✅ Yes | Event: "Gain 1 food OR lumber (minor effect)" | Low |
-| Custom Component | ❌ No (code) | Arrest Dissidents: Allocate unrest across settlements with prisons | High |
+## Data Flow (READ THIS FIRST)
+
+Understanding how data flows from component to execute function is critical:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ 1. Component Displays (postRollInteractions)                   │
+│    - Outcome shown: "Critical Success!"                        │
+│    - Custom component mounts inline                             │
+└─────────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ 2. User Makes Selection                                         │
+│    - Selects settlement: "Brevoy Prison"                       │
+│    - Adjusts amount: 4 imprisoned unrest                       │
+└─────────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ 3. Component Emits 'resolution' Event                          │
+│    dispatch('resolution', {                                     │
+│      isResolved: true,                                         │
+│      metadata: { allocations: { 'brevoy-id': 4 } },           │
+│      modifiers: [...]                                          │
+│    })                                                          │
+└─────────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ 4. OutcomeDisplay.handleComponentResolution()                  │
+│    - Receives event                                            │
+│    - Stores in customSelectionData (local)                    │
+│    - Enables Apply button (isResolved === true)               │
+└─────────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ 5. User Clicks "Apply Result"                                  │
+└─────────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ 6. buildResolutionData()                                        │
+│    - Merges customSelectionData into customComponentData      │
+│    - Returns ResolutionData object                            │
+└─────────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ 7. Pipeline execute() Function                                 │
+│    const allocations =                                         │
+│      ctx.resolutionData.customComponentData.allocations;      │
+│                                                                │
+│    await gameCommands.allocateImprisonedUnrest(allocations);  │
+└─────────────────────────────────────────────────────────────────┘
+                            ↓
+                      SUCCESS! ✅
+```
+
+**Key Points:**
+- Component emits `'resolution'` event with `metadata` object
+- Data is accessible in execute via `ctx.resolutionData.customComponentData`
+- Use `isResolved: true` when selection is complete
+- Modifiers are optional (for preview display only)
 
 ---
 
-## The Simple Pattern (Recommended)
+## Complete Working Example
 
-**Philosophy:** The component knows its own business logic.
+**Arrest Dissidents** - Allocate imprisoned unrest to settlements with prisons
 
-### Key Principles
-
-1. **Hardcode data in component** - Don't pass as props unless truly needed
-2. **Calculate from outcome** - Use `outcome` prop to determine amounts/options
-3. **Self-contained** - Component reads from stores, doesn't depend on external config
-4. **Minimal coupling** - Action file only provides component reference
-
-### Architecture
-
-```
-Action File (.ts)
-├─ Provides: Component reference
-└─ Does NOT provide: Props, data, configuration
-
-Component (.svelte)
-├─ Hardcodes: Available options (e.g., resources)
-├─ Calculates: Amounts from outcome (crit success vs success)
-├─ Reads: Kingdom state from stores (if needed)
-└─ Emits: Selection event with modifiers
-```
-
-### Example: Harvest Resources
-
-**What it does:** Let player choose which resource to harvest (food, lumber, stone, ore)
-
-**Data flow:**
-1. Component hardcodes: `['food', 'lumber', 'stone', 'ore']`
-2. Component calculates: `amount = outcome === 'criticalSuccess' ? 2 : 1`
-3. Player selects resource
-4. Component emits modifier: `{ type: 'static', resource: 'food', value: 2 }`
-
-**Action file** (`src/actions/harvest-resources/HarvestResourcesAction.ts`):
+### Pipeline File
 ```typescript
-export const HarvestResourcesAction = {
-  id: 'harvest-resources',
-  
-  customResolution: {
-    component: ResourceChoiceSelector,  // Just the component reference
-    
-    validateData(resolutionData: ResolutionData): boolean {
-      return !!(resolutionData.customComponentData?.selectedResource);
-    },
-    
-    async execute(resolutionData: ResolutionData): Promise<ResolveResult> {
-      const { selectedResource, amount } = resolutionData.customComponentData || {};
-      return createSuccessResult(`Harvested ${amount} ${selectedResource}!`);
+// src/pipelines/actions/arrestDissidents.ts
+import { createActionPipeline } from '../shared/createActionPipeline';
+import ArrestDissidentsResolution from '../../view/kingdom/components/OutcomeDisplay/components/ArrestDissidentsResolution.svelte';
+
+export const arrestDissidentsPipeline = createActionPipeline('arrest-dissidents', {
+  // ✅ Use postRollInteractions (not postApplyInteractions)
+  postRollInteractions: [
+    {
+      type: 'configuration',
+      id: 'arrest-details',
+      component: ArrestDissidentsResolution,
+      condition: (ctx) => ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess'
     }
-  },
-  
-  needsCustomResolution(outcome): boolean {
-    return outcome === 'success' || outcome === 'criticalSuccess';
+  ],
+
+  execute: async (ctx) => {
+    // ✅ Read from customComponentData (populated by component's metadata)
+    const allocations = ctx.resolutionData?.customComponentData?.allocations;
+    
+    if (!allocations || Object.keys(allocations).length === 0) {
+      return { 
+        success: false, 
+        error: 'No imprisoned unrest allocations provided' 
+      };
+    }
+
+    const { createGameCommandsService } = await import('../../services/GameCommandsService');
+    const gameCommands = await createGameCommandsService();
+    
+    const result = await gameCommands.allocateImprisonedUnrest(allocations);
+    
+    return result;
   }
-};
+});
 ```
 
-**Component** (`ResourceChoiceSelector.svelte`):
+### Component File
 ```svelte
+<!-- src/view/kingdom/components/OutcomeDisplay/components/ArrestDissidentsResolution.svelte -->
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import type { OutcomePreview } from '../../../../../models/CheckInstance';
-  import { updateInstanceResolutionState } from '../../../../../controllers/shared/ResolutionStateHelpers';
-  
-  export let instance: OutcomePreview | null = null;
+  import { kingdomData } from '../../../../../stores/KingdomStore';
+  import { structuresService } from '../../../../../services/structures';
+  import type { ActiveCheckInstance } from '../../../../../models/CheckInstance';
+
+  // Props (automatically passed by OutcomeDisplay)
+  export let instance: ActiveCheckInstance | null = null;
   export let outcome: string;
-  
+
   const dispatch = createEventDispatcher();
+
+  // ✅ Calculate from outcome
+  $: maxUnrestToImprison = outcome === 'criticalSuccess' ? 8 : 4;
+
+  // ✅ Local state (not persisted until Apply clicked)
+  let selectedSettlementId = '';
+  let amount = 0;
+
+  // ✅ Read from stores (dynamic kingdom state)
+  $: currentUnrest = $kingdomData?.unrest || 0;
+
+  $: settlementsWithJustice = ($kingdomData?.settlements || [])
+    .map(settlement => {
+      const capacity = structuresService.calculateImprisonedUnrestCapacity(settlement);
+      const currentImprisoned = settlement.imprisonedUnrest || 0;
+      const availableSpace = capacity - currentImprisoned;
+      return {
+        ...settlement,
+        justiceCapacity: capacity,
+        availableSpace
+      };
+    })
+    .filter(s => s.justiceCapacity > 0)
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  $: selectedSettlement = settlementsWithJustice.find(s => s.id === selectedSettlementId) || 
+    (settlementsWithJustice.length > 0 ? settlementsWithJustice[0] : null);
   
-  // ✅ HARDCODE data (always the same for this action)
-  const resources = ['food', 'lumber', 'stone', 'ore'];
-  
-  // ✅ CALCULATE from outcome
-  $: amount = outcome === 'criticalSuccess' ? 2 : 1;
-  
-  async function handleSelect(resource: string) {
-    if (!instance) return;
-    
-    // Store in instance state
-    await updateInstanceResolutionState(instance.previewId, {
-      customComponentData: { selectedResource: resource, amount }
-    });
-    
-    // Emit selection with modifier format
-    dispatch('selection', {
-      selectedResource: resource,
-      amount: amount,
-      modifiers: [{
-        type: 'static',
-        resource: resource,
-        value: amount,
-        duration: 'immediate'
-      }]
+  $: maxToAdd = selectedSettlement 
+    ? Math.min(maxUnrestToImprison, currentUnrest, selectedSettlement.availableSpace)
+    : 0;
+
+  // Auto-select first settlement
+  $: if (settlementsWithJustice.length > 0 && !selectedSettlementId) {
+    selectedSettlementId = settlementsWithJustice[0].id;
+    emitSelection();
+  }
+
+  function handleSettlementChange(event: Event) {
+    const target = event.target as HTMLSelectElement;
+    selectedSettlementId = target.value;
+    amount = 0;
+    emitSelection();
+  }
+
+  function incrementAmount() {
+    if (amount < maxToAdd) {
+      amount++;
+      emitSelection();
+    }
+  }
+
+  function decrementAmount() {
+    if (amount > 0) {
+      amount--;
+      emitSelection();
+    }
+  }
+
+  function emitSelection() {
+    // ✅ Build allocations object
+    const allocations = amount > 0 && selectedSettlementId 
+      ? { [selectedSettlementId]: amount }
+      : {};
+
+    // ✅ Build modifiers for preview
+    const modifiers = [];
+    if (amount > 0) {
+      modifiers.push(
+        { type: 'static', resource: 'unrest', value: -amount, duration: 'immediate' },
+        { type: 'static', resource: 'imprisoned', value: amount, duration: 'immediate' }
+      );
+    }
+
+    // ✅ CRITICAL: Dispatch 'resolution' event with metadata
+    dispatch('resolution', {
+      isResolved: amount > 0,      // Apply button enabled when amount selected
+      metadata: { allocations },   // Accessed via ctx.resolutionData.customComponentData
+      modifiers                    // Preview badges (optional)
     });
   }
 </script>
 
-<div class="resource-selector">
-  {#each resources as resource}
-    <button on:click={() => handleSelect(resource)}>
-      +{amount} {resource}
-    </button>
-  {/each}
+<div class="arrest-dissidents-resolution">
+  <h4>Imprison Dissidents</h4>
+  
+  {#if settlementsWithJustice.length === 0}
+    <p>No settlements with justice structures available.</p>
+  {:else}
+    <select value={selectedSettlementId} on:change={handleSettlementChange}>
+      {#each settlementsWithJustice as settlement}
+        <option value={settlement.id}>
+          {settlement.name} (space: {settlement.availableSpace})
+        </option>
+      {/each}
+    </select>
+
+    <div class="amount-controls">
+      <button disabled={amount <= 0} on:click={decrementAmount}>-</button>
+      <span>{amount}</span>
+      <button disabled={amount >= maxToAdd} on:click={incrementAmount}>+</button>
+    </div>
+
+    {#if amount > 0 && selectedSettlement}
+      <p>Will imprison {amount} unrest in {selectedSettlement.name}</p>
+    {/if}
+  {/if}
 </div>
 ```
 
-**Key takeaways:**
-- ✅ No props needed beyond `instance` and `outcome` (automatically passed)
-- ✅ Component owns the resource list
-- ✅ Component calculates amount from outcome
-- ✅ Simple, self-contained, easy to maintain
+### Component Registry
+```typescript
+// src/view/kingdom/components/OutcomeDisplay/config/ComponentRegistry.ts
+import ArrestDissidentsResolution from '../components/ArrestDissidentsResolution.svelte';
 
----
-
-## The Complex Pattern (Rarely Needed)
-
-**When to use:** Data varies by kingdom state and can't be hardcoded
-
-### Example: Arrest Dissidents
-
-**What it does:** Allocate imprisoned unrest across settlements with prisons
-
-**Why it needs complexity:**
-- Available settlements vary (only those with justice structures)
-- Capacity varies (depends on structure tier)
-- Amount varies (based on outcome and current unrest)
-
-**Component reads from stores:**
-```svelte
-<script lang="ts">
-  import { kingdomData } from '../../../../../stores/KingdomStore';
-  
-  // Calculate valid settlements from kingdom state
-  $: settlementsWithPrisons = $kingdomData.settlements.filter(s => {
-    return s.structures.some(st => st.category === 'justice');
-  });
-  
-  $: maxCapacity = calculateTotalCapacity(settlementsWithPrisons);
-</script>
+export const COMPONENT_REGISTRY: Record<string, any> = {
+  'ArrestDissidentsResolution': ArrestDissidentsResolution,
+  // ... other components
+};
 ```
-
-**Still no props needed!** Component queries stores directly.
 
 ---
 
@@ -211,736 +345,290 @@ export const HarvestResourcesAction = {
 
 ### Step 1: Create Component File
 
-**Location:** `src/view/kingdom/components/OutcomeDisplay/components/YourCustomComponent.svelte`
+**Location:** `src/view/kingdom/components/OutcomeDisplay/components/YourComponent.svelte`
 
-**Template:**
 ```svelte
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import type { OutcomePreview } from '../../../../../models/CheckInstance';
-  import { 
-    updateInstanceResolutionState,
-    getInstanceResolutionState 
-  } from '../../../../../controllers/shared/ResolutionStateHelpers';
-  
-  // Props (automatically passed by OutcomeDisplay)
-  export let instance: OutcomePreview | null = null;
+  import type { ActiveCheckInstance } from '../../../../../models/CheckInstance';
+
+  export let instance: ActiveCheckInstance | null = null;
   export let outcome: string;
-  
+
   const dispatch = createEventDispatcher();
-  
-  // Hardcode your data
-  const options = ['option1', 'option2', 'option3'];
-  
-  // Calculate from outcome if needed
-  $: amount = outcome === 'criticalSuccess' ? 2 : 1;
-  
-  // Get current selection state
-  $: resolutionState = getInstanceResolutionState(instance);
-  $: selectedOption = resolutionState.customComponentData?.selectedOption || '';
-  
-  async function handleSelect(option: string) {
-    if (!instance) return;
+
+  // Local state (not persisted)
+  let selection = '';
+
+  function handleSelect(value: string) {
+    selection = value;
     
-    // Store in instance
-    await updateInstanceResolutionState(instance.previewId, {
-      customComponentData: { 
-        selectedOption: option,
-        amount: amount
-      }
-    });
-    
-    // Emit selection
-    dispatch('selection', {
-      selectedOption: option,
-      amount: amount,
-      modifiers: [{
-        type: 'static',
-        resource: option,
-        value: amount,
-        duration: 'immediate'
-      }]
+    // ✅ REQUIRED: Dispatch 'resolution' event
+    dispatch('resolution', {
+      isResolved: !!selection,           // Enable Apply button
+      metadata: { selection },           // Your custom data
+      modifiers: []                      // Optional preview
     });
   }
 </script>
 
-<div class="your-selector">
-  <h4>Choose Option</h4>
-  
-  {#each options as option}
-    <button 
-      class:selected={selectedOption === option}
-      on:click={() => handleSelect(option)}
-    >
-      +{amount} {option}
-    </button>
-  {/each}
+<div>
+  <button on:click={() => handleSelect('option1')}>Option 1</button>
+  <button on:click={() => handleSelect('option2')}>Option 2</button>
 </div>
-
-<style lang="scss">
-  .your-selector {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 6px;
-    padding: 16px;
-    margin: 12px 0;
-  }
-  
-  button {
-    padding: 12px 16px;
-    cursor: pointer;
-    
-    &.selected {
-      background: rgba(34, 197, 94, 0.2);
-      border-color: var(--color-green);
-    }
-  }
-</style>
 ```
 
-### Step 2: Create Action File
+### Step 2: Register Component
 
-**Location:** `src/actions/{action-id}/YourAction.ts`
+**File:** `src/view/kingdom/components/OutcomeDisplay/config/ComponentRegistry.ts`
 
 ```typescript
-import type { KingdomData } from '../../actors/KingdomActor';
-import type { ActionRequirement } from '../../controllers/actions/action-resolver';
-import type { ResolutionData } from '../../types/modifiers';
-import YourCustomComponent from '../../view/kingdom/components/OutcomeDisplay/components/YourCustomComponent.svelte';
-import {
-  logActionStart,
-  logActionSuccess,
-  logActionError,
-  createSuccessResult,
-  createErrorResult,
-  type ResolveResult
-} from '../shared/ActionHelpers';
+import YourComponent from '../components/YourComponent.svelte';
 
-export const YourAction = {
-  id: 'your-action-id',
-  
-  checkRequirements(kingdomData: KingdomData): ActionRequirement {
-    // Add any prerequisites here
-    return { met: true };
+export const COMPONENT_REGISTRY: Record<string, any> = {
+  'YourComponent': YourComponent,
+  // ... other components
+};
+```
+
+### Step 3: Add to Pipeline
+
+**File:** `src/pipelines/actions/yourAction.ts`
+
+```typescript
+import { createActionPipeline } from '../shared/createActionPipeline';
+import YourComponent from '../../view/kingdom/components/OutcomeDisplay/components/YourComponent.svelte';
+
+export const yourPipeline = createActionPipeline('your-action', {
+  postRollInteractions: [
+    {
+      type: 'configuration',
+      id: 'your-component',
+      component: YourComponent,
+      condition: (ctx) => ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess'
+    }
+  ],
+
+  execute: async (ctx) => {
+    // ✅ Read from customComponentData
+    const selection = ctx.resolutionData?.customComponentData?.selection;
+    
+    if (!selection) {
+      return { success: false, error: 'No selection made' };
+    }
+
+    // Apply changes
+    console.log('User selected:', selection);
+    
+    return { success: true };
+  }
+});
+```
+
+---
+
+## Common Mistakes
+
+### ❌ Mistake 1: Using 'selection' Event
+
+```typescript
+// ❌ WRONG
+dispatch('selection', {
+  selectedResource: 'food',
+  amount: 2
+});
+```
+
+**✅ Fix:**
+```typescript
+// ✅ CORRECT
+dispatch('resolution', {
+  isResolved: true,
+  metadata: {
+    selectedResource: 'food',
+    amount: 2
   },
-  
-  customResolution: {
-    component: YourCustomComponent,
-    
-    validateData(resolutionData: ResolutionData): boolean {
-      // Validate that selection was made
-      return !!(resolutionData.customComponentData?.selectedOption);
-    },
-    
-    async execute(resolutionData: ResolutionData): Promise<ResolveResult> {
-      logActionStart('your-action-id', 'Applying selection');
-      
-      try {
-        const { selectedOption, amount } = resolutionData.customComponentData || {};
-        
-        if (!selectedOption) {
-          return createErrorResult('No selection was made');
-        }
-        
-        // Resource changes handled automatically by OutcomeDisplay
-        // This is just for validation and success message
-        
-        logActionSuccess('your-action-id', `Applied ${selectedOption}!`);
-        return createSuccessResult(`Applied ${amount} ${selectedOption}!`);
-        
-      } catch (error) {
-        logActionError('your-action-id', error as Error);
-        return createErrorResult('Failed to apply selection');
-      }
-    }
-  },
-  
-  needsCustomResolution(outcome): boolean {
-    // Specify which outcomes need custom UI
-    return outcome === 'success' || outcome === 'criticalSuccess';
+  modifiers: [...]
+});
+```
+
+### ❌ Mistake 2: Data Not in metadata
+
+```typescript
+// ❌ WRONG - data at top level
+dispatch('resolution', {
+  isResolved: true,
+  selectedResource: 'food'  // ← Won't be accessible!
+});
+```
+
+**✅ Fix:**
+```typescript
+// ✅ CORRECT - data in metadata
+dispatch('resolution', {
+  isResolved: true,
+  metadata: {
+    selectedResource: 'food'  // ← Accessible!
   }
-};
-
-export default YourAction;
+});
 ```
 
-### Step 3: Register Action
-
-**File:** `src/controllers/actions/implementations/index.ts`
+### ❌ Mistake 3: Using postApplyInteractions
 
 ```typescript
-import YourAction from '../../actions/your-action-id/YourAction';
-
-export const actionImplementations: Record<string, any> = {
-  'your-action-id': YourAction,
-  // ... other actions
-};
+// ❌ WRONG - shows as dialog AFTER Apply clicked
+postApplyInteractions: [
+  { type: 'configuration', component: YourComponent }
+]
 ```
 
-### Step 4: Apply Resource Changes (Use InlineActionHelpers)
-
-**When implementing `customResolution.execute()`**, use the shared `InlineActionHelpers` to apply resource changes:
-
-**File:** `src/actions/shared/InlineActionHelpers.ts`
-
-**Purpose:** Provides reusable utilities for actions with custom resolution components that need to modify kingdom resources inline during execution.
-
-**Key function:**
+**✅ Fix:**
 ```typescript
-applyResourceChanges(
-  changes: ResourceChange[],
-  actionId: string
-): Promise<ResolveResult>
+// ✅ CORRECT - shows inline BEFORE Apply clicked
+postRollInteractions: [
+  { type: 'configuration', component: YourComponent }
+]
 ```
 
-**Updated action file pattern:**
+### ❌ Mistake 4: Wrong Data Access in Execute
+
 ```typescript
-import { applyResourceChanges } from '../shared/InlineActionHelpers';
-
-export const YourAction = {
-  id: 'your-action-id',
-  
-  customResolution: {
-    component: YourCustomComponent,
-    
-    validateData(resolutionData: ResolutionData): boolean {
-      return !!(resolutionData.customComponentData?.selectedOption);
-    },
-    
-    async execute(resolutionData: ResolutionData): Promise<ResolveResult> {
-      logActionStart('your-action-id', 'Applying selection');
-      
-      try {
-        const { selectedResource, amount } = resolutionData.customComponentData || {};
-        
-        if (!selectedResource || !amount) {
-          return { success: false, error: 'No selection was made' };
-        }
-        
-        // ✅ Use shared helper to apply resource changes
-        const result = await applyResourceChanges([
-          { resource: selectedResource, amount }
-        ], 'your-action-id');
-        
-        if (!result.success) {
-          return result;
-        }
-        
-        // Build success message
-        const message = `Applied ${amount} ${selectedResource}!`;
-        logActionSuccess('your-action-id', message);
-        return { success: true, data: { message } };
-        
-      } catch (error) {
-        logActionError('your-action-id', error as Error);
-        return { success: false, error: 'Failed to apply selection' };
-      }
-    }
-  }
-};
-```
-
-**Multiple resource changes (e.g., Purchase Resources):**
-```typescript
-// Purchase 2 stone for 10 gold
-const result = await applyResourceChanges([
-  { resource: 'gold', amount: -10 },      // Deduct gold
-  { resource: 'stone', amount: 2 }        // Add stone
-], 'purchase-resources');
-```
-
-**Why use InlineActionHelpers?**
-- ✅ DRY principle - eliminates duplicated resource application code
-- ✅ Consistent error handling across all actions
-- ✅ Type-safe with `ResourceChange` interface
-- ✅ Handles kingdom actor access and state updates automatically
-- ✅ ~40% less boilerplate code
-
-**InlineActionHelpers vs ActionHelpers:**
-- **InlineActionHelpers** = Custom resolution execution logic (apply resources, calculate outcomes)
-- **ActionHelpers** = General validation/lookup utilities (find settlements, check capacity, validate resources)
-
-### Step 5: Test Checklist
-
-- [ ] Component mounts after outcome displayed
-- [ ] Options display correctly
-- [ ] Selection highlights properly
-- [ ] Can change selection freely
-- [ ] "Apply" button disabled until selection made
-- [ ] Selection data accessible in execute()
-- [ ] Resource changes applied correctly (using InlineActionHelpers)
-- [ ] Success message displays
-- [ ] Component unmounts after application
-
----
-
-## Common Pitfalls
-
-### ❌ DON'T: Over-engineer with Props
-
-**Wrong approach (what we tried first):**
-```typescript
-// Action file
-customResolution: {
-  component: ResourceChoiceSelector,
-  
-  // ❌ DON'T DO THIS - unnecessary complexity
-  getComponentProps(outcome: string): Record<string, any> {
-    return {
-      resources: ['food', 'lumber', 'stone', 'ore'],
-      amount: outcome === 'criticalSuccess' ? 2 : 1
-    };
-  }
+// ❌ WRONG
+execute: async (ctx) => {
+  const data = ctx.metadata?.selection;  // ← undefined!
 }
 ```
 
-**Why it's wrong:**
-- Adds complexity (OutcomeDisplay must forward props)
-- Requires prop declarations in component
-- Creates coupling between action and component
-- Harder to debug when props don't flow correctly
-
-**Right approach:**
+**✅ Fix:**
 ```typescript
-// Action file
-customResolution: {
-  component: ResourceChoiceSelector  // That's it!
+// ✅ CORRECT
+execute: async (ctx) => {
+  const data = ctx.resolutionData?.customComponentData?.selection;  // ← works!
 }
-
-// Component hardcodes data
-const resources = ['food', 'lumber', 'stone', 'ore'];
-$: amount = outcome === 'criticalSuccess' ? 2 : 1;
 ```
 
-### ❌ DON'T: Use when choice-buttons would work
+### ❌ Mistake 5: Using ValidationContext
 
-**Wrong:**
 ```typescript
-// Creating custom component for simple A/B choice
-customResolution: {
-  component: SimpleChoiceComponent
-}
+// ❌ WRONG - adds unnecessary complexity
+import { getValidationContext } from '../context/ValidationContext';
+
+const validationContext = getValidationContext();
+onMount(() => {
+  validationContext.register('my-component', { ... });
+});
 ```
 
-**Right:**
-```json
-// Just use choice-buttons modifier in JSON
-{
-  "modifiers": [{
-    "type": "choice-buttons",
-    "resources": ["food", "lumber"],
-    "value": 2
-  }]
-}
-```
-
-### ❌ DON'T: Forget to emit selection event
-
-**Wrong:**
+**✅ Fix:**
 ```typescript
-async function handleSelect(option: string) {
-  await updateInstanceResolutionState(instance.previewId, {
-    customComponentData: { selectedOption: option }
-  });
-  // ❌ Forgot to dispatch!
-}
-```
-
-**Right:**
-```typescript
-async function handleSelect(option: string) {
-  await updateInstanceResolutionState(instance.previewId, {
-    customComponentData: { selectedOption: option }
-  });
-  
-  // ✅ Emit selection event
-  dispatch('selection', {
-    selectedOption: option,
-    modifiers: [{ type: 'static', resource: option, value: 1 }]
-  });
-}
-```
-
-### ✅ DO: Follow ArrestDissidents Pattern
-
-**Study this example:**
-```svelte
-<script lang="ts">
-  import { kingdomData } from '../../../../../stores/KingdomStore';
-  
-  // ✅ Read from stores, not props
-  $: settlementsWithPrisons = $kingdomData.settlements.filter(...);
-  
-  // ✅ Calculate capacity from kingdom state
-  $: maxCapacity = calculateCapacity(settlementsWithPrisons);
-  
-  // ✅ Self-contained validation
-  $: isValid = totalAllocated <= maxCapacity;
-</script>
-```
-
-### ✅ DO: Keep UI Minimal
-
-**Lessons from Harvest Resources:**
-- Remove redundant messages ("Selected: Food")
-- Remove unnecessary guidance text
-- Rely on visual feedback (highlighting)
-- Allow free re-selection until Apply
-
----
-
-## Working Examples
-
-### Example 1: Harvest Resources (Simple)
-
-**Complexity:** Low  
-**Files:** 2 (action + component)  
-**LOC:** ~150 total
-
-**Use case:** Choose which resource to harvest
-
-**Key features:**
-- Hardcoded resource list
-- Amount from outcome
-- Clean button layout
-- Free re-selection
-
-**Files:**
-- `src/actions/harvest-resources/HarvestResourcesAction.ts`
-- `src/view/kingdom/components/OutcomeDisplay/components/ResourceChoiceSelector.svelte`
-
-### Example 2: Arrest Dissidents (Complex)
-
-**Complexity:** High  
-**Files:** 2 (action + component)  
-**LOC:** ~300 total
-
-**Use case:** Allocate imprisoned unrest across settlements with prisons
-
-**Key features:**
-- Reads settlements from stores
-- Calculates capacity dynamically
-- Multiple inputs (sliders per settlement)
-- Validation (can't exceed capacity)
-- Rich feedback (capacity bars)
-
-**Files:**
-- `src/actions/arrest-dissidents/ArrestDissidentsAction.ts`
-- `src/view/kingdom/components/OutcomeDisplay/components/ArrestDissidentsResolution.svelte`
-
----
-
-## Troubleshooting
-
-### Component Not Rendering
-
-**Check:**
-1. ✅ Component exported from action's `customResolution.component`?
-2. ✅ Action registered in `implementations/index.ts`?
-3. ✅ `needsCustomResolution()` returns true for outcome?
-4. ✅ No JavaScript errors in console?
-
-**Debug:**
-```typescript
-// Add logging to action file
-needsCustomResolution(outcome): boolean {
-  const needs = outcome === 'success' || outcome === 'criticalSuccess';
-  console.log(`[YourAction] needsCustomResolution(${outcome}): ${needs}`);
-  return needs;
-}
-```
-
-### Buttons Not Appearing
-
-**Symptom:** Headers render but no interactive controls
-
-**Common causes:**
-1. ❌ Resource array is empty (hardcode check)
-2. ❌ `{#each}` loop has no items to iterate
-3. ❌ CSS hiding buttons (check display/visibility)
-
-**Fix:**
-```svelte
-<!-- Add debug output -->
-<p>Resources: {JSON.stringify(resources)}</p>
-<p>Resource count: {resources.length}</p>
-
-{#each resources as resource}
-  <button>{resource}</button>
-{/each}
-```
-
-### Selection Not Applying
-
-**Symptom:** Click button, nothing happens
-
-**Check:**
-1. ✅ `instance` prop is not null?
-2. ✅ `updateInstanceResolutionState()` called?
-3. ✅ `dispatch('selection', ...)` emitted?
-4. ✅ Modifiers array in event payload?
-
-**Debug:**
-```typescript
-async function handleSelect(option: string) {
-  console.log('[Component] Selecting:', option);
-  console.log('[Component] Instance:', instance);
-  
-  await updateInstanceResolutionState(...);
-  console.log('[Component] Updated instance state');
-  
-  dispatch('selection', payload);
-  console.log('[Component] Dispatched:', payload);
-}
-```
-
-### "Apply" Button Stays Disabled
-
-**Symptom:** Make selection but can't click Apply
-
-**Check:**
-1. ✅ `customComponentData` has required fields?
-2. ✅ `validateData()` returns true?
-3. ✅ Selection event emitted with modifiers?
-
-**Debug in action file:**
-```typescript
-validateData(resolutionData: ResolutionData): boolean {
-  console.log('[Action] Validating:', resolutionData.customComponentData);
-  const valid = !!(resolutionData.customComponentData?.selectedOption);
-  console.log('[Action] Valid:', valid);
-  return valid;
-}
+// ✅ CORRECT - no validation context needed
+// Use isResolved in 'resolution' event instead
+dispatch('resolution', {
+  isResolved: amount > 0,  // This controls Apply button
+  metadata: { ... }
+});
 ```
 
 ---
 
-## Performance: Self-Contained UI Pattern
+## Debugging Checklist
+
+Use this checklist when your custom component isn't working:
+
+### ✅ Component Registration
+- [ ] Component file created in `components/OutcomeDisplay/components/`?
+- [ ] Component exported from file (e.g., `ArrestDissidentsResolution.svelte`)?
+- [ ] Component registered in `ComponentRegistry.ts`?
+- [ ] Registry key matches component name exactly?
+
+### ✅ Pipeline Configuration
+- [ ] Pipeline uses `postRollInteractions` (not `postApplyInteractions`)?
+- [ ] Component reference matches registry key?
+- [ ] `condition` function returns true for expected outcomes?
+
+### ✅ Component Event
+- [ ] Component dispatches `'resolution'` event (not `'selection'`)?
+- [ ] Event includes `isResolved` boolean?
+- [ ] Event includes `metadata` object?
+- [ ] Custom data nested inside `metadata`?
+
+### ✅ Data Flow
+- [ ] Execute function reads from `ctx.resolutionData.customComponentData`?
+- [ ] Metadata key matches what component sends?
+- [ ] Apply button enables when `isResolved === true`?
+
+### ✅ Console Checks
+- [ ] Check browser console for errors
+- [ ] Look for "Looking up component:" log message
+- [ ] Look for "Found in registry: true" log message
+- [ ] Look for "Received resolution event:" log message
+
+---
+
+## Performance Optimization
 
 ### The Problem: Map Flashing
 
-**Symptom:** Every button click causes settlement labels on the map to flash/redraw
+Every actor update triggers map redraws. Persisting data on every button click causes lag.
 
-**Root cause:** Excessive actor updates trigger map layer redraws
+### The Solution: Local State
 
-**Example scenario (Purchase Resources):**
-```typescript
-// ❌ BAD: Persisting on every +/- click
-function incrementAmount() {
-  selectedAmount++;
-  await updateInstanceResolutionState(instance.previewId, {
-    customComponentData: { selectedAmount }
-  });
-  // Result: Actor update → Map redraw → Flash!
-}
-```
-
-### The Solution: Local State + Single Update
-
-**Architecture:**
-1. **Keep UI state local** - No persistence during interaction
-2. **Persist critical data once** - Only what's needed for validation
-3. **Apply all changes on Apply** - Single final update
-
-**Data flow:**
-```
-User Interaction:
-├─ Select resource → Persist selectedResource (validation)
-├─ Click +/- → Local state only (no persistence)
-├─ Click +/- → Local state only (no persistence)
-└─ Click Apply → Merge all data → Single kingdom update
-```
-
-### Implementation Pattern
-
-**Component structure:**
+**❌ BAD - Persists on every click:**
 ```svelte
-<script lang="ts">
-  import { updateInstanceResolutionState, getInstanceResolutionState } from '...';
-  
-  export let instance: OutcomePreview | null = null;
-  export let outcome: string;
-  
-  // ✅ Persist critical data (for validation)
-  $: resolutionState = getInstanceResolutionState(instance);
-  $: selectedResource = resolutionState.customComponentData?.selectedResource || '';
-  
-  // ✅ Keep interactive data local (no persistence)
-  let selectedAmount = 2;
-  let customSelectionData: Record<string, any> | null = null;
-  
-  async function handleResourceSelect(resource: string) {
-    // Persist selectedResource (ONCE, for validation)
-    await updateInstanceResolutionState(instance.previewId, {
-      customComponentData: { selectedResource: resource }
-    });
-    
-    // Store local data for Apply
-    notifySelectionChanged();
-  }
-  
-  function incrementAmount() {
-    // ✅ Local state only - NO persistence
-    selectedAmount++;
-    notifySelectionChanged();
-  }
-  
-  function notifySelectionChanged() {
-    // Dispatch with complete data (not persisted yet)
-    dispatch('selection', {
-      selectedResource,
-      selectedAmount,
-      goldCost: calculateCost(),
-      modifiers: buildModifiers()
+<script>
+  async function incrementAmount() {
+    amount++;
+    await updateInstanceResolutionState(instance.instanceId, {
+      customComponentData: { amount }  // ← Actor update → Map flash!
     });
   }
 </script>
 ```
 
-**OutcomeDisplay integration:**
-```typescript
-// OutcomeDisplay.svelte
-let customSelectionData: Record<string, any> | null = null;
-
-async function handleCustomSelection(event: CustomEvent) {
-  const { modifiers, ...metadata } = event.detail;
-  
-  // ✅ Store raw selection data locally
-  customSelectionData = metadata;
-  
-  // Convert to stateChanges for display
-  choiceResult = { effect, stateChanges: buildStateChanges(modifiers) };
-}
-
-function computeResolutionData(): ResolutionData {
-  // ✅ Merge persisted + local data when applying
-  const mergedCustomData = customSelectionData ? {
-    ...customComponentData,    // selectedResource (from instance)
-    ...customSelectionData     // selectedAmount, goldCost (from local state)
-  } : customComponentData;
-  
-  return {
-    numericModifiers,
-    customComponentData: mergedCustomData
-  };
-}
-```
-
-### Performance Comparison
-
-**Before (persisting everything):**
-```
-Select resource → 1 actor update
-Click + → 1 actor update → Map flash
-Click + → 1 actor update → Map flash
-Click + → 1 actor update → Map flash
-Click Apply → 1 actor update
-Total: 5 actor updates, 3 map flashes
-```
-
-**After (local state):**
-```
-Select resource → 1 actor update
-Click + → Local state only
-Click + → Local state only
-Click + → Local state only
-Click Apply → 1 actor update
-Total: 2 actor updates, 0 map flashes ✅
-```
-
-### Best Practices
-
-**✅ DO persist:**
-- Required validation fields (e.g., selectedResource)
-- Data needed across clients (multiplayer sync)
-- Permanent state changes
-
-**❌ DON'T persist:**
-- Interactive UI values (amounts, sliders)
-- Temporary selections (can change freely)
-- Display-only data
-
-**✅ DO use local state for:**
-- Increment/decrement buttons
-- Sliders and inputs
-- Temporary calculations
-- Preview values
-
-**🎯 Performance rule:** Minimize actor updates = minimize map redraws
-
-### Example: Purchase Resources
-
-**What it does:** Select resource and amount to purchase
-
-**Performance needs:**
-- User clicks +/- many times to find right amount
-- Each click should be instant, no lag
-
-**Implementation:**
+**✅ GOOD - Local state only:**
 ```svelte
-<!-- PurchaseResourceSelector.svelte -->
-<script lang="ts">
-  // Persist selectedResource (for validation)
-  $: selectedResource = resolutionState.customComponentData?.selectedResource || '';
-  
-  // Keep amount local (no persistence on +/-)
-  let selectedAmount = 2;
-  
-  async function handleResourceSelect(resource: string) {
-    selectedResource = resource;
-    
-    // Persist ONCE for validation
-    await updateInstanceResolutionState(instance.previewId, {
-      customComponentData: { selectedResource: resource }
-    });
-    
-    notifySelectionChanged();
-  }
-  
+<script>
+  // Local variable (no persistence)
+  let amount = 0;
+
   function incrementAmount() {
-    // Local state only - instant, no flash
-    selectedAmount += resourceGain;
-    notifySelectionChanged();
+    amount++;  // ← No actor update → No flash!
+    emitSelection();
   }
-  
-  function notifySelectionChanged() {
-    // Dispatch complete data (not persisted until Apply)
-    dispatch('selection', {
-      selectedResource,
-      selectedAmount,
-      goldCost: calculateCost(),
-      modifiers: [
-        { type: 'static', resource: 'gold', value: -goldCost },
-        { type: 'static', resource: selectedResource, value: selectedAmount }
-      ]
+
+  function emitSelection() {
+    // Only dispatches event (no persistence)
+    dispatch('resolution', {
+      isResolved: amount > 0,
+      metadata: { amount }
     });
   }
 </script>
-
-<button on:click={decrementAmount}>-</button>
-<input bind:value={selectedAmount} />
-<button on:click={incrementAmount}>+</button>
 ```
 
-**Result:** Smooth, responsive UI with no map flashing!
+**Performance comparison:**
+- ❌ Persisting: 5 actor updates, 3 map flashes
+- ✅ Local state: 2 actor updates, 0 map flashes
 
 ---
 
 ## Key Takeaways
 
-1. **Start simple** - Hardcode data, calculate from outcome
-2. **Avoid props** - Only use if data varies by kingdom state
-3. **Follow patterns** - Study Harvest Resources (simple) and Arrest Dissidents (complex)
-4. **Use choice-buttons first** - Only create component if truly needed
-5. **Keep UI minimal** - Rely on visual feedback, avoid redundant text
-6. **Optimize performance** - Local state for interactive elements, persist only what's needed
-7. **Test thoroughly** - Use checklist from Step 4
+1. ✅ **Always use `'resolution'` event** (not `'selection'`)
+2. ✅ **Always nest data in `metadata` object**
+3. ✅ **Always use `postRollInteractions`** (not `postApplyInteractions`)
+4. ✅ **Always read from `ctx.resolutionData.customComponentData`**
+5. ✅ **Use local state for interactive controls** (no persistence until Apply)
+6. ✅ **Use `isResolved` to control Apply button** (no ValidationContext needed)
+7. ✅ **Follow the Arrest Dissidents example** (complete working reference)
 
 ---
 
-**Related Documentation:**
-- [AI Action Guide](../AI_ACTION_GUIDE.md) - Quick reference
-- [Action Resolution Flow](../systems/action-resolution-complete-flow.md) - Complete architecture
-- [Game Commands System](../systems/game-commands-system.md) - Command integration
+## Related Documentation
+
+- [Inline Component Pattern](./INLINE_COMPONENT_PATTERN.md) - postRollInteractions vs postApplyInteractions
+- [OutcomeDisplay System](../systems/outcome-display-system.md) - How components integrate
+- [Pipeline Coordinator](../systems/pipeline-coordinator.md) - Complete flow
 - [Typed Modifiers System](../systems/typed-modifiers-system.md) - Modifier patterns
 
-**Need Help?** Check the [Troubleshooting](#troubleshooting) section or review working examples.
+**Need Help?** Check the [Debugging Checklist](#debugging-checklist) or study the [Arrest Dissidents example](#complete-working-example).

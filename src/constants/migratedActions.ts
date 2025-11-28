@@ -53,10 +53,10 @@ export const ACTION_STATUS = new Map<string, ActionStatus>([
   ['deploy-army', 'tested'],  // #18
   ['build-structure', 'tested'],  // #19
   ['repair-structure', 'tested'],  // #20
-  ['upgrade-settlement', 'testing'],  // #21
+  ['upgrade-settlement', 'tested'],  // #21
   
   // Phase 6: Complex Custom Logic
-  ['arrest-dissidents', 'untested'],  // #22
+  ['arrest-dissidents', 'testing'],  // #22
   ['outfit-army', 'tested'],  // #23
   ['infiltration', 'untested'],  // #24
   ['establish-settlement', 'untested'],  // #25

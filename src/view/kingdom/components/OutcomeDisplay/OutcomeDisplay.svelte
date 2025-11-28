@@ -558,9 +558,8 @@
       on:roll={handleDiceRoll}
       on:badgeRoll={handleDiceRoll}
     />
-    <RollBreakdown {rollBreakdown} />
     
-    <!-- Custom resolution UI component (action-specific) - shown in addition to standard display -->
+    <!-- Custom resolution UI component (action-specific) - shown above roll breakdown -->
     {#if customComponent}
       <div class="custom-resolution-ui">
         <svelte:component 
@@ -572,6 +571,8 @@
         />
       </div>
     {/if}
+    
+    <RollBreakdown {rollBreakdown} />
   </div>
   
   <OutcomeActions

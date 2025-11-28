@@ -6,10 +6,13 @@
  */
 
 import { createActionPipeline } from '../shared/createActionPipeline';
+import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 import { hasUnrestToArrest, calculateImprisonmentCapacity } from '../shared/ActionHelpers';
-
 import { textBadge } from '../../types/OutcomeBadge';
-export const arrestDissidentsPipeline = createActionPipeline('arrest-dissidents', {
+import ArrestDissidentsResolution from '../../view/kingdom/components/OutcomeDisplay/components/ArrestDissidentsResolution.svelte';
+
+// Store reference for execute function
+const pipeline = createActionPipeline('arrest-dissidents', {
   requirements: (kingdom) => {
     // Check if there's any unrest to arrest
     if (!hasUnrestToArrest(kingdom)) {
@@ -25,12 +28,13 @@ export const arrestDissidentsPipeline = createActionPipeline('arrest-dissidents'
     return { met: true };
   },
 
-  // Custom post-roll interaction for settlement/amount selection
+  // Post-roll interaction - embedded in outcome display (Step 5)
   postRollInteractions: [
     {
       type: 'configuration',
-      id: 'arrestDetails',
-      label: 'Select arrest details'
+      id: 'arrest-details',
+      component: ArrestDissidentsResolution,
+      condition: (ctx: any) => ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess'
     }
   ],
 
@@ -44,15 +48,54 @@ export const arrestDissidentsPipeline = createActionPipeline('arrest-dissidents'
         };
       }
 
+      if (ctx.outcome === 'failure') {
+        return {
+          resources: [],
+          outcomeBadges: [],
+          warnings: []
+        };
+      }
+
+      // Success/Critical Success - no badge needed (component shows info)
       return {
         resources: [],
-        outcomeBadges: [
-          textBadge('Will convert unrest to imprisoned unrest', 'fa-gavel', 'positive')
-        ],
+        outcomeBadges: [],
         warnings: []
       };
     }
-  }
+  },
 
-  // NOTE: Execution handled by custom implementation
+  execute: async (ctx) => {
+    // Handle failure outcomes using JSON modifiers
+    if (ctx.outcome === 'criticalFailure' || ctx.outcome === 'failure') {
+      await applyPipelineModifiers(pipeline, ctx.outcome);
+      return { success: true };
+    }
+
+    // Success/Critical Success - allocations handled by custom component
+    // Component data is stored in customComponentData (populated by OutcomeDisplay)
+    const customData = ctx.resolutionData?.customComponentData;
+    const allocations = customData?.allocations;
+    
+    if (!allocations || Object.keys(allocations).length === 0) {
+      return { 
+        success: false, 
+        error: 'No imprisoned unrest allocations provided' 
+      };
+    }
+
+    // Use GameCommandsService to handle the allocation
+    const { createGameCommandsService } = await import('../../services/GameCommandsService');
+    const gameCommands = await createGameCommandsService();
+    
+    const result = await gameCommands.allocateImprisonedUnrest(allocations);
+    
+    if (!result.success) {
+      return result;
+    }
+    
+    return { success: true };
+  }
 });
+
+export const arrestDissidentsPipeline = pipeline;

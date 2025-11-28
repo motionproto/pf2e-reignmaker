@@ -1,182 +1,126 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount, onDestroy } from 'svelte';
+  import { createEventDispatcher } from 'svelte';
   import { kingdomData } from '../../../../../stores/KingdomStore';
   import { structuresService } from '../../../../../services/structures';
   import type { ActiveCheckInstance } from '../../../../../models/CheckInstance';
-  import { 
-    updateInstanceResolutionState,
-    getInstanceResolutionState 
-  } from '../../../../../controllers/shared/ResolutionStateHelpers';
-  import { getValidationContext } from '../context/ValidationContext';
 
-  // Props
+  // Props (automatically passed by OutcomeDisplay)
   export let instance: ActiveCheckInstance | null = null;
   export let outcome: string;
-  export let modifiers: any[] | undefined = undefined;
-  export let stateChanges: Record<string, any> | undefined = undefined;
-  export let applied: boolean = false;  // Track if result has been applied
 
   const dispatch = createEventDispatcher();
-  
-  // ✨ NEW: Register with validation context
-  const validationContext = getValidationContext();
-  const providerId = 'arrest-dissidents-resolution';
 
   // Determine how much unrest can be imprisoned based on outcome
   $: maxUnrestToImprison = outcome === 'criticalSuccess' ? 8 : 4;
 
-  // Get resolution state from instance
-  $: resolutionState = getInstanceResolutionState(instance);
-  $: allocations = (resolutionState.customComponentData?.allocations || {}) as Record<string, number>;
-
-  // Calculate total allocated
-  $: totalAllocated = Object.values(allocations).reduce((sum, val) => sum + val, 0) as number;
-  $: remaining = maxUnrestToImprison - totalAllocated;
+  // Local state (not persisted until Apply clicked)
+  let selectedSettlementId = '';
+  let amount = 0;
 
   // Get current unrest
   $: currentUnrest = $kingdomData?.unrest || 0;
-  
-  // Calculate real-time displayed unrest (decrements as user allocates)
-  $: displayedUnrest = currentUnrest - totalAllocated;
 
   // Get settlements with justice structures
   $: settlementsWithJustice = ($kingdomData?.settlements || [])
     .map(settlement => {
       const capacity = structuresService.calculateImprisonedUnrestCapacity(settlement);
+      const currentImprisoned = settlement.imprisonedUnrest || 0;
+      const availableSpace = capacity - currentImprisoned;
       return {
         ...settlement,
         justiceCapacity: capacity,
-        allocated: allocations[settlement.id] || 0
+        availableSpace
       };
     })
     .filter(s => s.justiceCapacity > 0)
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  // Check if user can allocate more
-  $: canAllocate = totalAllocated < maxUnrestToImprison && totalAllocated < currentUnrest;
-
-  // Check if resolution is complete (user has allocated something)
-  $: isResolved = totalAllocated > 0;
+  // Get selected settlement (provide default if auto-select hasn't completed)
+  $: selectedSettlement = settlementsWithJustice.find(s => s.id === selectedSettlementId) || 
+    (settlementsWithJustice.length > 0 ? settlementsWithJustice[0] : null);
   
-  // ✨ NEW: Register validation on mount
-  onMount(() => {
-    if (validationContext) {
-      validationContext.register(providerId, {
-        id: providerId,
-        needsResolution: true,  // Always needs allocation decision
-        isResolved: isResolved
-      });
-    }
-  });
+  // Get current imprisoned and capacity for display
+  $: currentImprisoned = selectedSettlement?.imprisonedUnrest || 0;
+  $: maxCapacity = selectedSettlement?.justiceCapacity || 0;
   
-  // ✨ NEW: Update validation state when allocation changes
-  $: if (validationContext) {
-    validationContext.update(providerId, {
-      needsResolution: true,
-      isResolved: isResolved
-    });
-  }
-  
-  // ✨ NEW: Unregister on destroy
-  onDestroy(() => {
-    if (validationContext) {
-      validationContext.unregister(providerId);
-    }
-  });
+  // Calculate max amount user can ADD (outcome limit, available unrest, available space)
+  $: maxToAdd = selectedSettlement 
+    ? Math.min(maxUnrestToImprison, currentUnrest, selectedSettlement.availableSpace)
+    : 0;
 
-  async function handleAllocate(settlementId: string) {
-    if (!instance) return;
-
-    const settlement = settlementsWithJustice.find(s => s.id === settlementId);
-    if (!settlement) return;
-
-    // Calculate available space in this settlement
-    const availableSpace = settlement.justiceCapacity - settlement.imprisonedUnrest - settlement.allocated;
-    
-    // Can't allocate if no space or already at max
-    if (availableSpace <= 0 || !canAllocate) return;
-
-    // Allocate 1 unrest
-    const newAllocations = {
-      ...allocations,
-      [settlementId]: (allocations[settlementId] || 0) + 1
-    };
-
-    // Update instance resolution state
-    await updateInstanceResolutionState(instance.instanceId, {
-      customComponentData: { allocations: newAllocations }
-    });
-
-    // Emit selection event with modifiers (required by OutcomeDisplay)
-    emitSelection(newAllocations);
+  // Auto-select first settlement
+  $: if (settlementsWithJustice.length > 0 && !selectedSettlementId) {
+    selectedSettlementId = settlementsWithJustice[0].id;
+    emitSelection();
   }
 
-  async function handleDeallocate(settlementId: string) {
-    if (!instance) return;
-
-    const currentAllocation = allocations[settlementId] || 0;
-    if (currentAllocation <= 0) return;
-
-    // Remove 1 unrest
-    const newAllocations = { ...allocations };
-    if (currentAllocation === 1) {
-      delete newAllocations[settlementId];
-    } else {
-      newAllocations[settlementId] = currentAllocation - 1;
-    }
-
-    // Update instance resolution state
-    await updateInstanceResolutionState(instance.instanceId, {
-      customComponentData: { allocations: newAllocations }
-    });
-
-    // Emit selection event with modifiers (required by OutcomeDisplay)
-    emitSelection(newAllocations);
+  function handleSettlementChange(event: Event) {
+    const target = event.target as HTMLSelectElement;
+    selectedSettlementId = target.value;
+    amount = 0;  // Reset amount when changing settlement
+    emitSelection();
   }
 
-  function emitSelection(newAllocations: Record<string, number>) {
-    const totalAllocated = Object.values(newAllocations).reduce((sum, val) => sum + val, 0);
+  function incrementAmount() {
+    if (amount < maxToAdd) {
+      amount = Math.min(amount + 1, maxToAdd);
+      emitSelection();
+    }
+  }
 
-    // Build modifiers array for OutcomeDisplay validation
-    // Convert regular unrest to imprisoned unrest
+  function decrementAmount() {
+    if (amount > 0) {
+      amount = Math.max(amount - 1, 0);
+      emitSelection();
+    }
+  }
+
+  function emitSelection() {
+    // Build allocations object (single settlement)
+    const allocations = amount > 0 && selectedSettlementId 
+      ? { [selectedSettlementId]: amount }
+      : {};
+
+    // Build modifiers array for OutcomeDisplay
     const modifiers = [];
-    if (totalAllocated > 0) {
+    if (amount > 0) {
       // Decrease regular unrest
       modifiers.push({
         type: 'static',
         resource: 'unrest',
-        value: -totalAllocated,
+        value: -amount,
         duration: 'immediate'
       });
 
-      // Increase imprisoned unrest (distributed across settlements)
+      // Increase imprisoned unrest
       modifiers.push({
         type: 'static',
         resource: 'imprisoned',
-        value: totalAllocated,
+        value: amount,
         duration: 'immediate'
       });
     }
 
-    // Emit with modifiers (required for Apply button validation)
-    dispatch('selection', {
-      allocations: newAllocations,  // Metadata for execution
-      modifiers  // Required for OutcomeDisplay to enable Apply button
+    // ✅ Dispatch 'resolution' event per OutcomeDisplay.md pattern
+    dispatch('resolution', {
+      isResolved: amount > 0,     // Resolved when amount selected
+      metadata: { allocations },  // Used by execute function
+      modifiers                   // Resource changes for preview
     });
   }
 </script>
 
 <div class="arrest-dissidents-resolution">
   <div class="header">
-    <h4>Allocate Imprisoned Unrest</h4>
-    <div class="totals">
-      <div class="total-item">
+    <h4>Imprison Dissidents</h4>
+    <div class="info-row">
+      <div class="info-item">
         <span class="label">Current Unrest:</span>
-        <span class="value">{displayedUnrest}</span>
+        <span class="value">{currentUnrest}</span>
       </div>
-      <div class="total-item">
-        <span class="label">Store up to:</span>
-        <span class="value {remaining === 0 ? 'complete' : ''}">{remaining}</span>
+      <div class="info-item">
+        <span class="label">Can Imprison:</span>
+        <span class="value highlight">Up to {maxUnrestToImprison}</span>
       </div>
     </div>
   </div>
@@ -187,43 +131,72 @@
       <p>No settlements with justice structures (Stocks, Jail, Prison, or Donjon) available.</p>
     </div>
   {:else}
-    <div class="settlements-list">
-      {#each settlementsWithJustice as settlement}
-        {@const availableSpace = settlement.justiceCapacity - settlement.imprisonedUnrest - settlement.allocated}
-        {@const canAdd = availableSpace > 0 && canAllocate}
-        {@const canRemove = settlement.allocated > 0}
-        {@const currentImprisoned = applied ? settlement.imprisonedUnrest : (settlement.imprisonedUnrest + settlement.allocated)}
-        
-        <div class="settlement-row">
-          <div class="allocation-controls">
-            <button
-              class="btn-control"
-              disabled={!canRemove}
-              on:click={() => handleDeallocate(settlement.id)}
-              title="Remove 1"
-            >
-              <i class="fas fa-minus"></i>
-            </button>
-            
-            <button
-              class="btn-control btn-add"
-              disabled={!canAdd}
-              on:click={() => handleAllocate(settlement.id)}
-              title="Add 1"
-            >
-              <i class="fas fa-plus"></i>
-            </button>
+    <div class="two-column-layout">
+      <div class="form-field">
+        <label for="settlement-select">Select Prison:</label>
+        <select 
+          id="settlement-select"
+          class="settlement-select"
+          value={selectedSettlementId}
+          on:change={handleSettlementChange}
+        >
+          {#each settlementsWithJustice as settlement}
+            {@const currentImprisoned = settlement.imprisonedUnrest || 0}
+            <option value={settlement.id}>
+              {settlement.name} (imprisoned: {currentImprisoned}/{settlement.justiceCapacity}, space: {settlement.availableSpace})
+            </option>
+          {/each}
+        </select>
+      </div>
+
+      <div class="form-field">
+        <label>Imprisoned Unrest:</label>
+        <div class="amount-controls">
+          <div class="amount-display">
+            <span class="amount-value">{currentImprisoned + amount}</span>
+            <span class="amount-max">/ {maxCapacity}</span>
           </div>
           
-          <div class="settlement-info">
-            <span class="settlement-name">{settlement.name}</span>
-            <span class="capacity">
-              {currentImprisoned}/{settlement.justiceCapacity}
-            </span>
-          </div>
+          <button
+            class="btn-control"
+            disabled={amount <= 0}
+            on:click={decrementAmount}
+            title="Decrease by 1"
+          >
+            <i class="fas fa-minus"></i>
+          </button>
+          
+          <button
+            class="btn-control btn-add"
+            disabled={amount >= maxToAdd}
+            on:click={incrementAmount}
+            title="Increase by 1"
+          >
+            <i class="fas fa-plus"></i>
+          </button>
         </div>
-      {/each}
+        {#if maxToAdd > 0}
+          <div class="add-info">
+            Can add up to {maxToAdd} more
+          </div>
+        {/if}
+      </div>
     </div>
+
+    {#if selectedSettlement}
+      <div class="help-text">
+        Outcome allows {maxUnrestToImprison} imprisoned. Current unrest: {currentUnrest}. Available space: {selectedSettlement.availableSpace}
+      </div>
+    {/if}
+
+    {#if amount > 0 && selectedSettlement}
+      <div class="preview">
+        <i class="fas fa-info-circle"></i>
+        <span>
+          Will imprison <strong>{amount}</strong> unrest in <strong>{selectedSettlement.name}</strong>
+        </span>
+      </div>
+    {/if}
   {/if}
 </div>
 
@@ -242,30 +215,30 @@
       margin: 0 0 var(--space-8) 0;
       font-size: var(--font-md);
       font-weight: 600;
-      color: var(--text-primary, #e0e0e0);
+      color: var(--text-primary);
     }
   }
 
-  .totals {
+  .info-row {
     display: flex;
     gap: var(--space-16);
     font-size: var(--font-md);
   }
 
-  .total-item {
+  .info-item {
     display: flex;
     gap: var(--space-6);
     
     .label {
-      color: var(--text-secondary, #a0a0a0);
+      color: var(--text-secondary);
     }
     
     .value {
       font-weight: 600;
-      color: var(--color-orange, #f97316);
+      color: var(--text-primary);
       
-      &.complete {
-        color: var(--color-green, #22c55e);
+      &.highlight {
+        color: var(--color-orange);
       }
     }
   }
@@ -273,12 +246,12 @@
   .no-justice {
     text-align: center;
     padding: var(--space-20);
-    color: var(--text-secondary, #a0a0a0);
+    color: var(--text-secondary);
     
     i {
       font-size: var(--font-2xl);
       margin-bottom: var(--space-8);
-      color: var(--color-orange, #f97316);
+      color: var(--color-orange);
     }
     
     p {
@@ -287,58 +260,67 @@
     }
   }
 
-  .settlements-list {
+  .two-column-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-16);
+    margin-bottom: var(--space-12);
+  }
+
+  .form-field {
     display: flex;
     flex-direction: column;
-    gap: var(--space-8);
+    gap: var(--space-6);
+    
+    label {
+      font-size: var(--font-md);
+      font-weight: 500;
+      color: var(--text-primary);
+    }
   }
 
-  .settlement-row {
-    display: flex;
-    align-items: center;
-    gap: var(--space-16);
-    padding: var(--space-10) var(--space-12);
-    background: var(--hover-low);
+  .settlement-select {
+    padding: var(--space-8) var(--space-12);
+    background: var(--surface-low);
+    border: 1px solid var(--border-default);
     border-radius: var(--radius-md);
-    transition: background 0.2s;
+    color: var(--text-primary);
+    font-size: var(--font-md);
+    cursor: pointer;
     
     &:hover {
-      background: rgba(255, 255, 255, 0.08);
+      background: var(--hover-low);
+    }
+    
+    &:focus {
+      outline: none;
+      border-color: var(--color-blue);
     }
   }
 
-  .settlement-info {
-    display: flex;
-    align-items: center;
-    gap: var(--space-12);
-    flex: 1;
-    
-    .settlement-name {
-      font-weight: 500;
-      color: var(--text-primary, #e0e0e0);
-      font-size: var(--font-md);
-    }
-    
-    .capacity {
-      font-size: var(--font-md);
-      color: var(--text-secondary, #a0a0a0);
-      font-family: monospace;
-    }
-  }
-
-  .allocation-controls {
+  .amount-controls {
     display: flex;
     align-items: center;
     gap: var(--space-8);
   }
 
-  .allocated-badge {
-    font-size: var(--font-md);
-    font-weight: 600;
-    color: var(--color-green, #22c55e);
-    padding: var(--space-2) var(--space-6);
-    background: var(--surface-success-high);
-    border-radius: var(--radius-sm);
+  .amount-display {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-4);
+    min-width: 5rem;
+    justify-content: center;
+    
+    .amount-value {
+      font-size: var(--font-lg);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .amount-max {
+      font-size: var(--font-md);
+      color: var(--text-secondary);
+    }
   }
 
   .btn-control {
@@ -347,7 +329,7 @@
     border-radius: var(--radius-md);
     border: 1px solid var(--border-strong, var(--border-default));
     background: rgba(255, 255, 255, 0.08);
-    color: var(--text-primary, #e0e0e0);
+    color: var(--text-primary);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -365,8 +347,8 @@
     }
     
     &.btn-add:not(:disabled) {
-      border-color: var(--color-green, #22c55e);
-      color: var(--color-green, #22c55e);
+      border-color: var(--color-green);
+      color: var(--color-green);
       
       &:hover {
         background: var(--surface-success-high);
@@ -375,6 +357,38 @@
     
     i {
       font-size: var(--font-xs);
+    }
+  }
+
+  .add-info {
+    font-size: var(--font-sm);
+    color: var(--text-secondary);
+    margin-top: var(--space-2);
+  }
+
+  .help-text {
+    font-size: var(--font-sm);
+    color: var(--text-tertiary);
+    font-style: italic;
+  }
+
+  .preview {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    padding: var(--space-12);
+    background: var(--surface-success-low);
+    border: 1px solid var(--color-green);
+    border-radius: var(--radius-md);
+    font-size: var(--font-md);
+    color: var(--text-primary);
+    
+    i {
+      color: var(--color-green);
+    }
+    
+    strong {
+      color: var(--color-green);
     }
   }
 </style>

@@ -39,14 +39,7 @@
     },
     "failure": {
       "description": "The arrests fail.",
-      "modifiers": [
-        {
-          "type": "static",
-          "resource": "unrest",
-          "value": 0,
-          "duration": "immediate"
-        }
-      ]
+      "modifiers": []
     },
     "criticalFailure": {
       "description": "Botched arrests cause riots.",

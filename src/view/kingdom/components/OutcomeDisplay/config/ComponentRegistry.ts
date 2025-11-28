@@ -15,6 +15,7 @@ import DisbandArmyResolution from '../../DisbandArmyResolution.svelte';
 import BuildStructureDialog from '../../BuildStructureDialog/BuildStructureDialog.svelte';
 import RepairStructureDialog from '../../RepairStructure/RepairStructureDialog.svelte';
 import RepairCostChoice from '../../RepairStructure/RepairCostChoice.svelte';
+import ArrestDissidentsResolution from '../components/ArrestDissidentsResolution.svelte';
 
 export const COMPONENT_REGISTRY: Record<string, any> = {
   'ResourceChoiceSelector': ResourceChoiceSelector,
@@ -27,5 +28,6 @@ export const COMPONENT_REGISTRY: Record<string, any> = {
   'BuildStructureDialog': BuildStructureDialog,
   'RepairStructureDialog': RepairStructureDialog,
   'RepairCostChoice': RepairCostChoice,
+  'ArrestDissidentsResolution': ArrestDissidentsResolution,
   // Add more injectable components here as needed
 };
