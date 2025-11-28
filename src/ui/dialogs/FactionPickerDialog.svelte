@@ -53,13 +53,20 @@
     }
     
     if (selectedFactionIds.has(faction.id)) {
+      // Deselect if already selected
       selectedFactionIds.delete(faction.id);
     } else {
       if (selectedFactionIds.size < count) {
+        // Add if under limit
+        selectedFactionIds.add(faction.id);
+      } else if (count === 1) {
+        // For single selection (count=1), replace the old selection with the new one
+        selectedFactionIds.clear();
         selectedFactionIds.add(faction.id);
       } else {
+        // For multiple selection, show error when limit reached
         // @ts-ignore
-        ui?.notifications?.warn(`You can only select ${count} faction${count > 1 ? 's' : ''}`);
+        ui?.notifications?.warn(`You can only select ${count} factions`);
       }
     }
     selectedFactionIds = selectedFactionIds; // Trigger reactivity
@@ -122,13 +129,14 @@
     {selectedFactionIds.size}/{count} selected
   </div>
 
-  {#if eligibleFactions.length === 0}
-    <div class="no-factions">
-      <i class="fas fa-exclamation-circle"></i>
-      <p>No eligible factions available.</p>
-    </div>
-  {:else}
-    <div class="faction-table">
+  <div class="faction-table-container">
+    {#if eligibleFactions.length === 0}
+      <div class="no-factions">
+        <i class="fas fa-exclamation-circle"></i>
+        <p>No eligible factions available.</p>
+      </div>
+    {:else}
+      <div class="faction-table">
       <div class="table-header">
         <div class="col-name">Faction</div>
         <div class="col-attitude">Current Attitude</div>
@@ -158,12 +166,22 @@
             </div>
           </div>
         {/each}
+        </div>
       </div>
-    </div>
-  {/if}
+    {/if}
+  </div>
 </Dialog>
 
 <style lang="scss">
+  .faction-table-container {
+    /* Remove Dialog's default body padding by using negative margins */
+    margin: calc(-1 * var(--space-16)) calc(-1 * var(--space-24));
+    /* Set explicit height to fill available space */
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+  }
+
   .selection-count {
     font-size: var(--font-md);
     font-weight: var(--font-weight-medium);
@@ -188,11 +206,11 @@
   
   .faction-table {
     border: 1px solid var(--border-medium);
-    border-radius: var(--radius-md);
+    border-radius: 0; /* No radius since it fills the dialog body */
     overflow: hidden;
-    max-height: 400px;
     display: flex;
     flex-direction: column;
+    height: 100%; /* Fill container */
   }
   
   .table-header {
@@ -212,7 +230,7 @@
   .table-body {
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
+    overflow-y: scroll; /* Always show scrollbar */
     flex: 1;
   }
   

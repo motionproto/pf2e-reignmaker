@@ -62,10 +62,10 @@ export const HEX_HIGHLIGHT_COLORS: Record<string, ColorConfig> = {
   newRoad: { color: 0x9370DB, alpha: 0.5 },       // Light purple
   hoverRoad: { color: 0xDA70D6, alpha: 0.4 },     // Orchid (hover)
   
-  // Settlements
-  existingSettlement: { color: 0xD2691E, alpha: 0.3 },  // Dark orange
-  newSettlement: { color: 0xFFA500, alpha: 0.5 },       // Light orange
-  hoverSettlement: { color: 0xFFB347, alpha: 0.4 },     // Light orange (hover)
+  // Settlements (using green like worksite for consistency)
+  existingSettlement: { color: 0x8B4513, alpha: 0.3 },  // Brown
+  newSettlement: { color: 0x90EE90, alpha: 0.7 },       // Light green (selected) - matches worksite
+  hoverSettlement: { color: 0x90EE90, alpha: 0.4 },     // Light green (hover) - matches worksite
   
   // Scout Terrain
   existingScouted: { color: 0x3CB371, alpha: 0.3 },  // Dark green

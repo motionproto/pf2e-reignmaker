@@ -321,7 +321,8 @@ export class SelectionPanelManager {
     }
     
     // 🔧 FIX: Restore custom selector mount point or create new one
-    if (this.config.customSelector && this.selectedHexes.length > 0) {
+    // Always mount custom selector if configured (don't wait for hex selection)
+    if (this.config.customSelector) {
       if (customSelectorMount) {
         // Re-attach preserved mount point
         slotsContainer.appendChild(customSelectorMount);
@@ -332,8 +333,10 @@ export class SelectionPanelManager {
     }
     
     // Update Done button
+    // For settlement type, metadata is optional (has fallback), so don't require it
+    const metadataRequired = this.config.customSelector && this.config.colorType !== 'settlement';
     const isComplete = this.selectedHexes.length === this.config.count && 
-                       (!this.config.customSelector || this.selectedMetadata !== null);
+                       (!metadataRequired || this.selectedMetadata !== null);
     if (btnDone) {
       btnDone.disabled = !isComplete;
       btnDone.style.opacity = isComplete ? '1' : '0.5';
