@@ -6,17 +6,10 @@ import { PF2eCharacterService } from './PF2eCharacterService';
 import { getSkillPenalty } from '../domain/unrest/UnrestService';
 import { logger } from '../../utils/Logger';
 
-// Module-level state for reroll modifier preservation (client-only, no persistence)
+// Temporary variable for reroll modifier processing (loaded from kingdom.turnState during rerolls)
+// NOTE: This is NOT persistent storage - used only during the reroll execution
+// Persistent storage is in kingdom.turnState.actionsPhase.actionInstances (managed by PipelineCoordinator)
 let lastRollModifiers: Array<{ label: string; modifier: number }> | null = null;
-
-/**
- * Store modifiers from a completed roll for potential reroll
- * Called by OutcomeDisplay when user clicks "Reroll with Fame"
- */
-export function storeModifiersForReroll(modifiers: Array<{ label: string; modifier: number }>) {
-  lastRollModifiers = modifiers;
-
-}
 
 export interface SkillCheckOptions {
   skillName: string;
@@ -325,7 +318,9 @@ export class PF2eSkillService {
     checkId: string,
     checkEffects?: any,
     actionId?: string,  // Optional action ID for aid bonuses
-    callback?: (roll: any, outcome: string | null | undefined, message: any, event: Event | null) => Promise<void> | void  // NEW: Callback for PF2e native callback pattern
+    callback?: (roll: any, outcome: string | null | undefined, message: any, event: Event | null) => Promise<void> | void,  // Callback for PF2e native callback pattern
+    isReroll?: boolean,  // Only apply stored modifiers on rerolls
+    instanceId?: string  // NEW: Instance ID for loading modifiers on reroll
   ): Promise<any> {
     try {
 
@@ -409,40 +404,65 @@ export class PF2eSkillService {
         }
       }
       
-      // Apply stored modifiers from previous roll (for rerolls)
+      // Apply stored modifiers ONLY on rerolls
+      if (isReroll && instanceId) {
+        const currentKingdomState = get(kingdomData);
+        
+        // ✅ DIRECT LOOKUP: Load modifiers by instanceId (unique per execution)
+        const actionInstance = currentKingdomState.turnState?.actionsPhase?.actionInstances?.[instanceId];
+        
+        if (actionInstance?.rollModifiers && actionInstance.rollModifiers.length > 0) {
+          console.log(`🔄 [PF2eSkillService] Restoring modifiers from instance ${instanceId}:`, actionInstance.rollModifiers.length);
+          lastRollModifiers = actionInstance.rollModifiers;
+          
+          // ✅ NO CLEARING: Modifiers persist until turn cleanup (turn manager clears entire turnState)
+          // This allows multiple rerolls of the same action if needed
+        } else {
+          console.log('ℹ️ [PF2eSkillService] No stored modifiers found for reroll');
+          lastRollModifiers = null;
+        }
+      }
+      
+      // Apply modifiers if found (only happens on rerolls now)
       if (lastRollModifiers && lastRollModifiers.length > 0) {
-
+        console.log('🔄 [PF2eSkillService] Applying stored modifiers from previous roll:', lastRollModifiers.length);
+        
         // Track which labels we've matched
         const matchedLabels = new Set<string>();
         
-        // First pass: enable existing modifiers that match
+        // First pass: enable existing modifiers that match by label
         for (const mod of kingdomModifiers) {
           const previousMod = lastRollModifiers.find(m => m.label === mod.name);
           if (previousMod) {
             mod.enabled = true;
-            matchedLabels.add(mod.name);
-
+            matchedLabels.add(previousMod.label);  // Track by previousMod.label (what we matched against)
+            console.log(`  ✅ Matched kingdom modifier "${mod.name}" with stored modifier "${previousMod.label}"`);
           }
         }
         
-        // Second pass: add custom modifiers from previous roll that aren't in our list
-        // These are modifiers the user added manually in the PF2e dialog
+        // Second pass: add ALL modifiers from previous roll that we haven't matched
+        // This includes:
+        // - Custom modifiers added by the user
+        // - PF2e system modifiers (ability, proficiency, etc.)
+        // - Any other modifiers from the previous roll
         for (const prevMod of lastRollModifiers) {
           if (!matchedLabels.has(prevMod.label)) {
-            // This is a custom modifier - add it with the value from the previous roll
+            // Add this modifier to kingdomModifiers so it gets converted and passed to PF2e
+            // ✅ CRITICAL: Preserve original modifier type (not all modifiers are circumstance)
             kingdomModifiers.push({
               name: prevMod.label,
               value: prevMod.modifier,
-              type: 'circumstance',  // Default to circumstance for custom modifiers
+              type: (prevMod as any).type || 'circumstance',  // Use stored type, fallback to circumstance
               enabled: true
             });
-
+            console.log(`  ✨ Adding unmatched modifier from previous roll: "${prevMod.label}" = ${prevMod.modifier} (type: ${(prevMod as any).type || 'circumstance'})`);
           }
         }
         
-        // Clear stored modifiers after use
+        console.log(`🔄 [PF2eSkillService] Restored ${lastRollModifiers.length} modifiers (${matchedLabels.size} matched, ${lastRollModifiers.length - matchedLabels.size} added)`);
+        
+        // Clear stored modifiers after applying (prevent reuse on next action)
         lastRollModifiers = null;
-
       }
       
       // Convert to PF2e format
@@ -465,6 +485,57 @@ export class PF2eSkillService {
       // Check if we should use rollTwice (keep higher) for this action/event
       const useKeepHigher = this.shouldUseKeepHigher(actionId || checkId, checkType);
       
+      // ✅ WRAP CALLBACK: Store modifiers BEFORE calling pipeline callback
+      // This centralizes ALL reroll logic in PF2eSkillService
+      const wrappedCallback = async (roll: any, outcome: string | null | undefined, message: any, event: Event | null) => {
+        // ✅ REROLL SUPPORT: Store modifiers ONLY on initial roll (not on rerolls)
+        // KEY: Use instanceId (unique per execution) for complete isolation
+        if (!isReroll && instanceId) {
+          // Extract modifiers from PF2e message
+          const allModifiers = (message as any)?.flags?.pf2e?.modifiers || [];
+          const modifiers = allModifiers.filter((mod: any) => mod.type !== 'ability' && mod.type !== 'proficiency');
+          
+          if (modifiers.length > 0) {
+            const { getKingdomActor } = await import('../../stores/KingdomStore');
+            const actor = getKingdomActor();
+            
+            if (actor) {
+              await actor.updateKingdomData((kingdom: any) => {
+                // Initialize actionInstances if needed
+                if (!kingdom.turnState) kingdom.turnState = {};
+                if (!kingdom.turnState.actionsPhase) kingdom.turnState.actionsPhase = { activeAids: [] };
+                if (!kingdom.turnState.actionsPhase.actionInstances) {
+                  kingdom.turnState.actionsPhase.actionInstances = {};
+                }
+                
+                // ✅ KEY: Store by instanceId (unique per execution) for complete isolation
+                kingdom.turnState.actionsPhase.actionInstances[instanceId] = {
+                  instanceId: instanceId,
+                  actionId: actionId || checkId,
+                  rollModifiers: modifiers.map((mod: any) => ({
+                    label: mod.label || '',
+                    modifier: mod.modifier || 0,
+                    type: mod.type || 'circumstance',
+                    enabled: mod.enabled ?? true,
+                    ignored: mod.ignored ?? false
+                  })),
+                  timestamp: Date.now()
+                };
+              });
+              
+              console.log(`💾 [PF2eSkillService] Stored modifiers for instance ${instanceId} (isolated per execution)`);
+            }
+          }
+        } else if (isReroll) {
+          console.log('🔄 [PF2eSkillService] This is a reroll - not storing modifiers (already stored from initial roll)');
+        }
+        
+        // Call the pipeline callback (if provided)
+        if (callback) {
+          await callback(roll, outcome, message, event);
+        }
+      };
+      
       // Trigger the PF2e system roll with DC and modifiers
       const rollResult = await skill.roll({
         dc: { value: dc },
@@ -472,7 +543,7 @@ export class PF2eSkillService {
         modifiers: pf2eModifiers,
         rollTwice: useKeepHigher ? 'keep-higher' : false,
         skipDialog: false,
-        callback,  // NEW: Pass callback for native PF2e callback pattern
+        callback: wrappedCallback,  // ✅ Use wrapped callback for modifier storage
         extraRollOptions: [
           `${checkType}:kingdom`,
           `${checkType}:kingdom:${checkName.toLowerCase().replace(/\s+/g, '-')}`

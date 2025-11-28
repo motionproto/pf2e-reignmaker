@@ -339,6 +339,7 @@ export async function createActionOutcomePreview(context: {
   rollBreakdown?: any;
   currentTurn: number;
   metadata?: Record<string, any>;
+  instanceId?: string;  // ← Optional: Use existing pipeline instanceId instead of generating new one
 }): Promise<string> {
   const {
     actionId,
@@ -351,16 +352,21 @@ export async function createActionOutcomePreview(context: {
     skillName,
     rollBreakdown,
     currentTurn,
-    metadata = {}
+    metadata = {},
+    instanceId  // ← Use pipeline's instanceId if provided
   } = context;
   
-  // Create instance with metadata
-  const previewId = await outcomePreviewService.createInstance(
-    'action',
-    actionId,
-    action,
-    currentTurn,
-    {
+  // ✅ CRITICAL: Use existing instanceId from pipeline (no new generation)
+  // This ensures outcome card uses SAME instanceId where modifiers are stored
+  const previewId = instanceId || `T${currentTurn}-${actionId}-${Date.now()}`;
+  
+  // Create instance with metadata (reusing previewId from pipeline)
+  const preview: OutcomePreview = {
+    previewId,
+    checkType: 'action',
+    checkId: actionId,
+    checkData: action,
+    metadata: {
       ...metadata,
       // Add actor context if provided
       actor: actorId ? {
@@ -370,8 +376,29 @@ export async function createActionOutcomePreview(context: {
         selectedSkill: skillName || '',
         proficiencyRank: proficiencyRank || 0
       } : undefined
+    },
+    createdTurn: currentTurn,
+    status: 'pending'
+  };
+  
+  await updateKingdom(kingdom => {
+    if (!kingdom.pendingOutcomes) kingdom.pendingOutcomes = [];
+    
+    // Don't create duplicate instances - reuse existing if present
+    const existingIndex = kingdom.pendingOutcomes.findIndex(i => i.previewId === previewId);
+    if (existingIndex >= 0) {
+      // Update existing instance
+      kingdom.pendingOutcomes[existingIndex] = preview;
+    } else {
+      // Add new instance
+      kingdom.pendingOutcomes.push(preview);
     }
-  );
+  });
+  
+  // OLD CODE (replaced above):
+  /*
+  const previewId = await outcomePreviewService.createInstance(
+  */
   
   // Get basic effect message (no placeholder replacement - that's a formatting concern)
   const outcomeType = outcome as 'success' | 'criticalSuccess' | 'failure' | 'criticalFailure';

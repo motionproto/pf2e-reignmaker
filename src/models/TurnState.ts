@@ -126,6 +126,17 @@ export interface AidEntry {
 }
 
 /**
+ * Action instance - stores state for a specific action during the turn
+ * Used for reroll modifier preservation and action-specific state
+ */
+export interface ActionInstance {
+  instanceId: string;  // Check instance ID
+  actionId: string;    // Action ID
+  rollModifiers: Array<{ label: string; modifier: number; enabled?: boolean; ignored?: boolean }>;  // Modifiers from the roll
+  timestamp: number;   // When the roll was made
+}
+
+/**
  * Complete state for the Actions phase
  */
 export interface ActionsPhaseState {
@@ -133,6 +144,7 @@ export interface ActionsPhaseState {
   activeAids: AidEntry[];  // Aid bonuses available for actions this turn
   deployedArmyIds: string[];  // Army IDs that have been deployed this turn
   factionsAidedThisTurn: string[];  // Faction IDs that have provided aid (economic or military) this turn
+  actionInstances?: Record<string, ActionInstance>;  // Action-specific state (keyed by actionId)
   // Removed: playerActions - now using actionLog at top level instead
   // Removed: completionsByAction - now using actionLog instead
 }
@@ -224,7 +236,8 @@ export function createDefaultTurnState(turnNumber: number): TurnState {
       completed: false,
       activeAids: [],
       deployedArmyIds: [],
-      factionsAidedThisTurn: []
+      factionsAidedThisTurn: [],
+      actionInstances: {}
     },
     
     upkeepPhase: {

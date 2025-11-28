@@ -361,67 +361,30 @@
   async function handlePerformReroll(event: CustomEvent, action: any) {
     const { skill, previousFame } = event.detail;
 
-    // ✅ PRESERVE METADATA: Get existing instance to preserve context
+    // ✅ GET EXISTING INSTANCE ID: Reroll within same pipeline context
     const instanceId = currentActionInstances.get(action.id);
-    const instance = instanceId 
-      ? $kingdomData.pendingOutcomes?.find(i => i.previewId === instanceId)
-      : null;
-    const preservedMetadata = instance?.metadata || {};
     
-    console.log(`🔄 [ActionsPhase] Reroll preserving metadata:`, preservedMetadata);
-    
-    // Clear instance for this action
-    if (instanceId && checkInstanceService) {
-      await checkInstanceService.clearInstance(instanceId);
-      currentActionInstances.delete(action.id);
-      currentActionInstances = currentActionInstances;  // Trigger reactivity
+    if (!instanceId) {
+      console.error(`❌ [ActionsPhase] No instance found for reroll: ${action.id}`);
+      return;
     }
     
-    // Small delay to ensure UI updates
-    await new Promise(resolve => setTimeout(resolve, 100));
+    console.log(`🔄 [ActionsPhase] Rerolling from Step 3 (same pipeline): ${instanceId}`);
     
-    // Get character for reroll
-    let actingCharacter = getCurrentUserCharacter();
-    
-    if (!actingCharacter) {
-      // Show character selection dialog
-      actingCharacter = await showCharacterSelectionDialog();
-      if (!actingCharacter) {
-        // Restore fame if user cancelled
-        const { restoreFameAfterFailedReroll } = await import('../../../controllers/shared/RerollHelpers');
-        if (previousFame !== undefined) {
-          await restoreFameAfterFailedReroll(previousFame);
-        }
-        return;
-      }
-    }
-    
-    // 🔄 ALL actions use PipelineCoordinator
+    // 🔄 Reroll using PipelineCoordinator.rerollFromStep3()
     if (!pipelineCoordinator) {
       throw new Error('PipelineCoordinator not initialized');
     }
     
-    console.log(`🔄 [ActionsPhase] Reroll for action, re-executing pipeline for ${action.id}`);
-    
     try {
-      // Re-execute complete pipeline (Steps 1-9, pauses at Step 6 for user confirmation)
-      // ✅ PASS PRESERVED METADATA: This makes Step 2 skip pre-roll interactions
-      await pipelineCoordinator.executePipeline(action.id, {
-        actor: {
-          selectedSkill: skill,
-          fullActor: actingCharacter,
-          actorName: actingCharacter.name,
-          actorId: actingCharacter.id,
-          level: actingCharacter.level || 1,
-          proficiencyRank: 0 // TODO: Get from actor
-        },
-        metadata: preservedMetadata  // ← Preserves buildingDetails, settlement selection, etc.
-      });
+      // Rewind to Step 3 and re-execute with SAME context
+      // This preserves metadata, modifiers, and all pipeline state
+      await pipelineCoordinator.rerollFromStep3(instanceId);
       
-      console.log(`✅ [ActionsPhase] Pipeline reroll complete for ${action.id}`);
+      console.log(`✅ [ActionsPhase] Reroll complete for ${action.id}`);
       
     } catch (error) {
-      console.error(`❌ [ActionsPhase] PipelineCoordinator reroll failed for ${action.id}:`, error);
+      console.error(`❌ [ActionsPhase] Reroll failed for ${action.id}:`, error);
       // Restore fame if the roll failed
       const { restoreFameAfterFailedReroll } = await import('../../../controllers/shared/RerollHelpers');
       if (previousFame !== undefined) {

@@ -155,7 +155,7 @@ export class UnifiedCheckHandler {
   ): Promise<any> {
     switch (interaction.type) {
       case 'entity-selection':
-        return await this.executeEntitySelection(interaction, kingdom);
+        return await this.executeEntitySelection(interaction, kingdom, metadata);
 
       case 'map-selection':
         return await this.executeMapSelection(interaction, kingdom, metadata);
@@ -178,8 +178,15 @@ export class UnifiedCheckHandler {
   /**
    * Execute entity selection interaction
    */
-  private async executeEntitySelection(interaction: any, kingdom: any): Promise<any> {
+  private async executeEntitySelection(interaction: any, kingdom: any, metadata?: CheckMetadata): Promise<any> {
     console.log(`📋 [UnifiedCheckHandler] Entity selection: ${interaction.entityType}`);
+
+    // ✅ REROLL OPTIMIZATION: Skip if metadata already has this interaction's data
+    // This allows rerolls to preserve selections (e.g., settlement selection doesn't re-show)
+    if (interaction.id && metadata && metadata[interaction.id]) {
+      console.log(`⏭️ [UnifiedCheckHandler] Skipping entity selection (metadata already exists): ${interaction.id}`);
+      return metadata[interaction.id];
+    }
 
     const selectedId = await showEntitySelectionDialog(
       interaction.entityType,

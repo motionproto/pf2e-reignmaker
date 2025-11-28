@@ -114,6 +114,13 @@ export interface PipelineContext {
   executionResult?: ExecutionResult;
   
   // ========================================
+  // Reroll Flag
+  // ========================================
+  
+  /** Explicit flag: Is this a reroll of a previous roll? */
+  isReroll?: boolean;
+  
+  // ========================================
   // Live Data Access
   // ========================================
   
@@ -129,6 +136,9 @@ export interface PipelineContext {
   
   /** Internal: Resume callback for Step 6 pause/resume */
   _resumeCallback?: () => void;
+  
+  /** Internal: Temporary storage for modifiers (Step 3 → Step 4) */
+  _pendingModifiers?: Array<{ label: string; modifier: number; enabled: boolean; ignored: boolean }>;
 }
 
 /**

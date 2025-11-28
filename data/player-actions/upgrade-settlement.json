@@ -31,7 +31,7 @@
   ],
   "outcomes": {
     "criticalSuccess": {
-      "description": "The settlement grows rapidly.",
+      "description": "The settlement grows rapidly. Upgrade at half cost.",
       "modifiers": [
         {
           "type": "computed",
@@ -43,7 +43,7 @@
       ]
     },
     "success": {
-      "description": "The settlement grows.",
+      "description": "The settlement grows. Upgrade at full cost.",
       "modifiers": [
         {
           "type": "computed",
@@ -55,7 +55,7 @@
       ]
     },
     "failure": {
-      "description": "Construction setbacks waste resources.",
+      "description": "Construction setbacks waste resources. Lose half cost, no upgrade.",
       "modifiers": [
         {
           "type": "computed",
@@ -67,7 +67,7 @@
       ]
     },
     "criticalFailure": {
-      "description": "Accidents and incompetence waste the investment.",
+      "description": "Accidents and incompetence waste the investment. Lose full cost, no upgrade.",
       "modifiers": [
         {
           "type": "computed",

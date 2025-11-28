@@ -742,7 +742,276 @@ async executePipeline(actionId, initialContext) {
 
 ## Advanced Features
 
-### 7. State Persistence Strategy
+### 7. Reroll Modifier Persistence System
+
+**Problem:** When players use fame to reroll, modifiers from the original roll need to be preserved and reapplied to the new roll.
+
+**Challenge:** Modifiers must survive:
+- Tab switches
+- Page refreshes
+- Multi-client environments (synced to all players)
+
+**Solution:** Store modifiers in `kingdom.turnState.actionsPhase.actionInstances` (persistent in KingdomActor).
+
+#### Storage Structure
+
+**Location:** `src/models/TurnState.ts`
+
+```typescript
+interface ActionInstance {
+  instanceId: string;           // Check instance ID
+  actionId: string;             // Action ID
+  rollModifiers: Array<{        // Modifiers from the roll
+    label: string;
+    modifier: number;
+    enabled?: boolean;
+    ignored?: boolean;
+  }>;
+  timestamp: number;            // When the roll was made
+}
+
+interface ActionsPhaseState {
+  // ... existing fields
+  actionInstances?: Record<string, ActionInstance>;  // Keyed by actionId
+}
+```
+
+**Storage Location:** `kingdom.turnState.actionsPhase.actionInstances[actionId]`
+
+#### Data Flow: Initial Roll → Storage
+
+**Step 3 Callback (PipelineCoordinator):**
+
+```typescript
+private async step3_executeRoll(ctx: PipelineContext): Promise<void> {
+  // ... setup roll ...
+  
+  const callback: CheckRollCallback = async (roll, outcome, message, event) => {
+    // Extract modifiers from PF2e message flags
+    const allModifiers = message?.flags?.pf2e?.modifiers || [];
+    
+    // Filter: Keep kingdom modifiers, exclude character stats
+    const modifiers = allModifiers
+      .filter((mod: any) => mod.type !== 'ability' && mod.type !== 'proficiency');
+    
+    // Store in context
+    ctx.rollData = {
+      rollBreakdown: {
+        modifiers: modifiers.map(mod => ({
+          label: mod.label,
+          modifier: mod.modifier,
+          enabled: mod.enabled ?? true,
+          ignored: mod.ignored ?? false
+        }))
+      }
+    };
+    
+    // ✅ PERSIST: Store in kingdom.turnState for rerolls
+    if (modifiers.length > 0) {
+      const actor = getKingdomActor();
+      await actor.updateKingdomData((kingdom: any) => {
+        // Initialize if needed
+        if (!kingdom.turnState) kingdom.turnState = {};
+        if (!kingdom.turnState.actionsPhase) {
+          kingdom.turnState.actionsPhase = { activeAids: [] };
+        }
+        if (!kingdom.turnState.actionsPhase.actionInstances) {
+          kingdom.turnState.actionsPhase.actionInstances = {};
+        }
+        
+        // Store modifiers
+        kingdom.turnState.actionsPhase.actionInstances[ctx.actionId] = {
+          instanceId: ctx.instanceId,
+          actionId: ctx.actionId,
+          rollModifiers: ctx.rollData.rollBreakdown.modifiers,
+          timestamp: Date.now()
+        };
+      });
+      
+      console.log('💾 Stored modifiers in kingdom.turnState for reroll');
+    }
+    
+    // Continue pipeline...
+  };
+  
+  await pf2eSkillService.performKingdomSkillCheck(/* ... */, callback);
+}
+```
+
+#### Data Flow: Reroll Detection → Application
+
+**Reroll Detection (PipelineCoordinator Step 3):**
+
+```typescript
+private async step3_executeRoll(ctx: PipelineContext): Promise<void> {
+  // ... setup ...
+  
+  // ✅ DETECT REROLL: If metadata exists, this is a reroll
+  // Rerolls preserve metadata from previous execution (settlement selection, etc.)
+  const isReroll = ctx.metadata && Object.keys(ctx.metadata).length > 0;
+  
+  console.log(`Rolling ${skillName} vs DC ${dc}`, { isReroll });
+  
+  // Pass isReroll flag to skill service
+  await pf2eSkillService.performKingdomSkillCheck(
+    skillName, 'action', pipeline.name, ctx.actionId,
+    undefined, ctx.actionId, callback,
+    isReroll  // ← NEW: Tells PF2eSkillService to load stored modifiers
+  );
+}
+```
+
+**Modifier Application (PF2eSkillService):**
+
+```typescript
+async performKingdomSkillCheck(
+  // ... parameters ...
+  isReroll?: boolean  // NEW: Only apply stored modifiers on rerolls
+): Promise<any> {
+  // ... get kingdom modifiers ...
+  
+  // ✅ APPLY STORED MODIFIERS (only on rerolls)
+  if (isReroll && actionId) {
+    const currentKingdomState = get(kingdomData);
+    const actionInstance = currentKingdomState.turnState
+      ?.actionsPhase?.actionInstances?.[actionId];
+    
+    if (actionInstance?.rollModifiers) {
+      console.log('🔄 Restoring modifiers from kingdom.turnState');
+      
+      // Restore modifiers to temporary variable
+      let lastRollModifiers = actionInstance.rollModifiers;
+      
+      // Match existing kingdom modifiers
+      const matchedLabels = new Set<string>();
+      for (const mod of kingdomModifiers) {
+        const previousMod = lastRollModifiers.find(m => m.label === mod.name);
+        if (previousMod) {
+          mod.enabled = true;
+          matchedLabels.add(previousMod.label);
+        }
+      }
+      
+      // Add unmatched modifiers (custom modifiers, user additions)
+      for (const prevMod of lastRollModifiers) {
+        if (!matchedLabels.has(prevMod.label)) {
+          kingdomModifiers.push({
+            name: prevMod.label,
+            value: prevMod.modifier,
+            type: 'circumstance',
+            enabled: true
+          });
+        }
+      }
+      
+      console.log(`🔄 Restored ${lastRollModifiers.length} modifiers`);
+    }
+  }
+  
+  // Convert to PF2e format and execute roll
+  const pf2eModifiers = this.convertToPF2eModifiers(kingdomModifiers);
+  await skill.roll({ modifiers: pf2eModifiers, /* ... */ });
+}
+```
+
+#### Reroll Trigger Flow
+
+**User clicks "Reroll with Fame" in OutcomeDisplay:**
+
+```
+1. OutcomeDisplay dispatches 'performReroll' event
+   ↓
+2. BaseCheckCard handles event → forwards to parent
+   ↓
+3. ActionsPhase.handlePerformReroll()
+   ↓
+4. Clear old instance (removes from pendingOutcomes)
+   ↓
+5. Preserve metadata from old instance:
+   const preservedMetadata = instance?.metadata || {};
+   ↓
+6. Re-execute pipeline with preserved metadata:
+   await pipelineCoordinator.executePipeline(actionId, {
+     actor: { ... },
+     metadata: preservedMetadata  // ← Triggers reroll detection
+   });
+   ↓
+7. PipelineCoordinator detects isReroll = true (metadata exists)
+   ↓
+8. Pass isReroll: true to performKingdomSkillCheck()
+   ↓
+9. PF2eSkillService loads modifiers from kingdom.turnState
+   ↓
+10. Modifiers applied to new roll
+```
+
+#### Cleanup Strategy
+
+**Automatic Cleanup at Turn Boundaries:**
+
+```typescript
+// TurnManager.nextTurn()
+async nextTurn(): Promise<void> {
+  // ... advance turn ...
+  
+  // Reset turnState (includes actionInstances)
+  const { createDefaultTurnState } = await import('../models/TurnState');
+  await updateKingdom(kingdom => {
+    kingdom.turnState = createDefaultTurnState(kingdom.currentTurn);
+    // actionInstances automatically cleared (no history bloat)
+  });
+}
+```
+
+**Default State Factory:**
+
+```typescript
+// src/models/TurnState.ts
+export function createDefaultTurnState(turnNumber: number): TurnState {
+  return {
+    // ...
+    actionsPhase: {
+      completed: false,
+      activeAids: [],
+      deployedArmyIds: [],
+      factionsAidedThisTurn: [],
+      actionInstances: {}  // ← Empty object (no history)
+    }
+  };
+}
+```
+
+#### Benefits
+
+✅ **Persistent** - Survives tab switches and page refreshes  
+✅ **Multi-client** - Syncs across all clients via KingdomActor  
+✅ **Automatic cleanup** - Cleared at turn boundaries (no bloat)  
+✅ **Centralized detection** - One check point in PipelineCoordinator  
+✅ **Type-safe** - Full TypeScript support via TurnState interface  
+
+#### Key Design Decisions
+
+**Why metadata-based detection?**
+- Metadata is ONLY present on rerolls (preserved from previous execution)
+- Reliable heuristic (no false positives)
+- Works for actions, events, AND incidents (universal)
+
+**Why kingdom.turnState instead of module-level variable?**
+- Module-level state lost on page refresh
+- Doesn't sync to other clients
+- No persistence across sessions
+
+**Why clear after applying?**
+- Prevents accidental reuse on next action
+- Keeps state clean
+- Forces explicit reroll intent
+
+**Why filter ability/proficiency modifiers?**
+- Character stats shouldn't persist across characters
+- Kingdom modifiers are action-specific (settlements, aids, unrest)
+- User can still add custom modifiers in dialog
+
+### 8. State Persistence Strategy
 
 **Problem:** Paused contexts stored in memory are lost on page refresh/tab switch.
 

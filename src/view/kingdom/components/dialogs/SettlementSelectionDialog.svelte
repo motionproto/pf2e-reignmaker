@@ -293,7 +293,7 @@
     }
     
     .supplementary-info {
-      font-size: var(--font-sm);
+      font-size: var(--font-md);
       color: var(--text-tertiary);
       line-height: 1.4;
       text-align: left;

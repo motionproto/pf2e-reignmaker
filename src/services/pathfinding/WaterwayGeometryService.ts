@@ -60,12 +60,21 @@ class WaterwayGeometryService {
   private lastKingdomDataHash: string = '';
   
   constructor() {
-    // Subscribe to kingdom data changes and rebuild geometry
-    this.unsubscribe = kingdomData.subscribe(kingdom => {
-      this.rebuild(kingdom);
+    // Create a derived store that only tracks river data changes
+    const riverDataStore = derived(kingdomData, $kingdom => ({
+      kingdom: $kingdom,
+      hash: this.getRiverDataHash($kingdom)
+    }));
+    
+    // Subscribe to river data changes only (not all kingdom data changes)
+    this.unsubscribe = riverDataStore.subscribe(({ kingdom, hash }) => {
+      // Only rebuild if hash actually changed
+      if (hash !== this.lastKingdomDataHash) {
+        this.rebuild(kingdom);
+      }
     });
     
-    logger.info('[WaterwayGeometryService] Initialized with reactive kingdom data subscription');
+    logger.info('[WaterwayGeometryService] Initialized with reactive river data subscription');
   }
   
   /**
@@ -82,15 +91,13 @@ class WaterwayGeometryService {
   
   /**
    * Rebuild geometry from kingdom data
-   * Called automatically when kingdom data changes
+   * Called automatically when river data changes (not all kingdom data changes)
    */
   rebuild(kingdom: KingdomData): void {
-    console.log('[WaterwayGeometryService] rebuild() called');
     const canvas = (globalThis as any).canvas;
     
     // Can't compute geometry without canvas grid
     if (!canvas?.grid) {
-      console.warn('[WaterwayGeometryService] Canvas not ready - returning early');
       logger.warn('[WaterwayGeometryService] Canvas not ready - geometry deferred. Waiting for canvas initialization.');
       this.geometryStore.set({
         segments: [],
@@ -99,16 +106,9 @@ class WaterwayGeometryService {
       });
       return;
     }
-    console.log('[WaterwayGeometryService] Canvas is ready');
     
-    // Check if river data changed (optimization)
+    // Update hash (checked in derived store now)
     const currentHash = this.getRiverDataHash(kingdom);
-    console.log('[WaterwayGeometryService] Current hash:', currentHash);
-    console.log('[WaterwayGeometryService] Last hash:', this.lastKingdomDataHash);
-    if (currentHash === this.lastKingdomDataHash) {
-      console.log('[WaterwayGeometryService] Hash unchanged - skipping rebuild');
-      return; // No changes
-    }
     this.lastKingdomDataHash = currentHash;
     
     console.log('[WaterwayGeometryService] ========== REBUILDING GEOMETRY ==========');
@@ -351,4 +351,3 @@ class WaterwayGeometryService {
 
 // Export singleton instance
 export const waterwayGeometryService = new WaterwayGeometryService();
-

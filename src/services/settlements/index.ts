@@ -219,6 +219,60 @@ export class SettlementService {
   }
   
   /**
+   * Get supplementary info for settlement display in dialogs
+   * Shows structure progress and next tier requirements
+   * 
+   * Used by entity selection dialogs to provide context about settlement upgrade status
+   * Does NOT repeat information already visible (settlement name shows tier, separate field shows level)
+   * 
+   * @param settlement - Settlement to get info for
+   * @returns Formatted info string for display (structure progress only)
+   */
+  getSettlementUpgradeInfo(settlement: Settlement): string {
+    const currentLevel = settlement.level;
+    const currentTier = settlement.tier;
+    const structureCount = settlement.structureIds?.length || 0;
+    
+    // Get tier thresholds
+    const tierInfo: Record<string, { minStructures: number; nextTier: string; nextTierLevel: number }> = {
+      'village': { minStructures: 3, nextTier: 'Town', nextTierLevel: 5 },
+      'town': { minStructures: 6, nextTier: 'City', nextTierLevel: 10 },
+      'city': { minStructures: 9, nextTier: 'Metropolis', nextTierLevel: 15 },
+      'metropolis': { minStructures: 999, nextTier: '', nextTierLevel: 999 }
+    };
+    
+    const info = tierInfo[currentTier.toLowerCase()];
+    if (!info) return '';
+    
+    // Can't upgrade if at max level
+    if (currentLevel >= 20) {
+      return '(Max Level)';
+    }
+    
+    // Only show structure progress for tiers that can upgrade
+    if (currentTier.toLowerCase() === 'metropolis') {
+      return '';
+    }
+    
+    // Structure progress with next tier info
+    const structureProgress = `${structureCount}/${info.minStructures} structures`;
+    const canUpgradeTier = structureCount >= info.minStructures;
+    const nextLevel = currentLevel + 1;
+    
+    if (canUpgradeTier && nextLevel >= info.nextTierLevel) {
+      // Ready to become next tier
+      return `${structureProgress} → ${info.nextTier} at level ${info.nextTierLevel}`;
+    } else if (!canUpgradeTier) {
+      // Need more structures
+      const needed = info.minStructures - structureCount;
+      return `${structureProgress} (need ${needed} more for ${info.nextTier})`;
+    } else {
+      // Has structures but level not high enough yet
+      return `${structureProgress} (${info.nextTier} at level ${info.nextTierLevel})`;
+    }
+  }
+  
+  /**
    * Calculate skill bonuses from a settlement's structures
    * Returns a map of skill name -> highest bonus value
    * Only counts non-damaged structures

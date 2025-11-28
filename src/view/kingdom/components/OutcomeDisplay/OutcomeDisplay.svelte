@@ -346,48 +346,9 @@
       return;
     }
 
-    // Extract modifiers to preserve for reroll
-    // Preserve BOTH custom modifiers AND kingdom modifiers (unrest, infrastructure, aid)
-    // Exclude system-generated modifiers (ability scores, proficiency, level)
-    const enabledModifiers: Array<{ label: string; modifier: number }> = [];
-    if (rollBreakdown?.modifiers) {
-      for (const mod of rollBreakdown.modifiers) {
-        if (mod.enabled === true) {
-          // Kingdom modifier patterns to preserve:
-          const isUnrestPenalty = mod.label === 'Unrest Penalty';
-          const isInfrastructureBonus = mod.label.includes(' Infrastructure') || 
-                                        (mod.label.includes(' ') && !mod.label.match(/^[A-Z][a-z]+$/)); // Settlement bonuses like "Capital Courthouse"
-          const isAidBonus = mod.label.startsWith('Aid from ');
-          const isCustomModifier = (mod as any).custom === true;
-          
-          // System-generated patterns to exclude (these are auto-calculated by PF2e):
-          const isSkillBonus = mod.label.match(/^[+-]?\d+\s+[A-Z]/); // e.g., "+15 Diplomacy", "12 Society"
-          const isAbilityScore = ['Strength', 'Dexterity', 'Constitution', 'Intelligence', 'Wisdom', 'Charisma'].some(
-            ability => mod.label.includes(ability)
-          );
-          const isProficiency = mod.label.toLowerCase().includes('proficiency');
-          const isProficiencyRank = ['Untrained', 'Trained', 'Expert', 'Master', 'Legendary'].some(
-            rank => mod.label.includes(rank)
-          );
-          const isLevel = mod.label.toLowerCase().includes('level');
-          
-          // Include if it's a kingdom modifier OR a custom modifier (not system-generated)
-          const isKingdomModifier = isUnrestPenalty || isInfrastructureBonus || isAidBonus;
-          const isSystemGenerated = isSkillBonus || isAbilityScore || isProficiency || isProficiencyRank || isLevel;
-          
-          if (isKingdomModifier || (isCustomModifier && !isSystemGenerated)) {
-            enabledModifiers.push({
-              label: mod.label,
-              modifier: mod.modifier
-            });
-          }
-        }
-      }
-    }
-    
-    // Store modifiers for the next roll (module-scoped state)
-    const { storeModifiersForReroll } = await import('../../../../services/pf2e/PF2eSkillService');
-    storeModifiersForReroll(enabledModifiers);
+    // ✅ NO LONGER NEEDED: PipelineCoordinator now handles modifier storage automatically
+    // This prevents duplicate/conflicting modifier extraction logic
+    // See: PipelineCoordinator.ts Step 3 callback for the canonical extraction
     
     // ✅ Clear state in instance via helper (syncs to all clients)
     if (instance) {

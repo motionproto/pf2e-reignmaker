@@ -74,6 +74,12 @@ export class PipelineCoordinator {
     // Initialize context
     const context = this.initializeContext(actionId, initialContext);
     
+    // ✅ CRITICAL: Generate instanceId IMMEDIATELY for modifier isolation
+    // Each execution (deploy-army #1, #2, #3) gets a unique instanceId
+    // Format: <action-name>-<unique-string> (e.g., "deploy-army-abc123def456")
+    context.instanceId = `${actionId}-${foundry.utils.randomID()}`;
+    console.log(`🆔 [PipelineCoordinator] Generated new instanceId: ${context.instanceId}`);
+    
     log(context, 0, 'initialize', `Starting pipeline for ${actionId}`);
     
     try {
@@ -139,6 +145,37 @@ export class PipelineCoordinator {
       
       throw error;
     }
+  }
+
+  /**
+   * Reroll from Step 3 (keep existing pipeline context)
+   * 
+   * Called when user clicks "Reroll" button.
+   * Rewinds to Step 3 and re-executes the roll with the SAME context.
+   * 
+   * @param instanceId - Pipeline instance ID
+   */
+  async rerollFromStep3(instanceId: string): Promise<void> {
+    const context = this.pendingContexts.get(instanceId);
+    
+    if (!context) {
+      throw new Error(`[PipelineCoordinator] No pipeline context found for instance: ${instanceId}`);
+    }
+    
+    console.log(`🔄 [PipelineCoordinator] Rerolling from Step 3 (same pipeline context)`);
+    log(context, 3, 'reroll', 'Rerolling from Step 3 with existing context');
+    
+    // ✅ EXPLICIT: Mark context as reroll (used by Step 3 to load modifiers)
+    context.isReroll = true;
+    
+    // Clear old outcome preview (will be recreated in Step 4)
+    if (this.checkInstanceService) {
+      await this.checkInstanceService.clearInstance(instanceId);
+    }
+    
+    // Re-execute Step 3 with SAME context (modifiers already stored)
+    await this.step3_executeRoll(context);
+    // Callback will resume at Step 4 with new roll data
   }
 
   /**
@@ -310,15 +347,24 @@ export class PipelineCoordinator {
       dc
     } as any;
     
-    log(ctx, 3, 'executeRoll', `Rolling ${skillName} vs DC ${dc}`, { characterLevel, effectiveLevel, dc });
+    // ✅ EXPLICIT REROLL FLAG: Set by rerollFromStep3() method
+    const isReroll = ctx.isReroll || false;
+    
+    log(ctx, 3, 'executeRoll', `Rolling ${skillName} vs DC ${dc}`, { characterLevel, effectiveLevel, dc, isReroll });
     
     // CREATE CALLBACK that resumes pipeline
     const callback: CheckRollCallback = async (roll, outcome, message, event) => {
       console.log('✅ [Callback] Roll complete:', { outcome, total: roll.total });
       
-      // Extract modifiers from PF2e message flags (NOT the roll object!)
-      // Per PF2e source (check.ts line 399): modifiers stored in message.flags.pf2e.modifiers
-      const modifiers = (message as any)?.flags?.pf2e?.modifiers || [];
+      // Extract modifiers from PF2e message flags
+      // Modifiers are at: message.flags.pf2e.modifiers (NOT .context.modifiers)
+      const allModifiers = (message as any)?.flags?.pf2e?.modifiers || [];
+      
+      // Filter: Only exclude ability and proficiency modifiers (character stats)
+      // Keep everything else (kingdom modifiers, custom modifiers, etc.)
+      // Don't filter by enabled/ignored - that's user's choice in the dialog
+      const modifiers = allModifiers
+        .filter((mod: any) => mod.type !== 'ability' && mod.type !== 'proficiency');
       
       console.log('🎲 [PipelineCoordinator] Extracted modifiers from message.flags.pf2e.modifiers:', modifiers.length);
       
@@ -352,6 +398,7 @@ export class PipelineCoordinator {
           modifiers: modifiers.map((mod: any) => ({
             label: mod.label || '',
             modifier: mod.modifier || 0,
+            type: mod.type || 'circumstance',  // ✅ CRITICAL: Store type for reroll restoration
             enabled: mod.enabled ?? true,
             ignored: mod.ignored ?? false
           }))
@@ -387,7 +434,9 @@ export class PipelineCoordinator {
       ctx.actionId,   // check ID
       undefined,      // checkEffects (optional)
       ctx.actionId,   // actionId for aids
-      callback        // ← Pass callback
+      callback,       // callback
+      isReroll,       // ← Pass reroll detection from context
+      ctx.instanceId  // ← Pass instanceId for modifier storage
     );
     
     // Step 3 returns - callback will resume pipeline when roll completes
@@ -422,8 +471,10 @@ export class PipelineCoordinator {
     // Otherwise use ctx.actionId (normal behavior)
     const checkId = (ctx.metadata as any).checkId || ctx.actionId;
     
-    // Create check instance with minimal data (Step 4 only)
-    const instanceId = await createActionOutcomePreview({
+    // ✅ CRITICAL: Use pipeline's instanceId (generated in Step 0), not a new one
+    // This ensures the outcome card uses the SAME instanceId where modifiers are stored
+    // createActionOutcomePreview returns instanceId, but we already have one from Step 0
+    await createActionOutcomePreview({
       actionId: checkId,  // Use custom checkId if provided
       action: pipeline,
       outcome,
@@ -434,11 +485,11 @@ export class PipelineCoordinator {
       skillName: ctx.actor?.selectedSkill,
       rollBreakdown: ctx.rollData?.rollBreakdown || undefined,
       currentTurn: turn,
-      metadata: ctx.metadata
+      metadata: ctx.metadata,
+      instanceId: ctx.instanceId  // ← Pass pipeline's instanceId
     });
     
-    // Store instance ID in context
-    ctx.instanceId = instanceId;
+    // instanceId already set in Step 0 - no need to update it
     
     // ✅ EXTRACT CUSTOM COMPONENT from postRollInteractions (for inline display in OutcomeDisplay)
     let customComponentName: string | null = null;
@@ -486,12 +537,12 @@ export class PipelineCoordinator {
       
       if (actor) {
         const kingdom = actor.getKingdomData();
-        const instance = outcomePreviewService.getInstance(instanceId, kingdom);
+        const instance = outcomePreviewService.getInstance(ctx.instanceId!, kingdom);
         
         if (instance?.appliedOutcome) {
           // Update instance with custom component NAME (string for registry lookup)
           await outcomePreviewService.storeOutcome(
-            instanceId,
+            ctx.instanceId!,
             outcome,
             {
               numericModifiers: (instance.appliedOutcome.modifiers || []) as any,
@@ -512,7 +563,7 @@ export class PipelineCoordinator {
       }
     }
     
-    log(ctx, 4, 'createCheckInstance', `Check instance created: ${instanceId}`);
+    log(ctx, 4, 'createCheckInstance', `Check instance created: ${ctx.instanceId}`);
   }
 
   /**
