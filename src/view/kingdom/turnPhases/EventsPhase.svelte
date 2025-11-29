@@ -54,7 +54,6 @@
      stateChanges?: Record<string, any>;
      modifiers?: any[];
      manualEffects?: string[];
-     specialEffects?: string[];
      shortfallResources?: string[];
      rollBreakdown?: any;
      isIgnored?: boolean;
@@ -81,6 +80,11 @@
    // Current user ID
    let currentUserId: string | null = null;
    
+   // Load current event data from instance when available
+   $: if (currentEventInstance && currentEventInstance.checkData) {
+      currentEvent = currentEventInstance.checkData as EventData;
+   }
+   
    // Check if current user is GM
    $: isGM = (globalThis as any).game?.user?.isGM || false;
    
@@ -90,40 +94,52 @@
    $: eventChecked = getStepCompletion(currentSteps, 0); // Step 0 = event-check
    $: eventResolvedFromState = getStepCompletion(currentSteps, 1); // Step 1 = resolve-event
    $: eventDC = $kingdomData.eventDC || 15;
-   // NEW ARCHITECTURE: Read from unified activeCheckInstances filtered by type
-   $: activeEventInstances = $kingdomData.activeCheckInstances?.filter(i => i.checkType === 'event') || [];
+   // NEW ARCHITECTURE: Read from OutcomePreview (pendingOutcomes) instead of legacy activeCheckInstances
+   $: activeEventInstances = $kingdomData?.pendingOutcomes?.filter(i => i.checkType === 'event') || [];
    
    // ✅ NEW ARCHITECTURE: Get current event instance from turnState.eventInstanceId (precise matching)
    $: currentEventInstance = $kingdomData.turnState?.eventsPhase?.eventInstanceId 
-      ? activeEventInstances.find(i => i.instanceId === $kingdomData.turnState?.eventsPhase?.eventInstanceId)
+      ? activeEventInstances.find(i => i.previewId === $kingdomData.turnState?.eventsPhase?.eventInstanceId)
       : null;
    
-   // Filter instances: ongoing = pending but NOT current, resolved = resolved status
-   $: ongoingEventInstances = activeEventInstances.filter(instance => 
-      instance.status === 'pending' && 
-      instance.checkId !== $kingdomData.turnState?.eventsPhase?.eventId
+   // Filter instances: ongoing = pending but NOT debug instances
+   // Debug mode should be completely separate - don't show ANY debug instances as ongoing
+   // Only show true "ongoing events" from actual gameplay
+   $: ongoingEventInstances = isGM ? [] : activeEventInstances.filter(instance => 
+      instance.status === 'pending'
    );
    $: resolvedEventInstances = activeEventInstances.filter(instance => instance.status === 'resolved');
    
-   // Build outcomes for ongoing events from activeCheckInstances  
+   // Build outcomes for ongoing events from pendingOutcomes  
    $: ongoingEventsWithOutcomes = ongoingEventInstances.map(instance => {
       const event = instance.checkData as EventData;  // NEW ARCHITECTURE: checkData instead of eventData
+      
+      // Safety check - if event or outcomes is missing, return empty
+      if (!event || !event.outcomes) {
+         console.warn('[EventsPhase] Invalid event data in instance:', instance);
+         return {
+            instance,
+            event,
+            outcomes: []
+         };
+      }
+      
       const outcomes: Array<{
          type: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
          description: string;
       }> = [];
       
-      if (event.effects.criticalSuccess) {
-         outcomes.push({ type: 'criticalSuccess', description: event.effects.criticalSuccess.msg });
+      if (event.outcomes.criticalSuccess) {
+         outcomes.push({ type: 'criticalSuccess', description: event.outcomes.criticalSuccess.msg });
       }
-      if (event.effects.success) {
-         outcomes.push({ type: 'success', description: event.effects.success.msg });
+      if (event.outcomes.success) {
+         outcomes.push({ type: 'success', description: event.outcomes.success.msg });
       }
-      if (event.effects.failure) {
-         outcomes.push({ type: 'failure', description: event.effects.failure.msg });
+      if (event.outcomes.failure) {
+         outcomes.push({ type: 'failure', description: event.outcomes.failure.msg });
       }
-      if (event.effects.criticalFailure) {
-         outcomes.push({ type: 'criticalFailure', description: event.effects.criticalFailure.msg });
+      if (event.outcomes.criticalFailure) {
+         outcomes.push({ type: 'criticalFailure', description: event.outcomes.criticalFailure.msg });
       }
       
       // Check if someone is currently resolving this event
@@ -137,7 +153,7 @@
          instance,
          event,
          outcomes,
-         possibleOutcomes: buildPossibleOutcomes(event.effects),
+         possibleOutcomes: buildPossibleOutcomes(event.outcomes),
          isBeingResolved,
          isResolvedByMe,
          isResolvedByOther,
@@ -243,38 +259,38 @@
    }
    
    // Build possible outcomes for the event (synchronous - must be available for render)
-   $: possibleOutcomes = currentEvent ? buildPossibleOutcomes(currentEvent.effects) : [];
+   $: possibleOutcomes = currentEvent ? buildPossibleOutcomes(currentEvent.outcomes) : [];
    
    // Build outcomes array for BaseCheckCard
-   $: eventOutcomes = currentEvent ? (() => {
+   $: eventOutcomes = (currentEvent && currentEvent.outcomes) ? (() => {
       const outcomes: Array<{
          type: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
          description: string;
          modifiers?: Array<{ resource: string; value: number }>;
       }> = [];
       
-      if (currentEvent.effects.criticalSuccess) {
+      if (currentEvent.outcomes.criticalSuccess) {
          outcomes.push({
             type: 'criticalSuccess',
-            description: currentEvent.effects.criticalSuccess.msg
+            description: currentEvent.outcomes.criticalSuccess.msg
          });
       }
-      if (currentEvent.effects.success) {
+      if (currentEvent.outcomes.success) {
          outcomes.push({
             type: 'success',
-            description: currentEvent.effects.success.msg
+            description: currentEvent.outcomes.success.msg
          });
       }
-      if (currentEvent.effects.failure) {
+      if (currentEvent.outcomes.failure) {
          outcomes.push({
             type: 'failure',
-            description: currentEvent.effects.failure.msg
+            description: currentEvent.outcomes.failure.msg
          });
       }
-      if (currentEvent.effects.criticalFailure) {
+      if (currentEvent.outcomes.criticalFailure) {
          outcomes.push({
             type: 'criticalFailure',
-            description: currentEvent.effects.criticalFailure.msg
+            description: currentEvent.outcomes.criticalFailure.msg
          });
       }
       
@@ -293,19 +309,19 @@
       
       // If eventId is provided and it's not the current event, check ongoing events
       if (eventId && (!currentEvent || currentEvent.id !== eventId)) {
-         const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.instance.instanceId === eventId);
+         const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.instance.previewId === eventId);
          if (ongoingEvent) {
             targetEvent = ongoingEvent.event;
-            targetInstanceId = ongoingEvent.instance.instanceId;
+            targetInstanceId = ongoingEvent.instance.previewId;
          }
       }
       
       // Also check by checkId (which IS the instanceId for ongoing events)
       if (!targetEvent && checkId) {
-         const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.instance.instanceId === checkId);
+         const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.instance.previewId === checkId);
          if (ongoingEvent) {
             targetEvent = ongoingEvent.event;
-            targetInstanceId = ongoingEvent.instance.instanceId;
+            targetInstanceId = ongoingEvent.instance.previewId;
          }
       }
       
@@ -370,7 +386,6 @@
                effect: outcomeData.msg,
                modifiers: outcomeData.modifiers,
                manualEffects: outcomeData.manualEffects,
-               specialEffects: [],  // ✅ Will be populated when outcome is applied
                shortfallResources: [],  // ✅ Will be populated when outcome is applied
                rollBreakdown: result.rollBreakdown,
                effectsApplied: false
@@ -379,8 +394,8 @@
             if (isOngoingEvent && instanceId) {
                // Store in KingdomActor (synced to all clients!)
                await updateKingdom(kingdom => {
-                  if (!kingdom.activeCheckInstances) return;
-                  const instance = kingdom.activeCheckInstances.find((i: any) => i.instanceId === instanceId);
+                  if (!kingdom.pendingOutcomes) return;
+                  const instance = kingdom.pendingOutcomes.find((i: any) => i.previewId === instanceId);
                   if (instance) {
                      instance.appliedOutcome = resolution;
 
@@ -402,8 +417,8 @@
             if (isOngoingEvent && instanceId) {
                // Clear resolution from KingdomActor
                updateKingdom(kingdom => {
-                  if (!kingdom.activeCheckInstances) return;
-                  const instance = kingdom.activeCheckInstances.find((i: any) => i.instanceId === instanceId);
+                  if (!kingdom.pendingOutcomes) return;
+                  const instance = kingdom.pendingOutcomes.find((i: any) => i.previewId === instanceId);
                   if (instance) {
                      instance.appliedOutcome = undefined;
 
@@ -440,7 +455,7 @@
       // Check if this is an ongoing event or current event
       if (checkId && checkId !== currentEvent?.id) {
          // Ongoing event - look up by instanceId (not event.id!)
-         const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.instance.instanceId === checkId);
+         const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.instance.previewId === checkId);
          if (ongoingEvent) {
             targetEvent = ongoingEvent.event;
             resolution = ongoingEvent.instance.appliedOutcome;  // ✅ Get from instance
@@ -502,20 +517,18 @@
                manualEffects: eventResolution.manualEffects,
                rollBreakdown: eventResolution.rollBreakdown,
                isIgnored: eventResolution.isIgnored,
-               specialEffects: result.applied?.specialEffects || [],
                shortfallResources: shortfalls
             };
          } else {
             // Ongoing event - update kingdom state
             await updateKingdom(kingdom => {
-               if (!kingdom.activeCheckInstances) return;
-               const instance = kingdom.activeCheckInstances.find((i: any) => 
+               if (!kingdom.pendingOutcomes) return;
+               const instance = kingdom.pendingOutcomes.find((i: any) => 
                   i.appliedOutcome === resolution
                );
                if (instance && instance.appliedOutcome) {
                   instance.appliedOutcome = {
                      ...instance.appliedOutcome,
-                     specialEffects: result.applied?.specialEffects || [],
                      shortfallResources: shortfalls
                   };
                }
@@ -574,7 +587,7 @@
       
       // If checkId is provided and it's not the current event, check ongoing events
       if (checkId && (!currentEvent || currentEvent.id !== checkId)) {
-         const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.instance.instanceId === checkId);
+         const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.instance.previewId === checkId);
          if (ongoingEvent) {
             targetEventId = ongoingEvent.event.id;
          }
@@ -612,7 +625,7 @@
       
       // If checkId is provided and different from currentEvent, look up ongoing event
       if (checkId && (!currentEvent || currentEvent.id !== checkId)) {
-         const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.instance.instanceId === checkId);
+         const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.instance.previewId === checkId);
          if (ongoingEvent) {
             targetEvent = ongoingEvent.event;
          }
@@ -865,14 +878,14 @@
       if (!confirmed) return;
       
       await updateKingdom(kingdom => {
-         if (!kingdom.activeCheckInstances) return;
+         if (!kingdom.pendingOutcomes) return;
          
          // Filter out all event check instances (both pending and resolved)
-         const beforeCount = kingdom.activeCheckInstances.length;
-         kingdom.activeCheckInstances = kingdom.activeCheckInstances.filter(
+         const beforeCount = kingdom.pendingOutcomes.length;
+         kingdom.pendingOutcomes = kingdom.pendingOutcomes.filter(
             (instance: any) => instance.checkType !== 'event'
          );
-         const afterCount = kingdom.activeCheckInstances.length;
+         const afterCount = kingdom.pendingOutcomes.length;
          const removedCount = beforeCount - afterCount;
          
          logger.info(`🗑️ [EventsPhase] Cleared ${removedCount} event instances`);
@@ -932,12 +945,12 @@
    {/if}
    
    <!-- Active Event Card - Show when an event needs to be resolved -->
+   <!-- Debug Event Selector (GM Only) - Always visible for GMs to browse events -->
+   {#if isGM}
+      <DebugEventSelector type="event" currentItemId={currentEventInstance?.previewId || null} />
+   {/if}
+   
    {#if currentEventInstance && currentEventInstance.checkData}
-      <!-- Debug Event Selector (GM Only) - Positioned directly above event card -->
-      {#if isGM}
-         <DebugEventSelector type="event" currentItemId={$kingdomData.turnState?.eventsPhase?.eventId || null} />
-      {/if}
-      
       {#key `${currentEventInstance.checkId}-${activeAidsCount}`}
          <BaseCheckCard
             id={currentEventInstance.checkId}
@@ -959,7 +972,6 @@
             aidResult={currentEvent ? getAidResultForEvent(currentEvent.id) : null}
             resolved={eventResolved}
             resolution={eventResolution}
-            primaryButtonLabel="Apply Result"
             skillSectionTitle="Choose Your Response:"
             {hideUntrainedSkills}
             on:executeSkill={handleExecuteSkill}
@@ -979,7 +991,7 @@
          <div class="ongoing-events-list">
             {#each ongoingEventsWithOutcomes as item}
                <BaseCheckCard
-                  id={item.instance.instanceId}
+                  id={item.instance.previewId}
                   outcomePreview={item.instance}
                   name={item.event.name}
                   description={item.event.description}
@@ -996,9 +1008,6 @@
                   possibleOutcomes={item.possibleOutcomes}
                   showAidButton={true}
                   aidResult={getAidResultForEvent(item.event.id)}
-                  resolved={!!item.instance.appliedOutcome}
-                  resolution={item.instance.appliedOutcome || null}
-                  primaryButtonLabel="Apply Result"
                   skillSectionTitle="Choose Your Response:"
                   {hideUntrainedSkills}
                   resolutionInProgress={item.isBeingResolved}
@@ -1042,7 +1051,6 @@
                   {hideUntrainedSkills}
                resolved={true}
                resolution={instance.appliedOutcome || null}
-               primaryButtonLabel="Apply Result"
                skillSectionTitle=""
             />
             {/each}

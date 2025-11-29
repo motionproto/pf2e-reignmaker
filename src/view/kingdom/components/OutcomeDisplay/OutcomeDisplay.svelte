@@ -504,8 +504,29 @@
       metadata
     });
 
-    // Store resolution data locally
-    customSelectionData = metadata;
+    // Get component ID from props (stored by PipelineCoordinator)
+    const componentId = customResolutionProps?.componentId;
+    
+    // Store resolution data with component ID as key (if available)
+    let dataToStore;
+    if (componentId && metadata) {
+      dataToStore = {
+        [componentId]: metadata
+      };
+      customSelectionData = dataToStore;
+    } else {
+      // Fallback: store directly (for backwards compatibility)
+      dataToStore = metadata;
+      customSelectionData = metadata;
+    }
+    
+    // ✅ CRITICAL: Update the instance with the selection data
+    // This ensures it's available when Apply Result is clicked
+    if (instance && dataToStore) {
+      await updateInstanceResolutionState(instance.previewId, {
+        customComponentData: dataToStore
+      });
+    }
     
     // Convert modifiers to stateChanges (for display in StateChanges component)
     if (modifiers && modifiers.length > 0) {

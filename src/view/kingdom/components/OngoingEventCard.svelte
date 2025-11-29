@@ -14,7 +14,7 @@
   $: event = instance.eventData;
   $: resolution = instance.appliedOutcome || null;
   $: resolved = !!resolution;
-  $: possibleOutcomes = event ? buildPossibleOutcomes(event.effects) : [];
+  $: possibleOutcomes = event ? buildPossibleOutcomes(event.outcomes) : [];
   
   // Build outcomes array for BaseCheckCard
   $: eventOutcomes = event ? (() => {
@@ -24,28 +24,28 @@
       modifiers?: Array<{ resource: string; value: number }>;
     }> = [];
     
-    if (event.effects.criticalSuccess) {
+    if (event.outcomes.criticalSuccess) {
       outcomes.push({
         type: 'criticalSuccess',
-        description: event.effects.criticalSuccess.msg
+        description: event.outcomes.criticalSuccess.msg
       });
     }
-    if (event.effects.success) {
+    if (event.outcomes.success) {
       outcomes.push({
         type: 'success',
-        description: event.effects.success.msg
+        description: event.outcomes.success.msg
       });
     }
-    if (event.effects.failure) {
+    if (event.outcomes.failure) {
       outcomes.push({
         type: 'failure',
-        description: event.effects.failure.msg
+        description: event.outcomes.failure.msg
       });
     }
-    if (event.effects.criticalFailure) {
+    if (event.outcomes.criticalFailure) {
       outcomes.push({
         type: 'criticalFailure',
-        description: event.effects.criticalFailure.msg
+        description: event.outcomes.criticalFailure.msg
       });
     }
     
@@ -57,13 +57,13 @@
   
   // Get failure preview message (what happens if ignored)
   $: failurePreview = (() => {
-    if (!event?.effects) {
+    if (!event?.outcomes) {
       // Fallback for instances without event data
       return instance.description || 'This event cannot be resolved manually';
     }
     
     // Prefer critical failure, fallback to failure
-    const failureEffect = event.effects.criticalFailure || event.effects.failure;
+    const failureEffect = event.outcomes.criticalFailure || event.outcomes.failure;
     if (!failureEffect) return 'Unknown effect';
     
     return formatOutcomeMessage(failureEffect.msg, failureEffect.modifiers);

@@ -522,8 +522,11 @@ export class PipelineCoordinator {
               const rawName = interaction.component.name || 'Unknown';
               customComponentName = rawName.replace(/^Proxy<(.+)>$/, '$1');
             }
-            customResolutionProps = interaction.componentProps || {};
-            console.log(`✅ [PipelineCoordinator] Extracted custom component name: ${customComponentName}`);
+            customResolutionProps = {
+              ...(interaction.componentProps || {}),
+              componentId: interaction.id  // Store component ID for resolution data key
+            };
+            console.log(`✅ [PipelineCoordinator] Extracted custom component name: ${customComponentName}, ID: ${interaction.id}`);
             break;
           }
         }

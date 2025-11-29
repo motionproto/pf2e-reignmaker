@@ -221,7 +221,7 @@ export async function createUnrestPhaseController() {
       }
 
       // Get outcome data
-      const outcomeData = incident?.effects[outcome];
+      const outcomeData = incident?.outcomes[outcome];
       
       console.log('🔍 [resolveIncident] Incident:', incident?.id);
       console.log('🔍 [resolveIncident] Outcome:', outcome);
@@ -348,7 +348,7 @@ export async function createUnrestPhaseController() {
         ? 'success' 
         : outcome;
       
-      const outcomeData = incident.effects[effectiveOutcome];
+      const outcomeData = incident.outcomes[effectiveOutcome];
       
       return {
         msg: outcomeData?.msg || '',

@@ -85,9 +85,9 @@ export class CheckHandler {
         item.name,
         item.id,
         {
-          successEffect: item.effects?.success?.msg || 'Success',
-          failureEffect: item.effects?.failure?.msg || 'Failure',
-          criticalFailureEffect: item.effects?.criticalFailure?.msg || 'Critical Failure'
+          successEffect: item.outcomes?.success?.msg || 'Success',
+          failureEffect: item.outcomes?.failure?.msg || 'Failure',
+          criticalFailureEffect: item.outcomes?.criticalFailure?.msg || 'Critical Failure'
         },
         undefined  // actionId
         // Note: Modifiers are now preserved via module-scoped state in PF2eSkillService

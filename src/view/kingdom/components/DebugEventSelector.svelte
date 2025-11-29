@@ -1,4 +1,5 @@
 <script lang="ts">
+   import { onMount } from 'svelte';
    import { updateKingdom, kingdomData } from '../../../stores/KingdomStore';
    import { eventService } from '../../../controllers/events/event-loader';
    import { incidentLoader } from '../../../controllers/incidents/incident-loader';
@@ -27,9 +28,14 @@
          allItems = incidentLoader.getAllIncidents();
       }
       
-      // Find current index
+      // Find current index by extracting checkId from previewId
+      // previewId format: "T20-bandit-activity-1234567" -> checkId: "bandit-activity"
       if (currentItemId && allItems.length > 0) {
-         currentIndex = allItems.findIndex(item => item.id === currentItemId);
+         // Extract checkId from previewId (format: "T{turn}-{checkId}-{timestamp}")
+         const match = currentItemId.match(/^T\d+-(.+)-\d+$/);
+         const checkId = match ? match[1] : currentItemId;
+         
+         currentIndex = allItems.findIndex(item => item.id === checkId);
       } else {
          currentIndex = -1;
       }
@@ -38,6 +44,31 @@
    $: currentItem = currentIndex >= 0 ? allItems[currentIndex] : null;
    $: totalCount = allItems.length;
    $: displayIndex = currentIndex >= 0 ? currentIndex + 1 : 0;
+   
+   // Track if we've attempted auto-load to prevent repeated attempts
+   let autoLoadAttempted = false;
+   
+   // Auto-load first item when conditions are met (reactive)
+   // ONLY if no items exist yet for this phase
+   $: {
+      const kingdom = get(kingdomData);
+      const existingInstances = kingdom.pendingOutcomes?.filter(i => i.checkType === type) || [];
+      
+      if (!autoLoadAttempted && existingInstances.length === 0 && allItems.length > 0) {
+         autoLoadAttempted = true;
+         // Small delay to ensure phase initialization completes first
+         setTimeout(() => {
+            setActiveItem(allItems[0].id);
+         }, 150);
+      }
+   }
+   
+   // Reset auto-load flag when type changes (switching between incident/event)
+   let lastType = type;
+   $: if (type !== lastType) {
+      lastType = type;
+      autoLoadAttempted = false;
+   }
    
    async function navigatePrevious() {
       if (allItems.length === 0) return;
@@ -69,7 +100,46 @@
    }
    
    async function clearActive() {
-      await setActiveItem(null);
+      // Clear ALL instances of this type, not just the current one
+      const kingdom = get(kingdomData);
+      if (!kingdom.turnState) {
+         logger.warn('[DebugEventSelector] No turnState found, cannot clear items');
+         return;
+      }
+      
+      const outcomePreviewService = await createOutcomePreviewService();
+      const existing = outcomePreviewService.getPendingInstances(type, kingdom);
+      
+      for (const instance of existing) {
+         await outcomePreviewService.clearInstance(instance.previewId);
+      }
+      
+      // Clear turnState
+      if (type === 'event') {
+         await updateKingdom(kingdom => {
+            if (!kingdom.turnState) return;
+            kingdom.turnState.eventsPhase.eventRolled = false;
+            kingdom.turnState.eventsPhase.eventTriggered = false;
+            kingdom.turnState.eventsPhase.eventRoll = undefined;
+            kingdom.turnState.eventsPhase.eventId = null;
+            kingdom.turnState.eventsPhase.eventInstanceId = null;
+         });
+      } else {
+         await updateKingdom(kingdom => {
+            if (!kingdom.turnState) return;
+            kingdom.turnState.unrestPhase.incidentRolled = false;
+            kingdom.turnState.unrestPhase.incidentTriggered = false;
+            kingdom.turnState.unrestPhase.incidentRoll = undefined;
+         });
+      }
+      
+      // Reset auto-load flag and reload first item with fresh data
+      autoLoadAttempted = false;
+      setTimeout(() => {
+         if (allItems.length > 0) {
+            setActiveItem(allItems[0].id);
+         }
+      }, 200);
    }
    
    async function setActiveItem(itemId: string | null) {
@@ -93,10 +163,14 @@
                return;
             }
             
+            console.log('[DebugEventSelector] Loading event:', event.name);
+            console.log('[DebugEventSelector] Event outcomes:', event.outcomes);
+            console.log('[DebugEventSelector] Full event object keys:', Object.keys(event));
+            
             // Clear any existing event instances
             const existing = outcomePreviewService.getPendingInstances('event', kingdom);
             for (const instance of existing) {
-               await outcomePreviewService.clearInstance(instance.instanceId);
+               await outcomePreviewService.clearInstance(instance.previewId);
             }
             
             // Create new ActiveCheckInstance
@@ -106,6 +180,8 @@
                event,
                kingdom.currentTurn
             );
+            
+            console.log('[DebugEventSelector] Created event instance:', instanceId);
             
             // Update turnState for display purposes (roll number + event ID + instance ID)
             await updateKingdom(kingdom => {
@@ -117,12 +193,14 @@
                kingdom.turnState.eventsPhase.eventInstanceId = instanceId; // Store instance ID for lookup
                kingdom.eventDC = 15; // Reset DC (matches normal event trigger behavior)
             });
+            
+            console.log('[DebugEventSelector] Event loaded successfully');
 
          } else {
             // Clear event
             const existing = outcomePreviewService.getPendingInstances('event', kingdom);
             for (const instance of existing) {
-               await outcomePreviewService.clearInstance(instance.instanceId);
+               await outcomePreviewService.clearInstance(instance.previewId);
             }
             
             // Clear turnState AND reset phase step (step 0 = event check)
@@ -159,7 +237,7 @@
             // Clear any existing incident instances
             const existing = outcomePreviewService.getPendingInstances('incident', kingdom);
             for (const instance of existing) {
-               await outcomePreviewService.clearInstance(instance.instanceId);
+               await outcomePreviewService.clearInstance(instance.previewId);
             }
             
             // Create new ActiveCheckInstance
@@ -182,7 +260,7 @@
             // Clear incident
             const existing = outcomePreviewService.getPendingInstances('incident', kingdom);
             for (const instance of existing) {
-               await outcomePreviewService.clearInstance(instance.instanceId);
+               await outcomePreviewService.clearInstance(instance.previewId);
             }
             
             // Clear turnState AND reset phase step (step 1 = incident check)
@@ -236,7 +314,7 @@
       Random
    </button>
    
-   <button class="action-btn clear" on:click={clearActive} disabled={!currentItemId}>
+   <button class="action-btn clear" on:click={clearActive}>
       <i class="fas fa-times"></i>
       Clear All
    </button>

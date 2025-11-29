@@ -65,7 +65,8 @@ export async function updateInstanceResolutionState(
   }
 
   await actor.updateKingdomData((kingdom) => {
-    const instance = kingdom.activeCheckInstances?.find(i => i.instanceId === instanceId);
+    // ✅ Use pendingOutcomes (new) instead of activeCheckInstances (legacy)
+    const instance = kingdom.pendingOutcomes?.find(i => i.previewId === instanceId);
     if (!instance) {
       logger.warn(`⚠️ [ResolutionStateHelpers] Instance not found: ${instanceId}`);
       return;
@@ -92,6 +93,10 @@ export async function updateInstanceResolutionState(
       customComponentData: state.customComponentData ?? existing.customComponentData
     };
 
+    console.log('✅ [ResolutionStateHelpers] Updated instance resolution state:', {
+      instanceId,
+      resolutionState: instance.resolutionState
+    });
   });
 }
 
@@ -103,10 +108,10 @@ export async function clearInstanceResolutionState(instanceId: string): Promise<
   if (!actor) return;
 
   await actor.updateKingdomData((kingdom) => {
-    const instance = kingdom.activeCheckInstances?.find(i => i.instanceId === instanceId);
+    // ✅ Use pendingOutcomes (new) instead of activeCheckInstances (legacy)
+    const instance = kingdom.pendingOutcomes?.find(i => i.previewId === instanceId);
     if (instance) {
       instance.resolutionState = undefined;
-
     }
   });
 }

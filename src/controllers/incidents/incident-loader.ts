@@ -11,7 +11,7 @@ interface RawIncidentData {
     tier: string;  // "MINOR" | "MODERATE" | "MAJOR" from JSON
     description: string;
     skills: EventSkill[];
-    effects: {
+    outcomes: {
         criticalSuccess?: {
             msg: string;
             modifiers: any[];
@@ -59,7 +59,7 @@ export class IncidentLoader {
                 description: raw.description,
                 tier: raw.tier as 'minor' | 'moderate' | 'major', // Use tier from JSON (lowercase)
                 skills: raw.skills,
-                effects: {
+                outcomes: {
                     criticalSuccess: raw.outcomes.criticalSuccess ? {
                         msg: raw.outcomes.criticalSuccess.msg,
                         endsEvent: true,
@@ -160,13 +160,13 @@ export class IncidentLoader {
         incident: KingdomIncident, 
         result: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure'
     ): EventOutcome | null {
-        const effects = incident.effects;
-        if (!effects) {
-            logger.warn(`Incident ${incident.id} has no effects`);
+        const outcomes = incident.outcomes;
+        if (!outcomes) {
+            logger.warn(`Incident ${incident.id} has no outcomes`);
             return null;
         }
 
-        return effects[result] || null;
+        return outcomes[result] || null;
     }
 
     /**
@@ -176,12 +176,12 @@ export class IncidentLoader {
         incident: KingdomIncident, 
         result: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure'
     ): Record<string, number> {
-        const effects = incident.effects;
-        if (!effects || !effects[result]) {
+        const outcomes = incident.outcomes;
+        if (!outcomes || !outcomes[result]) {
             return {};
         }
 
-        const outcome = effects[result];
+        const outcome = outcomes[result];
         const appliedEffects: Record<string, number> = {};
 
         // Process modifiers

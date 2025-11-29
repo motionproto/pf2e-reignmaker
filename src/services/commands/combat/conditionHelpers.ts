@@ -62,6 +62,25 @@ export function calculateRandomNearbyHex(hexId: string, maxDistance: number = 3)
 }
 
 /**
+ * Remove existing effect with the given slug from actor
+ * Prevents stacking of deployment/training bonuses/penalties
+ * 
+ * @param actor - Army actor to remove effect from
+ * @param slug - Effect slug to remove
+ */
+export async function removeEffectFromActor(actor: any, slug: string): Promise<void> {
+  const existingEffects = actor.items.filter((item: any) => 
+    item.type === 'effect' && item.system?.slug === slug
+  );
+  
+  if (existingEffects.length > 0) {
+    const ids = existingEffects.map((e: any) => e.id);
+    await actor.deleteEmbeddedDocuments('Item', ids);
+    logger.info(`🗑️ Removed ${ids.length} existing effect(s) with slug "${slug}"`);
+  }
+}
+
+/**
  * Apply condition string to army actor
  * Parses condition strings like "+1 initiative (status bonus)", "fatigued", "enfeebled 1"
  * 
@@ -80,12 +99,17 @@ export async function applyConditionToActor(actor: any, conditionString: string)
     const match = lowerCondition.match(/([+-]?\d+)/);
     const bonus = match ? parseInt(match[1], 10) : (isPositive ? 1 : -1);
     
+    const slug = 'deploy-init';
+    
+    // Remove any existing deployment initiative effect
+    await removeEffectFromActor(actor, slug);
+    
     // Create initiative modifier effect
     await actor.createEmbeddedDocuments('Item', [{
       type: 'effect',
-      name: `Army Deployment: Initiative ${bonus > 0 ? '+' : ''}${bonus}`,
+      name: `Deploy Init ${bonus > 0 ? '+' : ''}${bonus}`,
       system: {
-        slug: 'army-deployment-initiative',
+        slug,
         rules: [{
           key: 'FlatModifier',
           selector: 'initiative',
@@ -106,11 +130,16 @@ export async function applyConditionToActor(actor: any, conditionString: string)
     const match = lowerCondition.match(/([+-]?\d+)/);
     const bonus = match ? parseInt(match[1], 10) : (isPositive ? 1 : -1);
     
+    const slug = 'deploy-saves';
+    
+    // Remove any existing deployment saves effect
+    await removeEffectFromActor(actor, slug);
+    
     await actor.createEmbeddedDocuments('Item', [{
       type: 'effect',
-      name: `Army Deployment: Saves ${bonus > 0 ? '+' : ''}${bonus}`,
+      name: `Deploy Saves ${bonus > 0 ? '+' : ''}${bonus}`,
       system: {
-        slug: 'army-deployment-saves',
+        slug,
         rules: [{
           key: 'FlatModifier',
           selector: 'saving-throw',
@@ -131,11 +160,16 @@ export async function applyConditionToActor(actor: any, conditionString: string)
     const match = lowerCondition.match(/([+-]?\d+)/);
     const bonus = match ? parseInt(match[1], 10) : (isPositive ? 1 : -1);
     
+    const slug = 'deploy-attack';
+    
+    // Remove any existing deployment attack effect
+    await removeEffectFromActor(actor, slug);
+    
     await actor.createEmbeddedDocuments('Item', [{
       type: 'effect',
-      name: `Army Deployment: Attack ${bonus > 0 ? '+' : ''}${bonus}`,
+      name: `Deploy Attack ${bonus > 0 ? '+' : ''}${bonus}`,
       system: {
-        slug: 'army-deployment-attack',
+        slug,
         rules: [{
           key: 'FlatModifier',
           selector: 'strike-attack-roll',

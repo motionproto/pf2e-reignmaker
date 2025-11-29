@@ -194,9 +194,15 @@ export class ArmyService {
       throw new Error(`Actor already linked to army: ${linkedArmy?.name || existingMetadata.armyId}`);
     }
     
+    // Update actor's prototype token to enable actorLink
+    await actor.update({
+      'prototypeToken.actorLink': true
+    });
+    logger.info(`✅ [ArmyService] Set actorLink: true on ${actor.name}`);
+    
     // Update army record
     await updateKingdom((k: KingdomData) => {
-      const army = k.armies.find((a: Army) => a.id === armyId);
+      const army = k.armies.find((a: any) => a.id === armyId);
       if (!army) {
         throw new Error('Army not found');
       }
@@ -245,7 +251,7 @@ export class ArmyService {
     
     // Remove actorId from army
     await updateKingdom((k: KingdomData) => {
-      const a = k.armies.find((army: Army) => army.id === armyId);
+      const a = k.armies.find((army: any) => army.id === armyId);
       if (a) {
         a.actorId = undefined;
       }
@@ -530,7 +536,8 @@ export class ArmyService {
         texture: {
           src: image // Token image
         },
-        displayName: 30 // Hover by Anyone
+        displayName: 30, // Hover by Anyone
+        actorLink: true // Link tokens to actor (changes to actor affect all tokens)
       },
       system: {
         details: {
@@ -845,6 +852,29 @@ export class ArmyService {
       itemId
     });
   }
+
+  /**
+   * Update an embedded item on an army actor (routes through GM via ActionDispatcher)
+   * Used for updating conditions/effects (e.g., increasing enfeebled value)
+   * 
+   * @param actorId - Army actor ID
+   * @param itemId - Item ID to update
+   * @param updateData - Data to update on the item
+   * @returns Updated item
+   */
+  async updateItemOnArmy(actorId: string, itemId: string, updateData: any): Promise<any> {
+    const { actionDispatcher } = await import('../ActionDispatcher');
+    
+    if (!actionDispatcher.isAvailable()) {
+      throw new Error('Action dispatcher not initialized. Please reload the game.');
+    }
+    
+    return await actionDispatcher.dispatch('updateItemOnArmy', {
+      actorId,
+      itemId,
+      updateData
+    });
+  }
   
   /**
    * Assign army to a settlement for support
@@ -867,7 +897,7 @@ export class ArmyService {
     }
     
     await updateKingdom((k: KingdomData) => {
-      const army = k.armies.find((a: Army) => a.id === armyId);
+      const army = k.armies.find((a: any) => a.id === armyId);
       if (!army) {
         throw new Error(`Army not found: ${armyId}`);
       }

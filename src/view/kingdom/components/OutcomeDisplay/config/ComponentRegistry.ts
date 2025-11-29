@@ -12,6 +12,8 @@ import RecruitArmyDialog from '../../RecruitArmyDialog.svelte';
 import OutfitArmyResolution from '../../OutfitArmyResolution.svelte';
 import TrainArmyResolution from '../../TrainArmyResolution.svelte';
 import DisbandArmyResolution from '../../DisbandArmyResolution.svelte';
+import TendWoundedResolution from '../components/TendWoundedResolution.svelte';
+import TendWoundedArmySelector from '../../../../actions/components/TendWoundedArmySelector.svelte';
 import BuildStructureDialog from '../../BuildStructureDialog/BuildStructureDialog.svelte';
 import RepairStructureDialog from '../../RepairStructure/RepairStructureDialog.svelte';
 import RepairCostChoice from '../../RepairStructure/RepairCostChoice.svelte';
@@ -26,6 +28,8 @@ export const COMPONENT_REGISTRY: Record<string, any> = {
   'OutfitArmyResolution': OutfitArmyResolution,
   'TrainArmyResolution': TrainArmyResolution,
   'DisbandArmyResolution': DisbandArmyResolution,
+  'TendWoundedResolution': TendWoundedResolution,
+  'TendWoundedArmySelector': TendWoundedArmySelector,
   'BuildStructureDialog': BuildStructureDialog,
   'RepairStructureDialog': RepairStructureDialog,
   'RepairCostChoice': RepairCostChoice,

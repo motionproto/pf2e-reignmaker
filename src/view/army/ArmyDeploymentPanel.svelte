@@ -145,9 +145,14 @@
         {/if}
       </div>
       <div class="result-actions">
-        <button class="btn-cancel" on:click={onCancel}>
-          <i class="fas fa-times"></i> Cancel
-        </button>
+        <div class="result-primary-actions">
+          <button class="btn-cancel" on:click={onCancel}>
+            <i class="fas fa-times"></i> Cancel
+          </button>
+          <button class="btn-confirm" on:click={onConfirm}>
+            <i class="fas fa-check"></i> Confirm
+          </button>
+        </div>
         <button 
           class="btn-reroll" 
           on:click={onReroll}
@@ -155,9 +160,6 @@
         >
           <i class="fas fa-star"></i> Reroll with Fame
           <span class="fame-count">({currentFame} left)</span>
-        </button>
-        <button class="btn-confirm" on:click={onConfirm}>
-          <i class="fas fa-check"></i> Confirm
         </button>
       </div>
     </div>
@@ -748,7 +750,12 @@
   
   .result-actions {
     display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+  }
+  
+  .result-primary-actions {
+    display: flex;
     gap: var(--space-8);
   }
 </style>
-

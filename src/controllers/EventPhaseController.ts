@@ -265,7 +265,7 @@ export async function createEventPhaseController(_eventService?: any) {
                 return { success: false, error: 'Event not found' };
             }
             
-            const outcomeData = event.effects[outcome];
+            const outcomeData = event.outcomes[outcome];
             const { getKingdomActor } = await import('../stores/KingdomStore');
             const actor = getKingdomActor();
             const kingdom = actor?.getKingdomData();
@@ -558,7 +558,7 @@ export async function createEventPhaseController(_eventService?: any) {
          * (Follows same pattern as ActionPhaseController.getActionModifiers)
          */
         getEventModifiers(event: EventData, outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure') {
-            const outcomeData = event.effects[outcome];
+            const outcomeData = event.outcomes[outcome];
             
             return {
                 msg: outcomeData?.msg || '',

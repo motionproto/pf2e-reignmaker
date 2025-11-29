@@ -1,5 +1,5 @@
 import type { ActiveModifier } from '../../models/Modifiers';
-import type { EventSkill, EventOutcome, EventModifier, EventEffects, EventTrait } from '../../types/events';
+import type { EventSkill, EventOutcome, EventModifier, EventOutcomes, EventTrait } from '../../types/events';
 import { getEventDisplayName } from '../../types/event-helpers';
 import eventsData from '../../data-compiled/events.json';
 import { logger } from '../../utils/Logger';
@@ -46,7 +46,7 @@ export interface EventData {
     tier: 'event' | 'minor' | 'moderate' | 'major' | number;
     description: string;
     skills?: EventSkill[];
-    effects: EventEffects;
+    outcomes: EventOutcomes;
     traits?: EventTrait[];  // Event traits (beneficial, dangerous, ongoing)
     ifUnresolved?: UnresolvedEvent;  // DEPRECATED: kept for backward compatibility
 }
@@ -129,27 +129,27 @@ export class EventService {
      * Get outcome for a specific result
      */
     getEventOutcome(event: EventData, result: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure'): EventOutcome | null {
-        // Get outcomes from the effects object
-        const effects = event.effects;
-        if (!effects) {
-            logger.warn(`Event ${event.id} has no effects`);
+        // Get outcome from the outcomes object
+        const outcomes = event.outcomes;
+        if (!outcomes) {
+            logger.warn(`Event ${event.id} has no outcomes`);
             return null;
         }
 
-        return effects[result] || null;
+        return outcomes[result] || null;
     }
 
     /**
      * Apply event outcome effects
      */
     applyEventOutcome(event: EventData, result: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure'): Record<string, number> {
-        // Get the outcome from the effects
-        const effects = event.effects;
-        if (!effects || !effects[result]) {
+        // Get the outcome from the outcomes
+        const outcomes = event.outcomes;
+        if (!outcomes || !outcomes[result]) {
             return {};
         }
 
-        const outcome = effects[result];
+        const outcome = outcomes[result];
         const appliedEffects: Record<string, number> = {};
 
         // Process modifiers using the new EventModifier structure

@@ -262,7 +262,10 @@
          const actor = await Actor.create({
             name: army.name,
             type: 'npc',
-            folder: null
+            folder: null,
+            prototypeToken: {
+               actorLink: true // Link tokens to actor (changes to actor affect all tokens)
+            }
          });
          
          if (actor) {

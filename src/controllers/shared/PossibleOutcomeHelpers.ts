@@ -22,6 +22,72 @@ export interface OutcomeEffects {
   criticalFailure?: { msg?: string; description?: string; modifiers?: EventModifier[]; manualEffects?: string[]; gameCommands?: any[] };
 }
 
+/**
+ * Build PossibleOutcome array from outcomes object
+ * Handles missing outcomes gracefully:
+ * - If criticalSuccess is missing, uses success outcome
+ * - Skips any other missing outcomes
+ * - Formats messages with placeholder replacement
+ * 
+ * @param outcomes - The outcomes object with outcome keys (can be called "effects" or "outcomes" in the data)
+ * @returns Array of PossibleOutcome objects for display
+ */
+export function buildPossibleOutcomes(outcomes?: OutcomeEffects): PossibleOutcome[] {
+  if (!outcomes) return [];
+  
+  const results: PossibleOutcome[] = [];
+  
+  // Critical Success - fallback to success if missing
+  const critSuccessEffect = outcomes.criticalSuccess || outcomes.success;
+  if (critSuccessEffect) {
+    results.push({
+      result: 'criticalSuccess',
+      label: 'Critical Success',
+      description: critSuccessEffect.msg || critSuccessEffect.description || '',
+      modifiers: critSuccessEffect.modifiers || [],
+      manualEffects: critSuccessEffect.manualEffects || [],
+      gameCommands: critSuccessEffect.gameCommands || []
+    });
+  }
+  
+  // Success
+  if (outcomes.success) {
+    results.push({
+      result: 'success',
+      label: 'Success',
+      description: outcomes.success.msg || outcomes.success.description || '',
+      modifiers: outcomes.success.modifiers || [],
+      manualEffects: outcomes.success.manualEffects || [],
+      gameCommands: outcomes.success.gameCommands || []
+    });
+  }
+  
+  // Failure
+  if (outcomes.failure) {
+    results.push({
+      result: 'failure',
+      label: 'Failure',
+      description: outcomes.failure.msg || outcomes.failure.description || '',
+      modifiers: outcomes.failure.modifiers || [],
+      manualEffects: outcomes.failure.manualEffects || [],
+      gameCommands: outcomes.failure.gameCommands || []
+    });
+  }
+  
+  // Critical Failure
+  if (outcomes.criticalFailure) {
+    results.push({
+      result: 'criticalFailure',
+      label: 'Critical Failure',
+      description: outcomes.criticalFailure.msg || outcomes.criticalFailure.description || '',
+      modifiers: outcomes.criticalFailure.modifiers || [],
+      manualEffects: outcomes.criticalFailure.manualEffects || [],
+      gameCommands: outcomes.criticalFailure.gameCommands || []
+    });
+  }
+  
+  return results;
+}
 
 /**
  * Format an outcome message with its modifiers for display
@@ -56,69 +122,3 @@ export function formatOutcomeMessage(message: string, modifiers?: any[]): string
   return `${message} (${modifierText})`;
 }
 
-/**
- * Build PossibleOutcome array from effects object
- * Handles missing outcomes gracefully:
- * - If criticalSuccess is missing, uses success effect
- * - Skips any other missing outcomes
- * - Formats messages with placeholder replacement
- * 
- * @param effects - The effects object with outcome keys
- * @returns Array of PossibleOutcome objects for display
- */
-export function buildPossibleOutcomes(effects?: OutcomeEffects): PossibleOutcome[] {
-  if (!effects) return [];
-  
-  const outcomes: PossibleOutcome[] = [];
-  
-  // Critical Success - fallback to success if missing
-  const critSuccessEffect = effects.criticalSuccess || effects.success;
-  if (critSuccessEffect) {
-    outcomes.push({
-      result: 'criticalSuccess',
-      label: 'Critical Success',
-      description: critSuccessEffect.msg || critSuccessEffect.description || '',
-      modifiers: critSuccessEffect.modifiers || [],
-      manualEffects: critSuccessEffect.manualEffects || [],
-      gameCommands: critSuccessEffect.gameCommands || []
-    });
-  }
-  
-  // Success
-  if (effects.success) {
-    outcomes.push({
-      result: 'success',
-      label: 'Success',
-      description: effects.success.msg || effects.success.description || '',
-      modifiers: effects.success.modifiers || [],
-      manualEffects: effects.success.manualEffects || [],
-      gameCommands: effects.success.gameCommands || []
-    });
-  }
-  
-  // Failure
-  if (effects.failure) {
-    outcomes.push({
-      result: 'failure',
-      label: 'Failure',
-      description: effects.failure.msg || effects.failure.description || '',
-      modifiers: effects.failure.modifiers || [],
-      manualEffects: effects.failure.manualEffects || [],
-      gameCommands: effects.failure.gameCommands || []
-    });
-  }
-  
-  // Critical Failure
-  if (effects.criticalFailure) {
-    outcomes.push({
-      result: 'criticalFailure',
-      label: 'Critical Failure',
-      description: effects.criticalFailure.msg || effects.criticalFailure.description || '',
-      modifiers: effects.criticalFailure.modifiers || [],
-      manualEffects: effects.criticalFailure.manualEffects || [],
-      gameCommands: effects.criticalFailure.gameCommands || []
-    });
-  }
-  
-  return outcomes;
-}

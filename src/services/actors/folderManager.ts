@@ -258,6 +258,36 @@ export async function removeItemFromActor(actorId: string, itemId: string): Prom
 }
 
 /**
+ * Update an embedded item on an actor
+ * Used for updating conditions/effects (e.g., increasing enfeebled value)
+ * 
+ * @param actorId - Actor ID
+ * @param itemId - Item ID to update
+ * @param updateData - Data to update on the item (e.g., { 'system.badge.value': 2 })
+ * @returns Updated item
+ */
+export async function updateItemOnActor(actorId: string, itemId: string, updateData: any): Promise<any> {
+  const game = (globalThis as any).game;
+  
+  const actor = game?.actors?.get(actorId);
+  if (!actor) {
+    throw new Error(`Actor not found: ${actorId}`);
+  }
+  
+  const item = actor.items.get(itemId);
+  if (!item) {
+    throw new Error(`Item not found: ${itemId}`);
+  }
+  
+  const itemName = item.name;
+  await item.update(updateData);
+  
+  logger.info(`✅ [ActorManager] Updated item "${itemName}" on actor "${actor.name}"`, updateData);
+  
+  return item;
+}
+
+/**
  * Get all items from an actor
  * 
  * @param actorId - Actor ID

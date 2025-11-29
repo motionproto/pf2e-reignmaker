@@ -7,6 +7,7 @@
 
 import { logger } from '../../utils/Logger';
 import { getKingdomActor } from '../../stores/KingdomStore';
+import { removeEffectFromActor } from '../../services/commands/combat/conditionHelpers';
 
 /**
  * Execute army training
@@ -51,39 +52,20 @@ export async function trainArmyExecution(
     logger.info(`⚠️ [trainArmyExecution] Training failed - no level increase`);
   }
 
-  // Helper function to remove effect by slug
-  async function removeEffectBySlug(actorId: string, slug: string): Promise<void> {
-    const game = (globalThis as any).game;
-    const actor = game?.actors?.get(actorId);
-    if (!actor) {
-      logger.warn(`⚠️ [trainArmyExecution] Actor not found: ${actorId}`);
-      return;
-    }
-
-    // Find item by slug - actor.items is a Collection/Map
-    const items = Array.from(actor.items.values());
-    logger.info(`🔍 [trainArmyExecution] Searching for effect with slug "${slug}" in ${items.length} items on actor "${actor.name}"`);
-    
-    const item = items.find((i: any) => {
-      const itemSlug = i.system?.slug;
-      return itemSlug === slug;
-    });
-    
-    if (item) {
-      logger.info(`🗑️ [trainArmyExecution] Found effect "${item.name}" (id: ${item.id}), removing...`);
-      // Use armyService to remove item (handles permissions and HMR properly)
-      await armyService.removeItemFromArmy(actorId, item.id);
-      logger.info(`✅ [trainArmyExecution] Successfully removed effect "${item.name}" (slug: "${slug}")`);
-    } else {
-      logger.info(`ℹ️ [trainArmyExecution] No effect found with slug "${slug}" on actor "${actor.name}"`);
-    }
+  // Get Foundry actor for applying effects
+  const game = (globalThis as any).game;
+  const armyActor = game?.actors?.get(army.actorId);
+  if (!armyActor) {
+    logger.warn(`⚠️ [trainArmyExecution] Actor not found: ${army.actorId}`);
+    return;
   }
 
   // Apply training effects based on outcome (permanent effects)
   // ✅ FIX: Use armyService.addItemToArmy like outfit-army does (works with HMR)
   if (outcome === 'criticalSuccess') {
-    // Remove Poorly Trained if it exists
-    await removeEffectBySlug(army.actorId, 'poorly-trained');
+    // Remove Poorly Trained and existing Well Trained if they exist (prevents stacking)
+    await removeEffectFromActor(armyActor, 'poorly-trained');
+    await removeEffectFromActor(armyActor, 'well-trained');
     
     // +1 to all saving throws (Well Trained effect - permanent)
     const wellTrainedEffect = {
@@ -118,8 +100,9 @@ export async function trainArmyExecution(
     // Success: Only level up, no additional effect
     logger.info(`✨ [trainArmyExecution] Army leveled up (no additional training effect)`);
   } else if (outcome === 'criticalFailure') {
-    // Remove Well Trained if it exists
-    await removeEffectBySlug(army.actorId, 'well-trained');
+    // Remove Well Trained and existing Poorly Trained if they exist (prevents stacking)
+    await removeEffectFromActor(armyActor, 'well-trained');
+    await removeEffectFromActor(armyActor, 'poorly-trained');
     
     // -1 to all saving throws (Poorly Trained - permanent)
     const poorlyTrainedEffect = {

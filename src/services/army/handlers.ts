@@ -5,7 +5,7 @@
 
 import { actionDispatcher } from '../ActionDispatcher';
 import { armyService } from './index';
-import { updateActor, addItemToActor, removeItemFromActor } from '../actors/folderManager';
+import { updateActor, addItemToActor, removeItemFromActor, updateItemOnActor } from '../actors/folderManager';
 import type { ActorUpdateData, ItemData } from '../actors/folderManager';
 
 /**
@@ -96,6 +96,18 @@ export function registerArmyHandlers(): void {
 
     await removeItemFromActor(data.actorId, data.itemId);
 
+  });
+
+  // Register updateItemOnArmy handler
+  actionDispatcher.register('updateItemOnArmy', async (data: {
+    actorId: string;
+    itemId: string;
+    updateData: any;
+  }) => {
+
+    const item = await updateItemOnActor(data.actorId, data.itemId, data.updateData);
+
+    return item;
   });
 
   console.log('✅ [ArmyHandlers] All army handlers registered successfully');

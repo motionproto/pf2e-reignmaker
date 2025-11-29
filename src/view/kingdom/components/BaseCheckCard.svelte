@@ -117,7 +117,7 @@
   $: isGM = (globalThis as any).game?.user?.isGM || false;
   
   // Computed: Don't show aid button on aid actions themselves
-  $: isAidAction = id.startsWith('aid-');
+  $: isAidAction = id?.startsWith('aid-') || false;
   $: effectiveShowAidButton = showAidButton && !isAidAction;
   
   const dispatch = createEventDispatcher();
@@ -365,7 +365,7 @@
   }
   
   // Format possible outcomes for OutcomesSection (actions only)
-  $: formattedOutcomes = outcomes.map(o => ({
+  $: formattedOutcomes = (outcomes || []).map(o => ({
     result: o.type,
     label: o.type === 'criticalSuccess' ? 'Critical Success' :
            o.type === 'success' ? 'Success' :
@@ -426,7 +426,7 @@
         {/if}
         
         <!-- Before resolution: Show skills and possible outcomes -->
-        {#if possibleOutcomes.length > 0 || (expandable && formattedOutcomes.length > 0)}
+        {#if (possibleOutcomes?.length || 0) > 0 || (expandable && (formattedOutcomes?.length || 0) > 0)}
           {#if expandable}
             <!-- Actions use OutcomesSection -->
             <OutcomesSection possibleOutcomes={formattedOutcomes} />

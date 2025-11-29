@@ -25,9 +25,9 @@
    let checkHandler: any;
    let possibleOutcomes: any[] = [];
    
-   // NEW ARCHITECTURE: Read from ActiveCheckInstance instead of turnState
+   // NEW ARCHITECTURE: Read from OutcomePreview (pendingOutcomes) instead of legacy activeCheckInstances
    // Don't filter by status - show all incidents (clearCompleted handles cleanup at phase start)
-   $: activeIncidents = $kingdomData.activeCheckInstances?.filter(i => i.checkType === 'incident') || [];
+   $: activeIncidents = $kingdomData?.pendingOutcomes?.filter(i => i.checkType === 'incident') || [];
    $: currentIncidentInstance = activeIncidents[0] || null;
    $: incidentResolution = currentIncidentInstance?.appliedOutcome || null;
    $: incidentResolved = !!incidentResolution;
@@ -60,13 +60,13 @@
    let currentIncident: any = null;
    
    // Generate unique checkId from instance ID to force component remount
-   $: incidentCheckId = currentIncidentInstance?.instanceId || null;
+   $: incidentCheckId = currentIncidentInstance?.previewId || null;
    
    // Load incident from instance checkData (already loaded in instance)
    $: {
       if (currentIncidentInstance) {
          currentIncident = currentIncidentInstance.checkData;
-
+         console.log('[UnrestPhase] Loaded currentIncident:', currentIncident?.name, 'has outcomes:', !!currentIncident?.outcomes);
       } else {
          currentIncident = null;
       }
@@ -74,6 +74,7 @@
    
    // NEW ARCHITECTURE: Show incident result if we have an active instance
    $: showIncidentResult = activeIncidents.length > 0;
+   $: console.log('[UnrestPhase] showIncidentResult:', showIncidentResult, 'activeIncidents:', activeIncidents.length, 'unrestPhaseController:', !!unrestPhaseController, 'incidentCheckId:', incidentCheckId);
    
    // Restore roll values for display when incident is rolled
    $: if ($kingdomData.turnState?.unrestPhase?.incidentRoll !== undefined) {
@@ -113,43 +114,47 @@
    }
    
    // Build possible outcomes for the incident (synchronous - must be available for render)
-   $: possibleOutcomes = currentIncident ? buildPossibleOutcomes(currentIncident.effects) : [];
+   $: possibleOutcomes = currentIncident ? buildPossibleOutcomes(currentIncident.outcomes) : [];
+   $: console.log('[UnrestPhase] possibleOutcomes:', possibleOutcomes.length, possibleOutcomes);
    
    // Build outcomes array for BaseCheckCard
-   $: incidentOutcomes = currentIncident ? (() => {
+   $: incidentOutcomes = (currentIncident && currentIncident.outcomes) ? (() => {
+      console.log('[UnrestPhase] Building incidentOutcomes from:', currentIncident.outcomes);
       const outcomes: Array<{
          type: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
          description: string;
          modifiers?: Array<{ resource: string; value: number }>;
       }> = [];
       
-      if (currentIncident.effects.criticalSuccess) {
+      if (currentIncident.outcomes.criticalSuccess) {
          outcomes.push({
             type: 'criticalSuccess',
-            description: currentIncident.effects.criticalSuccess.msg
+            description: currentIncident.outcomes.criticalSuccess.msg
          });
       }
-      if (currentIncident.effects.success) {
+      if (currentIncident.outcomes.success) {
          outcomes.push({
             type: 'success',
-            description: currentIncident.effects.success.msg
+            description: currentIncident.outcomes.success.msg
          });
       }
-      if (currentIncident.effects.failure) {
+      if (currentIncident.outcomes.failure) {
          outcomes.push({
             type: 'failure',
-            description: currentIncident.effects.failure.msg
+            description: currentIncident.outcomes.failure.msg
          });
       }
-      if (currentIncident.effects.criticalFailure) {
+      if (currentIncident.outcomes.criticalFailure) {
          outcomes.push({
             type: 'criticalFailure',
-            description: currentIncident.effects.criticalFailure.msg
+            description: currentIncident.outcomes.criticalFailure.msg
          });
       }
       
+      console.log('[UnrestPhase] Built incidentOutcomes:', outcomes.length, outcomes);
       return outcomes;
    })() : [];
+   $: console.log('[UnrestPhase] Final incidentOutcomes:', incidentOutcomes.length);
    
    // Initialize phase steps when component mounts
    onMount(async () => {
@@ -460,13 +465,13 @@
    {/if}
    
    <!-- Step 2: Incident Results -->
+   <!-- Debug Incident Selector (GM Only) - Always visible for GMs to browse incidents -->
+   {#if isGM}
+      <DebugEventSelector type="incident" currentItemId={currentIncidentInstance?.previewId || null} />
+   {/if}
+   
    {#if showIncidentResult}
       {#if currentIncident}
-         <!-- Debug Incident Selector (GM Only) - Positioned directly above incident card -->
-         {#if isGM}
-            <DebugEventSelector type="incident" currentItemId={currentIncidentInstance?.checkId || null} />
-         {/if}
-         
          <!-- Use BaseCheckCard for incident resolution - only show when controller is ready -->
          {#if unrestPhaseController && incidentCheckId}
             {#key incidentCheckId}
@@ -489,7 +494,6 @@
                         showAidButton={false}
                         resolved={incidentResolved}
                         resolution={incidentResolution}
-                        primaryButtonLabel="Apply Result"
                         skillSectionTitle="Choose Your Response:"
                         {hideUntrainedSkills}
                         on:executeSkill={handleExecuteSkill}
