@@ -29,23 +29,58 @@ export const workStoppagePipeline: CheckPipeline = {
     failure: {
       description: 'Work stoppage halts production.',
       modifiers: [
-        { type: 'choice', resources: ["lumber", "ore", "stone"], value: 1, negative: true, duration: 'immediate' }
+        { type: 'choice-buttons', resources: ["lumber", "ore", "stone"], value: 1, negative: true, duration: 'immediate' }
       ]
     },
     criticalFailure: {
       description: 'Widespread work stoppage causes chaos.',
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
-        { type: 'choice', resources: ["lumber", "ore", "stone"], value: 2, negative: true, duration: 'immediate' },
+        { type: 'choice-buttons', resources: ["lumber", "ore", "stone"], value: 2, negative: true, duration: 'immediate' },
       ]
     },
   },
 
   preview: {
+    calculate: (ctx) => {
+      const resources = [];
+      const outcomeBadges = [];
+
+      // Failure: lose 1 of chosen resource
+      if (ctx.outcome === 'failure') {
+        outcomeBadges.push({
+          icon: 'fa-industry',
+          prefix: 'Lose',
+          value: { type: 'static', value: 1 },
+          suffix: 'of chosen resource',
+          variant: 'negative'
+        });
+      }
+
+      // Critical Failure: 1 unrest + lose 2 of chosen resource
+      if (ctx.outcome === 'criticalFailure') {
+        resources.push({ resource: 'unrest', value: 1 });
+        outcomeBadges.push({
+          icon: 'fa-industry',
+          prefix: 'Lose',
+          value: { type: 'static', value: 2 },
+          suffix: 'of chosen resource',
+          variant: 'negative'
+        });
+      }
+
+      return {
+        resources,
+        outcomeBadges,
+        warnings: ctx.outcome === 'failure' || ctx.outcome === 'criticalFailure'
+          ? ['Choose which resource to lose: Lumber, Ore, or Stone']
+          : []
+      };
+    }
   },
 
   execute: async (ctx) => {
-    // Apply modifiers from outcome
+    // Apply modifiers from outcome - choice will be resolved by UI before this
     await applyPipelineModifiers(workStoppagePipeline, ctx.outcome);
     return { success: true };
   }

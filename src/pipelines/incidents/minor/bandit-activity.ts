@@ -42,11 +42,53 @@ export const banditActivityPipeline: CheckPipeline = {
   },
 
   preview: {
+    calculate: (ctx) => {
+      const resources = [];
+      const outcomeBadges = [];
+
+      // Failure: 1d4 gold loss
+      if (ctx.outcome === 'failure') {
+        outcomeBadges.push({
+          icon: 'fa-coins',
+          prefix: 'Lose',
+          value: { type: 'dice', formula: '1d4' },
+          suffix: 'Gold',
+          variant: 'negative'
+        });
+      }
+
+      // Critical Failure: 2d4 gold loss + worksite destroyed
+      if (ctx.outcome === 'criticalFailure') {
+        outcomeBadges.push({
+          icon: 'fa-coins',
+          prefix: 'Lose',
+          value: { type: 'dice', formula: '2d4' },
+          suffix: 'Gold',
+          variant: 'negative'
+        });
+        outcomeBadges.push({
+          icon: 'fa-hammer',
+          prefix: '',
+          value: { type: 'text', text: '1 worksite destroyed' },
+          suffix: '',
+          variant: 'negative'
+        });
+      }
+
+      return {
+        resources,
+        outcomeBadges,
+        warnings: ctx.outcome === 'criticalFailure'
+          ? ['One random ongoing worksite will be destroyed (remove all progress)']
+          : []
+      };
+    }
   },
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
     await applyPipelineModifiers(banditActivityPipeline, ctx.outcome);
+    // Note: destroyWorksite command not implemented - handled as manual effect
     return { success: true };
   }
 };

@@ -43,11 +43,60 @@ export const riotPipeline: CheckPipeline = {
   },
 
   preview: {
+    calculate: (ctx) => {
+      const resources = [];
+      const outcomeBadges = [];
+
+      // Failure: 1 unrest + damage 1 structure
+      if (ctx.outcome === 'failure') {
+        resources.push({ resource: 'unrest', value: 1 });
+        outcomeBadges.push({
+          icon: 'fa-home',
+          prefix: '',
+          value: { type: 'text', text: '1 structure damaged' },
+          suffix: '',
+          variant: 'negative'
+        });
+      }
+
+      // Critical Failure: 1 unrest + destroy/downgrade 1 structure
+      if (ctx.outcome === 'criticalFailure') {
+        resources.push({ resource: 'unrest', value: 1 });
+        outcomeBadges.push({
+          icon: 'fa-home',
+          prefix: '',
+          value: { type: 'text', text: '1 structure downgraded and damaged' },
+          suffix: '',
+          variant: 'negative'
+        });
+      }
+
+      return {
+        resources,
+        outcomeBadges,
+        warnings: []
+      };
+    }
   },
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
     await applyPipelineModifiers(riotPipeline, ctx.outcome);
+
+    const { createGameCommandsResolver } = await import('../../services/GameCommandsResolver');
+    const resolver = await createGameCommandsResolver();
+
+    // Failure: damage 1 structure
+    if (ctx.outcome === 'failure') {
+      await resolver.damageStructure(undefined, undefined, 1);
+    }
+
+    // Critical failure: destroy/downgrade and damage 1 structure
+    if (ctx.outcome === 'criticalFailure') {
+      // Destroy reduces tier by 1, or removes if tier 0
+      await resolver.destroyStructure(undefined, undefined, 1);
+    }
+
     return { success: true };
   }
 };

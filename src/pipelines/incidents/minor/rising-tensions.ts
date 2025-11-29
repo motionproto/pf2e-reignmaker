@@ -41,6 +41,26 @@ export const risingTensionsPipeline: CheckPipeline = {
   },
 
   preview: {
+    calculate: (ctx) => {
+      const resources = [];
+      const outcomeBadges = [];
+
+      // Failure: 1 unrest
+      if (ctx.outcome === 'failure') {
+        resources.push({ resource: 'unrest', value: 1 });
+      }
+
+      // Critical Failure: 2 unrest
+      if (ctx.outcome === 'criticalFailure') {
+        resources.push({ resource: 'unrest', value: 2 });
+      }
+
+      return {
+        resources,
+        outcomeBadges,
+        warnings: []
+      };
+    }
   },
 
   execute: async (ctx) => {

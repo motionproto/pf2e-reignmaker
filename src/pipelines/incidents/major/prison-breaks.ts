@@ -36,11 +36,61 @@ export const prisonBreaksPipeline: CheckPipeline = {
   },
 
   preview: {
+    calculate: (ctx) => {
+      const resources = [];
+      const outcomeBadges = [];
+
+      // Failure: many criminals released
+      if (ctx.outcome === 'failure') {
+        outcomeBadges.push({
+          icon: 'fa-lock-open',
+          prefix: '',
+          value: { type: 'text', text: 'Many prisoners escape' },
+          suffix: '',
+          variant: 'negative'
+        });
+      }
+
+      // Critical Failure: all criminals released
+      if (ctx.outcome === 'criticalFailure') {
+        outcomeBadges.push({
+          icon: 'fa-lock-open',
+          prefix: '',
+          value: { type: 'text', text: 'All prisoners escape' },
+          suffix: '',
+          variant: 'negative'
+        });
+      }
+
+      return {
+        resources,
+        outcomeBadges,
+        warnings: ctx.outcome === 'criticalFailure'
+          ? ['All imprisoned NPCs will be released']
+          : ctx.outcome === 'failure'
+            ? ['Half of imprisoned NPCs will be released']
+            : []
+      };
+    }
   },
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
     await applyPipelineModifiers(prisonBreaksPipeline, ctx.outcome);
+
+    const { createGameCommandsResolver } = await import('../../services/GameCommandsResolver');
+    const resolver = await createGameCommandsResolver();
+
+    // Failure: release half of imprisoned NPCs
+    if (ctx.outcome === 'failure') {
+      await resolver.releaseImprisoned(50);
+    }
+
+    // Critical Failure: release all imprisoned NPCs
+    if (ctx.outcome === 'criticalFailure') {
+      await resolver.releaseImprisoned('all');
+    }
+
     return { success: true };
   }
 };

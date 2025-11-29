@@ -39,6 +39,39 @@ export const internationalCrisisPipeline: CheckPipeline = {
   },
 
   preview: {
+    calculate: (ctx) => {
+      const resources = [];
+      const outcomeBadges = [];
+
+      // Failure: No modifiers but diplomatic relations damaged (text badge)
+      if (ctx.outcome === 'failure') {
+        outcomeBadges.push({
+          icon: 'fa-flag',
+          prefix: '',
+          value: { type: 'text', text: 'Diplomatic relations severely damaged' },
+          suffix: '',
+          variant: 'negative'
+        });
+      }
+
+      // Critical Failure: 1 fame loss
+      if (ctx.outcome === 'criticalFailure') {
+        resources.push({ resource: 'fame', value: -1 });
+        outcomeBadges.push({
+          icon: 'fa-flag',
+          prefix: '',
+          value: { type: 'text', text: 'Multiple kingdoms turn hostile' },
+          suffix: '',
+          variant: 'negative'
+        });
+      }
+
+      return {
+        resources,
+        outcomeBadges,
+        warnings: []
+      };
+    }
   },
 
   execute: async (ctx) => {

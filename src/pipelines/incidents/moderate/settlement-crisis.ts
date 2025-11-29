@@ -40,11 +40,58 @@ export const settlementCrisisPipeline: CheckPipeline = {
   },
 
   preview: {
+    calculate: (ctx) => {
+      const resources = [];
+      const outcomeBadges = [];
+
+      // Failure: damage 1 random structure
+      if (ctx.outcome === 'failure') {
+        outcomeBadges.push({
+          icon: 'fa-home',
+          prefix: '',
+          value: { type: 'text', text: '1 structure may be damaged' },
+          suffix: '',
+          variant: 'negative'
+        });
+      }
+
+      // Critical Failure: 1 unrest + settlement loses a level
+      if (ctx.outcome === 'criticalFailure') {
+        resources.push({ resource: 'unrest', value: 1 });
+        outcomeBadges.push({
+          icon: 'fa-city',
+          prefix: '',
+          value: { type: 'text', text: 'Settlement loses 1 level' },
+          suffix: '',
+          variant: 'negative'
+        });
+      }
+
+      return {
+        resources,
+        outcomeBadges,
+        warnings: ctx.outcome === 'criticalFailure'
+          ? ['A random settlement will lose one level (minimum level 1)']
+          : []
+      };
+    }
   },
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
     await applyPipelineModifiers(settlementCrisisPipeline, ctx.outcome);
+
+    const { createGameCommandsResolver } = await import('../../services/GameCommandsResolver');
+    const resolver = await createGameCommandsResolver();
+
+    // Failure: damage 1 structure in a random settlement
+    if (ctx.outcome === 'failure') {
+      await resolver.damageStructure(undefined, undefined, 1);
+    }
+
+    // Critical failure: settlement loses a level (handled as manual effect for now)
+    // Note: downgradeSettlement command not yet implemented
+
     return { success: true };
   }
 };

@@ -43,11 +43,71 @@ export const economicCrashPipeline: CheckPipeline = {
   },
 
   preview: {
+    calculate: (ctx) => {
+      const resources = [];
+      const outcomeBadges = [];
+
+      // Failure: 2d6 gold loss + damage highest commerce structure
+      if (ctx.outcome === 'failure') {
+        outcomeBadges.push({
+          icon: 'fa-coins',
+          prefix: 'Lose',
+          value: { type: 'dice', formula: '2d6' },
+          suffix: 'Gold',
+          variant: 'negative'
+        });
+        outcomeBadges.push({
+          icon: 'fa-store',
+          prefix: '',
+          value: { type: 'text', text: 'Commerce structure damaged' },
+          suffix: '',
+          variant: 'negative'
+        });
+      }
+
+      // Critical Failure: 4d6 gold loss + destroy/downgrade commerce structure
+      if (ctx.outcome === 'criticalFailure') {
+        outcomeBadges.push({
+          icon: 'fa-coins',
+          prefix: 'Lose',
+          value: { type: 'dice', formula: '4d6' },
+          suffix: 'Gold',
+          variant: 'negative'
+        });
+        outcomeBadges.push({
+          icon: 'fa-store',
+          prefix: '',
+          value: { type: 'text', text: 'Commerce structure downgraded' },
+          suffix: '',
+          variant: 'negative'
+        });
+      }
+
+      return {
+        resources,
+        outcomeBadges,
+        warnings: []
+      };
+    }
   },
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
     await applyPipelineModifiers(economicCrashPipeline, ctx.outcome);
+
+    const { createGameCommandsResolver } = await import('../../services/GameCommandsResolver');
+    const resolver = await createGameCommandsResolver();
+
+    // Failure: damage highest tier commerce structure
+    if (ctx.outcome === 'failure') {
+      await resolver.damageStructure(undefined, undefined, 1);
+    }
+
+    // Critical failure: destroy/downgrade highest tier commerce structure
+    if (ctx.outcome === 'criticalFailure') {
+      await resolver.destroyStructure('commerce', 'highest', 1);
+    }
+
     return { success: true };
   }
 };

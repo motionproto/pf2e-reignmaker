@@ -43,11 +43,55 @@ export const diseaseOutbreakPipeline: CheckPipeline = {
   },
 
   preview: {
+    calculate: (ctx) => {
+      const resources = [];
+      const outcomeBadges = [];
+
+      // Failure: 1d4 food loss + 1 unrest
+      if (ctx.outcome === 'failure') {
+        outcomeBadges.push({
+          icon: 'fa-apple-alt',
+          prefix: 'Lose',
+          value: { type: 'dice', formula: '1d4' },
+          suffix: 'Food',
+          variant: 'negative'
+        });
+        resources.push({ resource: 'unrest', value: 1 });
+      }
+
+      // Critical Failure: 2d4 food loss + 1 unrest + structure damage
+      if (ctx.outcome === 'criticalFailure') {
+        outcomeBadges.push({
+          icon: 'fa-apple-alt',
+          prefix: 'Lose',
+          value: { type: 'dice', formula: '2d4' },
+          suffix: 'Food',
+          variant: 'negative'
+        });
+        resources.push({ resource: 'unrest', value: 1 });
+      }
+
+      return {
+        resources,
+        outcomeBadges,
+        warnings: ctx.outcome === 'criticalFailure'
+          ? ['One Medicine or Faith structure will be damaged']
+          : []
+      };
+    }
   },
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
     await applyPipelineModifiers(diseaseOutbreakPipeline, ctx.outcome);
+
+    // Critical failure: damage a Medicine or Faith structure
+    if (ctx.outcome === 'criticalFailure') {
+      const { createGameCommandsResolver } = await import('../../services/GameCommandsResolver');
+      const resolver = await createGameCommandsResolver();
+      await resolver.damageStructure(undefined, undefined, 1);
+    }
+
     return { success: true };
   }
 };

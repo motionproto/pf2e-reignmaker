@@ -41,6 +41,35 @@ export const assassinationAttemptPipeline: CheckPipeline = {
   },
 
   preview: {
+    calculate: (ctx) => {
+      const resources = [];
+      const outcomeBadges = [];
+
+      // Failure: 1 unrest
+      if (ctx.outcome === 'failure') {
+        resources.push({ resource: 'unrest', value: 1 });
+      }
+
+      // Critical Failure: 2 unrest + leader wounded
+      if (ctx.outcome === 'criticalFailure') {
+        resources.push({ resource: 'unrest', value: 2 });
+        outcomeBadges.push({
+          icon: 'fa-user-injured',
+          prefix: '',
+          value: { type: 'text', text: 'Leader wounded' },
+          suffix: '',
+          variant: 'negative'
+        });
+      }
+
+      return {
+        resources,
+        outcomeBadges,
+        warnings: ctx.outcome === 'criticalFailure'
+          ? ['One PC leader cannot take a Kingdom Action this turn (recovering from wounds)']
+          : []
+      };
+    }
   },
 
   execute: async (ctx) => {
