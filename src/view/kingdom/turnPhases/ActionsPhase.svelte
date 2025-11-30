@@ -522,7 +522,7 @@
         {category}
         {actions}
         {currentActionInstances}
-        activeCheckInstances={$kingdomData.pendingOutcomes || []}
+        pendingOutcomes={$kingdomData.pendingOutcomes || []}
         {expandedActions}
         {controller}
         {activeAidsCount}

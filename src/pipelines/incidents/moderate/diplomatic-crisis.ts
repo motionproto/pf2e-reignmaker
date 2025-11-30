@@ -35,50 +35,14 @@ export const diplomaticCrisisPipeline: CheckPipeline = {
     },
   },
 
-  preview: {
-    calculate: (ctx) => {
-      const resources = [];
-      const outcomeBadges = [];
-
-      // Failure: one faction's attitude worsens
-      if (ctx.outcome === 'failure') {
-        outcomeBadges.push({
-          icon: 'fa-flag',
-          prefix: '',
-          value: { type: 'text', text: "One faction's attitude worsens" },
-          suffix: '',
-          variant: 'negative'
-        });
-      }
-
-      // Critical Failure: multiple factions' attitudes worsen
-      if (ctx.outcome === 'criticalFailure') {
-        outcomeBadges.push({
-          icon: 'fa-flag',
-          prefix: '',
-          value: { type: 'text', text: "Multiple factions' attitudes worsen" },
-          suffix: '',
-          variant: 'negative'
-        });
-      }
-
-      return {
-        resources,
-        outcomeBadges,
-        warnings: ctx.outcome === 'failure'
-          ? ['One random faction will become less friendly']
-          : ctx.outcome === 'criticalFailure'
-            ? ['Multiple factions will become less friendly']
-            : []
-      };
-    }
-  },
+  // Auto-convert JSON modifiers to badges (none for this incident, only game commands)
+  preview: undefined,
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(diplomaticCrisisPipeline, ctx.outcome);
+    await applyPipelineModifiers(diplomaticCrisisPipeline, ctx.outcome, ctx);
 
-    const { createGameCommandsResolver } = await import('../../services/GameCommandsResolver');
+    const { createGameCommandsResolver } = await import('../../../services/GameCommandsResolver');
     const resolver = await createGameCommandsResolver();
 
     // Failure: worsen one random faction's attitude

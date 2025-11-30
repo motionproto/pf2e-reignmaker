@@ -340,6 +340,7 @@ export async function createActionOutcomePreview(context: {
   currentTurn: number;
   metadata?: Record<string, any>;
   instanceId?: string;  // ← Optional: Use existing pipeline instanceId instead of generating new one
+  checkType?: 'action' | 'incident' | 'event';  // ← Optional: Default to 'action' for backward compatibility
 }): Promise<string> {
   const {
     actionId,
@@ -353,7 +354,8 @@ export async function createActionOutcomePreview(context: {
     rollBreakdown,
     currentTurn,
     metadata = {},
-    instanceId  // ← Use pipeline's instanceId if provided
+    instanceId,  // ← Use pipeline's instanceId if provided
+    checkType = 'action'  // ← Default to 'action' for backward compatibility
   } = context;
   
   // ✅ CRITICAL: Use existing instanceId from pipeline (no new generation)
@@ -363,7 +365,7 @@ export async function createActionOutcomePreview(context: {
   // Create instance with metadata (reusing previewId from pipeline)
   const preview: OutcomePreview = {
     previewId,
-    checkType: 'action',
+    checkType,  // Use provided checkType (action, incident, or event)
     checkId: actionId,
     checkData: action,
     metadata: {

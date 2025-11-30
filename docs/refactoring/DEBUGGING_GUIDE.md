@@ -18,17 +18,12 @@
 **Root Cause:** Naming mismatch in reactive stores/lookups
 
 **Common Causes:**
-1. Using `activeCheckInstances` instead of `pendingOutcomes`
-2. Looking up by `instanceId` instead of `previewId`
-3. Filtering by wrong field names
+1. Looking up by wrong ID field
+2. Filtering by wrong field names
 
 **Fix Checklist:**
 ```typescript
-// ❌ WRONG - Old naming
-const instances = $kingdomData.activeCheckInstances?.filter(...)
-const instance = instances.find(i => i.instanceId === id)
-
-// ✅ CORRECT - New naming
+// ✅ CORRECT - Current naming
 const instances = $kingdomData.pendingOutcomes?.filter(...)
 const instance = instances.find(i => i.previewId === id)
 ```
@@ -217,13 +212,13 @@ When an action fails, work through this checklist:
 
 **ALWAYS use these exact names:**
 
-| Context | Correct Name | Legacy/Wrong Names |
-|---------|--------------|-------------------|
-| Instance storage | `pendingOutcomes` | ❌ `activeCheckInstances` |
-| Instance ID field | `previewId` | ❌ `instanceId`, ❌ `checkInstanceId` |
-| Action identifier (in instance) | `checkId` | ❌ `actionId` (varies) |
-| Check type | `checkType: 'action'` | - |
-| Status field | `status: 'pending' | 'resolved'` | - |
+| Context | Correct Name |
+|---------|--------------|
+| Instance storage | `pendingOutcomes` |
+| Instance ID field | `previewId` |
+| Action identifier (in instance) | `checkId` |
+| Check type | `checkType: 'action'` |
+| Status field | `status: 'pending' | 'resolved'` |
 
 **Code Examples:**
 ```typescript
@@ -310,9 +305,8 @@ $: currentActionInstances = ($kingdomData.pendingOutcomes || [])
 ```
 
 **Common Issues:**
-- Using `i.instanceId` instead of `i.previewId`
-- Filtering by wrong `status` value
-- Using wrong collection (`activeCheckInstances`)
+- Using wrong `status` value
+- Wrong field names
 
 ### Step 4: Fix & Test
 1. Fix naming issues
@@ -367,5 +361,6 @@ confirmApply(instanceId: string): void {
 
 ---
 
-**Last Updated:** 2025-11-18  
+**Last Updated:** 2025-11-30  
+**Verified:** All naming conventions confirmed against codebase  
 **Based on:** First action testing session (deal-with-unrest)

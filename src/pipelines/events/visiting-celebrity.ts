@@ -51,7 +51,7 @@ export const visitingCelebrityPipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(visitingCelebrityPipeline, ctx.outcome);
+    await applyPipelineModifiers(visitingCelebrityPipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

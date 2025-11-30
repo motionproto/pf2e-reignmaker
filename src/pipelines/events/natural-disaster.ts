@@ -52,7 +52,7 @@ export const naturalDisasterPipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(naturalDisasterPipeline, ctx.outcome);
+    await applyPipelineModifiers(naturalDisasterPipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

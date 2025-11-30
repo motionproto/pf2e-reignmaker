@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher, onMount, onDestroy } from 'svelte';
   import { kingdomData } from '../../../../../stores/KingdomStore';
-  import type { ActiveCheckInstance } from '../../../../../models/CheckInstance';
+  import type { OutcomePreview } from '../../../../../models/OutcomePreview';
   import { 
     updateInstanceResolutionState,
     getInstanceResolutionState 
@@ -9,7 +9,7 @@
   import { getValidationContext } from '../context/ValidationContext';
 
   // Props
-  export let instance: ActiveCheckInstance | null = null;
+  export let instance: OutcomePreview | null = null;
   export let outcome: string;
   export let modifiers: any[] | undefined = undefined;
   export let stateChanges: Record<string, any> | undefined = undefined;
@@ -146,7 +146,7 @@
     }
 
     // Update instance resolution state
-    await updateInstanceResolutionState(instance.instanceId, {
+    await updateInstanceResolutionState(instance.previewId, {
       customComponentData: { selectedSettlementId: settlementId }
     });
 

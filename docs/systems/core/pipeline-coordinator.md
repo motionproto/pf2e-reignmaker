@@ -1,13 +1,18 @@
 # Pipeline Coordinator
 
-The `PipelineCoordinator` is the single entry point for all action execution. It orchestrates a 9-step pipeline that handles everything from pre-roll interactions to cleanup.
+The `PipelineCoordinator` is the single entry point for **all check execution** - actions, events, and incidents. It orchestrates a 9-step pipeline that handles everything from pre-roll interactions to cleanup.
+
+> **📖 For Implementation:** This document covers the architecture and design. For practical implementation patterns, see:
+> - **[pipeline-patterns.md](./pipeline-patterns.md)** - Pattern lookup with code examples
+> - **[../../refactoring/DEBUGGING_GUIDE.md](../../refactoring/DEBUGGING_GUIDE.md)** - Common issues & solutions
+> - **[../../refactoring/TESTING_GUIDE.md](../../refactoring/TESTING_GUIDE.md)** - Testing workflows
 
 ## Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                  PipelineCoordinator                     │
-│  (Single entry point for ALL action execution)          │
+│  (Single entry point for actions, events, incidents)    │
 ├─────────────────────────────────────────────────────────┤
 │                                                          │
 │  Step 1: Requirements Check          [optional]         │
@@ -75,60 +80,37 @@ Empty Context → [Step 1-9] → Complete Context
    Full audit trail of execution
 ```
 
-### 1.5. PreviewData Structure (Critical!)
+### 1.5. PreviewData Structure
 
 **File:** `src/types/PreviewData.ts`
 
-**⚠️ CRITICAL:** Preview calculations must return a **complete** `PreviewData` object.
-
-**Required Structure:**
+**Structure:**
 
 ```typescript
 interface PreviewData {
-  resources: ResourceChange[];       // ✅ Always required
+  resources: ResourceChange[];       // ✅ Required
   entities?: EntityOperation[];      // Optional
-  specialEffects: SpecialEffect[];   // ✅ Always required (even if empty)
+  outcomeBadges?: UnifiedOutcomeBadge[];  // Optional - auto-displayed in OutcomeDisplay
   warnings?: string[];               // Optional
 }
 ```
 
-**Common Bug:**
+**Example Usage:**
 
 ```typescript
-// ❌ This will crash when formatting preview
-preview: {
-  calculate: (ctx) => ({
-    resources: [{ resource: 'unrest', value: -2 }]
-  })
-}
-
-// ✅ Always include both required arrays
 preview: {
   calculate: (ctx) => ({
     resources: [{ resource: 'unrest', value: -2 }],
-    specialEffects: []  // Required!
+    outcomeBadges: [{
+      icon: 'fa-shield',
+      prefix: 'Reduce',
+      value: { type: 'static', amount: 2 },
+      suffix: 'unrest',
+      variant: 'positive'
+    }],
+    warnings: []
   })
 }
-```
-
-**Why This Matters:**
-
-The `defaultFormatPreview` method in `UnifiedCheckHandler` iterates over `specialEffects`:
-
-```typescript
-// UnifiedCheckHandler.ts
-defaultFormatPreview(preview: PreviewData) {
-  // ...
-  for (const effect of preview.specialEffects) {  // ← Crashes if undefined
-    effects.push(effect);
-  }
-  // ...
-}
-```
-
-**Error you'll see:**
-```
-TypeError: preview.specialEffects is not iterable (cannot read property undefined)
 ```
 
 **Helper Function (Recommended):**
@@ -147,7 +129,7 @@ preview: {
 }
 ```
 
-This guarantees all required properties are present and prevents runtime errors.
+**Note:** The PipelineCoordinator automatically converts JSON modifiers to badges, so custom preview calculation is only needed for special display logic.
 
 ### 2. PipelineCoordinator Class
 
@@ -352,9 +334,9 @@ All custom components must implement this standardized interface:
  * Standard props all custom components receive
  */
 export interface CustomComponentProps {
-  instance: ActiveCheckInstance | null;  // Check instance data
-  outcome: string;                        // Roll outcome
-  config?: Record<string, any>;          // Component-specific config
+  instance: OutcomePreview | null;  // Outcome preview data
+  outcome: string;                   // Roll outcome
+  config?: Record<string, any>;     // Component-specific config
 }
 
 /**
@@ -1320,7 +1302,7 @@ async function runSmokeTests() {
 ```
 
 **What This Catches:**
-- ✅ Missing `specialEffects: []` in PreviewData
+- ✅ Missing required properties in PreviewData
 - ✅ Undefined function calls
 - ✅ Type errors
 - ✅ Invalid JSON references
@@ -1351,9 +1333,9 @@ Test representative examples manually:
 
 ### ✅ Phase 2: Naming Cleanup (Complete)
 
-- [x] Rename `CheckInstance` → `OutcomePreview`
-- [x] Rename `activeCheckInstances` → `pendingOutcomes`
-- [x] Rename `instanceId` → `previewId`
+- [x] Unified to `OutcomePreview` type
+- [x] Renamed `pendingOutcomes` storage
+- [x] Renamed `previewId` identifier
 - [x] Update all documentation
 - [x] Build verified successful
 
@@ -1384,13 +1366,34 @@ Test representative examples manually:
 
 ## Related Documents
 
-- `docs/refactoring/CALLBACK_REFACTOR_MIGRATION.md` - Callback system migration
-- `docs/refactoring/OUTCOME_PREVIEW_RENAMING.md` - Terminology cleanup
-- `docs/refactoring/ACTION_MIGRATION_CHECKLIST.md` - Per-action migration tracking
-- `.clinerules/ARCHITECTURE_SUMMARY.md` - System architecture overview
+### Implementation Guides (refactoring/)
+- **[pipeline-patterns.md](./pipeline-patterns.md)** ⭐ Pattern reference with code examples
+- **[../../refactoring/DEBUGGING_GUIDE.md](../../refactoring/DEBUGGING_GUIDE.md)** ⭐ Common issues & solutions from real testing
+- **[../../refactoring/TESTING_GUIDE.md](../../refactoring/TESTING_GUIDE.md)** - Systematic testing workflows
+- **[../../refactoring/INCIDENT_PIPELINE_AUDIT.md](../../refactoring/INCIDENT_PIPELINE_AUDIT.md)** - Incident architecture analysis
+
+### Core Architecture (systems/core/)
+- **[check-type-differences.md](./check-type-differences.md)** - Events vs Incidents vs Actions
+- **[outcome-display-system.md](./outcome-display-system.md)** - Universal outcome renderer
+- **[typed-modifiers-system.md](./typed-modifiers-system.md)** - Resource modification system
+- **[game-commands-system.md](./game-commands-system.md)** - Non-resource effects
 
 ---
 
-**Status:** � Active Development  
-**Current Phase:** Phase 3 (Full Pipeline Integration)  
-**Last Updated:** 2025-11-17
+## Quick Navigation
+
+**Need to implement an action?**
+1. Start here → Understand the 9-step flow (this document)
+2. Find your pattern → [pipeline-patterns.md](./pipeline-patterns.md)
+3. Copy structure from example action in `src/pipelines/actions/`
+4. Test → [../../refactoring/TESTING_GUIDE.md](../../refactoring/TESTING_GUIDE.md)
+
+**Debugging an issue?**
+1. Check [../../refactoring/DEBUGGING_GUIDE.md](../../refactoring/DEBUGGING_GUIDE.md) first
+2. Full browser refresh (Ctrl+Shift+R)
+3. Watch console logs for pipeline steps
+
+---
+
+**Status:** ✅ Production Ready  
+**Last Updated:** 2025-11-30

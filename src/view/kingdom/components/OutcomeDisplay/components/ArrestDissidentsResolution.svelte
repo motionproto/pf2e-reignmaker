@@ -2,10 +2,10 @@
   import { createEventDispatcher } from 'svelte';
   import { kingdomData } from '../../../../../stores/KingdomStore';
   import { structuresService } from '../../../../../services/structures';
-  import type { ActiveCheckInstance } from '../../../../../models/CheckInstance';
+  import type { OutcomePreview } from '../../../../../models/OutcomePreview';
 
   // Props (automatically passed by OutcomeDisplay)
-  export let instance: ActiveCheckInstance | null = null;
+  export let instance: OutcomePreview | null = null;
   export let outcome: string;
 
   const dispatch = createEventDispatcher();

@@ -52,7 +52,7 @@ export const grandTournamentPipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(grandTournamentPipeline, ctx.outcome);
+    await applyPipelineModifiers(grandTournamentPipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

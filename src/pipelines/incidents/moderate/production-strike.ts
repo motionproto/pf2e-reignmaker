@@ -40,45 +40,12 @@ export const productionStrikePipeline: CheckPipeline = {
     },
   },
 
-  preview: {
-    calculate: (ctx) => {
-      const resources = [];
-      const outcomeBadges = [];
-
-      // Failure/Critical Failure: resource loss (choice will be shown via ChoiceButtons)
-      if (ctx.outcome === 'failure') {
-        outcomeBadges.push({
-          icon: 'fa-industry',
-          prefix: 'Lose',
-          value: { type: 'dice', formula: '1d4-1' },
-          suffix: 'of chosen resource',
-          variant: 'negative'
-        });
-      }
-
-      if (ctx.outcome === 'criticalFailure') {
-        outcomeBadges.push({
-          icon: 'fa-industry',
-          prefix: 'Lose',
-          value: { type: 'dice', formula: '2d4-1' },
-          suffix: 'of chosen resource',
-          variant: 'negative'
-        });
-      }
-
-      return {
-        resources,
-        outcomeBadges,
-        warnings: ctx.outcome === 'failure' || ctx.outcome === 'criticalFailure'
-          ? ['Choose which resource to lose: Lumber, Ore, or Stone']
-          : []
-      };
-    }
-  },
+  // Auto-convert JSON modifiers to badges
+  preview: undefined,
 
   execute: async (ctx) => {
     // Apply modifiers from outcome - choice will be resolved by UI before this
-    await applyPipelineModifiers(productionStrikePipeline, ctx.outcome);
+    await applyPipelineModifiers(productionStrikePipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

@@ -48,7 +48,7 @@ export const militaryExercisesPipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(militaryExercisesPipeline, ctx.outcome);
+    await applyPipelineModifiers(militaryExercisesPipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

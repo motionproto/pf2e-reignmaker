@@ -41,7 +41,7 @@ Write: Component → Controller → KingdomActor → Foundry → All Clients
 - `src/pipelines/actions/*.ts` - Action pipeline implementations
 - `src/services/PipelineCoordinator.ts` - Unified 9-step action execution
 - `data/player-actions/*.json` - 29 action definitions (structured effects)
-- **See:** `docs/systems/actions-architecture.md` for complete action lifecycle documentation
+- **See:** `docs/systems/core/pipeline-patterns.md` for action implementation patterns
 
 **UI Layer:**
 - `src/view/kingdom/turnPhases/*.svelte` - Phase UI components (presentation only)
@@ -1261,11 +1261,10 @@ try {
 
 ### System Documentation
 
-- **Actions Architecture**: See `docs/systems/actions-architecture.md` for complete action lifecycle, refactoring details, and best practices
-- **Game Commands System**: See `docs/systems/game-commands-system.md` for action effect system documentation
-- **Check Instance System**: See `docs/systems/check-instance-system.md` for outcome tracking and resolution
-- **Phase Controllers**: See `docs/systems/phase-controllers.md` for phase implementation patterns
-- **Turn & Phase System**: See `docs/systems/turn-and-phase-system.md` for turn/phase coordination details
+- **Actions Architecture**: See `docs/systems/core/pipeline-patterns.md` for action implementation patterns
+- **Game Commands System**: See `docs/systems/core/game-commands-system.md` for action effect system documentation
+- **Phase Controllers**: See `docs/systems/core/phase-controllers.md` for phase implementation patterns
+- **Turn & Phase System**: See `docs/systems/core/turn-and-phase-system.md` for turn/phase coordination details
 
 ### Legacy Documentation
 

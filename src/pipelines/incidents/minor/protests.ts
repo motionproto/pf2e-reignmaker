@@ -41,45 +41,12 @@ export const protestsPipeline: CheckPipeline = {
     },
   },
 
-  preview: {
-    calculate: (ctx) => {
-      const resources = [];
-      const outcomeBadges = [];
-
-      // Failure: 1d4 gold loss (property damage)
-      if (ctx.outcome === 'failure') {
-        outcomeBadges.push({
-          icon: 'fa-coins',
-          prefix: 'Lose',
-          value: { type: 'dice', formula: '1d4' },
-          suffix: 'Gold',
-          variant: 'negative'
-        });
-      }
-
-      // Critical Failure: 2d4 gold loss + 1 fame loss
-      if (ctx.outcome === 'criticalFailure') {
-        outcomeBadges.push({
-          icon: 'fa-coins',
-          prefix: 'Lose',
-          value: { type: 'dice', formula: '2d4' },
-          suffix: 'Gold',
-          variant: 'negative'
-        });
-        resources.push({ resource: 'fame', value: -1 });
-      }
-
-      return {
-        resources,
-        outcomeBadges,
-        warnings: []
-      };
-    }
-  },
+  // Auto-convert JSON modifiers to badges
+  preview: undefined,
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(protestsPipeline, ctx.outcome);
+    await applyPipelineModifiers(protestsPipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

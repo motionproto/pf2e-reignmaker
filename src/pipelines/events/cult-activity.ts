@@ -54,7 +54,7 @@ export const cultActivityPipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(cultActivityPipeline, ctx.outcome);
+    await applyPipelineModifiers(cultActivityPipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

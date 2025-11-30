@@ -50,7 +50,7 @@ export const localDisasterPipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(localDisasterPipeline, ctx.outcome);
+    await applyPipelineModifiers(localDisasterPipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

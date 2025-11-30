@@ -21,6 +21,17 @@ export const infrastructureDamagePipeline: CheckPipeline = {
       { skill: 'arcana', description: 'magical restoration' },
     ],
 
+  preRollInteractions: [
+    {
+      type: 'entity-selection',
+      id: 'settlement',
+      entityType: 'settlement',
+      label: 'Select Settlement with Infrastructure Damage',
+      required: true,
+      filter: (settlement: any) => settlement.structures?.length > 0
+    }
+  ],
+
   outcomes: {
     success: {
       description: 'Damage is prevented.',
@@ -40,55 +51,24 @@ export const infrastructureDamagePipeline: CheckPipeline = {
     },
   },
 
-  preview: {
-    calculate: (ctx) => {
-      const resources = [];
-      const outcomeBadges = [];
-
-      // Failure: damage 1 random structure
-      if (ctx.outcome === 'failure') {
-        outcomeBadges.push({
-          icon: 'fa-home',
-          prefix: '',
-          value: { type: 'text', text: '1 structure damaged' },
-          suffix: '',
-          variant: 'negative'
-        });
-      }
-
-      // Critical Failure: 1 unrest + 1d3 structures damaged
-      if (ctx.outcome === 'criticalFailure') {
-        resources.push({ resource: 'unrest', value: 1 });
-        outcomeBadges.push({
-          icon: 'fa-home',
-          prefix: '',
-          value: { type: 'dice', formula: '1d3' },
-          suffix: 'structures damaged',
-          variant: 'negative'
-        });
-      }
-
-      return {
-        resources,
-        outcomeBadges,
-        warnings: []
-      };
-    }
-  },
+  // Auto-convert JSON modifiers to badges
+  preview: undefined,
 
   execute: async (ctx) => {
+    const settlementId = ctx.metadata?.settlement?.id;
+    
     // Apply modifiers from outcome
-    await applyPipelineModifiers(infrastructureDamagePipeline, ctx.outcome);
+    await applyPipelineModifiers(infrastructureDamagePipeline, ctx.outcome, ctx);
 
-    const { createGameCommandsResolver } = await import('../../services/GameCommandsResolver');
+    const { createGameCommandsResolver } = await import('../../../services/GameCommandsResolver');
     const resolver = await createGameCommandsResolver();
 
-    // Failure: damage 1 structure
+    // Failure: damage 1 structure in selected settlement
     if (ctx.outcome === 'failure') {
       await resolver.damageStructure(undefined, undefined, 1);
     }
 
-    // Critical failure: damage 1d3 structures
+    // Critical failure: damage 1d3 structures in selected settlement
     if (ctx.outcome === 'criticalFailure') {
       // Roll 1d3 for number of structures to damage
       const roll = Math.floor(Math.random() * 3) + 1;

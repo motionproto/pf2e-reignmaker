@@ -1,6 +1,6 @@
 {
-  "id": "bandit-activity",
-  "name": "Bandit Activity",
+  "id": "bandit-raids",
+  "name": "Bandit Raids",
   "tier": "minor",
   "description": "Bandit raids threaten your trade routes and settlements",
   "skills": [

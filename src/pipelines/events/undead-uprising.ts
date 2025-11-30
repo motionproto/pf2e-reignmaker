@@ -50,7 +50,7 @@ export const undeadUprisingPipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(undeadUprisingPipeline, ctx.outcome);
+    await applyPipelineModifiers(undeadUprisingPipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

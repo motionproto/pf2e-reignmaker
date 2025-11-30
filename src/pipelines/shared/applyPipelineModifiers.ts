@@ -18,15 +18,24 @@ import { logger } from '../../utils/Logger';
 
 /**
  * Apply modifiers from a pipeline's outcome definition
- * 
+ *
  * @param pipeline - The pipeline containing outcome modifiers
  * @param outcome - The outcome degree to apply
+ * @param ctx - Optional context; if ctx.modifiersAlreadyApplied is true, skips modifier application
  * @returns Result of applying the modifiers
  */
 export async function applyPipelineModifiers(
   pipeline: CheckPipeline,
-  outcome: OutcomeDegree
+  outcome: OutcomeDegree,
+  ctx?: { modifiersAlreadyApplied?: boolean }
 ): Promise<{ success: boolean; error?: string }> {
+  // Skip if modifiers were already applied by the controller (applyResolvedOutcome)
+  // This prevents double-application when execute() is called after resolution
+  if (ctx?.modifiersAlreadyApplied) {
+    logger.info(`[applyPipelineModifiers] ${pipeline.id} ${outcome}: Skipping - modifiers already applied`);
+    return { success: true };
+  }
+
   // Get modifiers for this outcome
   const outcomeData = pipeline.outcomes?.[outcome];
   const modifiers = outcomeData?.modifiers || [];

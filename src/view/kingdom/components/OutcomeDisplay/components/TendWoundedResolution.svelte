@@ -11,10 +11,10 @@
    */
 
   import { createEventDispatcher, onMount } from 'svelte';
-  import type { ActiveCheckInstance } from '../../../models/CheckInstance';
+  import type { OutcomePreview } from '../../../../../models/OutcomePreview';
 
   // Props (automatically passed by OutcomeDisplay)
-  export let instance: ActiveCheckInstance | null = null;
+  export let instance: OutcomePreview | null = null;
   export let outcome: string;
 
   const dispatch = createEventDispatcher();

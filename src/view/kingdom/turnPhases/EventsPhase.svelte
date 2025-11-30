@@ -30,15 +30,12 @@
      showCharacterSelectionDialog,
      performKingdomActionRoll
    } from '../../../services/pf2e';
-   import { createCheckHandler } from '../../../controllers/shared/CheckHandler';
    import { buildPossibleOutcomes } from '../../../controllers/shared/PossibleOutcomeHelpers';
    import { buildEventOutcomes } from '../../../controllers/shared/EventOutcomeHelpers';
-   import { createEventContext, executeRoll } from '../../../controllers/shared/ExecutionHelpers';
-   
+
    // Initialize controller and service
    let eventPhaseController: any;
    let gameCommandsService: any;
-   let checkHandler: any;
    
    // UI State (no business logic)
    let isRolling = false;
@@ -185,7 +182,6 @@
       // Initialize the controller and service
       eventPhaseController = await createEventPhaseController(null);
       gameCommandsService = await createGameCommandsService();
-      checkHandler = createCheckHandler();
       
       // Initialize the phase (this sets up currentPhaseSteps!)
       await eventPhaseController.startPhase();
@@ -214,8 +210,7 @@
    onDestroy(() => {
       console.log('🔴 [EventsPhase] Component unmounting, removing event listener');
       window.removeEventListener('kingdomRollComplete', handleRollComplete as any);
-      checkHandler?.cleanup();
-      
+
       // Clear deduplication set
       processedRolls.clear();
    });
@@ -299,7 +294,7 @@
    
    // Event handler - execute skill check
    async function handleExecuteSkill(event: CustomEvent) {
-      if (!checkHandler || !eventPhaseController) return;
+      if (!eventPhaseController) return;
       
       const { skill, eventId, checkId, outcome } = event.detail;
       
@@ -349,207 +344,98 @@
    }
    
    async function executeSkillCheck(skill: string, targetInstanceId: string | null = null) {
-      if (!currentEvent || !checkHandler || !eventPhaseController) return;
-      
-      // Capture the event ID and instance ID for closure
-      const eventId = currentEvent.id;
-      // Determine instance ID: use provided targetInstanceId for ongoing events, or look up current event instance
-      const instanceId = targetInstanceId || $kingdomData.turnState?.eventsPhase?.eventInstanceId || null;
-      const isOngoingEvent = !!targetInstanceId;
-      
-      // Note: Action spending is handled by GameCommandsService.trackPlayerAction()
-      // when the result is applied
-      // Note: Preserved modifiers are applied via PF2eSkillService module state
-      
-      await checkHandler.executeCheck({
-         checkType: 'event',
-         item: currentEvent,
-         skill,
-         
-         onStart: () => {
+      if (!currentEvent) return;
 
-            isRolling = true;
-         },
-         
-         onComplete: async (result: any) => {
+      // Capture the event for closure
+      const targetEvent = currentEvent;
 
-            isRolling = false;
-            
-            // ARCHITECTURE: Delegate to controller for outcome data extraction
-            if (!currentEvent) return;
-            const outcomeData = eventPhaseController.getEventModifiers(currentEvent, result.outcome);
-            
-            const resolution = {
-               outcome: result.outcome,
-               actorName: result.actorName,
-               skillName: skill,
-               effect: outcomeData.msg,
-               modifiers: outcomeData.modifiers,
-               manualEffects: outcomeData.manualEffects,
-               shortfallResources: [],  // ✅ Will be populated when outcome is applied
-               rollBreakdown: result.rollBreakdown,
-               effectsApplied: false
-            };
-            
-            if (isOngoingEvent && instanceId) {
-               // Store in KingdomActor (synced to all clients!)
-               await updateKingdom(kingdom => {
-                  if (!kingdom.pendingOutcomes) return;
-                  const instance = kingdom.pendingOutcomes.find((i: any) => i.previewId === instanceId);
-                  if (instance) {
-                     instance.appliedOutcome = resolution;
+      try {
+         isRolling = true;
 
-                  } else {
-                     logger.error(`❌ [EventsPhase] Could not find instance with ID: ${instanceId}`);
-                  }
-               });
-            } else {
-               // Store in local UI state (current event only)
-               eventResolution = resolution;
-               eventResolved = true;
-            }
-         },
-         
-         onCancel: () => {
+         // Use PipelineCoordinator for events (same as actions/incidents)
+         const { getPipelineCoordinator } = await import('../../../services/PipelineCoordinator');
+         const { getCurrentUserCharacter } = await import('../../../services/pf2e');
 
-            isRolling = false;
-            
-            if (isOngoingEvent && instanceId) {
-               // Clear resolution from KingdomActor
-               updateKingdom(kingdom => {
-                  if (!kingdom.pendingOutcomes) return;
-                  const instance = kingdom.pendingOutcomes.find((i: any) => i.previewId === instanceId);
-                  if (instance) {
-                     instance.appliedOutcome = undefined;
-
-                  }
-               });
-            } else {
-               eventResolution = null;
-               eventResolved = false;
-            }
-            
-            // Note: Canceling doesn't add to actionLog, so player can still act
-         },
-         
-         onError: (error: Error) => {
-            logger.error(`❌ [EventsPhase] Error in event check:`, error);
-            isRolling = false;
-            ui?.notifications?.error(`Failed to perform event check: ${error.message}`);
+         const pipelineCoordinator = await getPipelineCoordinator();
+         const actingCharacter = getCurrentUserCharacter();
+         if (!actingCharacter) {
+            throw new Error('No character selected');
          }
-      });
+
+         await pipelineCoordinator.executePipeline(targetEvent.id, {
+            checkType: 'event',
+            actor: {
+               selectedSkill: skill,
+               fullActor: actingCharacter,
+               actorName: actingCharacter.name,
+               actorId: actingCharacter.id,
+               level: actingCharacter.level || 1,
+               proficiencyRank: 0
+            }
+         });
+
+         // Pipeline handles everything: roll, create instance, calculate preview, wait for apply
+
+      } catch (error) {
+         if ((error as Error).message === 'Action cancelled by user') {
+            logger.info('[EventsPhase] User cancelled event check');
+         } else {
+            logger.error(`❌ [EventsPhase] Error in event check:`, error);
+            ui?.notifications?.error(`Failed to perform event check: ${(error as Error).message}`);
+         }
+      } finally {
+         isRolling = false;
+      }
    }
    
    // Event handler - apply result
    async function handleApplyResult(event: CustomEvent) {
-
-      // NEW ARCHITECTURE: event.detail contains both resolution and checkId
+      // Get resolution data and instance ID from the event
       const resolutionData = event.detail.resolution;
       const checkId = event.detail.checkId;
 
+      // Find the instance to get the previewId
+      let instanceId: string | null = null;
 
-      // Determine which event and resolution to use
-      let targetEvent: EventData | null = null;
-      let resolution: any = null;
-      
-      // Check if this is an ongoing event or current event
-      if (checkId && checkId !== currentEvent?.id) {
-         // Ongoing event - look up by instanceId (not event.id!)
+      // Check current event instance first
+      if (currentEventInstance && currentEventInstance.previewId) {
+         instanceId = currentEventInstance.previewId;
+      }
+
+      // If checkId is provided and differs, look up ongoing event instance
+      if (checkId && checkId !== currentEventInstance?.previewId) {
          const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.instance.previewId === checkId);
          if (ongoingEvent) {
-            targetEvent = ongoingEvent.event;
-            resolution = ongoingEvent.instance.appliedOutcome;  // ✅ Get from instance
-
+            instanceId = ongoingEvent.instance.previewId;
          }
-      } else {
-         // Current event
-         targetEvent = currentEvent;
-         resolution = eventResolution;
-
       }
-      
-      // Validate we have what we need
-      if (!resolution || !targetEvent) {
-         logger.error(`❌ [EventsPhase] Missing resolution or event:`, { resolution, targetEvent });
+
+      if (!instanceId) {
+         logger.error(`❌ [EventsPhase] No instance ID found for apply result`);
          return;
       }
 
-      // Call controller directly with ResolutionData
-      const { createEventPhaseController } = await import('../../../controllers/EventPhaseController');
-      const controller = await createEventPhaseController(null);
-      
-      // Pass isIgnored flag to controller
-      const isIgnored = resolution.isIgnored || false;
-      
-      const result = await controller.resolveEvent(
-         targetEvent.id,
-         resolution.outcome,
-         resolutionData,
-         isIgnored,
-         resolution.actorName,
-         resolution.skillName,
-         currentUserId || undefined
-      );
-      
-      if (result.success) {
+      // Use PipelineCoordinator to confirm and execute (same as actions/incidents)
+      const { getPipelineCoordinator } = await import('../../../services/PipelineCoordinator');
+      const pipelineCoordinator = await getPipelineCoordinator();
+      pipelineCoordinator.confirmApply(instanceId, resolutionData);
 
-         // ✅ FIXED: Reassign to trigger Svelte reactivity
-         const shortfalls: string[] = [];
-         if (result.applied?.specialEffects) {
-            for (const effect of result.applied.specialEffects) {
-               // Type guard: ensure effect is a string before calling startsWith
-               if (typeof effect === 'string' && effect.startsWith('shortage_penalty:')) {
-                  shortfalls.push(effect.split(':')[1]);
-               }
-            }
-         }
-         
-         // Create new object to trigger reactivity
-         if (resolution === eventResolution && eventResolution) {
-            // Current event - reassign local state
-            eventResolution = {
-               outcome: eventResolution.outcome,
-               actorName: eventResolution.actorName,
-               skillName: eventResolution.skillName,
-               effect: eventResolution.effect,
-               stateChanges: eventResolution.stateChanges,
-               modifiers: eventResolution.modifiers,
-               manualEffects: eventResolution.manualEffects,
-               rollBreakdown: eventResolution.rollBreakdown,
-               isIgnored: eventResolution.isIgnored,
-               shortfallResources: shortfalls
-            };
-         } else {
-            // Ongoing event - update kingdom state
-            await updateKingdom(kingdom => {
-               if (!kingdom.pendingOutcomes) return;
-               const instance = kingdom.pendingOutcomes.find((i: any) => 
-                  i.appliedOutcome === resolution
-               );
-               if (instance && instance.appliedOutcome) {
-                  instance.appliedOutcome = {
-                     ...instance.appliedOutcome,
-                     shortfallResources: shortfalls
-                  };
-               }
-            });
-         }
-         
-         // Note: No manual clearing needed - the reactive statement will handle it
-         // when the controller updates turnState.eventsPhase.eventId = null
-      } else {
-         logger.error(`❌ [EventsPhase] Failed to apply event resolution:`, result.error);
-         ui?.notifications?.error(`Failed to apply result: ${result.error || 'Unknown error'}`);
-      }
+      // Pipeline handles Steps 7-9: post-apply interactions, execute, cleanup
    }
    
    // Event handler - cancel resolution
    async function handleCancel() {
+      // Clear the instance via OutcomePreviewService if we have one
+      if (currentEventInstance) {
+         const { createOutcomePreviewService } = await import('../../../services/OutcomePreviewService');
+         const outcomePreviewService = await createOutcomePreviewService();
+         await outcomePreviewService.clearInstance(currentEventInstance.previewId);
+      }
 
       // Clear local UI state
       eventResolution = null;
       eventResolved = false;
-      
+
       // Note: Canceling doesn't add to actionLog, so player can still act
    }
    

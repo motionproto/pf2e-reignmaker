@@ -40,47 +40,12 @@ export const emigrationThreatPipeline: CheckPipeline = {
     },
   },
 
-  preview: {
-    calculate: (ctx) => {
-      const resources = [];
-      const outcomeBadges = [];
-
-      // Failure: worksite destroyed
-      if (ctx.outcome === 'failure') {
-        outcomeBadges.push({
-          icon: 'fa-hammer',
-          prefix: '',
-          value: { type: 'text', text: '1 worksite destroyed' },
-          suffix: '',
-          variant: 'negative'
-        });
-      }
-
-      // Critical Failure: 1 unrest + worksite destroyed
-      if (ctx.outcome === 'criticalFailure') {
-        resources.push({ resource: 'unrest', value: 1 });
-        outcomeBadges.push({
-          icon: 'fa-hammer',
-          prefix: '',
-          value: { type: 'text', text: '1 worksite destroyed' },
-          suffix: '',
-          variant: 'negative'
-        });
-      }
-
-      return {
-        resources,
-        outcomeBadges,
-        warnings: ctx.outcome === 'failure' || ctx.outcome === 'criticalFailure'
-          ? ['One random ongoing worksite will be destroyed (remove all progress)']
-          : []
-      };
-    }
-  },
+  // Auto-convert JSON modifiers to badges
+  preview: undefined,
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(emigrationThreatPipeline, ctx.outcome);
+    await applyPipelineModifiers(emigrationThreatPipeline, ctx.outcome, ctx);
     // Note: destroyWorksite command not implemented - handled as manual effect
     return { success: true };
   }

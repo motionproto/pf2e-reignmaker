@@ -9,7 +9,7 @@
   
   All components receive the same minimal interface:
   - preview: OutcomePreview (all data)
-  - instance: ActiveCheckInstance (state management)
+  - instance: OutcomePreview (state management, same as preview)
   - ...componentProps: Component-specific extras
 -->
 

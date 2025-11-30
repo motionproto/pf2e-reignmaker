@@ -12,7 +12,7 @@ Phase controllers execute the business logic for each of the six kingdom turn ph
 
 **Architecture Note:** For check-based phases (Events, Unrest, Actions), controllers trigger **PipelineCoordinator** for execution while handling phase-specific triggering and persistence logic.
 
-**See:** `docs/systems/pipeline-coordinator.md` for complete check execution architecture.
+**See:** `docs/systems/core/pipeline-coordinator.md` for complete check execution architecture.
 
 ---
 
@@ -196,7 +196,7 @@ async performEventCheck(eventId: string) {
 }
 ```
 
-**See:** `docs/systems/check-type-differences.md` for event-specific behavior.
+**See:** `docs/systems/core/check-type-differences.md` for event-specific behavior.
 
 ### UnrestPhaseController
 
@@ -228,7 +228,7 @@ async checkForIncidents() {
 }
 ```
 
-**See:** `docs/systems/check-type-differences.md` for incident-specific behavior.
+**See:** `docs/systems/core/check-type-differences.md` for incident-specific behavior.
 
 ### ActionPhaseController
 
@@ -259,7 +259,7 @@ async performAction(actionId: string) {
 }
 ```
 
-**See:** `docs/systems/check-type-differences.md` for action-specific behavior (pre/post interactions, custom components).
+**See:** `docs/systems/core/check-type-differences.md` for action-specific behavior (pre/post interactions, custom components).
 
 ### UpkeepPhaseController
 
@@ -304,7 +304,7 @@ return { success: context.executionResult?.success };
 
 **Pattern:** Controllers focus on phase-specific logic (triggering, persistence), PipelineCoordinator handles execution.
 
-**See:** `docs/systems/pipeline-coordinator.md` for complete 9-step flow.
+**See:** `docs/systems/core/pipeline-coordinator.md` for complete 9-step flow.
 
 ### With OutcomePreviewService
 
@@ -472,8 +472,7 @@ This architecture ensures maintainable, testable phase implementations that foll
 ---
 
 **Related Documents:**
-- `docs/systems/pipeline-coordinator.md` - Check execution architecture (9-step flow)
-- `docs/systems/check-type-differences.md` - Events vs Incidents vs Actions
-- `docs/systems/check-instance-system.md` - OutcomePreview system
-- `docs/systems/turn-and-phase-system.md` - Turn/phase progression architecture
+- `docs/systems/core/pipeline-coordinator.md` - Check execution architecture (9-step flow)
+- `docs/systems/core/check-type-differences.md` - Events vs Incidents vs Actions
+- `docs/systems/core/turn-and-phase-system.md` - Turn/phase progression architecture
 - `docs/ARCHITECTURE.md` - Overall system architecture

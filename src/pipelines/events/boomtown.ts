@@ -50,7 +50,7 @@ export const boomtownPipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(boomtownPipeline, ctx.outcome);
+    await applyPipelineModifiers(boomtownPipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

@@ -44,56 +44,12 @@ export const nobleConspiracyPipeline: CheckPipeline = {
     },
   },
 
-  preview: {
-    calculate: (ctx) => {
-      const resources = [];
-      const outcomeBadges = [];
-
-      // Failure: 1d4 gold loss + 1 fame loss
-      if (ctx.outcome === 'failure') {
-        outcomeBadges.push({
-          icon: 'fa-coins',
-          prefix: 'Lose',
-          value: { type: 'dice', formula: '1d4' },
-          suffix: 'Gold',
-          variant: 'negative'
-        });
-        resources.push({ resource: 'fame', value: -1 });
-      }
-
-      // Critical Failure: 2d4 gold loss + 1 fame loss + 1 unrest + leader loses action
-      if (ctx.outcome === 'criticalFailure') {
-        outcomeBadges.push({
-          icon: 'fa-coins',
-          prefix: 'Lose',
-          value: { type: 'dice', formula: '2d4' },
-          suffix: 'Gold',
-          variant: 'negative'
-        });
-        resources.push({ resource: 'fame', value: -1 });
-        resources.push({ resource: 'unrest', value: 1 });
-        outcomeBadges.push({
-          icon: 'fa-user-slash',
-          prefix: '',
-          value: { type: 'text', text: 'Leader loses action' },
-          suffix: '',
-          variant: 'negative'
-        });
-      }
-
-      return {
-        resources,
-        outcomeBadges,
-        warnings: ctx.outcome === 'criticalFailure'
-          ? ['One PC leader loses their Kingdom Action this turn (dealing with conspiracy)']
-          : []
-      };
-    }
-  },
+  // Auto-convert JSON modifiers to badges
+  preview: undefined,
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(nobleConspiracyPipeline, ctx.outcome);
+    await applyPipelineModifiers(nobleConspiracyPipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

@@ -1,6 +1,6 @@
 {
-  "id": "assassination-attempt",
-  "name": "Assassination Attempt",
+  "id": "assassin-attack",
+  "name": "Assassin Attack",
   "tier": "moderate",
   "description": "An assassin targets one of your kingdom's leaders",
   "skills": [

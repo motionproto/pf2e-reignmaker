@@ -96,7 +96,7 @@ import { visitingCelebrityPipeline } from './events/visiting-celebrity';
 // ==================================================
 
 // Minor incidents (8)
-import { banditActivityPipeline as banditActivityIncidentPipeline } from './incidents/minor/bandit-activity';
+import { banditRaidsPipeline } from './incidents/minor/bandit-raids';
 import { corruptionScandalPipeline } from './incidents/minor/corruption-scandal';
 import { crimeWavePipeline } from './incidents/minor/crime-wave';
 import { diplomaticIncidentPipeline } from './incidents/minor/diplomatic-incident';
@@ -106,7 +106,7 @@ import { risingTensionsPipeline } from './incidents/minor/rising-tensions';
 import { workStoppagePipeline } from './incidents/minor/work-stoppage';
 
 // Moderate incidents (10)
-import { assassinationAttemptPipeline as assassinationAttemptIncidentPipeline } from './incidents/moderate/assassination-attempt';
+import { assassinAttackPipeline } from './incidents/moderate/assassin-attack';
 import { diplomaticCrisisPipeline } from './incidents/moderate/diplomatic-crisis';
 import { diseaseOutbreakPipeline } from './incidents/moderate/disease-outbreak';
 import { infrastructureDamagePipeline } from './incidents/moderate/infrastructure-damage';
@@ -221,7 +221,7 @@ const EVENT_PIPELINES: CheckPipeline[] = [
  */
 const INCIDENT_PIPELINES: CheckPipeline[] = [
   // Minor (8)
-  banditActivityIncidentPipeline,
+  banditRaidsPipeline,
   corruptionScandalPipeline,
   crimeWavePipeline,
   diplomaticIncidentPipeline,
@@ -231,7 +231,7 @@ const INCIDENT_PIPELINES: CheckPipeline[] = [
   workStoppagePipeline,
 
   // Moderate (10)
-  assassinationAttemptIncidentPipeline,
+  assassinAttackPipeline,
   diplomaticCrisisPipeline,
   diseaseOutbreakPipeline,
   infrastructureDamagePipeline,

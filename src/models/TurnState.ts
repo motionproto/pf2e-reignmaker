@@ -5,11 +5,10 @@
  * Stored in KingdomData for multi-client synchronization.
  * Reset at turn boundaries by StatusPhaseController.
  * 
- * MIGRATION PLAN (Active Check Instance Unification):
- * - Phase 1: Create activeCheckInstances alongside existing state (COMPLETE)
- * - Phase 2: Migrate incidents to use activeCheckInstances (IN PROGRESS)
- * - Phase 3: Migrate events to use activeCheckInstances
- * - Phase 4: Remove legacy fields (incidentResolution, eventId, activeEventInstances)
+ * Data architecture:
+ * - pendingOutcomes[] stores active check instances (actions, events, incidents)
+ * - turnState stores phase-specific UI state (roll results, step progress)
+ * - Resolution state is stored within each instance.resolutionState
  */
 
 import type { TurnPhase } from '../actors/KingdomActor';

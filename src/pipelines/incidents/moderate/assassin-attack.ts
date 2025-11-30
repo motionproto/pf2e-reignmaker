@@ -7,18 +7,28 @@
 import type { CheckPipeline } from '../../../types/CheckPipeline';
 import { applyPipelineModifiers } from '../../shared/applyPipelineModifiers';
 
-export const assassinationAttemptPipeline: CheckPipeline = {
-  id: 'assassination-attempt',
-  name: 'Assassination Attempt',
+export const assassinAttackPipeline: CheckPipeline = {
+  id: 'assassin-attack',
+  name: 'Assassin Attack',
   description: 'An assassin targets one of your kingdom\'s leaders',
   checkType: 'incident',
-  tier: 'moderate',
+  tier: 2,
 
   skills: [
       { skill: 'athletics', description: 'protect target' },
       { skill: 'medicine', description: 'treat wounds' },
       { skill: 'stealth', description: 'avoid the assassin' },
     ],
+
+  preRollInteractions: [
+    {
+      type: 'entity-selection',
+      id: 'target',
+      entityType: 'army',  // Leaders would need custom component
+      label: 'Select Army Under Attack',
+      required: true
+    }
+  ],
 
   outcomes: {
     success: {
@@ -40,41 +50,14 @@ export const assassinationAttemptPipeline: CheckPipeline = {
     },
   },
 
-  preview: {
-    calculate: (ctx) => {
-      const resources = [];
-      const outcomeBadges = [];
-
-      // Failure: 1 unrest
-      if (ctx.outcome === 'failure') {
-        resources.push({ resource: 'unrest', value: 1 });
-      }
-
-      // Critical Failure: 2 unrest + leader wounded
-      if (ctx.outcome === 'criticalFailure') {
-        resources.push({ resource: 'unrest', value: 2 });
-        outcomeBadges.push({
-          icon: 'fa-user-injured',
-          prefix: '',
-          value: { type: 'text', text: 'Leader wounded' },
-          suffix: '',
-          variant: 'negative'
-        });
-      }
-
-      return {
-        resources,
-        outcomeBadges,
-        warnings: ctx.outcome === 'criticalFailure'
-          ? ['One PC leader cannot take a Kingdom Action this turn (recovering from wounds)']
-          : []
-      };
-    }
-  },
+  // Auto-convert JSON modifiers to badges
+  preview: undefined,
 
   execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(assassinationAttemptPipeline, ctx.outcome);
+    const targetId = ctx.metadata?.target?.id;
+    
+    // Apply modifiers from outcome (assassination effects on target)
+    await applyPipelineModifiers(assassinAttackPipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

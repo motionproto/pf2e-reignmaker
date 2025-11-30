@@ -16,16 +16,15 @@ import { createGameCommandsService } from '../services/GameCommandsService';
 import type { ActiveModifier, ActiveEventInstance } from '../models/Modifiers';
 import { isStaticModifier, isOngoingDuration, isDiceModifier } from '../types/modifiers';
 import { createOutcomePreviewService } from '../services/OutcomePreviewService';
-import { 
-  reportPhaseStart, 
-  reportPhaseComplete, 
-  reportPhaseError, 
+import {
+  reportPhaseStart,
+  reportPhaseComplete,
+  reportPhaseError,
   createPhaseResult,
   checkPhaseGuard,
   initializePhaseSteps,
   completePhaseStepByIndex,
-  isStepCompletedByIndex,
-  resolvePhaseOutcome
+  isStepCompletedByIndex
 } from './shared/PhaseControllerHelpers';
 import { TurnPhase } from '../actors/KingdomActor';
 import { EventsPhaseSteps } from './shared/PhaseStepConstants';
@@ -151,14 +150,14 @@ export async function createEventPhaseController(_eventService?: any) {
                 if (event) {
                     state.currentEvent = event;
 
-                    // ✅ ARCHITECTURE FIX: Create ActiveCheckInstance IMMEDIATELY (or reuse if exists)
+                    // ✅ ARCHITECTURE FIX: Create OutcomePreview IMMEDIATELY (or reuse if exists)
                     const { getKingdomActor } = await import('../stores/KingdomStore');
                     const actor = getKingdomActor();
                     const kingdom = actor?.getKingdomData();
                     
                     if (actor && kingdom && event) {
                         // Check if this event already exists as an ongoing instance
-                        const existingInstance = kingdom.activeCheckInstances?.find(
+                        const existingInstance = kingdom.pendingOutcomes?.find(
                             (i: any) => i.checkType === 'event' && i.checkId === event!.id && i.status === 'pending'
                         );
                         
@@ -243,11 +242,7 @@ export async function createEventPhaseController(_eventService?: any) {
         
         /**
          * Resolve event with ResolutionData
-         * Receives pre-computed resolution data from UI (all dice rolled, choices made)
-         * 
-         * @deprecated TODO: This method duplicates PipelineCoordinator logic.
-         * Should be replaced with: pipelineCoordinator.executePipeline(eventId, actorData)
-         * See Task B: Pipeline Unification Migration
+         * Uses the pipeline system to execute event outcomes
          */
         async resolveEvent(
             eventId: string,
@@ -289,12 +284,12 @@ export async function createEventPhaseController(_eventService?: any) {
 
             }
             
-            // Check if this event already exists as an ongoing instance (NEW system)
-            const existingInstance = kingdom?.activeCheckInstances?.find(
+            // Check if this event already exists as an ongoing instance
+            const existingInstance = kingdom?.pendingOutcomes?.find(
                 (instance: any) => instance.checkType === 'event' && instance.checkId === event.id && instance.status === 'pending'
             );
             
-            // NEW ARCHITECTURE: Create or update ActiveCheckInstance for ongoing events
+            // NEW ARCHITECTURE: Create or update OutcomePreview for ongoing events
             // This happens for rolled outcomes with endsEvent: false and ongoing modifiers
             // NOTE: Ignored events already have instances created by ignoreEvent(), so we exclude them here
             const shouldCreateInstance = (
@@ -308,7 +303,7 @@ export async function createEventPhaseController(_eventService?: any) {
             // Capture the instance ID for use later when storing appliedOutcome
             let newInstanceId: string | null = null;
             
-            // Create instance using NEW system (activeCheckInstances, not activeEventInstances)
+            // Create instance using NEW system (pendingOutcomes, not activeEventInstances)
             if (shouldCreateInstance && !existingInstance) {
                 // First time: Create new instance via CheckInstanceService
                 newInstanceId = await outcomePreviewService.createInstance(
@@ -331,14 +326,34 @@ export async function createEventPhaseController(_eventService?: any) {
 
             }
             
-            // Use unified resolution wrapper (consolidates duplicate logic)
-            const result = await resolvePhaseOutcome(
-                eventId,
-                'event',
-                outcome,
-                resolutionData,
-                [EventsPhaseSteps.RESOLVE_EVENT, EventsPhaseSteps.APPLY_MODIFIERS]  // Type-safe step indices
-            );
+            // Apply numeric modifiers from resolutionData (pre-rolled dice values)
+            const { applyResolvedOutcome } = await import('../services/resolution');
+            await applyResolvedOutcome(resolutionData, outcome);
+
+            // Execute pipeline for game commands (damageStructure, etc.) if one exists
+            // Note: Modifiers are already applied above, so pipeline.execute should only handle game commands
+            const { pipelineRegistry } = await import('../pipelines/PipelineRegistry');
+            const pipeline = pipelineRegistry.getPipeline(eventId);
+
+            if (pipeline?.execute) {
+                const executeContext = {
+                    outcome,
+                    kingdom,
+                    resolutionData,
+                    check: pipeline,
+                    metadata: {},
+                    modifiersAlreadyApplied: true  // Signal to skip applyPipelineModifiers
+                };
+
+                const executeResult = await pipeline.execute(executeContext);
+                if (!executeResult.success) {
+                    logger.error(`❌ [EventPhaseController] Pipeline execute failed:`, executeResult.error);
+                }
+            }
+
+            // Complete phase steps
+            await completePhaseStepByIndex(EventsPhaseSteps.RESOLVE_EVENT);
+            await completePhaseStepByIndex(EventsPhaseSteps.APPLY_MODIFIERS);
             
             // Store appliedOutcome and mark effects as applied (NEW system)
             if (shouldCreateInstance || existingInstance) {
@@ -355,9 +370,9 @@ export async function createEventPhaseController(_eventService?: any) {
                 }));
                 
                 await updateKingdom(kingdom => {
-                    if (!kingdom.activeCheckInstances) return;
+                    if (!kingdom.pendingOutcomes) return;
                     
-                    const instance = kingdom.activeCheckInstances.find(i => i.instanceId === targetInstanceId);
+                    const instance = kingdom.pendingOutcomes.find(i => i.previewId === targetInstanceId);
                     if (instance) {
                         // Store outcome for both rolled and ignored events
                         instance.appliedOutcome = {
@@ -368,7 +383,8 @@ export async function createEventPhaseController(_eventService?: any) {
                             modifiers: resolvedModifiers,  // ✅ RESOLVED values, not raw modifiers
                             manualEffects: outcomeData?.manualEffects || [],
                             gameCommands: outcomeData?.gameCommands || [],
-                            effectsApplied: true  // ✅ Mark effects as applied inside appliedOutcome (syncs across clients)
+                            effectsApplied: true,  // ✅ Mark effects as applied inside appliedOutcome (syncs across clients)
+                            shortfallResources: []  // Events don't have shortfall resources
                         };
                         
                         // Clear resolution progress after successful application
@@ -383,7 +399,7 @@ export async function createEventPhaseController(_eventService?: any) {
             if (!isIgnored && outcomeData?.endsEvent) {
                 await updateKingdom(kingdom => {
                     // Find the instance (either existing or newly created)
-                    const instance = kingdom.activeCheckInstances?.find(
+                    const instance = kingdom.pendingOutcomes?.find(
                         i => i.checkType === 'event' && i.checkId === eventId && i.status !== 'resolved'
                     );
                     if (instance) {
@@ -430,10 +446,10 @@ export async function createEventPhaseController(_eventService?: any) {
             // They will be cleaned up at the start of the NEXT Events phase by startPhase()
             // This allows players to see what events were resolved this turn
             
-            // Check if all events have effects applied (phase completion) - NEW system
+            // Check if all events have effects applied (phase completion)
             const updatedActor = getKingdomActor();
             const updatedKingdomState = updatedActor?.getKingdomData();
-            const pendingInstances = updatedKingdomState?.activeCheckInstances?.filter(
+            const pendingInstances = updatedKingdomState?.pendingOutcomes?.filter(
                 (i: any) => i.checkType === 'event' && i.status === 'pending'
             ) || [];
             const allEffectsApplied = pendingInstances.length === 0 || pendingInstances.every((i: any) => 
@@ -446,7 +462,7 @@ export async function createEventPhaseController(_eventService?: any) {
                 await completePhaseStepByIndex(EventsPhaseSteps.APPLY_MODIFIERS);
             }
             
-            return result;
+            return { success: true };
         },
         
         /**
@@ -495,7 +511,7 @@ export async function createEventPhaseController(_eventService?: any) {
                 
                 if (kingdom) {
                     // Check if an instance already exists (created by performEventCheck)
-                    const existingInstance = kingdom.activeCheckInstances?.find(
+                    const existingInstance = kingdom.pendingOutcomes?.find(
                         (i: any) => i.checkType === 'event' && i.checkId === event.id && i.status === 'pending'
                     );
                     
@@ -526,12 +542,13 @@ export async function createEventPhaseController(_eventService?: any) {
                         manualEffects: outcomeData.manualEffects || [],
                         gameCommands: outcomeData.gameCommands || [],
                         effectsApplied: false,
-                        isIgnored: true  // Flag to hide reroll button
+                        isIgnored: true,  // Flag to hide reroll button
+                        shortfallResources: []  // Events don't have shortfall resources
                     };
                     
                     // Store preview in instance
                     await updateKingdom(kingdom => {
-                        const instance = kingdom.activeCheckInstances?.find(i => i.instanceId === instanceId);
+                        const instance = kingdom.pendingOutcomes?.find(i => i.previewId === instanceId);
                         if (instance) {
                             instance.appliedOutcome = resolution;
 

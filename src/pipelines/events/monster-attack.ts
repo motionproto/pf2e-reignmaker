@@ -51,7 +51,7 @@ export const monsterAttackPipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(monsterAttackPipeline, ctx.outcome);
+    await applyPipelineModifiers(monsterAttackPipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

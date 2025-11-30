@@ -21,7 +21,7 @@ export type {
   ModifierDuration,
   EventModifier,
   EventOutcome,
-  EventOutcomes,
+  EventEffects,
   KingdomEvent
 } from './events';
 
@@ -39,7 +39,7 @@ export interface KingdomIncident {
   tier: 'minor' | 'moderate' | 'major';
   description: string;
   skills?: EventSkill[];
-  outcomes: EventOutcomes;
+  effects: EventEffects;
   traits?: EventTrait[];  // Event traits (beneficial, dangerous, ongoing)
 }
 
@@ -53,7 +53,7 @@ export function isKingdomIncident(obj: any): obj is KingdomIncident {
     typeof obj.name === 'string' &&
     typeof obj.description === 'string' &&
     typeof obj.tier === 'string' &&
-    typeof obj.outcomes === 'object'
+    typeof obj.effects === 'object'
   );
 }
 

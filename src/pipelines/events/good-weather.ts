@@ -51,7 +51,7 @@ export const goodWeatherPipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(goodWeatherPipeline, ctx.outcome);
+    await applyPipelineModifiers(goodWeatherPipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

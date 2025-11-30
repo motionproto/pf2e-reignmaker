@@ -1,11 +1,11 @@
 /**
  * ResolutionStateHelpers - Unified utilities for syncing CheckCard state across clients
  * 
- * NEW ARCHITECTURE: Resolution state stored in ActiveCheckInstance.resolutionState
+ * NEW ARCHITECTURE: Resolution state stored in OutcomePreview.resolutionState
  * OLD ARCHITECTURE: Resolution state stored in turnState.activeResolutions (deprecated)
  * 
  * Architecture: Instance-level
- * - CheckCard receives instance prop
+ * - CheckCard receives instance prop (OutcomePreview)
  * - Reads state from instance.resolutionState
  * - Updates via these helpers
  * - Emits final ResolutionData when ready
@@ -13,7 +13,7 @@
 
 import { getKingdomActor } from '../../stores/KingdomStore';
 import type { ResolutionState } from '../../models/Modifiers';
-import type { ActiveCheckInstance } from '../../models/CheckInstance';
+import type { OutcomePreview } from '../../models/OutcomePreview';
 import { logger } from '../../utils/Logger';
 
 // ============================================================================
@@ -24,7 +24,7 @@ import { logger } from '../../utils/Logger';
  * Get resolution state from instance (NEW)
  * Returns a new object each time to ensure Svelte reactivity
  */
-export function getInstanceResolutionState(instance: ActiveCheckInstance | null | undefined): ResolutionState {
+export function getInstanceResolutionState(instance: OutcomePreview | null | undefined): ResolutionState {
   if (!instance) {
     return {
       selectedChoice: null,

@@ -41,47 +41,12 @@ export const workStoppagePipeline: CheckPipeline = {
     },
   },
 
-  preview: {
-    calculate: (ctx) => {
-      const resources = [];
-      const outcomeBadges = [];
-
-      // Failure: lose 1 of chosen resource
-      if (ctx.outcome === 'failure') {
-        outcomeBadges.push({
-          icon: 'fa-industry',
-          prefix: 'Lose',
-          value: { type: 'static', value: 1 },
-          suffix: 'of chosen resource',
-          variant: 'negative'
-        });
-      }
-
-      // Critical Failure: 1 unrest + lose 2 of chosen resource
-      if (ctx.outcome === 'criticalFailure') {
-        resources.push({ resource: 'unrest', value: 1 });
-        outcomeBadges.push({
-          icon: 'fa-industry',
-          prefix: 'Lose',
-          value: { type: 'static', value: 2 },
-          suffix: 'of chosen resource',
-          variant: 'negative'
-        });
-      }
-
-      return {
-        resources,
-        outcomeBadges,
-        warnings: ctx.outcome === 'failure' || ctx.outcome === 'criticalFailure'
-          ? ['Choose which resource to lose: Lumber, Ore, or Stone']
-          : []
-      };
-    }
-  },
+  // Auto-convert JSON modifiers to badges
+  preview: undefined,
 
   execute: async (ctx) => {
     // Apply modifiers from outcome - choice will be resolved by UI before this
-    await applyPipelineModifiers(workStoppagePipeline, ctx.outcome);
+    await applyPipelineModifiers(workStoppagePipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

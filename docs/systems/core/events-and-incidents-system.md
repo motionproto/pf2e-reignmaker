@@ -199,7 +199,7 @@ Turn 4: No drug-den event (resolved)
 }
 ```
 
-**See Also:** `docs/systems/typed-modifiers-system.md` for full modifier documentation.
+**See Also:** `docs/systems/core/typed-modifiers-system.md` for full modifier documentation.
 
 ---
 
@@ -273,7 +273,7 @@ Turn 4: No drug-den event (resolved)
 
 Events now execute through **PipelineCoordinator**, which provides a standardized 9-step execution flow. EventPhaseController triggers the pipeline and handles event-specific persistence logic.
 
-**See:** `docs/systems/pipeline-coordinator.md` for complete pipeline architecture.
+**See:** `docs/systems/core/pipeline-coordinator.md` for complete pipeline architecture.
 
 ### 1. Event Selection (Events Phase Start)
 
@@ -316,7 +316,7 @@ Step 8: Execute Action (apply effects + check endsEvent)
 Step 9: Cleanup (update turnState)
 ```
 
-**See:** `docs/systems/check-type-differences.md` for event-specific pipeline behavior.
+**See:** `docs/systems/core/check-type-differences.md` for event-specific pipeline behavior.
 
 ### 3. Outcome Application
 
@@ -433,7 +433,7 @@ Incidents use the same 9-step pipeline as events, with minor differences:
 
 **Persistence:** Uses `kingdom.turnState.unrestPhase` instead of `eventsPhase`.
 
-**See:** `docs/systems/check-type-differences.md` for complete incident vs event comparison.
+**See:** `docs/systems/core/check-type-differences.md` for complete incident vs event comparison.
 
 ---
 
@@ -469,7 +469,7 @@ const context = await coordinator.executePipeline(incidentId, {
 // Same flow, different checkType
 ```
 
-**See:** `docs/systems/pipeline-coordinator.md` for complete architecture.
+**See:** `docs/systems/core/pipeline-coordinator.md` for complete architecture.
 
 ### With EventPhaseController
 
@@ -543,7 +543,7 @@ await outcomePreviewService.storeOutcome(
 await outcomePreviewService.markApplied(previewId);
 ```
 
-**See:** `docs/systems/check-instance-system.md`
+**Note:** Check instance system has been integrated into the pipeline coordinator.
 
 ### With GameCommandsService & GameCommandsResolver
 
@@ -561,7 +561,7 @@ await gameCommandsService.damageStructure(params);
 await gameCommandsService.destroyStructure(params);
 ```
 
-**See:** `docs/systems/game-commands-system.md`
+**See:** `docs/systems/core/game-commands-system.md`
 
 ---
 
@@ -787,7 +787,6 @@ This architecture provides dynamic, replayable kingdom challenges while maintain
 ---
 
 **Related Documents:**
-- `docs/systems/pipeline-coordinator.md` - Complete pipeline architecture
-- `docs/systems/check-type-differences.md` - Events vs Incidents vs Actions
-- `docs/systems/check-instance-system.md` - OutcomePreview system
-- `docs/systems/game-commands-system.md` - Game commands integration
+- `docs/systems/core/pipeline-coordinator.md` - Complete pipeline architecture
+- `docs/systems/core/check-type-differences.md` - Events vs Incidents vs Actions
+- `docs/systems/core/game-commands-system.md` - Game commands integration

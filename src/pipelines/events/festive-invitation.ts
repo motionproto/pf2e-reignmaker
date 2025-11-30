@@ -51,7 +51,7 @@ export const festiveInvitationPipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(festiveInvitationPipeline, ctx.outcome);
+    await applyPipelineModifiers(festiveInvitationPipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

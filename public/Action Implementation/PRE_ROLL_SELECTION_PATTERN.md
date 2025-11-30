@@ -212,7 +212,7 @@ For actions that need player input **after** the roll (e.g., resource selection,
 ### Benefits
 - Better UX - no modal interruption
 - Context preserved - player sees outcome + UI together
-- Multi-player synchronized via CheckInstance
+- Multi-player synchronized via OutcomePreview
 - Composable - multiple UIs can coexist
 
 ### Example: Purchase Resources
@@ -221,9 +221,9 @@ For actions that need player input **after** the roll (e.g., resource selection,
 // PurchaseResourcesUI.svelte
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import type { ActiveCheckInstance } from '../../../models/CheckInstance';
+  import type { OutcomePreview } from '../../../models/OutcomePreview';
   
-  export let instance: ActiveCheckInstance | null;
+  export let instance: OutcomePreview | null;
   export let outcome: string;
   export let modifiers: any[];
   export let stateChanges: Record<string, any>;
@@ -313,7 +313,7 @@ function handleCustomSelection(event: CustomEvent) {
 
 ### Multi-Player Synchronization
 
-Custom UIs receive the `instance` prop with the CheckInstance object. Use it to:
+Custom UIs receive the `instance` prop with the OutcomePreview object. Use it to:
 1. Read shared state from `instance.resolutionState`
 2. Update state via `updateInstanceResolutionState()`
 3. All players see the same state in real-time
@@ -326,7 +326,7 @@ async function handleSelection() {
   if (!instance) return;
   
   // Update shared state
-  await updateInstanceResolutionState(instance.instanceId, {
+  await updateInstanceResolutionState(instance.previewId, {
     customData: { selectedResource, quantity }
   });
   

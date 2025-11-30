@@ -38,55 +38,12 @@ export const guerrillaMovementPipeline: CheckPipeline = {
     },
   },
 
-  preview: {
-    calculate: (ctx) => {
-      const resources = [];
-      const outcomeBadges = [];
-
-      // Failure: 1d3 hexes rebel-controlled
-      if (ctx.outcome === 'failure') {
-        outcomeBadges.push({
-          icon: 'fa-flag',
-          prefix: '',
-          value: { type: 'dice', formula: '1d3' },
-          suffix: 'hexes seized by rebels',
-          variant: 'negative'
-        });
-      }
-
-      // Critical Failure: 2d3 hexes rebel-controlled + rebel army
-      if (ctx.outcome === 'criticalFailure') {
-        outcomeBadges.push({
-          icon: 'fa-flag',
-          prefix: '',
-          value: { type: 'dice', formula: '2d3' },
-          suffix: 'hexes seized by rebels',
-          variant: 'negative'
-        });
-        outcomeBadges.push({
-          icon: 'fa-shield-alt',
-          prefix: '',
-          value: { type: 'text', text: 'Rebel army raised' },
-          suffix: '',
-          variant: 'negative'
-        });
-      }
-
-      return {
-        resources,
-        outcomeBadges,
-        warnings: ctx.outcome === 'failure'
-          ? ['Mark 1d3 hexes as rebel-controlled (cannot use until resolved)']
-          : ctx.outcome === 'criticalFailure'
-            ? ['Mark 2d3 hexes as rebel-controlled', 'Rebels raise an army (level = kingdom level - 1)']
-            : []
-      };
-    }
-  },
+  // Auto-convert JSON modifiers to badges
+  preview: undefined,
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(guerrillaMovementPipeline, ctx.outcome);
+    await applyPipelineModifiers(guerrillaMovementPipeline, ctx.outcome, ctx);
     // Note: Hex seizure and rebel army commands not implemented - handled as manual effects
     return { success: true };
   }

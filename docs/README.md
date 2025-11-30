@@ -10,10 +10,9 @@ This documentation describes the architecture and core systems of the Reignmaker
 
 1. **[ARCHITECTURE.md](ARCHITECTURE.md)** - Complete system overview
 2. **Choose your task type:**
-   - **Implementing/fixing actions?** → [guides/CUSTOM_UI_ACTION_GUIDE.md](guides/CUSTOM_UI_ACTION_GUIDE.md)
-   - **Understanding checks/outcomes?** → [systems/outcome-display-system.md](systems/outcome-display-system.md)
-   - **Working with pipelines?** → [systems/pipeline-coordinator.md](systems/pipeline-coordinator.md)
-   - **Modifying resources?** → [systems/typed-modifiers-system.md](systems/typed-modifiers-system.md)
+   - **Understanding checks/outcomes?** → [systems/core/outcome-display-system.md](systems/core/outcome-display-system.md)
+   - **Working with pipelines?** → [systems/core/pipeline-coordinator.md](systems/core/pipeline-coordinator.md)
+   - **Modifying resources?** → [systems/core/typed-modifiers-system.md](systems/core/typed-modifiers-system.md)
    - **Debugging issues?** → [refactoring/DEBUGGING_GUIDE.md](refactoring/DEBUGGING_GUIDE.md)
 
 **Key architectural rules (read ARCHITECTURE.md for details):**
@@ -30,68 +29,89 @@ This documentation describes the architecture and core systems of the Reignmaker
 New to the project? Start here:
 
 1. **[ARCHITECTURE.md](ARCHITECTURE.md)** - Comprehensive overview of the entire system
-2. **[guides/CUSTOM_UI_ACTION_GUIDE.md](guides/CUSTOM_UI_ACTION_GUIDE.md)** - Quick reference for implementing actions
+2. **[systems/core/pipeline-patterns.md](systems/core/pipeline-patterns.md)** - Pattern reference for implementing actions
 3. Pick a system to learn more about (see Core Systems below)
 
 ---
 
 ## Core Systems
 
-These documents describe the main architectural systems:
+### Core Architecture (systems/core/)
 
-### [OutcomeDisplay System](systems/outcome-display-system.md)
-Universal outcome renderer for Actions, Events, and Incidents.
-
-**Topics:**
-- Automatic component inference from modifier types
-- Unified badge system
-- Custom component integration
-- Registry pattern
-
-### [Pipeline Coordinator](systems/pipeline-coordinator.md)
-9-step pipeline architecture for all player actions.
-
-**Topics:**
+**[Pipeline Coordinator](systems/core/pipeline-coordinator.md)** - 9-step pipeline architecture for all player actions
 - Step-by-step execution flow
 - Requirements checking
 - Pre-roll and post-roll interactions
-- Execute and cleanup phases
 
-### [Turn and Phase System](systems/turn-and-phase-system.md)
-Coordinate kingdom turn progression through six phases.
-
-**Topics:**
+**[Turn and Phase System](systems/core/turn-and-phase-system.md)** - Kingdom turn progression through six phases
 - Turn lifecycle and phase order
 - TurnState (per-turn data management)
-- Phase progression patterns
 - Self-executing phase architecture
 
-### [Typed Modifiers System](systems/typed-modifiers-system.md)
-Type-safe resource modifications using explicit TypeScript discriminants.
-
-**Topics:**
-- StaticModifier, DiceModifier, ChoiceModifier
-- Duration types (immediate, ongoing, turn-count)
-- Outcome structure and message placeholders
-- Manual effects vs game commands
-
-### [Game Commands System](systems/game-commands-system.md)
-Structured gameplay commands for non-resource effects from player actions.
-
-**Topics:**
-- 25+ typed command definitions
-- Territory, construction, military, diplomatic commands
-- Service architecture (GameCommandsService, GameCommandsResolver)
-- Integration with action outcomes and dual-effect pattern
-
-### [Phase Controllers](systems/phase-controllers.md)
-Implement phase-specific business logic following standardized patterns.
-
-**Topics:**
+**[Phase Controllers](systems/core/phase-controllers.md)** - Phase-specific business logic
 - Factory function pattern
 - Phase guard protection
-- Step management helpers
 - Six phase controller implementations
+
+**[OutcomeDisplay System](systems/core/outcome-display-system.md)** - Universal outcome renderer
+- Automatic component inference from modifier types
+- Unified badge system
+- Custom component integration
+
+**[Typed Modifiers System](systems/core/typed-modifiers-system.md)** - Type-safe resource modifications
+- StaticModifier, DiceModifier, ChoiceModifier
+- Duration types (immediate, ongoing, turn-count)
+- Manual effects vs game commands
+
+**[Game Commands System](systems/core/game-commands-system.md)** - Non-resource effects
+- 25+ typed command definitions
+- Territory, construction, military, diplomatic commands
+- Service architecture
+
+**[Events and Incidents](systems/core/events-and-incidents-system.md)** - Random kingdom events
+- Event structure and traits
+- Incident severity tiers
+- Outcome modifiers
+
+**[Check Type Differences](systems/core/check-type-differences.md)** - Events vs Incidents vs Actions
+- Triggering mechanisms
+- Persistence patterns
+- Pipeline differences
+
+### Map Systems (systems/map/)
+
+**[Hex Selection Flow](systems/map/HEX_SELECTION_FLOW_GUIDE.md)** - Map-based interaction for actions
+- Selection state machine
+- Visual states and timing
+- Integration with pipelines
+
+**[Map Selection Pattern](systems/map/MAP_SELECTION_PATTERN.md)** - Selection patterns
+- Hex selection patterns
+- Validation strategies
+
+**[Canonical Edge System](systems/map/canonical-edge-system.md)** - Hex border management
+- Single source of truth for edges
+- Edge ID format
+- River and road integration
+
+**[River Editor](systems/map/river-editor-implementation-summary.md)** - River editing tools
+- River segment management
+- Flow direction handling
+
+### Gameplay Systems (systems/gameplay/)
+
+**[Army Pathfinding](systems/gameplay/army-pathfinding-system.md)** - A* pathfinding for armies
+- Movement range calculation
+- Visual path preview
+- Terrain costs
+
+**[Army Actor Linking](systems/gameplay/army-actor-linking.md)** - Army management
+- Actor integration
+- Army lifecycle
+
+**[App Window Management](systems/gameplay/app-window-management.md)** - UI visibility control
+- CSS-based hide/show
+- Map interaction mode
 
 ---
 
@@ -103,46 +123,43 @@ docs/
 ├── ARCHITECTURE.md                    (comprehensive system overview)
 ├── BUILD_SYSTEM.md                    (build system reference)
 │
-├── guides/                            (implementation how-tos)
-│   ├── CUSTOM_UI_ACTION_GUIDE.md      ⭐ Creating custom action UI
-│   ├── INLINE_COMPONENT_PATTERN.md    (postRoll vs postApply)
-│   └── VALIDATION_PATTERNS.md         (validation strategies)
+├── systems/                           (architecture documentation)
+│   ├── core/                          (core architecture fundamentals)
+│   │   ├── pipeline-coordinator.md    ⭐ 9-step action pipeline
+│   │   ├── pipeline-patterns.md       ⭐ Implementation patterns
+│   │   ├── turn-and-phase-system.md   (turn progression)
+│   │   ├── phase-controllers.md       (phase business logic)
+│   │   ├── outcome-display-system.md  ⭐ Universal outcome renderer
+│   │   ├── typed-modifiers-system.md  (resource modifications)
+│   │   ├── game-commands-system.md    (non-resource effects)
+│   │   ├── events-and-incidents-system.md (random events)
+│   │   └── check-type-differences.md  (action/event/incident)
+│   │
+│   ├── map/                           (map and territory features)
+│   │   ├── HEX_SELECTION_FLOW_GUIDE.md (map interactions)
+│   │   ├── MAP_SELECTION_PATTERN.md    (selection patterns)
+│   │   ├── canonical-edge-system.md    (hex borders)
+│   │   └── river-editor-implementation-summary.md (river editing)
+│   │
+│   └── gameplay/                      (gameplay features)
+│       ├── army-pathfinding-system.md (army movement)
+│       ├── army-actor-linking.md      (army management)
+│       └── app-window-management.md   (window lifecycle)
 │
-├── systems/                           (core architecture docs)
-│   ├── outcome-display-system.md      ⭐ Universal outcome renderer
-│   ├── pipeline-coordinator.md        ⭐ 9-step action pipeline
-│   ├── turn-and-phase-system.md       (turn progression)
-│   ├── typed-modifiers-system.md      (resource modifications)
-│   ├── game-commands-system.md        (non-resource effects)
-│   ├── phase-controllers.md           (phase business logic)
-│   ├── events-and-incidents-system.md (random events)
-│   ├── HEX_SELECTION_FLOW_GUIDE.md    (map interactions)
-│   ├── MAP_SELECTION_PATTERN.md       (selection patterns)
-│   ├── army-actor-linking.md          (army management)
-│   ├── army-pathfinding-system.md     (army movement)
-│   ├── canonical-edge-system.md       (hex borders)
-│   ├── check-type-differences.md      (action/event/incident)
-│   ├── app-window-management.md       (window lifecycle)
-│   └── river-editor-implementation-summary.md (river editing)
-│
-├── refactoring/                       (migration & testing)
+├── refactoring/                       (implementation guides)
 │   ├── README.md                      (migration overview)
 │   ├── DEBUGGING_GUIDE.md             ⭐ Common issues & fixes
 │   ├── TESTING_GUIDE.md               (systematic testing)
-│   ├── ACTION_MIGRATION_CHECKLIST.md  (migration steps)
-│   ├── CUSTOM_COMPONENTS_TODO.md      (component tracking)
-│   └── MODIFIER_PATTERNS.md           (modifier best practices)
+│   └── INCIDENT_PIPELINE_AUDIT.md     (incident architecture)
 │
 ├── design-system/                     (UI/UX patterns)
 │   ├── choice-buttons.md              (choice UI component)
 │   └── surface-background-system.md   (color system)
 │
-├── todo/                              (development tracking)
-│   ├── known_issues.md                (bug list)
-│   ├── hex-selector-territory-layer-issue.md
-│   └── production_recalculation.md
-│
-└── archived/                          (historical/completed work)
+└── todo/                              (development tracking)
+    ├── known_issues.md                (bug list)
+    ├── hex-selector-territory-layer-issue.md
+    └── production_recalculation.md
 ```
 
 **⭐ = Most frequently referenced by AI agents**
@@ -159,7 +176,7 @@ These documents focus on **architectural principles and data flow**, not impleme
 - **What are the key patterns?** - Architectural patterns
 
 **Not included:**
-- Step-by-step tutorials (see guides/)
+- Step-by-step tutorials (see systems/core/pipeline-patterns.md)
 - Complete API documentation (see TypeScript types in code)
 - Detailed code walkthroughs (see actual implementations)
 
@@ -208,22 +225,22 @@ From [ARCHITECTURE.md](ARCHITECTURE.md):
 
 ## Common Tasks
 
-### I need to create a custom action UI component
+### I need to implement a new action
 
-1. Read: [guides/CUSTOM_UI_ACTION_GUIDE.md](guides/CUSTOM_UI_ACTION_GUIDE.md)
-2. Follow the Arrest Dissidents example (complete working code)
-3. Use the debugging checklist if issues arise
+1. Read: [systems/core/pipeline-patterns.md](systems/core/pipeline-patterns.md)
+2. Find your pattern and copy structure from similar action
+3. Test in Foundry - roll, apply, verify state changes
 
 ### I need to understand how actions work
 
-1. Read: [systems/pipeline-coordinator.md](systems/pipeline-coordinator.md)
-2. Read: [systems/outcome-display-system.md](systems/outcome-display-system.md)
+1. Read: [systems/core/pipeline-coordinator.md](systems/core/pipeline-coordinator.md)
+2. Read: [systems/core/outcome-display-system.md](systems/core/outcome-display-system.md)
 3. Look at: `src/pipelines/actions/` for examples
 
 ### I need to modify resources or apply effects
 
-1. Read: [systems/typed-modifiers-system.md](systems/typed-modifiers-system.md)
-2. Read: [systems/game-commands-system.md](systems/game-commands-system.md)
+1. Read: [systems/core/typed-modifiers-system.md](systems/core/typed-modifiers-system.md)
+2. Read: [systems/core/game-commands-system.md](systems/core/game-commands-system.md)
 3. Use explicit types (StaticModifier, DiceModifier, etc.)
 
 ### I'm debugging an issue
@@ -245,10 +262,10 @@ From [ARCHITECTURE.md](ARCHITECTURE.md):
 **Recommended reading order:**
 
 1. [ARCHITECTURE.md](ARCHITECTURE.md) - Get the big picture (30 min)
-2. [systems/pipeline-coordinator.md](systems/pipeline-coordinator.md) - Understand action flow (15 min)
-3. [systems/outcome-display-system.md](systems/outcome-display-system.md) - Learn outcome rendering (15 min)
-4. [guides/CUSTOM_UI_ACTION_GUIDE.md](guides/CUSTOM_UI_ACTION_GUIDE.md) - See practical examples (20 min)
-5. [systems/turn-and-phase-system.md](systems/turn-and-phase-system.md) - Understand turn flow (15 min)
+2. [systems/core/pipeline-coordinator.md](systems/core/pipeline-coordinator.md) - Understand action flow (15 min)
+3. [systems/core/outcome-display-system.md](systems/core/outcome-display-system.md) - Learn outcome rendering (15 min)
+4. [systems/core/pipeline-patterns.md](systems/core/pipeline-patterns.md) - See practical patterns (20 min)
+5. [systems/core/turn-and-phase-system.md](systems/core/turn-and-phase-system.md) - Understand turn flow (15 min)
 
 Then explore the codebase with this architectural context.
 

@@ -42,60 +42,14 @@ export const religiousSchismPipeline: CheckPipeline = {
     },
   },
 
-  preview: {
-    calculate: (ctx) => {
-      const resources = [];
-      const outcomeBadges = [];
-
-      // Failure: 2d6 gold loss + damage highest religious structure
-      if (ctx.outcome === 'failure') {
-        outcomeBadges.push({
-          icon: 'fa-coins',
-          prefix: 'Lose',
-          value: { type: 'dice', formula: '2d6' },
-          suffix: 'Gold',
-          variant: 'negative'
-        });
-        outcomeBadges.push({
-          icon: 'fa-church',
-          prefix: '',
-          value: { type: 'text', text: 'Religious structure damaged' },
-          suffix: '',
-          variant: 'negative'
-        });
-      }
-
-      // Critical Failure: 4d6 gold loss + destroy/downgrade religious structure
-      if (ctx.outcome === 'criticalFailure') {
-        outcomeBadges.push({
-          icon: 'fa-coins',
-          prefix: 'Lose',
-          value: { type: 'dice', formula: '4d6' },
-          suffix: 'Gold',
-          variant: 'negative'
-        });
-        outcomeBadges.push({
-          icon: 'fa-church',
-          prefix: '',
-          value: { type: 'text', text: 'Religious structure downgraded' },
-          suffix: '',
-          variant: 'negative'
-        });
-      }
-
-      return {
-        resources,
-        outcomeBadges,
-        warnings: []
-      };
-    }
-  },
+  // Auto-convert JSON modifiers to badges
+  preview: undefined,
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(religiousSchismPipeline, ctx.outcome);
+    await applyPipelineModifiers(religiousSchismPipeline, ctx.outcome, ctx);
 
-    const { createGameCommandsResolver } = await import('../../services/GameCommandsResolver');
+    const { createGameCommandsResolver } = await import('../../../services/GameCommandsResolver');
     const resolver = await createGameCommandsResolver();
 
     // Failure: damage highest tier religious structure

@@ -2,12 +2,12 @@
   import { createEventDispatcher } from 'svelte';
   import { kingdomData } from '../../../stores/KingdomStore';
   import type { Army } from '../../../models/Army';
-  import type { ActiveCheckInstance } from '../../../models/CheckInstance';
+  import type { OutcomePreview } from '../../../models/OutcomePreview';
   import Dialog from './baseComponents/Dialog.svelte';
   import { PLAYER_KINGDOM } from '../../../types/ownership';
 
   // Props required by pipeline interface but not used in this component
-  export const instance: ActiveCheckInstance | null = null;
+  export const instance: OutcomePreview | null = null;
   export let outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure' = 'success';
   export const modifiers: any[] = [];
   export const stateChanges: any = {};

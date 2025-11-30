@@ -50,7 +50,7 @@ export const criminalTrialPipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(criminalTrialPipeline, ctx.outcome);
+    await applyPipelineModifiers(criminalTrialPipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

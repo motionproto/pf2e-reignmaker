@@ -50,7 +50,7 @@ export const inquisitionPipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(inquisitionPipeline, ctx.outcome);
+    await applyPipelineModifiers(inquisitionPipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

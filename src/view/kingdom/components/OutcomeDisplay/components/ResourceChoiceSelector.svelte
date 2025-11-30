@@ -1,13 +1,13 @@
 <script lang="ts">
   import { createEventDispatcher, onMount, onDestroy } from 'svelte';
-  import type { ActiveCheckInstance } from '../../../../../models/CheckInstance';
+  import type { OutcomePreview } from '../../../../../models/OutcomePreview';
   import type { ComponentResolutionData } from '../../../../../types/CustomComponentInterface';
   import type { ResourceType } from '../../../../../types/events';
   import { getResourceIcon } from '../../../../kingdom/utils/presentation';
   import { getValidationContext } from '../context/ValidationContext';
 
   // ✅ STANDARD PROPS (CustomComponentInterface)
-  export let instance: ActiveCheckInstance | null = null;
+  export let instance: OutcomePreview | null = null;
   export let outcome: string;
   export let config: Record<string, any> = {};
 

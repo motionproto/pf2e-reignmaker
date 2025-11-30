@@ -45,30 +45,8 @@
    $: totalCount = allItems.length;
    $: displayIndex = currentIndex >= 0 ? currentIndex + 1 : 0;
    
-   // Track if we've attempted auto-load to prevent repeated attempts
-   let autoLoadAttempted = false;
-   
-   // Auto-load first item when conditions are met (reactive)
-   // ONLY if no items exist yet for this phase
-   $: {
-      const kingdom = get(kingdomData);
-      const existingInstances = kingdom.pendingOutcomes?.filter(i => i.checkType === type) || [];
-      
-      if (!autoLoadAttempted && existingInstances.length === 0 && allItems.length > 0) {
-         autoLoadAttempted = true;
-         // Small delay to ensure phase initialization completes first
-         setTimeout(() => {
-            setActiveItem(allItems[0].id);
-         }, 150);
-      }
-   }
-   
-   // Reset auto-load flag when type changes (switching between incident/event)
-   let lastType = type;
-   $: if (type !== lastType) {
-      lastType = type;
-      autoLoadAttempted = false;
-   }
+   // NOTE: Auto-load behavior removed - incidents/events should only appear via normal gameplay rolls
+   // The debug selector now only provides manual navigation for testing purposes
    
    async function navigatePrevious() {
       if (allItems.length === 0) return;
@@ -100,17 +78,20 @@
    }
    
    async function clearActive() {
-      // Clear ALL instances of this type, not just the current one
+      // Clear ALL instances of this type, regardless of status (pending, resolved, etc.)
       const kingdom = get(kingdomData);
       if (!kingdom.turnState) {
          logger.warn('[DebugEventSelector] No turnState found, cannot clear items');
          return;
       }
-      
+
       const outcomePreviewService = await createOutcomePreviewService();
-      const existing = outcomePreviewService.getPendingInstances(type, kingdom);
-      
-      for (const instance of existing) {
+
+      // Get ALL instances of this type (not just pending - includes resolved, stuck, etc.)
+      const allInstances = kingdom.pendingOutcomes?.filter(i => i.checkType === type) || [];
+      console.log(`[DebugEventSelector] Clearing ${allInstances.length} ${type} instance(s) (all statuses)`);
+
+      for (const instance of allInstances) {
          await outcomePreviewService.clearInstance(instance.previewId);
       }
       
@@ -130,16 +111,23 @@
             kingdom.turnState.unrestPhase.incidentRolled = false;
             kingdom.turnState.unrestPhase.incidentTriggered = false;
             kingdom.turnState.unrestPhase.incidentRoll = undefined;
+
+            // Reset incident phase steps (step 1 = incident check, step 2 = resolve incident)
+            if (kingdom.currentPhaseSteps && kingdom.currentPhaseSteps.length > 1) {
+               kingdom.currentPhaseSteps[1].completed = 0; // INCIDENT_CHECK
+               if (kingdom.currentPhaseSteps.length > 2) {
+                  kingdom.currentPhaseSteps[2].completed = 0; // RESOLVE_INCIDENT
+               }
+
+               // Update phase completion status
+               const totalSteps = kingdom.currentPhaseSteps.length;
+               const completedCount = kingdom.currentPhaseSteps.filter(s => s.completed === 1).length;
+               kingdom.phaseComplete = totalSteps > 0 && completedCount === totalSteps;
+            }
          });
       }
       
-      // Reset auto-load flag and reload first item with fresh data
-      autoLoadAttempted = false;
-      setTimeout(() => {
-         if (allItems.length > 0) {
-            setActiveItem(allItems[0].id);
-         }
-      }, 200);
+      console.log(`[DebugEventSelector] ${type} cleared completely`);
    }
    
    async function setActiveItem(itemId: string | null) {
@@ -154,7 +142,7 @@
       const outcomePreviewService = await createOutcomePreviewService();
       
       if (type === 'event') {
-         // EVENT: NEW ARCHITECTURE (ActiveCheckInstance + turnState)
+         // EVENT: NEW ARCHITECTURE (OutcomePreview + turnState)
          if (itemId !== null) {
             // Find event data
             const event = eventService.getEventById(itemId);
@@ -162,18 +150,18 @@
                logger.error(`[DebugEventSelector] Event not found: ${itemId}`);
                return;
             }
-            
+
             console.log('[DebugEventSelector] Loading event:', event.name);
             console.log('[DebugEventSelector] Event outcomes:', event.outcomes);
             console.log('[DebugEventSelector] Full event object keys:', Object.keys(event));
-            
-            // Clear any existing event instances
-            const existing = outcomePreviewService.getPendingInstances('event', kingdom);
+
+            // Clear any existing event instances (all statuses, not just pending)
+            const existing = kingdom.pendingOutcomes?.filter(i => i.checkType === 'event') || [];
             for (const instance of existing) {
                await outcomePreviewService.clearInstance(instance.previewId);
             }
             
-            // Create new ActiveCheckInstance
+            // Create new OutcomePreview
             const instanceId = await outcomePreviewService.createInstance(
                'event',
                event.id,
@@ -197,8 +185,8 @@
             console.log('[DebugEventSelector] Event loaded successfully');
 
          } else {
-            // Clear event
-            const existing = outcomePreviewService.getPendingInstances('event', kingdom);
+            // Clear event (all statuses, not just pending)
+            const existing = kingdom.pendingOutcomes?.filter(i => i.checkType === 'event') || [];
             for (const instance of existing) {
                await outcomePreviewService.clearInstance(instance.previewId);
             }
@@ -225,7 +213,7 @@
 
          }
       } else {
-         // INCIDENT: NEW ARCHITECTURE (ActiveCheckInstance + turnState)
+         // INCIDENT: NEW ARCHITECTURE (OutcomePreview + turnState)
          if (itemId !== null) {
             // Find incident data
             const incident = incidentLoader.getIncidentById(itemId);
@@ -234,13 +222,13 @@
                return;
             }
             
-            // Clear any existing incident instances
-            const existing = outcomePreviewService.getPendingInstances('incident', kingdom);
+            // Clear any existing incident instances (all statuses, not just pending)
+            const existing = kingdom.pendingOutcomes?.filter(i => i.checkType === 'incident') || [];
             for (const instance of existing) {
                await outcomePreviewService.clearInstance(instance.previewId);
             }
             
-            // Create new ActiveCheckInstance
+            // Create new OutcomePreview
             const instanceId = await outcomePreviewService.createInstance(
                'incident',
                incident.id,
@@ -257,8 +245,8 @@
             });
 
          } else {
-            // Clear incident
-            const existing = outcomePreviewService.getPendingInstances('incident', kingdom);
+            // Clear incident (all statuses, not just pending)
+            const existing = kingdom.pendingOutcomes?.filter(i => i.checkType === 'incident') || [];
             for (const instance of existing) {
                await outcomePreviewService.clearInstance(instance.previewId);
             }

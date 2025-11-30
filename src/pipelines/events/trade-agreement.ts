@@ -51,7 +51,7 @@ export const tradeAgreementPipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(tradeAgreementPipeline, ctx.outcome);
+    await applyPipelineModifiers(tradeAgreementPipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

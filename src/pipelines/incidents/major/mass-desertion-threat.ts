@@ -37,66 +37,16 @@ export const massDesertionThreatPipeline: CheckPipeline = {
     },
   },
 
-  preview: {
-    calculate: (ctx) => {
-      const resources = [];
-      const outcomeBadges = [];
-
-      // Failure: 1 army morale check + structure damage
-      if (ctx.outcome === 'failure') {
-        outcomeBadges.push({
-          icon: 'fa-shield-alt',
-          prefix: '',
-          value: { type: 'text', text: '1 army morale check' },
-          suffix: '',
-          variant: 'negative'
-        });
-        outcomeBadges.push({
-          icon: 'fa-home',
-          prefix: '',
-          value: { type: 'text', text: 'Military structure damaged' },
-          suffix: '',
-          variant: 'negative'
-        });
-      }
-
-      // Critical Failure: 2 armies morale check + structure downgrade
-      if (ctx.outcome === 'criticalFailure') {
-        outcomeBadges.push({
-          icon: 'fa-shield-alt',
-          prefix: '',
-          value: { type: 'text', text: '2 armies morale check' },
-          suffix: '',
-          variant: 'negative'
-        });
-        outcomeBadges.push({
-          icon: 'fa-home',
-          prefix: '',
-          value: { type: 'text', text: 'Military structure downgraded' },
-          suffix: '',
-          variant: 'negative'
-        });
-      }
-
-      return {
-        resources,
-        outcomeBadges,
-        warnings: ctx.outcome === 'failure'
-          ? ['1 army must make a morale check (DC = kingdom level + 5) or disband', 'Highest military structure is damaged']
-          : ctx.outcome === 'criticalFailure'
-            ? ['2 armies must make morale checks (DC = kingdom level + 5) or disband', 'Highest military structure is downgraded']
-            : []
-      };
-    }
-  },
+  // Auto-convert JSON modifiers to badges
+  preview: undefined,
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(massDesertionThreatPipeline, ctx.outcome);
+    await applyPipelineModifiers(massDesertionThreatPipeline, ctx.outcome, ctx);
 
     // Damage/destroy military structure
     if (ctx.outcome === 'failure' || ctx.outcome === 'criticalFailure') {
-      const { createGameCommandsResolver } = await import('../../services/GameCommandsResolver');
+      const { createGameCommandsResolver } = await import('../../../services/GameCommandsResolver');
       const resolver = await createGameCommandsResolver();
 
       if (ctx.outcome === 'failure') {

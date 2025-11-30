@@ -17,7 +17,7 @@
   };
   export let actions: PlayerAction[];
   export let currentActionInstances: Map<string, string>;
-  export let activeCheckInstances: any[];
+  export let pendingOutcomes: any[];
   export let expandedActions: Set<string>;
   export let controller: any;
   export let activeAidsCount: number;
@@ -71,7 +71,7 @@
         {@const actionStatus = getActionStatus(action.id)}
         {@const actionNumber = getActionNumber(action.id) ?? undefined}
         {@const instanceId = currentActionInstances.get(action.id)}
-        {@const checkInstance = instanceId ? activeCheckInstances?.find(i => i.previewId === instanceId) : null}
+        {@const checkInstance = instanceId ? pendingOutcomes?.find(i => i.previewId === instanceId) : null}
         {@const isResolved = !!(checkInstance && checkInstance.status !== 'pending')}
         {@const resolution = checkInstance?.appliedOutcome ? {
           outcome: checkInstance.appliedOutcome.outcome,

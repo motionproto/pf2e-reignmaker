@@ -20,6 +20,16 @@ export const settlementCrisisPipeline: CheckPipeline = {
       { skill: 'religion', description: 'provide hope' },
     ],
 
+  preRollInteractions: [
+    {
+      type: 'entity-selection',
+      id: 'settlement',
+      entityType: 'settlement',
+      label: 'Select Settlement in Crisis',
+      required: true
+    }
+  ],
+
   outcomes: {
     success: {
       description: 'The settlement is stabilized.',
@@ -39,52 +49,19 @@ export const settlementCrisisPipeline: CheckPipeline = {
     },
   },
 
-  preview: {
-    calculate: (ctx) => {
-      const resources = [];
-      const outcomeBadges = [];
-
-      // Failure: damage 1 random structure
-      if (ctx.outcome === 'failure') {
-        outcomeBadges.push({
-          icon: 'fa-home',
-          prefix: '',
-          value: { type: 'text', text: '1 structure may be damaged' },
-          suffix: '',
-          variant: 'negative'
-        });
-      }
-
-      // Critical Failure: 1 unrest + settlement loses a level
-      if (ctx.outcome === 'criticalFailure') {
-        resources.push({ resource: 'unrest', value: 1 });
-        outcomeBadges.push({
-          icon: 'fa-city',
-          prefix: '',
-          value: { type: 'text', text: 'Settlement loses 1 level' },
-          suffix: '',
-          variant: 'negative'
-        });
-      }
-
-      return {
-        resources,
-        outcomeBadges,
-        warnings: ctx.outcome === 'criticalFailure'
-          ? ['A random settlement will lose one level (minimum level 1)']
-          : []
-      };
-    }
-  },
+  // Auto-convert JSON modifiers to badges
+  preview: undefined,
 
   execute: async (ctx) => {
+    const settlementId = ctx.metadata?.settlement?.id;
+    
     // Apply modifiers from outcome
-    await applyPipelineModifiers(settlementCrisisPipeline, ctx.outcome);
+    await applyPipelineModifiers(settlementCrisisPipeline, ctx.outcome, ctx);
 
-    const { createGameCommandsResolver } = await import('../../services/GameCommandsResolver');
+    const { createGameCommandsResolver } = await import('../../../services/GameCommandsResolver');
     const resolver = await createGameCommandsResolver();
 
-    // Failure: damage 1 structure in a random settlement
+    // Failure: damage 1 structure in the selected settlement
     if (ctx.outcome === 'failure') {
       await resolver.damageStructure(undefined, undefined, 1);
     }

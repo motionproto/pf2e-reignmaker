@@ -40,44 +40,12 @@ export const borderRaidPipeline: CheckPipeline = {
     },
   },
 
-  preview: {
-    calculate: (ctx) => {
-      const resources = [];
-      const outcomeBadges = [];
-
-      // Failure: 1d4 gold loss
-      if (ctx.outcome === 'failure') {
-        outcomeBadges.push({
-          icon: 'fa-coins',
-          prefix: 'Lose',
-          value: { type: 'dice', formula: '1d4' },
-          suffix: 'Gold',
-          variant: 'negative'
-        });
-      }
-
-      // Critical Failure: 2d4 gold loss
-      if (ctx.outcome === 'criticalFailure') {
-        outcomeBadges.push({
-          icon: 'fa-coins',
-          prefix: 'Lose',
-          value: { type: 'dice', formula: '2d4' },
-          suffix: 'Gold',
-          variant: 'negative'
-        });
-      }
-
-      return {
-        resources,
-        outcomeBadges,
-        warnings: []
-      };
-    }
-  },
+  // Auto-convert JSON modifiers to badges
+  preview: undefined,
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(borderRaidPipeline, ctx.outcome);
+    await applyPipelineModifiers(borderRaidPipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

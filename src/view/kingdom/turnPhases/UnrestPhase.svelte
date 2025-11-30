@@ -11,10 +11,9 @@
    
    // Import UI components
    import BaseCheckCard from '../components/BaseCheckCard.svelte';
-   import DebugEventSelector from '../components/DebugEventSelector.svelte';
-   import { createCheckHandler } from '../../../controllers/shared/CheckHandler';
+   import IncidentDebugPanel from '../components/IncidentDebugPanel.svelte';
    // Removed: spendPlayerAction, getPlayerAction, resetPlayerAction - now using actionLog
-   
+
    // UI State only - no business logic
    let phaseExecuting = false;
    let isRolling = false;
@@ -22,7 +21,6 @@
    let incidentCheckDC: number = 0;
    let incidentCheckChance: number = 0;
    let unrestPhaseController: any;
-   let checkHandler: any;
    let possibleOutcomes: any[] = [];
    
    // NEW ARCHITECTURE: Read from OutcomePreview (pendingOutcomes) instead of legacy activeCheckInstances
@@ -37,6 +35,9 @@
    
    // Check if current user is GM
    $: isGM = (globalThis as any).game?.user?.isGM || false;
+   
+   // Debug mode toggle state
+   let showDebugPanel = false;
    
    // Reactive UI state using shared helper for step completion
    import { getStepCompletion } from '../../../controllers/shared/PhaseHelpers';
@@ -129,25 +130,26 @@
       if (currentIncident.outcomes.criticalSuccess) {
          outcomes.push({
             type: 'criticalSuccess',
-            description: currentIncident.outcomes.criticalSuccess.msg
+            // Support both pipeline format (.description) and JSON format (.msg)
+            description: currentIncident.outcomes.criticalSuccess.description || currentIncident.outcomes.criticalSuccess.msg
          });
       }
       if (currentIncident.outcomes.success) {
          outcomes.push({
             type: 'success',
-            description: currentIncident.outcomes.success.msg
+            description: currentIncident.outcomes.success.description || currentIncident.outcomes.success.msg
          });
       }
       if (currentIncident.outcomes.failure) {
          outcomes.push({
             type: 'failure',
-            description: currentIncident.outcomes.failure.msg
+            description: currentIncident.outcomes.failure.description || currentIncident.outcomes.failure.msg
          });
       }
       if (currentIncident.outcomes.criticalFailure) {
          outcomes.push({
             type: 'criticalFailure',
-            description: currentIncident.outcomes.criticalFailure.msg
+            description: currentIncident.outcomes.criticalFailure.description || currentIncident.outcomes.criticalFailure.msg
          });
       }
       
@@ -158,11 +160,9 @@
    
    // Initialize phase steps when component mounts
    onMount(async () => {
-
       // Initialize the phase (this sets up currentPhaseSteps!)
       const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
       unrestPhaseController = await createUnrestPhaseController();
-      checkHandler = createCheckHandler();
       await unrestPhaseController.startPhase();
 
       // Store current user ID
@@ -229,7 +229,7 @@
    
    // Event handler - execute skill check
    async function handleExecuteSkill(event: CustomEvent) {
-      if (!currentIncident || !checkHandler || !unrestPhaseController) return;
+      if (!currentIncident || !unrestPhaseController) return;
       
       const { skill } = event.detail;
       
@@ -239,113 +239,75 @@
    }
    
    async function executeSkillCheck(skill: string, enabledModifiers?: string[]) {
-      if (!currentIncident || !checkHandler || !unrestPhaseController) return;
-      
+      if (!currentIncident) return;
+
       // Note: Incidents don't consume player actions - they're separate checks
-      
-      await checkHandler.executeCheck({
-         checkType: 'incident',
-         item: currentIncident,
-         skill,
-         enabledModifiers,
-         
-         onStart: () => {
 
-            isRolling = true;
-         },
-         
-         onComplete: async (result: any) => {
+      try {
+         isRolling = true;
 
-            isRolling = false;
-            
-            // ARCHITECTURE: Delegate to controller for outcome data extraction and storage
-            if (!currentIncident) return;
-            const outcomeData = unrestPhaseController.getIncidentModifiers(currentIncident, result.outcome);
-            
-            const resolution = {
-               outcome: result.outcome,
-               actorName: result.actorName,
-               skillName: skill,
-               effect: outcomeData.msg,
-               modifiers: outcomeData.modifiers,
-               manualEffects: outcomeData.manualEffects,
-               rollBreakdown: result.rollBreakdown
-            };
-            
-            // ✅ Store in KingdomActor via controller (syncs to all clients)
-            await unrestPhaseController.storeIncidentResolution(currentIncident.id, resolution);
-         },
-         
-         onCancel: async () => {
+         // Use PipelineCoordinator for incidents (same as actions)
+         const { getPipelineCoordinator } = await import('../../../services/PipelineCoordinator');
+         const { getCurrentUserCharacter } = await import('../../../services/pf2e');
 
-            isRolling = false;
-            
-            // ✅ Clear from KingdomActor via controller (syncs to all clients)
-            if (unrestPhaseController) {
-               await unrestPhaseController.clearIncidentResolution();
-            }
-            
-            // Note: Incidents don't consume player actions
-         },
-         
-         onError: (error: Error) => {
-            logger.error(`❌ [UnrestPhase] Error in incident check:`, error);
-            isRolling = false;
-            ui?.notifications?.error(`Failed to perform incident check: ${error.message}`);
+         const pipelineCoordinator = await getPipelineCoordinator();
+         const actingCharacter = getCurrentUserCharacter();
+         if (!actingCharacter) {
+            throw new Error('No character selected');
          }
-      });
+
+         await pipelineCoordinator.executePipeline(currentIncident.id, {
+            checkType: 'incident',
+            actor: {
+               selectedSkill: skill,
+               fullActor: actingCharacter,
+               actorName: actingCharacter.name,
+               actorId: actingCharacter.id,
+               level: actingCharacter.level || 1,
+               proficiencyRank: 0
+            }
+         });
+
+         // Pipeline handles everything: roll, create instance, calculate preview, wait for apply
+         // No need for manual storeIncidentResolution - pipeline does it
+
+      } catch (error) {
+         if ((error as Error).message === 'Action cancelled by user') {
+            logger.info('[UnrestPhase] User cancelled incident check');
+         } else {
+            logger.error(`❌ [UnrestPhase] Error in incident check:`, error);
+            ui?.notifications?.error(`Failed to perform incident check: ${(error as Error).message}`);
+         }
+      } finally {
+         isRolling = false;
+      }
    }
    
    // Event handler - apply result
    async function handleApplyResult(event: CustomEvent) {
-      if (!incidentResolution || !currentIncident) return;
+      if (!incidentResolution || !currentIncidentInstance) return;
 
-
-      // NEW ARCHITECTURE: event.detail.resolution is already ResolutionData from OutcomeDisplay
+      // Get resolution data from OutcomeDisplay
       const resolutionData = event.detail.resolution;
+      const instanceId = currentIncidentInstance.previewId;
 
-      // Call controller directly with ResolutionData
-      const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
-      const controller = await createUnrestPhaseController();
-      
-      const result = await controller.resolveIncident(
-         currentIncident.id,
-         incidentResolution.outcome,
-         resolutionData
-      );
-      
-      if (result.success) {
+      // Use PipelineCoordinator to confirm and execute (same as actions)
+      const { getPipelineCoordinator } = await import('../../../services/PipelineCoordinator');
+      const pipelineCoordinator = await getPipelineCoordinator();
+      pipelineCoordinator.confirmApply(instanceId, resolutionData);
 
-         // NOTE: markApplied() now called automatically in resolvePhaseOutcome()
-         // No need to call controller.markIncidentApplied() separately
-         
-         // Parse shortfall information from the new result structure
-         const shortfalls: string[] = [];
-         if (result.applied?.applied?.specialEffects) {
-            for (const effect of result.applied.applied.specialEffects) {
-               if (effect.startsWith('shortage_penalty:')) {
-                  shortfalls.push(effect.split(':')[1]);
-               }
-            }
-         }
-         
-         if (shortfalls.length > 0) {
-            incidentResolution.shortfallResources = shortfalls;
-         }
-      } else {
-         logger.error(`❌ [UnrestPhase] Failed to apply incident resolution:`, result.error);
-         ui?.notifications?.error(`Failed to apply result: ${result.error || 'Unknown error'}`);
-      }
+      // Pipeline handles Steps 7-9: post-apply interactions, execute, cleanup
    }
    
    // Event handler - cancel resolution
    async function handleCancel() {
+      if (!currentIncidentInstance) return;
 
-      // ✅ Clear from KingdomActor via controller (syncs to all clients)
-      if (unrestPhaseController) {
-         await unrestPhaseController.clearIncidentResolution();
-      }
-      
+      // Clear the instance via OutcomePreviewService (same as actions)
+      const { createOutcomePreviewService } = await import('../../../services/OutcomePreviewService');
+      const outcomePreviewService = await createOutcomePreviewService();
+      await outcomePreviewService.clearInstance(currentIncidentInstance.previewId);
+
       // Note: Incidents don't consume player actions
    }
    
@@ -465,10 +427,6 @@
    {/if}
    
    <!-- Step 2: Incident Results -->
-   <!-- Debug Incident Selector (GM Only) - Always visible for GMs to browse incidents -->
-   {#if isGM}
-      <DebugEventSelector type="incident" currentItemId={currentIncidentInstance?.previewId || null} />
-   {/if}
    
    {#if showIncidentResult}
       {#if currentIncident}
@@ -514,6 +472,24 @@
             <div class="no-incident-desc">The kingdom avoids crisis this turn</div>
          </div>
       {/if}
+   {/if}
+   
+   <!-- Debug Panel (GM Only) - Collapsible section for testing all incidents -->
+   {#if isGM}
+      <div class="debug-section">
+         <button 
+            class="debug-toggle"
+            on:click={() => showDebugPanel = !showDebugPanel}
+         >
+            <i class="fas fa-bug"></i>
+            <span>Debug Mode</span>
+            <i class="fas fa-chevron-{showDebugPanel ? 'up' : 'down'}"></i>
+         </button>
+         
+         {#if showDebugPanel}
+            <IncidentDebugPanel {hideUntrainedSkills} />
+         {/if}
+      </div>
    {/if}
 </div>
 
@@ -947,5 +923,47 @@
       text-align: center;
       padding: var(--space-20);
       color: var(--text-secondary);
+   }
+   
+   // Debug section
+   .debug-section {
+      margin-top: var(--space-24);
+      padding-top: var(--space-20);
+      border-top: 1px solid var(--border-faint);
+   }
+   
+   .debug-toggle {
+      display: flex;
+      align-items: center;
+      gap: var(--space-10);
+      width: 100%;
+      padding: var(--space-12) var(--space-16);
+      background: rgba(139, 92, 246, 0.1);
+      border: 1px solid var(--border-special-subtle);
+      border-radius: var(--radius-md);
+      color: rgba(196, 181, 253, 1);
+      font-size: var(--font-md);
+      font-weight: var(--font-weight-medium);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      margin-bottom: var(--space-16);
+      
+      i:first-child {
+         font-size: var(--font-lg);
+      }
+      
+      span {
+         flex: 1;
+         text-align: left;
+      }
+      
+      i:last-child {
+         font-size: var(--font-md);
+      }
+      
+      &:hover {
+         background: rgba(139, 92, 246, 0.15);
+         border-color: var(--border-special-medium);
+      }
    }
 </style>

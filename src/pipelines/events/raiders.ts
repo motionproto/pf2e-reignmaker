@@ -54,7 +54,7 @@ export const raidersPipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(raidersPipeline, ctx.outcome);
+    await applyPipelineModifiers(raidersPipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

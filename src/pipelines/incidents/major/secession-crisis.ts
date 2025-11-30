@@ -42,63 +42,12 @@ export const secessionCrisisPipeline: CheckPipeline = {
     },
   },
 
-  preview: {
-    calculate: (ctx) => {
-      const resources = [];
-      const outcomeBadges = [];
-
-      // Failure: 2d4 gold loss + settlement downgrade + structure damage
-      if (ctx.outcome === 'failure') {
-        outcomeBadges.push({
-          icon: 'fa-coins',
-          prefix: 'Lose',
-          value: { type: 'dice', formula: '2d4' },
-          suffix: 'Gold',
-          variant: 'negative'
-        });
-        outcomeBadges.push({
-          icon: 'fa-city',
-          prefix: '',
-          value: { type: 'text', text: 'Settlement loses 1 level' },
-          suffix: '',
-          variant: 'negative'
-        });
-        outcomeBadges.push({
-          icon: 'fa-home',
-          prefix: '',
-          value: { type: 'text', text: 'Structure downgraded' },
-          suffix: '',
-          variant: 'negative'
-        });
-      }
-
-      // Critical Failure: 2 unrest + settlement secedes
-      if (ctx.outcome === 'criticalFailure') {
-        resources.push({ resource: 'unrest', value: 2 });
-        outcomeBadges.push({
-          icon: 'fa-city',
-          prefix: '',
-          value: { type: 'text', text: 'Settlement secedes!' },
-          suffix: '',
-          variant: 'negative'
-        });
-      }
-
-      return {
-        resources,
-        outcomeBadges,
-        warnings: ctx.outcome === 'failure'
-          ? ['One settlement loses a level and its highest structure is downgraded']
-          : ctx.outcome === 'criticalFailure'
-            ? ['One settlement and adjacent hexes secede from your kingdom!', 'Any armies in seceded hexes defect']
-            : []
-      };
-    }
-  },
+  // Auto-convert JSON modifiers to badges
+  preview: undefined,
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(secessionCrisisPipeline, ctx.outcome);
+    await applyPipelineModifiers(secessionCrisisPipeline, ctx.outcome, ctx);
     // Note: Settlement secession commands not implemented - handled as manual effects
     return { success: true };
   }

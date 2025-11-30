@@ -18,8 +18,7 @@ import {
   checkPhaseGuard,
   initializePhaseSteps,
   completePhaseStepByIndex,
-  isStepCompletedByIndex,
-  resolvePhaseOutcome
+  isStepCompletedByIndex
 } from './shared/PhaseControllerHelpers'
 import type { PlayerAction } from './actions/pipeline-types'
 import type { KingdomData } from '../actors/KingdomActor'
@@ -98,7 +97,7 @@ export async function createActionPhaseController() {
         // Get stored instance metadata if available
         let metadata: CheckMetadata = {};
         if (instanceId) {
-          const storedInstance = kingdom.activeCheckInstances?.find(i => i.instanceId === instanceId);
+          const storedInstance = kingdom.pendingOutcomes?.find(i => i.previewId === instanceId);
           if (storedInstance?.metadata) {
             metadata = storedInstance.metadata;
           }

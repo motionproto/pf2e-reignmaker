@@ -53,7 +53,7 @@ export const banditActivityPipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(banditActivityPipeline, ctx.outcome);
+    await applyPipelineModifiers(banditActivityPipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

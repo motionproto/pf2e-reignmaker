@@ -1,13 +1,13 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { updateInstanceResolutionState } from '../../../../controllers/shared/ResolutionStateHelpers';
-  import type { ActiveCheckInstance } from '../../../../models/CheckInstance';
+  import type { OutcomePreview } from '../../../../models/OutcomePreview';
   import type { ResourceCost } from '../../../../models/Structure';
   import { getResourceIcon, getResourceColor } from '../../utils/presentation';
   import { logger } from '../../../../utils/Logger';
   
   // Props passed from OutcomeDisplay
-  export let instance: ActiveCheckInstance | null = null;
+  export let instance: OutcomePreview | null = null;
   export let outcome: string;
   
   // Read structureId/settlementId from instance metadata

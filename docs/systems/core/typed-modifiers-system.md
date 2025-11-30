@@ -329,7 +329,7 @@ interface ActionEffect {
 - Diplomatic Actions (establishDiplomaticRelations, requestEconomicAid)
 - Event Management (resolveEvent, hireAdventurers, arrestDissidents)
 
-See `docs/systems/game-commands-system.md` for comprehensive documentation.
+See `docs/systems/core/game-commands-system.md` for comprehensive documentation.
 
 ---
 

@@ -52,7 +52,7 @@ export const pilgrimagePipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(pilgrimagePipeline, ctx.outcome);
+    await applyPipelineModifiers(pilgrimagePipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

@@ -49,7 +49,7 @@ export const diplomaticOverturePipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(diplomaticOverturePipeline, ctx.outcome);
+    await applyPipelineModifiers(diplomaticOverturePipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

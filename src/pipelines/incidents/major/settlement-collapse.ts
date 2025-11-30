@@ -20,6 +20,16 @@ export const settlementCollapsePipeline: CheckPipeline = {
       { skill: 'religion', description: 'provide hope' },
     ],
 
+  preRollInteractions: [
+    {
+      type: 'entity-selection',
+      id: 'settlement',
+      entityType: 'settlement',
+      label: 'Select Settlement at Risk of Collapse',
+      required: true
+    }
+  ],
+
   outcomes: {
     success: {
       description: 'The settlement is stabilized.',
@@ -39,66 +49,24 @@ export const settlementCollapsePipeline: CheckPipeline = {
     },
   },
 
-  preview: {
-    calculate: (ctx) => {
-      const resources = [];
-      const outcomeBadges = [];
-
-      // Failure: 2 structures damaged
-      if (ctx.outcome === 'failure') {
-        outcomeBadges.push({
-          icon: 'fa-home',
-          prefix: '',
-          value: { type: 'text', text: '2 structures damaged' },
-          suffix: '',
-          variant: 'negative'
-        });
-      }
-
-      // Critical Failure: 1 unrest + settlement downgrade + structure downgrade
-      if (ctx.outcome === 'criticalFailure') {
-        resources.push({ resource: 'unrest', value: 1 });
-        outcomeBadges.push({
-          icon: 'fa-city',
-          prefix: '',
-          value: { type: 'text', text: 'Settlement loses 1 level' },
-          suffix: '',
-          variant: 'negative'
-        });
-        outcomeBadges.push({
-          icon: 'fa-home',
-          prefix: '',
-          value: { type: 'text', text: 'Structure downgraded' },
-          suffix: '',
-          variant: 'negative'
-        });
-      }
-
-      return {
-        resources,
-        outcomeBadges,
-        warnings: ctx.outcome === 'failure'
-          ? ['2 random structures in one settlement will be damaged']
-          : ctx.outcome === 'criticalFailure'
-            ? ['One settlement loses a level (min 1)', 'One structure in that settlement is downgraded']
-            : []
-      };
-    }
-  },
+  // Auto-convert JSON modifiers to badges
+  preview: undefined,
 
   execute: async (ctx) => {
+    const settlementId = ctx.metadata?.settlement?.id;
+    
     // Apply modifiers from outcome
-    await applyPipelineModifiers(settlementCollapsePipeline, ctx.outcome);
+    await applyPipelineModifiers(settlementCollapsePipeline, ctx.outcome, ctx);
 
-    const { createGameCommandsResolver } = await import('../../services/GameCommandsResolver');
+    const { createGameCommandsResolver } = await import('../../../services/GameCommandsResolver');
     const resolver = await createGameCommandsResolver();
 
-    // Failure: damage 2 structures
+    // Failure: damage 2 structures in selected settlement
     if (ctx.outcome === 'failure') {
       await resolver.damageStructure(undefined, undefined, 2);
     }
 
-    // Critical Failure: downgrade 1 structure (settlement level handled as manual effect)
+    // Critical Failure: downgrade 1 structure in selected settlement (settlement level handled as manual effect)
     if (ctx.outcome === 'criticalFailure') {
       await resolver.destroyStructure(undefined, undefined, 1);
     }

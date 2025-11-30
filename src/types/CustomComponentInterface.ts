@@ -17,7 +17,7 @@
  * 4. OutcomeDisplay receives event and enables "Apply Result" button
  */
 
-import type { ActiveCheckInstance } from '../models/CheckInstance';
+import type { OutcomePreview } from '../models/OutcomePreview';
 import type { EventModifier } from './events';
 
 /**
@@ -25,7 +25,7 @@ import type { EventModifier } from './events';
  */
 export interface CustomComponentProps {
   /** Check instance for state persistence across clients */
-  instance: ActiveCheckInstance | null;
+  instance: OutcomePreview | null;
   
   /** Current outcome from skill check */
   outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
@@ -75,7 +75,7 @@ export interface ComponentResolutionEvent extends CustomEvent {
  * Components should follow this pattern:
  * 
  * ```typescript
- * export let instance: ActiveCheckInstance | null = null;
+ * export let instance: OutcomePreview | null = null;
  * export let outcome: string;
  * export let config: Record<string, any> = {};
  * 
@@ -131,7 +131,7 @@ export interface CustomComponentLifecycle {
  * Helper type for components to implement
  */
 export type CustomComponent = {
-  instance: ActiveCheckInstance | null;
+  instance: OutcomePreview | null;
   outcome: string;
   config?: Record<string, any>;
 };

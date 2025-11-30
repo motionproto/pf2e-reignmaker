@@ -239,11 +239,7 @@ Arrow is drawn as filled triangle:
    - Added `drawFlowArrow()` function
    - Updated main rendering loop for multi-layer rendering
 
-3. **docs/systems/river-editor-analysis.md**
-   - Created comprehensive analysis document
-   - Documented issues and recommendations
-
-4. **docs/systems/river-editor-implementation-summary.md** (this file)
+3. **docs/systems/map/river-editor-implementation-summary.md** (this file)
    - Implementation details and testing guide
 
 ## Integration Points

@@ -36,7 +36,6 @@
     getInstanceResolutionState,
     clearInstanceResolutionState
   } from '../../../../controllers/shared/ResolutionStateHelpers';
-  import type { ActiveCheckInstance } from '../../../../models/CheckInstance';
   import { 
     getOutcomeDisplayProps,
     detectDiceModifiers,
@@ -65,7 +64,7 @@
   
   // ✨ NEW UNIFIED INTERFACE: Only 2 required props
   export let preview: OutcomePreview;  // Contains ALL outcome data
-  export let instance: ActiveCheckInstance | null = null;  // State management
+  export let instance: OutcomePreview | null = null;  // State management (same as preview, kept for backward compat)
   
   // Derive UI configuration from preview.checkType and environment
   $: isGM = (globalThis as any).game?.user?.isGM || false;
@@ -352,7 +351,7 @@
     
     // ✅ Clear state in instance via helper (syncs to all clients)
     if (instance) {
-      await clearInstanceResolutionState(instance.instanceId);
+      await clearInstanceResolutionState(instance.previewId);
     }
     
     // Reset local UI state
@@ -412,7 +411,7 @@
     if (!instance) return;
     
     // ✅ Store in instance via helper (syncs to all clients)
-    await updateInstanceResolutionState(instance.instanceId, {
+    await updateInstanceResolutionState(instance.previewId, {
       selectedResources: {
         ...resolutionState.selectedResources,
         [modifierIndex]: resource
@@ -439,7 +438,7 @@
     
     // Also store in instance for persistence/sync across clients (if available)
     if (instance) {
-      await updateInstanceResolutionState(instance.instanceId, {
+      await updateInstanceResolutionState(instance.previewId, {
         resolvedDice: {
           ...resolutionState.resolvedDice,
           [modifierIndex]: result
@@ -458,13 +457,13 @@
     // Toggle selection
     if (selectedChoice === index) {
       // ✅ Clear choice in instance
-      await updateInstanceResolutionState(instance.instanceId, { selectedChoice: null });
+      await updateInstanceResolutionState(instance.previewId, { selectedChoice: null });
       componentResolutionData = null;
       return;
     }
     
     // ✅ Store in instance via helper (syncs to all clients)
-    await updateInstanceResolutionState(instance.instanceId, { selectedChoice: index });
+    await updateInstanceResolutionState(instance.previewId, { selectedChoice: index });
     
     const choice = effectiveChoices[index];
     const resourceValues = rolledValues || {};
@@ -485,7 +484,7 @@
   async function handleCancel() {
     // ✅ Clear state in instance via helper (syncs to all clients)
     if (instance) {
-      await clearInstanceResolutionState(instance.instanceId);
+      await clearInstanceResolutionState(instance.previewId);
     }
     
     // Reset local UI state

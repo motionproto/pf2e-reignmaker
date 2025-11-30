@@ -50,7 +50,7 @@ export const immigrationPipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(immigrationPipeline, ctx.outcome);
+    await applyPipelineModifiers(immigrationPipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

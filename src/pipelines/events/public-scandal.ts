@@ -50,7 +50,7 @@ export const publicScandalPipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(publicScandalPipeline, ctx.outcome);
+    await applyPipelineModifiers(publicScandalPipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

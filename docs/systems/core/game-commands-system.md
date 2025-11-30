@@ -130,7 +130,7 @@ The system provides 25+ typed command interfaces organized by function:
 
 All checks (events, incidents, actions) execute through **PipelineCoordinator**, which coordinates modifier and game command application at Step 8 (Execute Action).
 
-**See:** `docs/systems/pipeline-coordinator.md` for complete pipeline architecture.
+**See:** `docs/systems/core/pipeline-coordinator.md` for complete pipeline architecture.
 
 ### 1. Action Defined (JSON)
 
@@ -804,7 +804,7 @@ Action Implementation
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { updateInstanceResolutionState, getInstanceResolutionState } from '../../../../../controllers/shared/ResolutionStateHelpers';
-  import type { OutcomePreview } from '../../../../../models/CheckInstance';
+  import type { OutcomePreview } from '../../../../../models/OutcomePreview';
 
   // Props (passed from action implementation)
   export let instance: OutcomePreview | null = null;
@@ -1162,7 +1162,7 @@ async yourCommand(param1: string): Promise<PreparedCommand> {
 }
 ```
 
-**Step 2: Add Case to CheckInstanceHelpers.ts**
+**Step 2: Add Case to OutcomePreviewHelpers.ts**
 
 ```typescript
 case 'yourCommand': {
@@ -1228,6 +1228,5 @@ This architecture enables complex kingdom operations while maintaining code clar
 ---
 
 **Related Documents:**
-- `docs/systems/pipeline-coordinator.md` - Complete pipeline architecture
-- `docs/systems/check-type-differences.md` - Events vs Incidents vs Actions
-- `docs/systems/check-instance-system.md` - OutcomePreview system
+- `docs/systems/core/pipeline-coordinator.md` - Complete pipeline architecture
+- `docs/systems/core/check-type-differences.md` - Events vs Incidents vs Actions

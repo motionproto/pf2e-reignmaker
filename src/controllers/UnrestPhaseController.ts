@@ -12,16 +12,15 @@ import { logger } from '../utils/Logger';
 import { getKingdomActor } from '../stores/KingdomStore'
 import { get } from 'svelte/store'
 import { kingdomData } from '../stores/KingdomStore'
-import { 
-  reportPhaseStart, 
-  reportPhaseComplete, 
-  reportPhaseError, 
+import {
+  reportPhaseStart,
+  reportPhaseComplete,
+  reportPhaseError,
   createPhaseResult,
   checkPhaseGuard,
   initializePhaseSteps,
   completePhaseStepByIndex,
-  isStepCompletedByIndex,
-  resolvePhaseOutcome
+  isStepCompletedByIndex
 } from './shared/PhaseControllerHelpers'
 import { TurnPhase } from '../actors/KingdomActor'
 import { UnrestPhaseSteps } from './shared/PhaseStepConstants'
@@ -53,12 +52,16 @@ export async function createUnrestPhaseController() {
         
         // ✅ FIX: Clear incidents from previous turns using createdTurn comparison
         const kingdom = get(kingdomData);
-        const allIncidents = kingdom.activeCheckInstances?.filter(i => i.checkType === 'incident') || [];
+        // CRITICAL: Use pendingOutcomes (where OutcomePreviewService stores data), NOT activeCheckInstances
+        const allIncidents = kingdom.pendingOutcomes?.filter(i => i.checkType === 'incident') || [];
         const outdatedIncidents = allIncidents.filter(i => i.createdTurn < kingdom.currentTurn);
         
         if (outdatedIncidents.length > 0) {
-
-          await outcomePreviewService.clearCompleted('incident', kingdom.currentTurn);
+          console.log('[UnrestPhaseController] Clearing', outdatedIncidents.length, 'outdated incidents from previous turns');
+          // Clear each outdated incident individually
+          for (const incident of outdatedIncidents) {
+            await outcomePreviewService.clearInstance(incident.previewId);
+          }
         }
         
         // Also clear completed/applied incidents from THIS turn on first entry
@@ -66,8 +69,10 @@ export async function createUnrestPhaseController() {
           i.createdTurn === kingdom.currentTurn && (i.status === 'resolved' || i.status === 'applied')
         );
         if (completedThisTurn.length > 0) {
-
-          await outcomePreviewService.clearCompleted('incident', kingdom.currentTurn);
+          console.log('[UnrestPhaseController] Clearing', completedThisTurn.length, 'completed incidents from this turn');
+          for (const incident of completedThisTurn) {
+            await outcomePreviewService.clearInstance(incident.previewId);
+          }
         }
         
         // Read state from activeCheckInstances (new) OR turnState (legacy fallback)
@@ -141,7 +146,7 @@ export async function createUnrestPhaseController() {
           
           if (incident) {
 
-            // NEW ARCHITECTURE: Create ActiveCheckInstance
+            // NEW ARCHITECTURE: Create OutcomePreview
             instanceId = await outcomePreviewService.createInstance(
               'incident',
               incident.id,
@@ -192,171 +197,14 @@ export async function createUnrestPhaseController() {
       };
     },
 
-    /**
-     * Resolve a triggered incident (step 2)
-     * NEW ARCHITECTURE: Receives ResolutionData with all values already computed
-     * 
-     * @deprecated TODO: This method duplicates PipelineCoordinator logic.
-     * Should be replaced with: pipelineCoordinator.executePipeline(incidentId, actorData)
-     * See Task B: Pipeline Unification Migration
-     */
-    async resolveIncident(
-      incidentId: string, 
-      outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
-      resolutionData: import('../types/modifiers').ResolutionData
-    ) {
-      const actor = getKingdomActor();
-      if (!actor) {
-        logger.error('❌ [UnrestPhaseController] No kingdom actor available');
-        return { success: false, error: 'No kingdom actor' };
-      }
-
-      // Validate incident exists
-      const { incidentLoader } = await import('./incidents/incident-loader');
-      const incident = incidentLoader.getIncidentById(incidentId);
-      
-      if (!incident) {
-        logger.error(`❌ [UnrestPhaseController] Incident ${incidentId} not found`);
-        return { success: false, error: 'Incident not found' };
-      }
-
-      // Get outcome data
-      const outcomeData = incident?.outcomes[outcome];
-      
-      console.log('🔍 [resolveIncident] Incident:', incident?.id);
-      console.log('🔍 [resolveIncident] Outcome:', outcome);
-      console.log('🔍 [resolveIncident] OutcomeData:', outcomeData);
-      console.log('🔍 [resolveIncident] GameCommands:', (outcomeData as any)?.gameCommands);
-      
-      // Use unified resolution wrapper (consolidates duplicate logic)
-      return await resolvePhaseOutcome(
-        incidentId,
-        'incident',
-        outcome,
-        resolutionData,
-        [UnrestPhaseSteps.RESOLVE_INCIDENT]  // Type-safe step index
-      );
-    },
+    // Legacy methods removed - now handled by PipelineCoordinator:
+    // - resolveIncident()
+    // - storeIncidentResolution()
+    // - markIncidentApplied()
+    // - clearIncidentResolution()
+    // - getIncidentModifiers()
 
 
-    /**
-     * Store incident resolution in ActiveCheckInstance (synced across all clients)
-     * NEW ARCHITECTURE ONLY - no legacy fallback
-     */
-    async storeIncidentResolution(
-      incidentId: string,
-      resolution: {
-        outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
-        actorName: string;
-        skillName: string;
-        effect: string;
-        modifiers?: any[];
-        manualEffects?: string[];
-        rollBreakdown?: any;
-        effectsApplied?: boolean;
-      }
-    ) {
-      const kingdom = get(kingdomData);
-      
-      // NEW ARCHITECTURE: Store in ActiveCheckInstance
-      const pendingIncidents = outcomePreviewService.getPendingInstances('incident', kingdom);
-      const instance = pendingIncidents.find(i => i.checkId === incidentId);
-      
-      if (!instance) {
-        logger.error('❌ [UnrestPhaseController] No pending incident instance found');
-        return { success: false };
-      }
-      
-      // Build ResolutionData format for service
-      const resolutionData: import('../types/modifiers').ResolutionData = {
-        numericModifiers: resolution.modifiers || [],
-        manualEffects: resolution.manualEffects || [],
-        complexActions: []  // Incidents don't have complex actions
-      };
-      
-      await outcomePreviewService.storeOutcome(
-        instance.instanceId,
-        resolution.outcome,
-        resolutionData,
-        resolution.actorName,
-        resolution.skillName,
-        resolution.effect,
-        resolution.rollBreakdown
-      );
-
-      return { success: true };
-    },
-    
-    /**
-     * Mark incident resolution as applied (after "Apply Result" clicked)
-     * NEW ARCHITECTURE ONLY - no legacy fallback
-     */
-    async markIncidentApplied() {
-      const kingdom = get(kingdomData);
-      
-      // NEW ARCHITECTURE: Find incident with status 'resolved' (has been rolled but not applied)
-      const resolvedIncident = kingdom.activeCheckInstances?.find(i => 
-        i.checkType === 'incident' && i.status === 'resolved'
-      );
-      
-      if (!resolvedIncident) {
-        logger.error('❌ [UnrestPhaseController] No resolved incident to mark as applied');
-        return;
-      }
-      
-      await outcomePreviewService.markApplied(resolvedIncident.instanceId);
-
-    },
-
-    /**
-     * Clear incident resolution from ActiveCheckInstance
-     * NEW ARCHITECTURE ONLY - no legacy fallback
-     * ✅ FIX: Clears appliedOutcome AND resets status to 'pending' for rerolls
-     */
-    async clearIncidentResolution() {
-      const kingdom = get(kingdomData);
-      const actor = getKingdomActor();
-      if (!actor) {
-        logger.error('❌ [UnrestPhaseController] No kingdom actor available');
-        return;
-      }
-      
-      // ✅ FIX: Find ANY incident (pending, resolved, or applied) and reset it
-      const allIncidents = kingdom.activeCheckInstances?.filter((i: any) => i.checkType === 'incident') || [];
-      if (allIncidents.length > 0) {
-        await actor.updateKingdomData((k: any) => {
-          const instance = k.activeCheckInstances?.find((i: any) => 
-            i.instanceId === allIncidents[0].instanceId
-          );
-          if (instance) {
-            instance.appliedOutcome = undefined;  // Clear resolution
-            instance.status = 'pending';  // Reset status for reroll
-
-          }
-        });
-      }
-    },
-
-    /**
-     * Get outcome modifiers for an incident
-     * (Follows same pattern as ActionPhaseController.getActionModifiers)
-     * NOTE: For incidents, criticalSuccess falls back to success (by design)
-     */
-    getIncidentModifiers(incident: any, outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure') {
-      // For incidents, criticalSuccess falls back to success if not defined (by design)
-      const effectiveOutcome = outcome === 'criticalSuccess' && !incident.outcomes.criticalSuccess 
-        ? 'success' 
-        : outcome;
-      
-      const outcomeData = incident.outcomes[effectiveOutcome];
-      
-      return {
-        msg: outcomeData?.msg || '',
-        modifiers: outcomeData?.modifiers || [],
-        manualEffects: outcomeData?.manualEffects || []
-      };
-    },
-    
     /**
      * Get display data for the UI (delegates to static helper)
      */

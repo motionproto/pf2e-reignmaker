@@ -73,9 +73,8 @@ export abstract class BaseGameCommandHandler implements GameCommandHandler {
       const effect = result.specialEffect;
       return {
         outcomeBadge: {
-          icon: effect.icon || 'fa-info-circle'
-          value: { type: 'static', amount: 0 },
-          suffix: effect.message,
+          icon: effect.icon || 'fa-info-circle',
+          template: effect.message,
           variant: effect.variant || 'info'
         },
         commit: result.commit
@@ -94,9 +93,8 @@ export abstract class BaseGameCommandHandler implements GameCommandHandler {
       
       return {
         outcomeBadge: {
-          icon: isNegative ? 'fa-coins' : 'fa-shield-alt'
-          value: { type: 'static', amount: 0 },
-          suffix: message,
+          icon: isNegative ? 'fa-coins' : 'fa-shield-alt',
+          template: message,
           variant: isNegative ? 'info' : 'positive'
         },
         commit: async () => {

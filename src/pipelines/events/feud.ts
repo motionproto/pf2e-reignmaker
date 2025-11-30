@@ -54,7 +54,7 @@ export const feudPipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(feudPipeline, ctx.outcome);
+    await applyPipelineModifiers(feudPipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

@@ -101,9 +101,9 @@ export interface EventOutcome {
 }
 
 /**
- * Event outcomes (results for different degrees of success)
+ * Event effects (outcomes for different degrees of success)
  */
-export interface EventOutcomes {
+export interface EventEffects {
   criticalSuccess?: EventOutcome;
   success?: EventOutcome;
   failure?: EventOutcome;
@@ -119,7 +119,7 @@ export interface KingdomEvent {
   tier: EventTier;
   description: string;
   skills?: EventSkill[];
-  outcomes: EventOutcomes;
+  effects: EventEffects;
   traits?: EventTrait[];  // Event traits (beneficial, dangerous, ongoing)
 }
 
@@ -139,7 +139,7 @@ export function isKingdomEvent(obj: any): obj is KingdomEvent {
     typeof obj.id === 'string' &&
     typeof obj.name === 'string' &&
     typeof obj.description === 'string' &&
-    typeof obj.outcomes === 'object'
+    typeof obj.effects === 'object'
   );
 }
 

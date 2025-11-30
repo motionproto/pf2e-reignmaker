@@ -69,7 +69,8 @@ export class PipelineCoordinator {
     const checkId = (initialContext.metadata as any)?.checkId || actionId;
     
     // Clean up any old instances for this action before starting new pipeline
-    await this.cleanupOldInstances(checkId);
+    const checkType = initialContext.checkType || 'action';
+    await this.cleanupOldInstances(checkId, checkType);
     
     // Initialize context
     const context = this.initializeContext(actionId, initialContext);
@@ -354,7 +355,9 @@ export class PipelineCoordinator {
     
     // CREATE CALLBACK that resumes pipeline
     const callback: CheckRollCallback = async (roll, outcome, message, event) => {
-      console.log('✅ [Callback] Roll complete:', { outcome, total: roll.total });
+      console.log('✅ [Callback] Roll complete:', { outcome, total: roll.total, checkType: ctx.checkType, actionId: ctx.actionId });
+
+      try {
       
       // Extract modifiers from PF2e message flags
       // Modifiers are at: message.flags.pf2e.modifiers (NOT .context.modifiers)
@@ -411,7 +414,7 @@ export class PipelineCoordinator {
       const rollCompleteEvent = new CustomEvent('kingdomRollComplete', {
         detail: {
           checkId: ctx.actionId,
-          checkType: 'action',
+          checkType: ctx.checkType || 'action',
           outcome: ctx.rollData.outcome,
           actorName: ctx.actor?.actorName || 'Unknown',
           skillName: skillName,
@@ -422,6 +425,10 @@ export class PipelineCoordinator {
       
       // Resume pipeline at Step 4
       await this.resumeAfterRoll(ctx);
+      } catch (callbackError) {
+        console.error('❌ [PipelineCoordinator] Callback error:', callbackError);
+        throw callbackError;
+      }
     };
     
     // Call PF2eSkillService with callback (delegates to skill.roll internally)
@@ -486,7 +493,8 @@ export class PipelineCoordinator {
       rollBreakdown: ctx.rollData?.rollBreakdown || undefined,
       currentTurn: turn,
       metadata: ctx.metadata,
-      instanceId: ctx.instanceId  // ← Pass pipeline's instanceId
+      instanceId: ctx.instanceId,  // ← Pass pipeline's instanceId
+      checkType: pipeline.checkType as 'action' | 'incident' | 'event'  // ← Use pipeline's checkType
     });
     
     // instanceId already set in Step 0 - no need to update it
@@ -788,44 +796,70 @@ export class PipelineCoordinator {
 
   /**
    * Step 9: Cleanup
-   * 
+   *
    * Clean up temporary state, delete instances, track action
    * ALWAYS RUNS
+   *
+   * For incidents: Completes the RESOLVE_INCIDENT phase step
+   * For events: Completes the RESOLVE_EVENT and APPLY_MODIFIERS phase steps
    */
   private async step9_cleanup(ctx: PipelineContext): Promise<void> {
     log(ctx, 9, 'cleanup', 'Cleaning up');
-    
+
+    const { TurnPhase } = await import('../actors/KingdomActor');
+
+    // Determine the correct TurnPhase based on checkType
+    const turnPhase = ctx.checkType === 'incident' ? TurnPhase.UNREST :
+                      ctx.checkType === 'event' ? TurnPhase.EVENTS :
+                      TurnPhase.ACTIONS;
+
     // TRACK ACTION in actionLog (so player can't perform unlimited actions)
+    // Note: Incidents don't consume player actions, they're separate checks
     const game = (window as any).game;
     const userId = ctx.userId || game?.user?.id;
     const userName = game?.user?.name;
     const actorName = ctx.actor?.actorName || 'Unknown';
-    
-    if (userId && userName) {
+
+    if (userId && userName && ctx.checkType === 'action') {
       const { createGameCommandsService } = await import('./GameCommandsService');
-      const { TurnPhase } = await import('../actors/KingdomActor');
       const gameCommandsService = await createGameCommandsService();
-      
+
       await gameCommandsService.trackPlayerAction(
         userId,
         userName,
         actorName,
         ctx.actionId,
-        TurnPhase.ACTIONS
+        turnPhase
       );
-      
+
       log(ctx, 9, 'cleanup', `Tracked action for user ${userName}`);
     }
-    
+
+    // COMPLETE PHASE STEPS based on checkType
+    if (ctx.checkType === 'incident') {
+      // Complete the RESOLVE_INCIDENT step in UnrestPhase
+      const { completePhaseStepByIndex } = await import('../controllers/shared/PhaseControllerHelpers');
+      const { UnrestPhaseSteps } = await import('../controllers/shared/PhaseStepConstants');
+      await completePhaseStepByIndex(UnrestPhaseSteps.RESOLVE_INCIDENT);
+      log(ctx, 9, 'cleanup', 'Completed RESOLVE_INCIDENT phase step');
+    } else if (ctx.checkType === 'event') {
+      // Complete the RESOLVE_EVENT and APPLY_MODIFIERS steps in EventsPhase
+      const { completePhaseStepByIndex } = await import('../controllers/shared/PhaseControllerHelpers');
+      const { EventsPhaseSteps } = await import('../controllers/shared/PhaseStepConstants');
+      await completePhaseStepByIndex(EventsPhaseSteps.RESOLVE_EVENT);
+      await completePhaseStepByIndex(EventsPhaseSteps.APPLY_MODIFIERS);
+      log(ctx, 9, 'cleanup', 'Completed RESOLVE_EVENT and APPLY_MODIFIERS phase steps');
+    }
+
     // DELETE check instance completely from pendingOutcomes
     if (ctx.instanceId && this.checkInstanceService) {
       await this.checkInstanceService.clearInstance(ctx.instanceId);
       log(ctx, 9, 'cleanup', `Deleted check instance: ${ctx.instanceId}`);
-      
+
       // Remove from pending contexts
       this.pendingContexts.delete(ctx.instanceId);
     }
-    
+
     log(ctx, 9, 'cleanup', 'Cleanup complete');
   }
 
@@ -875,16 +909,16 @@ export class PipelineCoordinator {
   }
 
   /**
-   * Clean up old instances for an action
+   * Clean up old instances for an action/incident/event
    * Called before starting a new pipeline to prevent stale data
    */
-  private async cleanupOldInstances(actionId: string): Promise<void> {
+  private async cleanupOldInstances(actionId: string, checkType: string = 'action'): Promise<void> {
     const actor = getKingdomActor();
     if (!actor) return;
-    
+
     const kingdom = actor.getKingdomData();
     const oldInstances = (kingdom.pendingOutcomes || []).filter(
-      (i: any) => i.checkType === 'action' && i.checkId === actionId
+      (i: any) => i.checkType === checkType && i.checkId === actionId
     );
     
     if (oldInstances.length > 0) {

@@ -54,7 +54,7 @@ export const notoriousHeistPipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(notoriousHeistPipeline, ctx.outcome);
+    await applyPipelineModifiers(notoriousHeistPipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

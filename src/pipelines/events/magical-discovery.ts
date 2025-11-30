@@ -50,7 +50,7 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(magicalDiscoveryPipeline, ctx.outcome);
+    await applyPipelineModifiers(magicalDiscoveryPipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

@@ -524,9 +524,8 @@ These actions won't be fully functional until custom components are implemented,
 ### Issue: Outcome doesn't appear after roll
 **Symptoms:** Roll completes, no outcome card shows  
 **Most Common Causes:**
-1. Using `activeCheckInstances` instead of `pendingOutcomes`
-2. Looking up by `instanceId` instead of `previewId`  
-**Fix:** Check `ActionsPhase.svelte` and `ActionCategorySection.svelte` for correct naming  
+1. Looking up by wrong ID field  
+**Fix:** Check `ActionsPhase.svelte` and `ActionCategorySection.svelte` for correct field usage  
 **Details:** DEBUGGING_GUIDE.md - Issue #1
 
 ### Issue: Old outcome appears when expanding action

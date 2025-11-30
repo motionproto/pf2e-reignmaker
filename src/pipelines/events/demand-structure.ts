@@ -50,7 +50,7 @@ export const demandStructurePipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(demandStructurePipeline, ctx.outcome);
+    await applyPipelineModifiers(demandStructurePipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };

@@ -52,7 +52,7 @@ export const plaguePipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Apply modifiers from outcome
-    await applyPipelineModifiers(plaguePipeline, ctx.outcome);
+    await applyPipelineModifiers(plaguePipeline, ctx.outcome, ctx);
     return { success: true };
   }
 };
