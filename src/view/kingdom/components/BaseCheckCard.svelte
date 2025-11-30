@@ -70,6 +70,10 @@
   export let actionStatus: 'untested' | 'testing' | 'tested' | null = null;
   export let actionNumber: number | undefined = undefined;  // Action number for migration badge (1-26)
   
+  // Incident status tracking
+  export let incidentStatus: 'untested' | 'testing' | 'tested' | null = null;
+  export let incidentNumber: number | undefined = undefined;  // Incident number for testing badge (1-30)
+  
   // State props
   export let expanded: boolean = false;
   export let available: boolean = true;
@@ -394,6 +398,8 @@
     {statusBadge}
     {actionStatus}
     {actionNumber}
+    {incidentStatus}
+    {incidentNumber}
     on:toggle={toggleExpanded}
   />
   

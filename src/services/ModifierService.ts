@@ -41,7 +41,8 @@ export async function createModifierService() {
               // Apply resource/stat change
               const current = kingdom.resources[mod.resource] || 0;
               const newValue = Math.max(0, current + mod.value);
-              kingdom.resources[mod.resource] = newValue;
+              // ✅ Immutable: Reassign object to trigger Svelte reactivity
+              kingdom.resources = { ...kingdom.resources, [mod.resource]: newValue };
               
               // Track the change
               changes[mod.resource] = (changes[mod.resource] || 0) + mod.value;

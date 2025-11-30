@@ -15,6 +15,7 @@ import type { CheckContext, CheckMetadata, ResolutionData } from '../types/Check
 import type { PreviewData } from '../types/PreviewData';
 import { createEmptyMetadata, createEmptyResolutionData } from '../types/CheckContext';
 import { createEmptyPreviewData } from '../types/PreviewData';
+import type { ResourceType } from '../types/modifiers';
 
 // Import existing services (work once copied to src/)
 import { executeRoll } from '../controllers/shared/ExecutionHelpers';
@@ -22,6 +23,7 @@ import { hexSelectorService } from './hex-selector';
 import { updateKingdom, getKingdomActor } from '../stores/KingdomStore';
 import { OutcomePreviewService } from './OutcomePreviewService';
 import { showEntitySelectionDialog, showTextInputDialog, showConfirmationDialog, showChoiceDialog } from './InteractionDialogs';
+import { createGameCommandsService } from './GameCommandsService';
 
 /**
  * Main unified check handler service
@@ -741,9 +743,19 @@ export class UnifiedCheckHandler {
         }
       }
       
-      // Check if pipeline has custom execute function
+      // ═══════════════════════════════════════════════════════════════════════
+      // ✅ EXECUTE-FIRST PATTERN: Apply modifiers BEFORE custom execute
+      // This ensures all pipelines (simple and complex) get proper modifier handling
+      // ═══════════════════════════════════════════════════════════════════════
+      
+      // Apply default modifiers unless pipeline opts out
+      if (!(pipeline as any).skipDefaultModifiers) {
+        await this.applyDefaultModifiers(context, pipeline);
+      }
+      
+      // Then call custom execute if exists (for custom logic only, modifiers already applied)
       if (pipeline.execute) {
-        console.log(`🎯 [UnifiedCheckHandler] Using custom execute function`);
+        console.log(`🎯 [UnifiedCheckHandler] Executing custom logic`);
         const result = await pipeline.execute(context);
         
         if (!result.success) {
@@ -758,9 +770,10 @@ export class UnifiedCheckHandler {
         return;
       }
 
-      // Default execution path (no custom execute function)
-      // Apply resource changes from preview
-      await this.applyResourceChanges(preview.resources, context.kingdom);
+      // Default path: Execute game commands and persistence
+      // (modifiers already applied above)
+      
+      console.log(`🔄 [UnifiedCheckHandler] Completing default execution path`);
 
       // Execute game commands (actions only)
       if (pipeline.gameCommands) {
@@ -772,10 +785,62 @@ export class UnifiedCheckHandler {
         await this.handlePersistence(pipeline, context);
       }
 
-      console.log(`✅ [UnifiedCheckHandler] Check executed successfully`);
+      console.log(`✅ [UnifiedCheckHandler] Default execution completed`);
     } catch (error) {
       console.error(`❌ [UnifiedCheckHandler] Check execution failed:`, error);
       throw error;
+    }
+  }
+
+  /**
+   * Apply default modifiers (fame bonus + JSON modifiers)
+   * Extracted to support execute-first pattern
+   * 
+   * Called BEFORE custom execute functions to ensure consistent modifier application.
+   * Pipelines can opt out by setting skipDefaultModifiers: true
+   */
+  private async applyDefaultModifiers(
+    context: CheckContext,
+    pipeline: CheckPipeline
+  ): Promise<void> {
+    console.log(`🔄 [UnifiedCheckHandler] Applying default modifiers`);
+    
+    const gameCommandsService = await createGameCommandsService();
+    
+    // Step 1: Apply fame bonus for critical success
+    if (context.outcome === 'criticalSuccess') {
+      const tempResult = { success: true, applied: { resources: [] } };
+      await gameCommandsService.applyFameChange(1, 'Critical Success Bonus', tempResult);
+      console.log(`✨ [UnifiedCheckHandler] Applied +1 fame for critical success`);
+    }
+    
+    // Step 2: Apply pre-rolled modifiers from resolutionData (dice already rolled in UI)
+    if (context.resolutionData?.numericModifiers?.length > 0) {
+      console.log(`💰 [UnifiedCheckHandler] Applying ${context.resolutionData.numericModifiers.length} pre-rolled modifier(s)`);
+      
+      await gameCommandsService.applyNumericModifiers(
+        context.resolutionData.numericModifiers,
+        context.outcome
+      );
+    }
+    // Step 3: Apply static modifiers from JSON (if not already handled by numericModifiers)
+    // This handles pipelines that only have static modifiers (no dice)
+    else {
+      const outcomeData = pipeline.outcomes?.[context.outcome];
+      const jsonModifiers = outcomeData?.modifiers || [];
+      const staticModifiers = jsonModifiers.filter((m: any) => m.type === 'static');
+      
+      if (staticModifiers.length > 0) {
+        console.log(`💰 [UnifiedCheckHandler] Applying ${staticModifiers.length} static modifier(s) from JSON`);
+        
+        // Convert to numeric format and apply
+        const numericMods = staticModifiers.map((m: any) => ({
+          resource: m.resource as ResourceType,
+          value: m.negative ? -(m.value || 0) : (m.value || 0)
+        }));
+        
+        await gameCommandsService.applyNumericModifiers(numericMods, context.outcome);
+      }
     }
   }
 
@@ -854,9 +919,9 @@ export class UnifiedCheckHandler {
       throw new Error('Pipeline missing skills');
     }
 
-    // Pre-roll interactions only for actions
-    if (pipeline.checkType !== 'action' && pipeline.preRollInteractions) {
-      throw new Error('Pre-roll interactions only allowed for actions');
+    // Pre-roll interactions allowed for actions and incidents
+    if (pipeline.checkType === 'event' && pipeline.preRollInteractions) {
+      throw new Error('Pre-roll interactions not allowed for events');
     }
 
     // Game commands only for actions

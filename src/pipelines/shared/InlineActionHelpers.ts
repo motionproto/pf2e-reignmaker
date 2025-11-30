@@ -28,6 +28,12 @@ export interface ResourceChange {
  * This is the shared pattern for actions with custom resolution components
  * that need to modify kingdom resources (e.g., Harvest Resources, Purchase Resources).
  * 
+ * ✅ Uses GameCommandsService to ensure:
+ * - Shortfall detection
+ * - Automatic +1 unrest per shortfall
+ * - Proper floating notifications
+ * - Consistent logging
+ * 
  * @param changes - Array of resource changes to apply
  * @param actionId - Action ID for logging/error messages
  * @returns Success/error result
@@ -50,27 +56,23 @@ export async function applyResourceChanges(
   actionId: string
 ): Promise<ResolveResult> {
   try {
-    // Get kingdom actor
-    const { getKingdomActor } = await import('../../stores/KingdomStore');
-    const actor = getKingdomActor();
+    // ✅ Use GameCommandsService for proper shortfall handling
+    const { createGameCommandsService } = await import('../../services/GameCommandsService');
+    const gameCommandsService = await createGameCommandsService();
     
-    if (!actor) {
-      return createErrorResult('Kingdom actor not found');
+    // Convert to numeric modifiers format
+    const numericMods = changes.map(c => ({ 
+      resource: c.resource as import('../../types/modifiers').ResourceType, 
+      value: c.amount 
+    }));
+    
+    // Apply with full shortfall protection
+    // Use 'success' outcome since these are confirmed resource changes
+    const result = await gameCommandsService.applyNumericModifiers(numericMods, 'success');
+    
+    if (!result.success) {
+      return createErrorResult(result.error || 'Failed to apply resource changes');
     }
-    
-    // Apply all resource changes
-    await actor.updateKingdomData((kingdom: KingdomData) => {
-      // Initialize resources if needed
-      if (!kingdom.resources) {
-        kingdom.resources = { food: 0, lumber: 0, stone: 0, ore: 0, gold: 0 };
-      }
-      
-      // Apply each change
-      for (const change of changes) {
-        const current = kingdom.resources[change.resource] || 0;
-        kingdom.resources[change.resource] = current + change.amount;
-      }
-    });
     
     return createSuccessResult('Resources applied successfully');
     

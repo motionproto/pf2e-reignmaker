@@ -6,7 +6,6 @@
  */
 
 import { createActionPipeline } from '../shared/createActionPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 // Store reference for execute function
 const pipeline = createActionPipeline('deal-with-unrest', {
@@ -14,13 +13,9 @@ const pipeline = createActionPipeline('deal-with-unrest', {
   requirements: () => ({ met: true }),
 
   // No preview needed - JSON modifiers auto-converted by PipelineCoordinator
-  preview: undefined,
+  preview: undefined
 
-  execute: async (ctx) => {
-    // Apply modifiers from JSON outcomes
-    await applyPipelineModifiers(pipeline, ctx.outcome);
-    return { success: true };
-  }
+  // ✅ REMOVED: No longer needed - UnifiedCheckHandler handles modifiers automatically
 });
 
 export const dealWithUnrestPipeline = pipeline;

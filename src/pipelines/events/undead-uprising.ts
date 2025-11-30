@@ -46,11 +46,5 @@ export const undeadUprisingPipeline: CheckPipeline = {
   },
 
   preview: {
-  },
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(undeadUprisingPipeline, ctx.outcome, ctx);
-    return { success: true };
   }
 };

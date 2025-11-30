@@ -5,7 +5,6 @@
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../../shared/applyPipelineModifiers';
 
 export const secessionCrisisPipeline: CheckPipeline = {
   id: 'secession-crisis',
@@ -43,12 +42,5 @@ export const secessionCrisisPipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined,
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(secessionCrisisPipeline, ctx.outcome, ctx);
-    // Note: Settlement secession commands not implemented - handled as manual effects
-    return { success: true };
-  }
+  preview: undefined
 };

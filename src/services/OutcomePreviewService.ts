@@ -43,7 +43,8 @@ export class OutcomePreviewService {
     
     await updateKingdom(kingdom => {
       if (!kingdom.pendingOutcomes) kingdom.pendingOutcomes = [];
-      kingdom.pendingOutcomes.push(preview);
+      // ✅ CRITICAL: Reassign array to trigger Svelte reactivity
+      kingdom.pendingOutcomes = [...kingdom.pendingOutcomes, preview];
 
     });
     
@@ -118,23 +119,29 @@ export class OutcomePreviewService {
     }
     
     await updateKingdom(kingdom => {
-      const preview = kingdom.pendingOutcomes?.find(i => i.previewId === previewId);
-      if (preview) {
-        preview.appliedOutcome = {
-          outcome: outcome as any,
-          actorName,
-          skillName,
-          effect,
-          modifiers: resolutionData.numericModifiers as any,
-          manualEffects: resolutionData.manualEffects,
-          shortfallResources: [],
-          rollBreakdown,
-          effectsApplied: false,
-          // ⚠️ CRITICAL: Store component NAME (string) not component CLASS
-          componentName,  // String = JSON serializable
-          componentProps: customResolutionProps || {}  // Renamed from customResolutionProps
+      const previewIndex = kingdom.pendingOutcomes?.findIndex(i => i.previewId === previewId);
+      if (previewIndex !== undefined && previewIndex >= 0 && kingdom.pendingOutcomes) {
+        // ✅ CRITICAL: Reassign array to trigger Svelte reactivity
+        const updated = [...kingdom.pendingOutcomes];
+        updated[previewIndex] = {
+          ...updated[previewIndex],
+          appliedOutcome: {
+            outcome: outcome as any,
+            actorName,
+            skillName,
+            effect,
+            modifiers: resolutionData.numericModifiers as any,
+            manualEffects: resolutionData.manualEffects,
+            shortfallResources: [],
+            rollBreakdown,
+            effectsApplied: false,
+            // ⚠️ CRITICAL: Store component NAME (string) not component CLASS
+            componentName,  // String = JSON serializable
+            componentProps: customResolutionProps || {}  // Renamed from customResolutionProps
+          },
+          status: 'resolved' as const
         };
-        preview.status = 'resolved';
+        kingdom.pendingOutcomes = updated;
         console.log('✅ [OutcomePreviewService] Stored outcome with componentName:', componentName);
       } else {
         console.error(`❌ [OutcomePreviewService] Preview ${previewId} not found when storing outcome`);
@@ -389,11 +396,13 @@ export async function createActionOutcomePreview(context: {
     // Don't create duplicate instances - reuse existing if present
     const existingIndex = kingdom.pendingOutcomes.findIndex(i => i.previewId === previewId);
     if (existingIndex >= 0) {
-      // Update existing instance
-      kingdom.pendingOutcomes[existingIndex] = preview;
+      // ✅ CRITICAL: Reassign array to trigger Svelte reactivity
+      const updated = [...kingdom.pendingOutcomes];
+      updated[existingIndex] = preview;
+      kingdom.pendingOutcomes = updated;
     } else {
-      // Add new instance
-      kingdom.pendingOutcomes.push(preview);
+      // ✅ CRITICAL: Reassign array to trigger Svelte reactivity
+      kingdom.pendingOutcomes = [...kingdom.pendingOutcomes, preview];
     }
   });
   

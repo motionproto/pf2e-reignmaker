@@ -6,7 +6,6 @@
  */
 
 import { createActionPipeline } from '../shared/createActionPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 import { hasUnrestToArrest, calculateImprisonmentCapacity } from '../shared/ActionHelpers';
 import { textBadge } from '../../types/OutcomeBadge';
 import ArrestDissidentsResolution from '../../view/kingdom/components/OutcomeDisplay/components/ArrestDissidentsResolution.svelte';
@@ -66,9 +65,10 @@ const pipeline = createActionPipeline('arrest-dissidents', {
   },
 
   execute: async (ctx) => {
-    // Handle failure outcomes using JSON modifiers
+    // Modifiers (unrest changes) applied automatically by execute-first pattern
+    
+    // Failure outcomes - just return success (modifiers already applied)
     if (ctx.outcome === 'criticalFailure' || ctx.outcome === 'failure') {
-      await applyPipelineModifiers(pipeline, ctx.outcome);
       return { success: true };
     }
 

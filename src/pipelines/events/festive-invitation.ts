@@ -47,11 +47,5 @@ export const festiveInvitationPipeline: CheckPipeline = {
   },
 
   preview: {
-  },
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(festiveInvitationPipeline, ctx.outcome, ctx);
-    return { success: true };
   }
 };

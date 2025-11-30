@@ -46,11 +46,5 @@ export const demandExpansionPipeline: CheckPipeline = {
   },
 
   preview: {
-  },
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(demandExpansionPipeline, ctx.outcome, ctx);
-    return { success: true };
   }
 };

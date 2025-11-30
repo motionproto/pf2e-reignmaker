@@ -49,11 +49,5 @@ export const foodSurplusPipeline: CheckPipeline = {
   },
 
   preview: {
-  },
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(foodSurplusPipeline, ctx.outcome, ctx);
-    return { success: true };
   }
 };

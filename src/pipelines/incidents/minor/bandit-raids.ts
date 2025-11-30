@@ -5,7 +5,6 @@
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../../shared/applyPipelineModifiers';
 
 export const banditRaidsPipeline: CheckPipeline = {
   id: 'bandit-raids',
@@ -42,12 +41,11 @@ export const banditRaidsPipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined,
+  preview: undefined
 
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(banditRaidsPipeline, ctx.outcome, ctx);
-    // Note: destroyWorksite command not implemented - handled as manual effect
-    return { success: true };
-  }
+  // ✅ REMOVED: No longer needed - UnifiedCheckHandler handles modifiers automatically
+  // execute: async (ctx) => {
+  //   await applyPipelineModifiers(banditRaidsPipeline, ctx.outcome, ctx);
+  //   return { success: true };
+  // }
 };

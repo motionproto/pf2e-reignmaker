@@ -44,11 +44,5 @@ export const assassinationAttemptPipeline: CheckPipeline = {
   },
 
   preview: {
-  },
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(assassinationAttemptPipeline, ctx.outcome, ctx);
-    return { success: true };
   }
 };

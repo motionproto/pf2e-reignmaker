@@ -50,11 +50,5 @@ export const cultActivityPipeline: CheckPipeline = {
   },
 
   preview: {
-  },
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(cultActivityPipeline, ctx.outcome, ctx);
-    return { success: true };
   }
 };

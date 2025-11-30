@@ -191,12 +191,25 @@ export interface CheckPipeline {
   /**
    * Execute function - Custom execution logic for the check
    * Called by UnifiedCheckHandler after Apply button is clicked
-   * Use for: Custom resource changes, complex state updates
+   * 
+   * NOTE: As of execute-first architecture, JSON modifiers are applied BEFORE
+   * this function is called. Use execute only for custom logic (hex selection,
+   * entity creation, etc.), not for standard modifier application.
    * 
    * @param ctx - Check context with kingdom, metadata, resolutionData
    * @returns Execution result with success/error/message
    */
   execute?: (ctx: any) => Promise<{ success: boolean; error?: string; message?: string }>;
+  
+  /**
+   * Skip default modifier application (opt-out)
+   * 
+   * Set to true if execute function handles ALL modifier application manually.
+   * Default: false (modifiers applied before execute)
+   * 
+   * Use cases: Legacy actions that need complete control over modifier timing
+   */
+  skipDefaultModifiers?: boolean;
 
   // Game commands (actions only)
   gameCommands?: GameCommand[];

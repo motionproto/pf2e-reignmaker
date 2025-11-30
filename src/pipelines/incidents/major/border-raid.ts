@@ -5,7 +5,6 @@
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../../shared/applyPipelineModifiers';
 
 export const borderRaidPipeline: CheckPipeline = {
   id: 'border-raid',
@@ -41,11 +40,5 @@ export const borderRaidPipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined,
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(borderRaidPipeline, ctx.outcome, ctx);
-    return { success: true };
-  }
+  preview: undefined
 };

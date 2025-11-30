@@ -5,7 +5,6 @@
 
 import { createActionPipeline } from '../shared/createActionPipeline';
 import { applyActionCost } from '../shared/applyActionCost';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 import { foundSettlementExecution } from '../../execution';
 import { textBadge } from '../../types/OutcomeBadge';
 import {
@@ -196,13 +195,11 @@ export const establishSettlementPipeline = createActionPipeline('establish-settl
       }
         
       case 'failure':
-        // Pay half costs on failure (uses outcome-specific modifiers from JSON)
-        await applyPipelineModifiers(establishSettlementPipeline, ctx.outcome);
+        // Modifiers (half costs) applied automatically by execute-first pattern
         return { success: true };
         
       case 'criticalFailure':
-        // Pay full costs and gain unrest (uses outcome-specific modifiers from JSON)
-        await applyPipelineModifiers(establishSettlementPipeline, ctx.outcome);
+        // Modifiers (full costs + unrest) applied automatically by execute-first pattern
         return { success: true };
         
       default:

@@ -207,9 +207,27 @@ class PipelineCoordinator {
 - Optional - skip if no post-apply interactions
 
 **Step 8: executeAction()**
-- Apply state changes to kingdom
-- Update resources, create entities
-- Always runs
+
+**Execute-First Pattern:** Modifiers are applied automatically BEFORE custom execute runs.
+
+1. `applyDefaultModifiers()` runs FIRST:
+   - Fame +1 for all critical successes
+   - Pre-rolled dice modifiers from `resolutionData.numericModifiers`
+   - Static JSON modifiers (if no pre-rolled values)
+   - All use GameCommandsService (includes shortfall detection)
+
+2. Custom `execute()` runs SECOND (if defined):
+   - Only implements custom game logic
+   - Can call `applyNumericModifiers()` for dynamic costs
+   - Can call `applyOutcome()` for complex scenarios with rich tracking
+
+3. Default path (if no custom execute):
+   - Execute game commands (actions only)
+   - Handle persistence (events/incidents only)
+
+**Opt-Out:** Set `skipDefaultModifiers: true` on pipeline to skip step 1 (unused).
+
+Always runs.
 
 **Step 9: cleanup()**
 - Delete OutcomePreview from kingdom.pendingOutcomes

@@ -228,7 +228,11 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
           }
         }
         if (!kingdom.turnState.actionsPhase.factionsAidedThisTurn.includes(factionId)) {
-          kingdom.turnState.actionsPhase.factionsAidedThisTurn.push(factionId);
+          // ✅ Immutable: Reassign array to trigger Svelte reactivity
+          kingdom.turnState.actionsPhase.factionsAidedThisTurn = [
+            ...kingdom.turnState.actionsPhase.factionsAidedThisTurn,
+            factionId
+          ];
         }
       });
 
@@ -251,9 +255,12 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
 
       // If no eligible armies, grant 1 gold as fallback
       if (eligibleArmies.length === 0) {
-        await actor.updateKingdomData((kingdom: any) => {
-          kingdom.resources.gold = (kingdom.resources.gold || 0) + 1;
-        });
+        const { createGameCommandsService } = await import('../../services/GameCommandsService');
+        const gameCommandsService = await createGameCommandsService();
+        
+        await gameCommandsService.applyNumericModifiers([
+          { resource: 'gold', value: 1 }
+        ], ctx.outcome);
 
         // Mark faction as having provided aid this turn
         await actor.updateKingdomData((kingdom: any) => {
@@ -265,7 +272,11 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
             }
           }
           if (!kingdom.turnState.actionsPhase.factionsAidedThisTurn.includes(factionId)) {
-            kingdom.turnState.actionsPhase.factionsAidedThisTurn.push(factionId);
+            // ✅ Immutable: Reassign array to trigger Svelte reactivity
+          kingdom.turnState.actionsPhase.factionsAidedThisTurn = [
+            ...kingdom.turnState.actionsPhase.factionsAidedThisTurn,
+            factionId
+          ];
           }
         });
 
@@ -321,7 +332,11 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
           }
         }
         if (!kingdom.turnState.actionsPhase.factionsAidedThisTurn.includes(factionId)) {
-          kingdom.turnState.actionsPhase.factionsAidedThisTurn.push(factionId);
+          // ✅ Immutable: Reassign array to trigger Svelte reactivity
+          kingdom.turnState.actionsPhase.factionsAidedThisTurn = [
+            ...kingdom.turnState.actionsPhase.factionsAidedThisTurn,
+            factionId
+          ];
         }
       });
 

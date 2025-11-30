@@ -4,7 +4,6 @@
  */
 
 import { createActionPipeline } from '../shared/createActionPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 import { textBadge } from '../../types/OutcomeBadge';
 import { PLAYER_KINGDOM } from '../../types/ownership';
 
@@ -101,9 +100,8 @@ const pipeline = createActionPipeline('deploy-army', {
   },
 
   execute: async (ctx: any) => {
-    // Apply modifiers (unrest changes) from JSON outcomes first
-    await applyPipelineModifiers(pipeline, ctx.outcome);
-
+    // Modifiers (unrest changes) applied automatically by execute-first pattern
+    
     const conditionsToApply = ctx.outcome === 'criticalSuccess' ?
       ['+1 initiative (status bonus)', '+1 saving throws (status bonus)', '+1 attack (status bonus)'] :
       ctx.outcome === 'failure' ?

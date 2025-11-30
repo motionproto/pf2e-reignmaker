@@ -4,7 +4,6 @@
  */
 
 import { createActionPipeline } from '../shared/createActionPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 import { claimHexesExecution } from '../../execution/territory/claimHexes';
 import {
   validateUnclaimed,
@@ -109,12 +108,11 @@ export const claimHexesPipeline = createActionPipeline('claim-hexes', {
         return { success: true };
         
       case 'failure':
-        // Explicitly do nothing for failure (no modifiers defined)
+        // No modifiers defined for failure
         return { success: true };
         
       case 'criticalFailure':
-        // Explicitly apply +1 unrest modifier from pipeline
-        await applyPipelineModifiers(claimHexesPipeline, ctx.outcome);
+        // Modifiers (+1 unrest) applied automatically by execute-first pattern
         return { success: true };
         
       default:

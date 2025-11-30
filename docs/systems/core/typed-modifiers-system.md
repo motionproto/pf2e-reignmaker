@@ -526,34 +526,33 @@ python3 buildscripts/generate-types.py
 
 ## Action Implementation Patterns
 
-### Simple Actions (JSON-only)
+**Since January 2025**, the pipeline uses an **execute-first pattern** where modifiers are applied automatically. Most pipelines need no execute function at all.
 
-For actions that only modify resources, JSON modifiers are sufficient:
+### Simple Actions (Automatic - Preferred)
+
+For actions that only modify resources, JSON modifiers are applied automatically:
 
 ```typescript
 // src/pipelines/actions/dealWithUnrest.ts
 const pipeline = createActionPipeline('deal-with-unrest', {
   requirements: () => ({ met: true }),
-  preview: undefined,  // Auto-converts JSON modifiers to badges!
-  execute: async (ctx) => {
-    await applyPipelineModifiers(pipeline, ctx.outcome);
-    return { success: true };
-  }
+  // No preview needed - JSON modifiers auto-convert to badges
+  // No execute needed - modifiers applied automatically by execute-first pattern!
 });
 ```
 
 **Key Points:**
 - ✅ Set `preview: undefined` - pipeline handles conversion automatically
-- ✅ JSON modifiers in `data/player-actions/*.json` become badges automatically
-- ✅ No need to manually call `convertModifiersToBadges()`
-- ✅ Zero boilerplate for simple resource changes
+- ✅ JSON modifiers become badges automatically
+- ✅ No execute function needed for simple actions
+- ✅ Execute-first pattern handles all modifier application
+- ✅ Includes shortfall detection (+1 unrest per shortfall)
 
-### Complex Actions (Custom badges)
+### Complex Actions (Custom Execute)
 
-For actions needing custom badges beyond JSON modifiers:
+For actions needing custom logic beyond resource changes:
 
 ```typescript
-// src/pipelines/actions/myAction.ts
 const pipeline = createActionPipeline('my-action', {
   preview: {
     calculate: (ctx) => {
@@ -566,15 +565,28 @@ const pipeline = createActionPipeline('my-action', {
       };
     }
   },
+  
   execute: async (ctx) => {
-    // Custom execution logic
+    // JSON modifiers ALREADY applied by execute-first pattern
+    // Just implement custom game logic here
+    
+    // For dynamic costs, use GameCommandsService:
+    const gameCommandsService = await createGameCommandsService();
+    await gameCommandsService.applyNumericModifiers([
+      { resource: 'gold', value: -calculatedCost }
+    ], ctx.outcome);
+    
+    // Custom logic
+    await doCustomThing(ctx);
+    return { success: true };
   }
 });
 ```
 
 **Key Points:**
-- ✅ JSON modifiers → Automatic badges (always)
+- ✅ JSON modifiers → Applied automatically (always)
 - ✅ Custom badges → Added via preview.calculate (optional)
+- ✅ Dynamic costs → Use `applyNumericModifiers()` in execute
 - ✅ Final display → JSON badges + custom badges (merged by pipeline)
 
 ## Best Practices

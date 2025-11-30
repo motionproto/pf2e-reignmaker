@@ -4,7 +4,6 @@
  */
 
 import { createActionPipeline } from '../shared/createActionPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 import { applyResourceChanges } from '../shared/InlineActionHelpers';
 
 export const harvestResourcesPipeline = createActionPipeline('harvest-resources', {
@@ -64,8 +63,7 @@ export const harvestResourcesPipeline = createActionPipeline('harvest-resources'
         return { success: true };
         
       case 'criticalFailure':
-        // Explicitly apply -1 gold modifier from pipeline
-        await applyPipelineModifiers(harvestResourcesPipeline, ctx.outcome);
+        // Modifiers (-1 gold) applied automatically by execute-first pattern
         return { success: true };
         
       default:

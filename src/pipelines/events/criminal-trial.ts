@@ -46,11 +46,5 @@ export const criminalTrialPipeline: CheckPipeline = {
   },
 
   preview: {
-  },
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(criminalTrialPipeline, ctx.outcome, ctx);
-    return { success: true };
   }
 };

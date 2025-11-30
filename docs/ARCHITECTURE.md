@@ -486,6 +486,93 @@ getActionDC(characterLevel: number): number
 getAvailableActions(kingdomData): PlayerAction[]
 ```
 
+#### Execute-First Pattern (Resource Modifiers)
+
+**Important:** `UnifiedCheckHandler` uses an **execute-first pattern** for modifier application:
+
+1. **Modifiers applied FIRST** - Before any custom `execute` function runs
+2. **Fame bonus automatic** - +1 fame on critical success (built-in)
+3. **Shortfall detection** - Automatic +1 unrest per resource shortfall
+4. **Custom logic second** - Execute functions only need custom logic
+
+**Pipeline Implementation:**
+```typescript
+// ✅ CORRECT - Simple pipeline (no execute needed)
+export const myPipeline = createActionPipeline('my-action', {
+  // Modifiers in JSON are applied automatically by UnifiedCheckHandler
+  // No execute function needed for simple modifier-only pipelines
+});
+
+// ✅ CORRECT - Custom logic only
+export const myPipeline = createActionPipeline('my-action', {
+  execute: async (ctx) => {
+    // Modifiers already applied by execute-first pattern
+    // Only implement custom game logic here
+    await someCustomLogic(ctx);
+    return { success: true };
+  }
+});
+
+// ❌ WRONG - Duplicate modifier application (removed in Phase 4)
+execute: async (ctx) => {
+  await applyPipelineModifiers(pipeline, ctx.outcome); // Don't do this!
+  await someCustomLogic(ctx);
+}
+```
+
+**Resource Modification Best Practices:**
+```typescript
+// ✅ CORRECT - Use GameCommandsService for all resource changes
+import { createGameCommandsService } from '../../services/GameCommandsService';
+const gameCommandsService = await createGameCommandsService();
+await gameCommandsService.applyNumericModifiers([
+  { resource: 'gold', value: -5 },
+  { resource: 'unrest', value: 1 }
+], ctx.outcome);
+
+// ❌ WRONG - Direct modification bypasses shortfall detection
+await updateKingdom(kingdom => {
+  kingdom.resources.gold -= 5;  // No shortfall detection!
+  kingdom.unrest += 1;          // No logging!
+});
+```
+
+**Opt-Out (rare):**
+```typescript
+// If a pipeline needs to skip default modifier application:
+export const myPipeline = createActionPipeline('special-action', {
+  skipDefaultModifiers: true,  // Opts out of execute-first pattern
+  execute: async (ctx) => {
+    // Handle modifiers manually (unusual case)
+  }
+});
+```
+
+**Upfront Costs (Before Roll):**
+
+Some actions have costs paid regardless of outcome. Use `applyActionCost()` for these:
+
+```typescript
+import { applyActionCost } from '../shared/applyActionCost';
+
+execute: async (ctx) => {
+  // Pay cost first (1 gold to send scouts, regardless of success)
+  await applyActionCost(myPipeline);
+  
+  // Then handle outcome
+  if (ctx.outcome === 'success') {
+    await revealHex(ctx);
+  }
+}
+```
+
+**Examples:** `sendScouts` (1 gold), `buildRoads` (1 lumber + 1 stone), `establishSettlement` (2 gold + 2 food + 2 lumber)
+
+**For More Details:**
+- See [`docs/systems/core/pipeline-coordinator.md`](docs/systems/core/pipeline-coordinator.md) for complete pipeline flow
+- See [`docs/systems/core/pipeline-patterns.md`](docs/systems/core/pipeline-patterns.md) for implementation patterns
+- See [`docs/refactoring/resource-modification-audit.md`](docs/refactoring/resource-modification-audit.md) for architectural analysis
+
 ### 6. Phase Components (`src/view/kingdom/turnPhases/*.svelte`)
 **Role:** Mount when active, auto-start phase execution
 

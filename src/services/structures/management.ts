@@ -79,11 +79,11 @@ export class SettlementStructureManagementService {
       // Add any missing prerequisites
       for (const prereq of pathUpToRequested) {
         if (!settlement.structureIds.includes(prereq.id)) {
-          structuresToAdd.push(prereq.id);
+          structuresToAdd = [...structuresToAdd, prereq.id];
         }
       }
     } else {
-      structuresToAdd.push(structureId);
+      structuresToAdd = [...structuresToAdd, structureId];
     }
 
     // Check if we have room for all structures
@@ -101,9 +101,12 @@ export class SettlementStructureManagementService {
         if (!s.structureConditions) {
           s.structureConditions = {};
         }
+        // ✅ Immutable: Build new object with all conditions
+        const newConditions = { ...s.structureConditions };
         for (const id of structuresToAdd) {
-          s.structureConditions[id] = StructureCondition.GOOD;
+          newConditions[id] = StructureCondition.GOOD;
         }
+        s.structureConditions = newConditions;
       }
     });
 
@@ -288,7 +291,11 @@ export class SettlementStructureManagementService {
         if (!s.structureConditions) {
           s.structureConditions = {};
         }
-        s.structureConditions[structureId] = condition;
+        // ✅ Immutable: Reassign object to trigger Svelte reactivity
+        s.structureConditions = {
+          ...s.structureConditions,
+          [structureId]: condition
+        };
       }
     });
     

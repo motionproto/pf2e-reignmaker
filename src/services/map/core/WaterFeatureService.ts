@@ -90,7 +90,8 @@ export class WaterFeatureService {
       if (existingIndex !== -1 || forceRemove) {
         // Remove existing lake (or any feature if Ctrl+click)
         if (existingIndex !== -1) {
-          kingdom.waterFeatures.lakes.splice(existingIndex, 1);
+          // ✅ Immutable: Reassign array to trigger Svelte reactivity
+          kingdom.waterFeatures.lakes = kingdom.waterFeatures.lakes.filter((_, i) => i !== existingIndex);
           logger.info(`[WaterFeatureService] ❌ Removed lake at (${hexI}, ${hexJ})`);
         }
         
@@ -103,7 +104,8 @@ export class WaterFeatureService {
             // Check if this is a terrain='swamp' hex (cannot remove)
             const hex = kingdom.hexes.find(h => h.row === hexI && h.col === hexJ);
             if (hex?.terrain !== 'swamp') {
-              kingdom.waterFeatures.swamps.splice(swampIndex, 1);
+              // ✅ Immutable: Reassign array to trigger Svelte reactivity
+              kingdom.waterFeatures.swamps = kingdom.waterFeatures.swamps.filter((_, i) => i !== swampIndex);
               logger.info(`[WaterFeatureService] ❌ Removed swamp at (${hexI}, ${hexJ}) (Ctrl+click)`);
             }
           }
@@ -296,7 +298,8 @@ export class WaterFeatureService {
 
       if (existingIndex !== -1) {
         // Remove existing waterfall
-        kingdom.rivers.waterfalls.splice(existingIndex, 1);
+        // ✅ Immutable: Reassign array to trigger Svelte reactivity
+        kingdom.rivers.waterfalls = kingdom.rivers.waterfalls.filter((_, i) => i !== existingIndex);
         logger.info(
           `[WaterFeatureService] ❌ Removed waterfall from (${hexI},${hexJ}) ${isCenter ? 'center' : edge || `corner ${cornerIndex}`}`
         );
@@ -380,7 +383,8 @@ export class WaterFeatureService {
 
       if (existingIndex !== -1) {
         // Remove existing bridge
-        kingdom.rivers.crossings.splice(existingIndex, 1);
+        // ✅ Immutable: Reassign array to trigger Svelte reactivity
+        kingdom.rivers.crossings = kingdom.rivers.crossings.filter((_, i) => i !== existingIndex);
         logger.info(
           `[WaterFeatureService] ❌ Removed bridge from (${hexI},${hexJ}) ${isCenter ? 'center' : edge || `corner ${cornerIndex}`}`
         );
@@ -478,7 +482,8 @@ export class WaterFeatureService {
 
       if (existingIndex !== -1) {
         // Remove existing ford
-        kingdom.rivers.crossings.splice(existingIndex, 1);
+        // ✅ Immutable: Reassign array to trigger Svelte reactivity
+        kingdom.rivers.crossings = kingdom.rivers.crossings.filter((_, i) => i !== existingIndex);
         logger.info(
           `[WaterFeatureService] ❌ Removed ford from (${hexI},${hexJ}) ${isCenter ? 'center' : edge || `corner ${cornerIndex}`}`
         );

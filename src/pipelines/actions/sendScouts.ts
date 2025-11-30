@@ -4,7 +4,6 @@
  */
 
 import { createActionPipeline } from '../shared/createActionPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 import { applyActionCost } from '../shared/applyActionCost';
 import { sendScoutsExecution } from '../../execution/territory/sendScouts';
 import { worldExplorerService } from '../../services/WorldExplorerService';
@@ -114,12 +113,11 @@ export const sendScoutsPipeline = createActionPipeline('send-scouts', {
         return { success: true };
         
       case 'failure':
-        // Explicitly do nothing (no modifiers defined)
+        // No modifiers defined for failure
         return { success: true };
         
       case 'criticalFailure':
-        // Explicitly apply +1 unrest modifier from pipeline
-        await applyPipelineModifiers(sendScoutsPipeline, ctx.outcome);
+        // Modifiers (+1 unrest) applied automatically by execute-first pattern
         return { success: true };
         
       default:

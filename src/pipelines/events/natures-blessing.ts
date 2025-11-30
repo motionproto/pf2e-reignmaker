@@ -47,11 +47,5 @@ export const naturesBlessingPipeline: CheckPipeline = {
   },
 
   preview: {
-  },
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(naturesBlessingPipeline, ctx.outcome, ctx);
-    return { success: true };
   }
 };

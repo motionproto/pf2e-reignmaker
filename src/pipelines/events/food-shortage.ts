@@ -50,11 +50,5 @@ export const foodShortagePipeline: CheckPipeline = {
   },
 
   preview: {
-  },
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(foodShortagePipeline, ctx.outcome, ctx);
-    return { success: true };
   }
 };

@@ -7,7 +7,6 @@ import { createActionPipeline } from '../shared/createActionPipeline';
 import { textBadge } from '../../types/OutcomeBadge';
 import { disbandArmyExecution } from '../../execution/armies/disbandArmy';
 import { PLAYER_KINGDOM } from '../../types/ownership';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 // Store reference for execute function
 const disbandArmyPipelineInternal = createActionPipeline('disband-army', {
@@ -82,8 +81,7 @@ const disbandArmyPipelineInternal = createActionPipeline('disband-army', {
       return { success: false, error: 'No army selected' };
     }
 
-    // Apply modifiers (unrest changes) from JSON outcomes
-    await applyPipelineModifiers(disbandArmyPipelineInternal, ctx.outcome);
+    // Modifiers (unrest changes) applied automatically by execute-first pattern
 
     // Disband the army
     await disbandArmyExecution(armyId, deleteActor);

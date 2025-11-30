@@ -47,11 +47,5 @@ export const scholarlyDiscoveryPipeline: CheckPipeline = {
   },
 
   preview: {
-  },
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(scholarlyDiscoveryPipeline, ctx.outcome, ctx);
-    return { success: true };
   }
 };

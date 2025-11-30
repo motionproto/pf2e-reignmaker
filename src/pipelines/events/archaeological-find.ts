@@ -50,11 +50,5 @@ export const archaeologicalFindPipeline: CheckPipeline = {
   },
 
   preview: {
-  },
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(archaeologicalFindPipeline, ctx.outcome, ctx);
-    return { success: true };
   }
 };

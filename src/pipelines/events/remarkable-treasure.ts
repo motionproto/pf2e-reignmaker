@@ -49,11 +49,5 @@ export const remarkableTreasurePipeline: CheckPipeline = {
   },
 
   preview: {
-  },
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(remarkableTreasurePipeline, ctx.outcome, ctx);
-    return { success: true };
   }
 };

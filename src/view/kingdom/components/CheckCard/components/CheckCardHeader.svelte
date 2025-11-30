@@ -17,6 +17,10 @@
   export let actionStatus: 'untested' | 'testing' | 'tested' | null = null;
   export let actionNumber: number | null | undefined = undefined;  // Action number for migration badge (1-26)
   
+  // Incident status tracking
+  export let incidentStatus: 'untested' | 'testing' | 'tested' | null = null;
+  export let incidentNumber: number | null | undefined = undefined;  // Incident number for testing badge (1-30)
+  
   const dispatch = createEventDispatcher();
   
   function handleClick(event: Event) {
@@ -67,6 +71,19 @@
               #{actionNumber}
             </span>
           {/if}
+          {#if incidentStatus === 'tested'}
+            <span class="incident-badge tested" title="Tested with PipelineCoordinator">
+              <i class="fas fa-check"></i>
+            </span>
+          {:else if incidentStatus === 'testing'}
+            <span class="incident-badge testing" title="Currently being tested">
+              testing
+            </span>
+          {:else if incidentStatus === 'untested'}
+            <span class="incident-badge untested" title="Pipeline exists, needs testing">
+              untested
+            </span>
+          {/if}
           <div class="expand-icon-wrapper">
             <i class="fas fa-chevron-{expanded ? 'down' : 'right'} expand-icon"></i>
           </div>
@@ -94,6 +111,19 @@
             <span class="requirements-badge">
               <i class="fas fa-exclamation-triangle"></i>
               {missingRequirements.join(', ')}
+            </span>
+          {/if}
+          {#if incidentStatus === 'tested'}
+            <span class="incident-badge tested" title="Tested with PipelineCoordinator">
+              <i class="fas fa-check"></i>
+            </span>
+          {:else if incidentStatus === 'testing'}
+            <span class="incident-badge testing" title="Currently being tested">
+              testing
+            </span>
+          {:else if incidentStatus === 'untested'}
+            <span class="incident-badge untested" title="Pipeline exists, needs testing">
+              untested
             </span>
           {/if}
         </div>
@@ -314,6 +344,45 @@
       
       &.untested {
         color: var(--text-tertiary);
+      }
+    }
+    
+    .incident-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-4) var(--space-10);
+      border-radius: var(--radius-full);
+      font-size: var(--font-xs);
+      font-weight: var(--font-weight-medium);
+      letter-spacing: 0.025rem;
+      line-height: 1.2;
+      flex-shrink: 0;
+      cursor: help;
+      text-transform: lowercase;
+      
+      &.untested {
+        color: var(--text-tertiary);
+        background: transparent;
+        opacity: 0.6;
+        font-weight: var(--font-weight-normal);
+      }
+      
+      &.testing {
+        background: var(--surface-success);
+        border: 1px solid var(--border-success);
+        color: var(--color-green);
+        text-transform: lowercase;
+      }
+      
+      &.tested {
+        background: var(--surface-success);
+        border: 1px solid var(--border-success);
+        color: var(--color-green);
+        
+        i {
+          font-size: var(--font-xs);
+        }
       }
     }
   }

@@ -4,7 +4,6 @@
  */
 
 import { createActionPipeline } from '../shared/createActionPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 import { getKingdomData } from '../../stores/KingdomStore';
 import { createWorksiteExecution } from '../../execution/territory/createWorksite';
 import { getWorksiteBaseProduction } from '../../services/economics/production';
@@ -124,7 +123,6 @@ export const createWorksitePipeline = createActionPipeline('create-worksite', {
         
         // Grant immediate resources on critical success
         if (ctx.outcome === 'criticalSuccess') {
-          const { updateKingdom } = await import('../../stores/KingdomStore');
           const kingdom = getKingdomData();
           const hex = kingdom.hexes?.find((h: any) => h.id === hexId);
           
@@ -132,13 +130,16 @@ export const createWorksitePipeline = createActionPipeline('create-worksite', {
             const production = getWorksiteBaseProduction(worksiteType, hex.terrain);
             
             if (production.size > 0) {
-              await updateKingdom(k => {
-                production.forEach((amount, resource) => {
-                  if (k.resources && resource in k.resources) {
-                    k.resources[resource] += amount;
-                  }
-                });
-              });
+              // ✅ Use GameCommandsService for proper shortfall handling (even though we're adding resources)
+              const { createGameCommandsService } = await import('../../services/GameCommandsService');
+              const gameCommandsService = await createGameCommandsService();
+              
+              const modifiers = Array.from(production.entries()).map(([resource, amount]) => ({
+                resource: resource as import('../../types/modifiers').ResourceType,
+                value: amount
+              }));
+              
+              await gameCommandsService.applyNumericModifiers(modifiers, ctx.outcome);
               
               const resourceText = Array.from(production.entries())
                 .map(([res, amt]) => `+${amt} ${res}`)
@@ -154,12 +155,9 @@ export const createWorksitePipeline = createActionPipeline('create-worksite', {
         // No effects on failure
         return { success: true };
         
-      case 'criticalFailure': {
-        // Apply +1 unrest modifier from pipeline
-        const { applyPipelineModifiers } = await import('../shared/applyPipelineModifiers');
-        await applyPipelineModifiers(createWorksitePipeline, ctx.outcome);
+      case 'criticalFailure':
+        // Modifiers (+1 unrest) applied automatically by execute-first pattern
         return { success: true };
-      }
         
       default:
         return { success: false, error: `Unexpected outcome: ${ctx.outcome}` };

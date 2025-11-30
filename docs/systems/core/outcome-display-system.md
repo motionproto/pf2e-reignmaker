@@ -74,6 +74,53 @@ See `src/types/OutcomeBadge.ts` for full type definitions.
 
 ---
 
+## Dice Roll Data Flow
+
+**How dice values flow from UI to execution:**
+
+### The Flow
+
+1. **User Sees Dice Badge** - OutcomeBadges.svelte displays interactive dice badge (e.g., "🎲 2d6 gold")
+
+2. **User Clicks Dice** - DiceRollingService rolls and stores result:
+   ```typescript
+   // Stored in resolutionData.numericModifiers
+   {
+     resource: 'gold',
+     value: 8  // Actual rolled value
+   }
+   ```
+
+3. **User Clicks "Apply Result"** - Execute-first pattern activates
+
+4. **Modifiers Applied Automatically** - UnifiedCheckHandler reads `resolutionData.numericModifiers` and applies via GameCommandsService
+
+5. **Custom Execute Runs** - Modifiers already applied, dice values preserved
+
+### Key Guarantees
+
+- ✅ **No Re-Rolling** - Dice values rolled once in UI, never re-rolled in execute
+- ✅ **Preserved Values** - Exact rolled value used (e.g., if you rolled 8, you get 8)
+- ✅ **Shortfall Detection** - Applied automatically even for dice modifiers
+- ✅ **Transparent to User** - "Apply Result" is atomic - all changes happen together
+
+### Implementation Detail
+
+```typescript
+// In UnifiedCheckHandler.applyDefaultModifiers()
+// Step 2: Apply pre-rolled modifiers from resolutionData
+if (context.resolutionData?.numericModifiers?.length > 0) {
+  await gameCommandsService.applyNumericModifiers(
+    context.resolutionData.numericModifiers,  // Contains rolled dice values
+    context.outcome
+  );
+}
+```
+
+**Pipeline execute functions** receive these values already applied. They don't need to handle dice rolling or modifier application unless adding ADDITIONAL dynamic costs.
+
+---
+
 ## Custom Component Override
 
 For unique UI needs, pipelines can specify a custom component:

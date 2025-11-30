@@ -187,11 +187,14 @@ export class PipelineCoordinator {
    * @param instanceId - Check instance ID
    * @param resolutionData - Resolution data from OutcomeDisplay (includes customComponentData)
    */
-  confirmApply(instanceId: string, resolutionData?: any): void {
+  async confirmApply(instanceId: string, resolutionData?: any): Promise<void> {
     const context = this.pendingContexts.get(instanceId);
     
     if (!context) {
-      console.error(`[PipelineCoordinator] No pending context for instance: ${instanceId}`);
+      console.warn(`[PipelineCoordinator] No pending context for instance: ${instanceId} - resuming from persisted data`);
+      
+      // Context was lost (page reload or client sync) - execute from persisted preview
+      await this.resumeFromPersistedPreview(instanceId, resolutionData);
       return;
     }
     
@@ -217,6 +220,77 @@ export class PipelineCoordinator {
       context._resumeCallback();
     } else {
       console.error('[PipelineCoordinator] No resume callback found in context');
+    }
+  }
+
+  /**
+   * Resume execution from persisted preview (after reload or client sync)
+   * 
+   * Executes Steps 7-9 directly from the persisted outcome preview
+   */
+  private async resumeFromPersistedPreview(instanceId: string, resolutionData?: any): Promise<void> {
+    console.log(`🔄 [PipelineCoordinator] Resuming from persisted preview: ${instanceId}`);
+    
+    // Get persisted preview from kingdom data
+    const actor = getKingdomActor();
+    if (!actor) {
+      console.error('[PipelineCoordinator] No kingdom actor found');
+      return;
+    }
+    
+    const kingdom = actor.getKingdomData();
+    const instance = kingdom.pendingOutcomes?.find((i: any) => i.previewId === instanceId);
+    
+    if (!instance || !instance.appliedOutcome) {
+      console.error('[PipelineCoordinator] Instance or outcome not found:', instanceId);
+      return;
+    }
+    
+    const pipeline = await getPipeline({ actionId: instance.checkId });
+    if (!pipeline) {
+      console.error(`[PipelineCoordinator] Pipeline not found: ${instance.checkId}`);
+      return;
+    }
+    
+    // Reconstruct minimal context from persisted data
+    const ctx: PipelineContext = {
+      actionId: instance.checkId,
+      checkType: instance.checkType as 'action' | 'event' | 'incident',
+      userId: (window as any).game?.user?.id || 'unknown',
+      kingdom,
+      actor: instance.metadata?.actor,
+      metadata: instance.metadata || {},
+      resolutionData: resolutionData || {
+        diceRolls: {},
+        choices: {},
+        allocations: {},
+        textInputs: {},
+        compoundData: {},
+        numericModifiers: [],
+        manualEffects: [],
+        customComponentData: null
+      },
+      rollData: {
+        outcome: instance.appliedOutcome.outcome as any,
+        rollBreakdown: instance.appliedOutcome.rollBreakdown
+      },
+      instanceId,
+      userConfirmed: true,
+      logs: []  // Initialize logs array for resumed execution
+    };
+    
+    console.log(`🔄 [PipelineCoordinator] Reconstructed context, executing Steps 7-9`);
+    
+    // Execute Steps 7-9 (post-apply interactions, execute, cleanup)
+    try {
+      await this.step7_postApplyInteractions(ctx);
+      await this.step8_executeAction(ctx);
+      await this.step9_cleanup(ctx);
+      
+      console.log(`✅ [PipelineCoordinator] Resumed execution complete`);
+    } catch (error) {
+      console.error(`❌ [PipelineCoordinator] Resumed execution failed:`, error);
+      throw error;
     }
   }
 
@@ -603,7 +677,7 @@ export class PipelineCoordinator {
     // ✅ STEP 5B: Call custom preview.calculate if defined (OPTIONAL)
     let customPreview: any = { resources: [], outcomeBadges: [] };
     
-    if (pipeline.preview.calculate) {
+    if (pipeline.preview?.calculate) {
       // Build check context for preview calculation
       const checkContext = {
         check: pipeline,

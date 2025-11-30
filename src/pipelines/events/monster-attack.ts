@@ -47,11 +47,5 @@ export const monsterAttackPipeline: CheckPipeline = {
   },
 
   preview: {
-  },
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(monsterAttackPipeline, ctx.outcome, ctx);
-    return { success: true };
   }
 };

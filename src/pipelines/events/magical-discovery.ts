@@ -46,11 +46,5 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
   },
 
   preview: {
-  },
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(magicalDiscoveryPipeline, ctx.outcome, ctx);
-    return { success: true };
   }
 };

@@ -5,7 +5,6 @@
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../../shared/applyPipelineModifiers';
 
 export const emigrationThreatPipeline: CheckPipeline = {
   id: 'emigration-threat',
@@ -41,12 +40,7 @@ export const emigrationThreatPipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined,
+  preview: undefined
 
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(emigrationThreatPipeline, ctx.outcome, ctx);
-    // Note: destroyWorksite command not implemented - handled as manual effect
-    return { success: true };
-  }
+  // ✅ REMOVED: No longer needed - UnifiedCheckHandler handles modifiers automatically
 };

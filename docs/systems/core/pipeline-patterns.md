@@ -2,7 +2,91 @@
 
 **Quick Reference Guide for Implementing Actions**
 
-**Last Updated:** 2025-11-30
+**Last Updated:** 2025-01-28
+
+---
+
+## Execute-First Pattern (Core Concept)
+
+**Since January 2025**, the pipeline uses an **execute-first pattern** for automatic modifier application:
+
+### How It Works
+
+1. **Default modifiers applied FIRST** (before custom execute runs):
+   - Fame +1 on all critical successes
+   - Pre-rolled dice modifiers from UI (`resolutionData.numericModifiers`)
+   - Static JSON modifiers for the outcome
+   - All applied via GameCommandsService (includes shortfall detection)
+
+2. **Custom execute runs SECOND** (if defined):
+   - Only implements custom game logic
+   - Modifiers already applied - don't duplicate!
+   - Can add ADDITIONAL dynamic costs if needed
+
+### Simple Pipeline (No Execute Needed)
+
+Most incidents and events need no execute function at all:
+
+```typescript
+export const myPipeline = createActionPipeline('my-action', {
+  requirements: () => ({ met: true }),
+  // No preview needed - JSON modifiers auto-convert to badges
+  // No execute needed - modifiers applied automatically!
+});
+```
+
+### Custom Logic Pipeline
+
+For actions with game logic beyond resource changes:
+
+```typescript
+export const myPipeline = createActionPipeline('my-action', {
+  execute: async (ctx) => {
+    // Modifiers already applied by execute-first pattern
+    // Just implement custom logic here
+    await claimHexesExecution(ctx.resolutionData.compoundData?.selectedHexes);
+    return { success: true };
+  }
+});
+```
+
+### Dynamic Cost Pipeline
+
+For actions where costs are calculated based on user selections:
+
+```typescript
+export const myPipeline = createActionPipeline('my-action', {
+  execute: async (ctx) => {
+    // JSON modifiers already applied
+    // Add ADDITIONAL dynamic costs using GameCommandsService
+    const dynamicCost = calculateCost(ctx.metadata.selection);
+    
+    const gameCommandsService = await createGameCommandsService();
+    await gameCommandsService.applyNumericModifiers([
+      { resource: 'gold', value: -dynamicCost }
+    ], ctx.outcome);
+    
+    // Custom logic
+    await doCustomThing(ctx);
+    return { success: true };
+  }
+});
+```
+
+### Opt-Out (Rare)
+
+For special cases where you need full control:
+
+```typescript
+export const myPipeline = createActionPipeline('special-action', {
+  skipDefaultModifiers: true,  // Opts out of execute-first pattern
+  execute: async (ctx) => {
+    // Handle modifiers manually (unusual case)
+  }
+});
+```
+
+**Current Usage:** Zero pipelines use `skipDefaultModifiers` - all work with the default pattern.
 
 ---
 
@@ -29,7 +113,7 @@ Use this table to find reference implementations for the pattern you need:
 
 **When:** Action only applies modifiers from JSON, no user interaction needed
 
-**Examples:** `dealWithUnrest`, `aidAnother`
+**Examples:** `dealWithUnrest`, `aidAnother`, plus 57 incidents/events
 
 **Structure:**
 ```typescript
@@ -39,17 +123,14 @@ export const actionPipeline = createActionPipeline('action-id', {
   // Omit preview or set to undefined - JSON modifiers auto-converted to badges
   preview: undefined,
   
-  execute: async (ctx) => {
-    // Apply modifiers from JSON outcomes
-    await applyPipelineModifiers(pipeline, ctx.outcome);
-    return { success: true };
-  }
+  // No execute needed! Modifiers applied automatically by execute-first pattern
 });
 ```
 
 **Key Points:**
 - No optional steps: All interaction arrays empty or undefined
-- `preview: undefined` is converted to empty calculate function by `createActionPipeline`
+- `preview: undefined` - JSON modifiers auto-converted to badges
+- **No execute function needed** - modifiers applied automatically
 - JSON modifiers in `data/player-actions/*.json` automatically become badges
 
 ---
@@ -89,6 +170,8 @@ export const actionPipeline = createActionPipeline('action-id', {
   ],
   
   execute: async (ctx) => {
+    // Modifiers already applied by execute-first pattern
+    
     // Access selected entity from metadata
     const settlementId = ctx.metadata?.settlement?.id;
     const settlementName = ctx.metadata?.settlement?.name;
@@ -143,6 +226,8 @@ export const actionPipeline = createActionPipeline('action-id', {
   ],
   
   execute: async (ctx) => {
+    // Modifiers already applied by execute-first pattern
+    
     // Access hex selections from resolutionData
     const hexIds = ctx.resolutionData.compoundData?.selectedHexes;
     
@@ -192,7 +277,8 @@ export const actionPipeline = createActionPipeline('action-id', {
   ],
   
   execute: async (ctx) => {
-    // Resources already applied by onComplete!
+    // Modifiers already applied by execute-first pattern
+    // Resources also applied by onComplete handler
     return { success: true };
   }
 });
@@ -232,6 +318,8 @@ export const actionPipeline = createActionPipeline('action-id', {
   ],
   
   execute: async (ctx) => {
+    // Modifiers already applied by execute-first pattern
+    
     // Access configuration data
     const config = ctx.resolutionData?.customComponentData?.configuration;
     
@@ -287,6 +375,8 @@ export const actionPipeline = createActionPipeline('action-id', {
   ],
   
   execute: async (ctx) => {
+    // Modifiers already applied by execute-first pattern
+    
     // Access both pre-roll and post-apply data
     const settlementId = ctx.metadata?.settlement?.id;
     // OR for configuration:
@@ -336,7 +426,8 @@ export const actionPipeline = createActionPipeline('action-id', {
   },
   
   execute: async (ctx) => {
-    // Apply the calculated preview
+    // Modifiers already applied by execute-first pattern
+    // Custom logic here if needed
   }
 });
 ```
@@ -370,6 +461,8 @@ export const actionPipeline = createActionPipeline('deploy-army', {
   ],
   
   execute: async (ctx) => {
+    // Modifiers already applied by execute-first pattern
+    
     const deployment = ctx.metadata?.deployment;
     const { armyId, path, armyName } = deployment;
     
@@ -484,8 +577,41 @@ execute: async (ctx) => {
 - **Full Architecture:** [pipeline-coordinator.md](./pipeline-coordinator.md)
 - **Testing Guide:** [../../refactoring/TESTING_GUIDE.md](../../refactoring/TESTING_GUIDE.md)
 - **Debugging Guide:** [../../refactoring/DEBUGGING_GUIDE.md](../../refactoring/DEBUGGING_GUIDE.md)
-- **Modifier Helpers:** Use `applyPipelineModifiers()` or `applyPreRolledModifiers()` from `src/pipelines/shared/`
+- **Resource Modification Best Practices:** [../../refactoring/resource-modification-audit.md](../../refactoring/resource-modification-audit.md)
+
+## Helper Functions Reference
+
+### For Dynamic Costs in Execute
+
+Use these when you need to apply additional costs based on user selections or calculations:
+
+```typescript
+// Simple modifier application
+const gameCommandsService = await createGameCommandsService();
+await gameCommandsService.applyNumericModifiers([
+  { resource: 'gold', value: -cost },
+  { resource: 'unrest', value: 1 }
+], ctx.outcome);
+
+// With rich source tracking
+await gameCommandsService.applyOutcome({
+  type: 'action',
+  sourceId: 'my-action',
+  sourceName: `My Action (${entityName})`,
+  outcome: ctx.outcome,
+  modifiers: calculatedModifiers
+});
+```
+
+### For Upfront Costs (Before Roll)
+
+Use `applyActionCost()` for costs paid regardless of outcome:
+
+```typescript
+// src/pipelines/shared/applyActionCost.ts
+await applyActionCost(myPipeline);  // Deducts cost defined in pipeline.cost
+```
 
 ---
 
-**Status:** ✅ Production Ready - All patterns validated
+**Status:** ✅ Production Ready - All patterns validated with execute-first pattern

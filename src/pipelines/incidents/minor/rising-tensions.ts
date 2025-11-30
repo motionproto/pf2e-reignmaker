@@ -5,7 +5,6 @@
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../../shared/applyPipelineModifiers';
 
 export const risingTensionsPipeline: CheckPipeline = {
   id: 'rising-tensions',
@@ -41,11 +40,7 @@ export const risingTensionsPipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined,
+  preview: undefined
 
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(risingTensionsPipeline, ctx.outcome, ctx);
-    return { success: true };
-  }
+  // ✅ REMOVED: No longer needed - UnifiedCheckHandler handles modifiers automatically
 };

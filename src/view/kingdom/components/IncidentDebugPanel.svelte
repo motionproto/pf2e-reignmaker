@@ -12,6 +12,9 @@
    // Import UI components
    import BaseCheckCard from './BaseCheckCard.svelte';
    
+   // Import incident status tracking
+   import { getIncidentStatus, getIncidentNumber } from '../../../constants/migratedIncidents';
+   
    // Props
    export let hideUntrainedSkills: boolean = true;
    
@@ -26,6 +29,21 @@
    
    // Controller reference for incident execution
    let unrestPhaseController: any;
+   
+   // ✅ REACTIVE: Derive incident previews from store (must use $: for reactivity)
+   // This is the same pattern used by ActionsPhase for action outcomes
+   $: incidentPreviewMap = ($kingdomData?.pendingOutcomes || [])
+      .filter(i => i.checkType === 'incident' && i.metadata?.isDebugTest)
+      .reduce((map, instance) => {
+         map.set(instance.checkId, instance);
+         return map;
+      }, new Map<string, any>());
+   
+   // ✅ Force {#each} blocks to re-render when previews change
+   // This key changes whenever any debug incident preview is added/updated
+   $: previewsKey = Array.from(incidentPreviewMap.entries())
+      .map(([id, p]) => `${id}:${p.status}:${!!p.appliedOutcome}`)
+      .join(',');
    
    onMount(async () => {
       // Load incidents by severity
@@ -110,6 +128,9 @@
                actorId: actingCharacter.id,
                level: actingCharacter.level || 1,
                proficiencyRank: 0
+            },
+            metadata: {
+               isDebugTest: true  // Mark as debug test to hide from normal UnrestPhase
             }
          });
          
@@ -145,7 +166,7 @@
       // Use PipelineCoordinator to confirm and execute
       const { getPipelineCoordinator } = await import('../../../services/PipelineCoordinator');
       const pipelineCoordinator = await getPipelineCoordinator();
-      pipelineCoordinator.confirmApply(activeInstance.previewId, resolutionData);
+      await pipelineCoordinator.confirmApply(activeInstance.previewId, resolutionData);
    }
    
    // Handle cancel
@@ -178,17 +199,30 @@
       await handleExecuteSkill(mockEvent, incident);
    }
    
-   // Get active outcome preview for an incident
+   // Get active outcome preview for an incident (only debug tests)
+   // ✅ Use reactive map lookup instead of store.find() for proper reactivity
    function getIncidentPreview(incident: LoadedIncident) {
-      return $kingdomData?.pendingOutcomes?.find(
-         i => i.checkType === 'incident' && i.checkId === incident.id
-      ) || null;
+      const preview = incidentPreviewMap.get(incident.id) || null;
+      
+      if (preview) {
+         console.log(`[IncidentDebugPanel] Found debug preview for ${incident.id}:`, preview);
+      }
+      
+      return preview;
    }
    
    // Check if incident is resolved
    function isIncidentResolved(incident: LoadedIncident): boolean {
       const preview = getIncidentPreview(incident);
-      return !!preview?.appliedOutcome;
+      const resolved = !!preview?.appliedOutcome;
+      
+      console.log(`[IncidentDebugPanel] isIncidentResolved for ${incident.id}:`, {
+         hasPreview: !!preview,
+         hasAppliedOutcome: !!preview?.appliedOutcome,
+         resolved
+      });
+      
+      return resolved;
    }
    
    // Get resolution for incident
@@ -220,11 +254,13 @@
          <span class="count">{minorIncidents.length}</span>
       </div>
       <div class="incidents-grid">
-         {#each minorIncidents as incident (incident.id)}
+         {#each minorIncidents as incident (`${incident.id}-${previewsKey}`)}
             {@const preview = getIncidentPreview(incident)}
             {@const resolved = isIncidentResolved(incident)}
             {@const resolution = getIncidentResolution(incident)}
             {@const possibleOutcomes = buildPossibleOutcomes(incident.outcomes)}
+            {@const incidentStatus = getIncidentStatus(incident.id)}
+            {@const incidentNumber = getIncidentNumber(incident.id)}
             <BaseCheckCard
                id={incident.id}
                name={incident.name}
@@ -246,6 +282,8 @@
                {resolution}
                skillSectionTitle="Choose Your Response:"
                {hideUntrainedSkills}
+               {incidentStatus}
+               {incidentNumber}
                on:executeSkill={(e) => handleExecuteSkill(e, incident)}
                on:primary={(e) => handleApplyResult(e, incident)}
                on:cancel={(e) => handleCancel(e, incident)}
@@ -263,11 +301,13 @@
          <span class="count">{moderateIncidents.length}</span>
       </div>
       <div class="incidents-grid">
-         {#each moderateIncidents as incident (incident.id)}
+         {#each moderateIncidents as incident (`${incident.id}-${previewsKey}`)}
             {@const preview = getIncidentPreview(incident)}
             {@const resolved = isIncidentResolved(incident)}
             {@const resolution = getIncidentResolution(incident)}
             {@const possibleOutcomes = buildPossibleOutcomes(incident.outcomes)}
+            {@const incidentStatus = getIncidentStatus(incident.id)}
+            {@const incidentNumber = getIncidentNumber(incident.id)}
             <BaseCheckCard
                id={incident.id}
                name={incident.name}
@@ -289,6 +329,8 @@
                {resolution}
                skillSectionTitle="Choose Your Response:"
                {hideUntrainedSkills}
+               {incidentStatus}
+               {incidentNumber}
                on:executeSkill={(e) => handleExecuteSkill(e, incident)}
                on:primary={(e) => handleApplyResult(e, incident)}
                on:cancel={(e) => handleCancel(e, incident)}
@@ -306,11 +348,13 @@
          <span class="count">{majorIncidents.length}</span>
       </div>
       <div class="incidents-grid">
-         {#each majorIncidents as incident (incident.id)}
+         {#each majorIncidents as incident (`${incident.id}-${previewsKey}`)}
             {@const preview = getIncidentPreview(incident)}
             {@const resolved = isIncidentResolved(incident)}
             {@const resolution = getIncidentResolution(incident)}
             {@const possibleOutcomes = buildPossibleOutcomes(incident.outcomes)}
+            {@const incidentStatus = getIncidentStatus(incident.id)}
+            {@const incidentNumber = getIncidentNumber(incident.id)}
             <BaseCheckCard
                id={incident.id}
                name={incident.name}
@@ -332,6 +376,8 @@
                {resolution}
                skillSectionTitle="Choose Your Response:"
                {hideUntrainedSkills}
+               {incidentStatus}
+               {incidentNumber}
                on:executeSkill={(e) => handleExecuteSkill(e, incident)}
                on:primary={(e) => handleApplyResult(e, incident)}
                on:cancel={(e) => handleCancel(e, incident)}

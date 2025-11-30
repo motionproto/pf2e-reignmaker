@@ -46,11 +46,5 @@ export const inquisitionPipeline: CheckPipeline = {
   },
 
   preview: {
-  },
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(inquisitionPipeline, ctx.outcome, ctx);
-    return { success: true };
   }
 };

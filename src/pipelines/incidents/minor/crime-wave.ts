@@ -5,7 +5,6 @@
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../../shared/applyPipelineModifiers';
 
 export const crimeWavePipeline: CheckPipeline = {
   id: 'crime-wave',
@@ -42,11 +41,7 @@ export const crimeWavePipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined,
+  preview: undefined
 
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(crimeWavePipeline, ctx.outcome, ctx);
-    return { success: true };
-  }
+  // ✅ REMOVED: No longer needed - UnifiedCheckHandler handles modifiers automatically
 };

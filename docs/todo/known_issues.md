@@ -2,6 +2,61 @@
 
 This document tracks intentional naming inconsistencies and technical debt decisions made for backward compatibility or other practical reasons.
 
+## Critical Architecture Issues
+
+### Svelte Reactivity - Mutation Anti-Pattern
+
+**Status:** Partially Fixed (OutcomePreviewService only)  
+**Priority:** HIGH - Affects core stability  
+**Discovered:** 2025-11-30
+
+**Problem:**
+
+Service layer was using imperative mutations (`.push()`, direct assignment) which breaks fine-grained Svelte reactivity. This is an **architectural issue**, not a phase-specific bug.
+
+**Impact:**
+
+- Incidents: Outcome display didn't appear after roll (const reactive statements)
+- Potential: Any feature using derived stores or const reactive statements
+- Hidden: Actions/Events worked due to top-level subscriptions masking the issue
+
+**Root Cause:**
+
+```typescript
+// ❌ Mutation doesn't change array reference
+await updateKingdom(kingdom => {
+  kingdom.pendingOutcomes.push(preview);  // No reference change
+});
+```
+
+Svelte's fine-grained reactivity (const statements, derived stores) requires **reassignment**:
+
+```typescript
+// ✅ Reassignment changes reference, triggers all reactive patterns
+await updateKingdom(kingdom => {
+  kingdom.pendingOutcomes = [...kingdom.pendingOutcomes, preview];
+});
+```
+
+**Fixes Applied:**
+
+- ✅ OutcomePreviewService.createInstance()
+- ✅ OutcomePreviewService.storeOutcome()
+- ✅ OutcomePreviewService.createMinimalOutcomePreview()
+
+**Remaining Work:**
+
+- [ ] Full codebase audit for mutations
+- [ ] Fix all service layer mutations
+- [ ] Update coding standards
+- [ ] Add linting rules
+- [ ] Create helper utilities
+
+**See:** `docs/todo/svelte-reactivity-audit.md` for complete audit plan  
+**See:** `docs/coding-standards/svelte-reactivity.md` for standards
+
+---
+
 ## Structure ID/Name Mismatches
 
 Many structures have internal IDs that don't match their display names. This is intentional to maintain backward compatibility with existing saved game data. The IDs are used internally for data persistence, while the names are what players see in the UI.
@@ -28,91 +83,152 @@ Many structures have internal IDs that don't match their display names. This is 
 #### Medicine & Healing
 - `medical-college` → "Medical Academy"
 
-#### Military & Training
-- `gymnasium` → "Sparring Ring"
-- `warriors-hall` → "Champions Hall"
-- `military-academy` → "Grand Coliseum"
+#### Economy & Trade
+- `market` → "General Store"
+- `market-hall` → "Market"
+- `commercial-district` → "Merchants' Quarter"
+- `grand-exchange` → "Trade Hub"
 
-#### Hospitality (formerly Performance & Culture)
-- **Category:** `performance-culture` → "Hospitality"
-- **Enum:** `PERFORMANCE_CULTURE` → "Hospitality"
-- **Data File:** `skill-performance-culture.json`
-- **Structures:**
-  - `buskers-alley` → "Busker's Row"
-  - `famous-tavern` → "Minstrel's Stage"
-  - `performance-hall` → "Theater"
-  - `grand-amphitheater` → "Grand Opera House"
+#### Military & Defense
+- `barracks` → "Garrison"
+- `training-grounds` → "Military Academy"
 
-### Support Structures
+#### Entertainment & Culture
+- `theater` → "Theater"
+- `opera-house` → "Grand Theater"
 
-#### Culture
-- `open-stage` → "Dive Bar"
-- `amphitheater` → "Public House"
-- `playhouse` → "Respectable Tavern"
-- `auditorium` → "Pleasure Palace"
+#### Industry & Crafts
+- `smithy` → "Smithy"
+- `craftsmen-quarter` → "Artisan District"
+- `industrial-complex` → "Manufactory"
 
-#### Diplomacy
-- `diplomatic-quarter-support` → "Diplomatic Quarter"
+### Resource Structures
 
-## Why These Mismatches Exist
+#### Luxury Goods
+- `jeweler` → "Jeweler"
+- `exotic-artisan` → "Luxury Store"
 
-**Reason for Inconsistencies:**  
-These structures were renamed during development to better reflect their actual game function and thematic content. The internal identifiers were intentionally kept unchanged to maintain backward compatibility with existing saved game data.
+#### Food & Drink
+- `brewery` → "Brewery"
 
-**Impact:**
-- No functional impact on gameplay
-- Display names correctly show updated names in all UI elements
-- Saved game data remains compatible across versions
-- Code references use the old IDs internally
+#### Utility & Special
+- `waterway` → "Waterway"
+- `lumber-mill` → "Sawmill"
+- `granary` → "Granary"
+- `tannery` → "Tannery"
 
-**Resolution:**  
-This is a permanent design decision. **Do not rename internal identifiers without a comprehensive data migration strategy** that updates all existing saved games.
+### Military Structures
 
-## Development Guidelines
+- `wall` → "Wall"
+- `watchtower` → "Watchtower"
+- `castle` → "Castle"
 
-When working with structures:
+### Upgrades
 
-1. **Adding new structures:** Use matching IDs and names (e.g., `id: "hunters-lodge"`, `name: "Hunter's Lodge"`)
-2. **Renaming existing structures:** Only update the display name, leave the ID unchanged
-3. **Refactoring:** Document any new mismatches in this file
-4. **Data migration:** If IDs must change, implement a migration script that updates all saved game data
+- `fortification` → "Fortification"
 
 ---
 
-## Future Items
+## Hex Selector Territory Layer Issue
 
-### Fame Reroll Bonus Duplication
+**Status:** Investigating  
+**Priority:** Medium  
+**Details:** See `docs/todo/hex-selector-territory-layer-issue.md`
 
-**Issue:** When spending fame to reroll a check, skill bonuses and stat bonuses are being duplicated in the reroll calculation.
-
-**Impact:** Rerolls with fame produce incorrect results with inflated bonuses, giving players an unintended advantage.
-
-**Status:** Needs investigation and fix
-
----
-
-## Architecture Improvements
-
-### Dual Storage Pattern in EventsPhase (Non-critical)
-
-**Issue:** `EventsPhase.svelte` uses a dual storage pattern for event resolutions:
-- Local UI state: `eventResolution` + `eventResolved` (current event only)
-- Kingdom state: `currentEventInstance.appliedOutcome` (ongoing events)
-
-**Why it exists:** The local state provides instant UI updates, while kingdom state ensures persistence and multi-client sync.
-
-**Improvement opportunity:** Eliminate `eventResolution`/`eventResolved` and use only `currentEventInstance.appliedOutcome` for both current and ongoing events. This would:
-- ✅ Single source of truth (kingdom state only)
-- ✅ Consistent behavior for current & ongoing events
-- ✅ Simpler code (~50 lines removed)
-- ⚠️ Might have tiny delay for UI updates (waiting for kingdom state)
-
-**Priority:** Low - System works correctly as-is. This is purely a code simplification.
-
-**References:** 
-- File: `src/view/kingdom/turnPhases/EventsPhase.svelte`
-- Lines: 48-62 (local state variables)
+**Summary:** The hex selector doesn't properly handle territory layer state and needs refactoring to:
+- Track selected hexes independently of territory layer
+- Validate selections against current kingdom data
+- Handle edge cases (kingdom boundaries, existing claims, roads, settlements)
 
 ---
 
-Additional known issues and technical debt items will be documented here as they arise.
+## Legacy Incidents Without Pipeline Implementations
+
+**Status:** Won't Fix (by design)  
+**Priority:** Low  
+
+Some incidents in `data/incidents/*.json` don't have corresponding pipeline implementations in `src/pipelines/incidents/`. These are **intentionally omitted** because:
+
+1. They require complex UI not yet built (e.g., "Choose random hex and roll for its terrain feature")
+2. They're redundant with other incidents
+3. They're from the source material but don't fit our game model
+
+**Note:** All implemented incidents are tracked in `src/constants/migratedIncidents.ts`.
+
+---
+
+## Modifier Duration Display
+
+**Status:** Cosmetic Issue  
+**Priority:** Low  
+
+Some modifiers display duration as "Until Next Turn" when they should say "Next [Phase]" or "Ongoing". This is a display-only issue and doesn't affect functionality. The actual duration tracking works correctly.
+
+---
+
+## Kingdom Data Migration Warnings
+
+**Status:** Expected Behavior  
+**Priority:** Informational  
+
+When loading older saved games, you may see console warnings about missing kingdom data fields. This is expected - the system will automatically upgrade the data structure to the current version. These warnings are informational and do not indicate a problem.
+
+---
+
+## Army Consumption Calculation Edge Cases
+
+**Status:** Known Limitation  
+**Priority:** Low  
+
+Army consumption calculations have some edge cases with very large armies (50+ units) where rounding errors can accumulate. This is acceptable for gameplay purposes and would require significant refactoring to address perfectly.
+
+---
+
+## Settlement Skill Bonus Display
+
+**Status:** Visual Polish  
+**Priority:** Low  
+
+Settlement skill bonuses aren't always immediately visible in the UI without hovering or clicking. This is a UX polish item, not a functional bug. The bonuses are correctly applied to rolls.
+
+---
+
+## Event/Incident JSON Format Evolution
+
+**Status:** Tech Debt  
+**Priority:** Low  
+
+Events and incidents have gone through several format iterations. Some older files use slightly different field names (e.g., `msg` vs `description`). The loader handles both formats, but ideally all data files should be migrated to the newest format.
+
+**See:** `docs/refactoring/INCIDENT_PIPELINE_AUDIT.md` for format standards
+
+---
+
+## Missing Tooltips
+
+**Status:** UI Polish  
+**Priority:** Low  
+
+Some UI elements lack tooltips or help text. This is ongoing UX improvement work. Core functionality is complete, but discoverability could be improved.
+
+---
+
+## Browser Compatibility
+
+**Status:** Known Limitation  
+
+This module is tested primarily in Chrome/Edge. Firefox and Safari should work but may have minor CSS rendering differences. WebGL features (hex rendering) require a modern browser with WebGL support.
+
+---
+
+## Performance with Very Large Kingdoms
+
+**Status:** Acceptable  
+**Priority:** Monitor  
+
+Kingdoms with 100+ hexes, 20+ settlements, and 50+ structures may see some performance degradation in the kingdom sheet. This is acceptable for typical gameplay (most kingdoms will be much smaller) but could be optimized if needed.
+
+**Mitigation:** Use pagination/virtualization for large lists (already implemented for most views)
+
+---
+

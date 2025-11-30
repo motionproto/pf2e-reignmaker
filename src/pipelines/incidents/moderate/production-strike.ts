@@ -5,7 +5,6 @@
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../../shared/applyPipelineModifiers';
 
 export const productionStrikePipeline: CheckPipeline = {
   id: 'production-strike',
@@ -41,11 +40,5 @@ export const productionStrikePipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined,
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome - choice will be resolved by UI before this
-    await applyPipelineModifiers(productionStrikePipeline, ctx.outcome, ctx);
-    return { success: true };
-  }
+  preview: undefined
 };

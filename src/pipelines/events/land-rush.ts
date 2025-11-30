@@ -48,11 +48,5 @@ export const landRushPipeline: CheckPipeline = {
   },
 
   preview: {
-  },
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(landRushPipeline, ctx.outcome, ctx);
-    return { success: true };
   }
 };

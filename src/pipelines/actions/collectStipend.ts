@@ -131,25 +131,26 @@ export const collectStipendPipeline = createActionPipeline('collect-stipend', {
       });
     }
 
-    // Handle unrest penalties for failures
-    const { updateKingdom } = await import('../../stores/KingdomStore');
+    // Handle unrest penalties for failures via proper service
+    const { createGameCommandsService } = await import('../../services/GameCommandsService');
+    const gameCommandsService = await createGameCommandsService();
     
     if (ctx.outcome === 'failure') {
       // Apply +1 unrest
-      await updateKingdom(kingdom => {
-        kingdom.unrest = (kingdom.unrest || 0) + 1;
-      });
+      await gameCommandsService.applyNumericModifiers([
+        { resource: 'unrest', value: 1 }
+      ], ctx.outcome);
     } else if (ctx.outcome === 'criticalFailure') {
       // ✅ Get already-rolled value from resolutionData (rolled in DiceRoller component)
       const unrestModifier = ctx.resolutionData?.numericModifiers?.find((m: any) => m.resource === 'unrest');
       
       if (unrestModifier) {
-        // Dice modifiers have 'result' property from DiceRoller, static modifiers have 'value'
-        const unrestAmount = Math.abs(unrestModifier.result || unrestModifier.value || 0);
+        // Use the pre-rolled value
+        const unrestAmount = Math.abs(unrestModifier.value || 0);
         
-        await updateKingdom(kingdom => {
-          kingdom.unrest = (kingdom.unrest || 0) + unrestAmount;
-        });
+        await gameCommandsService.applyNumericModifiers([
+          { resource: 'unrest', value: unrestAmount }
+        ], ctx.outcome);
       }
     }
 

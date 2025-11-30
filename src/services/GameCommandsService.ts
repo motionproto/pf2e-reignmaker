@@ -195,7 +195,8 @@ export async function createGameCommandsService() {
           timestamp: Date.now()
         };
 
-        kingdom.turnState.actionLog.push(entry);
+        // ✅ Immutable: Reassign array to trigger Svelte reactivity
+        kingdom.turnState.actionLog = [...kingdom.turnState.actionLog, entry];
 
       });
     },
@@ -381,7 +382,8 @@ export async function createGameCommandsService() {
         }
         
         const newValue = Math.max(0, targetValue); // Resources can't go negative
-        kingdom.resources[resource] = newValue;
+        // ✅ Immutable: Reassign object to trigger Svelte reactivity
+        kingdom.resources = { ...kingdom.resources, [resource]: newValue };
 
       });
 
@@ -570,8 +572,11 @@ export async function createGameCommandsService() {
           settlement.structureConditions = {};
         }
 
-      // Mark structure as damaged
-      settlement.structureConditions[target.structure.id] = StructureCondition.DAMAGED;
+      // ✅ Immutable: Reassign object to trigger Svelte reactivity
+      settlement.structureConditions = {
+        ...settlement.structureConditions,
+        [target.structure.id]: StructureCondition.DAMAGED
+      };
       logger.info(`[GameCommands] Damaged structure: ${target.structure.name} in ${settlement.name}`);
     });
     
@@ -657,16 +662,19 @@ export async function createGameCommandsService() {
           // Remove current tier structure
           settlement.structureIds = settlement.structureIds.filter(id => id !== target.structure.id);
           
-          // Add previous tier structure
-          settlement.structureIds.push(previousTierId);
+          // ✅ Immutable: Reassign array to trigger Svelte reactivity
+          settlement.structureIds = [...settlement.structureIds, previousTierId];
           
           // Initialize structureConditions if needed
           if (!settlement.structureConditions) {
             settlement.structureConditions = {};
           }
           
-          // Mark previous tier as damaged
-          settlement.structureConditions[previousTierId] = StructureCondition.DAMAGED;
+          // ✅ Immutable: Reassign object to trigger Svelte reactivity
+          settlement.structureConditions = {
+            ...settlement.structureConditions,
+            [previousTierId]: StructureCondition.DAMAGED
+          };
           
           // Remove current tier from structureConditions if present
           delete settlement.structureConditions[target.structure.id];

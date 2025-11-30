@@ -5,7 +5,6 @@
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../../shared/applyPipelineModifiers';
 
 export const taxRevoltPipeline: CheckPipeline = {
   id: 'tax-revolt',
@@ -42,11 +41,5 @@ export const taxRevoltPipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined,
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(taxRevoltPipeline, ctx.outcome, ctx);
-    return { success: true };
-  }
+  preview: undefined
 };

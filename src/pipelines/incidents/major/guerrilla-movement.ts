@@ -5,7 +5,6 @@
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../../shared/applyPipelineModifiers';
 
 export const guerrillaMovementPipeline: CheckPipeline = {
   id: 'guerrilla-movement',
@@ -39,12 +38,5 @@ export const guerrillaMovementPipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined,
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(guerrillaMovementPipeline, ctx.outcome, ctx);
-    // Note: Hex seizure and rebel army commands not implemented - handled as manual effects
-    return { success: true };
-  }
+  preview: undefined
 };

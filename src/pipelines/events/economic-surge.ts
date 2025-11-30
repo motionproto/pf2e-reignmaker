@@ -46,11 +46,5 @@ export const economicSurgePipeline: CheckPipeline = {
   },
 
   preview: {
-  },
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(economicSurgePipeline, ctx.outcome, ctx);
-    return { success: true };
   }
 };

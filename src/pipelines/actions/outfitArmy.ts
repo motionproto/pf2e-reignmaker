@@ -110,19 +110,21 @@ export const outfitArmyPipeline = createActionPipeline('outfit-army', {
   ],
 
   execute: async (ctx: any) => {
-    // Apply resource changes from preview (since we have custom execute)
-    const { updateKingdom } = await import('../../stores/KingdomStore');
+    // Apply resource changes via proper service (handles shortfalls)
+    const { createGameCommandsService } = await import('../../services/GameCommandsService');
+    const gameCommandsService = await createGameCommandsService();
     
     if (ctx.outcome === 'criticalSuccess' || ctx.outcome === 'success') {
-      await updateKingdom(kingdom => {
-        kingdom.resources.ore -= 1;
-        kingdom.resources.gold -= 2;
-      });
+      await gameCommandsService.applyNumericModifiers([
+        { resource: 'ore', value: -1 },
+        { resource: 'gold', value: -2 }
+      ], ctx.outcome);
     } else if (ctx.outcome === 'criticalFailure') {
       // Critical failure: lose gold but get no equipment
-      await updateKingdom(kingdom => {
-        kingdom.resources.gold -= 2;
-      });
+      await gameCommandsService.applyNumericModifiers([
+        { resource: 'gold', value: -2 }
+      ], ctx.outcome);
+      
       return { 
         success: true, 
         message: 'Suppliers took the gold but provided no equipment'

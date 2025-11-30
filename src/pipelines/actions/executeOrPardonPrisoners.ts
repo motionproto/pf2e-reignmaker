@@ -101,14 +101,17 @@ export const executeOrPardonPrisonersPipeline = createActionPipeline('execute-or
     const { updateKingdom } = await import('../../stores/KingdomStore');
 
     // Handle outcomes
+    const { createGameCommandsService } = await import('../../services/GameCommandsService');
+    const gameCommandsService = await createGameCommandsService();
+    
     if (ctx.outcome === 'criticalSuccess') {
       // Reduce all imprisoned unrest
       await reduceImprisonedExecution(settlementId, 'all');
 
-      // Apply -1 unrest
-      await updateKingdom(kingdom => {
-        kingdom.unrest = Math.max(0, (kingdom.unrest || 0) - 1);
-      });
+      // Apply -1 unrest via proper service
+      await gameCommandsService.applyNumericModifiers([
+        { resource: 'unrest', value: -1 }
+      ], ctx.outcome);
 
       return { success: true, message: `All imprisoned unrest cleared in ${settlement.name}` };
     } else if (ctx.outcome === 'success') {
@@ -137,10 +140,10 @@ export const executeOrPardonPrisonersPipeline = createActionPipeline('execute-or
       // No change
       return { success: true, message: 'The prisoners you choose are inconsequential' };
     } else if (ctx.outcome === 'criticalFailure') {
-      // +1 unrest
-      await updateKingdom(kingdom => {
-        kingdom.unrest = (kingdom.unrest || 0) + 1;
-      });
+      // +1 unrest via proper service
+      await gameCommandsService.applyNumericModifiers([
+        { resource: 'unrest', value: 1 }
+      ], ctx.outcome);
 
       return { success: true, message: 'Your judgment causes outrage (+1 Unrest)' };
     }

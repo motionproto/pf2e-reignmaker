@@ -46,11 +46,5 @@ export const boomtownPipeline: CheckPipeline = {
   },
 
   preview: {
-  },
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(boomtownPipeline, ctx.outcome, ctx);
-    return { success: true };
   }
 };

@@ -4,7 +4,6 @@
  */
 
 import { createActionPipeline } from '../shared/createActionPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 import { applyActionCost } from '../shared/applyActionCost';
 import { buildRoadsExecution } from '../../execution/territory/buildRoads';
 import { validateRoadHex } from '../shared/roadValidator';
@@ -108,9 +107,8 @@ export const buildRoadsPipeline = createActionPipeline('build-roads', {
         return { success: true };
         
       case 'criticalFailure':
-        // Deduct costs and apply +1 unrest modifier
+        // Deduct costs (modifiers applied automatically by execute-first pattern)
         await applyActionCost(buildRoadsPipeline);
-        await applyPipelineModifiers(buildRoadsPipeline, ctx.outcome);
         return { success: true };
         
       default:

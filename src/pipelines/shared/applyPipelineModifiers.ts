@@ -7,27 +7,38 @@
  * Usage in pipeline execute functions:
  * ```typescript
  * case 'criticalFailure':
- *   await applyPipelineModifiers(ctx.pipeline, ctx.outcome);
+ *   await applyPipelineModifiers(ctx.pipeline, ctx.outcome, ctx);
  *   return { success: true };
  * ```
  */
 
 import { createGameCommandsService, type OutcomeDegree } from '../../services/GameCommandsService';
 import type { CheckPipeline } from '../../types/CheckPipeline';
+import type { ResolutionData } from '../../types/modifiers';
 import { logger } from '../../utils/Logger';
+
+/**
+ * Context type for apply modifiers
+ */
+interface ApplyModifiersContext {
+  modifiersAlreadyApplied?: boolean;
+  resolutionData?: ResolutionData;
+}
 
 /**
  * Apply modifiers from a pipeline's outcome definition
  *
  * @param pipeline - The pipeline containing outcome modifiers
  * @param outcome - The outcome degree to apply
- * @param ctx - Optional context; if ctx.modifiersAlreadyApplied is true, skips modifier application
+ * @param ctx - Optional context with:
+ *   - modifiersAlreadyApplied: if true, skips modifier application
+ *   - resolutionData: contains pre-rolled values from OutcomeDisplay
  * @returns Result of applying the modifiers
  */
 export async function applyPipelineModifiers(
   pipeline: CheckPipeline,
   outcome: OutcomeDegree,
-  ctx?: { modifiersAlreadyApplied?: boolean }
+  ctx?: ApplyModifiersContext
 ): Promise<{ success: boolean; error?: string }> {
   // Skip if modifiers were already applied by the controller (applyResolvedOutcome)
   // This prevents double-application when execute() is called after resolution
@@ -48,6 +59,28 @@ export async function applyPipelineModifiers(
   
   logger.info(`[applyPipelineModifiers] ${pipeline.id} ${outcome}: Applying ${modifiers.length} modifier(s)`);
   
+  // ✅ CRITICAL: Build preRolledValues map from resolutionData.numericModifiers
+  // This provides the pre-rolled dice values to GameCommandsService
+  const preRolledValues = new Map<number | string, number>();
+  
+  if (ctx?.resolutionData?.numericModifiers) {
+    // Map pre-rolled values by resource name (using state:resource pattern)
+    for (const mod of ctx.resolutionData.numericModifiers) {
+      preRolledValues.set(`state:${mod.resource}`, mod.value);
+      logger.info(`[applyPipelineModifiers] Pre-rolled value: ${mod.resource} = ${mod.value}`);
+    }
+    
+    // Also map by index for dice modifiers that match by position
+    modifiers.forEach((modifier, index) => {
+      if (modifier.type === 'dice' && modifier.resource) {
+        const preRolled = ctx.resolutionData?.numericModifiers?.find(m => m.resource === modifier.resource);
+        if (preRolled) {
+          preRolledValues.set(index, preRolled.value);
+        }
+      }
+    });
+  }
+  
   // Apply modifiers using GameCommandsService
   const gameCommandsService = await createGameCommandsService();
   const result = await gameCommandsService.applyOutcome({
@@ -55,7 +88,8 @@ export async function applyPipelineModifiers(
     sourceId: pipeline.id,
     sourceName: pipeline.name,
     outcome,
-    modifiers
+    modifiers,
+    preRolledValues: preRolledValues.size > 0 ? preRolledValues : undefined
   });
   
   if (!result.success) {

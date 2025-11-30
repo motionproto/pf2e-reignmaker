@@ -5,7 +5,6 @@
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../../shared/applyPipelineModifiers';
 
 export const massExodusPipeline: CheckPipeline = {
   id: 'mass-exodus',
@@ -43,12 +42,5 @@ export const massExodusPipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined,
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(massExodusPipeline, ctx.outcome, ctx);
-    // Note: destroyWorksite command not implemented - handled as manual effect
-    return { success: true };
-  }
+  preview: undefined
 };

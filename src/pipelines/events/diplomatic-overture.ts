@@ -45,11 +45,5 @@ export const diplomaticOverturePipeline: CheckPipeline = {
   },
 
   preview: {
-  },
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(diplomaticOverturePipeline, ctx.outcome, ctx);
-    return { success: true };
   }
 };

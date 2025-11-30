@@ -13,6 +13,9 @@
    import BaseCheckCard from '../components/BaseCheckCard.svelte';
    import IncidentDebugPanel from '../components/IncidentDebugPanel.svelte';
    // Removed: spendPlayerAction, getPlayerAction, resetPlayerAction - now using actionLog
+   
+   // Import incident status tracking
+   import { getIncidentStatus, getIncidentNumber } from '../../../constants/migratedIncidents';
 
    // UI State only - no business logic
    let phaseExecuting = false;
@@ -25,7 +28,10 @@
    
    // NEW ARCHITECTURE: Read from OutcomePreview (pendingOutcomes) instead of legacy activeCheckInstances
    // Don't filter by status - show all incidents (clearCompleted handles cleanup at phase start)
-   $: activeIncidents = $kingdomData?.pendingOutcomes?.filter(i => i.checkType === 'incident') || [];
+   // Filter out debug tests (isDebugTest flag in metadata)
+   $: activeIncidents = $kingdomData?.pendingOutcomes?.filter(i => 
+      i.checkType === 'incident' && !i.metadata?.isDebugTest
+   ) || [];
    $: currentIncidentInstance = activeIncidents[0] || null;
    $: incidentResolution = currentIncidentInstance?.appliedOutcome || null;
    $: incidentResolved = !!incidentResolution;
@@ -36,8 +42,8 @@
    // Check if current user is GM
    $: isGM = (globalThis as any).game?.user?.isGM || false;
    
-   // Debug mode toggle state
-   let showDebugPanel = false;
+   // Debug mode toggle state (default to open for incident testing)
+   let showDebugPanel = true;
    
    // Reactive UI state using shared helper for step completion
    import { getStepCompletion } from '../../../controllers/shared/PhaseHelpers';
@@ -117,6 +123,15 @@
    // Build possible outcomes for the incident (synchronous - must be available for render)
    $: possibleOutcomes = currentIncident ? buildPossibleOutcomes(currentIncident.outcomes) : [];
    $: console.log('[UnrestPhase] possibleOutcomes:', possibleOutcomes.length, possibleOutcomes);
+   
+   // Get incident testing status
+   $: incidentStatus = currentIncidentInstance?.checkId ? getIncidentStatus(currentIncidentInstance.checkId) : null;
+   $: incidentNumber = currentIncidentInstance?.checkId ? getIncidentNumber(currentIncidentInstance.checkId) : undefined;
+   $: console.log('[UnrestPhase] Incident testing status:', { 
+      checkId: currentIncidentInstance?.checkId, 
+      incidentStatus, 
+      incidentNumber 
+   });
    
    // Build outcomes array for BaseCheckCard
    $: incidentOutcomes = (currentIncident && currentIncident.outcomes) ? (() => {
@@ -454,6 +469,8 @@
                         resolution={incidentResolution}
                         skillSectionTitle="Choose Your Response:"
                         {hideUntrainedSkills}
+                        {incidentStatus}
+                        {incidentNumber}
                         on:executeSkill={handleExecuteSkill}
                         on:primary={handleApplyResult}
                         on:cancel={handleCancel}

@@ -47,11 +47,5 @@ export const visitingCelebrityPipeline: CheckPipeline = {
   },
 
   preview: {
-  },
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(visitingCelebrityPipeline, ctx.outcome, ctx);
-    return { success: true };
   }
 };

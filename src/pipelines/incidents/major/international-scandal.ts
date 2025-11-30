@@ -5,7 +5,6 @@
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../../shared/applyPipelineModifiers';
 
 export const internationalScandalPipeline: CheckPipeline = {
   id: 'international-scandal',
@@ -43,11 +42,5 @@ export const internationalScandalPipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined,
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(internationalScandalPipeline, ctx.outcome, ctx);
-    return { success: true };
-  }
+  preview: undefined
 };

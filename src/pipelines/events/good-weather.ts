@@ -47,11 +47,5 @@ export const goodWeatherPipeline: CheckPipeline = {
   },
 
   preview: {
-  },
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(goodWeatherPipeline, ctx.outcome, ctx);
-    return { success: true };
   }
 };

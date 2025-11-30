@@ -5,7 +5,6 @@
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../../shared/applyPipelineModifiers';
 
 export const assassinAttackPipeline: CheckPipeline = {
   id: 'assassin-attack',
@@ -51,13 +50,5 @@ export const assassinAttackPipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined,
-
-  execute: async (ctx) => {
-    const targetId = ctx.metadata?.target?.id;
-    
-    // Apply modifiers from outcome (assassination effects on target)
-    await applyPipelineModifiers(assassinAttackPipeline, ctx.outcome, ctx);
-    return { success: true };
-  }
+  preview: undefined
 };

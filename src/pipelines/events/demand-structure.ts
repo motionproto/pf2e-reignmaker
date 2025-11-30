@@ -46,11 +46,5 @@ export const demandStructurePipeline: CheckPipeline = {
   },
 
   preview: {
-  },
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(demandStructurePipeline, ctx.outcome, ctx);
-    return { success: true };
   }
 };

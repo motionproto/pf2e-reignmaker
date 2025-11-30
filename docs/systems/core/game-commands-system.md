@@ -79,6 +79,128 @@ The system provides 25+ typed command interfaces organized by function:
 
 ---
 
+## Resource Modification Patterns
+
+### When to Use Each Method
+
+The pipeline now uses an **execute-first pattern** where most resource modifications happen automatically. Understanding when to use each method is important:
+
+| Method | Use Case | Features | When to Use |
+|--------|----------|----------|-------------|
+| **Automatic (JSON)** | Simple static/dice modifiers | Zero code, shortfall detection | Default - use whenever possible |
+| `applyNumericModifiers()` | Dynamic costs | Shortfall detection, simple API | Costs calculated in execute |
+| `applyOutcome()` | Rich logging | Full metadata, source tracking | Need detailed notifications |
+| `applyActionCost()` | Upfront costs | Applied before roll | Costs paid regardless of outcome |
+
+### Pattern 1: Automatic Application (Preferred)
+
+JSON modifiers are applied automatically by the execute-first pattern. **No code needed!**
+
+```json
+// data/player-actions/my-action.json
+{
+  "outcomes": {
+    "success": {
+      "modifiers": [
+        { "type": "static", "resource": "gold", "value": -10 },
+        { "type": "dice", "resource": "unrest", "formula": "1d4" }
+      ]
+    }
+  }
+}
+```
+
+The pipeline automatically:
+1. Converts modifiers to outcome badges
+2. Lets user roll dice
+3. Applies final values via GameCommandsService
+4. Detects shortfalls and adds unrest
+
+**Your execute function doesn't need to do anything!**
+
+### Pattern 2: Dynamic Costs in Custom Execute
+
+For costs calculated based on user selections or game state:
+
+```typescript
+execute: async (ctx) => {
+  // JSON modifiers already applied by execute-first pattern
+  
+  // Calculate dynamic cost based on user selection
+  const cost = calculateCost(ctx.metadata.selection);
+  
+  // Apply additional costs
+  const gameCommandsService = await createGameCommandsService();
+  await gameCommandsService.applyNumericModifiers([
+    { resource: 'gold', value: -cost }
+  ], ctx.outcome);
+  
+  // Custom logic
+  await doCustomThing(ctx);
+  return { success: true };
+}
+```
+
+**Key Points:**
+- Simple API - just array of `{ resource, value }`
+- Full shortfall detection (+1 unrest per shortfall)
+- Automatic floating notifications
+
+### Pattern 3: Rich Tracking with applyOutcome
+
+When you want detailed source tracking in logs and notifications:
+
+```typescript
+execute: async (ctx) => {
+  const structure = getStructure(ctx.metadata.structureId);
+  const cost = getRepairCost(structure);
+  
+  const gameCommandsService = await createGameCommandsService();
+  await gameCommandsService.applyOutcome({
+    type: 'action',
+    sourceId: 'repair-structure',
+    sourceName: `Repair ${structure.name}`,  // Shows in notifications
+    outcome: ctx.outcome,
+    modifiers: costModifiers
+  });
+  
+  // Notification will say: "Repair Tavern cost: -3 gold, -2 lumber"
+}
+```
+
+**Key Points:**
+- Rich source tracking (shows action name in logs)
+- Same shortfall detection as `applyNumericModifiers()`
+- Better UX for complex actions
+
+### Pattern 4: Upfront Costs (Before Roll)
+
+For costs paid regardless of outcome (like scouting):
+
+```typescript
+// In pipeline definition
+export const myPipeline = createActionPipeline('my-action', {
+  cost: {
+    gold: 1,
+    lumber: 2
+  },
+  
+  execute: async (ctx) => {
+    // Deduct costs first (regardless of outcome)
+    await applyActionCost(myPipeline);
+    
+    // Then handle outcome-specific logic
+    if (ctx.outcome === 'success') {
+      await doSuccessLogic(ctx);
+    }
+  }
+});
+```
+
+**Examples:** `sendScouts` (1 gold), `buildRoads` (1 lumber + 1 stone)
+
+---
+
 ## Service Architecture
 
 ### GameCommandsService
@@ -175,12 +297,16 @@ Step 4: Display Outcome (create OutcomePreview)
 
 ```
 Step 7: Post-Apply Interactions (optional)
-  → Step 8: Execute Action
-    → GameCommandsService.applyNumericModifiers()
-      → Resources updated in KingdomActor
-        → GameCommandsResolver for each gameCommand
-          → State changes applied to kingdom
-            → Step 9: Cleanup
+  → Step 8: Execute Action (EXECUTE-FIRST PATTERN)
+    → 8a: applyDefaultModifiers() [AUTOMATIC]
+      ├── Fame +1 (critical success)
+      ├── Pre-rolled dice modifiers from resolutionData
+      └── Static JSON modifiers
+    → 8b: pipeline.execute() [CUSTOM - if defined]
+      └── Can call applyNumericModifiers() for dynamic costs
+    → 8c: GameCommandsResolver for each gameCommand
+      → State changes applied to kingdom
+        → Step 9: Cleanup
 ```
 
 ### 5. State Synchronized

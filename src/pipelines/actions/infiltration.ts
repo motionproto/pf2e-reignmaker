@@ -81,24 +81,23 @@ export const infiltrationPipeline = createActionPipeline('infiltration', {
   },
 
   execute: async (ctx) => {
-    // Import updateKingdom for direct resource changes
-    const { updateKingdom } = await import('../../stores/KingdomStore');
+    const { createGameCommandsService } = await import('../../services/GameCommandsService');
+    const gameCommandsService = await createGameCommandsService();
     
-    // Apply dice roll results and static modifiers
+    // Apply dice roll results and static modifiers via proper service
     if (ctx.outcome === 'criticalSuccess') {
       // Apply +1d4 gold from dice roll
       const goldGained = ctx.resolutionData.diceRolls?.goldGained || 2;
-      await updateKingdom(kingdom => {
-        kingdom.resources.gold += goldGained;
-      });
+      await gameCommandsService.applyNumericModifiers([
+        { resource: 'gold', value: goldGained }
+      ], ctx.outcome);
     } else if (ctx.outcome === 'criticalFailure') {
       // Apply -1d4 gold from dice roll + 1 unrest (static)
       const goldLost = ctx.resolutionData.diceRolls?.goldLost || 2;
-      await updateKingdom(kingdom => {
-        kingdom.resources.gold -= goldLost;
-        // Unrest is stored directly on kingdom, not in resources
-        kingdom.unrest = (kingdom.unrest || 0) + 1;
-      });
+      await gameCommandsService.applyNumericModifiers([
+        { resource: 'gold', value: -goldLost },
+        { resource: 'unrest', value: 1 }
+      ], ctx.outcome);
       
       // Worsen relations with the target faction
       // Extract ID from entity-selection structure { id, name }

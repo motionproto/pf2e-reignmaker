@@ -5,7 +5,6 @@
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../../shared/applyPipelineModifiers';
 
 export const nobleConspiracyPipeline: CheckPipeline = {
   id: 'noble-conspiracy',
@@ -45,11 +44,5 @@ export const nobleConspiracyPipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined,
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(nobleConspiracyPipeline, ctx.outcome, ctx);
-    return { success: true };
-  }
+  preview: undefined
 };

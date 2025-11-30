@@ -47,11 +47,5 @@ export const tradeAgreementPipeline: CheckPipeline = {
   },
 
   preview: {
-  },
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(tradeAgreementPipeline, ctx.outcome, ctx);
-    return { success: true };
   }
 };

@@ -4,8 +4,7 @@
  * Generated from data/incidents/minor/work-stoppage.json
  */
 
-import type { CheckPipeline } from '../../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../../shared/applyPipelineModifiers';
+import type { CheckPipeline} from '../../../types/CheckPipeline';
 
 export const workStoppagePipeline: CheckPipeline = {
   id: 'work-stoppage',
@@ -42,11 +41,7 @@ export const workStoppagePipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined,
+  preview: undefined
 
-  execute: async (ctx) => {
-    // Apply modifiers from outcome - choice will be resolved by UI before this
-    await applyPipelineModifiers(workStoppagePipeline, ctx.outcome, ctx);
-    return { success: true };
-  }
+  // ✅ REMOVED: No longer needed - UnifiedCheckHandler handles modifiers automatically
 };

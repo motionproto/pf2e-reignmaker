@@ -4,7 +4,6 @@
  */
 
 import { createActionPipeline } from '../shared/createActionPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 import { fortifyHexExecution } from '../../execution/territory/fortifyHex';
 import { getKingdomData } from '../../stores/KingdomStore';
 import { PLAYER_KINGDOM } from '../../types/ownership';
@@ -235,20 +234,16 @@ export const fortifyHexPipeline = createActionPipeline('fortify-hex', {
         // Execute fortification (handles cost deduction internally)
         await fortifyHexExecution(hexId, nextTier as 1 | 2 | 3 | 4);
 
-        // Apply modifiers for critical success
-        if (ctx.outcome === 'criticalSuccess') {
-          await applyPipelineModifiers(fortifyHexPipeline, ctx.outcome);
-        }
+        // Modifiers (unrest changes) applied automatically by execute-first pattern
         return { success: true };
       }
         
       case 'failure':
-        // Explicitly do nothing (no modifiers defined)
+        // No modifiers defined for failure
         return { success: true };
         
       case 'criticalFailure':
-        // Explicitly apply +1 unrest modifier from pipeline
-        await applyPipelineModifiers(fortifyHexPipeline, ctx.outcome);
+        // Modifiers (+1 unrest) applied automatically by execute-first pattern
         return { success: true };
         
       default:

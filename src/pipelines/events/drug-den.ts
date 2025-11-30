@@ -49,11 +49,5 @@ export const drugDenPipeline: CheckPipeline = {
   },
 
   preview: {
-  },
-
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(drugDenPipeline, ctx.outcome, ctx);
-    return { success: true };
   }
 };

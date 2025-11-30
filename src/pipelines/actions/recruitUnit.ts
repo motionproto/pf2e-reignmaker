@@ -4,7 +4,6 @@
  */
 
 import { createActionPipeline } from '../shared/createActionPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 import { textBadge } from '../../types/OutcomeBadge';
 
 // Store reference for execute function
@@ -53,9 +52,8 @@ const pipeline = createActionPipeline('recruit-unit', {
   ],
 
   execute: async (ctx: any) => {
-    // Apply modifiers (unrest changes) from JSON outcomes first
-    await applyPipelineModifiers(pipeline, ctx.outcome);
-
+    // Modifiers (unrest changes) applied automatically by execute-first pattern
+    
     // Handle different outcomes
     if (ctx.outcome === 'failure' || ctx.outcome === 'criticalFailure') {
       return { 
