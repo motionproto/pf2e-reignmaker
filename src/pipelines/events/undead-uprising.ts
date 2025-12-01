@@ -1,11 +1,9 @@
 /**
  * Undead Uprising Event Pipeline
  *
- * Generated from data/events/undead-uprising.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const undeadUprisingPipeline: CheckPipeline = {
   id: 'undead-uprising',
@@ -23,22 +21,26 @@ export const undeadUprisingPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The undead are destroyed.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
       ]
     },
     success: {
       description: 'The undead are put down.',
+      endsEvent: true,
       modifiers: []
     },
     failure: {
       description: 'The undead spread.',
+      endsEvent: false,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
     },
     criticalFailure: {
       description: 'A major outbreak occurs.',
+      endsEvent: false,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
       ]
@@ -46,5 +48,7 @@ export const undeadUprisingPipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["dangerous", "ongoing"],
 };

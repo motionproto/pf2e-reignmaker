@@ -1,7 +1,6 @@
 /**
  * Mass Desertion Threat Incident Pipeline
  *
- * Generated from data/incidents/major/mass-desertion-threat.json
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';

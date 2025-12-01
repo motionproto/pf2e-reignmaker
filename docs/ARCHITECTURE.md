@@ -1,6 +1,6 @@
 # PF2e Reignmaker - Architecture Guide
 
-**Last Updated:** October 3, 2025
+**Last Updated:** January 28, 2026
 
 ## Overview
 
@@ -34,14 +34,21 @@ Write: Component → Controller → KingdomActor → Foundry → All Clients
 - `src/controllers/shared/PhaseControllerHelpers.ts` - Shared phase utilities
 
 **Player Actions:**
-- `src/controllers/actions/action-types.ts` - Action interfaces
-- `src/controllers/actions/game-commands.ts` - 25+ typed game command definitions
-- `src/controllers/actions/action-loader.ts` - Load/query actions from JSON
-- `src/controllers/actions/action-execution.ts` - Execute actions, apply effects
-- `src/pipelines/actions/*.ts` - Action pipeline implementations
+- `src/pipelines/actions/*.ts` - Action pipeline implementations (TypeScript-only, self-contained)
+- `src/pipelines/events/*.ts` - Event pipeline implementations (TypeScript-only, self-contained)
+- `src/pipelines/incidents/*.ts` - Incident pipeline implementations (TypeScript-only, self-contained)
+- `src/pipelines/PipelineRegistry.ts` - Central registry for all pipelines (single source of truth)
 - `src/services/PipelineCoordinator.ts` - Unified 9-step action execution
-- `data/player-actions/*.json` - 29 action definitions (structured effects)
 - **See:** `docs/systems/core/pipeline-patterns.md` for action implementation patterns
+
+**Data Architecture:**
+- **TypeScript Pipelines = Single Source of Truth** for all actions, events, and incidents
+- All pipeline definitions live in `src/pipelines/` directory (TypeScript files only)
+- Each pipeline is self-contained with all data (name, description, skills, outcomes) embedded
+- `PipelineRegistry` provides runtime access to all pipelines
+- No JSON data files or compilation needed for actions/events/incidents
+- Controllers load from `PipelineRegistry.getPipelinesByType()` for runtime access
+- Legacy JSON data archived in `archived-implementations/data-json/` for reference
 
 **UI Layer:**
 - `src/view/kingdom/turnPhases/*.svelte` - Phase UI components (presentation only)
@@ -63,11 +70,16 @@ await updateKingdom(k => k.unrest = Math.max(0, k.unrest - 1))
 
 **Execute Player Action:**
 ```typescript
-import { actionLoader } from '../controllers/actions/action-loader'
-import { actionExecutionService } from '../controllers/actions/action-execution'
+import { pipelineRegistry } from '../pipelines/PipelineRegistry'
+import { pipelineCoordinator } from '../services/PipelineCoordinator'
 
-const action = actionLoader.getActionById('claim-hexes')
-const result = actionExecutionService.executeAction(action, 'success', kingdom)
+const action = pipelineRegistry.getPipeline('claim-hexes')
+if (action) {
+  await pipelineCoordinator.executePipeline('claim-hexes', {
+    actor: { selectedSkill: 'leadership', fullActor: someActor, actorName: 'Hero' }
+  })
+}
+```
 ```
 
 **Create Phase Controller:**
@@ -412,78 +424,75 @@ completePhaseStepByIndex(stepIndex: number): Promise<StepCompletionResult>
 isStepCompletedByIndex(stepIndex: number): Promise<boolean>
 ```
 
-### 5. Player Action System (`src/controllers/actions/`)
-**Role:** Structured action execution with type-safe effects
+### 5. Player Action System (`src/pipelines/`)
+**Role:** Unified pipeline architecture for all actions, events, and incidents
 
 **Architecture:**
 ```
-src/controllers/actions/
-├── action-types.ts       # TypeScript interfaces for actions
-├── game-commands.ts      # 25+ typed game command definitions
-├── action-loader.ts      # Load and manage action definitions
-└── action-execution.ts   # Execute actions and apply effects
+src/pipelines/
+├── PipelineRegistry.ts          # Central registry (single source of truth)
+├── actions/                     # Self-contained action pipelines
+│   ├── claimHexes.ts
+│   ├── buildStructure.ts
+│   └── ... (29 actions, fully defined in TypeScript)
+├── events/                      # Self-contained event pipelines
+│   ├── drug-den.ts
+│   └── ... (all events, fully defined in TypeScript)
+└── incidents/                   # Self-contained incident pipelines
+    ├── bandit-raids.ts
+    └── ... (all incidents, fully defined in TypeScript)
 ```
 
-**Action Structure:**
+**Pipeline Structure:**
 ```typescript
-interface PlayerAction {
-  id: string
-  name: string
-  category: ActionCategory
-  brief: string
-  description: string
-  skills: SkillOption[]
-  effects: {
-    criticalSuccess: ActionEffect
-    success: ActionEffect
-    failure: ActionEffect
-    criticalFailure: ActionEffect
+export const myActionPipeline: CheckPipeline = {
+  id: 'my-action',
+  name: 'My Action',
+  description: 'Description of what this action does',
+  category: 'expand-borders',
+  checkType: 'action',
+  skills: [
+    { skill: 'survival', description: 'wilderness expertise' }
+  ],
+  outcomes: {
+    criticalSuccess: {
+      description: 'You succeed greatly',
+      modifiers: [{ resource: 'fame', value: 1 }],
+      gameCommands: [{ type: 'claimHexes', count: 3 }]
+    },
+    // ... other outcomes
+  },
+  requirements: () => ({ met: true }),
+  getDC: () => 15,
+  preview: {
+    calculate: async (ctx) => {
+      // Optional: dynamic preview logic
+      return { resources: [], outcomeBadges: [], warnings: [] };
+    }
+  },
+  execute: async (ctx) => {
+    // Optional: custom execution logic
+    return { success: true };
   }
-  requirements?: string[]
-  costs?: Record<string, number>
-}
-
-interface ActionEffect {
-  description: string
-  modifiers: ActionModifier[]      // Resource changes (gold, unrest, etc.)
-  gameEffects: GameEffect[]        // Gameplay mechanics (claim hexes, build, etc.)
-}
+};
 ```
 
-**Game Command Types (25+ commands):**
-- **Territory:** `claimHexes`, `fortifyHex`, `buildRoads`
-- **Construction:** `buildStructure`, `foundSettlement`, `upgradeSettlement`, `createWorksite`
-- **Military:** `recruitArmy`, `trainArmy`, `deployArmy`, `recoverArmy`, `disbandArmy`
-- **Diplomatic:** `establishDiplomaticRelations`, `requestEconomicAid`, `infiltration`
-- **Support:** `aidBonus`, `grantReroll`, `hireAdventurers`
-- **Unrest:** `arrestDissidents`, `executePrisoners`, `pardonPrisoners`
+**Key Features:**
+- **Self-contained** - All data embedded in TypeScript (no JSON dependencies)
+- **Type-safe** - Full TypeScript validation at compile time
+- **Runtime registry** - `PipelineRegistry` provides fast lookup by ID or type
+- **Consistent structure** - Same pattern for actions, events, and incidents
+- **Rich features** - Support for preview badges, game commands, custom execution, post-apply interactions
 
-**ActionLoader Class:**
+**PipelineRegistry API:**
 ```typescript
-// Load all actions from JSON
-loadActions(): void
+// Get a specific pipeline by ID
+const pipeline = pipelineRegistry.getPipeline('claim-hexes');
 
-// Query actions
-getActionById(actionId: string): PlayerAction | null
-getActionsByCategory(category: string): PlayerAction[]
-getAllActions(): PlayerAction[]
-
-// Action utilities
-canPerformWithSkill(action: PlayerAction, skill: string): boolean
-getActionSkills(action: PlayerAction): SkillOption[]
-getActionOutcome(action, outcome): ActionEffect
-```
-
-**ActionExecutionService:**
-```typescript
-// Validate and execute
-checkActionRequirements(action, kingdomData): RequirementResult
-parseActionOutcome(action, outcome): ParsedActionEffect
-executeAction(action, outcome, kingdomData): ExecutionResult
-
-// Utilities
-getActionDC(characterLevel: number): number
-getAvailableActions(kingdomData): PlayerAction[]
+// Get all pipelines of a type
+const allActions = pipelineRegistry.getPipelinesByType('action');
+const allEvents = pipelineRegistry.getPipelinesByType('event');
+const allIncidents = pipelineRegistry.getPipelinesByType('incident');
 ```
 
 #### Execute-First Pattern (Resource Modifiers)
@@ -498,26 +507,33 @@ getAvailableActions(kingdomData): PlayerAction[]
 **Pipeline Implementation:**
 ```typescript
 // ✅ CORRECT - Simple pipeline (no execute needed)
-export const myPipeline = createActionPipeline('my-action', {
-  // Modifiers in JSON are applied automatically by UnifiedCheckHandler
-  // No execute function needed for simple modifier-only pipelines
-});
+export const myPipeline: CheckPipeline = {
+  id: 'my-action',
+  name: 'My Action',
+  // ... other fields
+  outcomes: {
+    success: {
+      description: 'You succeed',
+      modifiers: [
+        { resource: 'gold', value: -5 },
+        { resource: 'fame', value: 1 }
+      ]
+    }
+  }
+  // Modifiers applied automatically - no execute function needed!
+};
 
 // ✅ CORRECT - Custom logic only
-export const myPipeline = createActionPipeline('my-action', {
+export const myPipeline: CheckPipeline = {
+  id: 'my-action',
+  // ... base fields
   execute: async (ctx) => {
     // Modifiers already applied by execute-first pattern
     // Only implement custom game logic here
     await someCustomLogic(ctx);
     return { success: true };
   }
-});
-
-// ❌ WRONG - Duplicate modifier application (removed in Phase 4)
-execute: async (ctx) => {
-  await applyPipelineModifiers(pipeline, ctx.outcome); // Don't do this!
-  await someCustomLogic(ctx);
-}
+};
 ```
 
 **Resource Modification Best Practices:**
@@ -534,17 +550,6 @@ await gameCommandsService.applyNumericModifiers([
 await updateKingdom(kingdom => {
   kingdom.resources.gold -= 5;  // No shortfall detection!
   kingdom.unrest += 1;          // No logging!
-});
-```
-
-**Opt-Out (rare):**
-```typescript
-// If a pipeline needs to skip default modifier application:
-export const myPipeline = createActionPipeline('special-action', {
-  skipDefaultModifiers: true,  // Opts out of execute-first pattern
-  execute: async (ctx) => {
-    // Handle modifiers manually (unusual case)
-  }
 });
 ```
 
@@ -571,7 +576,6 @@ execute: async (ctx) => {
 **For More Details:**
 - See [`docs/systems/core/pipeline-coordinator.md`](docs/systems/core/pipeline-coordinator.md) for complete pipeline flow
 - See [`docs/systems/core/pipeline-patterns.md`](docs/systems/core/pipeline-patterns.md) for implementation patterns
-- See [`docs/refactoring/resource-modification-audit.md`](docs/refactoring/resource-modification-audit.md) for architectural analysis
 
 ### 6. Phase Components (`src/view/kingdom/turnPhases/*.svelte`)
 **Role:** Mount when active, auto-start phase execution
@@ -876,15 +880,23 @@ src/
 │   ├── ResourcePhaseController.ts
 │   ├── ActionPhaseController.ts
 │   ├── UpkeepPhaseController.ts
-│   ├── actions/               # Player action system
-│   │   ├── action-types.ts    # TypeScript interfaces
+│   ├── actions/               # Action system utilities
 │   │   ├── game-commands.ts   # Game command definitions
-│   │   ├── action-loader.ts   # Action loading/querying
-│   │   └── action-execution.ts # Action execution logic
-│   ├── events/                # Event type providers
-│   ├── incidents/             # Incident type providers
+│   │   └── shared-requirements.ts # Common requirement checks
 │   └── shared/                # Shared controller utilities
 │       └── PhaseControllerHelpers.ts
+├── pipelines/                 # Self-contained pipeline definitions
+│   ├── PipelineRegistry.ts    # Central registry (single source of truth)
+│   ├── actions/               # Action pipelines (29 total, fully in TypeScript)
+│   │   ├── claimHexes.ts
+│   │   ├── buildStructure.ts
+│   │   └── ...
+│   ├── events/                # Event pipelines (all events, fully in TypeScript)
+│   │   ├── drug-den.ts
+│   │   └── ...
+│   └── incidents/             # Incident pipelines (all incidents, fully in TypeScript)
+│       ├── bandit-raids.ts
+│       └── ...
 ├── services/                  # Complex operations and utilities
 │   ├── domain/                # Domain-specific services
 │   │   ├── events/            # Event management
@@ -909,11 +921,19 @@ src/
 
 **Data Files:**
 ```
-data/
-├── player-actions/            # 29 action JSON files (structured effects)
-├── events/                    # Event definitions (resource modifiers)
-└── incidents/                 # Incident definitions (resource modifiers)
+archived-implementations/data-json/
+├── player-actions/            # 29 action JSON files (archived, reference only)
+├── events/                    # Event definitions (archived, reference only)
+├── incidents/                 # Incident definitions (archived, reference only)
+└── README.md                  # Explains archive and migration to TypeScript
+
+src/pipelines/
+├── actions/                   # ACTIVE: 29 self-contained TypeScript action pipelines
+├── events/                    # ACTIVE: All TypeScript event pipelines
+└── incidents/                 # ACTIVE: All TypeScript incident pipelines
 ```
+
+**Note:** All active game logic lives in TypeScript pipelines. JSON data is archived for historical reference only.
 
 ## View Layer Code Examples
 
@@ -1042,55 +1062,63 @@ const isComplete = await isStepCompletedByIndex(0)
 
 ### Player Action Execution:
 ```typescript
-import { actionLoader } from '../controllers/actions/action-loader'
-import { actionExecutionService } from '../controllers/actions/action-execution'
+import { pipelineRegistry } from '../pipelines/PipelineRegistry'
+import { pipelineCoordinator } from '../services/PipelineCoordinator'
 
-// Load and query actions
-const action = actionLoader.getActionById('claim-hexes')
-const expandActions = actionLoader.getActionsByCategory('expand-borders')
+// Get pipeline from registry
+const pipeline = pipelineRegistry.getPipeline('claim-hexes')
+const allActions = pipelineRegistry.getPipelinesByType('action')
 
-// Check requirements
-const requirements = actionExecutionService.checkActionRequirements(action, kingdom)
-if (!requirements.met) {
-  console.log(requirements.reason)
-}
-
-// Execute action
-const result = actionExecutionService.executeAction(action, 'success', kingdom)
-
-// Apply state changes
-for (const [resource, value] of result.stateChanges) {
-  await modifyResource(resource, value)
+// Execute through coordinator
+if (pipeline) {
+  await pipelineCoordinator.executePipeline('claim-hexes', {
+    actor: { selectedSkill: 'leadership', fullActor: someActor, actorName: 'Hero' }
+  })
 }
 ```
 
-### Loading Actions from JSON:
+### Loading Actions from TypeScript Pipelines:
 ```typescript
-// Actions are automatically loaded at startup
-// Located in: data/player-actions/*.json
+// Pipelines are registered at startup automatically
+// Access via PipelineRegistry
 
-// Example action structure:
-{
-  "id": "claim-hexes",
-  "name": "Claim Hexes",
-  "category": "expand-borders",
-  "skills": [
-    { "skill": "survival", "description": "wilderness expertise" }
+import { pipelineRegistry } from '../pipelines/PipelineRegistry';
+
+// Get a specific pipeline
+const pipeline = pipelineRegistry.getPipeline('claim-hexes');
+
+// Get all actions
+const allActions = pipelineRegistry.getPipelinesByType('action');
+
+// Get all events
+const allEvents = pipelineRegistry.getPipelinesByType('event');
+
+// Example pipeline structure:
+export const claimHexesPipeline: CheckPipeline = {
+  id: 'claim-hexes',
+  name: 'Claim Hexes',
+  description: 'Claim territory for your kingdom',
+  category: 'expand-borders',
+  checkType: 'action',
+  skills: [
+    { skill: 'survival', description: 'wilderness expertise' }
   ],
-  "effects": {
-    "success": {
-      "description": "Claim hexes based on proficiency",
-      "modifiers": [],
-      "gameEffects": [
+  outcomes: {
+    success: {
+      description: 'Claim hexes based on proficiency',
+      modifiers: [],
+      gameCommands: [
         {
-          "type": "claimHexes",
-          "count": "proficiency-scaled",
-          "scaling": { "trained": 1, "expert": 1, "master": 2, "legendary": 3 }
+          type: 'claimHexes',
+          count: 'proficiency-scaled',
+          scaling: { trained: 1, expert: 1, master: 2, legendary: 3 }
         }
       ]
     }
-  }
-}
+  },
+  requirements: () => ({ met: true }),
+  getDC: () => 15
+};
 ```
 
 ## Hex Coordinate System
@@ -1289,10 +1317,11 @@ Kingmaker State Update (hexes[219].claimed = true)
 ## System Integration Points
 
 ### Events & Incidents
-- **Location**: `data/events/*.json` and `data/incidents/*.json`
-- **Format**: Normalized structure with `EventModifier[]` for outcomes
-- **Processing**: Controllers create `ActiveModifier` instances for unresolved items
-- **See**: `docs/GAME_EFFECTS_SYSTEM.md` for detailed effect system documentation
+- **Location**: `src/pipelines/events/` and `src/pipelines/incidents/`
+- **Format**: Self-contained TypeScript CheckPipeline objects
+- **Processing**: Controllers use `PipelineRegistry` to load and execute
+- **See**: `docs/systems/core/events-and-incidents-system.md` for system documentation
+- **See**: `docs/systems/core/pipeline-patterns.md` for implementation patterns
 
 ### Modifiers
 - **Storage**: `kingdom.activeModifiers: ActiveModifier[]` in KingdomActor
@@ -1301,10 +1330,11 @@ Kingmaker State Update (hexes[219].claimed = true)
 - **Cleanup**: Automatic expiration based on turn count or resolution conditions
 
 ### Player Actions
-- **29 Actions**: Loaded from `data/player-actions/*.json` at startup
+- **29 Actions**: Defined in `src/pipelines/actions/` as self-contained TypeScript pipelines
 - **6 Categories**: uphold-stability, military-operations, expand-borders, urban-planning, foreign-affairs, economic-actions
-- **Type Safety**: Full TypeScript validation via `action-types.ts` and `game-commands.ts`
-- **Execution**: GameCommandsService and GameCommandsResolver handle command execution
+- **Type Safety**: Full TypeScript validation via `CheckPipeline` interface
+- **Execution**: PipelineCoordinator handles 9-step execution flow
+- **Registry**: All actions accessible via `PipelineRegistry.getPipelinesByType('action')`
 
 ### Turn Phases (in order)
 1. **STATUS** - Apply modifiers, check kingdom state

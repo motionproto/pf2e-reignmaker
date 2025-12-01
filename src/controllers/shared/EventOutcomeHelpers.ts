@@ -1,4 +1,4 @@
-import type { EventData } from '../events/event-loader';
+import type { CheckPipeline } from '../../types/CheckPipeline';
 
 /**
  * Outcome structure for display
@@ -15,34 +15,34 @@ export interface EventOutcome {
  * - Lines 141-165: Build outcomes for ongoing events
  * - Lines 275-304: Build outcomes for current event
  */
-export function buildEventOutcomes(event: EventData): EventOutcome[] {
+export function buildEventOutcomes(event: CheckPipeline): EventOutcome[] {
   const outcomes: EventOutcome[] = [];
   
   if (event.outcomes.criticalSuccess) {
     outcomes.push({
       type: 'criticalSuccess',
-      description: event.outcomes.criticalSuccess.msg
+      description: event.outcomes.criticalSuccess.description
     });
   }
   
   if (event.outcomes.success) {
     outcomes.push({
       type: 'success',
-      description: event.outcomes.success.msg
+      description: event.outcomes.success.description
     });
   }
   
   if (event.outcomes.failure) {
     outcomes.push({
       type: 'failure',
-      description: event.outcomes.failure.msg
+      description: event.outcomes.failure.description
     });
   }
   
   if (event.outcomes.criticalFailure) {
     outcomes.push({
       type: 'criticalFailure',
-      description: event.outcomes.criticalFailure.msg
+      description: event.outcomes.criticalFailure.description
     });
   }
   

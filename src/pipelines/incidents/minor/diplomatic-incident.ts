@@ -1,7 +1,6 @@
 /**
  * Diplomatic Incident Incident Pipeline
  *
- * Generated from data/incidents/minor/diplomatic-incident.json
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';

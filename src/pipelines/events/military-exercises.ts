@@ -1,11 +1,9 @@
 /**
  * Military Exercises Event Pipeline
  *
- * Generated from data/events/military-exercises.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const militaryExercisesPipeline: CheckPipeline = {
   id: 'military-exercises',
@@ -23,20 +21,24 @@ export const militaryExercisesPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The exercises forge elite forces.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
       ]
     },
     success: {
       description: 'The training goes well.',
+      endsEvent: true,
       modifiers: []
     },
     failure: {
       description: 'The training is ineffective.',
+      endsEvent: false,
       modifiers: []
     },
     criticalFailure: {
       description: 'A training accident occurs.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
@@ -44,5 +46,7 @@ export const militaryExercisesPipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["beneficial"],
 };

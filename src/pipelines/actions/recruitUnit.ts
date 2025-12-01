@@ -1,14 +1,52 @@
 /**
- * recruitUnit Action Pipeline
- * Data from: data/player-actions/recruit-unit.json
+ * Recruit Army Action Pipeline
+ * Raise new troops for your armies
  */
 
-import { createActionPipeline } from '../shared/createActionPipeline';
+import type { CheckPipeline } from '../../types/CheckPipeline';
 import { textBadge } from '../../types/OutcomeBadge';
 
-// Store reference for execute function
-const pipeline = createActionPipeline('recruit-unit', {
-  // No cost - always available
+export const recruitUnitPipeline: CheckPipeline = {
+  // === BASE DATA ===
+  id: 'recruit-unit',
+  name: 'Recruit Army',
+  description: 'Rally citizens to arms, drawing from the population to form new military units through inspiration, coercion, or demonstration of prowess',
+  brief: 'Raise new troops for your armies',
+  category: 'military-operations',
+  checkType: 'action',
+
+  skills: [
+    { skill: 'diplomacy', description: 'inspire patriotism' },
+    { skill: 'intimidation', description: 'conscription' },
+    { skill: 'society', description: 'civic duty' },
+    { skill: 'performance', description: 'recruitment rallies' },
+    { skill: 'athletics', description: 'demonstrations of prowess' }
+  ],
+
+  outcomes: {
+    criticalSuccess: {
+      description: 'Patriotic fervor spreads.',
+      modifiers: [
+        { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
+      ]
+    },
+    success: {
+      description: 'Troops are recruited.',
+      modifiers: []
+    },
+    failure: {
+      description: 'Recruitment fails.',
+      modifiers: []
+    },
+    criticalFailure: {
+      description: 'The recruitment attempt angers the populace.',
+      modifiers: [
+        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
+      ]
+    }
+  },
+
+  // === TYPESCRIPT LOGIC ===
   requirements: () => ({ met: true }),
 
   preview: {
@@ -37,13 +75,12 @@ const pipeline = createActionPipeline('recruit-unit', {
       id: 'recruit-army',
       type: 'configuration',
       condition: (ctx) => ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess',
-      component: 'RecruitArmyDialog',  // Resolved via ComponentRegistry
+      component: 'RecruitArmyDialog',
       componentProps: {
         show: true,
         exemptFromUpkeep: false
       },
       onComplete: async (data: any, ctx: any) => {
-        // Store recruitment data for execute step
         ctx.resolutionData = ctx.resolutionData || {};
         ctx.resolutionData.customComponentData = ctx.resolutionData.customComponentData || {};
         ctx.resolutionData.customComponentData['recruit-army'] = data;
@@ -52,9 +89,6 @@ const pipeline = createActionPipeline('recruit-unit', {
   ],
 
   execute: async (ctx: any) => {
-    // Modifiers (unrest changes) applied automatically by execute-first pattern
-    
-    // Handle different outcomes
     if (ctx.outcome === 'failure' || ctx.outcome === 'criticalFailure') {
       return { 
         success: true, 
@@ -64,10 +98,8 @@ const pipeline = createActionPipeline('recruit-unit', {
       };
     }
 
-    // Get recruitment data from postApplyInteractions resolution
     const recruitmentData = ctx.resolutionData?.customComponentData?.['recruit-army'];
     
-    // Handle cancellation gracefully (user cancelled recruitment dialog)
     if (!recruitmentData) {
       return { 
         success: true, 
@@ -76,13 +108,10 @@ const pipeline = createActionPipeline('recruit-unit', {
       };
     }
 
-    // Get party level (falls back to character level if no party)
     const { createGameCommandsResolver } = await import('../../services/GameCommandsResolver');
     const resolver = await createGameCommandsResolver();
     const partyLevel = resolver.getPartyLevel();
 
-    // Create army via game command (uses prepare/commit pattern)
-    // Pass recruitment data directly - no global state needed
     const preparedCommand = await resolver.recruitArmy(
       partyLevel,
       {
@@ -90,10 +119,9 @@ const pipeline = createActionPipeline('recruit-unit', {
         armyType: recruitmentData.armyType,
         settlementId: recruitmentData.settlementId || null
       },
-      false // not exempt from upkeep (regular recruitment)
+      false
     );
 
-    // Commit the prepared command
     if (preparedCommand.commit) {
       await preparedCommand.commit();
     }
@@ -103,6 +131,4 @@ const pipeline = createActionPipeline('recruit-unit', {
       message: `Successfully recruited ${recruitmentData.name}` 
     };
   }
-});
-
-export const recruitUnitPipeline = pipeline;
+};

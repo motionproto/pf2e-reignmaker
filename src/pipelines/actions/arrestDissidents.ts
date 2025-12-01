@@ -1,24 +1,56 @@
 /**
  * Arrest Dissidents Action Pipeline
- *
- * Convert current unrest to imprisoned unrest.
- * Data from: data/player-actions/arrest-dissidents.json
+ * Convert current unrest to imprisoned unrest
  */
 
-import { createActionPipeline } from '../shared/createActionPipeline';
+import type { CheckPipeline } from '../../types/CheckPipeline';
 import { hasUnrestToArrest, calculateImprisonmentCapacity } from '../shared/ActionHelpers';
-import { textBadge } from '../../types/OutcomeBadge';
 import ArrestDissidentsResolution from '../../view/kingdom/components/OutcomeDisplay/components/ArrestDissidentsResolution.svelte';
 
-// Store reference for execute function
-const pipeline = createActionPipeline('arrest-dissidents', {
+export const arrestDissidentsPipeline: CheckPipeline = {
+  // === BASE DATA ===
+  id: 'arrest-dissidents',
+  name: 'Arrest Dissidents',
+  description: 'Round up troublemakers and malcontents, converting unrest into imprisoned unrest that can be dealt with through the justice system',
+  brief: 'Convert current unrest to imprisoned unrest',
+  category: 'uphold-stability',
+  checkType: 'action',
+
+  skills: [
+    { skill: 'intimidation', description: 'show of force' },
+    { skill: 'society', description: 'legal procedures' },
+    { skill: 'stealth', description: 'covert operations' },
+    { skill: 'deception', description: 'infiltration tactics' },
+    { skill: 'athletics', description: 'physical pursuit' }
+  ],
+
+  outcomes: {
+    criticalSuccess: {
+      description: 'The troublemakers are swiftly arrested.',
+      modifiers: []
+    },
+    success: {
+      description: 'The troublemakers are arrested.',
+      modifiers: []
+    },
+    failure: {
+      description: 'The arrests fail.',
+      modifiers: []
+    },
+    criticalFailure: {
+      description: 'Botched arrests cause riots.',
+      modifiers: [
+        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
+      ]
+    }
+  },
+
+  // === TYPESCRIPT LOGIC ===
   requirements: (kingdom) => {
-    // Check if there's any unrest to arrest
     if (!hasUnrestToArrest(kingdom)) {
       return { met: false, reason: 'No unrest to arrest' };
     }
     
-    // Check imprisonment capacity
     const capacity = calculateImprisonmentCapacity(kingdom);
     if (capacity.available <= 0) {
       return { met: false, reason: 'No justice structures with available capacity' };
@@ -27,7 +59,6 @@ const pipeline = createActionPipeline('arrest-dissidents', {
     return { met: true };
   },
 
-  // Post-roll interaction - embedded in outcome display (Step 5)
   postRollInteractions: [
     {
       type: 'configuration',
@@ -47,15 +78,6 @@ const pipeline = createActionPipeline('arrest-dissidents', {
         };
       }
 
-      if (ctx.outcome === 'failure') {
-        return {
-          resources: [],
-          outcomeBadges: [],
-          warnings: []
-        };
-      }
-
-      // Success/Critical Success - no badge needed (component shows info)
       return {
         resources: [],
         outcomeBadges: [],
@@ -65,15 +87,10 @@ const pipeline = createActionPipeline('arrest-dissidents', {
   },
 
   execute: async (ctx) => {
-    // Modifiers (unrest changes) applied automatically by execute-first pattern
-    
-    // Failure outcomes - just return success (modifiers already applied)
     if (ctx.outcome === 'criticalFailure' || ctx.outcome === 'failure') {
       return { success: true };
     }
 
-    // Success/Critical Success - allocations handled by custom component
-    // Component data is stored in customComponentData (populated by OutcomeDisplay)
     const customData = ctx.resolutionData?.customComponentData;
     const allocations = customData?.allocations;
     
@@ -84,7 +101,6 @@ const pipeline = createActionPipeline('arrest-dissidents', {
       };
     }
 
-    // Use GameCommandsService to handle the allocation
     const { createGameCommandsService } = await import('../../services/GameCommandsService');
     const gameCommands = await createGameCommandsService();
     
@@ -96,6 +112,4 @@ const pipeline = createActionPipeline('arrest-dissidents', {
     
     return { success: true };
   }
-});
-
-export const arrestDissidentsPipeline = pipeline;
+};

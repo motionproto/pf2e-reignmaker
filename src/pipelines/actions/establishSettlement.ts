@@ -1,9 +1,9 @@
 /**
- * establishSettlement Action Pipeline
- * Data from: data/player-actions/establish-settlement.json
+ * Establish Settlement Action Pipeline
+ * Found a new village
  */
 
-import { createActionPipeline } from '../shared/createActionPipeline';
+import type { CheckPipeline } from '../../types/CheckPipeline';
 import { applyActionCost } from '../shared/applyActionCost';
 import { foundSettlementExecution } from '../../execution';
 import { textBadge } from '../../types/OutcomeBadge';
@@ -15,11 +15,67 @@ import {
   getFreshKingdomData,
   type ValidationResult
 } from '../shared/hexValidators';
-import { PLAYER_KINGDOM } from '../../types/ownership';
 import SettlementCustomSelector from '../../services/hex-selector/SettlementCustomSelector.svelte';
 import { getAdjacentHexes } from '../../utils/hexUtils';
 
-export const establishSettlementPipeline = createActionPipeline('establish-settlement', {
+export const establishSettlementPipeline: CheckPipeline = {
+  // === BASE DATA ===
+  id: 'establish-settlement',
+  name: 'Establish Settlement',
+  description: 'Found a new community where settlers can establish homes and begin building infrastructure',
+  brief: 'Found a new village',
+  category: 'urban-planning',
+  checkType: 'action',
+  cost: { gold: 2, lumber: 2, food: 2 },
+  special: 'A new settlement begins as a level 1 Village unless special circumstances apply. Must be founded in a claimed hex with no other settlement within 4 hexes.',
+
+  skills: [
+    { skill: 'society', description: 'organized settlement' },
+    { skill: 'survival', description: 'frontier establishment' },
+    { skill: 'diplomacy', description: 'attract settlers' },
+    { skill: 'religion', description: 'blessed founding' },
+    { skill: 'medicine', description: 'healthy community planning' }
+  ],
+
+  outcomes: {
+    criticalSuccess: {
+      description: 'The village is established quickly.',
+      modifiers: [
+        { type: 'static', resource: 'gold', value: -2, duration: 'immediate' },
+        { type: 'static', resource: 'food', value: -2, duration: 'immediate' },
+        { type: 'static', resource: 'lumber', value: -2, duration: 'immediate' }
+      ],
+      manualEffects: ['Place the new village on the hex map', 'Choose and add any Tier 1 structure to the new settlement']
+    },
+    success: {
+      description: 'The village is established.',
+      modifiers: [
+        { type: 'static', resource: 'gold', value: -2, duration: 'immediate' },
+        { type: 'static', resource: 'food', value: -2, duration: 'immediate' },
+        { type: 'static', resource: 'lumber', value: -2, duration: 'immediate' }
+      ],
+      manualEffects: ['Place the new village on the hex map']
+    },
+    failure: {
+      description: 'Resources are wasted.',
+      modifiers: [
+        { type: 'static', resource: 'gold', value: -1, duration: 'immediate' },
+        { type: 'static', resource: 'food', value: -1, duration: 'immediate' },
+        { type: 'static', resource: 'lumber', value: -1, duration: 'immediate' }
+      ]
+    },
+    criticalFailure: {
+      description: 'The settlement attempt is a complete disaster.',
+      modifiers: [
+        { type: 'static', resource: 'gold', value: -2, duration: 'immediate' },
+        { type: 'static', resource: 'food', value: -2, duration: 'immediate' },
+        { type: 'static', resource: 'lumber', value: -2, duration: 'immediate' },
+        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
+      ]
+    }
+  },
+
+  // === TYPESCRIPT LOGIC ===
   requirements: (kingdom) => {
     const requirements: string[] = [];
     
@@ -85,20 +141,15 @@ export const establishSettlementPipeline = createActionPipeline('establish-settl
             return { valid: false, message: 'Hex not found' };
           }
           
-          // Must be claimed by player
           const claimedResult = validateClaimed(hexId, kingdom);
           if (!claimedResult.valid) return claimedResult;
           
-          // Must be explored (if World Explorer active)
           const exploredResult = validateExplored(hexId);
           if (!exploredResult.valid) return exploredResult;
           
-          // Cannot already have a settlement
           const settlementResult = validateNoSettlement(hexId, kingdom);
           if (!settlementResult.valid) return settlementResult;
           
-          // Check spacing requirement (must NOT be adjacent to any other settlement)
-          // PF2e Rule: Settlements cannot be placed in hexes adjacent to other settlements
           const [hX, hY] = hexId.split('.').map(Number);
           const adjacentHexes = getAdjacentHexes(hX, hY);
           
@@ -106,7 +157,6 @@ export const establishSettlementPipeline = createActionPipeline('establish-settl
           for (const settlement of settlements) {
             if (!settlement.location || (settlement.location.x === 0 && settlement.location.y === 0)) continue;
             
-            // Check if settlement is adjacent to the target hex
             const isAdjacent = adjacentHexes.some(
               adjacent => adjacent.i === settlement.location.x && adjacent.j === settlement.location.y
             );
@@ -125,7 +175,7 @@ export const establishSettlementPipeline = createActionPipeline('establish-settl
       customSelector: {
         component: SettlementCustomSelector,
         props: {
-          showStructureSelection: true  // Always shown, only matters on critical success
+          showStructureSelection: true
         }
       }
     }
@@ -135,55 +185,39 @@ export const establishSettlementPipeline = createActionPipeline('establish-settl
     switch (ctx.outcome) {
       case 'criticalSuccess':
       case 'success': {
-        // Read hex selection from resolutionData
         const locationData = ctx.resolutionData?.compoundData?.location;
         
-        // Handle both array and object formats (with metadata from custom selector)
         let hexId: string | undefined;
         let settlementName: string | undefined;
         
         if (!locationData) {
-          console.log('⏭️ [establishSettlement] User cancelled hex selection, skipping execution gracefully');
-          return { success: true };  // Graceful cancellation
+          return { success: true };
         }
         
         if (Array.isArray(locationData)) {
-          // Array format (shouldn't happen with custom selector, but handle it)
           if (locationData.length === 0) {
-            console.log('⏭️ [establishSettlement] No hex selected, skipping execution gracefully');
             return { success: true };
           }
           hexId = locationData[0];
         } else if (locationData?.hexIds) {
-          // Object format with metadata from custom selector
           hexId = locationData.hexIds[0];
           settlementName = locationData.metadata?.settlementName;
         }
         
         if (!hexId) {
-          console.error('❌ [establishSettlement] Missing hex ID');
           return { success: false, error: 'Settlement location not provided' };
         }
         
         const [x, y] = hexId.split('.').map(Number);
         
-        // Use fallback name if not provided by custom selector
         const finalName = settlementName && settlementName.trim() !== '' 
           ? settlementName.trim() 
           : 'Settlement';
         
-        // Get free structure ID from metadata (if critical success)
         const freeStructureId = locationData.metadata?.structureId || null;
         
-        console.log(`[establishSettlement] Creating settlement "${finalName}" at ${hexId}`);
-        if (freeStructureId) {
-          console.log(`[establishSettlement] Including free structure: ${freeStructureId}`);
-        }
-        
-        // Deduct costs
         await applyActionCost(establishSettlementPipeline);
         
-        // Execute settlement creation
         await foundSettlementExecution({
           name: finalName,
           location: { x, y },
@@ -195,15 +229,13 @@ export const establishSettlementPipeline = createActionPipeline('establish-settl
       }
         
       case 'failure':
-        // Modifiers (half costs) applied automatically by execute-first pattern
         return { success: true };
         
       case 'criticalFailure':
-        // Modifiers (full costs + unrest) applied automatically by execute-first pattern
         return { success: true };
         
       default:
         return { success: false, error: `Unexpected outcome: ${ctx.outcome}` };
     }
   }
-});
+};

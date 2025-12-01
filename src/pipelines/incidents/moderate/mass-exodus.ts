@@ -1,7 +1,6 @@
 /**
  * Mass Exodus Incident Pipeline
  *
- * Generated from data/incidents/moderate/mass-exodus.json
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
@@ -68,5 +67,7 @@ export const massExodusPipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined
+  preview: undefined,
+
+  traits: ["dangerous"],
 };

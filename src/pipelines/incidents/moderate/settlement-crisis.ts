@@ -1,7 +1,6 @@
 /**
  * Settlement Crisis Incident Pipeline
  *
- * Generated from data/incidents/moderate/settlement-crisis.json
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';

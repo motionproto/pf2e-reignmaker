@@ -1,13 +1,50 @@
 /**
- * upgradeSettlement Action Pipeline
- * Data from: data/player-actions/upgrade-settlement.json
+ * Upgrade Settlement Action Pipeline
+ * Increase settlement level by 1
  */
 
-import { createActionPipeline } from '../shared/createActionPipeline';
+import type { CheckPipeline } from '../../types/CheckPipeline';
 import { settlementService } from '../../services/settlements';
 import type { ResourceType } from '../../types/modifiers';
 
-export const upgradeSettlementPipeline = createActionPipeline('upgrade-settlement', {
+export const upgradeSettlementPipeline: CheckPipeline = {
+  // === BASE DATA ===
+  id: 'upgrade-settlement',
+  name: 'Upgrade Settlement',
+  description: 'Invest in infrastructure and development to advance your settlement\'s capabilities and unlock access to more advanced structures',
+  brief: 'Increase settlement level by 1',
+  category: 'urban-planning',
+  checkType: 'action',
+  special: 'Cost equals the settlement\'s NEW level in gold.',
+
+  skills: [
+    { skill: 'crafting', description: 'infrastructure expansion' },
+    { skill: 'society', description: 'urban planning' },
+    { skill: 'performance', description: 'inspire growth' },
+    { skill: 'arcana', description: 'magical enhancement' },
+    { skill: 'medicine', description: 'public health improvements' }
+  ],
+
+  outcomes: {
+    criticalSuccess: {
+      description: 'The settlement grows rapidly. Upgrade at half cost.',
+      modifiers: []
+    },
+    success: {
+      description: 'The settlement grows. Upgrade at full cost.',
+      modifiers: []
+    },
+    failure: {
+      description: 'Construction setbacks waste resources. Lose half cost, no upgrade.',
+      modifiers: []
+    },
+    criticalFailure: {
+      description: 'Accidents and incompetence waste the investment. Lose full cost, no upgrade.',
+      modifiers: []
+    }
+  },
+
+  // === TYPESCRIPT LOGIC ===
   requirements: (kingdom) => {
     const settlements = kingdom.settlements || [];
     const availableGold = kingdom.resources?.gold || 0;
@@ -19,10 +56,8 @@ export const upgradeSettlementPipeline = createActionPipeline('upgrade-settlemen
       };
     }
     
-    // Check if any settlement can be upgraded
-    // Note: Can always upgrade level (up to 20), but tier transitions require structures
     const canUpgradeAny = settlements.some(s => {
-      return s.level < 20; // Can upgrade if not at max level
+      return s.level < 20;
     });
     
     if (!canUpgradeAny) {
@@ -32,7 +67,6 @@ export const upgradeSettlementPipeline = createActionPipeline('upgrade-settlemen
       };
     }
     
-    // Check if we can afford to upgrade any eligible settlement
     const minCost = Math.min(
       ...settlements
         .filter(s => s.level < 20)
@@ -56,18 +90,12 @@ export const upgradeSettlementPipeline = createActionPipeline('upgrade-settlemen
       label: 'Select settlement to upgrade',
       entityType: 'settlement',
       filter: (settlement: any) => {
-        // Show all settlements, but provide info about upgradeability
         return true;
       },
       getSupplementaryInfo: (settlement: any) => {
-        // Use settlement service for consistent upgrade info display
-        // Note: Must be synchronous - can't use async import here
-        // Importing at module level instead (see top of file)
         return settlementService.getSettlementUpgradeInfo(settlement);
       },
       onComplete: async (data: any, ctx: any) => {
-        // UnifiedCheckHandler returns { id: '...', name: '...' }
-        // Extract just the ID for simplicity
         ctx.metadata = ctx.metadata || {};
         ctx.metadata.settlementId = data.id;
       }
@@ -79,7 +107,6 @@ export const upgradeSettlementPipeline = createActionPipeline('upgrade-settlemen
       const settlementId = ctx.metadata?.settlementId;
       const settlement = ctx.kingdom.settlements?.find((s: any) => s.id === settlementId);
       if (!settlement) {
-        console.error('[upgradeSettlement] Settlement not found in preview. settlementId:', settlementId);
         return { resources: [], outcomeBadges: [], warnings: ['Settlement not found'] };
       }
 
@@ -95,7 +122,6 @@ export const upgradeSettlementPipeline = createActionPipeline('upgrade-settlemen
 
       const outcomeBadges = [];
       
-      // Show upgrade message for success outcomes
       if (ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess') {
         outcomeBadges.push({
           type: 'text' as const,
@@ -105,7 +131,6 @@ export const upgradeSettlementPipeline = createActionPipeline('upgrade-settlemen
         });
       }
       
-      // Show cost badge for all outcomes (cost applies regardless)
       const costAmount = Math.abs(goldCost);
       const costMessage = ctx.outcome === 'criticalSuccess' 
         ? `Gold cost: ${costAmount} (50% discount)`
@@ -119,11 +144,11 @@ export const upgradeSettlementPipeline = createActionPipeline('upgrade-settlemen
         type: 'text' as const,
         message: costMessage,
         icon: 'fa-coins',
-        variant: 'negative' as const  // All gold costs are red (negative resources)
+        variant: 'negative' as const
       });
 
       return {
-        resources: [],  // Don't return resources - we're manually creating badges instead
+        resources: [],
         outcomeBadges,
         warnings: []
       };
@@ -134,11 +159,9 @@ export const upgradeSettlementPipeline = createActionPipeline('upgrade-settlemen
     const settlementId = ctx.metadata?.settlementId;
     
     if (!settlementId) {
-      console.error('[upgradeSettlement] Missing settlementId in execute. metadata:', ctx.metadata);
       throw new Error('Settlement ID not found in context');
     }
 
-    // Get fresh kingdom data in case of rerolls
     const { getKingdomActor, updateKingdom } = await import('../../stores/KingdomStore');
     const actor = getKingdomActor();
     if (!actor) {
@@ -152,7 +175,6 @@ export const upgradeSettlementPipeline = createActionPipeline('upgrade-settlemen
     
     const settlement = freshKingdom.settlements?.find((s: any) => s.id === settlementId);
     if (!settlement) {
-      console.error('[upgradeSettlement] Settlement not found. settlementId:', settlementId, 'Available settlements:', freshKingdom.settlements?.map((s: any) => s.id));
       throw new Error(`Settlement not found: ${settlementId}`);
     }
 
@@ -160,23 +182,15 @@ export const upgradeSettlementPipeline = createActionPipeline('upgrade-settlemen
     const currentLevel = settlement.level;
     const newLevel = currentLevel + 1;
     
-    // Calculate gold cost based on outcome (must match preview calculation)
     const fullCost = newLevel;
     const halfCost = Math.ceil(newLevel / 2);
     const goldCost = outcome === 'criticalSuccess' ? halfCost :
                     outcome === 'success' ? fullCost :
                     outcome === 'failure' ? halfCost :
-                    fullCost;  // critical failure
+                    fullCost;
     
-    // Apply gold cost using GameCommandsService for proper shortfall tracking
     const { createGameCommandsService } = await import('../../services/GameCommandsService');
     const gameCommandsService = await createGameCommandsService();
-    
-    console.log(`🎯 [upgradeSettlement] Applying gold cost via applyOutcome:`, {
-      goldCost,
-      outcome: ctx.outcome,
-      settlementName: settlement.name
-    });
     
     const applyResult = await gameCommandsService.applyOutcome({
       type: 'action',
@@ -191,17 +205,10 @@ export const upgradeSettlementPipeline = createActionPipeline('upgrade-settlemen
       }]
     });
     
-    console.log(`💰 [upgradeSettlement] applyOutcome result:`, applyResult);
-    
-    console.log(`💰 [upgradeSettlement] Applied gold cost: -${goldCost} (outcome: ${outcome})`);
-    
-    // For success and critical success: upgrade the settlement
     if (outcome === 'success' || outcome === 'criticalSuccess') {
-      // Import settlement service to handle tier transitions
       const { settlementService } = await import('../../services/settlements');
       await settlementService.updateSettlementLevel(settlementId, newLevel);
       
-      // Get updated settlement to check for tier change
       const updatedKingdom = actor.getKingdomData();
       const updatedSettlement = updatedKingdom?.settlements?.find((s: any) => s.id === settlementId);
       
@@ -219,8 +226,7 @@ export const upgradeSettlementPipeline = createActionPipeline('upgrade-settlemen
         };
       }
     }
-    // For failure and critical failure: gold already deducted via preview, no upgrade happens
 
     return { success: true };
   }
-});
+};

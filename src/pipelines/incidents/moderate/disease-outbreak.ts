@@ -1,7 +1,6 @@
 /**
  * Disease Outbreak Incident Pipeline
  *
- * Generated from data/incidents/moderate/disease-outbreak.json
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';

@@ -1,7 +1,6 @@
 /**
  * Infrastructure Damage Incident Pipeline
  *
- * Generated from data/incidents/moderate/infrastructure-damage.json
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';

@@ -1,34 +1,65 @@
 /**
- * harvestResources Action Pipeline
- * Data from: data/player-actions/harvest-resources.json
+ * Harvest Resources Action Pipeline
+ * Gather materials from your kingdom's lands
  */
 
-import { createActionPipeline } from '../shared/createActionPipeline';
+import type { CheckPipeline } from '../../types/CheckPipeline';
 import { applyResourceChanges } from '../shared/InlineActionHelpers';
 
-export const harvestResourcesPipeline = createActionPipeline('harvest-resources', {
-  // No cost - always available. Requires worksite with resources (handled by component)
+export const harvestResourcesPipeline: CheckPipeline = {
+  // === BASE DATA ===
+  id: 'harvest-resources',
+  name: 'Harvest Resources',
+  description: 'Organize gathering expeditions to collect raw materials from your kingdom\'s territories. Choose which resource to focus on after seeing how successful your efforts are.',
+  brief: 'Gather materials from your kingdom\'s lands',
+  category: 'economic-resources',
+  checkType: 'action',
+
+  skills: [
+    { skill: 'nature', description: 'natural harvesting' },
+    { skill: 'survival', description: 'efficient extraction' },
+    { skill: 'crafting', description: 'process materials' }
+  ],
+
+  outcomes: {
+    criticalSuccess: {
+      description: 'The harvest is exceptional.',
+      modifiers: []
+    },
+    success: {
+      description: 'The harvest is good.',
+      modifiers: []
+    },
+    failure: {
+      description: 'The harvest yields nothing.',
+      modifiers: []
+    },
+    criticalFailure: {
+      description: 'Damaged equipment and wasted effort.',
+      modifiers: [
+        { type: 'static', resource: 'gold', value: -1, duration: 'immediate' }
+      ]
+    }
+  },
+
+  // === TYPESCRIPT LOGIC ===
   requirements: () => ({ met: true }),
 
   postRollInteractions: [
     {
       type: 'configuration',
       id: 'resourceSelection',
-      component: 'ResourceChoiceSelector',  // String name (simple, reliable)
-      // Only show for successful harvests
+      component: 'ResourceChoiceSelector',
       condition: (ctx) => {
         return ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess';
       },
-      // Execute harvest when user confirms selection
       onComplete: async (data: any, ctx: any) => {
-        console.log('🎯 [HarvestResources] User selected:', data);
         const { selectedResource, amount } = data || {};
         
         if (!selectedResource || !amount) {
           throw new Error('No resource selection was made');
         }
         
-        // Apply resource gain
         const result = await applyResourceChanges([
           { resource: selectedResource, amount: amount }
         ], 'harvest-resources');
@@ -36,15 +67,13 @@ export const harvestResourcesPipeline = createActionPipeline('harvest-resources'
         if (!result.success) {
           throw new Error(result.error || 'Failed to apply resource changes');
         }
-        
-        console.log('✅ [HarvestResources] Resources harvested successfully');
       }
     }
   ],
 
   preview: {
     calculate: async (ctx) => ({
-      resources: []  // Component will show resource options, no preview needed
+      resources: []
     })
   },
 
@@ -52,22 +81,16 @@ export const harvestResourcesPipeline = createActionPipeline('harvest-resources'
     switch (ctx.outcome) {
       case 'criticalSuccess':
       case 'success':
-        // Resource selection and application handled by postRollInteractions.onComplete
-        // The onComplete handler is called during Step 8 by UnifiedCheckHandler,
-        // which applies the resource changes based on user's selection.
-        console.log('[HarvestResources] ✅ Resources harvested via postRollInteractions');
         return { success: true };
         
       case 'failure':
-        // No action taken on failure
         return { success: true };
         
       case 'criticalFailure':
-        // Modifiers (-1 gold) applied automatically by execute-first pattern
         return { success: true };
         
       default:
         return { success: false, error: `Unexpected outcome: ${ctx.outcome}` };
     }
   }
-});
+};

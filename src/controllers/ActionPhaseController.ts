@@ -69,8 +69,8 @@ export async function createActionPhaseController() {
       instanceId?: string
     ) {
       // Validate action exists
-      const { actionLoader } = await import('./actions/pipeline-loader');
-      const action = actionLoader.getAllActions().find(a => a.id === actionId);
+      const { pipelineRegistry } = await import('../pipelines/PipelineRegistry');
+      const action = pipelineRegistry.getPipeline(actionId);
       if (!action) {
         logger.error(`❌ [ActionPhaseController] Action ${actionId} not found`);
         return { success: false, error: 'Action not found' };

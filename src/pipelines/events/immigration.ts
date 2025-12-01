@@ -1,11 +1,9 @@
 /**
  * Immigration Event Pipeline
  *
- * Generated from data/events/immigration.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const immigrationPipeline: CheckPipeline = {
   id: 'immigration',
@@ -23,22 +21,26 @@ export const immigrationPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'A major influx of settlers arrives.',
+      endsEvent: true,
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '1d4', duration: 'immediate' }
       ]
     },
     success: {
       description: 'Settlers arrive steadily.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
       ]
     },
     failure: {
       description: 'Few settlers decide to stay.',
+      endsEvent: false,
       modifiers: []
     },
     criticalFailure: {
       description: 'Integration problems arise.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
@@ -46,5 +48,7 @@ export const immigrationPipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["beneficial"],
 };

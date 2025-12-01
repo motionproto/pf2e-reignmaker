@@ -1,7 +1,6 @@
 /**
  * Riot Incident Pipeline
  *
- * Generated from data/incidents/moderate/riot.json
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';

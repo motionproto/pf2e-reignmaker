@@ -1,15 +1,13 @@
 /**
- * createWorksite Action Pipeline
- * Data from: data/player-actions/create-worksite.json
+ * Create Worksite Action Pipeline
+ * Establish farms, mines, quarries, or lumber camps
  */
 
-import { createActionPipeline } from '../shared/createActionPipeline';
+import type { CheckPipeline } from '../../types/CheckPipeline';
 import { getKingdomData } from '../../stores/KingdomStore';
 import { createWorksiteExecution } from '../../execution/territory/createWorksite';
 import { getWorksiteBaseProduction } from '../../services/economics/production';
-import { textBadge } from '../../types/OutcomeBadge';
 import WorksiteTypeSelector from '../../services/hex-selector/WorksiteTypeSelector.svelte';
-import { validateCreateWorksiteForPipeline } from '../shared/worksiteValidator';
 import {
   validateClaimed,
   validateNoSettlement,
@@ -18,14 +16,50 @@ import {
   type ValidationResult
 } from '../shared/hexValidators';
 
-export const createWorksitePipeline = createActionPipeline('create-worksite', {
-  // No cost - always available
+export const createWorksitePipeline: CheckPipeline = {
+  // === BASE DATA ===
+  id: 'create-worksite',
+  name: 'Create Worksite',
+  description: 'Establish resource extraction operations to harness the natural wealth of your territories',
+  brief: 'Establish farms, mines, quarries, or lumber camps',
+  category: 'expand-borders',
+  checkType: 'action',
+
+  skills: [
+    { skill: 'crafting', description: 'build infrastructure' },
+    { skill: 'nature', description: 'identify resources' },
+    { skill: 'survival', description: 'frontier operations' },
+    { skill: 'athletics', description: 'manual labor' },
+    { skill: 'arcana', description: 'magical extraction' },
+    { skill: 'religion', description: 'blessed endeavors' }
+  ],
+
+  outcomes: {
+    criticalSuccess: {
+      description: 'The worksite is established quickly and immediately produces resources.',
+      modifiers: []
+    },
+    success: {
+      description: 'The worksite is established.',
+      modifiers: []
+    },
+    failure: {
+      description: 'The workers make no progress.',
+      modifiers: []
+    },
+    criticalFailure: {
+      description: 'The work is abandoned and tensions rise.',
+      modifiers: [
+        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
+      ]
+    }
+  },
+
+  // === TYPESCRIPT LOGIC ===
   requirements: () => ({ met: true }),
 
   preview: {
     calculate: (ctx) => {
-      // No resource costs for worksites currently
-      // Future: could add resource costs here if needed
       return {
         resources: [],
         outcomeBadges: [],
@@ -46,7 +80,6 @@ export const createWorksitePipeline = createActionPipeline('create-worksite', {
       condition: (ctx) => ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess',
       validateHex: (hexId: string): ValidationResult => {
         return safeValidation(() => {
-          // Basic validation without worksite type (type-specific validation happens in customSelector)
           const kingdom = getFreshKingdomData();
           const hex = kingdom.hexes?.find((h: any) => h.id === hexId);
           
@@ -54,15 +87,12 @@ export const createWorksitePipeline = createActionPipeline('create-worksite', {
             return { valid: false, message: 'Hex not found' };
           }
           
-          // Check if claimed
           const claimedResult = validateClaimed(hexId, kingdom);
           if (!claimedResult.valid) return claimedResult;
           
-          // Check for settlement
           const settlementResult = validateNoSettlement(hexId, kingdom);
           if (!settlementResult.valid) return settlementResult;
           
-          // Check for existing worksite
           if (hex.worksite) {
             return { valid: false, message: `Hex already has a ${hex.worksite.type}` };
           }
@@ -77,28 +107,20 @@ export const createWorksitePipeline = createActionPipeline('create-worksite', {
   ],
 
   execute: async (ctx) => {
-    console.log('[CreateWorksite] Execute called with outcome:', ctx.outcome);
-    console.log('[CreateWorksite] Resolution data:', JSON.stringify(ctx.resolutionData, null, 2));
-    
     switch (ctx.outcome) {
       case 'criticalSuccess':
       case 'success': {
-        // Read hex selection from resolutionData (populated by postApplyInteractions)
-        // Custom selector returns { hexIds: [...], metadata: { worksiteType: "..." } }
         const selectedHexData = ctx.resolutionData?.compoundData?.selectedHex;
         
         if (!selectedHexData) {
-          console.log('[CreateWorksite] No hex selected');
-          return { success: true };  // Graceful cancellation
+          return { success: true };
         }
         
         let hexId: string | undefined;
         let worksiteType: string | undefined;
         
-        // Handle both array and object formats
         if (Array.isArray(selectedHexData)) {
           hexId = selectedHexData[0];
-          console.warn('[CreateWorksite] Got array format for selectedHex, cannot determine worksite type');
           return { success: false, error: 'Worksite type not selected' };
         } else if (selectedHexData?.hexIds) {
           hexId = selectedHexData.hexIds[0];
@@ -106,22 +128,16 @@ export const createWorksitePipeline = createActionPipeline('create-worksite', {
         }
 
         if (!hexId || !worksiteType) {
-          console.error('[CreateWorksite] Missing hex or worksite type:', { hexId, worksiteType });
           return { success: false, error: 'Worksite selection incomplete' };
         }
 
-        console.log(`[CreateWorksite] Creating ${worksiteType} on hex ${hexId}`);
-
-        // Execute worksite creation
         await createWorksiteExecution(hexId, worksiteType);
 
-        // Show success notification
         const message = ctx.outcome === 'criticalSuccess'
           ? `Successfully created ${worksiteType} on hex ${hexId} (work completed swiftly!)`
           : `Successfully created ${worksiteType} on hex ${hexId}`;
         ui.notifications?.info(message);
         
-        // Grant immediate resources on critical success
         if (ctx.outcome === 'criticalSuccess') {
           const kingdom = getKingdomData();
           const hex = kingdom.hexes?.find((h: any) => h.id === hexId);
@@ -130,7 +146,6 @@ export const createWorksitePipeline = createActionPipeline('create-worksite', {
             const production = getWorksiteBaseProduction(worksiteType, hex.terrain);
             
             if (production.size > 0) {
-              // ✅ Use GameCommandsService for proper shortfall handling (even though we're adding resources)
               const { createGameCommandsService } = await import('../../services/GameCommandsService');
               const gameCommandsService = await createGameCommandsService();
               
@@ -152,15 +167,13 @@ export const createWorksitePipeline = createActionPipeline('create-worksite', {
       }
         
       case 'failure':
-        // No effects on failure
         return { success: true };
         
       case 'criticalFailure':
-        // Modifiers (+1 unrest) applied automatically by execute-first pattern
         return { success: true };
         
       default:
         return { success: false, error: `Unexpected outcome: ${ctx.outcome}` };
     }
   }
-});
+};

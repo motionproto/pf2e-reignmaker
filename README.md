@@ -93,20 +93,21 @@ npm run generate-types
 
 The build process involves three steps:
 
-1. **Combine Data** (`python3 buildscripts/combine-data.py`)
-   - Combines individual JSON files from `data/` into monolithic files
-   - Organizes events, incidents, factions, and player actions
-   - Outputs to `src/data-compiled/`
-
-2. **Generate Types** (`python3 buildscripts/generate-types.py`)
-   - Generates TypeScript types from combined JSON data
-   - Creates type-safe interfaces for events, incidents, and actions
+1. **Generate Types** (`python3 buildscripts/generate-types.py`)
+   - Generates TypeScript types from structured data
+   - Creates type-safe interfaces
    - Outputs to `src/types/`
+
+2. **Compile Remaining JSON** (`python3 buildscripts/combine-data.py`)
+   - Combines individual JSON files for factions and structures
+   - Outputs to `src/data-compiled/`
+   - **Note:** Actions, events, and incidents are now pure TypeScript (no JSON compilation)
 
 3. **Vite Build** (`vite build`)
    - Compiles TypeScript and Svelte components
+   - Bundles all TypeScript pipelines (actions, events, incidents)
    - Processes and bundles CSS
-   - Bundles everything to `dist/`
+   - Outputs to `dist/`
 
 ## Project Structure
 
@@ -116,7 +117,12 @@ pf2e-reignmaker/
 │   ├── index.ts                 # Module entry point
 │   ├── actors/                  # Kingdom and Army actor definitions
 │   ├── controllers/             # Phase controllers and business logic
-│   ├── data-compiled/           # Generated JSON data (from data/)
+│   ├── pipelines/               # Self-contained TypeScript pipelines (ACTIVE)
+│   │   ├── PipelineRegistry.ts  # Central registry
+│   │   ├── actions/             # 29 action pipelines (TypeScript only)
+│   │   ├── events/              # Event pipelines (TypeScript only)
+│   │   └── incidents/           # Incident pipelines (TypeScript only)
+│   ├── data-compiled/           # Generated JSON data (factions, structures only)
 │   ├── models/                  # Data models (Kingdom, Settlement, etc)
 │   ├── services/                # Business logic services
 │   ├── stores/                  # Svelte stores for reactive state
@@ -129,14 +135,14 @@ pf2e-reignmaker/
 │           ├── KingdomSheet.svelte      # Main kingdom sheet
 │           ├── turnPhases/              # Phase-specific UI components
 │           └── components/              # Reusable kingdom UI components
-├── data/                        # Source JSON data files
-│   ├── events/                  # Kingdom events
-│   ├── incidents/               # Kingdom incidents
-│   ├── factions/                # Faction definitions
-│   ├── player-actions/          # Player action definitions
-│   └── structures/              # Structure definitions
+├── archived-implementations/    # Historical reference
+│   └── data-json/               # Archived JSON data (reference only)
+│       ├── events/              # Legacy event JSON files
+│       ├── incidents/           # Legacy incident JSON files
+│       ├── player-actions/      # Legacy action JSON files
+│       └── README.md            # Explains migration to TypeScript
 ├── buildscripts/                # Python build scripts
-│   ├── combine-data.py          # Combines JSON files
+│   ├── combine-data.py          # Combines remaining JSON (factions, structures)
 │   └── generate-types.py        # Generates TypeScript types
 ├── docs/                        # Architecture documentation
 │   ├── ARCHITECTURE.md          # Complete system overview
@@ -179,15 +185,20 @@ Comprehensive documentation is available in the `docs/` directory:
 
 ## Data Files
 
-Game data is stored as individual JSON files in the `data/` directory:
+Game data is stored in two ways:
 
-- **Events** - Random kingdom events that occur during the Event Phase
-- **Incidents** - Triggered events based on kingdom unrest levels
+**TypeScript Pipelines (Active):**
+- **Actions** - 29 player actions defined in `src/pipelines/actions/`
+- **Events** - Kingdom events defined in `src/pipelines/events/`
+- **Incidents** - Unrest-triggered events defined in `src/pipelines/incidents/`
+
+All pipelines are self-contained TypeScript files with full game logic, outcomes, and effects.
+
+**JSON Data (Legacy):**
 - **Factions** - Faction definitions with relationships and benefits
-- **Player Actions** - Available actions during the Action Phase
 - **Structures** - Buildings and improvements for settlements
 
-These files are combined during the build process into monolithic files in `src/data-compiled/`, which are then used to generate TypeScript types.
+JSON data for actions, events, and incidents has been archived to `archived-implementations/data-json/` for historical reference.
 
 ## Contributing
 
@@ -203,16 +214,20 @@ Contributions are welcome! Please:
 ### Adding New Content
 
 **To add a new event:**
-1. Create a JSON file in `data/events/`
-2. Run `npm run build` to combine data and regenerate types
-3. The event will automatically appear in-game
+1. Create a TypeScript file in `src/pipelines/events/`
+2. Define the event as a `CheckPipeline` object
+3. Register it in `PipelineRegistry.ts`
+4. Run `npm run build`
+5. The event will automatically appear in-game
 
 **To add a new player action:**
-1. Create a JSON file in `data/player-actions/`
-2. Create the action implementation in `src/actions/`
-3. Run `npm run build`
+1. Create a TypeScript file in `src/pipelines/actions/`
+2. Define the action as a `CheckPipeline` object
+3. Register it in `PipelineRegistry.ts`
+4. Implement any custom execution logic if needed
+5. Run `npm run build`
 
-See the existing files for schema examples.
+See existing pipeline files for schema examples.
 
 ## License
 

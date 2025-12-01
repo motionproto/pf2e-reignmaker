@@ -1,7 +1,6 @@
 /**
  * Trade War Incident Pipeline
  *
- * Generated from data/incidents/major/trade-war.json
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
@@ -43,5 +42,7 @@ export const tradeWarPipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined
+  preview: undefined,
+
+  traits: ["dangerous"],
 };

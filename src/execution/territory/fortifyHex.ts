@@ -7,23 +7,7 @@
 
 import { updateKingdom } from '../../stores/KingdomStore';
 import { logger } from '../../utils/Logger';
-
-/**
- * Fortification tier data (loaded from JSON)
- */
-interface FortificationTier {
-  id: string;
-  name: string;
-  tier: 1 | 2 | 3 | 4;
-  cost: Record<string, number>;
-  maintenance: number;
-  benefits: {
-    ac: number;
-    initiative: number;
-  };
-  description: string;
-  special?: string;
-}
+import { getFortificationTier } from '../../data/fortificationTiers';
 
 /**
  * Execute fortification building/upgrading
@@ -39,10 +23,8 @@ export async function fortifyHexExecution(hexId: string, tier: 1 | 2 | 3 | 4): P
     return;
   }
 
-  // Load fortification tier data
-  const fortificationDataModule = await import('../../../data/player-actions/fortify-hex.json');
-  const fortificationData = fortificationDataModule.default || fortificationDataModule;
-  const tierConfig = fortificationData.tiers[tier - 1] as FortificationTier;
+  // Get fortification tier data
+  const tierConfig = getFortificationTier(tier);
 
   if (!tierConfig) {
     logger.error(`[fortifyHexExecution] Invalid tier: ${tier}`);

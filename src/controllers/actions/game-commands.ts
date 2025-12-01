@@ -64,7 +64,10 @@ export type GameCommandType =
   | 'reduceImprisoned'
   
   // Territory Management
-  | 'removeBorderHexes';
+  | 'removeBorderHexes'
+  
+  // Character Action Management
+  | 'spendPlayerAction';
 
 /**
  * Proficiency scaling for commands
@@ -354,6 +357,17 @@ export interface FortifyHexCommand extends BaseGameCommand {
 }
 
 /**
+ * Spend player action command
+ * Marks a character as having already acted without taking an action
+ * Used by incidents that cause characters to lose their action for the turn
+ */
+export interface SpendPlayerActionCommand extends BaseGameCommand {
+  type: 'spendPlayerAction';
+  characterSelection: 'random' | 'player-choice';  // How to select character
+  characterId?: string;  // Optional pre-selected character ID
+}
+
+/**
  * Union type of all game commands
  */
 export type GameCommand =
@@ -390,4 +404,6 @@ export type GameCommand =
   | DestroyStructureCommand
   | ReleaseImprisonedCommand
   | ReduceImprisonedCommand
-  | RemoveBorderHexesCommand;
+  | RemoveBorderHexesCommand
+  | DestroyWorksiteCommand
+  | SpendPlayerActionCommand;

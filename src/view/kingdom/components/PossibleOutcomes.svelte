@@ -8,6 +8,7 @@
 <script lang="ts">
   import AdjustmentBadges from './AdjustmentBadges.svelte';
   import GameCommandBadges from './GameCommandBadges.svelte';
+  import SimpleOutcomeBadges from './SimpleOutcomeBadges.svelte';
   
   export let outcomes: PossibleOutcome[];
   export let skill: string | undefined = undefined;
@@ -92,7 +93,7 @@
                   <GameCommandBadges gameCommands={outcome.gameCommands} />
                 {/if}
                 {#if outcome.outcomeBadges && outcome.outcomeBadges.length > 0}
-                  <AdjustmentBadges modifiers={outcome.outcomeBadges} />
+                  <SimpleOutcomeBadges badges={outcome.outcomeBadges} />
                 {/if}
               </div>
             {/if}

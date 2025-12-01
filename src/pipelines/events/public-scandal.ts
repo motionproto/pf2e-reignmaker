@@ -1,11 +1,9 @@
 /**
  * Public Scandal Event Pipeline
  *
- * Generated from data/events/public-scandal.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const publicScandalPipeline: CheckPipeline = {
   id: 'public-scandal',
@@ -23,22 +21,26 @@ export const publicScandalPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The scandal is deflected.',
+      endsEvent: true,
       modifiers: []
     },
     success: {
       description: 'The damage is controlled.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
     },
     failure: {
       description: 'Public outrage erupts.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
       ]
     },
     criticalFailure: {
       description: 'Your leader must lay low.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
       ]
@@ -46,5 +48,7 @@ export const publicScandalPipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["dangerous"],
 };

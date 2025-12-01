@@ -9,14 +9,14 @@
    export let hideUntrainedSkills: boolean = true;
    export let onToggleUntrained: ((value: boolean) => void) | undefined = undefined;
    
-   // Import controller instead of services/commands directly
-   import { createEventPhaseController } from '../../../controllers/EventPhaseController';
-   
-   // Import existing services and components
-   import type { EventData } from '../../../controllers/events/event-loader';
-   import type { EventSkill } from '../../../types/events';
-   import { eventService } from '../../../controllers/events/event-loader';
-   import Button from '../components/baseComponents/Button.svelte';
+  // Import controller instead of services/commands directly
+  import { createEventPhaseController } from '../../../controllers/EventPhaseController';
+  
+  // Import existing services and components
+  import type { CheckPipeline } from '../../../types/CheckPipeline';
+  import type { EventSkill } from '../../../types/events';
+  import { pipelineRegistry } from '../../../pipelines/PipelineRegistry';
+  import Button from '../components/baseComponents/Button.svelte';
    import BaseCheckCard from '../components/BaseCheckCard.svelte';
    import PlayerActionTracker from '../components/PlayerActionTracker.svelte';
    import DebugEventSelector from '../components/DebugEventSelector.svelte';
@@ -39,7 +39,7 @@
    
    // UI State (no business logic)
    let isRolling = false;
-   let currentEvent: EventData | null = null;
+   let currentEvent: CheckPipeline | null = null;
    let possibleOutcomes: any[] = [];
    
    // Resolution state for current event
@@ -79,7 +79,7 @@
    
    // Load current event data from instance when available
    $: if (currentEventInstance && currentEventInstance.checkData) {
-      currentEvent = currentEventInstance.checkData as EventData;
+      currentEvent = currentEventInstance.checkData as CheckPipeline;
    }
    
    // Check if current user is GM
@@ -109,7 +109,7 @@
    
    // Build outcomes for ongoing events from pendingOutcomes  
    $: ongoingEventsWithOutcomes = ongoingEventInstances.map(instance => {
-      const event = instance.checkData as EventData;  // NEW ARCHITECTURE: checkData instead of eventData
+      const event = instance.checkData as CheckPipeline;  // NEW ARCHITECTURE: checkData instead of eventData
       
       // Safety check - if event or outcomes is missing, return empty
       if (!event || !event.outcomes) {
@@ -121,23 +121,8 @@
          };
       }
       
-      const outcomes: Array<{
-         type: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
-         description: string;
-      }> = [];
-      
-      if (event.outcomes.criticalSuccess) {
-         outcomes.push({ type: 'criticalSuccess', description: event.outcomes.criticalSuccess.msg });
-      }
-      if (event.outcomes.success) {
-         outcomes.push({ type: 'success', description: event.outcomes.success.msg });
-      }
-      if (event.outcomes.failure) {
-         outcomes.push({ type: 'failure', description: event.outcomes.failure.msg });
-      }
-      if (event.outcomes.criticalFailure) {
-         outcomes.push({ type: 'criticalFailure', description: event.outcomes.criticalFailure.msg });
-      }
+      // Use shared helper to build outcomes
+      const outcomes = buildEventOutcomes(event);
       
       // Check if someone is currently resolving this event
       const progress = instance.resolutionProgress;
@@ -164,15 +149,15 @@
    $: eventWasTriggered = $kingdomData.turnState?.eventsPhase?.eventTriggered ?? null;
    $: activeAidsCount = $kingdomData?.turnState?.eventsPhase?.activeAids?.length || 0;
    
-   // Reactively load event when eventId changes (from turnState)
-   $: if ($kingdomData.turnState?.eventsPhase?.eventId) {
-      const event = eventService.getEventById($kingdomData.turnState.eventsPhase.eventId);
-      if (event) {
-         currentEvent = event;
+  // Reactively load event when eventId changes (from turnState)
+  $: if ($kingdomData.turnState?.eventsPhase?.eventId) {
+     const event = pipelineRegistry.getPipeline($kingdomData.turnState.eventsPhase.eventId);
+     if (event) {
+        currentEvent = event;
 
-      }
-   } else if ($kingdomData.turnState?.eventsPhase?.eventId === null) {
-      currentEvent = null;
+     }
+  } else if ($kingdomData.turnState?.eventsPhase?.eventId === null) {
+     currentEvent = null;
 
    }
    
@@ -193,7 +178,7 @@
       // Check if an event was already rolled by another client
       if ($kingdomData.turnState?.eventsPhase?.eventId) {
 
-         const event = eventService.getEventById($kingdomData.turnState.eventsPhase.eventId);
+         const event = pipelineRegistry.getPipeline($kingdomData.turnState.eventsPhase.eventId);
          if (event) {
             currentEvent = event;
          }
@@ -223,7 +208,7 @@
       if ($kingdomData.turnState?.eventsPhase?.eventId) {
 
          // Load the event by ID
-         const event = eventService.getEventById($kingdomData.turnState.eventsPhase.eventId);
+         const event = pipelineRegistry.getPipeline($kingdomData.turnState.eventsPhase.eventId);
          if (event) {
             currentEvent = event;
          }
@@ -257,40 +242,10 @@
    $: possibleOutcomes = currentEvent ? buildPossibleOutcomes(currentEvent.outcomes) : [];
    
    // Build outcomes array for BaseCheckCard
-   $: eventOutcomes = (currentEvent && currentEvent.outcomes) ? (() => {
-      const outcomes: Array<{
-         type: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
-         description: string;
-         modifiers?: Array<{ resource: string; value: number }>;
-      }> = [];
-      
-      if (currentEvent.outcomes.criticalSuccess) {
-         outcomes.push({
-            type: 'criticalSuccess',
-            description: currentEvent.outcomes.criticalSuccess.msg
-         });
-      }
-      if (currentEvent.outcomes.success) {
-         outcomes.push({
-            type: 'success',
-            description: currentEvent.outcomes.success.msg
-         });
-      }
-      if (currentEvent.outcomes.failure) {
-         outcomes.push({
-            type: 'failure',
-            description: currentEvent.outcomes.failure.msg
-         });
-      }
-      if (currentEvent.outcomes.criticalFailure) {
-         outcomes.push({
-            type: 'criticalFailure',
-            description: currentEvent.outcomes.criticalFailure.msg
-         });
-      }
-      
-      return outcomes;
-   })() : [];
+   // Build outcomes for current event using shared helper
+   $: eventOutcomes = (currentEvent && currentEvent.outcomes) 
+      ? buildEventOutcomes(currentEvent) 
+      : [];
    
    // Event handler - execute skill check
    async function handleExecuteSkill(event: CustomEvent) {

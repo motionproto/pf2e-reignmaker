@@ -1,11 +1,9 @@
 /**
  * Food Surplus Event Pipeline
  *
- * Generated from data/events/food-surplus.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const foodSurplusPipeline: CheckPipeline = {
   id: 'food-surplus',
@@ -23,6 +21,7 @@ export const foodSurplusPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'A massive surplus fills the granaries.',
+      endsEvent: true,
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '1d4+1', duration: 'immediate' },
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' },
@@ -30,18 +29,21 @@ export const foodSurplusPipeline: CheckPipeline = {
     },
     success: {
       description: 'The harvest is bountiful.',
+      endsEvent: true,
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '1d4', duration: 'immediate' }
       ]
     },
     failure: {
       description: 'A modest surplus is gathered.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
       ]
     },
     criticalFailure: {
       description: 'Much of the surplus spoils.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
@@ -49,5 +51,7 @@ export const foodSurplusPipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["beneficial"],
 };

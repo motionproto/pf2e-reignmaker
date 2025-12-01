@@ -6,8 +6,7 @@
  */
 
 import { getEventDisplayName } from '../types/event-helpers';
-import { eventService } from './events/event-loader';
-import type { EventData } from './events/event-loader';
+import type { CheckPipeline } from '../types/CheckPipeline';
 import type { KingdomData } from '../actors/KingdomActor';
 import type { ResolutionData } from '../types/modifiers';
 import { updateKingdom } from '../stores/KingdomStore';
@@ -29,18 +28,19 @@ import {
 import { TurnPhase } from '../actors/KingdomActor';
 import { EventsPhaseSteps } from './shared/PhaseStepConstants';
 import { logger } from '../utils/Logger';
+import { pipelineRegistry } from '../pipelines/PipelineRegistry';
 
 export interface EventPhaseState {
-    currentEvent: EventData | null;
+    currentEvent: CheckPipeline | null;
     eventCheckRoll: number;
     eventDC: number;
     resolutionOutcome: 'success' | 'failure' | 'criticalSuccess' | 'criticalFailure' | null;
     appliedEffects: Map<string, any>;
-    unresolvedEvent: EventData | null;
+    unresolvedEvent: CheckPipeline | null;
 }
 
 export interface IncidentResolution {
-    incident: EventData;
+    incident: CheckPipeline;
     outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
     skillUsed?: string;
     actorName?: string;
@@ -49,7 +49,7 @@ export interface IncidentResolution {
     message: string;
 }
 
-export async function createEventPhaseController(_eventService?: any) {
+export async function createEventPhaseController() {
     const modifierService = await createModifierService();
     const gameCommandsService = await createGameCommandsService();
     // Initialize OutcomePreviewService once per controller instance
@@ -118,7 +118,7 @@ export async function createEventPhaseController(_eventService?: any) {
          */
         async performEventCheck(currentDC: number): Promise<{
             triggered: boolean;
-            event: EventData | null;
+            event: CheckPipeline | null;
             roll: number;
             newDC: number;
         }> {
@@ -140,11 +140,13 @@ export async function createEventPhaseController(_eventService?: any) {
             state.eventCheckRoll = roll;
             
             let newDC: number;
-            let event: EventData | null = null;
+            let event: CheckPipeline | null = null;
             
             if (triggered) {
                 // Event triggered - get random event and reset DC to 15
-                event = eventService.getRandomEvent();
+                const { pipelineRegistry } = await import('../pipelines/PipelineRegistry');
+                const allEvents = pipelineRegistry.getPipelinesByType('event');
+                event = allEvents[Math.floor(Math.random() * allEvents.length)] as any;
                 newDC = 15;
                 
                 if (event) {
@@ -254,7 +256,7 @@ export async function createEventPhaseController(_eventService?: any) {
             playerId?: string
         ) {
             // Validate event exists
-            const event = eventService.getEventById(eventId);
+            const event = pipelineRegistry.getPipeline(eventId);
             if (!event) {
                 logger.error(`❌ [EventPhaseController] Event ${eventId} not found`);
                 return { success: false, error: 'Event not found' };
@@ -379,7 +381,7 @@ export async function createEventPhaseController(_eventService?: any) {
                             outcome,
                             actorName: actorName || 'Event Ignored',
                             skillName: skillName || '',
-                            effect: outcomeData?.msg || '',
+                            effect: outcomeData?.description || '',
                             modifiers: resolvedModifiers,  // ✅ RESOLVED values, not raw modifiers
                             manualEffects: outcomeData?.manualEffects || [],
                             gameCommands: outcomeData?.gameCommands || [],
@@ -471,7 +473,7 @@ export async function createEventPhaseController(_eventService?: any) {
          */
         async ignoreEvent(eventId: string): Promise<{ success: boolean; error?: string }> {
 
-            const event = eventService.getEventById(eventId);
+            const event = pipelineRegistry.getPipeline(eventId);
             if (!event) {
                 return { success: false, error: 'Event not found' };
             }
@@ -537,7 +539,7 @@ export async function createEventPhaseController(_eventService?: any) {
                         outcome: 'failure' as const,
                         actorName: 'Event Ignored',
                         skillName: '',
-                        effect: outcomeData.msg,
+                        effect: outcomeData.description,
                         modifiers: outcomeData.modifiers || [],
                         manualEffects: outcomeData.manualEffects || [],
                         gameCommands: outcomeData.gameCommands || [],
@@ -574,11 +576,11 @@ export async function createEventPhaseController(_eventService?: any) {
          * Get outcome modifiers for an event
          * (Follows same pattern as ActionPhaseController.getActionModifiers)
          */
-        getEventModifiers(event: EventData, outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure') {
+        getEventModifiers(event: CheckPipeline, outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure') {
             const outcomeData = event.outcomes[outcome];
             
             return {
-                msg: outcomeData?.msg || '',
+                description: outcomeData?.description || '',
                 modifiers: outcomeData?.modifiers || [],
                 manualEffects: outcomeData?.manualEffects || []
             };

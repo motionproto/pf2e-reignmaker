@@ -1,17 +1,62 @@
 /**
- * diplomaticMission Action Pipeline
- * Data from: data/player-actions/diplomatic-mission.json
+ * Diplomatic Mission Action Pipeline
+ * Improve relations with a faction
  */
 
-import { createActionPipeline } from '../shared/createActionPipeline';
+import type { CheckPipeline } from '../../types/CheckPipeline';
 import { factionService } from '../../services/factions';
 import type { Faction } from '../../models/Faction';
 import { createGameCommandsService } from '../../services/GameCommandsService';
 import type { ResourceType } from '../../types/modifiers';
 import { textBadge } from '../../types/OutcomeBadge';
-export const establishDiplomaticRelationsPipeline = createActionPipeline('diplomatic-mission', {
+
+export const establishDiplomaticRelationsPipeline: CheckPipeline = {
+  // === BASE DATA ===
+  id: 'diplomatic-mission',
+  name: 'Diplomatic Mission',
+  description: 'Send envoys to improve your kingdom\'s standing with neighboring powers and influential organizations',
+  brief: 'Improve relations with a faction',
+  category: 'foreign-affairs',
+  checkType: 'action',
+
+  skills: [
+    { skill: 'diplomacy', description: 'formal negotiations' },
+    { skill: 'society', description: 'cultural exchange' },
+    { skill: 'performance', description: 'diplomatic ceremonies' },
+    { skill: 'deception', description: 'strategic positioning' },
+    { skill: 'occultism', description: 'mystical bonds' },
+    { skill: 'religion', description: 'sacred alliances' }
+  ],
+
+  outcomes: {
+    criticalSuccess: {
+      description: 'The diplomatic mission is a resounding success.',
+      modifiers: [
+        { type: 'static', resource: 'gold', value: -2, duration: 'immediate' }
+      ]
+    },
+    success: {
+      description: 'Relations improve.',
+      modifiers: [
+        { type: 'static', resource: 'gold', value: -4, duration: 'immediate' }
+      ]
+    },
+    failure: {
+      description: 'The diplomatic mission fails.',
+      modifiers: [
+        { type: 'static', resource: 'gold', value: -2, duration: 'immediate' }
+      ]
+    },
+    criticalFailure: {
+      description: 'Your diplomats offend the faction.',
+      modifiers: [
+        { type: 'static', resource: 'gold', value: -4, duration: 'immediate' }
+      ]
+    }
+  },
+
+  // === TYPESCRIPT LOGIC ===
   requirements: (kingdom) => {
-    // Check if factions exist
     if (!kingdom.factions || kingdom.factions.length === 0) {
       return {
         met: false,
@@ -19,7 +64,6 @@ export const establishDiplomaticRelationsPipeline = createActionPipeline('diplom
       };
     }
     
-    // Check if there are improvable factions (not Helpful or Hostile)
     const improvableFactions = kingdom.factions.filter(
       (f: Faction) => f.attitude !== 'Helpful' && f.attitude !== 'Hostile'
     );
@@ -31,7 +75,6 @@ export const establishDiplomaticRelationsPipeline = createActionPipeline('diplom
       };
     }
     
-    // Check gold (worst case is 4 gold for success/critical failure)
     const availableGold = kingdom.resources?.gold || 0;
     if (availableGold < 4) {
       return {
@@ -49,17 +92,11 @@ export const establishDiplomaticRelationsPipeline = createActionPipeline('diplom
       type: 'entity-selection',
       entityType: 'faction',
       label: 'Select Faction for Diplomatic Mission',
-      // Pass filter function that marks factions as eligible/ineligible
-      // Note: This doesn't actually filter them out - dialog will show all but gray out ineligible ones
       filter: (faction: Faction, kingdom: any) => {
-        console.log('🔍 [establishDiplomaticRelations] Filter called for faction:', faction?.name);
-        
-        // Can always target Hostile or worse (trying to improve relations)
         if (faction.attitude === 'Hostile' || faction.attitude === 'Unfriendly' || faction.attitude === 'Indifferent') {
           return { eligible: true };
         }
         
-        // For Friendly factions, check if we have diplomatic capacity to promote to Helpful
         if (faction.attitude === 'Friendly') {
           const diplomaticCapacity = kingdom?.resources?.diplomaticCapacity || 1;
           const helpfulCount = (kingdom?.factions || []).filter((f: Faction) => f.attitude === 'Helpful').length;
@@ -72,7 +109,6 @@ export const establishDiplomaticRelationsPipeline = createActionPipeline('diplom
           }
         }
         
-        // Helpful factions can't be improved further (already at max)
         if (faction.attitude === 'Helpful') {
           return { 
             eligible: false, 
@@ -86,10 +122,8 @@ export const establishDiplomaticRelationsPipeline = createActionPipeline('diplom
   ],
 
   preview: {
-    // Custom format to avoid duplicate gold display
-    // (Resources are already shown in Outcome section, only show attitude changes here)
     format: (preview) => {
-      return preview.outcomeBadges; // Only return special effects, skip resources
+      return preview.outcomeBadges;
     },
     
     calculate: async (ctx) => {
@@ -112,11 +146,8 @@ export const establishDiplomaticRelationsPipeline = createActionPipeline('diplom
       }
 
       const badges: any[] = [];
-
-      // Calculate new attitude using the adjustment utility
       const { adjustAttitudeBySteps } = await import('../../utils/faction-attitude-adjuster');
 
-      // Show attitude changes based on outcome
       if (ctx.outcome === 'criticalSuccess') {
         const newAttitude = adjustAttitudeBySteps(faction.attitude, 1);
         if (newAttitude) {
@@ -144,7 +175,6 @@ export const establishDiplomaticRelationsPipeline = createActionPipeline('diplom
           ));
         }
       } else if (ctx.outcome === 'failure') {
-        // No attitude change, just gold cost
         badges.push(textBadge(
           `The diplomatic mission fails (no change to relations with ${faction.name})`,
           'neutral'
@@ -164,7 +194,6 @@ export const establishDiplomaticRelationsPipeline = createActionPipeline('diplom
         }
       }
 
-      // Get gold cost from outcome modifiers
       const outcomeKey = ctx.outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
       const goldModifier = (establishDiplomaticRelationsPipeline.outcomes[outcomeKey]?.modifiers || []).find(
         (m: any) => m.resource === 'gold' && m.type === 'static'
@@ -184,16 +213,9 @@ export const establishDiplomaticRelationsPipeline = createActionPipeline('diplom
   },
 
   execute: async (ctx) => {
-    console.log('🎯 [establishDiplomaticRelations] Execute function called');
-    console.log('🎯 [establishDiplomaticRelations] Context:', ctx);
-    console.log('🎯 [establishDiplomaticRelations] Metadata:', ctx.metadata);
-    console.log('🎯 [establishDiplomaticRelations] Outcome:', ctx.outcome);
-    
     const factionId = ctx.metadata?.faction?.id || ctx.metadata?.factionId;
-    console.log('🎯 [establishDiplomaticRelations] Faction ID:', factionId);
     
     if (!factionId) {
-      console.error('❌ [establishDiplomaticRelations] No faction selected');
       return { success: false, error: 'No faction selected' };
     }
 
@@ -202,7 +224,6 @@ export const establishDiplomaticRelationsPipeline = createActionPipeline('diplom
       return { success: false, error: 'Faction not found' };
     }
 
-    // ✅ Apply gold cost using GameCommandsService for proper shortfall tracking
     const outcomeKey = ctx.outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
     const goldModifier = (establishDiplomaticRelationsPipeline.outcomes[outcomeKey]?.modifiers || []).find(
       (m: any) => m.resource === 'gold' && m.type === 'static'
@@ -222,12 +243,9 @@ export const establishDiplomaticRelationsPipeline = createActionPipeline('diplom
           duration: 'immediate'
         }]
       });
-      console.log(`💰 [establishDiplomaticRelations] Applied ${goldModifier.value} gold via applyOutcome`);
     }
 
-    // Handle outcomes (gold costs are handled by modifiers)
     if (ctx.outcome === 'criticalSuccess') {
-      // Improve attitude by 1 step (no max)
       const result = await factionService.adjustAttitude(factionId, 1);
       
       if (result.success) {
@@ -242,7 +260,6 @@ export const establishDiplomaticRelationsPipeline = createActionPipeline('diplom
         };
       }
     } else if (ctx.outcome === 'success') {
-      // Improve attitude by 1 step (max Friendly)
       const result = await factionService.adjustAttitude(factionId, 1, { maxLevel: 'Friendly' });
       
       if (result.success) {
@@ -257,10 +274,8 @@ export const establishDiplomaticRelationsPipeline = createActionPipeline('diplom
         };
       }
     } else if (ctx.outcome === 'failure') {
-      // No attitude change, just gold cost
       return { success: true, message: `The diplomatic mission fails (no change to relations with ${faction.name})` };
     } else if (ctx.outcome === 'criticalFailure') {
-      // Worsen attitude by 1 step
       const result = await factionService.adjustAttitude(factionId, -1);
       
       if (result.success) {
@@ -278,4 +293,4 @@ export const establishDiplomaticRelationsPipeline = createActionPipeline('diplom
 
     return { success: true };
   }
-});
+};

@@ -1,11 +1,9 @@
 /**
  * Economic Surge Event Pipeline
  *
- * Generated from data/events/economic-surge.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const economicSurgePipeline: CheckPipeline = {
   id: 'economic-surge',
@@ -23,22 +21,26 @@ export const economicSurgePipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'Trade flourishes throughout the kingdom.',
+      endsEvent: false,
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '1d4', duration: 'immediate' }
       ]
     },
     success: {
       description: 'The economy grows steadily.',
+      endsEvent: false,
       modifiers: [
         { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
       ]
     },
     failure: {
       description: 'The economic surge slows.',
+      endsEvent: true,
       modifiers: []
     },
     criticalFailure: {
       description: 'The economic bubble bursts.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
@@ -46,5 +48,7 @@ export const economicSurgePipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["beneficial", "ongoing"],
 };

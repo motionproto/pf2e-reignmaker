@@ -1,21 +1,50 @@
 /**
- * outfitArmy Action Pipeline
- * Data from: data/player-actions/outfit-army.json
- * 
- * Simplified flow:
- * - No pre-roll interactions
- * - Post-apply: Combined army + equipment selection in single component
- * - Army dropdown updates equipment grid reactively
- * - Game command execution to apply equipment
+ * Outfit Army Action Pipeline
+ * Equip troops with armor, weapons, runes, or equipment
  */
 
-import { createActionPipeline } from '../shared/createActionPipeline';
+import type { CheckPipeline } from '../../types/CheckPipeline';
 import { textBadge } from '../../types/OutcomeBadge';
 import type { Army } from '../../models/Army';
 
-export const outfitArmyPipeline = createActionPipeline('outfit-army', {
+export const outfitArmyPipeline: CheckPipeline = {
+  // === BASE DATA ===
+  id: 'outfit-army',
+  name: 'Outfit Army',
+  description: 'Equip your troops with superior arms, armor, and supplies to enhance their battlefield effectiveness',
+  brief: 'Equip troops with armor, weapons, runes, or equipment',
+  category: 'military-operations',
+  checkType: 'action',
+  cost: { ore: 1, gold: 2 },
+
+  skills: [
+    { skill: 'crafting', description: 'forge equipment' },
+    { skill: 'society', description: 'requisition supplies' },
+    { skill: 'intimidation', description: 'commandeer resources' },
+    { skill: 'thievery', description: 'acquire through subterfuge' }
+  ],
+
+  outcomes: {
+    criticalSuccess: {
+      description: 'Army receives +2 equipment bonus',
+      modifiers: []
+    },
+    success: {
+      description: 'Army receives +1 equipment bonus',
+      modifiers: []
+    },
+    failure: {
+      description: 'Failed to find a suitable supplier',
+      modifiers: []
+    },
+    criticalFailure: {
+      description: 'Resources lost to corruption and waste',
+      modifiers: []
+    }
+  },
+
+  // === TYPESCRIPT LOGIC ===
   requirements: (kingdom) => {
-    // Check 1: Resource costs (ore: 1, gold: 2)
     const oreCost = 1;
     const goldCost = 2;
     const currentOre = kingdom.resources?.ore || 0;
@@ -36,7 +65,6 @@ export const outfitArmyPipeline = createActionPipeline('outfit-army', {
       };
     }
 
-    // Check 2: Army availability
     if (!kingdom.armies || kingdom.armies.length === 0) {
       return {
         met: false,
@@ -44,7 +72,6 @@ export const outfitArmyPipeline = createActionPipeline('outfit-army', {
       };
     }
 
-    // Check 3: Eligible armies (available equipment slots and has actor)
     const eligibleArmies = kingdom.armies.filter((army: Army) => {
       const equipmentCount = army.equipment 
         ? Object.values(army.equipment).filter(Boolean).length 
@@ -61,8 +88,6 @@ export const outfitArmyPipeline = createActionPipeline('outfit-army', {
 
     return { met: true };
   },
-
-  // No pre-roll interactions - army selection happens post-roll
 
   preview: {
     calculate: (ctx) => {
@@ -101,7 +126,6 @@ export const outfitArmyPipeline = createActionPipeline('outfit-army', {
         show: true
       },
       onComplete: async (data: any, ctx: any) => {
-        // Store both army and equipment selections for execute step
         ctx.resolutionData = ctx.resolutionData || {};
         ctx.resolutionData.customComponentData = ctx.resolutionData.customComponentData || {};
         ctx.resolutionData.customComponentData['outfit-army-resolution'] = data;
@@ -110,7 +134,6 @@ export const outfitArmyPipeline = createActionPipeline('outfit-army', {
   ],
 
   execute: async (ctx: any) => {
-    // Apply resource changes via proper service (handles shortfalls)
     const { createGameCommandsService } = await import('../../services/GameCommandsService');
     const gameCommandsService = await createGameCommandsService();
     
@@ -120,7 +143,6 @@ export const outfitArmyPipeline = createActionPipeline('outfit-army', {
         { resource: 'gold', value: -2 }
       ], ctx.outcome);
     } else if (ctx.outcome === 'criticalFailure') {
-      // Critical failure: lose gold but get no equipment
       await gameCommandsService.applyNumericModifiers([
         { resource: 'gold', value: -2 }
       ], ctx.outcome);
@@ -130,17 +152,14 @@ export const outfitArmyPipeline = createActionPipeline('outfit-army', {
         message: 'Suppliers took the gold but provided no equipment'
       };
     } else if (ctx.outcome === 'failure') {
-      // Regular failure: no cost, no equipment
       return { 
         success: true, 
         message: 'Failed to outfit army'
       };
     }
 
-    // Get outfit data from postApplyInteractions resolution
     const outfitData = ctx.resolutionData?.customComponentData?.['outfit-army-resolution'];
     
-    // Handle cancellation gracefully (user cancelled selection)
     if (!outfitData) {
       return { 
         success: true, 
@@ -152,7 +171,6 @@ export const outfitArmyPipeline = createActionPipeline('outfit-army', {
     const armyId = outfitData.armyId;
     const equipmentType = outfitData.equipmentType;
 
-    // Validate selections
     if (!armyId) {
       return { success: false, error: 'No army selected' };
     }
@@ -161,7 +179,6 @@ export const outfitArmyPipeline = createActionPipeline('outfit-army', {
       return { success: false, error: 'No equipment type selected' };
     }
 
-    // Validate equipment not already owned
     const army = ctx.kingdom.armies?.find((a: Army) => a.id === armyId);
     if (!army) {
       return { success: false, error: 'Army not found' };
@@ -172,19 +189,16 @@ export const outfitArmyPipeline = createActionPipeline('outfit-army', {
       return { success: false, error: `Army already has ${equipmentType}` };
     }
 
-    // Use GameCommandsResolver to apply equipment
     const { createGameCommandsResolver } = await import('../../services/GameCommandsResolver');
     const resolver = await createGameCommandsResolver();
 
     const preparedCommand = await resolver.outfitArmy(armyId, equipmentType, ctx.outcome);
 
-    // Handle prepare/commit pattern (like recruit-unit)
     if ('commit' in preparedCommand && preparedCommand.commit) {
       await preparedCommand.commit();
       return { success: true, message: `Successfully outfitted ${army.name} with ${equipmentType}` };
     }
 
-    // Handle direct result pattern
     if ('success' in preparedCommand) {
       if (!preparedCommand.success) {
         return { success: false, error: preparedCommand.error || 'Failed to outfit army' };
@@ -194,4 +208,4 @@ export const outfitArmyPipeline = createActionPipeline('outfit-army', {
 
     return { success: false, error: 'Unexpected response from outfit army command' };
   }
-});
+};

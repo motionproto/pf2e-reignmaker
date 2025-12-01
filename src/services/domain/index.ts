@@ -5,13 +5,16 @@
  * controllers or phases. Controller-specific logic should live in the controller
  * folders.
  * 
- * REMOVED SERVICES (now in controllers):
+ * REMOVED SERVICES:
  * - UnrestService → deleted (unused)
  * - ResourceManagementService → deleted (unused)
  * - BuildQueueService → deleted (violated architecture)
- * - EventService → moved to controllers/events/event-loader.ts
- * - IncidentService → moved to controllers/incidents/incident-loader.ts
- * - ActionExecutionService → moved to controllers/actions/action-helpers.ts
+ * - EventService → deleted (events now in TypeScript pipelines)
+ * - IncidentService → deleted (incidents now in TypeScript pipelines)
+ * - ActionExecutionService → deleted (actions now in TypeScript pipelines)
+ * 
+ * All actions, events, and incidents are now defined in src/pipelines/ and
+ * accessed via PipelineRegistry.
  */
 
 export { diceService } from './DiceService'

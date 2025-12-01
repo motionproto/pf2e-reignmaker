@@ -1,11 +1,9 @@
 /**
  * Food Shortage Event Pipeline
  *
- * Generated from data/events/food-shortage.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const foodShortagePipeline: CheckPipeline = {
   id: 'food-shortage',
@@ -23,18 +21,21 @@ export const foodShortagePipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The crisis is averted.',
+      endsEvent: true,
       modifiers: [
         { type: 'dice', resource: 'food', formula: '1d4', negative: true, duration: 'immediate' }
       ]
     },
     success: {
       description: 'The shortage is controlled.',
+      endsEvent: true,
       modifiers: [
         { type: 'dice', resource: 'food', formula: '1d6+1', negative: true, duration: 'immediate' }
       ]
     },
     failure: {
       description: 'A severe shortage develops.',
+      endsEvent: false,
       modifiers: [
         { type: 'dice', resource: 'food', formula: '2d4', negative: true, duration: 'immediate' },
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
@@ -42,6 +43,7 @@ export const foodShortagePipeline: CheckPipeline = {
     },
     criticalFailure: {
       description: 'Famine threatens the kingdom.',
+      endsEvent: false,
       modifiers: [
         { type: 'dice', resource: 'food', formula: '2d6+1', negative: true, duration: 'immediate' },
         { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' },
@@ -50,5 +52,7 @@ export const foodShortagePipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["dangerous", "ongoing"],
 };

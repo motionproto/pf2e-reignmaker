@@ -1,11 +1,9 @@
 /**
  * Sensational Crime Event Pipeline
  *
- * Generated from data/events/sensational-crime.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const sensationalCrimePipeline: CheckPipeline = {
   id: 'sensational-crime',
@@ -23,22 +21,26 @@ export const sensationalCrimePipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The criminal is caught spectacularly.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
       ]
     },
     success: {
       description: 'The crime is solved.',
+      endsEvent: true,
       modifiers: []
     },
     failure: {
       description: 'The criminal escapes.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
     },
     criticalFailure: {
       description: 'Copycat crimes emerge.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
       ]
@@ -46,5 +48,7 @@ export const sensationalCrimePipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["dangerous"],
 };

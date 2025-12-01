@@ -1,11 +1,9 @@
 /**
  * Pilgrimage Event Pipeline
  *
- * Generated from data/events/pilgrimage.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const pilgrimagePipeline: CheckPipeline = {
   id: 'pilgrimage',
@@ -23,6 +21,7 @@ export const pilgrimagePipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'A major pilgrimage brings prosperity.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'gold', value: 1, duration: 'immediate' },
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' },
@@ -31,16 +30,19 @@ export const pilgrimagePipeline: CheckPipeline = {
     },
     success: {
       description: 'The pilgrims pass through peacefully.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
       ]
     },
     failure: {
       description: 'Minor disruptions occur.',
+      endsEvent: false,
       modifiers: []
     },
     criticalFailure: {
       description: 'Religious tensions arise.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
@@ -48,5 +50,7 @@ export const pilgrimagePipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["beneficial"],
 };

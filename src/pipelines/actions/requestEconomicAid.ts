@@ -1,16 +1,55 @@
 /**
- * requestEconomicAid Action Pipeline
- * Data from: data/player-actions/request-economic-aid.json
+ * Request Economic Aid Action Pipeline
+ * Ask allies for financial support
  */
 
-import { createActionPipeline } from '../shared/createActionPipeline';
+import type { CheckPipeline } from '../../types/CheckPipeline';
 import { factionService } from '../../services/factions';
 import type { Faction } from '../../models/Faction';
-
 import { textBadge } from '../../types/OutcomeBadge';
-export const requestEconomicAidPipeline = createActionPipeline('request-economic-aid', {
+
+export const requestEconomicAidPipeline: CheckPipeline = {
+  // === BASE DATA ===
+  id: 'request-economic-aid',
+  name: 'Request Economic Aid',
+  description: 'Appeal to allied nations for material support in times of need',
+  brief: 'Ask allies for financial support',
+  category: 'foreign-affairs',
+  checkType: 'action',
+
+  skills: [
+    { skill: 'diplomacy', description: 'formal request' },
+    { skill: 'society', description: 'leverage connections' },
+    { skill: 'performance', description: 'emotional appeal' },
+    { skill: 'deception', description: 'exaggerate need' },
+    { skill: 'medicine', description: 'humanitarian aid' }
+  ],
+
+  outcomes: {
+    criticalSuccess: {
+      description: 'Your ally provides generous support.',
+      modifiers: [
+        { type: 'dice', resource: 'gold', formula: '2d6', duration: 'immediate' }
+      ]
+    },
+    success: {
+      description: 'Your ally provides support.',
+      modifiers: [
+        { type: 'dice', resource: 'gold', formula: '1d4+1', duration: 'immediate' }
+      ]
+    },
+    failure: {
+      description: 'Your ally cannot help.',
+      modifiers: []
+    },
+    criticalFailure: {
+      description: 'Your ally is offended.',
+      modifiers: []
+    }
+  },
+
+  // === TYPESCRIPT LOGIC ===
   requirements: (kingdom) => {
-    // Check if there are any Friendly/Helpful factions
     const hasAllies = kingdom.factions?.some(f => 
       f.attitude === 'Friendly' || f.attitude === 'Helpful'
     );
@@ -22,7 +61,6 @@ export const requestEconomicAidPipeline = createActionPipeline('request-economic
       };
     }
     
-    // Check if any Friendly/Helpful faction hasn't already provided aid this turn
     const aidedThisTurn = kingdom.turnState?.actionsPhase?.factionsAidedThisTurn || [];
     const availableFactions = kingdom.factions?.filter(f => 
       (f.attitude === 'Friendly' || f.attitude === 'Helpful') && 
@@ -46,7 +84,6 @@ export const requestEconomicAidPipeline = createActionPipeline('request-economic
       entityType: 'faction',
       label: 'Select Faction for Economic Aid Request',
       filter: (faction: Faction, kingdom: any) => {
-        // Only Friendly or Helpful factions can provide aid
         if (faction.attitude !== 'Friendly' && faction.attitude !== 'Helpful') {
           return { 
             eligible: false, 
@@ -54,7 +91,6 @@ export const requestEconomicAidPipeline = createActionPipeline('request-economic
           };
         }
         
-        // Check if faction already provided aid this turn
         const aidedThisTurn = kingdom.turnState?.actionsPhase?.factionsAidedThisTurn || [];
         if (aidedThisTurn.includes(faction.id)) {
           return {
@@ -90,7 +126,6 @@ export const requestEconomicAidPipeline = createActionPipeline('request-economic
 
       const outcomeBadges: any[] = [];
 
-      // Show gold gain message based on outcome
       if (ctx.outcome === 'criticalSuccess') {
         outcomeBadges.push(
           textBadge(`${faction.name} provides generous support (2d6 gold)`, 'fa-coins', 'positive')
@@ -101,7 +136,6 @@ export const requestEconomicAidPipeline = createActionPipeline('request-economic
         );
       }
 
-      // Show attitude warning on crit failure (matches establish-diplomatic-relations pattern)
       if (ctx.outcome === 'criticalFailure') {
         const { adjustAttitudeBySteps } = await import('../../utils/faction-attitude-adjuster');
         const newAttitude = adjustAttitudeBySteps(faction.attitude, -1);
@@ -140,27 +174,17 @@ export const requestEconomicAidPipeline = createActionPipeline('request-economic
     const { updateKingdom } = await import('../../stores/KingdomStore');
     const { applyPreRolledModifiers } = await import('../shared/applyPreRolledModifiers');
 
-    // Handle outcomes
     if (ctx.outcome === 'criticalSuccess' || ctx.outcome === 'success') {
-      // ✅ Apply pre-rolled gold modifiers using helper
       const result = await applyPreRolledModifiers(ctx);
       
       if (!result.success) {
         return { success: false, error: `Failed to apply gold: ${result.error}` };
       }
       
-      // Mark faction as having provided aid this turn
       await updateKingdom(k => {
         if (!k.turnState?.actionsPhase?.factionsAidedThisTurn) {
-          console.warn('[requestEconomicAid] turnState.actionsPhase.factionsAidedThisTurn not initialized, initializing now');
-          if (!k.turnState) {
-            console.error('[requestEconomicAid] ❌ turnState is null/undefined - cannot track faction aid');
-            return;
-          }
-          if (!k.turnState.actionsPhase) {
-            console.error('[requestEconomicAid] ❌ actionsPhase is null/undefined - cannot track faction aid');
-            return;
-          }
+          if (!k.turnState) return;
+          if (!k.turnState.actionsPhase) return;
           k.turnState.actionsPhase.factionsAidedThisTurn = [];
         }
         
@@ -183,7 +207,6 @@ export const requestEconomicAidPipeline = createActionPipeline('request-economic
     } 
     
     if (ctx.outcome === 'criticalFailure') {
-      // Worsen attitude by 1 step
       const result = await factionService.adjustAttitude(factionId, -1);
       
       if (result.success) {
@@ -201,4 +224,4 @@ export const requestEconomicAidPipeline = createActionPipeline('request-economic
 
     return { success: true };
   }
-});
+};

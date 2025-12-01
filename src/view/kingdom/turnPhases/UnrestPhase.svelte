@@ -48,6 +48,7 @@
    // Reactive UI state using shared helper for step completion
    import { getStepCompletion } from '../../../controllers/shared/PhaseHelpers';
    import { buildPossibleOutcomes } from '../../../controllers/shared/PossibleOutcomeHelpers';
+   import { buildEventOutcomes } from '../../../controllers/shared/EventOutcomeHelpers';
    $: stepComplete = getStepCompletion($kingdomData.currentPhaseSteps, 1); // Step 1 = incident check
    $: incidentWasTriggered = $kingdomData.turnState?.unrestPhase?.incidentTriggered ?? null;
    $: unrestStatus = $unrest !== undefined ? (() => {
@@ -102,10 +103,10 @@
    
    async function loadIncident(incidentId: string) {
       try {
-         const { incidentLoader } = await import('../../../controllers/incidents/incident-loader');
+         const { pipelineRegistry } = await import('../../../pipelines/PipelineRegistry');
          
-         // Use the incident loader to get the incident
-         const incident = incidentLoader.getIncidentById(incidentId);
+         // Use the pipeline registry to get the incident
+         const incident = pipelineRegistry.getPipeline(incidentId);
          
          if (incident) {
             currentIncident = incident;
@@ -133,45 +134,11 @@
       incidentNumber 
    });
    
-   // Build outcomes array for BaseCheckCard
-   $: incidentOutcomes = (currentIncident && currentIncident.outcomes) ? (() => {
-      console.log('[UnrestPhase] Building incidentOutcomes from:', currentIncident.outcomes);
-      const outcomes: Array<{
-         type: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
-         description: string;
-         modifiers?: Array<{ resource: string; value: number }>;
-      }> = [];
-      
-      if (currentIncident.outcomes.criticalSuccess) {
-         outcomes.push({
-            type: 'criticalSuccess',
-            // Support both pipeline format (.description) and JSON format (.msg)
-            description: currentIncident.outcomes.criticalSuccess.description || currentIncident.outcomes.criticalSuccess.msg
-         });
-      }
-      if (currentIncident.outcomes.success) {
-         outcomes.push({
-            type: 'success',
-            description: currentIncident.outcomes.success.description || currentIncident.outcomes.success.msg
-         });
-      }
-      if (currentIncident.outcomes.failure) {
-         outcomes.push({
-            type: 'failure',
-            description: currentIncident.outcomes.failure.description || currentIncident.outcomes.failure.msg
-         });
-      }
-      if (currentIncident.outcomes.criticalFailure) {
-         outcomes.push({
-            type: 'criticalFailure',
-            description: currentIncident.outcomes.criticalFailure.description || currentIncident.outcomes.criticalFailure.msg
-         });
-      }
-      
-      console.log('[UnrestPhase] Built incidentOutcomes:', outcomes.length, outcomes);
-      return outcomes;
-   })() : [];
-   $: console.log('[UnrestPhase] Final incidentOutcomes:', incidentOutcomes.length);
+   // Build outcomes array for BaseCheckCard using shared helper
+   $: incidentOutcomes = (currentIncident && currentIncident.outcomes) 
+      ? buildEventOutcomes(currentIncident) 
+      : [];
+   $: console.log('[UnrestPhase] incidentOutcomes:', incidentOutcomes.length, incidentOutcomes);
    
    // Initialize phase steps when component mounts
    onMount(async () => {

@@ -3,7 +3,7 @@
   import { TurnPhase, type KingdomData } from "../../../actors/KingdomActor";
   import { createGameCommandsService } from '../../../services/GameCommandsService';
   import { createOutcomePreviewService } from '../../../services/OutcomePreviewService';
-  import { actionLoader } from "../../../controllers/actions/pipeline-loader";
+  import { pipelineRegistry } from "../../../pipelines/PipelineRegistry";
   import ActionDialogManager from "./components/ActionDialogManager.svelte";
   import ActionCategorySection from "./components/ActionCategorySection.svelte";
   import { getAidResult } from '../../../controllers/shared/AidSystemHelpers';
@@ -105,9 +105,7 @@
     console.log('🎬 [ActionsPhase] applyActionEffects called for:', actionId);
     console.log('🎬 [ActionsPhase] Resolution data:', resolutionData);
 
-    const action = actionLoader.getAllActions().find(
-      (a) => a.id === actionId
-    );
+    const action = pipelineRegistry.getPipeline(actionId);
     if (!action) {
       console.error('❌ [applyActionEffects] Action not found:', actionId);
       logger.error('❌ [applyActionEffects] Action not found:', actionId);
@@ -251,7 +249,8 @@
 
   // Helper functions delegating to controller
   function getActionsByCategory(categoryId: string) {
-    return actionLoader.getActionsByCategory(categoryId);
+    return pipelineRegistry.getPipelinesByType('action')
+      .filter(p => p.category === categoryId);
   }
 
   function isActionAvailable(action: any): boolean {

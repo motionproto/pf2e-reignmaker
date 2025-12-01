@@ -1,7 +1,6 @@
 /**
  * Production Strike Incident Pipeline
  *
- * Generated from data/incidents/moderate/production-strike.json
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
@@ -40,5 +39,7 @@ export const productionStrikePipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined
+  preview: undefined,
+
+  traits: ["dangerous"],
 };

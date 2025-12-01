@@ -142,8 +142,8 @@ export class PipelineIntegrationAdapter {
       }
 
       // Get the action (for check property in context)
-      const { actionLoader } = await import('../controllers/actions/pipeline-loader');
-      const action = actionLoader.getAllActions().find(a => a.id === actionId);
+      const { pipelineRegistry } = await import('../pipelines/PipelineRegistry');
+      const action = pipelineRegistry.getPipeline(actionId);
       if (!action) {
         return { success: false, error: `Action ${actionId} not found` };
       }
@@ -228,8 +228,8 @@ export class PipelineIntegrationAdapter {
       return null;
     }
 
-    const { actionLoader } = await import('../controllers/actions/pipeline-loader');
-    const action = actionLoader.getAllActions().find(a => a.id === actionId);
+    const { pipelineRegistry } = await import('../pipelines/PipelineRegistry');
+    const action = pipelineRegistry.getPipeline(actionId);
     if (!action) {
       return null;
     }

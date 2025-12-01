@@ -1,11 +1,9 @@
 /**
  * Land Rush Event Pipeline
  *
- * Generated from data/events/land-rush.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const landRushPipeline: CheckPipeline = {
   id: 'land-rush',
@@ -23,24 +21,28 @@ export const landRushPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'Settlers expand the kingdom.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'claim_hex', value: 2, duration: 'immediate' }
       ]
     },
     success: {
       description: 'Settlers claim new land.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'claim_hex', value: 1, duration: 'immediate' }
       ]
     },
     failure: {
       description: 'The settlers disperse.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
     },
     criticalFailure: {
       description: 'Violence erupts at the border.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
       ]
@@ -48,5 +50,7 @@ export const landRushPipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["dangerous"],
 };

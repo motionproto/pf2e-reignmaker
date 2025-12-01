@@ -1,13 +1,49 @@
 /**
- * requestMilitaryAid Action Pipeline
- * Data from: data/player-actions/request-military-aid.json
+ * Request Military Aid Action Pipeline
+ * Call for allied troops in battle
  */
 
-import { createActionPipeline } from '../shared/createActionPipeline';
+import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { Faction } from '../../models/Faction';
 import { factionService } from '../../services/factions';
 import { textBadge } from '../../types/OutcomeBadge';
-export const requestMilitaryAidPipeline = createActionPipeline('request-military-aid', {
+
+export const requestMilitaryAidPipeline: CheckPipeline = {
+  // === BASE DATA ===
+  id: 'request-military-aid',
+  name: 'Request Military Aid',
+  description: 'Call upon allies to provide troops or military support during conflicts',
+  brief: 'Call for allied troops in battle',
+  category: 'foreign-affairs',
+  checkType: 'action',
+
+  skills: [
+    { skill: 'diplomacy', description: 'alliance obligations' },
+    { skill: 'intimidation', description: 'pressure tactics' },
+    { skill: 'society', description: 'mutual defense' },
+    { skill: 'arcana', description: 'magical pacts' }
+  ],
+
+  outcomes: {
+    criticalSuccess: {
+      description: 'Your ally sends elite reinforcements to support your cause.',
+      modifiers: []
+    },
+    success: {
+      description: 'Your ally provides military equipment and supplies.',
+      modifiers: []
+    },
+    failure: {
+      description: 'Your ally cannot help at this time.',
+      modifiers: []
+    },
+    criticalFailure: {
+      description: 'Your ally is offended by the request.',
+      modifiers: []
+    }
+  },
+
+  // === TYPESCRIPT LOGIC ===
   requirements: (kingdom) => {
     const hasAllies = kingdom.factions?.some(f => 
       f.attitude === 'Friendly' || f.attitude === 'Helpful'
@@ -30,7 +66,6 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
       entityType: 'faction',
       label: 'Select Faction for Military Aid Request',
       filter: (faction: Faction) => {
-        // Only Friendly or Helpful factions can provide military aid
         if (faction.attitude === 'Friendly' || faction.attitude === 'Helpful') {
           return { eligible: true };
         }
@@ -65,13 +100,11 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
 
       const outcomeBadges: any[] = [];
 
-      // Show appropriate message based on outcome
       if (ctx.outcome === 'criticalSuccess') {
         outcomeBadges.push(
           textBadge(`${faction.name} will send elite reinforcements (allied army, exempt from upkeep)`, 'fa-shield-alt', 'positive')
         );
       } else if (ctx.outcome === 'success') {
-        // Check if there are eligible armies
         const armies = ctx.kingdom.armies || [];
         const eligibleArmies = armies.filter((army: any) => {
           if (!army.actorId) return false;
@@ -81,7 +114,6 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
           return equipmentCount < 4;
         });
 
-        // If no armies available, show gold fallback
         if (eligibleArmies.length === 0) {
           return {
             resources: [
@@ -94,12 +126,10 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
           };
         }
 
-        // Otherwise show equipment message (will show post-roll interaction)
         outcomeBadges.push(
           textBadge(`${faction.name} provides military equipment and supplies`, 'fa-shield', 'positive')
         );
       } else if (ctx.outcome === 'criticalFailure') {
-        // Show attitude warning on crit failure (matches establish-diplomatic-relations pattern)
         const { adjustAttitudeBySteps } = await import('../../utils/faction-attitude-adjuster');
         const newAttitude = adjustAttitudeBySteps(faction.attitude, -1);
         
@@ -127,7 +157,7 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
       id: 'recruit-allied-army',
       type: 'configuration',
       condition: (ctx) => ctx.outcome === 'criticalSuccess',
-      component: 'RecruitArmyDialog',  // Resolved via ComponentRegistry
+      component: 'RecruitArmyDialog',
       componentProps: {
         show: true,
         exemptFromUpkeep: true
@@ -139,7 +169,6 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
       condition: (ctx) => {
         if (ctx.outcome !== 'success') return false;
         
-        // Check if there are eligible armies (with available equipment slots)
         const armies = ctx.kingdom.armies || [];
         const eligibleArmies = armies.filter((army: any) => {
           if (!army.actorId) return false;
@@ -149,15 +178,13 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
           return equipmentCount < 4;
         });
         
-        // Only show dialog if there are eligible armies
         return eligibleArmies.length > 0;
       },
-      component: 'OutfitArmyResolution',  // Use same component as outfit-army action
+      component: 'OutfitArmyResolution',
       componentProps: {
-        outcome: 'success'  // Always success for Request Military Aid
+        outcome: 'success'
       },
       onComplete: async (data: any, ctx: any) => {
-        // Store selection for execute step
         ctx.resolutionData = ctx.resolutionData || {};
         ctx.resolutionData.customComponentData = ctx.resolutionData.customComponentData || {};
         ctx.resolutionData.customComponentData['outfit-army'] = data;
@@ -183,12 +210,9 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
       return { success: false, error: 'No kingdom actor available' };
     }
 
-    // Handle different outcomes
     if (ctx.outcome === 'criticalSuccess') {
-      // Create allied army from postApplyInteractions resolution
       const recruitmentData = ctx.resolution?.['recruit-allied-army'];
       
-      // Handle cancellation gracefully (user cancelled recruitment dialog)
       if (!recruitmentData) {
         return { 
           success: true, 
@@ -197,8 +221,6 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
         };
       }
 
-      // Create allied army via game command (uses prepare/commit pattern)
-      // Pass recruitment data directly - no global state needed
       const { createGameCommandsResolver } = await import('../../services/GameCommandsResolver');
       const resolver = await createGameCommandsResolver();
       
@@ -208,17 +230,15 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
           name: recruitmentData.name,
           armyType: recruitmentData.armyType,
           settlementId: recruitmentData.settlementId || null,
-          supportedBy: faction.name  // Allied army supported by faction
+          supportedBy: faction.name
         },
-        true // exemptFromUpkeep
+        true
       );
 
-      // Commit the prepared command
       if (preparedCommand.commit) {
         await preparedCommand.commit();
       }
 
-      // Mark faction as having provided aid this turn
       await actor.updateKingdomData((kingdom: any) => {
         if (!kingdom.turnState?.actionsPhase?.factionsAidedThisTurn) {
           if (!kingdom.turnState) kingdom.turnState = { actionsPhase: { factionsAidedThisTurn: [] } };
@@ -228,7 +248,6 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
           }
         }
         if (!kingdom.turnState.actionsPhase.factionsAidedThisTurn.includes(factionId)) {
-          // ✅ Immutable: Reassign array to trigger Svelte reactivity
           kingdom.turnState.actionsPhase.factionsAidedThisTurn = [
             ...kingdom.turnState.actionsPhase.factionsAidedThisTurn,
             factionId
@@ -243,7 +262,6 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
     }
     
     if (ctx.outcome === 'success') {
-      // Check if there are eligible armies
       const armies = ctx.kingdom.armies || [];
       const eligibleArmies = armies.filter((army: any) => {
         if (!army.actorId) return false;
@@ -253,7 +271,6 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
         return equipmentCount < 4;
       });
 
-      // If no eligible armies, grant 1 gold as fallback
       if (eligibleArmies.length === 0) {
         const { createGameCommandsService } = await import('../../services/GameCommandsService');
         const gameCommandsService = await createGameCommandsService();
@@ -262,7 +279,6 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
           { resource: 'gold', value: 1 }
         ], ctx.outcome);
 
-        // Mark faction as having provided aid this turn
         await actor.updateKingdomData((kingdom: any) => {
           if (!kingdom.turnState?.actionsPhase?.factionsAidedThisTurn) {
             if (!kingdom.turnState) kingdom.turnState = { actionsPhase: { factionsAidedThisTurn: [] } };
@@ -272,11 +288,10 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
             }
           }
           if (!kingdom.turnState.actionsPhase.factionsAidedThisTurn.includes(factionId)) {
-            // ✅ Immutable: Reassign array to trigger Svelte reactivity
-          kingdom.turnState.actionsPhase.factionsAidedThisTurn = [
-            ...kingdom.turnState.actionsPhase.factionsAidedThisTurn,
-            factionId
-          ];
+            kingdom.turnState.actionsPhase.factionsAidedThisTurn = [
+              ...kingdom.turnState.actionsPhase.factionsAidedThisTurn,
+              factionId
+            ];
           }
         });
 
@@ -286,10 +301,8 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
         };
       }
 
-      // Outfit army from postApplyInteractions resolution
       const outfitData = ctx.resolution?.['outfit-army'];
       
-      // Handle cancellation gracefully (user cancelled outfit dialog)
       if (!outfitData) {
         return { 
           success: true, 
@@ -298,31 +311,25 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
         };
       }
 
-      // Apply equipment via game command
       const { createGameCommandsResolver } = await import('../../services/GameCommandsResolver');
       const resolver = await createGameCommandsResolver();
       
-      // outfitArmy returns PreparedCommand | ResolveResult
       const result = await resolver.outfitArmy(
         outfitData.armyId,
         outfitData.equipmentType,
-        'success', // outcome
-        false // fallbackToGold
+        'success',
+        false
       );
 
-      // Check if it's a PreparedCommand (has commit function)
       if ('commit' in result && typeof result.commit === 'function') {
-        // It's a PreparedCommand - commit it
         await result.commit();
       } else {
-        // It's a ResolveResult - type narrow and check if it succeeded
         const resolveResult = result as { success: boolean; error?: string };
         if (!resolveResult.success) {
           return { success: false, error: resolveResult.error };
         }
       }
 
-      // Mark faction as having provided aid this turn
       await actor.updateKingdomData((kingdom: any) => {
         if (!kingdom.turnState?.actionsPhase?.factionsAidedThisTurn) {
           if (!kingdom.turnState) kingdom.turnState = { actionsPhase: { factionsAidedThisTurn: [] } };
@@ -332,7 +339,6 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
           }
         }
         if (!kingdom.turnState.actionsPhase.factionsAidedThisTurn.includes(factionId)) {
-          // ✅ Immutable: Reassign array to trigger Svelte reactivity
           kingdom.turnState.actionsPhase.factionsAidedThisTurn = [
             ...kingdom.turnState.actionsPhase.factionsAidedThisTurn,
             factionId
@@ -354,7 +360,6 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
     } 
     
     if (ctx.outcome === 'criticalFailure') {
-      // Worsen attitude by 1 step
       const result = await factionService.adjustAttitude(factionId, -1);
       
       if (result.success) {
@@ -372,4 +377,4 @@ export const requestMilitaryAidPipeline = createActionPipeline('request-military
 
     return { success: true };
   }
-});
+};

@@ -3,8 +3,7 @@ import {
   showCharacterSelectionDialog,
   performKingdomActionRoll
 } from '../../services/pf2e';
-import { actionLoader } from '../actions/pipeline-loader';
-import { eventService } from '../events/event-loader';
+import { pipelineRegistry } from '../../pipelines/PipelineRegistry';
 import { logger } from '../../utils/Logger';
 
 /**
@@ -48,40 +47,21 @@ export async function executeRoll(
   const { getDC, onRollStart, onRollCancel } = config;
 
   // Find the item (action or event)
-  let item: any = null;
-  let outcomes: any = null;
-  let itemName = '';
-
-  if (type === 'action') {
-    item = actionLoader.getAllActions().find(a => a.id === id);
-    if (!item) {
-      logger.error(`[ExecutionHelpers] Action not found: ${id}`);
-      ui.notifications?.error(`Action not found: ${id}`);
-      return;
-    }
-    itemName = item.name;
-    outcomes = {
-      criticalSuccess: item.criticalSuccess,
-      success: item.success,
-      failure: item.failure,
-      criticalFailure: item.criticalFailure
-    };
-  } else {
-    item = eventService.getEventById(id);
-    if (!item) {
-      logger.error(`[ExecutionHelpers] Event not found: ${id}`);
-      ui.notifications?.error(`Event not found: ${id}`);
-      return;
-    }
-    itemName = item.name;
-    // Events use effects structure
-    outcomes = {
-      criticalSuccess: item.outcomes.criticalSuccess,
-      success: item.outcomes.success,
-      failure: item.outcomes.failure,
-      criticalFailure: item.outcomes.criticalFailure
-    };
+  const item = pipelineRegistry.getPipeline(id);
+  if (!item) {
+    const typeName = type.charAt(0).toUpperCase() + type.slice(1);
+    logger.error(`[ExecutionHelpers] ${typeName} not found: ${id}`);
+    ui.notifications?.error(`${typeName} not found: ${id}`);
+    return;
   }
+
+  const itemName = item.name;
+  const outcomes = {
+    criticalSuccess: item.outcomes.criticalSuccess,
+    success: item.outcomes.success,
+    failure: item.outcomes.failure,
+    criticalFailure: item.outcomes.criticalFailure
+  };
 
   // Validate required metadata
   if (type === 'action' && !validateMetadata(id, metadata)) {

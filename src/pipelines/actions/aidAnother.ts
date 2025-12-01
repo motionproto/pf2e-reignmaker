@@ -3,12 +3,11 @@
  * Allows players to aid another character's skill check
  */
 
-import { createActionPipeline } from '../shared/createActionPipeline';
+import type { CheckPipeline } from '../../types/CheckPipeline';
 import { textBadge } from '../../types/OutcomeBadge';
 import { getKingdomActor } from '../../stores/KingdomStore';
 import type { KingdomData } from '../../actors/KingdomActor';
 import { TurnPhase } from '../../actors/KingdomActor';
-import { logger } from '../../utils/Logger';
 
 /**
  * Calculate aid bonus based on outcome and proficiency rank
@@ -17,40 +16,68 @@ function calculateAidBonus(outcome: string, proficiencyRank: number): number {
   if (outcome === 'criticalSuccess') {
     return 4;
   } else if (outcome === 'success') {
-    // Calculate based on proficiency
-    if (proficiencyRank === 0) return 1; // Untrained
-    else if (proficiencyRank <= 2) return 2; // Trained/Expert
-    else if (proficiencyRank === 3) return 3; // Master
-    else return 4; // Legendary
+    if (proficiencyRank === 0) return 1;
+    else if (proficiencyRank <= 2) return 2;
+    else if (proficiencyRank === 3) return 3;
+    else return 4;
   } else if (outcome === 'criticalFailure') {
-    return -1; // PF2e rules: critical failure imposes a -1 penalty
+    return -1;
   }
-  // outcome === 'failure' stays at 0 (no effect)
   return 0;
 }
 
-/**
- * Get aid bonus description for preview
- */
-function getAidBonusDescription(outcome: string, proficiencyRank: number): string {
-  if (outcome === 'criticalSuccess') {
-    return '+4 circumstance bonus and grant keep higher roll';
-  } else if (outcome === 'success') {
-    const bonus = calculateAidBonus(outcome, proficiencyRank);
-    return `+${bonus} circumstance bonus`;
-  } else if (outcome === 'criticalFailure') {
-    return '-1 circumstance penalty to the target';
-  } else {
-    return 'No effect - you can try again with a different skill';
-  }
-}
+export const aidAnotherPipeline: CheckPipeline = {
+  // === BASE DATA ===
+  id: 'aid-another',
+  name: 'Aid Another',
+  description: 'Use your skills to assist another character\'s kingdom check. If you succeed, you grant them a circumstance bonus based on your proficiency. A critical success grants +4 and allows them to keep the higher of two rolls.',
+  brief: 'Help another character with their check',
+  category: 'support',
+  checkType: 'action',
 
-export const aidAnotherPipeline = createActionPipeline('aid-another', {
-  // No cost, always available
+  skills: [
+    { skill: 'agriculture', description: 'farming expertise' },
+    { skill: 'arts', description: 'cultural knowledge' },
+    { skill: 'boating', description: 'maritime skills' },
+    { skill: 'defense', description: 'military tactics' },
+    { skill: 'engineering', description: 'construction knowledge' },
+    { skill: 'exploration', description: 'reconnaissance' },
+    { skill: 'folklore', description: 'local traditions' },
+    { skill: 'industry', description: 'production expertise' },
+    { skill: 'intrigue', description: 'political maneuvering' },
+    { skill: 'magic', description: 'arcane knowledge' },
+    { skill: 'politics', description: 'diplomatic insight' },
+    { skill: 'scholarship', description: 'academic research' },
+    { skill: 'statecraft', description: 'governance wisdom' },
+    { skill: 'trade', description: 'economic acumen' },
+    { skill: 'warfare', description: 'strategic planning' },
+    { skill: 'wilderness', description: 'survival expertise' }
+  ],
+
+  outcomes: {
+    criticalSuccess: {
+      description: 'You provide exceptional aid. The target gains a +4 circumstance bonus and can keep the higher of two d20 rolls.',
+      modifiers: [],
+      manualEffects: ['+4 circumstance bonus to target\'s check', 'Target keeps higher of two rolls']
+    },
+    success: {
+      description: 'You provide helpful aid. The target gains a circumstance bonus based on your proficiency: +1 (untrained), +2 (trained/expert), +3 (master), or +4 (legendary).',
+      modifiers: [],
+      manualEffects: ['Circumstance bonus based on proficiency']
+    },
+    failure: {
+      description: 'Your aid has no effect. You can try again using a different skill.',
+      modifiers: []
+    },
+    criticalFailure: {
+      description: 'Your attempt to aid actually hinders the target, imposing a -1 circumstance penalty to their check.',
+      modifiers: [],
+      manualEffects: ['-1 circumstance penalty to target\'s check']
+    }
+  },
+
+  // === TYPESCRIPT LOGIC ===
   requirements: () => ({ met: true }),
-
-  // DC is always 15 for Aid Another (standard PF2e rule)
-  getDC: () => 15,
 
   preview: {
     calculate: (ctx) => {
@@ -58,26 +85,15 @@ export const aidAnotherPipeline = createActionPipeline('aid-another', {
       const outcomeBadges = [];
 
       if (ctx.outcome === 'criticalSuccess') {
-        outcomeBadges.push(
-          textBadge('+4 circumstance bonus', 'fa-hands-helping', 'positive')
-        );
-        outcomeBadges.push(
-          textBadge('Grant keep higher roll', 'fa-dice-d20', 'positive')
-        );
+        outcomeBadges.push(textBadge('+4 circumstance bonus', 'fa-hands-helping', 'positive'));
+        outcomeBadges.push(textBadge('Grant keep higher roll', 'fa-dice-d20', 'positive'));
       } else if (ctx.outcome === 'success') {
         const bonus = calculateAidBonus(ctx.outcome, proficiencyRank);
-        outcomeBadges.push(
-          textBadge(`+${bonus} circumstance bonus`, 'fa-hands-helping', 'positive')
-        );
+        outcomeBadges.push(textBadge(`+${bonus} circumstance bonus`, 'fa-hands-helping', 'positive'));
       } else if (ctx.outcome === 'failure') {
-        // No badge - no effect but can retry
-        outcomeBadges.push(
-          textBadge('No effect - can try with different skill', 'fa-redo', 'neutral')
-        );
+        outcomeBadges.push(textBadge('No effect - can try with different skill', 'fa-redo', 'neutral'));
       } else if (ctx.outcome === 'criticalFailure') {
-        outcomeBadges.push(
-          textBadge('-1 circumstance penalty', 'fa-exclamation-triangle', 'negative')
-        );
+        outcomeBadges.push(textBadge('-1 circumstance penalty', 'fa-exclamation-triangle', 'negative'));
       }
 
       return { resources: [], outcomeBadges, warnings: [] };
@@ -92,7 +108,6 @@ export const aidAnotherPipeline = createActionPipeline('aid-another', {
       return { success: false, error: 'No kingdom actor available' };
     }
 
-    // Get target information from metadata
     const targetActionId = ctx.metadata.targetActionId;
     const targetActionName = ctx.metadata.targetActionName;
     const skillUsed = ctx.actor?.selectedSkill || 'unknown';
@@ -102,17 +117,13 @@ export const aidAnotherPipeline = createActionPipeline('aid-another', {
       return { success: false, error: 'No target action specified' };
     }
 
-    // Calculate bonus
     const bonus = calculateAidBonus(ctx.outcome, proficiencyRank);
     const grantKeepHigher = ctx.outcome === 'criticalSuccess';
 
-    // Store aid result in turnState.actionsPhase.activeAids (or eventsPhase if applicable)
-    // This ensures the existing PF2eSkillService.getKingdomModifiers continues to work
     if (bonus !== 0) {
       await actor.updateKingdomData((kingdom: KingdomData) => {
         if (!kingdom.turnState) return;
 
-        // Determine which phase based on metadata (default to actionsPhase)
         const checkType = ctx.metadata.checkType || 'action';
         const phaseKey = checkType === 'action' ? 'actionsPhase' : 'eventsPhase';
         
@@ -132,15 +143,8 @@ export const aidAnotherPipeline = createActionPipeline('aid-another', {
           grantKeepHigher,
           timestamp: Date.now()
         });
-        
-        console.log('[Aid Debug] Stored aid result:', {
-          targetActionId,
-          bonus,
-          allActiveAids: kingdom.turnState[phaseKey].activeAids
-        });
       });
 
-      // Track the aid check in the action log
       const { createGameCommandsService } = await import('../../services/GameCommandsService');
       const gameCommandsService = await createGameCommandsService();
       
@@ -160,7 +164,6 @@ export const aidAnotherPipeline = createActionPipeline('aid-another', {
       
       return { success: true, message };
     } else {
-      // Failed aid (no bonus/penalty) - track action but don't store (allows retry)
       const { createGameCommandsService } = await import('../../services/GameCommandsService');
       const gameCommandsService = await createGameCommandsService();
       
@@ -179,5 +182,4 @@ export const aidAnotherPipeline = createActionPipeline('aid-another', {
       };
     }
   }
-});
-
+};

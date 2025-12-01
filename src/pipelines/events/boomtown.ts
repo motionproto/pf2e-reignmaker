@@ -1,11 +1,9 @@
 /**
  * Boomtown Event Pipeline
  *
- * Generated from data/events/boomtown.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const boomtownPipeline: CheckPipeline = {
   id: 'boomtown',
@@ -23,22 +21,26 @@ export const boomtownPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The settlement experiences major growth.',
+      endsEvent: false,
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '2d4', duration: 'immediate' }
       ]
     },
     success: {
       description: 'The settlement expands steadily.',
+      endsEvent: false,
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '1d4', duration: 'immediate' }
       ]
     },
     failure: {
       description: 'The growth stalls.',
+      endsEvent: true,
       modifiers: []
     },
     criticalFailure: {
       description: 'Corruption and greed flourish.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
@@ -46,5 +48,7 @@ export const boomtownPipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["beneficial", "ongoing"],
 };

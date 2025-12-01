@@ -1,16 +1,51 @@
 /**
- * trainArmy Action Pipeline
- * Data from: data/player-actions/train-army.json
+ * Train Army Action Pipeline
+ * Improve unit levels up to party level
  */
 
-import { createActionPipeline } from '../shared/createActionPipeline';
+import type { CheckPipeline } from '../../types/CheckPipeline';
 import { textBadge } from '../../types/OutcomeBadge';
 import { getPartyLevel } from '../shared/ActionHelpers';
 import { trainArmyExecution } from '../../execution/armies/trainArmy';
 
-export const trainArmyPipeline = createActionPipeline('train-army', {
+export const trainArmyPipeline: CheckPipeline = {
+  // === BASE DATA ===
+  id: 'train-army',
+  name: 'Train Army',
+  description: 'Drill your troops in tactics and discipline to improve their combat effectiveness through various training methods',
+  brief: 'Improve unit levels up to party level',
+  category: 'military-operations',
+  checkType: 'action',
+
+  skills: [
+    { skill: 'intimidation', description: 'harsh discipline' },
+    { skill: 'athletics', description: 'physical conditioning' },
+    { skill: 'acrobatics', description: 'agility training' },
+    { skill: 'survival', description: 'endurance exercises' }
+  ],
+
+  outcomes: {
+    criticalSuccess: {
+      description: 'The troops train exceptionally well.',
+      modifiers: [],
+      manualEffects: ['Well trained: +1 to all saving throws']
+    },
+    success: {
+      description: 'The troops train well.',
+      modifiers: []
+    },
+    failure: {
+      description: 'Your army does not improve.',
+      modifiers: []
+    },
+    criticalFailure: {
+      description: 'The training goes poorly.',
+      modifiers: []
+    }
+  },
+
+  // === TYPESCRIPT LOGIC ===
   requirements: (kingdom) => {
-    // Check if there are any armies at all
     if (!kingdom.armies || kingdom.armies.length === 0) {
       return {
         met: false,
@@ -18,11 +53,8 @@ export const trainArmyPipeline = createActionPipeline('train-army', {
       };
     }
     
-    // ✅ FIX: Always recalculate party level from game actors (don't use stale stored value)
-    // This ensures requirements check is always up-to-date even if hook hasn't synced yet
     const partyLevel = getPartyLevel();
     
-    // Check if any army is below party level
     const armiesBelowLevel = kingdom.armies.filter((army: any) => army.level < partyLevel);
     
     if (armiesBelowLevel.length === 0) {
@@ -35,25 +67,17 @@ export const trainArmyPipeline = createActionPipeline('train-army', {
     return { met: true };
   },
 
-  // No pre-roll interactions - army selection happens post-roll
-
   preview: {
     calculate: (ctx) => {
       const partyLevel = getPartyLevel();
       const outcomeBadges = [];
 
       if (ctx.outcome === 'criticalSuccess') {
-        // Badge 1: Train army to party level
         outcomeBadges.push(textBadge(`Train army to party level ${partyLevel}`, 'fa-shield-alt', 'positive'));
-        // Badge 2: Well trained effect
         outcomeBadges.push(textBadge('Well trained: +1 to all saving throws', 'fa-star', 'positive'));
       } else if (ctx.outcome === 'success') {
-        // Train army to party level
         outcomeBadges.push(textBadge(`Train army to party level ${partyLevel}`, 'fa-shield-alt', 'positive'));
-      } else if (ctx.outcome === 'failure') {
-        // No badge - no game effect
       } else if (ctx.outcome === 'criticalFailure') {
-        // Poorly trained effect
         outcomeBadges.push(textBadge('Poorly trained: -1 to all saves', 'fa-exclamation-triangle', 'negative'));
       }
 
@@ -71,7 +95,6 @@ export const trainArmyPipeline = createActionPipeline('train-army', {
         show: true
       },
       onComplete: async (data: any, ctx: any) => {
-        // Store army selection for execute step
         ctx.resolutionData = ctx.resolutionData || {};
         ctx.resolutionData.customComponentData = ctx.resolutionData.customComponentData || {};
         ctx.resolutionData.customComponentData['train-army-resolution'] = data;
@@ -80,10 +103,8 @@ export const trainArmyPipeline = createActionPipeline('train-army', {
   ],
 
   execute: async (ctx: any) => {
-    // Get army selection from postApplyInteractions resolution
     const trainData = ctx.resolutionData?.customComponentData?.['train-army-resolution'];
     
-    // Handle cancellation gracefully (user cancelled selection)
     if (!trainData) {
       return { 
         success: true, 
@@ -95,7 +116,6 @@ export const trainArmyPipeline = createActionPipeline('train-army', {
     const armyId = trainData.armyId;
     const armyName = trainData.armyName;
 
-    // Validate selection
     if (!armyId) {
       return { success: false, error: 'No army selected' };
     }
@@ -109,4 +129,4 @@ export const trainArmyPipeline = createActionPipeline('train-army', {
       return { success: true, message: `Successfully trained ${armyName || 'army'} to level ${partyLevel}` };
     }
   }
-});
+};

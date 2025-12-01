@@ -16,7 +16,7 @@ interface DefaultFactionData {
 
 /**
  * Load default factions from compiled data
- * Uses ES module import for proper HMR support (matches pattern in event-loader.ts, action-loader.ts, etc.)
+ * Uses ES module import for proper HMR support
  */
 export async function loadDefaultFactions(): Promise<Faction[]> {
   try {

@@ -1,9 +1,9 @@
 /**
- * repairStructure Action Pipeline
- * Data from: data/player-actions/repair-structure.json
+ * Repair Structure Action Pipeline
+ * Fix damaged buildings to restore functionality
  */
 
-import { createActionPipeline } from '../shared/createActionPipeline';
+import type { CheckPipeline } from '../../types/CheckPipeline';
 import { updateKingdom } from '../../stores/KingdomStore';
 import { settlementStructureManagement } from '../../services/structures/management';
 import { structuresService } from '../../services/structures';
@@ -12,9 +12,44 @@ import { textBadge } from '../../types/OutcomeBadge';
 import { createGameCommandsService } from '../../services/GameCommandsService';
 import type { ResourceType } from '../../types/modifiers';
 
-export const repairStructurePipeline = createActionPipeline('repair-structure', {
+export const repairStructurePipeline: CheckPipeline = {
+  // === BASE DATA ===
+  id: 'repair-structure',
+  name: 'Repair Structure',
+  description: 'Repair damaged structures within a settlement to restore its capabilities. You must select a structure first, then perform the skill check. Only the lowest tier damaged structure per category can be repaired.',
+  brief: 'Fix damaged buildings to restore functionality',
+  category: 'urban-planning',
+  checkType: 'action',
+
+  skills: [
+    { skill: 'crafting', description: 'construction expertise' },
+    { skill: 'society', description: 'organize workforce' },
+    { skill: 'athletics', description: 'physical labor' }
+  ],
+
+  outcomes: {
+    criticalSuccess: {
+      description: 'Structure repaired for free.',
+      modifiers: []
+    },
+    success: {
+      description: 'Structure repaired.',
+      modifiers: []
+    },
+    failure: {
+      description: 'Structure remains damaged.',
+      modifiers: []
+    },
+    criticalFailure: {
+      description: 'Time and money wasted.',
+      modifiers: [
+        { type: 'static', resource: 'gold', value: -1, duration: 'immediate' }
+      ]
+    }
+  },
+
+  // === TYPESCRIPT LOGIC ===
   requirements: (kingdom) => {
-    // Check if any settlement has damaged structures
     const hasDamagedStructures = kingdom.settlements?.some(s => 
       s.structureConditions && 
       Object.values(s.structureConditions).some(condition => condition === 'damaged')
@@ -39,7 +74,6 @@ export const repairStructurePipeline = createActionPipeline('repair-structure', 
         show: true
       },
       onComplete: async (data: any, ctx: any) => {
-        // Store structure details in metadata for preview/execute
         ctx.metadata = ctx.metadata || {};
         ctx.metadata.structureId = data.structureId;
         ctx.metadata.settlementId = data.settlementId;
@@ -67,7 +101,6 @@ export const repairStructurePipeline = createActionPipeline('repair-structure', 
         outcomeBadges.push(
           textBadge(`The ${structureName} is repaired.`, 'positive')
         );
-        // Cost shown in custom component (dice or half cost) - not predictable
       } else if (ctx.outcome === 'criticalSuccess') {
         outcomeBadges.push(
           textBadge(`Citizens volunteer their time and materials. The ${structureName} is repaired for free!`, 'positive')
@@ -78,8 +111,6 @@ export const repairStructurePipeline = createActionPipeline('repair-structure', 
     }
   },
 
-  // Custom component for success (cost choice)
-  // MOVED: From postApplyInteractions to postRollInteractions so it displays inline in OutcomeDisplay
   postRollInteractions: [
     {
       id: 'repairCost',
@@ -99,9 +130,7 @@ export const repairStructurePipeline = createActionPipeline('repair-structure', 
       throw new Error('Missing structure or settlement ID');
     }
 
-    // Handle cost based on outcome
     if (ctx.outcome === 'criticalFailure') {
-      // Critical failure: lose 1 gold, structure remains damaged
       const gameCommandsService = await createGameCommandsService();
       await gameCommandsService.applyOutcome({
         type: 'action',
@@ -123,21 +152,17 @@ export const repairStructurePipeline = createActionPipeline('repair-structure', 
     }
 
     if (ctx.outcome === 'failure') {
-      // Failure: structure remains damaged, no cost
       return {
         success: true,
         message: `Despite your efforts, the ${structureName} remains damaged.`
       };
     }
 
-    // Success or Critical Success: repair the structure
     let isFree = false;
 
     if (ctx.outcome === 'criticalSuccess') {
-      // Critical success: free repair
       isFree = true;
     } else if (ctx.outcome === 'success') {
-      // Success: get cost from custom component
       const costData = ctx.resolutionData?.customComponentData?.['repairCost'];
       
       if (!costData || !costData.cost) {
@@ -146,14 +171,12 @@ export const repairStructurePipeline = createActionPipeline('repair-structure', 
 
       const cost = costData.cost as Record<string, number>;
 
-      // ✅ Use GameCommandsService.applyOutcome for proper shortfall tracking
-      // This handles debt (negative resources) and automatic unrest penalties
       const modifiers = Object.entries(cost)
         .filter(([_, amount]) => amount !== undefined && amount > 0)
         .map(([resource, amount]) => ({
           type: 'static' as const,
           resource: resource as ResourceType,
-          value: -(amount as number),  // Negative to deduct
+          value: -(amount as number),
           duration: 'immediate' as const
         }));
 
@@ -169,21 +192,14 @@ export const repairStructurePipeline = createActionPipeline('repair-structure', 
       if (!result.success) {
         throw new Error(`Failed to apply repair costs: ${result.error}`);
       }
-
-      // Note: Shortfalls are automatically handled by applyOutcome:
-      // - Resources go negative (debt)
-      // - +1 unrest per resource type you can't afford
-      // - Structure is still repaired (repair happens even if you can't afford it)
     }
 
-    // Repair the structure (update condition to GOOD)
     await settlementStructureManagement.updateStructureCondition(
       structureId,
       settlementId,
       StructureCondition.GOOD
     );
 
-    // Return appropriate message
     if (isFree) {
       return {
         success: true,
@@ -196,4 +212,4 @@ export const repairStructurePipeline = createActionPipeline('repair-structure', 
       };
     }
   }
-});
+};

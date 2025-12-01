@@ -1,7 +1,6 @@
 /**
  * Settlement Collapse Incident Pipeline
  *
- * Generated from data/incidents/major/settlement-collapse.json
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';

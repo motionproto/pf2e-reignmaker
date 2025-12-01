@@ -1,11 +1,9 @@
 /**
  * Good Weather Event Pipeline
  *
- * Generated from data/events/good-weather.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const goodWeatherPipeline: CheckPipeline = {
   id: 'good-weather',
@@ -23,6 +21,7 @@ export const goodWeatherPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The perfect weather holds.',
+      endsEvent: false,
       modifiers: [
         { type: 'dice', resource: 'food', formula: '1d4', duration: 'immediate' },
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' },
@@ -30,16 +29,19 @@ export const goodWeatherPipeline: CheckPipeline = {
     },
     success: {
       description: 'The good weather continues.',
+      endsEvent: false,
       modifiers: [
         { type: 'dice', resource: 'food', formula: '1d4', duration: 'immediate' }
       ]
     },
     failure: {
       description: 'The weather changes.',
+      endsEvent: true,
       modifiers: []
     },
     criticalFailure: {
       description: 'The weather turns bad.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
@@ -47,5 +49,7 @@ export const goodWeatherPipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["beneficial", "ongoing"],
 };

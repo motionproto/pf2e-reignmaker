@@ -1,16 +1,51 @@
 /**
- * deployArmy Action Pipeline
- * Data from: data/player-actions/deploy-army.json
+ * Deploy Army Action Pipeline
+ * Move troops to strategic positions
  */
 
-import { createActionPipeline } from '../shared/createActionPipeline';
+import type { CheckPipeline } from '../../types/CheckPipeline';
 import { textBadge } from '../../types/OutcomeBadge';
 import { PLAYER_KINGDOM } from '../../types/ownership';
 
-// Store reference for execute function
-const pipeline = createActionPipeline('deploy-army', {
+export const deployArmyPipeline: CheckPipeline = {
+  // === BASE DATA ===
+  id: 'deploy-army',
+  name: 'Deploy Army',
+  description: 'Mobilize and maneuver your military forces across the kingdom\'s territory using various navigation methods',
+  brief: 'Move troops to strategic positions',
+  category: 'military-operations',
+  checkType: 'action',
+
+  skills: [
+    { skill: 'nature', description: 'natural pathways' },
+    { skill: 'survival', description: 'wilderness navigation' },
+    { skill: 'athletics', description: 'forced march' },
+    { skill: 'stealth', description: 'covert movement' }
+  ],
+
+  outcomes: {
+    criticalSuccess: {
+      description: 'Your forces move swiftly into position, confident in their victory.',
+      modifiers: []
+    },
+    success: {
+      description: 'A steady march. Your forces arrive at their destination ready for action.',
+      modifiers: []
+    },
+    failure: {
+      description: 'Your troops arrive tired and less prepared for combat.',
+      modifiers: []
+    },
+    criticalFailure: {
+      description: 'Your forces get lost and arrive demoralized and exhausted.',
+      modifiers: [
+        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
+      ]
+    }
+  },
+
+  // === TYPESCRIPT LOGIC ===
   requirements: (kingdom) => {
-    // Filter to only player-led armies (exclude other factions' armies)
     const playerArmies = (kingdom.armies || []).filter((army: any) => army.ledBy === PLAYER_KINGDOM);
     
     if (playerArmies.length === 0) {
@@ -20,16 +55,13 @@ const pipeline = createActionPipeline('deploy-army', {
       };
     }
     
-    // Get list of armies that have already been deployed this turn
     const deployedArmyIds = kingdom.turnState?.actionsPhase?.deployedArmyIds || [];
     
-    // Find at least one player army that hasn't been deployed this turn AND has an actor
     const availableArmies = playerArmies.filter((army: any) => 
       !deployedArmyIds.includes(army.id) && army.actorId
     );
     
     if (availableArmies.length === 0) {
-      // Check if it's because all player armies moved, or because armies are missing actors
       const playerArmiesWithoutActors = playerArmies.filter((army: any) => !army.actorId);
       
       if (deployedArmyIds.length >= playerArmies.length) {
@@ -75,7 +107,6 @@ const pipeline = createActionPipeline('deploy-army', {
         textBadge(`Will deploy ${armyName} to ${finalHex}`, 'fa-flag', 'positive')
       ];
 
-      // Add specific condition badges based on outcome
       if (ctx.outcome === 'criticalSuccess') {
         outcomeBadges.push(
           textBadge('+1 initiative (status bonus)', 'fa-bolt', 'positive'),
@@ -100,8 +131,6 @@ const pipeline = createActionPipeline('deploy-army', {
   },
 
   execute: async (ctx: any) => {
-    // Modifiers (unrest changes) applied automatically by execute-first pattern
-    
     const conditionsToApply = ctx.outcome === 'criticalSuccess' ?
       ['+1 initiative (status bonus)', '+1 saving throws (status bonus)', '+1 attack (status bonus)'] :
       ctx.outcome === 'failure' ?
@@ -110,17 +139,14 @@ const pipeline = createActionPipeline('deploy-army', {
       ['-2 initiative (status penalty)', 'enfeebled 1', 'fatigued'] :
       [];
 
-    // Get deployment data from metadata
     const deployment = ctx.metadata.deployment || {};
     const armyId = deployment.armyId || ctx.metadata.armyId;
     const path = deployment.path || ctx.metadata.path || [];
     
-    // Path must have at least 2 hexes (start and end)
     if (!armyId || !path || path.length < 2) {
       return { success: false, error: 'Missing army or path data (path must have at least 2 hexes)' };
     }
     
-    // Use execution function directly (deployArmyExecution handles everything)
     const { deployArmyExecution } = await import('../../execution/armies/deployArmy');
     
     await deployArmyExecution({
@@ -132,6 +158,4 @@ const pipeline = createActionPipeline('deploy-army', {
     
     return { success: true, message: 'Army deployed' };
   }
-});
-
-export const deployArmyPipeline = pipeline;
+};

@@ -1,11 +1,9 @@
 /**
  * Bandit Activity Event Pipeline
  *
- * Generated from data/events/bandit-activity.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const banditActivityPipeline: CheckPipeline = {
   id: 'bandit-activity',
@@ -23,6 +21,7 @@ export const banditActivityPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The bandits are captured and reformed.',
+      endsEvent: true,
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '1d4', duration: 'immediate' },
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' },
@@ -30,10 +29,12 @@ export const banditActivityPipeline: CheckPipeline = {
     },
     success: {
       description: 'The bandits flee into the wilderness.',
+      endsEvent: true,
       modifiers: []
     },
     failure: {
       description: 'The bandits evade capture.',
+      endsEvent: false,
       modifiers: [
         { type: 'static', resource: 'gold', value: -1, duration: 'immediate' },
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
@@ -41,6 +42,7 @@ export const banditActivityPipeline: CheckPipeline = {
     },
     criticalFailure: {
       description: 'The bandits grow bolder.',
+      endsEvent: false,
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '1d4', negative: true, duration: 'immediate' },
         { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' },
@@ -49,5 +51,7 @@ export const banditActivityPipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["dangerous", "ongoing"],
 };

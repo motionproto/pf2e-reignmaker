@@ -1,7 +1,6 @@
 /**
  * Noble Conspiracy Incident Pipeline
  *
- * Generated from data/incidents/major/noble-conspiracy.json
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
@@ -11,7 +10,7 @@ export const nobleConspiracyPipeline: CheckPipeline = {
   name: 'Noble Conspiracy',
   description: 'Nobles plot to overthrow the kingdom\'s leadership',
   checkType: 'incident',
-  tier: 'major',
+  tier: 3,
 
   skills: [
       { skill: 'stealth', description: 'uncover plot' },
@@ -33,16 +32,23 @@ export const nobleConspiracyPipeline: CheckPipeline = {
       ]
     },
     criticalFailure: {
-      description: 'The conspiracy strikes a devastating blow.',
+      description: 'The conspiracy strikes and a leader is compromised.',
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '2d4', negative: true, duration: 'immediate' },
         { type: 'static', resource: 'fame', value: -1, duration: 'immediate' },
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
       ],
-      manualEffects: ["Choose or roll for one random PC leader. That PC loses their kingdom action this turn (they are dealing with the conspiracy)"]
+      gameCommands: [
+        {
+          type: 'spendPlayerAction',
+          characterSelection: 'random'
+        }
+      ]
     },
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined
+  preview: undefined,
+
+  traits: ["dangerous"],
 };

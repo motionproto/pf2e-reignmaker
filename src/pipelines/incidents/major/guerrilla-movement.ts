@@ -1,7 +1,6 @@
 /**
  * Guerrilla Movement Incident Pipeline
  *
- * Generated from data/incidents/major/guerrilla-movement.json
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
@@ -38,5 +37,7 @@ export const guerrillaMovementPipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined
+  preview: undefined,
+
+  traits: ["dangerous"],
 };

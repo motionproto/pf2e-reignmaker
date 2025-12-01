@@ -1,7 +1,6 @@
 /**
  * Secession Crisis Incident Pipeline
  *
- * Generated from data/incidents/major/secession-crisis.json
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
@@ -42,5 +41,7 @@ export const secessionCrisisPipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined
+  preview: undefined,
+
+  traits: ["dangerous"],
 };

@@ -1,11 +1,9 @@
 /**
  * Monster Attack Event Pipeline
  *
- * Generated from data/events/monster-attack.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const monsterAttackPipeline: CheckPipeline = {
   id: 'monster-attack',
@@ -23,6 +21,7 @@ export const monsterAttackPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The monster is defeated.',
+      endsEvent: true,
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '1d4', duration: 'immediate' },
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' },
@@ -30,16 +29,19 @@ export const monsterAttackPipeline: CheckPipeline = {
     },
     success: {
       description: 'The monster is driven away.',
+      endsEvent: true,
       modifiers: []
     },
     failure: {
       description: 'The monster causes damage.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
     },
     criticalFailure: {
       description: 'The monster rampages.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
       ]
@@ -47,5 +49,7 @@ export const monsterAttackPipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["dangerous"],
 };

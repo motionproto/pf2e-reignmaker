@@ -1,11 +1,9 @@
 /**
  * Grand Tournament Event Pipeline
  *
- * Generated from data/events/grand-tournament.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const grandTournamentPipeline: CheckPipeline = {
   id: 'grand-tournament',
@@ -23,6 +21,7 @@ export const grandTournamentPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The tournament is a spectacular success.',
+      endsEvent: true,
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '1d4', duration: 'immediate' },
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' },
@@ -31,16 +30,19 @@ export const grandTournamentPipeline: CheckPipeline = {
     },
     success: {
       description: 'The tournament goes well.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
       ]
     },
     failure: {
       description: 'The turnout is disappointing.',
+      endsEvent: false,
       modifiers: []
     },
     criticalFailure: {
       description: 'An accident mars the event.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
@@ -48,5 +50,7 @@ export const grandTournamentPipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["beneficial"],
 };

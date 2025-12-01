@@ -754,8 +754,8 @@ export class ArmyDeploymentPanel {
    */
   private async getDeployActionData(): Promise<any> {
     try {
-      const { actionLoader } = await import('../../controllers/actions/pipeline-loader');
-      const action = actionLoader.getAllActions().find(a => a.id === 'deploy-army');
+      const { pipelineRegistry } = await import('../../pipelines/PipelineRegistry');
+      const action = pipelineRegistry.getPipeline('deploy-army');
       return action;
     } catch (error) {
       logger.error('[ArmyDeploymentPanel] Failed to load action data:', error);

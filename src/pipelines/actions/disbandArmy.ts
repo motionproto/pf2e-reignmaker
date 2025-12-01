@@ -1,17 +1,56 @@
 /**
- * disbandArmy Action Pipeline
- * Data from: data/player-actions/disband-army.json
+ * Disband Army Action Pipeline
+ * Decommission troops and return soldiers home
  */
 
-import { createActionPipeline } from '../shared/createActionPipeline';
+import type { CheckPipeline } from '../../types/CheckPipeline';
 import { textBadge } from '../../types/OutcomeBadge';
 import { disbandArmyExecution } from '../../execution/armies/disbandArmy';
 import { PLAYER_KINGDOM } from '../../types/ownership';
 
-// Store reference for execute function
-const disbandArmyPipelineInternal = createActionPipeline('disband-army', {
+export const disbandArmyPipeline: CheckPipeline = {
+  // === BASE DATA ===
+  id: 'disband-army',
+  name: 'Disband Army',
+  description: 'Release military units from service, returning soldiers to civilian life',
+  brief: 'Decommission troops and return soldiers home',
+  category: 'military-operations',
+  checkType: 'action',
+
+  skills: [
+    { skill: 'intimidation', description: 'stern dismissal' },
+    { skill: 'diplomacy', description: 'honorable discharge' },
+    { skill: 'society', description: 'reintegration programs' },
+    { skill: 'performance', description: 'farewell ceremony' }
+  ],
+
+  outcomes: {
+    criticalSuccess: {
+      description: 'The people welcome them home with honor.',
+      modifiers: [
+        { type: 'static', resource: 'unrest', value: -2, duration: 'immediate' }
+      ]
+    },
+    success: {
+      description: 'The army is disbanded smoothly.',
+      modifiers: [
+        { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
+      ]
+    },
+    failure: {
+      description: 'The army is disbanded.',
+      modifiers: []
+    },
+    criticalFailure: {
+      description: 'The disbandment causes unrest.',
+      modifiers: [
+        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
+      ]
+    }
+  },
+
+  // === TYPESCRIPT LOGIC ===
   requirements: (kingdom) => {
-    // Filter to only player-led armies
     const playerArmies = kingdom.armies.filter((army: any) => army.ledBy === PLAYER_KINGDOM);
     
     if (playerArmies.length === 0) {
@@ -22,8 +61,6 @@ const disbandArmyPipelineInternal = createActionPipeline('disband-army', {
     }
     return { met: true };
   },
-
-  // No pre-roll interactions - army selection happens post-roll
 
   preview: {
     calculate: (ctx) => {
@@ -45,13 +82,12 @@ const disbandArmyPipelineInternal = createActionPipeline('disband-army', {
     {
       type: 'configuration',
       id: 'disband-army-resolution',
-      condition: () => true, // Always show for all outcomes
+      condition: () => true,
       component: 'DisbandArmyResolution',
       componentProps: {
         show: true
       },
       onComplete: async (data: any, ctx: any) => {
-        // Store army selection and deleteActor choice for execute step
         ctx.resolutionData = ctx.resolutionData || {};
         ctx.resolutionData.customComponentData = ctx.resolutionData.customComponentData || {};
         ctx.resolutionData.customComponentData['disband-army-resolution'] = data;
@@ -60,10 +96,8 @@ const disbandArmyPipelineInternal = createActionPipeline('disband-army', {
   ],
 
   execute: async (ctx: any) => {
-    // Get army selection and deleteActor choice from postApplyInteractions resolution
     const disbandData = ctx.resolutionData?.customComponentData?.['disband-army-resolution'];
     
-    // Handle cancellation gracefully (user cancelled selection)
     if (!disbandData) {
       return { 
         success: true, 
@@ -76,17 +110,11 @@ const disbandArmyPipelineInternal = createActionPipeline('disband-army', {
     const armyName = disbandData.armyName;
     const deleteActor = disbandData.deleteActor ?? true;
 
-    // Validate selection
     if (!armyId) {
       return { success: false, error: 'No army selected' };
     }
 
-    // Modifiers (unrest changes) applied automatically by execute-first pattern
-
-    // Disband the army
     await disbandArmyExecution(armyId, deleteActor);
     return { success: true, message: `Successfully disbanded ${armyName || 'army'}` };
   }
-});
-
-export const disbandArmyPipeline = disbandArmyPipelineInternal;
+};

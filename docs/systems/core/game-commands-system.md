@@ -71,6 +71,9 @@ The system provides 25+ typed command interfaces organized by function:
 - `executePrisoners` - Remove imprisoned unrest (harsh)
 - `pardonPrisoners` - Remove imprisoned unrest (merciful)
 
+### Character Action Management
+- `spendPlayerAction` - Mark character as having already acted without taking action
+
 ### Support & Bonuses
 - `aidBonus` - Grant circumstance bonus to ally
 - `grantReroll` - Allow check reroll
@@ -880,6 +883,126 @@ Hostile → Unfriendly → Indifferent → Friendly → Helpful
 5. **FactionService** adjusts attitude with constraints
 6. **Chat Message** displays: "Relations with [Faction] improved: Unfriendly → Indifferent"
 7. **KingdomStore** updates reactively
+
+---
+
+## Spend Player Action
+
+**Command:** `spendPlayerAction`  
+**Location:** `src/services/gameCommands/handlers/SpendPlayerActionHandler.ts`  
+**Status:** ✅ Fully Implemented (2025-12-01)
+
+### Overview
+
+Marks a character as having already acted without performing an action. Used by incidents that cause characters to lose their action for the turn (e.g., assassination attempt, noble conspiracy). This prevents the affected character from taking their normal Kingdom Action during the current turn.
+
+### Command Structure
+
+```typescript
+interface SpendPlayerActionCommand {
+  type: 'spendPlayerAction';
+  characterSelection: 'random' | 'player-choice';  // How to select character
+  characterId?: string;  // Optional pre-selected character ID
+}
+```
+
+### Features
+
+- ✅ **Random Selection**: Automatically selects a random player who hasn't acted yet
+- ✅ **Action Log Tracking**: Adds entry to turnState.actionLog to mark character as having acted
+- ✅ **Validation**: Only selects from players who haven't already acted this turn
+- ✅ **Turn Boundary**: Automatically clears at turn end (via turnState reset)
+- ✅ **Chat Integration**: Displays affected character in chat message
+- ✅ **UI Integration**: Shows as "acted" in player action tracker
+
+### How It Works
+
+1. **Selection Phase**: Handler identifies all players who haven't acted yet this turn
+2. **Random Selection**: Randomly picks one player/character from eligible list
+3. **Action Log Entry**: Adds special entry to `turnState.actionLog` with `actionName: 'spent-action-incident'`
+4. **UI Update**: Player action tracker shows character as having acted
+5. **Prevention**: Character cannot perform Kingdom Actions for remainder of turn
+6. **Cleanup**: Entry is automatically removed at turn end
+
+### Action Log Entry
+
+```typescript
+{
+  playerId: 'user-id',
+  playerName: 'Player Name',
+  characterName: 'Character Name',
+  actionName: 'spent-action-incident',  // Special marker
+  phase: 'unrest',  // Current phase when applied
+  timestamp: Date.now()
+}
+```
+
+### JSON Examples
+
+**Assassination Attempt (Critical Failure):**
+```json
+{
+  "gameCommands": [
+    {
+      "type": "spendPlayerAction",
+      "characterSelection": "random"
+    }
+  ]
+}
+```
+
+**Pre-selected Character (future use):**
+```json
+{
+  "gameCommands": [
+    {
+      "type": "spendPlayerAction",
+      "characterSelection": "player-choice",
+      "characterId": "actor-id-here"
+    }
+  ]
+}
+```
+
+### Implementation Details
+
+**Handler:** `src/services/gameCommands/handlers/SpendPlayerActionHandler.ts`
+- Extends `BaseGameCommandHandler`
+- Uses prepare/commit pattern
+- Validates player availability before commit
+
+**Integration Points:**
+- `turnState.actionLog` - Tracks all character actions
+- `PlayerActionTracker.svelte` - Displays action status
+- `BaseCheckCard.svelte` - Checks if player has acted (via `hasPlayerActed` computed)
+
+**Edge Cases Handled:**
+- No players available → Shows neutral message, no-op commit
+- All players already acted → Shows neutral message, no-op commit
+- Player has no assigned character → Falls back to player name
+
+### Usage Pattern
+
+1. **Incident triggers** with spendPlayerAction command
+2. **UnrestPhaseController** executes gameCommands array via PipelineCoordinator
+3. **GameCommandHandlerRegistry** routes to SpendPlayerActionHandler
+4. **Handler prepares** preview badge showing affected character
+5. **User clicks** "Apply Result"
+6. **Commit executes**: Adds actionLog entry
+7. **UI updates**: Character shows as having acted
+8. **Turn continues**: Character cannot take normal action
+
+### Testing Checklist
+
+- ✅ Command type definition added to `game-commands.ts`
+- ✅ Handler created and registered
+- ✅ Incident pipelines updated (assassination-attempt, noble-conspiracy)
+- ⏳ In-game testing needed:
+  - Verify character is marked as having acted
+  - Verify character cannot take another action
+  - Verify clears at turn boundary
+  - Verify chat message displays correctly
+  - Verify works with multiple players
 
 ---
 

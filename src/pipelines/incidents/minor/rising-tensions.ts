@@ -1,7 +1,6 @@
 /**
  * Rising Tensions Incident Pipeline
  *
- * Generated from data/incidents/minor/rising-tensions.json
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
@@ -40,7 +39,8 @@ export const risingTensionsPipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined
+  preview: undefined,
 
+  traits: ["dangerous"],
   // ✅ REMOVED: No longer needed - UnifiedCheckHandler handles modifiers automatically
 };

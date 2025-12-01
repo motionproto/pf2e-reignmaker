@@ -1,11 +1,9 @@
 /**
  * Feud Event Pipeline
  *
- * Generated from data/events/feud.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const feudPipeline: CheckPipeline = {
   id: 'feud',
@@ -23,6 +21,7 @@ export const feudPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The families become allies.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: -2, duration: 'immediate' },
         { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
@@ -30,18 +29,21 @@ export const feudPipeline: CheckPipeline = {
     },
     success: {
       description: 'The feud is resolved.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
       ]
     },
     failure: {
       description: 'The feud escalates.',
+      endsEvent: false,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
       ]
     },
     criticalFailure: {
       description: 'Violence erupts in the streets.',
+      endsEvent: false,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 3, duration: 'immediate' },
         { type: 'static', resource: 'gold', value: -1, duration: 'immediate' },
@@ -50,5 +52,7 @@ export const feudPipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["dangerous", "ongoing"],
 };

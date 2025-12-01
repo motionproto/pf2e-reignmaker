@@ -672,7 +672,10 @@ export class PipelineCoordinator {
     const modifiers = outcomeData?.modifiers || [];
     const modifierBadges = convertModifiersToBadges(modifiers, ctx.metadata);
     
-    log(ctx, 5, 'calculatePreview', `Converted ${modifiers.length} JSON modifiers to ${modifierBadges.length} badges`);
+    // ✅ STEP 5A.1: Extract static outcomeBadges from pipeline outcomes
+    const staticBadges = outcomeData?.outcomeBadges || [];
+    
+    log(ctx, 5, 'calculatePreview', `Converted ${modifiers.length} JSON modifiers to ${modifierBadges.length} badges, found ${staticBadges.length} static badges`);
     
     // ✅ STEP 5B: Call custom preview.calculate if defined (OPTIONAL)
     let customPreview: any = { resources: [], outcomeBadges: [] };
@@ -694,11 +697,12 @@ export class PipelineCoordinator {
       log(ctx, 5, 'calculatePreview', `Custom preview returned ${customPreview.outcomeBadges?.length || 0} additional badges`);
     }
     
-    // ✅ STEP 5C: Merge JSON badges + custom badges - no specialEffects conversion
+    // ✅ STEP 5C: Merge static badges + JSON badges + custom badges
     const preview = {
       resources: customPreview.resources || [],
       outcomeBadges: [
-        ...modifierBadges,  // From JSON
+        ...staticBadges,  // From outcomes.outcomeBadges (NEW!)
+        ...modifierBadges,  // From JSON modifiers
         ...(customPreview.outcomeBadges || [])  // From custom preview
       ]
     };

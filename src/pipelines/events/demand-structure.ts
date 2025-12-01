@@ -1,11 +1,9 @@
 /**
  * Demand Structure Event Pipeline
  *
- * Generated from data/events/demand-structure.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const demandStructurePipeline: CheckPipeline = {
   id: 'demand-structure',
@@ -23,22 +21,26 @@ export const demandStructurePipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The citizens are convinced.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
       ]
     },
     success: {
       description: 'The demands are satisfied.',
+      endsEvent: true,
       modifiers: []
     },
     failure: {
       description: 'The protests continue.',
+      endsEvent: false,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
     },
     criticalFailure: {
       description: 'Violence erupts.',
+      endsEvent: false,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
       ]
@@ -46,5 +48,7 @@ export const demandStructurePipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["dangerous", "ongoing"],
 };

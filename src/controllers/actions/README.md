@@ -8,11 +8,11 @@ This is the "game engine" layer for actions - it provides the plumbing that make
 
 ## What Lives Here
 
-- **action-loader.ts** - Loads action definitions from pipelines
-- **action-resolver.ts** - Executes actions through the pipeline coordinator
-- **action-types.ts** - Shared type definitions
 - **game-commands.ts** - Game command utilities
+- **pipeline-types.ts** - Shared type definitions
 - **shared-requirements.ts** - Common requirement checks
+
+All action definitions now live in `src/pipelines/actions/` and are accessed via `PipelineRegistry`.
 
 ## What Does NOT Live Here
 

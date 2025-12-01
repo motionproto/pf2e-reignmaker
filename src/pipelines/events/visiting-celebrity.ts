@@ -1,11 +1,9 @@
 /**
  * Visiting Celebrity Event Pipeline
  *
- * Generated from data/events/visiting-celebrity.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const visitingCelebrityPipeline: CheckPipeline = {
   id: 'visiting-celebrity',
@@ -23,6 +21,7 @@ export const visitingCelebrityPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The visit is spectacular.',
+      endsEvent: true,
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '1d4', duration: 'immediate' },
         { type: 'static', resource: 'unrest', value: -2, duration: 'immediate' },
@@ -30,16 +29,19 @@ export const visitingCelebrityPipeline: CheckPipeline = {
     },
     success: {
       description: 'The visit is pleasant.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
       ]
     },
     failure: {
       description: 'The visit is mediocre.',
+      endsEvent: false,
       modifiers: []
     },
     criticalFailure: {
       description: 'The celebrity is offended.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
@@ -47,5 +49,7 @@ export const visitingCelebrityPipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["beneficial"],
 };

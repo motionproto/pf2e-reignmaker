@@ -20,6 +20,7 @@ import {
 import { TurnPhase } from '../actors/KingdomActor';
 import { UpkeepPhaseSteps } from './shared/PhaseStepConstants';
 import { logger } from '../utils/Logger';
+import { getFortificationTier } from '../data/fortificationTiers';
 
 export async function createUpkeepPhaseController() {
   return {
@@ -277,7 +278,6 @@ export async function createUpkeepPhaseController() {
       
       // Calculate fortification maintenance costs
       // Skip maintenance for fortifications built/upgraded this turn
-      const fortificationData = await import('../../data/player-actions/fortify-hex.json');
       const currentTurn = kingdom.currentTurn;
       let totalFortificationCost = 0;
       const fortificationDetails: Array<{hexId: string, tier: number, cost: number}> = [];
@@ -292,8 +292,8 @@ export async function createUpkeepPhaseController() {
             continue;
           }
           
-          const tierConfig = fortificationData.tiers[hex.fortification.tier - 1];
-          const cost = tierConfig.maintenance || 0;
+          const tierConfig = getFortificationTier(hex.fortification.tier);
+          const cost = tierConfig?.maintenance || 0;
           totalFortificationCost += cost;
           if (cost > 0) {
             fortificationDetails.push({
@@ -562,7 +562,6 @@ export async function createUpkeepPhaseController() {
       const armyFoodShortage = Math.max(0, consumption.armyFood - foodRemainingForArmies);
       
       // Calculate fortification maintenance costs (skip fortifications built this turn)
-      const fortificationData = await import('../../data/player-actions/fortify-hex.json');
       const currentTurn = kingdomData.currentTurn;
       let totalFortificationCost = 0;
       let fortificationCount = 0;
@@ -578,8 +577,8 @@ export async function createUpkeepPhaseController() {
           // This matches the logic in startPhase() for step auto-completion
           fortificationCount++;
           
-          const tierConfig = fortificationData.tiers[hex.fortification.tier - 1];
-          const cost = tierConfig.maintenance || 0;
+          const tierConfig = getFortificationTier(hex.fortification.tier);
+          const cost = tierConfig?.maintenance || 0;
           totalFortificationCost += cost;
         }
       }

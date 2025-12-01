@@ -1,11 +1,9 @@
 /**
  * Inquisition Event Pipeline
  *
- * Generated from data/events/inquisition.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const inquisitionPipeline: CheckPipeline = {
   id: 'inquisition',
@@ -23,22 +21,26 @@ export const inquisitionPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The situation is peacefully resolved.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
       ]
     },
     success: {
       description: 'The zealots are dispersed.',
+      endsEvent: true,
       modifiers: []
     },
     failure: {
       description: 'The persecution spreads.',
+      endsEvent: false,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
       ]
     },
     criticalFailure: {
       description: 'Violence erupts.',
+      endsEvent: false,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
       ]
@@ -46,5 +48,7 @@ export const inquisitionPipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["dangerous", "ongoing"],
 };

@@ -1,7 +1,6 @@
 /**
  * International Crisis Incident Pipeline
  *
- * Generated from data/incidents/major/international-crisis.json
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
@@ -38,5 +37,7 @@ export const internationalCrisisPipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined
+  preview: undefined,
+
+  traits: ["dangerous"],
 };

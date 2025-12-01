@@ -1,11 +1,9 @@
 /**
  * Criminal Trial Event Pipeline
  *
- * Generated from data/events/criminal-trial.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const criminalTrialPipeline: CheckPipeline = {
   id: 'criminal-trial',
@@ -23,22 +21,26 @@ export const criminalTrialPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'Justice triumphs.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: -2, duration: 'immediate' }
       ]
     },
     success: {
       description: 'Justice is served.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
       ]
     },
     failure: {
       description: 'Complications arise from the trial.',
+      endsEvent: true,
       modifiers: []
     },
     criticalFailure: {
       description: 'Justice is miscarried.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
@@ -46,5 +48,7 @@ export const criminalTrialPipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["beneficial"],
 };

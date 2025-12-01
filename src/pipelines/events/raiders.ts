@@ -1,11 +1,9 @@
 /**
  * Raiders Event Pipeline
  *
- * Generated from data/events/raiders.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const raidersPipeline: CheckPipeline = {
   id: 'raiders',
@@ -23,16 +21,19 @@ export const raidersPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The raiders are defeated.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
       ]
     },
     success: {
       description: 'The raiders are repelled.',
+      endsEvent: true,
       modifiers: []
     },
     failure: {
       description: 'The raiders plunder your holdings.',
+      endsEvent: false,
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '1d4', negative: true, duration: 'immediate' },
         { type: 'dice', resource: 'food', formula: '1d4', negative: true, duration: 'immediate' },
@@ -41,6 +42,7 @@ export const raidersPipeline: CheckPipeline = {
     },
     criticalFailure: {
       description: 'A major raid devastates the area.',
+      endsEvent: false,
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '1d4', negative: true, duration: 'immediate' },
         { type: 'dice', resource: 'food', formula: '1d4', negative: true, duration: 'immediate' },
@@ -50,5 +52,7 @@ export const raidersPipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["dangerous", "ongoing"],
 };

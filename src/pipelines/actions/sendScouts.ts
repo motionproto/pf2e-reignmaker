@@ -1,9 +1,9 @@
 /**
- * sendScouts Action Pipeline
- * Data from: data/player-actions/send-scouts.json
+ * Send Scouts Action Pipeline
+ * Learn about unexplored hexes
  */
 
-import { createActionPipeline } from '../shared/createActionPipeline';
+import type { CheckPipeline } from '../../types/CheckPipeline';
 import { applyActionCost } from '../shared/applyActionCost';
 import { sendScoutsExecution } from '../../execution/territory/sendScouts';
 import { worldExplorerService } from '../../services/WorldExplorerService';
@@ -15,9 +15,48 @@ import {
   type ValidationResult
 } from '../shared/hexValidators';
 
-export const sendScoutsPipeline = createActionPipeline('send-scouts', {
+export const sendScoutsPipeline: CheckPipeline = {
+  // === BASE DATA ===
+  id: 'send-scouts',
+  name: 'Send Scouts',
+  description: 'Dispatch explorers to gather intelligence about neighboring territories and potential threats',
+  brief: 'Learn about unexplored hexes',
+  category: 'expand-borders',
+  checkType: 'action',
+  cost: { gold: 1 },
+
+  skills: [
+    { skill: 'stealth', description: 'covert reconnaissance' },
+    { skill: 'survival', description: 'wilderness expertise' },
+    { skill: 'nature', description: 'read the land' },
+    { skill: 'society', description: 'gather local information' },
+    { skill: 'athletics', description: 'rapid exploration' },
+    { skill: 'acrobatics', description: 'navigate obstacles' }
+  ],
+
+  outcomes: {
+    criticalSuccess: {
+      description: 'The scouts return with detailed information.',
+      modifiers: []
+    },
+    success: {
+      description: 'The scouts return with information.',
+      modifiers: []
+    },
+    failure: {
+      description: 'The scouts find nothing.',
+      modifiers: []
+    },
+    criticalFailure: {
+      description: 'The scouts are lost.',
+      modifiers: [
+        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
+      ]
+    }
+  },
+
+  // === TYPESCRIPT LOGIC ===
   requirements: (kingdom) => {
-    // Check 1: World Explorer availability
     if (!worldExplorerService.isAvailable()) {
       return { 
         met: false, 
@@ -25,7 +64,6 @@ export const sendScoutsPipeline = createActionPipeline('send-scouts', {
       };
     }
 
-    // Check 2: Resource cost
     const goldCost = 1;
     const currentGold = kingdom.resources?.gold || 0;
     if (currentGold < goldCost) {
@@ -36,14 +74,9 @@ export const sendScoutsPipeline = createActionPipeline('send-scouts', {
 
   preview: {
     calculate: async (ctx) => {
-      // Preview shows gold cost deduction
       return {
         resources: [
-          {
-            resource: 'gold',
-            change: -1,
-            reason: 'Scout expedition cost'
-          }
+          { resource: 'gold', change: -1, reason: 'Scout expedition cost' }
         ],
         outcomeBadges: []
       };
@@ -55,20 +88,17 @@ export const sendScoutsPipeline = createActionPipeline('send-scouts', {
       type: 'map-selection',
       id: 'selectedHexes',
       mode: 'hex-selection',
-      count: 1,  // Default count (used for success)
+      count: 1,
       colorType: 'scout',
       condition: (ctx) => ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess',
       validateHex: (hexId: string, pendingSelections: string[] = []): ValidationResult => {
         return safeValidation(() => {
-          // Check 1: Cannot select already-revealed hex
           const unexploredResult = validateUnexplored(hexId);
           if (!unexploredResult.valid) return unexploredResult;
           
-          // Check 2: Cannot already be selected as pending
           const notPendingResult = validateNotPending(hexId, pendingSelections);
           if (!notPendingResult.valid) return notPendingResult;
 
-          // Check 3: Must be adjacent to explored hex or pending selection
           const adjacencyResult = validateAdjacentToExplored(hexId, pendingSelections);
           if (!adjacencyResult.valid) return adjacencyResult;
           
@@ -84,23 +114,20 @@ export const sendScoutsPipeline = createActionPipeline('send-scouts', {
           count: 1, 
           title: 'Select 1 hex to scout' 
         },
-        failure: { count: 0 },  // No hexes on failure
-        criticalFailure: { count: 0 }  // No hexes on critical failure
+        failure: { count: 0 },
+        criticalFailure: { count: 0 }
       }
     }
   ],
 
   execute: async (ctx) => {
-    // Deduct cost first (regardless of outcome - action was attempted)
     await applyActionCost(sendScoutsPipeline);
     
     switch (ctx.outcome) {
       case 'criticalSuccess':
       case 'success':
-        // Read hex selections from resolutionData (populated by postApplyInteractions)
         const hexIds = ctx.resolutionData.compoundData?.selectedHexes;
         
-        // Handle cancellation gracefully (user cancelled hex selection)
         if (!hexIds || hexIds.length === 0) {
           return { 
             success: true, 
@@ -113,15 +140,13 @@ export const sendScoutsPipeline = createActionPipeline('send-scouts', {
         return { success: true };
         
       case 'failure':
-        // No modifiers defined for failure
         return { success: true };
         
       case 'criticalFailure':
-        // Modifiers (+1 unrest) applied automatically by execute-first pattern
         return { success: true };
         
       default:
         return { success: false, error: `Unexpected outcome: ${ctx.outcome}` };
     }
   }
-});
+};

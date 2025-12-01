@@ -1,7 +1,6 @@
 /**
  * Corruption Scandal Incident Pipeline
  *
- * Generated from data/incidents/minor/corruption-scandal.json
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
@@ -40,8 +39,7 @@ export const corruptionScandalPipeline: CheckPipeline = {
     },
   },
 
-  // Auto-convert JSON modifiers to badges
-  preview: undefined
+  preview: undefined,
 
-  // ✅ REMOVED: No longer needed - UnifiedCheckHandler handles modifiers automatically
+  traits: ["dangerous"],
 };

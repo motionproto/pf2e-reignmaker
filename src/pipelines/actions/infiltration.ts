@@ -1,15 +1,58 @@
 /**
- * infiltration Action Pipeline
- * Data from: data/player-actions/infiltration.json
+ * Infiltration Action Pipeline
+ * Gather intelligence through espionage
  */
 
-import { createActionPipeline } from '../shared/createActionPipeline';
+import type { CheckPipeline } from '../../types/CheckPipeline';
 import { textBadge } from '../../types/OutcomeBadge';
 import { adjustFactionAttitudeExecution } from '../../execution';
 import { adjustAttitudeBySteps } from '../../utils/faction-attitude-adjuster';
 
-export const infiltrationPipeline = createActionPipeline('infiltration', {
-  // No cost - always available
+export const infiltrationPipeline: CheckPipeline = {
+  // === BASE DATA ===
+  id: 'infiltration',
+  name: 'Infiltration',
+  description: 'Deploy spies and agents to gather intelligence on rival kingdoms or potential threats',
+  brief: 'Gather intelligence through espionage',
+  category: 'foreign-affairs',
+  checkType: 'action',
+
+  skills: [
+    { skill: 'deception', description: 'false identities' },
+    { skill: 'stealth', description: 'covert operations' },
+    { skill: 'thievery', description: 'steal secrets' },
+    { skill: 'society', description: 'social infiltration' },
+    { skill: 'arcana', description: 'magical espionage' },
+    { skill: 'acrobatics', description: 'daring infiltration' }
+  ],
+
+  outcomes: {
+    criticalSuccess: {
+      description: 'Valuable intel is gathered.',
+      modifiers: [
+        { type: 'dice', resource: 'gold', formula: '1d4', duration: 'immediate' }
+      ],
+      manualEffects: ['The GM should disclose sensitive information.']
+    },
+    success: {
+      description: 'Intel is gathered.',
+      modifiers: [],
+      manualEffects: ['The GM should disclose sensitive information.']
+    },
+    failure: {
+      description: 'The mission fails.',
+      modifiers: []
+    },
+    criticalFailure: {
+      description: 'Your spies are captured.',
+      modifiers: [
+        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
+        { type: 'dice', resource: 'gold', formula: '1d4', negative: true, duration: 'immediate' }
+      ]
+    }
+  },
+
+  // === TYPESCRIPT LOGIC ===
   requirements: () => ({ met: true }),
 
   preRollInteractions: [
@@ -42,7 +85,6 @@ export const infiltrationPipeline = createActionPipeline('infiltration', {
     calculate: (ctx) => {
       const resources = [];
       
-      // Extract faction name from metadata (entity-selection stores { id, name })
       const factionName = ctx.metadata.targetFactionId?.name || 'the target faction';
 
       if (ctx.outcome === 'criticalSuccess') {
@@ -58,7 +100,6 @@ export const infiltrationPipeline = createActionPipeline('infiltration', {
       if (ctx.outcome === 'criticalSuccess' || ctx.outcome === 'success') {
         outcomeBadges.push(textBadge(`GM will disclose sensitive information about ${factionName}`, 'fa-user-secret', 'positive'));
       } else if (ctx.outcome === 'criticalFailure') {
-        // Calculate resulting attitude after -1 step
         const factionId = ctx.metadata.targetFactionId?.id || ctx.metadata.targetFactionId;
         const faction = ctx.kingdom.factions?.find((f: any) => f.id === factionId);
         
@@ -67,11 +108,9 @@ export const infiltrationPipeline = createActionPipeline('infiltration', {
           if (newAttitude) {
             outcomeBadges.push(textBadge(`${factionName} becomes ${newAttitude}`, 'fa-frown', 'negative'));
           } else {
-            // Already at worst attitude (Hostile)
             outcomeBadges.push(textBadge(`${factionName} remains Hostile`, 'fa-frown', 'negative'));
           }
         } else {
-          // Fallback if faction not found
           outcomeBadges.push(textBadge(`Relations worsen with ${factionName}`, 'fa-frown', 'negative'));
         }
       }
@@ -84,27 +123,22 @@ export const infiltrationPipeline = createActionPipeline('infiltration', {
     const { createGameCommandsService } = await import('../../services/GameCommandsService');
     const gameCommandsService = await createGameCommandsService();
     
-    // Apply dice roll results and static modifiers via proper service
     if (ctx.outcome === 'criticalSuccess') {
-      // Apply +1d4 gold from dice roll
       const goldGained = ctx.resolutionData.diceRolls?.goldGained || 2;
       await gameCommandsService.applyNumericModifiers([
         { resource: 'gold', value: goldGained }
       ], ctx.outcome);
     } else if (ctx.outcome === 'criticalFailure') {
-      // Apply -1d4 gold from dice roll + 1 unrest (static)
       const goldLost = ctx.resolutionData.diceRolls?.goldLost || 2;
       await gameCommandsService.applyNumericModifiers([
         { resource: 'gold', value: -goldLost },
         { resource: 'unrest', value: 1 }
       ], ctx.outcome);
       
-      // Worsen relations with the target faction
-      // Extract ID from entity-selection structure { id, name }
       const factionId = ctx.metadata.targetFactionId?.id || ctx.metadata.targetFactionId;
       await adjustFactionAttitudeExecution(factionId, -1);
     }
     
     return { success: true };
   }
-});
+};

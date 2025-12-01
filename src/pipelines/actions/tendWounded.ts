@@ -1,14 +1,50 @@
 /**
- * tendWounded Action Pipeline
- * Data from: data/player-actions/tend-wounded.json
+ * Tend Wounded Action Pipeline
+ * Heal and restore damaged units
  */
 
-import { createActionPipeline } from '../shared/createActionPipeline';
+import type { CheckPipeline } from '../../types/CheckPipeline';
 import { textBadge } from '../../types/OutcomeBadge';
 import { tendWoundedExecution } from '../../execution/armies/tendWounded';
 import { PLAYER_KINGDOM } from '../../types/ownership';
 
-export const tendWoundedPipeline = createActionPipeline('tend-wounded', {
+export const tendWoundedPipeline: CheckPipeline = {
+  // === BASE DATA ===
+  id: 'tend-wounded',
+  name: 'Tend Wounded',
+  description: 'Tend to wounded troops, restore morale, and replenish ranks after battle losses',
+  brief: 'Heal and restore damaged units',
+  category: 'military-operations',
+  checkType: 'action',
+
+  skills: [
+    { skill: 'medicine', description: 'heal the wounded' },
+    { skill: 'performance', description: 'boost morale' },
+    { skill: 'religion', description: 'spiritual restoration' },
+    { skill: 'nature', description: 'natural remedies' },
+    { skill: 'crafting', description: 'repair equipment' }
+  ],
+
+  outcomes: {
+    criticalSuccess: {
+      description: 'The troops recover completely.',
+      modifiers: []
+    },
+    success: {
+      description: 'The troops recover.',
+      modifiers: []
+    },
+    failure: {
+      description: 'The troops fail to recover.',
+      modifiers: []
+    },
+    criticalFailure: {
+      description: 'The recovery effort fails.',
+      modifiers: []
+    }
+  },
+
+  // === TYPESCRIPT LOGIC ===
   requirements: (kingdom) => {
     if (!kingdom.armies || kingdom.armies.length === 0) {
       return {
@@ -40,12 +76,10 @@ export const tendWoundedPipeline = createActionPipeline('tend-wounded', {
         show: true
       },
       onComplete: async (data: any, ctx: any) => {
-        // Store army selection and fetch army data for post-roll
         ctx.metadata = ctx.metadata || {};
         ctx.metadata.armyId = data.armyId;
         ctx.metadata.armyName = data.armyName;
         
-        // Fetch army HP and conditions data
         const game = (globalThis as any).game;
         const kingdom = ctx.kingdom;
         const army = kingdom?.armies?.find((a: any) => a.id === data.armyId);
@@ -54,17 +88,14 @@ export const tendWoundedPipeline = createActionPipeline('tend-wounded', {
           const npcActor = game?.actors?.get(army.actorId);
           
           if (npcActor) {
-            // Store HP data
             ctx.metadata.currentHP = npcActor.system?.attributes?.hp?.value || 0;
             ctx.metadata.maxHP = npcActor.system?.attributes?.hp?.max || 0;
             
-            // Store conditions data (filter out beneficial effects)
             const items = Array.from(npcActor.items.values()) as any[];
             const allConditions = items
               .filter((i: any) => {
                 if (i.type !== 'condition' && i.type !== 'effect') return false;
                 
-                // Filter out beneficial effects by checking for positive keywords
                 const name = i.name?.toLowerCase() || '';
                 const isBeneficial = name.includes('bonus') || 
                                     name.includes('+') ||
@@ -81,7 +112,6 @@ export const tendWoundedPipeline = createActionPipeline('tend-wounded', {
                 img: i.img
               }));
             
-            // Deduplicate by slug+badge combination
             const uniqueConditions = new Map();
             allConditions.forEach(c => {
               const key = `${c.slug}${c.badge ? `-${c.badge}` : ''}`;
@@ -91,13 +121,6 @@ export const tendWoundedPipeline = createActionPipeline('tend-wounded', {
             });
             
             ctx.metadata.conditions = Array.from(uniqueConditions.values());
-            
-            console.log('✅ [tendWounded] Stored army data in context:', {
-              armyId: data.armyId,
-              armyName: data.armyName,
-              hp: `${ctx.metadata.currentHP}/${ctx.metadata.maxHP}`,
-              conditions: ctx.metadata.conditions
-            });
           }
         }
       }
@@ -135,22 +158,16 @@ export const tendWoundedPipeline = createActionPipeline('tend-wounded', {
     }
   },
 
-  // ✅ INLINE COMPONENT: Displays BEFORE "Apply Result" clicked
-  // Component shows inline in OutcomeDisplay for better UX
   postRollInteractions: [
     {
       type: 'configuration',
       id: 'tend-wounded-resolution',
-      component: 'TendWoundedResolution',  // Resolved via ComponentRegistry
-      condition: (ctx: any) => ctx.outcome === 'success',  // Only success, not critical success
-      // NO onComplete handler - execution happens in execute()
-      // Component dispatches 'resolution' event which OutcomeDisplay captures
-      // Data is stored in ctx.resolutionData.customComponentData['tend-wounded-resolution']
+      component: 'TendWoundedResolution',
+      condition: (ctx: any) => ctx.outcome === 'success',
     }
   ],
 
   execute: async (ctx: any) => {
-    // Get army selection from pre-roll interaction
     const armyId = ctx.metadata?.armyId;
     const armyName = ctx.metadata?.armyName;
     
@@ -158,18 +175,14 @@ export const tendWoundedPipeline = createActionPipeline('tend-wounded', {
       return { success: false, error: 'No army selected' };
     }
 
-    // For critical success, auto-apply (full heal + remove all conditions)
     if (ctx.outcome === 'criticalSuccess') {
       await tendWoundedExecution(armyId, ctx.outcome);
       return { success: true, message: `${armyName} fully healed and all conditions removed` };
     }
 
-    // For success, get player's choice from post-roll interaction
     if (ctx.outcome === 'success') {
-      console.log('🔍 [tendWounded] Resolution Data:', JSON.stringify(ctx.resolutionData, null, 2));
       const tendData = ctx.resolutionData?.customComponentData?.['tend-wounded-resolution'];
       
-      // Handle cancellation
       if (!tendData) {
         return { 
           success: true, 
@@ -190,12 +203,10 @@ export const tendWoundedPipeline = createActionPipeline('tend-wounded', {
       }
     }
 
-    // For failure, nothing happens
     if (ctx.outcome === 'failure') {
       return { success: true, message: 'Recovery attempt had no effect' };
     }
 
-    // For critical failure, increase enfeebled
     if (ctx.outcome === 'criticalFailure') {
       await tendWoundedExecution(armyId, ctx.outcome);
       return { success: true, message: `${armyName} became more enfeebled` };
@@ -203,4 +214,4 @@ export const tendWoundedPipeline = createActionPipeline('tend-wounded', {
 
     return { success: true };
   }
-});
+};

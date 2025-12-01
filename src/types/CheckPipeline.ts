@@ -85,6 +85,7 @@ export interface Outcome {
   modifiers: EventModifier[];
   gameCommands?: GameCommand[];
   endsCheck?: boolean;
+  endsEvent?: boolean;  // For events: whether this outcome ends the ongoing event
   manualEffects?: string[];
   outcomeBadges?: any[];  // UnifiedOutcomeBadge[] for preview badges shown before rolling
 }

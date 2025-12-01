@@ -1,7 +1,6 @@
 /**
  * International Scandal Incident Pipeline
  *
- * Generated from data/incidents/major/international-scandal.json
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
@@ -42,5 +41,7 @@ export const internationalScandalPipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined
+  preview: undefined,
+
+  traits: ["dangerous"],
 };

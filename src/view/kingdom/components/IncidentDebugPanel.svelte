@@ -1,12 +1,12 @@
 <script lang="ts">
    import { onMount } from 'svelte';
    import { kingdomData } from '../../../stores/KingdomStore';
-   import { incidentLoader } from '../../../controllers/incidents/incident-loader';
+   import { pipelineRegistry } from '../../../pipelines/PipelineRegistry';
    import { buildPossibleOutcomes } from '../../../controllers/shared/PossibleOutcomeHelpers';
+   import { buildEventOutcomes } from '../../../controllers/shared/EventOutcomeHelpers';
    import { logger } from '../../../utils/Logger';
    
-   // Note: The incident-loader transforms incidents to have 'outcomes' instead of 'effects'
-   // Use 'any' type since the loaded structure differs from the TypeScript type
+   // Type for loaded incidents
    type LoadedIncident = any;
    
    // Import UI components
@@ -46,10 +46,12 @@
       .join(',');
    
    onMount(async () => {
-      // Load incidents by severity
-      minorIncidents = incidentLoader.getIncidentsBySeverity('minor');
-      moderateIncidents = incidentLoader.getIncidentsBySeverity('moderate');
-      majorIncidents = incidentLoader.getIncidentsBySeverity('major');
+      // Load incidents by tier from pipeline registry
+      const allIncidents = pipelineRegistry.getPipelinesByType('incident');
+      // Handle both numeric (1, 2, 3) and string ('minor', 'moderate', 'major') tier formats
+      minorIncidents = allIncidents.filter((i: any) => i.tier === 1 || i.tier === 'minor');
+      moderateIncidents = allIncidents.filter((i: any) => i.tier === 2 || i.tier === 'moderate');
+      majorIncidents = allIncidents.filter((i: any) => i.tier === 3 || i.tier === 'major');
       
       console.log('[IncidentDebugPanel] Loaded incidents:', {
          minor: minorIncidents.length,
@@ -62,42 +64,10 @@
       unrestPhaseController = await createUnrestPhaseController();
    });
    
-   // Build outcomes array for BaseCheckCard
+   // Build outcomes array for BaseCheckCard using shared helper
    function buildIncidentOutcomes(incident: LoadedIncident) {
       if (!incident.outcomes) return [];
-      
-      const outcomes: Array<{
-         type: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
-         description: string;
-         modifiers?: Array<{ resource: string; value: number }>;
-      }> = [];
-      
-      if (incident.outcomes.criticalSuccess) {
-         outcomes.push({
-            type: 'criticalSuccess',
-            description: incident.outcomes.criticalSuccess.msg
-         });
-      }
-      if (incident.outcomes.success) {
-         outcomes.push({
-            type: 'success',
-            description: incident.outcomes.success.msg
-         });
-      }
-      if (incident.outcomes.failure) {
-         outcomes.push({
-            type: 'failure',
-            description: incident.outcomes.failure.msg
-         });
-      }
-      if (incident.outcomes.criticalFailure) {
-         outcomes.push({
-            type: 'criticalFailure',
-            description: incident.outcomes.criticalFailure.msg
-         });
-      }
-      
-      return outcomes;
+      return buildEventOutcomes(incident);
    }
    
    // Execute skill check for an incident

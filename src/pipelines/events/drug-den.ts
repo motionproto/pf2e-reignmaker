@@ -1,11 +1,9 @@
 /**
  * Drug Den Event Pipeline
  *
- * Generated from data/events/drug-den.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const drugDenPipeline: CheckPipeline = {
   id: 'drug-den',
@@ -23,18 +21,21 @@ export const drugDenPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The drug ring is destroyed.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
       ]
     },
     success: {
       description: 'Major arrests disrupt the drug trade.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'imprisoned_unrest', value: 1, duration: 'immediate' }
       ]
     },
     failure: {
       description: 'The drug trade spreads.',
+      endsEvent: false,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
         { type: 'static', resource: 'gold', value: -1, duration: 'immediate' },
@@ -42,6 +43,7 @@ export const drugDenPipeline: CheckPipeline = {
     },
     criticalFailure: {
       description: 'A major drug crisis erupts.',
+      endsEvent: false,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
       ]
@@ -49,5 +51,7 @@ export const drugDenPipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["dangerous", "ongoing"],
 };

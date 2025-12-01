@@ -1,11 +1,9 @@
 /**
  * Magical Discovery Event Pipeline
  *
- * Generated from data/events/magical-discovery.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const magicalDiscoveryPipeline: CheckPipeline = {
   id: 'magical-discovery',
@@ -23,22 +21,26 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'A major magical boon is revealed.',
+      endsEvent: true,
       modifiers: []
     },
     success: {
       description: 'The discovery proves useful.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: -2, duration: 'immediate' }
       ]
     },
     failure: {
       description: 'The magic proves dangerous.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
     },
     criticalFailure: {
       description: 'A magical disaster erupts.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
       ]
@@ -46,5 +48,7 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["beneficial"],
 };

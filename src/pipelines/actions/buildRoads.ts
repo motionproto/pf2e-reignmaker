@@ -1,16 +1,54 @@
 /**
- * buildRoads Action Pipeline
- * Data from: data/player-actions/build-roads.json
+ * Build Roads Action Pipeline
+ * Connect your territory with infrastructure
  */
 
-import { createActionPipeline } from '../shared/createActionPipeline';
+import type { CheckPipeline } from '../../types/CheckPipeline';
 import { applyActionCost } from '../shared/applyActionCost';
 import { buildRoadsExecution } from '../../execution/territory/buildRoads';
 import { validateRoadHex } from '../shared/roadValidator';
 import { PLAYER_KINGDOM } from '../../types/ownership';
-export const buildRoadsPipeline = createActionPipeline('build-roads', {
+
+export const buildRoadsPipeline: CheckPipeline = {
+  // === BASE DATA ===
+  id: 'build-roads',
+  name: 'Build Roads',
+  description: 'Construct pathways between settlements to improve trade, travel, and military movement. Roads must be built in claimed territory.',
+  brief: 'Connect your territory with infrastructure',
+  category: 'expand-borders',
+  checkType: 'action',
+  cost: { lumber: 1, stone: 1 },
+
+  skills: [
+    { skill: 'crafting', description: 'engineering expertise' },
+    { skill: 'survival', description: 'pathfinding routes' },
+    { skill: 'athletics', description: 'manual labor' },
+    { skill: 'nature', description: 'work with terrain' }
+  ],
+
+  outcomes: {
+    criticalSuccess: {
+      description: 'Excellent roads are constructed.',
+      modifiers: []
+    },
+    success: {
+      description: 'A road is constructed.',
+      modifiers: []
+    },
+    failure: {
+      description: 'Construction fails.',
+      modifiers: []
+    },
+    criticalFailure: {
+      description: 'Work crews are lost.',
+      modifiers: [
+        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
+      ]
+    }
+  },
+
+  // === TYPESCRIPT LOGIC ===
   requirements: (kingdom) => {
-    // Check resource costs
     const lumber = kingdom.resources?.lumber || 0;
     const stone = kingdom.resources?.stone || 0;
     
@@ -21,7 +59,6 @@ export const buildRoadsPipeline = createActionPipeline('build-roads', {
       return { met: false, reason: missing.join(', ') };
     }
     
-    // Check if we have claimed hexes to build roads in
     const claimedHexes = (kingdom.hexes || []).filter((h: any) => h.claimedBy === PLAYER_KINGDOM);
     if (claimedHexes.length === 0) {
       return { met: false, reason: 'No claimed territory to build roads in' };
@@ -32,17 +69,11 @@ export const buildRoadsPipeline = createActionPipeline('build-roads', {
 
   preview: {
     calculate: (ctx) => {
-      const resources = [];
-      
-      // Show resource costs for all outcomes
-      resources.push({ resource: 'lumber', value: -1 });
-      resources.push({ resource: 'stone', value: -1 });
-      
-      // Critical failure unrest is automatically detected from pipeline JSON
-      // No need to manually add it here - convertModifiersToBadges handles it
-      
       return {
-        resources,
+        resources: [
+          { resource: 'lumber', value: -1 },
+          { resource: 'stone', value: -1 }
+        ],
         outcomeBadges: [],
         warnings: []
       };
@@ -54,11 +85,10 @@ export const buildRoadsPipeline = createActionPipeline('build-roads', {
       type: 'map-selection',
       id: 'selectedHexes',
       mode: 'hex-selection',
-      count: 1,  // Default for success
+      count: 1,
       colorType: 'road',
       condition: (ctx) => ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess',
       validateHex: (hexId: string, pendingSelection: string[] = []) => {
-        // Use dedicated road validation (checks claimed status, existing roads, and adjacency)
         const isValid = validateRoadHex(hexId, pendingSelection);
         
         if (!isValid) {
@@ -72,15 +102,15 @@ export const buildRoadsPipeline = createActionPipeline('build-roads', {
       },
       outcomeAdjustment: {
         criticalSuccess: {
-          count: 2,  // Build roads on 2 hexes
+          count: 2,
           title: 'Select hexes to build roads (Critical Success)'
         },
         success: {
-          count: 1,  // Build road on 1 hex
+          count: 1,
           title: 'Select 1 hex to build a road'
         },
-        failure: { count: 0 },  // No roads on failure
-        criticalFailure: { count: 0 }  // No roads on critical failure
+        failure: { count: 0 },
+        criticalFailure: { count: 0 }
       }
     }
   ],
@@ -89,25 +119,20 @@ export const buildRoadsPipeline = createActionPipeline('build-roads', {
     switch (ctx.outcome) {
       case 'criticalSuccess':
       case 'success':
-        // Read hex selections from resolutionData (populated by postApplyInteractions)
         const selectedHexes = ctx.resolutionData?.compoundData?.selectedHexes;
         if (!selectedHexes || selectedHexes.length === 0) {
-          console.log('⏭️ [buildRoads] User cancelled hex selection, skipping execution gracefully');
-          return { success: true };  // Graceful cancellation - no error thrown
+          return { success: true };
         }
         
-        // Deduct costs and build roads
         await applyActionCost(buildRoadsPipeline);
         await buildRoadsExecution(selectedHexes);
         return { success: true };
         
       case 'failure':
-        // Deduct costs even on failure (action was attempted)
         await applyActionCost(buildRoadsPipeline);
         return { success: true };
         
       case 'criticalFailure':
-        // Deduct costs (modifiers applied automatically by execute-first pattern)
         await applyActionCost(buildRoadsPipeline);
         return { success: true };
         
@@ -115,4 +140,4 @@ export const buildRoadsPipeline = createActionPipeline('build-roads', {
         return { success: false, error: `Unexpected outcome: ${ctx.outcome}` };
     }
   }
-});
+};

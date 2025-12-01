@@ -1,7 +1,6 @@
 /**
  * Tax Revolt Incident Pipeline
  *
- * Generated from data/incidents/moderate/tax-revolt.json
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
@@ -41,5 +40,7 @@ export const taxRevoltPipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined
+  preview: undefined,
+
+  traits: ["dangerous"],
 };

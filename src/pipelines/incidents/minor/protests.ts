@@ -1,7 +1,6 @@
 /**
  * Protests Incident Pipeline
  *
- * Generated from data/incidents/minor/protests.json
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
@@ -41,7 +40,8 @@ export const protestsPipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined
+  preview: undefined,
 
+  traits: ["dangerous"],
   // ✅ REMOVED: No longer needed - UnifiedCheckHandler handles modifiers automatically
 };

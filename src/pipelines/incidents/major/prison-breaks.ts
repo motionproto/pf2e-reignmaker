@@ -1,7 +1,6 @@
 /**
  * Prison Breaks Incident Pipeline
  *
- * Generated from data/incidents/major/prison-breaks.json
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';

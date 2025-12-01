@@ -1,11 +1,9 @@
 /**
  * Plague Event Pipeline
  *
- * Generated from data/events/plague.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const plaguePipeline: CheckPipeline = {
   id: 'plague',
@@ -23,16 +21,19 @@ export const plaguePipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The plague is cured.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
       ]
     },
     success: {
       description: 'The plague is contained.',
+      endsEvent: true,
       modifiers: []
     },
     failure: {
       description: 'The plague spreads.',
+      endsEvent: false,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
         { type: 'dice', resource: 'gold', formula: '1d4', negative: true, duration: 'immediate' },
@@ -40,6 +41,7 @@ export const plaguePipeline: CheckPipeline = {
     },
     criticalFailure: {
       description: 'A devastating outbreak occurs.',
+      endsEvent: false,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' },
         { type: 'dice', resource: 'gold', formula: '1d4', negative: true, duration: 'immediate' },
@@ -48,5 +50,7 @@ export const plaguePipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["dangerous", "ongoing"],
 };

@@ -107,27 +107,27 @@
             outcomes={[
               {
                 type: 'criticalSuccess',
-                description: action.effects?.criticalSuccess?.description || action.criticalSuccess?.description || action.success?.description || '—',
-                modifiers: action.effects?.criticalSuccess?.modifiers || action.criticalSuccess?.modifiers || [],
-                gameCommands: action.effects?.criticalSuccess?.gameCommands || []
+                description: action.outcomes.criticalSuccess?.description ?? action.outcomes.success?.description ?? '',
+                modifiers: action.outcomes.criticalSuccess?.modifiers ?? [],
+                gameCommands: action.outcomes.criticalSuccess?.gameCommands ?? []
               },
               {
                 type: 'success',
-                description: action.effects?.success?.description || action.success?.description || '—',
-                modifiers: action.effects?.success?.modifiers || action.success?.modifiers || [],
-                gameCommands: action.effects?.success?.gameCommands || []
+                description: action.outcomes.success?.description ?? '',
+                modifiers: action.outcomes.success?.modifiers ?? [],
+                gameCommands: action.outcomes.success?.gameCommands ?? []
               },
               {
                 type: 'failure',
-                description: action.effects?.failure?.description || action.failure?.description || '—',
-                modifiers: action.effects?.failure?.modifiers || action.failure?.modifiers || [],
-                gameCommands: action.effects?.failure?.gameCommands || []
+                description: action.outcomes.failure?.description ?? '',
+                modifiers: action.outcomes.failure?.modifiers ?? [],
+                gameCommands: action.outcomes.failure?.gameCommands ?? []
               },
               {
                 type: 'criticalFailure',
-                description: action.effects?.criticalFailure?.description || action.criticalFailure?.description || '—',
-                modifiers: action.effects?.criticalFailure?.modifiers || action.criticalFailure?.modifiers || [],
-                gameCommands: action.effects?.criticalFailure?.gameCommands || []
+                description: action.outcomes.criticalFailure?.description ?? '',
+                modifiers: action.outcomes.criticalFailure?.modifiers ?? [],
+                gameCommands: action.outcomes.criticalFailure?.gameCommands ?? []
               }
             ]}
             checkType="action"

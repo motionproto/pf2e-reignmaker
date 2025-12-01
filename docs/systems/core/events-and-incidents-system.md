@@ -2,6 +2,8 @@
 
 **Purpose:** Random kingdom events and unrest-triggered incidents with skill-based resolution
 
+**Data Architecture:** Self-contained TypeScript pipelines in `src/pipelines/events/` and `src/pipelines/incidents/`
+
 ---
 
 ## Overview
@@ -10,46 +12,55 @@ The Events and Incidents System provides dynamic challenges for kingdom manageme
 - **Events** - Random occurrences during Events phase (every turn)
 - **Incidents** - Unrest-triggered problems during Unrest phase (percentage-based)
 
-**Key Principle:** Both use the same data structure (modifiers, outcomes, traits) but different triggering conditions.
+**Key Principle:** Both use the same `CheckPipeline` structure but different triggering conditions.
+
+**Implementation:** All events and incidents are defined as self-contained TypeScript pipeline files, registered in `PipelineRegistry`, and accessed at runtime by phase controllers.
 
 ---
 
 ## Event Structure
 
-### Core Event Data
+### Core Event Pipeline
 
 ```typescript
-interface Event {
-  id: string;
-  name: string;
-  tier: number;                    // Kingdom level requirement (1-20)
-  description: string;
-  traits: EventTrait[];            // Modifiers to event behavior
-  skills: EventSkill[];            // Available resolution methods
-  effects: EventOutcomes;          // Outcome modifiers by degree of success
-}
-```
-
-**Example:**
-```json
-{
-  "id": "drug-den",
-  "name": "Drug Den",
-  "tier": 1,
-  "description": "An illicit drug trade threatens your settlement.",
-  "traits": ["dangerous", "ongoing"],
-  "skills": [
-    { "skill": "stealth", "description": "undercover investigation" },
-    { "skill": "medicine", "description": "treat addicts, trace source" },
-    { "skill": "intimidation", "description": "crack down hard" }
+export const drugDenPipeline: CheckPipeline = {
+  id: 'drug-den',
+  name: 'Drug Den',
+  description: 'An illicit drug trade threatens your settlement.',
+  tier: 1,                         // Kingdom level requirement (1-20)
+  category: 'event',
+  checkType: 'event',
+  traits: ['dangerous', 'ongoing'],
+  skills: [
+    { skill: 'stealth', description: 'undercover investigation' },
+    { skill: 'medicine', description: 'treat addicts, trace source' },
+    { skill: 'intimidation', description: 'crack down hard' }
   ],
-  "effects": {
-    "criticalSuccess": { "msg": "Drug ring destroyed", "modifiers": [...], "endsEvent": true },
-    "success": { "msg": "Major arrests", "modifiers": [...], "endsEvent": true },
-    "failure": { "msg": "Drug trade spreads", "modifiers": [...], "endsEvent": false },
-    "criticalFailure": { "msg": "Major drug crisis", "modifiers": [...], "endsEvent": false }
-  }
-}
+  outcomes: {
+    criticalSuccess: {
+      description: 'Drug ring destroyed',
+      modifiers: [{ resource: 'unrest', value: -2 }],
+      endsEvent: true
+    },
+    success: {
+      description: 'Major arrests',
+      modifiers: [{ resource: 'unrest', value: -1 }],
+      endsEvent: true
+    },
+    failure: {
+      description: 'Drug trade spreads',
+      modifiers: [{ resource: 'crime', value: 1 }],
+      endsEvent: false
+    },
+    criticalFailure: {
+      description: 'Major drug crisis',
+      modifiers: [{ resource: 'unrest', value: 2 }, { resource: 'crime', value: 2 }],
+      endsEvent: false
+    }
+  },
+  requirements: () => ({ met: true }),
+  getDC: () => 15
+};
 ```
 
 ---
@@ -79,13 +90,16 @@ Modifier duration "immediate" → Apply once when clicked
 ```
 
 **Wrong Pattern:**
-```json
+```typescript
 {
-  "traits": ["ongoing"],
-  "failure": {
-    "modifiers": [
-      { "resource": "unrest", "value": 1, "duration": "ongoing" }  // ❌ WRONG
-    ]
+  traits: ["ongoing"],
+  outcomes: {
+    failure: {
+      description: 'Problem persists',
+      modifiers: [
+        { resource: 'unrest', value: 1, duration: 'ongoing' }  // ❌ WRONG
+      ]
+    }
   }
 }
 ```
@@ -93,11 +107,20 @@ Modifier duration "immediate" → Apply once when clicked
 This causes modifiers to be skipped (code expects `"ongoing"` duration for structures only).
 
 **Correct Pattern:**
-```json
+```typescript
 {
-  "traits": ["ongoing"],
-  "failure": {
-    "modifiers": [
+  traits: ["ongoing"],
+  outcomes: {
+    failure: {
+      description: 'Problem persists',
+      modifiers: [
+        { resource: 'unrest', value: 1 }  // ✅ CORRECT - applied each turn
+      ],
+      endsEvent: false  // Event continues to next turn
+    }
+  }
+}
+```
       { "resource": "unrest", "value": 1, "duration": "immediate" }  // ✅ CORRECT
     ],
     "endsEvent": false  // Event will repeat next turn

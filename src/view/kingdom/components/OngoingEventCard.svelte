@@ -1,5 +1,6 @@
 <script lang="ts">
   import { buildPossibleOutcomes, formatOutcomeMessage } from '../../../controllers/shared/PossibleOutcomeHelpers';
+  import { buildEventOutcomes } from '../../../controllers/shared/EventOutcomeHelpers';
   import BaseCheckCard from './BaseCheckCard.svelte';
   
   // Props
@@ -16,41 +17,8 @@
   $: resolved = !!resolution;
   $: possibleOutcomes = event ? buildPossibleOutcomes(event.outcomes) : [];
   
-  // Build outcomes array for BaseCheckCard
-  $: eventOutcomes = event ? (() => {
-    const outcomes: Array<{
-      type: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
-      description: string;
-      modifiers?: Array<{ resource: string; value: number }>;
-    }> = [];
-    
-    if (event.outcomes.criticalSuccess) {
-      outcomes.push({
-        type: 'criticalSuccess',
-        description: event.outcomes.criticalSuccess.msg
-      });
-    }
-    if (event.outcomes.success) {
-      outcomes.push({
-        type: 'success',
-        description: event.outcomes.success.msg
-      });
-    }
-    if (event.outcomes.failure) {
-      outcomes.push({
-        type: 'failure',
-        description: event.outcomes.failure.msg
-      });
-    }
-    if (event.outcomes.criticalFailure) {
-      outcomes.push({
-        type: 'criticalFailure',
-        description: event.outcomes.criticalFailure.msg
-      });
-    }
-    
-    return outcomes;
-  })() : [];
+  // Build outcomes array for BaseCheckCard using shared helper
+  $: eventOutcomes = event ? buildEventOutcomes(event) : [];
   
   // Check if this instance can be resolved (has event data)
   $: canResolve = !!event;
@@ -66,7 +34,7 @@
     const failureEffect = event.outcomes.criticalFailure || event.outcomes.failure;
     if (!failureEffect) return 'Unknown effect';
     
-    return formatOutcomeMessage(failureEffect.msg, failureEffect.modifiers);
+    return formatOutcomeMessage(failureEffect.description, failureEffect.modifiers);
   })();
   
   function toggleExpand() {

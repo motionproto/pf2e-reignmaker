@@ -7,7 +7,7 @@ import { get } from 'svelte/store';
 import { kingdomData } from '../../stores/KingdomStore';
 import { isHexClaimedByPlayer, getHex } from '../shared/hexValidation';
 import { PLAYER_KINGDOM } from '../../types/ownership';
-import fortificationData from '../../../data/player-actions/fortify-hex.json';
+import { fortificationTiers, getFortificationTier } from '../../data/fortificationTiers';
 
 /**
  * Validate if a hex can be fortified
@@ -36,11 +36,9 @@ export async function validateFortifyHex(hexId: string): Promise<{ valid: boolea
     return { valid: false, message: 'Already at maximum tier (Fortress)' };
   }
   
-  // Load fortification data to show next tier info
-  const fortificationDataModule = await import('../../../data/player-actions/fortify-hex.json');
-  const fortificationData = fortificationDataModule.default || fortificationDataModule;
+  // Get next tier info
   const nextTier = currentTier + 1;
-  const tierConfig = fortificationData.tiers[nextTier - 1];
+  const tierConfig = getFortificationTier(nextTier);
   
   // Build cost summary
   const costSummary = Object.entries(tierConfig.cost)
@@ -79,7 +77,8 @@ export function validateFortifyHexForPipeline(hexId: string): { valid: boolean; 
   const currentTier = hex.fortification?.tier || 0;
   
   if (currentTier >= 4) {
-    const currentName = fortificationData.tiers[currentTier - 1]?.name || 'Fortress';
+    const currentTierConfig = getFortificationTier(currentTier);
+    const currentName = currentTierConfig?.name || 'Fortress';
     return { valid: false, message: `Already a ${currentName}, cannot be upgraded further` };
   }
   
@@ -96,7 +95,7 @@ export function validateFortifyHexForPipeline(hexId: string): { valid: boolean; 
   
   // Check next tier availability
   const nextTier = currentTier + 1;
-  const tierConfig = fortificationData.tiers[nextTier - 1];
+  const tierConfig = getFortificationTier(nextTier);
   
   if (!tierConfig) {
     return { valid: false, message: 'Invalid fortification tier' };
@@ -114,9 +113,10 @@ export function validateFortifyHexForPipeline(hexId: string): { valid: boolean; 
   
   if (missingResources.length > 0) {
     const action = currentTier === 0 ? 'build' : 'upgrade to';
+    const currentTierConfig = getFortificationTier(currentTier);
     const fromTo = currentTier === 0 
       ? tierConfig.name 
-      : `${fortificationData.tiers[currentTier - 1].name} to ${tierConfig.name}`;
+      : `${currentTierConfig?.name || 'current'} to ${tierConfig.name}`;
     return { 
       valid: false, 
       message: `You need at least ${missingResources.join(' and ')} to ${action} ${fromTo}` 

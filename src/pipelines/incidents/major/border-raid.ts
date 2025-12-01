@@ -1,7 +1,6 @@
 /**
  * Border Raid Incident Pipeline
  *
- * Generated from data/incidents/major/border-raid.json
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
@@ -40,5 +39,7 @@ export const borderRaidPipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined
+  preview: undefined,
+
+  traits: ["dangerous"],
 };

@@ -1,11 +1,9 @@
 /**
  * Archaeological Find Event Pipeline
  *
- * Generated from data/events/archaeological-find.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const archaeologicalFindPipeline: CheckPipeline = {
   id: 'archaeological-find',
@@ -23,6 +21,7 @@ export const archaeologicalFindPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'A major discovery brings wealth and fame.',
+      endsEvent: true,
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '1d4', duration: 'immediate' },
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' },
@@ -31,18 +30,21 @@ export const archaeologicalFindPipeline: CheckPipeline = {
     },
     success: {
       description: 'Valuable artifacts are uncovered.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
       ]
     },
     failure: {
       description: 'Only minor artifacts are found.',
+      endsEvent: true,
       modifiers: [
         { type: 'choice', resources: ["food", "lumber", "ore", "stone"], value: 1, negative: false, duration: 'immediate' }
       ]
     },
     criticalFailure: {
       description: 'The site awakens something dangerous.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
@@ -50,5 +52,7 @@ export const archaeologicalFindPipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["beneficial"],
 };

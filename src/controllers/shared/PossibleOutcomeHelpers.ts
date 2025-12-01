@@ -1,92 +1,85 @@
 /**
- * Shared helper functions for building PossibleOutcome arrays from event/incident/action data
- * Handles missing outcomes gracefully (e.g., incidents where criticalSuccess = success)
+ * Shared helper functions for building PossibleOutcome arrays from pipeline outcomes
  */
 
 import type { EventModifier } from '../../types/modifiers';
+import type { Outcome } from '../../types/CheckPipeline';
 
 export interface PossibleOutcome {
   result: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
   label: string;
   description: string;
-  modifiers?: EventModifier[];
-  manualEffects?: string[];
-  gameCommands?: any[];
-  outcomeBadges?: any[];  // UnifiedOutcomeBadge[] for condition badges from pipeline
+  modifiers: EventModifier[];
+  manualEffects: string[];
+  gameCommands: any[];
+  outcomeBadges: any[];
 }
 
+// Re-use the Outcome type from CheckPipeline for consistency
 export interface OutcomeEffects {
-  criticalSuccess?: { msg?: string; description?: string; modifiers?: EventModifier[]; manualEffects?: string[]; gameCommands?: any[]; outcomeBadges?: any[] };
-  success?: { msg?: string; description?: string; modifiers?: EventModifier[]; manualEffects?: string[]; gameCommands?: any[]; outcomeBadges?: any[] };
-  failure?: { msg?: string; description?: string; modifiers?: EventModifier[]; manualEffects?: string[]; gameCommands?: any[]; outcomeBadges?: any[] };
-  criticalFailure?: { msg?: string; description?: string; modifiers?: EventModifier[]; manualEffects?: string[]; gameCommands?: any[]; outcomeBadges?: any[] };
+  criticalSuccess?: Outcome;
+  success?: Outcome;
+  failure?: Outcome;
+  criticalFailure?: Outcome;
 }
 
 /**
- * Build PossibleOutcome array from outcomes object
- * Handles missing outcomes gracefully:
- * - If criticalSuccess is missing, uses success outcome
- * - Skips any other missing outcomes
- * - Formats messages with placeholder replacement
+ * Build PossibleOutcome array from pipeline outcomes
  * 
- * @param outcomes - The outcomes object with outcome keys (can be called "effects" or "outcomes" in the data)
- * @returns Array of PossibleOutcome objects for display
+ * If criticalSuccess is missing, uses success outcome for that slot.
  */
 export function buildPossibleOutcomes(outcomes?: OutcomeEffects): PossibleOutcome[] {
   if (!outcomes) return [];
   
   const results: PossibleOutcome[] = [];
   
-  // Critical Success - fallback to success if missing
-  const critSuccessEffect = outcomes.criticalSuccess || outcomes.success;
-  if (critSuccessEffect) {
+  // Critical Success - use success if criticalSuccess is missing
+  const critSuccessOutcome = outcomes.criticalSuccess ?? outcomes.success;
+  if (critSuccessOutcome) {
     results.push({
       result: 'criticalSuccess',
       label: 'Critical Success',
-      description: critSuccessEffect.msg || critSuccessEffect.description || '',
-      modifiers: critSuccessEffect.modifiers || [],
-      manualEffects: critSuccessEffect.manualEffects || [],
-      gameCommands: critSuccessEffect.gameCommands || [],
-      outcomeBadges: critSuccessEffect.outcomeBadges || []
+      description: critSuccessOutcome.description,
+      modifiers: critSuccessOutcome.modifiers,
+      manualEffects: critSuccessOutcome.manualEffects ?? [],
+      gameCommands: critSuccessOutcome.gameCommands ?? [],
+      outcomeBadges: critSuccessOutcome.outcomeBadges ?? []
     });
   }
   
-  // Success
   if (outcomes.success) {
     results.push({
       result: 'success',
       label: 'Success',
-      description: outcomes.success.msg || outcomes.success.description || '',
-      modifiers: outcomes.success.modifiers || [],
-      manualEffects: outcomes.success.manualEffects || [],
-      gameCommands: outcomes.success.gameCommands || [],
-      outcomeBadges: outcomes.success.outcomeBadges || []
+      description: outcomes.success.description,
+      modifiers: outcomes.success.modifiers,
+      manualEffects: outcomes.success.manualEffects ?? [],
+      gameCommands: outcomes.success.gameCommands ?? [],
+      outcomeBadges: outcomes.success.outcomeBadges ?? []
     });
   }
   
-  // Failure
   if (outcomes.failure) {
     results.push({
       result: 'failure',
       label: 'Failure',
-      description: outcomes.failure.msg || outcomes.failure.description || '',
-      modifiers: outcomes.failure.modifiers || [],
-      manualEffects: outcomes.failure.manualEffects || [],
-      gameCommands: outcomes.failure.gameCommands || [],
-      outcomeBadges: outcomes.failure.outcomeBadges || []
+      description: outcomes.failure.description,
+      modifiers: outcomes.failure.modifiers,
+      manualEffects: outcomes.failure.manualEffects ?? [],
+      gameCommands: outcomes.failure.gameCommands ?? [],
+      outcomeBadges: outcomes.failure.outcomeBadges ?? []
     });
   }
   
-  // Critical Failure
   if (outcomes.criticalFailure) {
     results.push({
       result: 'criticalFailure',
       label: 'Critical Failure',
-      description: outcomes.criticalFailure.msg || outcomes.criticalFailure.description || '',
-      modifiers: outcomes.criticalFailure.modifiers || [],
-      manualEffects: outcomes.criticalFailure.manualEffects || [],
-      gameCommands: outcomes.criticalFailure.gameCommands || [],
-      outcomeBadges: outcomes.criticalFailure.outcomeBadges || []
+      description: outcomes.criticalFailure.description,
+      modifiers: outcomes.criticalFailure.modifiers,
+      manualEffects: outcomes.criticalFailure.manualEffects ?? [],
+      gameCommands: outcomes.criticalFailure.gameCommands ?? [],
+      outcomeBadges: outcomes.criticalFailure.outcomeBadges ?? []
     });
   }
   

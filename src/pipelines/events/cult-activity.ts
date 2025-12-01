@@ -1,11 +1,9 @@
 /**
  * Cult Activity Event Pipeline
  *
- * Generated from data/events/cult-activity.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const cultActivityPipeline: CheckPipeline = {
   id: 'cult-activity',
@@ -23,6 +21,7 @@ export const cultActivityPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The cultists are converted.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: -2, duration: 'immediate' },
         { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
@@ -30,18 +29,21 @@ export const cultActivityPipeline: CheckPipeline = {
     },
     success: {
       description: 'The cult is disbanded.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
       ]
     },
     failure: {
       description: 'The cult evades your forces.',
+      endsEvent: false,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
     },
     criticalFailure: {
       description: 'The cult\'s influence spreads.',
+      endsEvent: false,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' },
         { type: 'dice', resource: 'gold', formula: '1', negative: true, duration: 'immediate' },
@@ -50,5 +52,7 @@ export const cultActivityPipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["dangerous", "ongoing"],
 };

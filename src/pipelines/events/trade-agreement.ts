@@ -1,11 +1,9 @@
 /**
  * Trade Agreement Event Pipeline
  *
- * Generated from data/events/trade-agreement.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const tradeAgreementPipeline: CheckPipeline = {
   id: 'trade-agreement',
@@ -23,22 +21,26 @@ export const tradeAgreementPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'An exclusive trade deal is secured.',
+      endsEvent: true,
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '1d4', duration: 'immediate' }
       ]
     },
     success: {
       description: 'A standard agreement is reached.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
       ]
     },
     failure: {
       description: 'The terms are poor.',
+      endsEvent: true,
       modifiers: []
     },
     criticalFailure: {
       description: 'A trade dispute erupts.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'gold', value: -1, duration: 'immediate' },
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
@@ -47,5 +49,7 @@ export const tradeAgreementPipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["beneficial"],
 };

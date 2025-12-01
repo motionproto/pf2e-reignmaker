@@ -1,11 +1,9 @@
 /**
  * Diplomatic Overture Event Pipeline
  *
- * Generated from data/events/diplomatic-overture.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const diplomaticOverturePipeline: CheckPipeline = {
   id: 'diplomatic-overture',
@@ -23,6 +21,7 @@ export const diplomaticOverturePipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'Relations with the neighboring kingdom improve greatly.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'gold', value: 1, duration: 'immediate' },
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' },
@@ -30,14 +29,17 @@ export const diplomaticOverturePipeline: CheckPipeline = {
     },
     success: {
       description: 'Relations with the neighboring kingdom improve.',
+      endsEvent: true,
       modifiers: []
     },
     failure: {
       description: 'The negotiations go nowhere.',
+      endsEvent: true,
       modifiers: []
     },
     criticalFailure: {
       description: 'The negotiations turn sour.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
@@ -45,5 +47,7 @@ export const diplomaticOverturePipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["beneficial"],
 };

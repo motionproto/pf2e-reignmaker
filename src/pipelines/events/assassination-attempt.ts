@@ -1,11 +1,9 @@
 /**
  * Assassination Attempt Event Pipeline
  *
- * Generated from data/events/assassination-attempt.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const assassinationAttemptPipeline: CheckPipeline = {
   id: 'assassination-attempt',
@@ -23,20 +21,24 @@ export const assassinationAttemptPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The assassin is captured.',
+      endsEvent: true,
       modifiers: []
     },
     success: {
       description: 'The attempt is foiled.',
+      endsEvent: true,
       modifiers: []
     },
     failure: {
       description: 'Your leader narrowly escapes.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
     },
     criticalFailure: {
       description: 'Your leader is seriously wounded.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
       ]
@@ -44,5 +46,7 @@ export const assassinationAttemptPipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["dangerous"],
 };

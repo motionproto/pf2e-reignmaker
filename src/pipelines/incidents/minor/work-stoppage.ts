@@ -1,7 +1,6 @@
 /**
  * Work Stoppage Incident Pipeline
  *
- * Generated from data/incidents/minor/work-stoppage.json
  */
 
 import type { CheckPipeline} from '../../../types/CheckPipeline';
@@ -41,7 +40,8 @@ export const workStoppagePipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined
+  preview: undefined,
 
+  traits: ["dangerous"],
   // ✅ REMOVED: No longer needed - UnifiedCheckHandler handles modifiers automatically
 };

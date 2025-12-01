@@ -1,7 +1,6 @@
 /**
  * Emigration Threat Incident Pipeline
  *
- * Generated from data/incidents/minor/emigration-threat.json
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
@@ -64,5 +63,7 @@ export const emigrationThreatPipeline: CheckPipeline = {
   },
 
   // Auto-convert JSON modifiers to badges
-  preview: undefined
+  preview: undefined,
+
+  traits: ["dangerous"],
 };

@@ -1,21 +1,55 @@
 /**
- * sellSurplus Action Pipeline
- * Data from: data/player-actions/sell-surplus.json
+ * Sell Surplus Action Pipeline
+ * Trade resources for gold based on commerce structure tier
  */
 
-import { createActionPipeline } from '../shared/createActionPipeline';
+import type { CheckPipeline } from '../../types/CheckPipeline';
 import { applyResourceChanges } from '../shared/InlineActionHelpers';
 import { hasCommerceStructure, getBestTradeRates } from '../../services/commerce/tradeRates';
 import { getResourceIcon } from '../../view/kingdom/utils/presentation';
 
-export const sellSurplusPipeline = createActionPipeline('sell-surplus', {
+export const sellSurplusPipeline: CheckPipeline = {
+  // === BASE DATA ===
+  id: 'sell-surplus',
+  name: 'Sell Surplus',
+  description: 'Convert excess resources into gold through your kingdom\'s commerce infrastructure. Better commerce structures provide better trade rates. Requires at least one commerce structure.',
+  brief: 'Trade resources for gold based on commerce structure tier',
+  category: 'economic-resources',
+  checkType: 'action',
+
+  skills: [
+    { skill: 'society', description: 'market knowledge' },
+    { skill: 'diplomacy', description: 'trade negotiations' },
+    { skill: 'deception', description: 'inflate value' },
+    { skill: 'performance', description: 'showcase goods' },
+    { skill: 'thievery', description: 'black market' }
+  ],
+
+  outcomes: {
+    criticalSuccess: {
+      description: 'You secure exceptional trade rates.',
+      modifiers: []
+    },
+    success: {
+      description: 'Resources are sold.',
+      modifiers: []
+    },
+    failure: {
+      description: 'No buyers are found.',
+      modifiers: []
+    },
+    criticalFailure: {
+      description: 'You lose resources to fraud and corruption.',
+      modifiers: []
+    }
+  },
+
+  // === TYPESCRIPT LOGIC ===
   requirements: (kingdom) => {
-    // Must have a commerce structure
     if (!hasCommerceStructure()) {
       return { met: false, reason: 'Requires a commerce structure' };
     }
     
-    // Need at least enough of any resource type to meet trade rate
     const baseRates = getBestTradeRates();
     const minAmount = baseRates.sell.resourceCost;
     
@@ -34,34 +68,25 @@ export const sellSurplusPipeline = createActionPipeline('sell-surplus', {
     return { met: true };
   },
 
-  // ✅ CHANGED: Move to postRollInteractions for INLINE display in OutcomeDisplay
-  // This shows the component BEFORE clicking Apply, not as a dialog after
   postRollInteractions: [
     {
       type: 'configuration',
       id: 'resourceSelection',
-      component: 'SellResourceSelector',  // Resolved via ComponentRegistry
-      // Only show for successful sales
+      component: 'SellResourceSelector',
       condition: (ctx) => {
         return ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess';
       }
-      // NOTE: No onComplete handler here - execution happens in execute() function
-      // Component dispatches 'resolution' event which OutcomeDisplay captures
-      // Data is stored in ctx.resolutionData.customComponentData
     }
   ],
 
   preview: {
     calculate: async (ctx) => {
       if (ctx.outcome === 'criticalFailure') {
-        // Determine most plentiful resource for fraud penalty
         const resources = ctx.kingdom.resources;
         const plentifulResource = getMostPlentifulResource(resources);
         
         return {
           resources: [],
-          // ✨ AUTO-CONVERSION: OutcomeBadges with {{value}} are automatically converted to modifiers
-          // No need to manually create matching modifier - ResolutionDataBuilder handles it
           outcomeBadges: [{
             icon: getResourceIcon(plentifulResource),
             template: `Lose {{value}} ${capitalize(plentifulResource)}`,
@@ -71,7 +96,6 @@ export const sellSurplusPipeline = createActionPipeline('sell-surplus', {
         };
       }
       
-      // Success/failure - component handles selection
       return { resources: [] };
     }
   },
@@ -80,16 +104,12 @@ export const sellSurplusPipeline = createActionPipeline('sell-surplus', {
     switch (ctx.outcome) {
       case 'criticalSuccess':
       case 'success':
-        // ✅ Get user selection from customComponentData (set by SellResourceSelector)
         const customData = ctx.resolutionData?.customComponentData;
-        console.log('[SellSurplus] 🔍 customComponentData:', customData);
         
         if (!customData?.selectedResource || !customData?.selectedAmount || customData?.goldGained === undefined) {
-          console.warn('[SellSurplus] ⚠️ No resource selection - user might not have selected anything');
           return { success: true };
         }
         
-        // Apply resource changes based on user selection
         const saleResult = await applyResourceChanges([
           { resource: customData.selectedResource, amount: -customData.selectedAmount },
           { resource: 'gold', amount: customData.goldGained }
@@ -99,24 +119,18 @@ export const sellSurplusPipeline = createActionPipeline('sell-surplus', {
           throw new Error(saleResult.error || 'Failed to sell resources');
         }
         
-        console.log(`[SellSurplus] ✅ Sold ${customData.selectedAmount} ${customData.selectedResource} for ${customData.goldGained} gold`);
         return { success: true };
         
       case 'criticalFailure':
-        // Get rolled value from numericModifiers (populated by ResolutionDataBuilder)
         const penaltyModifier = ctx.resolutionData?.numericModifiers?.[0];
         
         if (!penaltyModifier) {
-          // User hasn't rolled yet - this is fine, they'll roll in OutcomeDisplay
-          console.log('[SellSurplus] ⏳ Waiting for fraud penalty roll');
           return { success: true };
         }
         
-        // Resource is stored in the modifier by ResolutionDataBuilder
         const resource = penaltyModifier.resource;
         const amount = Math.abs(penaltyModifier.value);
         
-        // Apply loss (GameCommandsService auto-converts shortage to unrest)
         const result = await applyResourceChanges([
           { resource, amount: -amount }
         ], 'sell-surplus');
@@ -125,18 +139,16 @@ export const sellSurplusPipeline = createActionPipeline('sell-surplus', {
           throw new Error(result.error || 'Failed to apply fraud penalty');
         }
         
-        console.log(`[SellSurplus] ✅ Applied fraud penalty: -${amount} ${resource}`);
         return { success: true };
         
       case 'failure':
-        // No action taken on failure
         return { success: true };
         
       default:
         return { success: false, error: `Unexpected outcome: ${ctx.outcome}` };
     }
   }
-});
+};
 
 /**
  * Helper: Find most plentiful resource (random selection if tied)
@@ -148,13 +160,9 @@ function getMostPlentifulResource(resources: any): 'food' | 'lumber' | 'stone' |
     amount: resources[r] || 0 
   }));
   
-  // Get max amount
   const max = Math.max(...counts.map(c => c.amount));
-  
-  // Get all resources tied for max
   const tied = counts.filter(c => c.amount === max);
   
-  // Random selection if tied
   return tied[Math.floor(Math.random() * tied.length)].resource;
 }
 

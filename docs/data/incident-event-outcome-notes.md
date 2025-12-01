@@ -116,19 +116,17 @@
 ---
 
 ### 9. Assassination Attempt
-**ID**: `assassination-attempt` | **Tier**: Moderate | **Status**: ⚠️ Manual
+**ID**: `assassination-attempt` | **Tier**: Moderate | **Status**: ✅ Complete
 
 **Implementation Notes**:
 - ✅ Resource modifiers handled by execute-first pattern
-- ❌ **Need Game Command**: `consumePlayerAction(random: boolean)`
-  - **Critical Failure**: Randomly select one leader and mark action as used
-  - Requirements:
-    - Show as consumed in turn tracker UI
-    - Prevent action execution for remainder of turn
-    - Clear on next turn
-  - Current workaround: Manual effect
-  - Priority: Low (narrative penalty, not mechanical blocker)
-  - Also needed for: Noble Conspiracy (#25)
+- ✅ **Critical Failure**: `spendPlayerAction(random)` game command implemented
+  - Randomly selects one leader who hasn't acted yet
+  - Marks their action as spent in the turn's actionLog
+  - Prevents them from taking a Kingdom Action for the remainder of the turn
+  - Shows chat notification with affected character name
+  - Automatically clears at next turn
+- Also used by: Noble Conspiracy (#25)
 
 ---
 
@@ -361,15 +359,15 @@
 ---
 
 ### 25. Noble Conspiracy
-**ID**: `noble-conspiracy` | **Tier**: Major | **Status**: ⚠️ Manual
+**ID**: `noble-conspiracy` | **Tier**: Major | **Status**: ✅ Complete
 
 **Implementation Notes**:
 - ✅ Resource modifiers (unrest, gold loss) via execute-first
-- ❌ **Critical Failure**: Need `consumePlayerAction(random: true)`
+- ✅ **Critical Failure**: `spendPlayerAction(random)` game command implemented
   - Same as Assassination Attempt (#9)
   - Randomly select leader and mark action as used
-- Current workaround: Manual effect
-- Priority: Low (narrative penalty, works manually)
+  - Shows in turn tracker UI as consumed
+  - Automatically clears on next turn
 
 ---
 
@@ -525,11 +523,11 @@
 
 ### Low Priority (Quality of Life)
 
-7. **`consumePlayerAction(random)`**
+7. **`spendPlayerAction(characterSelection)`** ✅ **IMPLEMENTED**
    - Needed for: Assassination Attempt (#9), Noble Conspiracy (#25)
-   - Impact: Action tracker (narrative penalty)
-   - Complexity: Low (flag in turn state)
-   - Note: Works fine with manual effects
+   - Impact: Action tracker (prevents character from acting)
+   - Complexity: Low (adds entry to actionLog)
+   - Implementation: Complete - marks character as having acted without taking action
 
 ### Enhancement Opportunities (Not Blocking)
 

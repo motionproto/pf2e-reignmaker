@@ -1,11 +1,9 @@
 /**
  * Local Disaster Event Pipeline
  *
- * Generated from data/events/local-disaster.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const localDisasterPipeline: CheckPipeline = {
   id: 'local-disaster',
@@ -23,22 +21,26 @@ export const localDisasterPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The disaster is contained.',
+      endsEvent: true,
       modifiers: []
     },
     success: {
       description: 'Damage is limited.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
     },
     failure: {
       description: 'Major damage occurs.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
     },
     criticalFailure: {
       description: 'The disaster is catastrophic.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
       ]
@@ -46,5 +48,7 @@ export const localDisasterPipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["dangerous"],
 };

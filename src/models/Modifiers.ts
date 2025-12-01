@@ -12,7 +12,7 @@
  */
 
 import type { EventModifier } from '../types/modifiers';
-import type { EventData } from '../controllers/events/event-loader';
+import type { CheckPipeline } from '../types/CheckPipeline';
 
 /**
  * Intermediate resolution state for OutcomeDisplay
@@ -53,7 +53,7 @@ export interface ActiveEventInstance {
   instanceId: string;           // Unique: "demand-structure-1760275035410"
   eventId: string;               // Template ID: "demand-structure"
   eventType: 'event' | 'incident';
-  eventData: EventData;          // Full event object (skills, outcomes, etc.)
+  eventData: CheckPipeline;          // Full event object (skills, outcomes, etc.)
   createdTurn: number;
   status: 'pending' | 'resolved';
   

@@ -1,7 +1,6 @@
 /**
  * Economic Crash Incident Pipeline
  *
- * Generated from data/incidents/major/economic-crash.json
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';

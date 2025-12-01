@@ -1,11 +1,10 @@
 <script lang="ts">
    import { onMount } from 'svelte';
    import { updateKingdom, kingdomData } from '../../../stores/KingdomStore';
-   import { eventService } from '../../../controllers/events/event-loader';
-   import { incidentLoader } from '../../../controllers/incidents/incident-loader';
+   import { pipelineRegistry } from '../../../pipelines/PipelineRegistry';
    import { createOutcomePreviewService } from '../../../services/OutcomePreviewService';
    import { get } from 'svelte/store';
-   import type { EventData } from '../../../controllers/events/event-loader';
+   import type { CheckPipeline } from '../../../types/CheckPipeline';
    import type { KingdomIncident } from '../../../types/incidents';
    
    const logger = {
@@ -18,14 +17,14 @@
    export let currentItemId: string | null = null;
    
    // Get all available items
-   let allItems: Array<EventData | KingdomIncident> = [];
+   let allItems: Array<CheckPipeline> = [];
    let currentIndex = -1;
    
    $: {
       if (type === 'event') {
-         allItems = eventService.exportEvents();
+         allItems = pipelineRegistry.getPipelinesByType('event');
       } else {
-         allItems = incidentLoader.getAllIncidents();
+         allItems = pipelineRegistry.getPipelinesByType('incident');
       }
       
       // Find current index by extracting checkId from previewId
@@ -145,7 +144,7 @@
          // EVENT: NEW ARCHITECTURE (OutcomePreview + turnState)
          if (itemId !== null) {
             // Find event data
-            const event = eventService.getEventById(itemId);
+            const event = pipelineRegistry.getPipeline(itemId);
             if (!event) {
                logger.error(`[DebugEventSelector] Event not found: ${itemId}`);
                return;
@@ -216,7 +215,7 @@
          // INCIDENT: NEW ARCHITECTURE (OutcomePreview + turnState)
          if (itemId !== null) {
             // Find incident data
-            const incident = incidentLoader.getIncidentById(itemId);
+            const incident = pipelineRegistry.getPipeline(itemId);
             if (!incident) {
                logger.error(`[DebugEventSelector] Incident not found: ${itemId}`);
                return;

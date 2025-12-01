@@ -1,11 +1,9 @@
 /**
  * Remarkable Treasure Event Pipeline
  *
- * Generated from data/events/remarkable-treasure.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const remarkableTreasurePipeline: CheckPipeline = {
   id: 'remarkable-treasure',
@@ -23,6 +21,7 @@ export const remarkableTreasurePipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'A legendary treasure is discovered.',
+      endsEvent: true,
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '1d6+1', duration: 'immediate' },
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' },
@@ -30,18 +29,21 @@ export const remarkableTreasurePipeline: CheckPipeline = {
     },
     success: {
       description: 'A valuable treasure is found.',
+      endsEvent: true,
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '1d4', duration: 'immediate' }
       ]
     },
     failure: {
       description: 'The treasure is of modest value.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
       ]
     },
     criticalFailure: {
       description: 'The treasure is cursed.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
@@ -49,5 +51,7 @@ export const remarkableTreasurePipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["beneficial"],
 };

@@ -1,7 +1,6 @@
 /**
  * Religious Schism Incident Pipeline
  *
- * Generated from data/incidents/major/religious-schism.json
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';

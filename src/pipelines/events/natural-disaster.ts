@@ -1,11 +1,9 @@
 /**
  * Natural Disaster Event Pipeline
  *
- * Generated from data/events/natural-disaster.json
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../shared/applyPipelineModifiers';
 
 export const naturalDisasterPipeline: CheckPipeline = {
   id: 'natural-disaster',
@@ -23,24 +21,28 @@ export const naturalDisasterPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'Damage is minimal.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
       ]
     },
     success: {
       description: 'Some damage occurs.',
+      endsEvent: true,
       modifiers: [
         { type: 'choice', resources: ["lumber", "ore", "food", "stone"], value: 1, negative: true, duration: 'immediate' }
       ]
     },
     failure: {
       description: 'Major damage occurs.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
     },
     criticalFailure: {
       description: 'The disaster is devastating.',
+      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
       ]
@@ -48,5 +50,7 @@ export const naturalDisasterPipeline: CheckPipeline = {
   },
 
   preview: {
-  }
+  },
+
+  traits: ["dangerous"],
 };

@@ -30,11 +30,15 @@ npm run deploy
 ```
 This will:
 1. Clean the `dist` folder
-2. Run Python build scripts to combine data files
-3. Build the module with Vite
-4. Copy everything to your FoundryVTT modules directory
+2. Run Python build scripts to combine data for factions and structures (from archive)
+3. Generate TypeScript types
+4. Build the module with Vite
+5. Copy everything to your FoundryVTT modules directory
 
 Use this for local testing in Foundry VTT.
+
+**Note on Data Architecture:**
+As of December 2025, all Action, Event, and Incident data is now defined directly in TypeScript pipeline files (`src/pipelines/`). The legacy JSON data files have been moved to `archived-implementations/data-json/` for historical reference. The build process only compiles factions and structures JSON (which remain in use).
 
 ### Build Only
 ```bash
@@ -50,7 +54,7 @@ npm run package
 
 This will:
 1. Clean old build artifacts
-2. Run Python build scripts to combine data files
+2. Run Python build scripts to combine data for factions and structures and generate types
 3. Build the module with Vite (production mode, **no source maps**)
 4. Create a clean distribution package
 5. Generate a versioned zip file: `pf2e-reignmaker-v{version}.zip`
@@ -64,7 +68,6 @@ This will:
   - `LICENSE`
   - `README.md`
   - `dist/` - Compiled module code (no source maps)
-  - `data/` - Game data files
   - `lang/` - Language files
   - `macros/` - Helper macros
 
@@ -73,6 +76,7 @@ This will:
 - The version number is read from `module.json`
 - Output is organized in the `releases/` folder (ignored by git)
 - This zip file is ready for upload to release platforms or manual installation
+- All game data (actions, events, incidents) is compiled into the TypeScript bundle
 
 ## Custom Path Override
 
@@ -97,6 +101,18 @@ npm run deploy
 ```
 
 ## Changes Made
+
+### Data Architecture (December 2025)
+- **JSON data archived to `archived-implementations/data-json/`**: Source JSON files for actions, events, and incidents moved to archive directory
+- **TypeScript pipelines as single source**: All actions, events, and incidents now fully defined in `src/pipelines/` TypeScript files
+- **PipelineRegistry as runtime source**: Controllers load from `PipelineRegistry` instead of JSON loaders
+- **Legacy loaders removed**: `action-loader.ts`, `event-loader.ts`, and `incident-loader.ts` deleted
+- **Build simplified**: No longer compiles actions/events/incidents JSON (only factions and structures)
+- **Benefits**: 
+  - No sync issues between JSON and TypeScript
+  - Full TypeScript features (outcomeBadges, custom execute, postApplyInteractions)
+  - Easier to maintain and extend
+  - Single source of truth at runtime
 
 ### `buildscripts/deploy.js`
 - Added `getFoundryModulesPath()` function that detects the OS
