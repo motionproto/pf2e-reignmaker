@@ -221,10 +221,41 @@
   $: stateChangeDice = detectStateChangeDice(stateChanges);
   $: hasStateChangeDice = stateChangeDice.length > 0;
   
-  // ✨ REMOVED: Specific validation logic (diceResolved, choicesResolved, etc.)
-  // ✨ Components now register with ValidationContext and manage their own state
+  // ========================================
+  // ✨ NEW: Direct Validation from Data
+  // ========================================
+  // Detect all interaction requirements directly from outcome data
+  // This replaces ValidationContext with simpler, more reliable approach
   
-  // Determine if custom component requires resolution
+  // 1. DICE ROLL REQUIREMENTS
+  // Check for dice in both badges and modifiers
+  $: hasDiceInBadges = outcomeBadges?.some(b => b.value?.type === 'dice') || false;
+  $: hasDiceInModifiers = standaloneDiceModifiers.length > 0 || hasStateChangeDice;
+  $: requiresDiceRoll = hasDiceInBadges || hasDiceInModifiers;
+  
+  // Check if all dice are rolled
+  $: allDiceRolled = (() => {
+    if (!requiresDiceRoll) return true;
+    
+    // Check standalone dice modifiers
+    const standaloneDiceResolved = standaloneDiceModifiers.every((m: any) => 
+      resolvedDice.has(m.originalIndex)
+    );
+    
+    // Check state change dice
+    const stateChangeDiceResolved = stateChangeDice.every((dice: any) => 
+      resolvedDice.has(dice.key)
+    );
+    
+    // Check dice badges
+    const badgeDiceResolved = !hasDiceInBadges || outcomeBadges.every((badge, idx) => 
+      badge.value?.type !== 'dice' || resolvedDice.has(idx)
+    );
+    
+    return standaloneDiceResolved && stateChangeDiceResolved && badgeDiceResolved;
+  })();
+  
+  // 2. CUSTOM COMPONENT REQUIREMENTS
   $: hasCustomComponent = customComponent !== null;
   $: customComponentResolved = !hasCustomComponent || (
     // Check if componentResolutionData has data (for modifiers-based custom components)
@@ -237,8 +268,31 @@
     (customSelectionData && Object.keys(customSelectionData).length > 0)
   );
   
-  // Debug logging for custom component resolution
-  $: if (hasCustomComponent) {
+  // 3. CHOICE REQUIREMENTS
+  $: requiresChoice = effectiveChoices.length > 0;
+  $: choiceResolved = !requiresChoice || selectedChoice !== null;
+  
+  // 4. COMBINE ALL REQUIREMENTS
+  $: allInteractionsResolved = allDiceRolled && customComponentResolved && choiceResolved;
+  
+  // Debug logging for validation state
+  $: if (!allInteractionsResolved && !applied) {
+    console.log('🔒 [OutcomeDisplay] Interactions not resolved:', {
+      requiresDiceRoll,
+      allDiceRolled,
+      standaloneDiceModifiers: standaloneDiceModifiers.length,
+      stateChangeDice: stateChangeDice.length,
+      resolvedDiceCount: resolvedDice.size,
+      hasCustomComponent,
+      customComponentResolved,
+      requiresChoice,
+      choiceResolved,
+      selectedChoice
+    });
+  }
+  
+  // Keep old custom component debug logging for reference
+  $: if (hasCustomComponent && !customComponentResolved) {
     console.log('🔍 [OutcomeDisplay] Custom component validation:', {
       hasCustomComponent,
       customComponentResolved,
@@ -261,12 +315,12 @@
   $: showPrimaryButton = !applied;
   $: effectivePrimaryLabel = primaryButtonLabel;  // Always "Apply Result" (no "✓ Applied" state)
   
-  // ✨ NEW: Validation via context (collects from all registered providers)
+  // ✨ DEPRECATED: Validation via context (keeping for backwards compatibility but not used)
   $: unresolvedProviders = Array.from($validationContext.values()).filter(
     p => p.needsResolution && !p.isResolved
   );
   
-  // ✨ NEW: Simplified validation logic using context-based validation
+  // ✨ NEW: Direct validation from data (more reliable than ValidationContext)
   let primaryButtonDisabled = false;
   $: {
     // Check if there's any content to apply
@@ -283,10 +337,28 @@
       ui.notifications?.error('Outcome data error: No message or modifiers to display');
     }
     
-    // ✨ Context-based validation (all components register themselves)
-    const contextValidationFails = unresolvedProviders.length > 0;
+    // ✨ Use direct data validation instead of ValidationContext
+    // This is more reliable as it computes from data synchronously
+    const interactionsNotResolved = !allInteractionsResolved;
     
-    primaryButtonDisabled = applied || contextValidationFails || !hasContent;
+    primaryButtonDisabled = applied || interactionsNotResolved || !hasContent;
+    
+    // Enhanced debug logging when button is disabled
+    if (primaryButtonDisabled && !applied) {
+      console.log('🔒 [OutcomeDisplay] Apply button disabled:', {
+        applied,
+        interactionsNotResolved,
+        hasContent,
+        breakdown: {
+          requiresDiceRoll,
+          allDiceRolled,
+          requiresCustomComponent: hasCustomComponent,
+          customComponentResolved,
+          requiresChoice,
+          choiceResolved
+        }
+      });
+    }
   }
   
   // Display effective message and state changes

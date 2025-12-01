@@ -77,6 +77,16 @@ export class SelectionPanelManager {
   }
 
   /**
+   * Transition directly to completed state (for display mode)
+   * Skips selection phase and goes straight to showing results
+   */
+  transitionToCompleted(hexInfo: string | null): void {
+    this.panelState = 'completed';
+    this.completionHexInfo = hexInfo;
+    this.updatePanel();
+  }
+
+  /**
    * Mount floating panel
    */
   mountPanel(): void {
@@ -387,18 +397,29 @@ export class SelectionPanelManager {
     const panel = this.panelMountPoint.querySelector('.hex-selection-panel') as HTMLElement;
     if (!panel) return;
     
-    const actionMessages: Record<string, string> = {
-      scout: 'Hexes Revealed!',
-      claim: 'Hexes Claimed!',
-      road: 'Roads Built!',
-      settlement: 'Settlement Established!',
-      fortify: 'Hex Fortified!',
-      unclaim: 'Hexes Unclaimed!',
-      worksite: 'Worksite Created!'  // Add worksite-specific message
-    };
+    // Use custom title if provided (for display mode), otherwise use action-specific messages
+    let title: string;
+    let icon: string;
     
-    const title = actionMessages[this.config.colorType] || 'Selection Complete!';
-    const icon = this.config.colorType === 'scout' ? 'fa-map-marked-alt' : 'fa-check-circle';
+    if (this.config.mode === 'display') {
+      // Display mode: use the custom title directly
+      title = this.config.title;
+      icon = this.config.colorType === 'destroyed' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+    } else {
+      // Interactive mode: use action-specific messages
+      const actionMessages: Record<string, string> = {
+        scout: 'Hexes Revealed!',
+        claim: 'Hexes Claimed!',
+        road: 'Roads Built!',
+        settlement: 'Settlement Established!',
+        fortify: 'Hex Fortified!',
+        unclaim: 'Hexes Unclaimed!',
+        worksite: 'Worksite Created!',
+        destroyed: 'Worksites Destroyed!'
+      };
+      title = actionMessages[this.config.colorType] || 'Selection Complete!';
+      icon = this.config.colorType === 'scout' ? 'fa-map-marked-alt' : 'fa-check-circle';
+    }
     
     // Generate metadata display HTML if custom selector data exists
     let metadataHTML = '';
@@ -428,25 +449,35 @@ export class SelectionPanelManager {
           ${title}
         </h3>
       </div>
-      ${this.completionHexInfo ? `
-        <div style="margin-bottom: 12px; padding: 8px; background: var(--hover-low); border-radius: 4px; font-size: 13px;">
-          ${this.completionHexInfo}
-        </div>
-      ` : ''}
       ${metadataHTML}
       <div style="padding: 20px;">
         <div style="background: var(--hover-low); border-radius: 4px; padding: 8px; margin-bottom: 16px;">
-          <div style="font-size: 12px; color: #999; margin-bottom: 4px;">Selected ${this.selectedHexes.length} ${this.selectedHexes.length === 1 ? 'hex' : 'hexes'}:</div>
-          <div style="max-height: 200px; overflow-y: auto;">
-            ${this.selectedHexes.map(hexId => {
-              const terrain = this.getHexTerrain(hexId);
-              return `
-                <div style="padding: 2px 4px; font-family: monospace; font-size: var(--font-md); color: #D2691E;">
-                  ${hexId} <span style="font-size: 12px; color: #999;">[${terrain}]</span>
-                </div>
-              `;
-            }).join('')}
-          </div>
+          ${this.config.mode === 'display' && this.config.getHexInfo ? `
+            <!-- Display mode with custom hex info: show only the info, no "Selected X hexes" label -->
+            <div style="max-height: 200px; overflow-y: auto;">
+              ${this.selectedHexes.map(hexId => {
+                const hexInfo = this.config.getHexInfo ? this.config.getHexInfo(hexId) : null;
+                return `
+                  <div style="padding: 8px 4px; font-size: var(--font-lg); border-bottom: 1px solid var(--border-subtle);">
+                    ${hexInfo || hexId}
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          ` : `
+            <!-- Interactive mode or display without custom info: show "Selected X hexes" with hex IDs -->
+            <div style="font-size: 12px; color: #999; margin-bottom: 4px;">Selected ${this.selectedHexes.length} ${this.selectedHexes.length === 1 ? 'hex' : 'hexes'}:</div>
+            <div style="max-height: 200px; overflow-y: auto;">
+              ${this.selectedHexes.map(hexId => {
+                const terrain = this.getHexTerrain(hexId);
+                return `
+                  <div style="padding: 2px 4px; font-family: monospace; font-size: var(--font-md); color: #D2691E;">
+                    ${hexId} <span style="font-size: 12px; color: #999;">[${terrain}]</span>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `}
           ${this.config.colorType === 'scout' ? `
             <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #666; font-size: 12px; color: #999; text-align: center;">
               <i class="fas fa-eye"></i> Check the map to see newly revealed areas!

@@ -139,9 +139,17 @@ export async function createUnrestPhaseController() {
       let instanceId: string | null = null;
       if (incidentTriggered) {
         try {
-          const { incidentLoader } = await import('./incidents/incident-loader');
+          // ✅ ARCHITECTURE FIX: Load from pipeline registry instead of JSON
+          // Pipelines have outcomeBadges, gameCommands, execute() functions - JSON doesn't
+          const { pipelineRegistry } = await import('../pipelines/PipelineRegistry');
           const severity = tier === 1 ? 'minor' : tier === 2 ? 'moderate' : 'major';
-          const incident = incidentLoader.getRandomIncident(severity);
+          
+          // Get all incidents of the correct tier
+          const allIncidents = pipelineRegistry.getPipelinesByType('incident');
+          const incidentsForTier = allIncidents.filter((p: any) => p.tier === tier);
+          
+          // Pick random incident
+          const incident = incidentsForTier[Math.floor(Math.random() * incidentsForTier.length)];
           incidentId = incident?.id || null;
           
           if (incident) {

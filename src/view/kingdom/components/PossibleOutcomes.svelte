@@ -82,14 +82,17 @@
               {@html outcome.description}
             </div>
             
-            <!-- Show badges (modifiers and game commands together) -->
-            {#if (outcome.modifiers && outcome.modifiers.length > 0) || (outcome.gameCommands && outcome.gameCommands.length > 0)}
+            <!-- Show badges (modifiers, game commands, and outcome badges together) -->
+            {#if (outcome.modifiers && outcome.modifiers.length > 0) || (outcome.gameCommands && outcome.gameCommands.length > 0) || (outcome.outcomeBadges && outcome.outcomeBadges.length > 0)}
               <div class="outcome-badges">
                 {#if outcome.modifiers && outcome.modifiers.length > 0}
                   <AdjustmentBadges modifiers={outcome.modifiers} />
                 {/if}
                 {#if outcome.gameCommands && outcome.gameCommands.length > 0}
                   <GameCommandBadges gameCommands={outcome.gameCommands} />
+                {/if}
+                {#if outcome.outcomeBadges && outcome.outcomeBadges.length > 0}
+                  <AdjustmentBadges modifiers={outcome.outcomeBadges} />
                 {/if}
               </div>
             {/if}

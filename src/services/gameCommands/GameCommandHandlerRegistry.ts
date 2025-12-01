@@ -17,6 +17,7 @@ import { FoundSettlementHandler } from './handlers/FoundSettlementHandler';
 import { AdjustFactionHandler } from './handlers/AdjustFactionHandler';
 import { OutfitArmyHandler } from './handlers/OutfitArmyHandler';
 import { RequestMilitaryAidHandler } from './handlers/RequestMilitaryAidHandler';
+import { DestroyWorksiteHandler } from './handlers/DestroyWorksiteHandler';
 
 /**
  * Registry manages all game command handlers
@@ -30,7 +31,8 @@ export class GameCommandHandlerRegistry {
     new FoundSettlementHandler(),
     new AdjustFactionHandler(),
     new OutfitArmyHandler(),
-    new RequestMilitaryAidHandler()
+    new RequestMilitaryAidHandler(),
+    new DestroyWorksiteHandler()
   ];
   
   /**
@@ -115,7 +117,7 @@ let registryInstance: GameCommandHandlerRegistry | null = null;
 export function getGameCommandRegistry(): GameCommandHandlerRegistry {
   if (!registryInstance) {
     registryInstance = new GameCommandHandlerRegistry();
-    console.log('[GameCommandHandlerRegistry] Registry initialized with 8 handlers');
+    console.log('[GameCommandHandlerRegistry] Registry initialized with 9 handlers');
   }
   return registryInstance;
 }

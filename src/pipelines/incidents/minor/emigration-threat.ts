@@ -27,20 +27,42 @@ export const emigrationThreatPipeline: CheckPipeline = {
     },
     failure: {
       description: 'Citizens abandon ongoing projects.',
-      modifiers: [],
-      manualEffects: ["Choose or roll for one random ongoing worksite. That worksite is destroyed (remove all progress)"]
+      modifiers: []
     },
     criticalFailure: {
       description: 'Mass emigration causes chaos.',
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-      ],
-      manualEffects: ["Choose or roll for one random ongoing worksite. That worksite is destroyed (remove all progress)"]
+      ]
     },
+  },
+
+  execute: async (ctx) => {
+    // Modifiers already applied by execute-first pattern
+    
+    // Only execute worksite destruction on failure or critical failure
+    if (ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess') {
+      return { success: true };
+    }
+    
+    const { createGameCommandsResolver } = await import('../../../services/GameCommandsResolver');
+    const resolver = await createGameCommandsResolver();
+    
+    // Failure: destroy 1 worksite, Critical Failure: destroy 1d3 worksites
+    const count = ctx.outcome === 'criticalFailure' ? '1d3' : 1;
+    const preparedCommand = await resolver.destroyWorksite(count);
+    
+    if (!preparedCommand) {
+      return { success: true, message: 'No worksites to destroy' };
+    }
+    
+    if (preparedCommand.commit) {
+      await preparedCommand.commit();
+    }
+    
+    return { success: true };
   },
 
   // Auto-convert JSON modifiers to badges
   preview: undefined
-
-  // ✅ REMOVED: No longer needed - UnifiedCheckHandler handles modifiers automatically
 };

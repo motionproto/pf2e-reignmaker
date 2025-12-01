@@ -131,6 +131,38 @@ preview: {
 
 **Note:** The PipelineCoordinator automatically converts JSON modifiers to badges, so custom preview calculation is only needed for special display logic.
 
+**Static Preview Badges (New in 2025-01):**
+
+Pipelines can also define static preview badges in the `outcomes` section that appear in the "Possible Outcomes" display before any roll:
+
+```typescript
+import { textBadge } from '../../types/OutcomeBadge';
+
+export const myPipeline: CheckPipeline = {
+  outcomes: {
+    criticalFailure: {
+      description: 'Major bandit raids devastate the area.',
+      modifiers: [...],
+      outcomeBadges: [
+        textBadge('1 random worksite destroyed', 'fa-hammer-war', 'negative')
+      ]
+    }
+  },
+  preview: {
+    calculate: (ctx) => {
+      // Returns dynamic badges after rolling
+      // Can be combined with static badges from outcomes
+    }
+  }
+};
+```
+
+**Badge Flow:**
+1. **Before Roll:** `buildPossibleOutcomes()` extracts `outcomeBadges` from `outcomes` → displayed in check card
+2. **After Roll:** `preview.calculate()` returns dynamic badges → combined with static badges in outcome display
+
+See `docs/systems/core/pipeline-patterns.md` for complete preview badges documentation.
+
 ### 2. PipelineCoordinator Class
 
 **File:** `src/services/PipelineCoordinator.ts`
@@ -195,9 +227,11 @@ class PipelineCoordinator {
 - User rolls on tables, makes choices, updates preview
 - Passive - handled by OutcomeDisplay component
 - Optional - skip if no outcome interactions defined
+- **Apply button disabled** until all interactions resolved (dice rolled, components selected, choices made)
 
 **Step 6: waitForApply()**
 - Wait for user to click "Apply Result" button
+- Button automatically disabled until all Step 5 interactions are resolved
 - Pause/resume pattern (see below)
 - Always runs
 
@@ -1393,6 +1427,7 @@ Test representative examples manually:
 ### Core Architecture (systems/core/)
 - **[check-type-differences.md](./check-type-differences.md)** - Events vs Incidents vs Actions
 - **[outcome-display-system.md](./outcome-display-system.md)** - Universal outcome renderer
+- **[apply-button-validation.md](./apply-button-validation.md)** - Apply button validation for post-roll interactions
 - **[typed-modifiers-system.md](./typed-modifiers-system.md)** - Resource modification system
 - **[game-commands-system.md](./game-commands-system.md)** - Non-resource effects
 

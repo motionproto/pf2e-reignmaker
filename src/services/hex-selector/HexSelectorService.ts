@@ -58,8 +58,16 @@ export class HexSelectorService {
     return new Promise(async (resolve) => {
       this.resolve = resolve;
       this.config = config;
-      this.selectedHexes = [];
+      this.selectedHexes = config.existingHexes || [];  // Pre-populate if provided
       this.active = true;
+      
+      logger.info(`[HexSelector] Starting selection with config:`, {
+        mode: config.mode,
+        count: config.count,
+        existingHexesCount: config.existingHexes?.length || 0,
+        existingHexes: config.existingHexes,
+        selectedHexesCount: this.selectedHexes.length
+      });
       
       try {
         // Configure components
@@ -86,6 +94,15 @@ export class HexSelectorService {
         );
         this.panelManager.mountPanel();
         
+        // Render pre-selected hexes immediately
+        if (config.existingHexes && config.existingHexes.length > 0) {
+          const style = this.renderer.getSelectionStyle();
+          for (const hexId of config.existingHexes) {
+            this.renderer.renderSelection(hexId, style);
+          }
+          this.panelManager.updatePanel();
+        }
+        
         // Listen for panel events
         const panelMount = document.getElementById('hex-selection-panel-mount');
         panelMount?.addEventListener('hex-deselected', ((e: CustomEvent) => {
@@ -96,20 +113,48 @@ export class HexSelectorService {
           this.handleCompletedOk();
         });
         
-        // 6. Attach canvas listeners
-        this.interactionHandler.setConfig(
-          config,
-          this.selectedHexes,
-          this.selectedRoadConnections,
-          (hexId) => this.handleHexSelection(hexId),
-          (hexId) => this.handleHexDeselection(hexId),
-          () => this.panelManager.updatePanel()
-        );
-        this.interactionHandler.attachCanvasListeners();
+        // 6. Check for display mode
+        const isDisplayMode = config.mode === 'display';
         
-        // 7. Notify user
-        const ui = (globalThis as any).ui;
-        ui?.notifications?.info(`Click hexes on the map to select them`);
+        if (isDisplayMode) {
+          // Display-only mode: show completion panel immediately, resolve when user clicks OK
+          logger.info('[HexSelector] Display mode - showing pre-selected hexes');
+          
+          // Detach any canvas listeners to prevent interaction
+          this.interactionHandler.detachCanvasListeners();
+          
+          // Capture hex info for completion display (if available)
+          let completionHexInfo: string | null = null;
+          if (config.getHexInfo && this.selectedHexes.length > 0) {
+            completionHexInfo = config.getHexInfo(this.selectedHexes[0]);
+          }
+          
+          // Transition to completed state FIRST (panel shows before executing action)
+          this.panelManager.transitionToCompleted(completionHexInfo);
+          
+          // THEN resolve promise with selected hexes (but only after panel is shown)
+          // This allows the pipeline to continue to Step 8 (execute)
+          // Note: We resolve immediately but the panel stays visible until user clicks OK
+          const hexes = [...this.selectedHexes];
+          const resolver = this.resolve;
+          this.resolve = null;
+          resolver?.(hexes);
+        } else {
+          // Interactive selection mode
+          this.interactionHandler.setConfig(
+            config,
+            this.selectedHexes,
+            this.selectedRoadConnections,
+            (hexId) => this.handleHexSelection(hexId),
+            (hexId) => this.handleHexDeselection(hexId),
+            () => this.panelManager.updatePanel()
+          );
+          this.interactionHandler.attachCanvasListeners();
+          
+          // 7. Notify user
+          const ui = (globalThis as any).ui;
+          ui?.notifications?.info(`Click hexes on the map to select them`);
+        }
 
       } catch (error) {
         logger.error('[HexSelector] Failed to start selection:', error);
@@ -191,8 +236,11 @@ export class HexSelectorService {
    * Handle Done button click - returns hexes and shows completion panel
    */
   private async handleDone(): Promise<void> {
-    if (!this.config || this.selectedHexes.length !== this.config.count) {
-      return;
+    // In display mode, skip count validation
+    if (this.config?.mode !== 'display') {
+      if (!this.config || this.selectedHexes.length !== this.config.count) {
+        return;
+      }
     }
     
     logger.info('[HexSelector] Done clicked, updating kingdom and showing completion');

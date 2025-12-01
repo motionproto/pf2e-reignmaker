@@ -5,7 +5,7 @@
 /**
  * Type of hex selection action
  */
-export type HexSelectionType = 'claim' | 'road' | 'settlement' | 'scout' | 'fortify' | 'unclaim' | 'worksite';
+export type HexSelectionType = 'claim' | 'road' | 'settlement' | 'scout' | 'fortify' | 'unclaim' | 'worksite' | 'destroyed';
 
 /**
  * Color configuration for hex highlighting
@@ -38,6 +38,7 @@ export interface HexSelectionConfig {
   title: string;              // Panel title (e.g., "Select Hexes to Claim")
   count: number;              // Number of hexes to select
   colorType: HexSelectionType;  // Action type for color coding
+  mode?: 'select' | 'display';  // Selection mode: 'select' = interactive (default), 'display' = show only
   existingHexes?: string[];   // Already selected hexes (for highlighting)
   allowToggle?: boolean;      // Allow clicking to deselect (default: true)
   validateHex?: (hexId: string, pendingSelections?: string[]) => boolean | ValidationResult;  // Optional validation function (supports pending selections for chaining)
@@ -85,5 +86,10 @@ export const HEX_HIGHLIGHT_COLORS: Record<string, ColorConfig> = {
   // Worksite Creation
   existingWorksite: { color: 0x8B4513, alpha: 0.3 },  // Brown
   newWorksite: { color: 0x90EE90, alpha: 0.7 },        // Light green (selected) - matches fortify
-  hoverWorksite: { color: 0x90EE90, alpha: 0.4 }       // Light green (hover) - matches fortify
+  hoverWorksite: { color: 0x90EE90, alpha: 0.4 },       // Light green (hover) - matches fortify
+  
+  // Destroyed/Negative Outcomes (for showing destroyed worksites, damaged structures, etc.)
+  existingDestroyed: { color: 0x8B0000, alpha: 0.3 },  // Dark red
+  newDestroyed: { color: 0xFF4444, alpha: 0.7 },        // Bright red (selected)
+  hoverDestroyed: { color: 0xFF6666, alpha: 0.4 }       // Light red (hover)
 };

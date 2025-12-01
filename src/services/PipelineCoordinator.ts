@@ -725,6 +725,12 @@ export class PipelineCoordinator {
               instance.appliedOutcome.outcomeBadges = preview.outcomeBadges;
               console.log('✅ [PipelineCoordinator] Updated outcomeBadges:', instance.appliedOutcome.outcomeBadges);
             }
+            
+            // Update instance metadata with changes from preview.calculate()
+            if (ctx.metadata && Object.keys(ctx.metadata).length > 0) {
+              instance.metadata = { ...instance.metadata, ...ctx.metadata };
+              console.log('✅ [PipelineCoordinator] Updated instance metadata:', ctx.metadata);
+            }
           } else {
             console.warn('⚠️ [PipelineCoordinator] Instance or appliedOutcome not found');
           }

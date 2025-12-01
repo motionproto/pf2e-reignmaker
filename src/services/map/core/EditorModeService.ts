@@ -64,7 +64,7 @@ const EDITOR_MODE_OVERLAYS: Record<EditorMode, string[]> = {
   'roads': ['roads'],
   'terrain': ['terrain'],
   'bounty': ['resources'],
-  'worksites': ['worksites'],
+  'worksites': ['worksites', 'terrain'],
   'settlements': ['settlements', 'settlement-labels'],
   'fortifications': ['fortifications'],
   'territory': ['territories']

@@ -47,6 +47,8 @@ import {
   damageStructure as damageStructureCommand
 } from './commands/structures/damageCommands';
 
+import { DestroyWorksiteHandler } from './gameCommands/handlers/DestroyWorksiteHandler';
+
 import { 
   getBorderHexes,
   removeBorderHexes as removeBorderHexesCommand
@@ -521,6 +523,22 @@ export async function createGameCommandsResolver() {
       count: number = 1
     ): Promise<ResolveResult> {
       return damageStructureCommand(targetStructure, settlementId, count);
+    },
+
+    async destroyWorksite(count: number | string = 1): Promise<PreparedCommand | null> {
+      const handler = new DestroyWorksiteHandler();
+      
+      const actor = getKingdomActor();
+      if (!actor) {
+        return null;
+      }
+      
+      const kingdom = actor.getKingdomData();
+      
+      return handler.prepare(
+        { type: 'destroyWorksite', count },
+        { actionId: 'destroy-worksite', outcome: 'success', kingdom, metadata: {} }
+      );
     },
 
     async removeBorderHexes(count: number | 'dice', dice?: string): Promise<ResolveResult> {

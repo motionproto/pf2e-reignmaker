@@ -56,6 +56,9 @@ export type GameCommandType =
   | 'damageStructure'
   | 'destroyStructure'
   
+  // Worksite Management
+  | 'destroyWorksite'
+  
   // Unrest Management (Additional)
   | 'releaseImprisoned'
   | 'reduceImprisoned'
@@ -294,6 +297,15 @@ export interface DestroyStructureCommand extends BaseGameCommand {
   category?: string; // Structure category (e.g., 'justice')
   targetTier?: 'highest' | 'lowest' | number; // Which tier to target
   count?: number; // Number of structures to destroy (default: 1)
+}
+
+/**
+ * Destroy worksite command
+ * Used by incidents like bandit raids, emigration threat, mass exodus
+ */
+export interface DestroyWorksiteCommand extends BaseGameCommand {
+  type: 'destroyWorksite';
+  count?: number | string; // Number of worksites to destroy (default: 1) or dice formula (e.g., '1d3')
 }
 
 /**

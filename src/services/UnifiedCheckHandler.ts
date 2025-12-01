@@ -232,7 +232,20 @@ export class UnifiedCheckHandler {
    * Delegates to existing HexSelectorService or ArmyDeploymentPanel for hex-path mode
    */
   private async executeMapSelection(interaction: any, kingdom: any, metadata?: any): Promise<any> {
-    console.log(`🗺️ [UnifiedCheckHandler] Map selection: ${interaction.mode}`);
+    console.log(`🗺️ [UnifiedCheckHandler] Map selection: ${interaction.mode || 'default'}`);
+
+    // Build full context for function evaluation
+    // CRITICAL: Get fresh kingdom data to ensure we have latest instance metadata
+    // The instance was created/updated in previous pipeline steps, so we need fresh data
+    const actor = getKingdomActor();
+    const freshKingdom = actor?.getKingdomData() || kingdom;
+    
+    const context: any = {
+      kingdom: freshKingdom,
+      outcome: metadata?.outcome,
+      metadata,
+      instanceId: metadata?.instanceId
+    };
 
     // Special case: hex-path mode uses ArmyDeploymentPanel for integrated UX
     // This provides the correct UX: army selection happens first, then path plotting
@@ -317,14 +330,45 @@ export class UnifiedCheckHandler {
 
     // Default: Use HexSelectorService for other modes
     try {
-      const result = await hexSelectorService.selectHexes({
-        title: interaction.title,
-        count: interaction.count,
+      // Evaluate functions that provide dynamic values
+      const config: any = {
+        title: typeof interaction.title === 'function' 
+          ? interaction.title(context)
+          : interaction.title,
+        count: typeof interaction.count === 'function'
+          ? interaction.count(context)
+          : interaction.count,
         colorType: interaction.colorType || 'claim',
+        mode: interaction.mode || 'select',  // Pass through mode (default: 'select')
         validateHex: interaction.validateHex,
         customSelector: interaction.customSelector,
         getHexInfo: interaction.getHexInfo
+          ? (hexId: string) => interaction.getHexInfo(hexId, context)
+          : undefined
+      };
+      
+      // Add optional properties if defined
+      if (interaction.existingHexes !== undefined) {
+        config.existingHexes = typeof interaction.existingHexes === 'function'
+          ? interaction.existingHexes(context)
+          : interaction.existingHexes;
+      }
+      
+      if (interaction.allowToggle !== undefined) {
+        config.allowToggle = interaction.allowToggle;
+      }
+      
+      console.log(`🗺️ [UnifiedCheckHandler] Hex selector config:`, {
+        title: config.title,
+        count: config.count,
+        colorType: config.colorType,
+        mode: config.mode,
+        existingHexesCount: config.existingHexes?.length || 0,
+        existingHexes: config.existingHexes,
+        allowToggle: config.allowToggle
       });
+      
+      const result = await hexSelectorService.selectHexes(config);
 
       return result;
     } catch (error) {
@@ -554,7 +598,9 @@ export class UnifiedCheckHandler {
       const adjustedInteraction = this.adjustInteractionForOutcome(interaction, outcome, context);
 
       // Execute interaction based on type
-      const result = await this.executeInteraction(adjustedInteraction, kingdom, instance.metadata || {});
+      // Pass instance.metadata but add instanceId for function evaluation
+      const metadataWithId = { ...instance.metadata, instanceId, outcome };
+      const result = await this.executeInteraction(adjustedInteraction, kingdom, metadataWithId);
 
       // ✅ NEW: Call onComplete handler if defined (executes custom logic with user selections)
       if (interaction.onComplete && result !== null && result !== undefined) {

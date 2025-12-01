@@ -149,6 +149,11 @@ export class SceneManager {
         // Show territory border, existing worksites, and settlement icons (settlements block worksites) + interactive hover
         actionViewOverlays = ['territories', 'territory-border', 'worksites', 'settlement-icons', 'settlement-labels', 'interactive-hover'];
         break;
+        
+      case 'destroyed':
+        // Show worksites being destroyed (same overlays as worksite creation but in display mode)
+        actionViewOverlays = ['territories', 'territory-border', 'worksites', 'settlement-icons', 'settlement-labels', 'interactive-hover'];
+        break;
     }
 
     // ✅ CRITICAL: Ensure interactive-hover is ALWAYS enabled for map selection

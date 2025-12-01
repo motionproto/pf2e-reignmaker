@@ -12,6 +12,7 @@ import type { UnifiedOutcomeBadge } from './OutcomeBadge';
  * The prepare/commit pattern allows game commands to:
  * 1. Generate a preview badge (outcomeBadge) shown before Apply
  * 2. Defer execution until user clicks Apply (commit function)
+ * 3. Store metadata for post-apply interactions
  * 
  * This prevents premature state changes and allows user review.
  */
@@ -29,6 +30,12 @@ export interface PreparedCommand {
    */
   commit: () => Promise<void>;
   
+  /**
+   * Optional metadata for post-apply interactions
+   * Stores information determined during prepare() that post-apply interactions need
+   * Example: hexIds that will be destroyed, structures that will be damaged, etc.
+   */
+  metadata?: Record<string, any>;
 }
 
 /**

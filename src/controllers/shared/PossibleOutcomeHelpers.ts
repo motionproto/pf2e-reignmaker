@@ -16,10 +16,10 @@ export interface PossibleOutcome {
 }
 
 export interface OutcomeEffects {
-  criticalSuccess?: { msg?: string; description?: string; modifiers?: EventModifier[]; manualEffects?: string[]; gameCommands?: any[] };
-  success?: { msg?: string; description?: string; modifiers?: EventModifier[]; manualEffects?: string[]; gameCommands?: any[] };
-  failure?: { msg?: string; description?: string; modifiers?: EventModifier[]; manualEffects?: string[]; gameCommands?: any[] };
-  criticalFailure?: { msg?: string; description?: string; modifiers?: EventModifier[]; manualEffects?: string[]; gameCommands?: any[] };
+  criticalSuccess?: { msg?: string; description?: string; modifiers?: EventModifier[]; manualEffects?: string[]; gameCommands?: any[]; outcomeBadges?: any[] };
+  success?: { msg?: string; description?: string; modifiers?: EventModifier[]; manualEffects?: string[]; gameCommands?: any[]; outcomeBadges?: any[] };
+  failure?: { msg?: string; description?: string; modifiers?: EventModifier[]; manualEffects?: string[]; gameCommands?: any[]; outcomeBadges?: any[] };
+  criticalFailure?: { msg?: string; description?: string; modifiers?: EventModifier[]; manualEffects?: string[]; gameCommands?: any[]; outcomeBadges?: any[] };
 }
 
 /**
@@ -46,7 +46,8 @@ export function buildPossibleOutcomes(outcomes?: OutcomeEffects): PossibleOutcom
       description: critSuccessEffect.msg || critSuccessEffect.description || '',
       modifiers: critSuccessEffect.modifiers || [],
       manualEffects: critSuccessEffect.manualEffects || [],
-      gameCommands: critSuccessEffect.gameCommands || []
+      gameCommands: critSuccessEffect.gameCommands || [],
+      outcomeBadges: critSuccessEffect.outcomeBadges || []
     });
   }
   
@@ -58,7 +59,8 @@ export function buildPossibleOutcomes(outcomes?: OutcomeEffects): PossibleOutcom
       description: outcomes.success.msg || outcomes.success.description || '',
       modifiers: outcomes.success.modifiers || [],
       manualEffects: outcomes.success.manualEffects || [],
-      gameCommands: outcomes.success.gameCommands || []
+      gameCommands: outcomes.success.gameCommands || [],
+      outcomeBadges: outcomes.success.outcomeBadges || []
     });
   }
   
@@ -70,7 +72,8 @@ export function buildPossibleOutcomes(outcomes?: OutcomeEffects): PossibleOutcom
       description: outcomes.failure.msg || outcomes.failure.description || '',
       modifiers: outcomes.failure.modifiers || [],
       manualEffects: outcomes.failure.manualEffects || [],
-      gameCommands: outcomes.failure.gameCommands || []
+      gameCommands: outcomes.failure.gameCommands || [],
+      outcomeBadges: outcomes.failure.outcomeBadges || []
     });
   }
   
@@ -82,7 +85,8 @@ export function buildPossibleOutcomes(outcomes?: OutcomeEffects): PossibleOutcom
       description: outcomes.criticalFailure.msg || outcomes.criticalFailure.description || '',
       modifiers: outcomes.criticalFailure.modifiers || [],
       manualEffects: outcomes.criticalFailure.manualEffects || [],
-      gameCommands: outcomes.criticalFailure.gameCommands || []
+      gameCommands: outcomes.criticalFailure.gameCommands || [],
+      outcomeBadges: outcomes.criticalFailure.outcomeBadges || []
     });
   }
   

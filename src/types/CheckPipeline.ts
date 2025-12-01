@@ -86,6 +86,7 @@ export interface Outcome {
   gameCommands?: GameCommand[];
   endsCheck?: boolean;
   manualEffects?: string[];
+  outcomeBadges?: any[];  // UnifiedOutcomeBadge[] for preview badges shown before rolling
 }
 
 /**
