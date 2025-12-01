@@ -450,7 +450,8 @@
       customComponentData,
       customSelectionData,
       manualEffects,
-      outcomeBadges
+      outcomeBadges,
+      kingdomResources: $kingdomData?.resources  // ✨ Pass current resources for shortfall detection
     });
   }
   

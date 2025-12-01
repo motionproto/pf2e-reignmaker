@@ -21,6 +21,7 @@ export function buildResolutionData(options: {
   customSelectionData: Record<string, any> | null;
   manualEffects: string[] | undefined;
   outcomeBadges?: any[] | undefined;
+  kingdomResources?: Record<string, number>;  // ✨ NEW: Current kingdom resources for shortfall detection
 }): any {
   const {
     selectedChoice,
@@ -117,13 +118,16 @@ export function buildResolutionData(options: {
   }
   // Case 3: No choices, apply all modifiers
   else {
+    console.log('📊 [ResolutionDataBuilder] Case 3: Processing all modifiers', { modifiersLength: modifiers?.length });
     if (modifiers) {
       for (let i = 0; i < modifiers.length; i++) {
         const mod = modifiers[i] as any;
+        console.log(`📊 [ResolutionDataBuilder] Processing modifier ${i}:`, mod);
 
         // ⚠️ SKIP DICE MODIFIERS: Already converted from outcomeBadges above (lines 47-75)
         // This prevents double-application of penalties/bonuses
         if (mod.type === 'dice' && mod.formula) {
+          console.log(`📊 [ResolutionDataBuilder] Skipping dice modifier ${i} (already processed from badges)`);
           continue;
         }
 
@@ -135,23 +139,82 @@ export function buildResolutionData(options: {
               resource: selectedResource as string, 
               value: mod.value as number 
             });
+            console.log(`📊 [ResolutionDataBuilder] Added choice modifier: ${selectedResource} = ${mod.value}`);
           }
           continue;
         }
 
         // Skip resource arrays if no choice (shouldn't happen, but safety)
         if (Array.isArray(mod.resources)) {
+          console.log(`📊 [ResolutionDataBuilder] Skipping resource array modifier ${i}`);
           continue;
         }
         
         // Get rolled value or use static value
         let value = resolvedDice.get(i) ?? resolvedDice.get(`state:${mod.resource}`) ?? mod.value;
+        console.log(`📊 [ResolutionDataBuilder] Modifier ${i} value resolution:`, { 
+          rolledAtIndex: resolvedDice.get(i), 
+          rolledAtState: resolvedDice.get(`state:${mod.resource}`),
+          staticValue: mod.value,
+          finalValue: value
+        });
 
         if (typeof value === 'number') {
           // Apply negative flag for static modifiers
           const finalValue = mod.negative ? -Math.abs(value) : value;
           numericModifiers.push({ resource: mod.resource as string, value: finalValue });
+          console.log(`📊 [ResolutionDataBuilder] Added static modifier: ${mod.resource} = ${finalValue} (negative=${mod.negative})`);
         }
+      }
+    }
+  }
+  
+  // ✨ PRE-CALCULATE SHORTFALL PENALTIES (Short Fly Rule)
+  // If resource losses would go negative, add +1 unrest per shortfall resource
+  // This way the UI shows the correct total unrest BEFORE the user clicks Apply
+  if (options.kingdomResources) {
+    console.log('📊 [ResolutionDataBuilder] Detecting shortfalls with kingdom resources:', options.kingdomResources);
+    
+    // Step 1: Accumulate modifiers by resource type
+    const accumulated = new Map<string, number>();
+    for (const { resource, value } of numericModifiers) {
+      const current = accumulated.get(resource) || 0;
+      accumulated.set(resource, current + value);
+    }
+    console.log('📊 [ResolutionDataBuilder] Accumulated modifiers:', Array.from(accumulated.entries()));
+    
+    // Step 2: Detect shortfalls for standard resources (not unrest, fame, imprisonedUnrest)
+    const shortfallCount = Array.from(accumulated.entries()).filter(([resource, value]) => {
+      // Only check standard resources
+      if (resource === 'unrest' || resource === 'fame' || resource === 'imprisonedUnrest') {
+        return false;
+      }
+      
+      const currentValue = options.kingdomResources![resource] || 0;
+      const targetValue = currentValue + value;
+      const hasShortfall = value < 0 && targetValue < 0;
+      
+      if (hasShortfall) {
+        console.log(`  ⚠️ [ResolutionDataBuilder] Shortfall detected: ${resource} (current=${currentValue}, change=${value}, target=${targetValue})`);
+      }
+      
+      return hasShortfall;
+    }).length;
+    
+    // Step 3: Add shortfall penalties to numericModifiers
+    if (shortfallCount > 0) {
+      console.log(`📊 [ResolutionDataBuilder] Adding +${shortfallCount} unrest from shortfalls`);
+      
+      // Find existing unrest modifier and add to it, or create new one
+      const existingUnrestIndex = numericModifiers.findIndex(m => m.resource === 'unrest');
+      if (existingUnrestIndex !== -1) {
+        // Add to existing unrest modifier
+        numericModifiers[existingUnrestIndex].value += shortfallCount;
+        console.log(`  ✅ Updated existing unrest modifier: ${numericModifiers[existingUnrestIndex].value}`);
+      } else {
+        // Create new unrest modifier
+        numericModifiers.push({ resource: 'unrest', value: shortfallCount });
+        console.log(`  ✅ Added new unrest modifier: +${shortfallCount}`);
       }
     }
   }
@@ -162,6 +225,8 @@ export function buildResolutionData(options: {
     ...customComponentData,  // selectedResource from instance
     ...customSelectionData  // Contains the full selection (selectedAmount, goldCost, etc.)
   } : customComponentData;
+  
+  console.log('📊 [ResolutionDataBuilder] Final numericModifiers:', numericModifiers);
   
   return {
     numericModifiers,

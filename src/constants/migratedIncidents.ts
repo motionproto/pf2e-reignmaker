@@ -25,9 +25,9 @@ export type IncidentStatus = 'untested' | 'testing' | 'tested';
  */
 export const INCIDENT_STATUS = new Map<string, IncidentStatus>([
   // Minor Incidents (Tier 1) - #1-8
-  ['bandit-raids', 'testing'],  // #1
-  ['corruption-scandal', 'untested'],  // #2
-  ['crime-wave', 'untested'],  // #3
+  ['bandit-raids', 'tested'],  // #1
+  ['corruption-scandal', 'tested'],  // #2
+  ['crime-wave', 'testing'],  // #3
   ['diplomatic-incident', 'untested'],  // #4
   ['emigration-threat', 'untested'],  // #5
   ['protests', 'untested'],  // #6

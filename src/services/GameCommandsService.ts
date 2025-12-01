@@ -95,6 +95,7 @@ export async function createGameCommandsService() {
       modifiers: Array<{ resource: ResourceType; value: number }>,
       outcome?: OutcomeDegree
     ): Promise<ApplyOutcomeResult> {
+      logger.info(`📊 [GameCommands] applyNumericModifiers called with ${modifiers.length} modifier(s):`, modifiers);
 
       const result: ApplyOutcomeResult = {
         success: true,
@@ -115,6 +116,7 @@ export async function createGameCommandsService() {
           const current = accumulated.get(resource) || 0;
           accumulated.set(resource, current + value);
         }
+        logger.info(`📊 [GameCommands] Accumulated modifiers:`, Array.from(accumulated.entries()));
 
         // Step 2: Pre-detect shortfalls for standard resources
         const shortfallResources: ResourceType[] = [];
@@ -122,33 +124,41 @@ export async function createGameCommandsService() {
         const kingdom = actor?.getKingdomData();
         
         if (kingdom?.resources) {
+          logger.info(`📊 [GameCommands] Current kingdom resources:`, kingdom.resources);
           for (const [resource, value] of accumulated) {
             // Only check standard resources (not unrest, fame, imprisonedUnrest)
             if (resource !== 'unrest' && resource !== 'fame' && resource !== 'imprisonedUnrest') {
               const currentValue = kingdom.resources[resource] || 0;
               const targetValue = currentValue + value;
+              logger.info(`📊 [GameCommands] Checking ${resource}: current=${currentValue}, change=${value}, target=${targetValue}`);
               if (value < 0 && targetValue < 0) {
                 shortfallResources.push(resource);
-
+                logger.warn(`  ⚠️ Shortfall detected for ${resource}!`);
               }
             }
           }
+        } else {
+          logger.warn(`⚠️ [GameCommands] No kingdom resources found - skipping shortfall detection`);
         }
+        
+        logger.info(`📊 [GameCommands] Shortfall resources:`, shortfallResources);
         
         // Step 3: Apply each accumulated resource change (skip individual shortfall checks)
         for (const [resource, value] of accumulated) {
+          logger.info(`📊 [GameCommands] Applying ${resource}: ${value}`);
           await this.applyResourceChange(resource, value, 'Applied', result, true);
         }
         
-        // Step 4: Apply accumulated shortfall penalty as one unrest change
+        // Step 4: NO LONGER APPLY SHORTFALL PENALTY HERE
+        // The shortfall penalty is now pre-calculated in ResolutionDataBuilder
+        // and included in the numericModifiers array, so it's already been applied in Step 3
         if (shortfallResources.length > 0) {
-          const totalUnrestPenalty = shortfallResources.length;
-          logger.warn(`  ⚠️ Total shortfalls: ${shortfallResources.length} resources (${shortfallResources.join(', ')})`);
-          logger.warn(`  ⚠️ Accumulated unrest penalty: +${totalUnrestPenalty}`);
-          
-          await this.applyUnrestChange(totalUnrestPenalty, 'Resource shortfall', result);
+          logger.info(`  ℹ️ [GameCommands] Shortfalls detected (${shortfallResources.length}), but penalties already included in numericModifiers`);
+          logger.info(`  ℹ️ [GameCommands] Shortfall resources: ${shortfallResources.join(', ')}`);
+          // NOTE: The unrest penalty was already added by ResolutionDataBuilder, so we don't add it again
         }
 
+        logger.info(`📊 [GameCommands] Final result:`, result);
         return result;
       } catch (error) {
         logger.error(`❌ [GameCommands] Failed to apply modifiers:`, error);
@@ -400,9 +410,12 @@ export async function createGameCommandsService() {
      * Apply unrest changes with special handling
      */
     async applyUnrestChange(value: number, modifierName: string, result: ApplyOutcomeResult): Promise<void> {
+      logger.info(`📊 [GameCommands] applyUnrestChange called: value=${value}, modifierName="${modifierName}"`);
+      
       await updateKingdom(kingdom => {
         const currentUnrest = kingdom.unrest || 0;
         const newUnrest = Math.max(0, currentUnrest + value);
+        logger.info(`📊 [GameCommands] Unrest change: ${currentUnrest} → ${newUnrest} (${value >= 0 ? '+' : ''}${value})`);
         kingdom.unrest = newUnrest;
 
       });
