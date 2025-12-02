@@ -2,7 +2,7 @@
  * Faction Attitude Adjuster - Pure utility functions for attitude calculations
  * 
  * Provides reusable logic for improving/worsening faction relations
- * Used by FactionService, GameCommandsResolver, and action implementations
+ * Used by FactionService, game command handlers, and action implementations
  */
 
 import type { AttitudeLevel } from '../models/Faction';

@@ -30,38 +30,24 @@ export const riotPipeline: CheckPipeline = {
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ],
-      manualEffects: ["Choose or roll for one random structure in a random settlement. Mark that structure as damaged"]
+      gameCommands: [
+        { type: 'damageStructure', count: 1 }
+      ]
     },
     criticalFailure: {
       description: 'A violent riot destroys property.',
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ],
-      manualEffects: ["Choose or roll for one random structure in a random settlement. Reduce that structure's tier by one and mark it as damaged. If the tier is reduced to zero, remove it entirely"]
+      gameCommands: [
+        { type: 'destroyStructure', count: 1 }
+      ]
     },
   },
 
   // Auto-convert JSON modifiers to badges
   preview: undefined,
 
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(riotPipeline, ctx.outcome, ctx);
-
-    const { createGameCommandsResolver } = await import('../../../services/GameCommandsResolver');
-    const resolver = await createGameCommandsResolver();
-
-    // Failure: damage 1 structure
-    if (ctx.outcome === 'failure') {
-      await resolver.damageStructure(undefined, undefined, 1);
-    }
-
-    // Critical failure: destroy/downgrade and damage 1 structure
-    if (ctx.outcome === 'criticalFailure') {
-      // Destroy reduces tier by 1, or removes if tier 0
-      await resolver.destroyStructure(undefined, undefined, 1);
-    }
-
-    return { success: true };
-  }
+  // PipelineCoordinator handles gameCommands automatically
+  execute: undefined
 };

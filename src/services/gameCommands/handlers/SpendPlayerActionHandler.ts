@@ -38,18 +38,18 @@ export class SpendPlayerActionHandler extends BaseGameCommandHandler {
       return null;
     }
     
-    // Get all players in the game
-    const players = Array.from(game.users).filter(user => !user.isGM);
+    // Get all logged-in players (excluding GM)
+    const players = Array.from(game.users).filter(user => !user.isGM && user.active);
     if (players.length === 0) {
-      logger.warn('[SpendPlayerActionHandler] No players available');
+      logger.warn('[SpendPlayerActionHandler] No logged-in players available');
       return {
         outcomeBadge: {
           icon: 'fa-exclamation-triangle',
-          template: 'No players available to spend action',
+          template: 'No logged-in players available to spend action',
           variant: 'neutral'
         },
         commit: async () => {
-          logger.info('[SpendPlayerActionHandler] No players to affect - skipping');
+          logger.info('[SpendPlayerActionHandler] No logged-in players to affect - skipping');
         }
       };
     }
@@ -87,6 +87,7 @@ export class SpendPlayerActionHandler extends BaseGameCommandHandler {
       targetPlayer = playersWhoHaventActed[randomIndex];
       
       // Get the player's assigned character
+      // Foundry stores the character as user.character (Actor object)
       targetCharacter = targetPlayer.character;
       
       if (!targetCharacter) {
@@ -101,14 +102,26 @@ export class SpendPlayerActionHandler extends BaseGameCommandHandler {
       return null;
     }
     
-    const characterName = targetCharacter.name || targetPlayer.name || 'Unknown Character';
+    // Try to get character name from multiple sources
+    // Priority: character.name (Actor name) > character.data?.name > player.name
+    let characterName = 'Unknown Character';
+    if (targetCharacter.name) {
+      characterName = targetCharacter.name;
+    } else if ((targetCharacter as any).data?.name) {
+      characterName = (targetCharacter as any).data.name;
+    } else if (targetPlayer.name) {
+      characterName = `${targetPlayer.name}'s Character`;
+    }
+    
     const message = `${characterName} cannot take a Kingdom Action this turn (recovering from wounds)`;
     
     logger.info(`[SpendPlayerActionHandler] Preview: ${message}`);
+    logger.info(`[SpendPlayerActionHandler] Selected character: ${characterName} (Player: ${targetPlayer.name})`);
     
     // Capture values for commit closure
     const playerId = targetPlayer.id;
     const playerName = targetPlayer.name || 'Unknown Player';
+    const finalCharacterName = characterName;  // Capture for closure
     
     return {
       outcomeBadge: {
@@ -117,7 +130,7 @@ export class SpendPlayerActionHandler extends BaseGameCommandHandler {
         variant: 'negative'
       },
       commit: async () => {
-        logger.info(`[SpendPlayerActionHandler] Spending action for ${characterName}`);
+        logger.info(`[SpendPlayerActionHandler] Spending action for ${finalCharacterName}`);
         
         // Add entry to action log to mark character as having acted
         const actor = getKingdomActor();
@@ -139,7 +152,7 @@ export class SpendPlayerActionHandler extends BaseGameCommandHandler {
           const entry: ActionLogEntry = {
             playerId: playerId,
             playerName: playerName,
-            characterName: characterName,
+            characterName: finalCharacterName,
             actionName: 'spent-action-incident',  // Special marker for spent actions
             phase: kingdom.currentPhase as TurnPhase,
             timestamp: Date.now()
@@ -150,14 +163,14 @@ export class SpendPlayerActionHandler extends BaseGameCommandHandler {
         });
         
         // Show chat message
-        const chatMessage = `<p><strong>Character Cannot Act:</strong></p><p>${characterName} cannot take a Kingdom Action this turn (recovering from wounds).</p>`;
+        const chatMessage = `<p><strong>Character Cannot Act:</strong></p><p>${finalCharacterName} cannot take a Kingdom Action this turn (recovering from wounds).</p>`;
         
         ChatMessage.create({
           content: chatMessage,
           speaker: ChatMessage.getSpeaker()
         });
         
-        logger.info(`[SpendPlayerActionHandler] Successfully spent action for ${characterName}`);
+        logger.info(`[SpendPlayerActionHandler] Successfully spent action for ${finalCharacterName}`);
       }
     };
   }

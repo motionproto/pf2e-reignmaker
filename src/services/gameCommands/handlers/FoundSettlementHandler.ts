@@ -14,14 +14,13 @@ export class FoundSettlementHandler extends BaseGameCommandHandler {
   }
   
   async prepare(command: any, ctx: GameCommandContext): Promise<PreparedCommand | null> {
-    const { createGameCommandsResolver } = await import('../../GameCommandsResolver');
-    const resolver = await createGameCommandsResolver();
+    const { foundSettlement } = await import('../../commands/settlements/foundSettlement');
     
     // For critical success on Establish Settlement, grant free structure
     const grantFreeStructure = (ctx.outcome === 'criticalSuccess');
     
-    // Delegate to resolver
-    const result = await resolver.foundSettlement(
+    // Delegate to command
+    const result = await foundSettlement(
       command.name || 'New Settlement',
       command.location || { x: 0, y: 0 },
       grantFreeStructure

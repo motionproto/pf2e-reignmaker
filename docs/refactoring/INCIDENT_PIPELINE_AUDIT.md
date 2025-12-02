@@ -78,6 +78,14 @@ export const riotPipeline: CheckPipeline = {
 
 **Assessment:** Structure is simpler than before - most incidents need no execute function.
 
+**⚠️ CRITICAL ANTI-PATTERNS:**
+
+1. **❌ NEVER re-roll dice in execute()** - Dice are rolled in UI and stored in `resolutionData.numericModifiers`. Re-rolling causes displayed ≠ applied values.
+2. **❌ NEVER manually apply resources** - `UnifiedCheckHandler.applyDefaultModifiers()` applies modifiers BEFORE execute runs. Manual application causes double-application.
+3. **✅ ONLY use execute() for game commands** - Structure damage, army operations, hex claiming. NOT for resource changes.
+
+**See:** `docs/systems/core/pipeline-patterns.md` (Anti-Patterns section) for detailed examples.
+
 ---
 
 ### 2. PreviewData Structure (✅ Auto-Generated)

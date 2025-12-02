@@ -26,34 +26,23 @@ export const prisonBreaksPipeline: CheckPipeline = {
     },
     failure: {
       description: 'A mass prison break releases many criminals.',
-      modifiers: []
+      modifiers: [],
+      gameCommands: [
+        { type: 'releaseImprisoned', percentage: 50 }
+      ]
     },
     criticalFailure: {
       description: 'A complete prison break releases all criminals.',
-      modifiers: []
+      modifiers: [],
+      gameCommands: [
+        { type: 'releaseImprisoned', percentage: 'all' }
+      ]
     },
   },
 
   // Auto-convert JSON modifiers to badges (none for this incident, only game commands)
   preview: undefined,
 
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(prisonBreaksPipeline, ctx.outcome, ctx);
-
-    const { createGameCommandsResolver } = await import('../../../services/GameCommandsResolver');
-    const resolver = await createGameCommandsResolver();
-
-    // Failure: release half of imprisoned NPCs
-    if (ctx.outcome === 'failure') {
-      await resolver.releaseImprisoned(50);
-    }
-
-    // Critical Failure: release all imprisoned NPCs
-    if (ctx.outcome === 'criticalFailure') {
-      await resolver.releaseImprisoned('all');
-    }
-
-    return { success: true };
-  }
+  // PipelineCoordinator handles gameCommands automatically
+  execute: undefined
 };

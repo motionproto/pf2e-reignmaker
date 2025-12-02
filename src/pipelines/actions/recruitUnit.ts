@@ -108,21 +108,27 @@ export const recruitUnitPipeline: CheckPipeline = {
       };
     }
 
-    const { createGameCommandsResolver } = await import('../../services/GameCommandsResolver');
-    const resolver = await createGameCommandsResolver();
-    const partyLevel = resolver.getPartyLevel();
+    const { getPartyLevel } = await import('../../services/gameCommands/GameCommandUtils');
+    const { getGameCommandRegistry } = await import('../../services/gameCommands/GameCommandHandlerRegistry');
+    
+    const partyLevel = getPartyLevel();
+    const registry = getGameCommandRegistry();
 
-    const preparedCommand = await resolver.recruitArmy(
-      partyLevel,
+    const preparedCommand = await registry.process(
       {
-        name: recruitmentData.name,
-        armyType: recruitmentData.armyType,
-        settlementId: recruitmentData.settlementId || null
+        type: 'recruitArmy',
+        level: partyLevel,
+        recruitmentData: {
+          name: recruitmentData.name,
+          armyType: recruitmentData.armyType,
+          settlementId: recruitmentData.settlementId || null
+        },
+        exemptFromUpkeep: false
       },
-      false
+      { kingdom: ctx.kingdom, outcome: ctx.outcome, metadata: ctx.metadata }
     );
 
-    if (preparedCommand.commit) {
+    if (preparedCommand?.commit) {
       await preparedCommand.commit();
     }
 

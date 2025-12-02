@@ -26,20 +26,41 @@ export const deployArmyPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'Your forces move swiftly into position, confident in their victory.',
-      modifiers: []
+      modifiers: [],
+      gameCommands: [
+        {
+          type: 'deployArmy',
+          conditionsToApply: ['+1 initiative (status bonus)', '+1 saving throws (status bonus)', '+1 attack (status bonus)']
+        }
+      ]
     },
     success: {
       description: 'A steady march. Your forces arrive at their destination ready for action.',
-      modifiers: []
+      modifiers: [],
+      gameCommands: [
+        { type: 'deployArmy' }
+      ]
     },
     failure: {
       description: 'Your troops arrive tired and less prepared for combat.',
-      modifiers: []
+      modifiers: [],
+      gameCommands: [
+        {
+          type: 'deployArmy',
+          conditionsToApply: ['-1 initiative (status penalty)', 'fatigued']
+        }
+      ]
     },
     criticalFailure: {
       description: 'Your forces get lost and arrive demoralized and exhausted.',
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
+      ],
+      gameCommands: [
+        {
+          type: 'deployArmy',
+          conditionsToApply: ['-2 initiative (status penalty)', 'enfeebled 1', 'fatigued']
+        }
       ]
     }
   },
@@ -130,15 +151,10 @@ export const deployArmyPipeline: CheckPipeline = {
     }
   },
 
+  // PipelineCoordinator handles gameCommands automatically
+  // Note: gameCommands need armyId and path from metadata
   execute: async (ctx: any) => {
-    const conditionsToApply = ctx.outcome === 'criticalSuccess' ?
-      ['+1 initiative (status bonus)', '+1 saving throws (status bonus)', '+1 attack (status bonus)'] :
-      ctx.outcome === 'failure' ?
-      ['-1 initiative (status penalty)', 'fatigued'] :
-      ctx.outcome === 'criticalFailure' ?
-      ['-2 initiative (status penalty)', 'enfeebled 1', 'fatigued'] :
-      [];
-
+    // Validate required metadata
     const deployment = ctx.metadata.deployment || {};
     const armyId = deployment.armyId || ctx.metadata.armyId;
     const path = deployment.path || ctx.metadata.path || [];
@@ -147,15 +163,16 @@ export const deployArmyPipeline: CheckPipeline = {
       return { success: false, error: 'Missing army or path data (path must have at least 2 hexes)' };
     }
     
-    const { deployArmyExecution } = await import('../../execution/armies/deployArmy');
+    // Add metadata to game commands
+    const commands = ctx.resolutionData?.gameCommands || [];
+    for (const command of commands) {
+      if (command.type === 'deployArmy') {
+        command.armyId = armyId;
+        command.path = path;
+        command.outcome = ctx.outcome;
+      }
+    }
     
-    await deployArmyExecution({
-      armyId: armyId,
-      path: path,
-      conditionsToApply,
-      animationSpeed: 100
-    });
-    
-    return { success: true, message: 'Army deployed' };
+    return { success: true };
   }
 };

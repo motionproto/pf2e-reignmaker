@@ -18,6 +18,9 @@
    // Props
    export let hideUntrainedSkills: boolean = true;
    
+   // Toggle for showing tested incidents
+   let showTestedIncidents: boolean = false;
+   
    // Load all incidents organized by severity
    let minorIncidents: LoadedIncident[] = [];
    let moderateIncidents: LoadedIncident[] = [];
@@ -47,22 +50,48 @@
    
    onMount(async () => {
       // Load incidents by tier from pipeline registry
-      const allIncidents = pipelineRegistry.getPipelinesByType('incident');
-      // Handle both numeric (1, 2, 3) and string ('minor', 'moderate', 'major') tier formats
-      minorIncidents = allIncidents.filter((i: any) => i.tier === 1 || i.tier === 'minor');
-      moderateIncidents = allIncidents.filter((i: any) => i.tier === 2 || i.tier === 'moderate');
-      majorIncidents = allIncidents.filter((i: any) => i.tier === 3 || i.tier === 'major');
-      
-      console.log('[IncidentDebugPanel] Loaded incidents:', {
-         minor: minorIncidents.length,
-         moderate: moderateIncidents.length,
-         major: majorIncidents.length
-      });
+      loadIncidents();
       
       // Initialize controller
       const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
       unrestPhaseController = await createUnrestPhaseController();
    });
+   
+   // Reactive: Reload incidents when toggle changes
+   $: if (showTestedIncidents !== undefined) {
+      loadIncidents();
+   }
+   
+   function loadIncidents() {
+      const allIncidents = pipelineRegistry.getPipelinesByType('incident');
+      
+      // Filter incidents based on tier and tested status
+      // Handle both numeric (1, 2, 3) and string ('minor', 'moderate', 'major') tier formats
+      minorIncidents = allIncidents.filter((i: any) => {
+         const isTier1 = i.tier === 1 || i.tier === 'minor';
+         const notTested = getIncidentStatus(i.id) !== 'tested';
+         return isTier1 && (showTestedIncidents || notTested);
+      });
+      
+      moderateIncidents = allIncidents.filter((i: any) => {
+         const isTier2 = i.tier === 2 || i.tier === 'moderate';
+         const notTested = getIncidentStatus(i.id) !== 'tested';
+         return isTier2 && (showTestedIncidents || notTested);
+      });
+      
+      majorIncidents = allIncidents.filter((i: any) => {
+         const isTier3 = i.tier === 3 || i.tier === 'major';
+         const notTested = getIncidentStatus(i.id) !== 'tested';
+         return isTier3 && (showTestedIncidents || notTested);
+      });
+      
+      console.log('[IncidentDebugPanel] Loaded incidents:', {
+         showTested: showTestedIncidents,
+         minor: minorIncidents.length,
+         moderate: moderateIncidents.length,
+         major: majorIncidents.length
+      });
+   }
    
    // Build outcomes array for BaseCheckCard using shared helper
    function buildIncidentOutcomes(incident: LoadedIncident) {
@@ -200,6 +229,22 @@
       const preview = getIncidentPreview(incident);
       return preview?.appliedOutcome || null;
    }
+   
+   // Helper function to derive tier trait from tier (handles both number and string formats)
+   function getTierTrait(tier: number | string): string {
+      // If already a valid string tier, return it
+      if (tier === 'minor' || tier === 'moderate' || tier === 'major') {
+         return tier;
+      }
+      // Handle numeric tier format
+      const tierMap: Record<number, string> = { 1: 'minor', 2: 'moderate', 3: 'major' };
+      return tierMap[tier as number] || '';
+   }
+   
+   // Filter out traits that aren't useful for incidents (all incidents are dangerous)
+   function filterIncidentTraits(traits: string[]): string[] {
+      return traits.filter(t => t && t !== 'dangerous');
+   }
 </script>
 
 <div class="incident-debug-panel">
@@ -207,13 +252,21 @@
       <i class="fas fa-bug"></i>
       <h3>Incident Debug Panel</h3>
       <span class="incident-count">
-         {minorIncidents.length + moderateIncidents.length + majorIncidents.length} incidents total
+         {minorIncidents.length + moderateIncidents.length + majorIncidents.length} incidents
       </span>
    </div>
    
-   <div class="debug-notice">
-      <i class="fas fa-info-circle"></i>
-      <span>Click any skill to test the full incident pipeline. Each card is fully interactive.</span>
+   <div class="debug-controls">
+      <div class="debug-notice">
+         <i class="fas fa-info-circle"></i>
+         <span>Testing incidents with the PipelineCoordinator system.</span>
+      </div>
+      
+      <label class="toggle-control">
+         <input type="checkbox" bind:checked={showTestedIncidents} />
+         <span class="toggle-slider"></span>
+         <span class="toggle-label">Show Tested Incidents</span>
+      </label>
    </div>
    
    <!-- Minor Incidents -->
@@ -231,13 +284,14 @@
             {@const possibleOutcomes = buildPossibleOutcomes(incident.outcomes)}
             {@const incidentStatus = getIncidentStatus(incident.id)}
             {@const incidentNumber = getIncidentNumber(incident.id)}
+            {@const derivedTraits = filterIncidentTraits([...(incident.traits || []), getTierTrait(incident.tier)])}
             <BaseCheckCard
                id={incident.id}
                name={incident.name}
                description={incident.description}
                skills={incident.skills}
                outcomes={buildIncidentOutcomes(incident)}
-               traits={[]}
+               traits={derivedTraits}
                checkType="incident"
                outcomePreview={preview}
                expandable={false}
@@ -278,13 +332,14 @@
             {@const possibleOutcomes = buildPossibleOutcomes(incident.outcomes)}
             {@const incidentStatus = getIncidentStatus(incident.id)}
             {@const incidentNumber = getIncidentNumber(incident.id)}
+            {@const derivedTraits = filterIncidentTraits([...(incident.traits || []), getTierTrait(incident.tier)])}
             <BaseCheckCard
                id={incident.id}
                name={incident.name}
                description={incident.description}
                skills={incident.skills}
                outcomes={buildIncidentOutcomes(incident)}
-               traits={[]}
+               traits={derivedTraits}
                checkType="incident"
                outcomePreview={preview}
                expandable={false}
@@ -325,13 +380,14 @@
             {@const possibleOutcomes = buildPossibleOutcomes(incident.outcomes)}
             {@const incidentStatus = getIncidentStatus(incident.id)}
             {@const incidentNumber = getIncidentNumber(incident.id)}
+            {@const derivedTraits = filterIncidentTraits([...(incident.traits || []), getTierTrait(incident.tier)])}
             <BaseCheckCard
                id={incident.id}
                name={incident.name}
                description={incident.description}
                skills={incident.skills}
                outcomes={buildIncidentOutcomes(incident)}
-               traits={[]}
+               traits={derivedTraits}
                checkType="incident"
                outcomePreview={preview}
                expandable={false}
@@ -373,8 +429,6 @@
       display: flex;
       align-items: center;
       gap: var(--space-12);
-      padding-bottom: var(--space-12);
-      border-bottom: 1px solid var(--border-special-subtle);
       
       i {
          font-size: var(--font-xl);
@@ -398,6 +452,14 @@
       }
    }
    
+   .debug-controls {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-10);
+      padding-bottom: var(--space-12);
+      border-bottom: 1px solid var(--border-special-subtle);
+   }
+   
    .debug-notice {
       display: flex;
       align-items: center;
@@ -411,6 +473,65 @@
       
       i {
          color: rgba(196, 181, 253, 1);
+      }
+   }
+   
+   .toggle-control {
+      display: flex;
+      align-items: center;
+      gap: var(--space-10);
+      padding: var(--space-8) var(--space-12);
+      background: rgba(139, 92, 246, 0.05);
+      border: 1px solid var(--border-special-subtle);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: background 0.2s;
+      
+      &:hover {
+         background: rgba(139, 92, 246, 0.1);
+      }
+      
+      input[type="checkbox"] {
+         position: absolute;
+         opacity: 0;
+         width: 0;
+         height: 0;
+         
+         &:checked + .toggle-slider {
+            background: rgba(139, 92, 246, 0.8);
+            
+            &::before {
+               transform: translateX(1rem);
+            }
+         }
+      }
+      
+      .toggle-slider {
+         position: relative;
+         display: inline-block;
+         width: 2.5rem;
+         height: 1.25rem;
+         background: rgba(139, 92, 246, 0.3);
+         border-radius: var(--radius-full);
+         transition: background 0.2s;
+         
+         &::before {
+            content: '';
+            position: absolute;
+            top: 0.125rem;
+            left: 0.125rem;
+            width: 1rem;
+            height: 1rem;
+            background: white;
+            border-radius: var(--radius-full);
+            transition: transform 0.2s;
+         }
+      }
+      
+      .toggle-label {
+         font-size: var(--font-md);
+         color: var(--text-primary);
+         user-select: none;
       }
    }
    

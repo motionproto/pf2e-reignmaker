@@ -14,8 +14,7 @@ export class TrainArmyHandler extends BaseGameCommandHandler {
   }
   
   async prepare(command: any, ctx: GameCommandContext): Promise<PreparedCommand | null> {
-    const { createGameCommandsResolver } = await import('../../GameCommandsResolver');
-    const resolver = await createGameCommandsResolver();
+    const { trainArmy } = await import('../../commands/armies/armyCommands');
     
     // Get armyId from explicit context
     const armyId = ctx.pendingState.armyId;
@@ -24,8 +23,8 @@ export class TrainArmyHandler extends BaseGameCommandHandler {
       throw new Error('Army training requires army selection - ensure army context is provided');
     }
     
-    // Delegate to resolver
-    const result = await resolver.trainArmy(armyId, ctx.outcome);
+    // Delegate to command
+    const result = await trainArmy(armyId, ctx.outcome);
     
     return this.normalizeResult(result, 'Army trained');
   }

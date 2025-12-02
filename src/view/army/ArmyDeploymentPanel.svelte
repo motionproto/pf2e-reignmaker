@@ -369,6 +369,8 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-8);
+    cursor: move; /* Indicate draggable */
+    user-select: none; /* Prevent text selection during drag */
   }
   
   .panel-header h3 {

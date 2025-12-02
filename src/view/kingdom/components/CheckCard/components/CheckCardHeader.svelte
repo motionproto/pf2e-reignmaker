@@ -48,7 +48,10 @@
           {#if traits && traits.length > 0}
             <div class="card-traits">
               {#each traits as trait}
-                <span class="trait-badge">{trait}</span>
+                <span class="trait-badge" 
+                      class:tier-minor={trait === 'minor'} 
+                      class:tier-moderate={trait === 'moderate'} 
+                      class:tier-major={trait === 'major'}>{trait}</span>
               {/each}
             </div>
           {/if}
@@ -103,7 +106,10 @@
           {#if traits && traits.length > 0}
             <div class="card-traits">
               {#each traits as trait}
-                <span class="trait-badge">{trait}</span>
+                <span class="trait-badge" 
+                      class:tier-minor={trait === 'minor'} 
+                      class:tier-moderate={trait === 'moderate'} 
+                      class:tier-major={trait === 'major'}>{trait}</span>
               {/each}
             </div>
           {/if}
@@ -277,6 +283,24 @@
       letter-spacing: 0.05rem;
       color: var(--text-tertiary);
       text-transform: capitalize;
+      
+      &.tier-minor {
+        background: var(--surface-accent-low);
+        border-color: var(--border-accent-subtle);
+        color: var(--color-amber-light);
+      }
+      
+      &.tier-moderate {
+        background: rgba(249, 115, 22, 0.1);
+        border-color: var(--color-orange-border);
+        color: var(--color-orange);
+      }
+      
+      &.tier-major {
+        background: var(--surface-primary-low);
+        border-color: var(--border-primary-subtle);
+        color: var(--color-red);
+      }
     }
     
     .status-badge {

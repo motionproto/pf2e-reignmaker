@@ -189,17 +189,26 @@ export const outfitArmyPipeline: CheckPipeline = {
       return { success: false, error: `Army already has ${equipmentType}` };
     }
 
-    const { createGameCommandsResolver } = await import('../../services/GameCommandsResolver');
-    const resolver = await createGameCommandsResolver();
+    const { getGameCommandRegistry } = await import('../../services/gameCommands/GameCommandHandlerRegistry');
+    const registry = getGameCommandRegistry();
 
-    const preparedCommand = await resolver.outfitArmy(armyId, equipmentType, ctx.outcome);
+    const preparedCommand = await registry.process(
+      {
+        type: 'outfitArmy',
+        armyId,
+        equipmentType,
+        outcome: ctx.outcome,
+        fallbackToGold: false
+      },
+      { kingdom: ctx.kingdom, outcome: ctx.outcome, metadata: ctx.metadata }
+    );
 
-    if ('commit' in preparedCommand && preparedCommand.commit) {
+    if (preparedCommand && 'commit' in preparedCommand && preparedCommand.commit) {
       await preparedCommand.commit();
       return { success: true, message: `Successfully outfitted ${army.name} with ${equipmentType}` };
     }
 
-    if ('success' in preparedCommand) {
+    if (preparedCommand && 'success' in preparedCommand) {
       if (!preparedCommand.success) {
         return { success: false, error: preparedCommand.error || 'Failed to outfit army' };
       }

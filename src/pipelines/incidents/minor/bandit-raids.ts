@@ -94,9 +94,13 @@ export const banditRaidsPipeline: CheckPipeline = {
     
     if (!preparedCommand) {
       // Fallback: prepare now if somehow missed
-      const { createGameCommandsResolver } = await import('../../../services/GameCommandsResolver');
-      const resolver = await createGameCommandsResolver();
-      const fallbackCommand = await resolver.destroyWorksite(1);
+      const { getGameCommandRegistry } = await import('../../../services/gameCommands/GameCommandHandlerRegistry');
+      const registry = getGameCommandRegistry();
+      
+      const fallbackCommand = await registry.process(
+        { type: 'destroyWorksite', count: 1 },
+        { kingdom: ctx.kingdom, outcome: ctx.outcome, metadata: ctx.metadata }
+      );
       
       if (!fallbackCommand?.commit) {
         return { success: true, message: 'No worksites to destroy' };

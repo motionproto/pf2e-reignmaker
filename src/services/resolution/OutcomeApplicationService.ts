@@ -3,8 +3,10 @@
  * 
  * Centralizes the logic for:
  * - Applying ResolutionData from UI to kingdom state
- * - Automatic +1 fame bonus on critical success
  * - Consistent outcome application across Actions, Events, and Incidents
+ * 
+ * Note: +1 fame bonus on critical success is handled by UnifiedCheckHandler,
+ * not by this service or GameCommandsService.
  */
 
 import { createGameCommandsService, type OutcomeDegree } from '../GameCommandsService';
@@ -28,10 +30,10 @@ export async function applyResolvedOutcome(
 
   const gameCommands = await createGameCommandsService();
   
-  // Apply numeric modifiers with automatic critical success fame bonus
+  // Apply numeric modifiers (fame bonus applied separately by UnifiedCheckHandler)
   const result = await gameCommands.applyNumericModifiers(
     resolutionData.numericModifiers,
-    outcome  // Automatically applies +1 fame on critical success
+    outcome
   );
   
   // Log manual effects (displayed in UI, not executed here)

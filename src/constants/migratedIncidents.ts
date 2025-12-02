@@ -27,17 +27,17 @@ export const INCIDENT_STATUS = new Map<string, IncidentStatus>([
   // Minor Incidents (Tier 1) - #1-8
   ['bandit-raids', 'tested'],  // #1
   ['corruption-scandal', 'tested'],  // #2
-  ['crime-wave', 'testing'],  // #3
-  ['diplomatic-incident', 'untested'],  // #4
-  ['emigration-threat', 'untested'],  // #5
-  ['protests', 'untested'],  // #6
-  ['rising-tensions', 'untested'],  // #7
-  ['work-stoppage', 'untested'],  // #8
+  ['crime-wave', 'tested'],  // #3
+  ['diplomatic-incident', 'tested'],  // #4
+  ['emigration-threat', 'tested'],  // #5
+  ['protests', 'tested'],  // #6
+  ['rising-tensions', 'tested'],  // #7
+  ['work-stoppage', 'tested'],  // #8
   
   // Moderate Incidents (Tier 2) - #9-18
-  ['assassin-attack', 'untested'],  // #9 (has pre-roll entity selection)
-  ['diplomatic-crisis', 'untested'],  // #10
-  ['disease-outbreak', 'untested'],  // #11
+  ['assassin-attack', 'tested'],  // #9 (has pre-roll entity selection)
+  ['diplomatic-crisis', 'tested'],  // #10
+  ['disease-outbreak', 'testing'],  // #11
   ['infrastructure-damage', 'untested'],  // #12 (has pre-roll entity selection)
   ['mass-exodus', 'untested'],  // #13
   ['production-strike', 'untested'],  // #14

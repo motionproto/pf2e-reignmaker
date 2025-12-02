@@ -14,8 +14,7 @@ export class GiveActorGoldHandler extends BaseGameCommandHandler {
   }
   
   async prepare(command: any, ctx: GameCommandContext): Promise<PreparedCommand | null> {
-    const { createGameCommandsResolver } = await import('../../GameCommandsResolver');
-    const resolver = await createGameCommandsResolver();
+    const { giveActorGold } = await import('../../commands/resources/playerRewards');
     
     // Get settlementId from command OR from explicit context
     const settlementId = command.settlementId || ctx.pendingState.settlementId;
@@ -27,8 +26,8 @@ export class GiveActorGoldHandler extends BaseGameCommandHandler {
     
     const multiplier = parseFloat(command.multiplier) || 1;
     
-    // Delegate to resolver
-    const result = await resolver.giveActorGold(multiplier, settlementId);
+    // Delegate to command
+    const result = await giveActorGold(multiplier, settlementId);
     
     return this.normalizeResult(result, 'Gold distributed to actor');
   }

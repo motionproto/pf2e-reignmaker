@@ -15,8 +15,7 @@ export class AdjustFactionHandler extends BaseGameCommandHandler {
   }
   
   async prepare(command: any, ctx: GameCommandContext): Promise<PreparedCommand | null> {
-    const { createGameCommandsResolver } = await import('../../GameCommandsResolver');
-    const resolver = await createGameCommandsResolver();
+    const { adjustFactionAttitude } = await import('../../commands/factions/attitudeCommands');
     
     // Get factionId from command OR from explicit context OR from metadata
     const factionId = command.factionId || 
@@ -34,8 +33,8 @@ export class AdjustFactionHandler extends BaseGameCommandHandler {
     
     const steps = command.steps || -1;
     
-    // Call resolver to prepare the command
-    const result = await resolver.adjustFactionAttitude(
+    // Call command to prepare
+    const result = await adjustFactionAttitude(
       factionId,
       steps,
       {

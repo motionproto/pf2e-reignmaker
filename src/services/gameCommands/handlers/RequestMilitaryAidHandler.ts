@@ -30,8 +30,7 @@ export class RequestMilitaryAidHandler extends BaseGameCommandHandler {
    * Handle allied army recruitment (critical success)
    */
   private async handleRecruitment(command: any, ctx: GameCommandContext): Promise<PreparedCommand | null> {
-    const { createGameCommandsResolver } = await import('../../../services/GameCommandsResolver');
-    const resolver = await createGameCommandsResolver();
+    const { recruitArmy } = await import('../../commands/armies/armyCommands');
     
     // Determine army level
     let level = 1;
@@ -79,15 +78,14 @@ export class RequestMilitaryAidHandler extends BaseGameCommandHandler {
     }
     
     // Pass recruitment data directly - no global state needed
-    return await resolver.recruitArmy(level, recruitmentData, exemptFromUpkeep);
+    return await recruitArmy(level, recruitmentData, exemptFromUpkeep);
   }
   
   /**
    * Handle equipment selection (success)
    */
   private async handleEquipment(command: any, ctx: GameCommandContext): Promise<PreparedCommand | null> {
-    const { createGameCommandsResolver } = await import('../../../services/GameCommandsResolver');
-    const resolver = await createGameCommandsResolver();
+    const { updateKingdom } = await import('../../../stores/KingdomStore');
     
     // Check if there are any armies available BEFORE showing dialog
     const availableArmies = (ctx.kingdom.armies || []).filter((a: Army) => {
@@ -156,53 +154,17 @@ export class RequestMilitaryAidHandler extends BaseGameCommandHandler {
       return null;
     }
     
-    // PREPARE: Generate preview message only (don't apply equipment yet)
-    const army = ctx.kingdom.armies?.find((a: any) => a.id === selection.armyId);
-    const armyName = army?.name || 'Army';
+    // Use the new outfitArmy command
+    const { outfitArmy } = await import('../../commands/armies/outfitArmy');
     
-    const equipmentNames = {
-      armor: 'Armor',
-      runes: 'Runes',
-      weapons: 'Weapons',
-      equipment: 'Enhanced Gear'
-    };
-    const equipmentName = equipmentNames[selection.equipmentType as keyof typeof equipmentNames] || selection.equipmentType;
+    // Prepare the command with the selected army and equipment
+    const result = await outfitArmy(
+      selection.armyId,
+      selection.equipmentType,
+      'success',  // Always success for Request Military Aid
+      false  // No fallback to gold
+    );
     
-    const message = `${armyName} will be outfitted with ${equipmentName}`;
-    
-    // Return PreparedCommand with commit function that actually applies equipment
-    return {
-      outcomeBadge: {
-        icon: 'fa-shield-alt',
-        template: `Outfitting ${armyName} with ${equipmentName}`,
-        variant: 'positive'
-      },
-      commit: async () => {
-        console.log('[RequestMilitaryAidHandler] COMMITTING equipment application');
-        console.log('  - armyId:', selection.armyId);
-        console.log('  - equipmentType:', selection.equipmentType);
-        
-        // NOW apply the equipment
-        const applyResult = await resolver.outfitArmy(
-          selection.armyId, 
-          selection.equipmentType, 
-          'success',
-          false
-        );
-        
-        // Check if result is ResolveResult (has success property)
-        if ('success' in applyResult) {
-          if (!applyResult.success) {
-            console.error('[RequestMilitaryAidHandler] Failed to outfit army:', applyResult.error);
-            throw new Error(applyResult.error || 'Failed to outfit army');
-          }
-        } else if ('commit' in applyResult) {
-          // PreparedCommand - execute commit
-          await applyResult.commit();
-        }
-        
-        console.log('[RequestMilitaryAidHandler] Equipment applied successfully');
-      }
-    };
+    return result;
   }
 }

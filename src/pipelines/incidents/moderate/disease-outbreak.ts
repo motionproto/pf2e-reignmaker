@@ -4,7 +4,7 @@
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../../shared/applyPipelineModifiers';
+import { textBadge } from '../../../types/OutcomeBadge';
 
 export const diseaseOutbreakPipeline: CheckPipeline = {
   id: 'disease-outbreak',
@@ -37,24 +37,67 @@ export const diseaseOutbreakPipeline: CheckPipeline = {
         { type: 'dice', resource: 'food', formula: '2d4', negative: true, duration: 'immediate' },
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
       ],
-      manualEffects: ["Choose or roll for one Medicine or Faith structure. Mark that structure as damaged"]
+      outcomeBadges: [
+        textBadge('1 random structure damaged', 'fa-house-crack', 'negative')
+      ]
     },
   },
 
-  // Auto-convert JSON modifiers to badges
-  preview: undefined,
+  preview: {
+    calculate: async (ctx) => {
+      // Only show preview on critical failure
+      if (ctx.outcome !== 'criticalFailure') {
+        return { resources: [], outcomeBadges: [], warnings: [] };
+      }
+
+      // Use DamageStructureHandler to prepare the command
+      const { DamageStructureHandler } = await import('../../../services/gameCommands/handlers/DamageStructureHandler');
+      const handler = new DamageStructureHandler();
+      
+      const preparedCommand = await handler.prepare(
+        { type: 'damageStructure', count: 1 },
+        { actionId: 'disease-outbreak', outcome: ctx.outcome, kingdom: ctx.kingdom, metadata: ctx.metadata }
+      );
+
+      if (!preparedCommand) {
+        return {
+          resources: [],
+          outcomeBadges: [],
+          warnings: ['No structures available to damage']
+        };
+      }
+
+      // Store prepared command for execute step
+      ctx.metadata._preparedDamageStructure = preparedCommand;
+
+      return {
+        resources: [],
+        outcomeBadges: [preparedCommand.outcomeBadge],
+        warnings: []
+      };
+    }
+  },
 
   execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(diseaseOutbreakPipeline, ctx.outcome, ctx);
-
-    // Critical failure: damage a Medicine or Faith structure
+    // Modifiers are already applied automatically by UnifiedCheckHandler
+    
+    // Critical failure: damage a structure
     if (ctx.outcome === 'criticalFailure') {
-      const { createGameCommandsResolver } = await import('../../../services/GameCommandsResolver');
-      const resolver = await createGameCommandsResolver();
-      await resolver.damageStructure(undefined, undefined, 1);
+      const preparedCommand = ctx.metadata._preparedDamageStructure;
+      
+      if (!preparedCommand) {
+        console.warn('[Disease Outbreak] No prepared command - skipping damage');
+        return { success: true, message: 'No structures to damage' };
+      }
+
+      // Commit the structure damage
+      if (preparedCommand.commit) {
+        await preparedCommand.commit();
+      }
     }
 
     return { success: true };
-  }
+  },
+
+  traits: ["dangerous"],
 };

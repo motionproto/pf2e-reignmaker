@@ -697,13 +697,17 @@ export class PipelineCoordinator {
       log(ctx, 5, 'calculatePreview', `Custom preview returned ${customPreview.outcomeBadges?.length || 0} additional badges`);
     }
     
-    // ✅ STEP 5C: Merge static badges + JSON badges + custom badges
+    // ✅ STEP 5C: Merge badges intelligently
+    // Custom preview badges are always ADDED to modifier badges
+    // Static badges are fallback (only used if no custom preview)
     const preview = {
       resources: customPreview.resources || [],
       outcomeBadges: [
-        ...staticBadges,  // From outcomes.outcomeBadges (NEW!)
-        ...modifierBadges,  // From JSON modifiers
-        ...(customPreview.outcomeBadges || [])  // From custom preview
+        ...modifierBadges,  // ALWAYS include auto-converted modifier badges
+        ...(customPreview.outcomeBadges && customPreview.outcomeBadges.length > 0
+          ? customPreview.outcomeBadges  // Add custom badges if present
+          : staticBadges  // Otherwise add static badges as fallback
+        )
       ]
     };
     
@@ -836,21 +840,6 @@ export class PipelineCoordinator {
     const pipeline = await getPipeline(ctx);
     const outcome = ctx.rollData?.outcome || 'success';
     
-    // ✅ GLOBAL: Apply +1 fame for all critical successes (Kingdom Rule)
-    if (ctx.rollData && outcome === 'criticalSuccess') {
-      const { createGameCommandsService } = await import('./GameCommandsService');
-      const gameCommandsService = await createGameCommandsService();
-      
-      const tempResult = {
-        success: true,
-        applied: { resources: [] }
-      };
-      
-      await gameCommandsService.applyFameChange(1, 'Critical Success Bonus', tempResult);
-      console.log('✅ [PipelineCoordinator] Applied +1 fame for critical success');
-      log(ctx, 8, 'executeAction', 'Applied +1 fame for critical success');
-    }
-    
     // Build check context for execution
     const checkContext = {
       check: pipeline,
@@ -862,7 +851,7 @@ export class PipelineCoordinator {
       instanceId: ctx.instanceId
     };
     
-    // Execute via UnifiedCheckHandler
+    // Execute via UnifiedCheckHandler (which handles fame bonus)
     await unifiedCheckHandler.executeCheck(
       ctx.actionId,
       checkContext,

@@ -14,47 +14,22 @@ export class OutfitArmyHandler extends BaseGameCommandHandler {
   }
   
   async prepare(command: any, ctx: GameCommandContext): Promise<PreparedCommand | null> {
-    const { createGameCommandsResolver } = await import('../../GameCommandsResolver');
-    const resolver = await createGameCommandsResolver();
+    const { outfitArmy } = await import('../../commands/armies/outfitArmy');
     
-    // Get armyId from command (optional - can auto-select)
+    // Get parameters from command
     const armyId = command.armyId;
     const equipmentType = command.equipmentType || 'armor';
     const fallbackToGold = command.fallbackToGold === true;
     
-    // Convert outcome to appropriate format for resolver
-    const resolverOutcome = ctx.outcome === 'criticalSuccess' ? 'criticalSuccess' 
+    // Convert outcome to appropriate format
+    const outcome = ctx.outcome === 'criticalSuccess' ? 'criticalSuccess' 
       : ctx.outcome === 'success' ? 'success'
       : ctx.outcome === 'failure' ? 'failure'
       : 'criticalFailure';
     
-    // outfitArmy returns PreparedCommand | ResolveResult (hybrid during migration)
-    const result = await resolver.outfitArmy(armyId, equipmentType, resolverOutcome, fallbackToGold);
+    // Delegate to command
+    const result = await outfitArmy(armyId, equipmentType, outcome, fallbackToGold);
     
-    // Check if result is ResolveResult (legacy) and convert to PreparedCommand
-    if (result && 'success' in result && !('outcomeBadge' in result)) {
-      // Legacy ResolveResult - convert to PreparedCommand format with outcomeBadge
-      if (result.success) {
-        const message = result.data?.message || 'Army outfitted';
-        const isNegative = result.data?.grantedGold === true;
-        
-        return {
-          outcomeBadge: {
-            icon: isNegative ? 'fa-coins' : 'fa-shield-alt'
-            value: { type: 'static', amount: 0 },
-            suffix: message,
-            variant: isNegative ? 'info' : 'positive'
-          },
-          commit: async () => {
-            // Already executed by resolver (legacy pattern)
-            console.log('[OutfitArmyHandler] Equipment already applied (legacy)');
-          }
-        };
-      }
-      return null;
-    }
-    
-    // If result is already PreparedCommand, use it as-is
-    return result as PreparedCommand;
+    return this.normalizeResult(result, 'Army outfitted');
   }
 }

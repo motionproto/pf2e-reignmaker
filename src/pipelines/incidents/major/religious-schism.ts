@@ -30,37 +30,24 @@ export const religiousSchismPipeline: CheckPipeline = {
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '2d6', negative: true, duration: 'immediate' }
       ],
-      manualEffects: ["Mark your highest tier religious structure as damaged"]
+      gameCommands: [
+        { type: 'damageStructure', count: 1 }
+      ]
     },
     criticalFailure: {
       description: 'The church splits entirely.',
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '4d6', negative: true, duration: 'immediate' }
       ],
-      manualEffects: ["Reduce your highest tier religious structure's tier by one and mark it as damaged. If the tier is reduced to zero, remove it entirely"]
+      gameCommands: [
+        { type: 'destroyStructure', category: 'religion', targetTier: 'highest', count: 1 }
+      ]
     },
   },
 
   // Auto-convert JSON modifiers to badges
   preview: undefined,
 
-  execute: async (ctx) => {
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(religiousSchismPipeline, ctx.outcome, ctx);
-
-    const { createGameCommandsResolver } = await import('../../../services/GameCommandsResolver');
-    const resolver = await createGameCommandsResolver();
-
-    // Failure: damage highest tier religious structure
-    if (ctx.outcome === 'failure') {
-      await resolver.damageStructure(undefined, undefined, 1);
-    }
-
-    // Critical failure: destroy/downgrade highest tier religious structure
-    if (ctx.outcome === 'criticalFailure') {
-      await resolver.destroyStructure('religion', 'highest', 1);
-    }
-
-    return { success: true };
-  }
+  // PipelineCoordinator handles gameCommands automatically
+  execute: undefined
 };

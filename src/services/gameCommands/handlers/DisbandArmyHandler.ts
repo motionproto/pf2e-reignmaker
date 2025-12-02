@@ -14,8 +14,7 @@ export class DisbandArmyHandler extends BaseGameCommandHandler {
   }
   
   async prepare(command: any, ctx: GameCommandContext): Promise<PreparedCommand | null> {
-    const { createGameCommandsResolver } = await import('../../GameCommandsResolver');
-    const resolver = await createGameCommandsResolver();
+    const { disbandArmy } = await import('../../commands/armies/armyCommands');
     
     // Get armyId from explicit context
     const armyId = ctx.pendingState.armyId;
@@ -26,8 +25,8 @@ export class DisbandArmyHandler extends BaseGameCommandHandler {
     
     const deleteActor = command.deleteActor !== false; // Default to true
     
-    // Delegate to resolver
-    const result = await resolver.disbandArmy(armyId, deleteActor);
+    // Delegate to command
+    const result = await disbandArmy(armyId, deleteActor);
     
     return this.normalizeResult(result, 'Army disbanded');
   }

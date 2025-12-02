@@ -14,8 +14,7 @@ export class RecruitArmyHandler extends BaseGameCommandHandler {
   }
   
   async prepare(command: any, ctx: GameCommandContext): Promise<PreparedCommand | null> {
-    const { createGameCommandsResolver } = await import('../../GameCommandsResolver');
-    const resolver = await createGameCommandsResolver();
+    const { recruitArmy } = await import('../../commands/armies/armyCommands');
     
     // Determine army level
     let level = 1;
@@ -40,8 +39,8 @@ export class RecruitArmyHandler extends BaseGameCommandHandler {
       throw new Error('Allied army recruitment requires faction context - ensure faction is selected before recruitment');
     }
     
-    // Pass recruitment data directly to resolver - no global state needed
-    const result = await resolver.recruitArmy(level, {
+    // Pass recruitment data directly to command - no global state needed
+    const result = await recruitArmy(level, {
       name: recruitmentData.name,
       armyType: recruitmentData.armyType,
       settlementId: recruitmentData.settlementId || null,

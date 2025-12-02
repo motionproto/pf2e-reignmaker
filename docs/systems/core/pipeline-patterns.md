@@ -90,6 +90,186 @@ export const myPipeline = createActionPipeline('special-action', {
 
 ---
 
+## ⚠️ Anti-Patterns (Do NOT Do This)
+
+### ❌ NEVER Re-Roll Dice in Execute Functions
+
+**Problem:** Dice are already rolled in the UI and stored in `resolutionData.numericModifiers`. Re-rolling in execute means the displayed value won't match the applied value.
+
+**WRONG:**
+```typescript
+preview: {
+  calculate: async (ctx) => {
+    const resource = pickRandom(['food', 'lumber']);
+    return {
+      outcomeBadges: [diceBadge(`Lose {{value}} ${resource}`, 'fa-box', '1d4', 'negative')]
+    };
+  }
+},
+execute: async (ctx) => {
+  // ❌ BAD: Re-rolling dice that were already rolled in UI
+  const roll = await new Roll('1d4').evaluate();
+  const amount = roll.total;
+  
+  await updateKingdom(kingdom => {
+    kingdom.resources[resource] -= amount;  // Might be different than UI showed!
+  });
+}
+```
+
+**CORRECT:**
+```typescript
+preview: {
+  calculate: async (ctx) => {
+    const resource = pickRandom(['food', 'lumber']);
+    ctx.metadata._resource = resource;
+    return {
+      outcomeBadges: [diceBadge(`Lose {{value}} ${resource}`, 'fa-box', '1d4', 'negative')]
+    };
+  }
+},
+// ✅ GOOD: No execute needed - dice badge auto-converts and applies
+execute: undefined
+```
+
+**Why it works:** `ResolutionDataBuilder` automatically extracts dice values from badges and creates `numericModifiers`. `UnifiedCheckHandler.applyDefaultModifiers()` applies these BEFORE execute runs.
+
+### ❌ NEVER Manually Apply Resources in Execute
+
+**Problem:** Resources from dice badges and JSON modifiers are automatically applied by `UnifiedCheckHandler.applyDefaultModifiers()`. Manual application causes double-application.
+
+**WRONG:**
+```typescript
+outcomes: {
+  failure: {
+    modifiers: [
+      { type: 'static', resource: 'gold', value: -10, duration: 'immediate' }
+    ]
+  }
+},
+execute: async (ctx) => {
+  // ❌ BAD: Manually applying what's already in modifiers
+  await updateKingdom(kingdom => {
+    kingdom.resources.gold -= 10;  // This will be applied TWICE!
+  });
+}
+```
+
+**CORRECT:**
+```typescript
+outcomes: {
+  failure: {
+    modifiers: [
+      { type: 'static', resource: 'gold', value: -10, duration: 'immediate' }
+    ]
+  }
+},
+// ✅ GOOD: No execute needed - modifiers applied automatically
+execute: undefined
+```
+
+### ❌ NEVER Mix Badge Creation and Direct Application
+
+**Problem:** If you create a badge in preview, don't also apply it in execute. Pick one approach.
+
+**WRONG:**
+```typescript
+preview: {
+  calculate: async (ctx) => {
+    return {
+      outcomeBadges: [diceBadge('Lose {{value}} Gold', 'fa-coins', '2d4', 'negative')]
+    };
+  }
+},
+execute: async (ctx) => {
+  // ❌ BAD: Also manually applying gold loss
+  const roll = await new Roll('2d4').evaluate();
+  await updateKingdom(kingdom => {
+    kingdom.resources.gold -= roll.total;  // Double-applies the loss!
+  });
+}
+```
+
+**CORRECT:**
+```typescript
+preview: {
+  calculate: async (ctx) => {
+    return {
+      outcomeBadges: [diceBadge('Lose {{value}} Gold', 'fa-coins', '2d4', 'negative')]
+    };
+  }
+},
+// ✅ GOOD: Badge handles everything
+execute: undefined
+```
+
+### ✅ When Execute IS Needed
+
+**Use execute ONLY for:**
+1. Game commands (structure damage, army operations, hex claiming)
+2. Complex logic beyond resource changes
+3. Operations that can't be represented as modifiers
+
+**Example - Structure Destruction (Correct):**
+```typescript
+preview: {
+  calculate: async (ctx) => {
+    // Prepare structure destruction
+    const handler = new DestroyWorksiteHandler();
+    const prepared = await handler.prepare({ type: 'destroyWorksite', count: 1 }, ctx);
+    
+    // Store for execute step
+    ctx.metadata._prepared = prepared;
+    
+    return {
+      outcomeBadges: [
+        diceBadge('Lose {{value}} Gold', 'fa-coins', '2d4', 'negative'),  // Auto-applied
+        prepared.outcomeBadge  // Shows which worksite
+      ]
+    };
+  }
+},
+execute: async (ctx) => {
+  // ✅ GOOD: Only executes game command (gold already applied by badge)
+  const prepared = ctx.metadata._prepared;
+  if (prepared?.commit) {
+    await prepared.commit();
+  }
+  return { success: true };
+}
+```
+
+### The Architectural Flow
+
+```
+User clicks dice badge
+    ↓
+OutcomeBadges.svelte rolls dice ONCE, stores result
+    ↓
+User clicks "Apply Result"
+    ↓
+ResolutionDataBuilder extracts rolled values
+    ↓
+Creates resolutionData.numericModifiers array
+    ↓
+PipelineCoordinator.confirmApply() stores in context
+    ↓
+UnifiedCheckHandler.applyDefaultModifiers() runs FIRST
+    ├─ Applies fame bonus
+    ├─ Applies numericModifiers (dice already rolled!)
+    └─ Applies static JSON modifiers
+    ↓
+Pipeline execute() runs (if defined)
+    └─ Resources already modified - only do game commands
+```
+
+**Key Files:**
+- `src/view/kingdom/components/OutcomeDisplay/utils/ResolutionDataBuilder.ts` - Extracts rolled dice
+- `src/services/UnifiedCheckHandler.ts` (applyDefaultModifiers) - Applies modifiers first
+- `src/services/PipelineCoordinator.ts` (step8_executeAction) - Orchestrates execution
+
+---
+
 ## Preview Badges (Possible Outcomes Display)
 
 **When to Use:** Show static preview information in the "Possible Outcomes" display before any roll is made.

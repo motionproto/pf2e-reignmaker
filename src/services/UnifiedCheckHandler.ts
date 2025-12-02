@@ -844,6 +844,8 @@ export class UnifiedCheckHandler {
    * 
    * Called BEFORE custom execute functions to ensure consistent modifier application.
    * Pipelines can opt out by setting skipDefaultModifiers: true
+   * 
+   * Fame bonus is applied HERE as a check outcome rule (critical success = +1 fame)
    */
   private async applyDefaultModifiers(
     context: CheckContext,
@@ -853,7 +855,7 @@ export class UnifiedCheckHandler {
     
     const gameCommandsService = await createGameCommandsService();
     
-    // Step 1: Apply fame bonus for critical success
+    // Step 1: Apply +1 fame for critical success (Kingdom Rule)
     if (context.outcome === 'criticalSuccess') {
       const tempResult = { success: true, applied: { resources: [] } };
       await gameCommandsService.applyFameChange(1, 'Critical Success Bonus', tempResult);

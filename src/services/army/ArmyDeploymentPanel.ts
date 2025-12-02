@@ -461,6 +461,94 @@ export class ArmyDeploymentPanel {
         currentFame: await this.getCurrentFame()
       }
     });
+    
+    // Make panel draggable after it's rendered
+    await this.makePanelDraggable();
+  }
+  
+  /**
+   * Make panel draggable by the header
+   */
+  private async makePanelDraggable(): Promise<void> {
+    // Wait for next tick to ensure component is fully rendered
+    await new Promise(resolve => setTimeout(resolve, 0));
+    
+    const panel = document.querySelector('.army-deployment-panel') as HTMLElement;
+    if (!panel) {
+      logger.warn('[ArmyDeploymentPanel] Could not find panel element for dragging');
+      return;
+    }
+    
+    let isDragging = false;
+    let currentX = 0;
+    let currentY = 0;
+    let initialX = 0;
+    let initialY = 0;
+    
+    // Use event delegation on the panel itself to handle header changes
+    const onMouseDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      
+      // Only start dragging if clicking on the header (not buttons or inputs)
+      const header = target.closest('.panel-header') as HTMLElement;
+      if (!header || target.closest('button, input, select, a')) return;
+      
+      isDragging = true;
+      
+      const rect = panel.getBoundingClientRect();
+      initialX = e.clientX - rect.left;
+      initialY = e.clientY - rect.top;
+      
+      document.body.style.cursor = 'grabbing';
+      
+      // Update cursor on all headers (in case there are multiple)
+      panel.querySelectorAll('.panel-header').forEach((h: Element) => {
+        (h as HTMLElement).style.cursor = 'grabbing';
+      });
+      
+      e.preventDefault();
+    };
+    
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      
+      e.preventDefault();
+      
+      currentX = e.clientX - initialX;
+      currentY = e.clientY - initialY;
+      
+      // Keep panel within viewport bounds
+      const maxX = window.innerWidth - panel.offsetWidth;
+      const maxY = window.innerHeight - panel.offsetHeight;
+      
+      currentX = Math.max(0, Math.min(currentX, maxX));
+      currentY = Math.max(0, Math.min(currentY, maxY));
+      
+      panel.style.left = `${currentX}px`;
+      panel.style.top = `${currentY}px`;
+      panel.style.right = 'auto';
+      panel.style.bottom = 'auto';
+      panel.style.transform = 'none';
+    };
+    
+    const onMouseUp = () => {
+      if (isDragging) {
+        isDragging = false;
+        document.body.style.cursor = '';
+        
+        // Reset cursor on all headers
+        panel.querySelectorAll('.panel-header').forEach((h: Element) => {
+          (h as HTMLElement).style.cursor = 'move';
+        });
+      }
+    };
+    
+    // Attach to panel instead of header - this survives re-renders
+    panel.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+    
+    logger.info('[ArmyDeploymentPanel] Panel is now draggable');
   }
   
   /**
@@ -717,19 +805,34 @@ export class ArmyDeploymentPanel {
       const gameCommand = effect?.gameCommands?.find((cmd: any) => cmd.type === 'deployArmy');
       const conditionsToApply = gameCommand?.conditionsToApply || [];
       
-      // Apply game command
-      const { createGameCommandsResolver } = await import('../GameCommandsResolver');
-      const resolver = await createGameCommandsResolver();
+      // Apply game command via handler registry
+      const { getGameCommandRegistry } = await import('../gameCommands/GameCommandHandlerRegistry');
+      const registry = getGameCommandRegistry();
       
-      const result = await resolver.deployArmy(
-        this.selectedArmyId,
-        this.plottedPath,
-        this.rollResult.outcome,
-        conditionsToApply
+      const kingdom = getKingdomActor()?.getKingdomData();
+      const preparedCommand = await registry.process(
+        {
+          type: 'deployArmy',
+          armyId: this.selectedArmyId,
+          path: this.plottedPath,
+          conditionsToApply
+        },
+        { 
+          kingdom, 
+          outcome: this.rollResult.outcome, 
+          metadata: {}, 
+          actionId: 'deploy-army',
+          pendingActions: [],
+          pendingState: {}
+        }
       );
       
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to deploy army');
+      if (!preparedCommand) {
+        throw new Error('Failed to prepare army deployment');
+      }
+      
+      if (preparedCommand.commit) {
+        await preparedCommand.commit();
       }
       
       logger.info('[ArmyDeploymentPanel] Effects applied, switching to completed state');

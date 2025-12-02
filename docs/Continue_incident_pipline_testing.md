@@ -100,6 +100,21 @@ Continue incident pipeline testing.
 
 **Common Issues:**
 
+- **❌ CRITICAL: Never re-roll dice in execute functions**
+  - Dice are rolled ONCE in the UI (OutcomeBadges.svelte)
+  - Rolled values stored in resolvedDice map
+  - ResolutionDataBuilder extracts these to numericModifiers
+  - UnifiedCheckHandler applies BEFORE execute runs
+  - Re-rolling in execute means displayed ≠ applied values
+  - **Solution:** Remove execute function - badges auto-apply
+  - See: docs/systems/core/pipeline-patterns.md (Anti-Patterns section)
+
+- **❌ CRITICAL: Never manually apply resources in execute**
+  - JSON modifiers and dice badges auto-apply via UnifiedCheckHandler
+  - Manual updateKingdom() in execute causes double-application
+  - **Solution:** Remove manual application - use badges/modifiers only
+  - Execute should ONLY contain game commands (structures, armies, hexes)
+
 - **Outcome doesn't display after roll**: Fixed - Svelte reactivity issue with array mutations
   - Previously: Data stored but UI didn't update until reload
   - Root cause: `.push()` and direct mutations don't trigger Svelte reactivity

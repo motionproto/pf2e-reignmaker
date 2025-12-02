@@ -91,6 +91,15 @@ export async function createGameCommandsService() {
      * @param modifiers - Array of resource changes to apply
      * @param outcome - Outcome degree (for automatic fame bonus on critical success)
      */
+    /**
+     * Apply numeric modifiers to kingdom resources
+     * 
+     * Handles resource accumulation, shortfall detection, and application.
+     * Does NOT apply fame bonus - that's handled by UnifiedCheckHandler as a check outcome rule.
+     * 
+     * @param modifiers - Array of resource modifiers to apply
+     * @param outcome - Outcome degree (no longer used for fame)
+     */
     async applyNumericModifiers(
       modifiers: Array<{ resource: ResourceType; value: number }>,
       outcome?: OutcomeDegree
@@ -105,10 +114,6 @@ export async function createGameCommandsService() {
       };
       
       try {
-        // Apply critical success fame bonus (applies to all rolls)
-        if (outcome === 'criticalSuccess') {
-          await this.applyFameChange(1, 'Critical Success Bonus', result);
-        }
         
         // Step 1: Accumulate modifiers by resource type
         const accumulated = new Map<ResourceType, number>();
@@ -232,6 +237,9 @@ export async function createGameCommandsService() {
      * 
      * This is the main entry point for all outcome applications.
      * It handles immediate effects and delegates to ModifierService for ongoing effects.
+     * 
+     * Note: Fame bonus is NOT applied here - it's handled by UnifiedCheckHandler
+     * as a check outcome rule.
      */
     async applyOutcome(params: ApplyOutcomeParams): Promise<ApplyOutcomeResult> {
 
@@ -243,11 +251,6 @@ export async function createGameCommandsService() {
       };
 
       try {
-        // Apply critical success fame bonus (applies to all rolls)
-        if (params.outcome === 'criticalSuccess') {
-          await this.applyFameChange(1, 'Critical Success Bonus', result);
-        }
-
         // Apply all modifiers with their indices
         for (let i = 0; i < params.modifiers.length; i++) {
           await this.applyModifier(params.modifiers[i], params, result, i);

@@ -27,6 +27,9 @@ export const massExodusPipeline: CheckPipeline = {
       description: 'Citizens abandon projects.',
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
+      ],
+      gameCommands: [
+        { type: 'destroyWorksite', count: 1 }
       ]
     },
     criticalFailure: {
@@ -34,40 +37,19 @@ export const massExodusPipeline: CheckPipeline = {
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
         { type: 'static', resource: 'fame', value: -1, duration: 'immediate' },
+      ],
+      gameCommands: [
+        { type: 'destroyWorksite', count: 1 },
+        { type: 'damageStructure', count: 1 }
       ]
     },
   },
 
-  execute: async (ctx) => {
-    // Modifiers already applied by execute-first pattern
-    
-    // Only execute game commands on failure or critical failure
-    if (ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess') {
-      return { success: true };
-    }
-    
-    const { createGameCommandsResolver } = await import('../../../services/GameCommandsResolver');
-    const resolver = await createGameCommandsResolver();
-    
-    // Both outcomes destroy 1 worksite
-    const worksiteCommand = await resolver.destroyWorksite(1);
-    if (worksiteCommand?.commit) {
-      await worksiteCommand.commit();
-    }
-    
-    // Critical failure also damages 1 structure
-    if (ctx.outcome === 'criticalFailure') {
-      const structureCommand = await resolver.damageStructure(1);
-      if (structureCommand?.commit) {
-        await structureCommand.commit();
-      }
-    }
-    
-    return { success: true };
-  },
+  // PipelineCoordinator handles gameCommands automatically
+  execute: undefined,
 
   // Auto-convert JSON modifiers to badges
   preview: undefined,
 
-  traits: ["dangerous"],
+  traits: ["dangerous"]
 };

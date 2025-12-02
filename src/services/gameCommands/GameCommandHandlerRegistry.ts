@@ -19,6 +19,12 @@ import { OutfitArmyHandler } from './handlers/OutfitArmyHandler';
 import { RequestMilitaryAidHandler } from './handlers/RequestMilitaryAidHandler';
 import { DestroyWorksiteHandler } from './handlers/DestroyWorksiteHandler';
 import { SpendPlayerActionHandler } from './handlers/SpendPlayerActionHandler';
+import { DamageStructureHandler } from './handlers/DamageStructureHandler';
+import { DestroyStructureHandler } from './handlers/DestroyStructureHandler';
+import { ReleaseImprisonedHandler } from './handlers/ReleaseImprisonedHandler';
+import { RemoveBorderHexesHandler } from './handlers/RemoveBorderHexesHandler';
+import { ReduceImprisonedHandler } from './handlers/ReduceImprisonedHandler';
+import { DeployArmyHandler } from './handlers/DeployArmyHandler';
 
 /**
  * Registry manages all game command handlers
@@ -34,7 +40,13 @@ export class GameCommandHandlerRegistry {
     new OutfitArmyHandler(),
     new RequestMilitaryAidHandler(),
     new DestroyWorksiteHandler(),
-    new SpendPlayerActionHandler()
+    new SpendPlayerActionHandler(),
+    new DamageStructureHandler(),
+    new DestroyStructureHandler(),
+    new ReleaseImprisonedHandler(),
+    new RemoveBorderHexesHandler(),
+    new ReduceImprisonedHandler(),
+    new DeployArmyHandler()
   ];
   
   /**
@@ -119,7 +131,7 @@ let registryInstance: GameCommandHandlerRegistry | null = null;
 export function getGameCommandRegistry(): GameCommandHandlerRegistry {
   if (!registryInstance) {
     registryInstance = new GameCommandHandlerRegistry();
-    console.log('[GameCommandHandlerRegistry] Registry initialized with 10 handlers');
+    console.log('[GameCommandHandlerRegistry] Registry initialized with 15 handlers');
   }
   return registryInstance;
 }

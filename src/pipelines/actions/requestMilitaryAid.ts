@@ -221,21 +221,25 @@ export const requestMilitaryAidPipeline: CheckPipeline = {
         };
       }
 
-      const { createGameCommandsResolver } = await import('../../services/GameCommandsResolver');
-      const resolver = await createGameCommandsResolver();
+      const { getGameCommandRegistry } = await import('../../services/gameCommands/GameCommandHandlerRegistry');
+      const registry = getGameCommandRegistry();
       
-      const preparedCommand = await resolver.recruitArmy(
-        ctx.kingdom.level,
+      const preparedCommand = await registry.process(
         {
-          name: recruitmentData.name,
-          armyType: recruitmentData.armyType,
-          settlementId: recruitmentData.settlementId || null,
-          supportedBy: faction.name
+          type: 'recruitArmy',
+          level: ctx.kingdom.level,
+          recruitmentData: {
+            name: recruitmentData.name,
+            armyType: recruitmentData.armyType,
+            settlementId: recruitmentData.settlementId || null,
+            supportedBy: faction.name
+          },
+          exemptFromUpkeep: true
         },
-        true
+        { kingdom: ctx.kingdom, outcome: ctx.outcome, metadata: ctx.metadata }
       );
 
-      if (preparedCommand.commit) {
+      if (preparedCommand?.commit) {
         await preparedCommand.commit();
       }
 
@@ -311,14 +315,18 @@ export const requestMilitaryAidPipeline: CheckPipeline = {
         };
       }
 
-      const { createGameCommandsResolver } = await import('../../services/GameCommandsResolver');
-      const resolver = await createGameCommandsResolver();
+      const { getGameCommandRegistry } = await import('../../services/gameCommands/GameCommandHandlerRegistry');
+      const registry = getGameCommandRegistry();
       
-      const result = await resolver.outfitArmy(
-        outfitData.armyId,
-        outfitData.equipmentType,
-        'success',
-        false
+      const result = await registry.process(
+        {
+          type: 'outfitArmy',
+          armyId: outfitData.armyId,
+          equipmentType: outfitData.equipmentType,
+          outcome: 'success',
+          fallbackToGold: false
+        },
+        { kingdom: ctx.kingdom, outcome: ctx.outcome, metadata: ctx.metadata }
       );
 
       if ('commit' in result && typeof result.commit === 'function') {

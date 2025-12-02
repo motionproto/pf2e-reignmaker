@@ -37,39 +37,25 @@ export const settlementCollapsePipeline: CheckPipeline = {
     failure: {
       description: 'A major crisis threatens the settlement.',
       modifiers: [],
-      manualEffects: ["Choose or roll for one random settlement. If you chose 'structures damaged', damage 2 random structures in that settlement"]
+      gameCommands: [
+        { type: 'damageStructure', count: 2 }
+      ]
     },
     criticalFailure: {
       description: 'A settlement collapses.',
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ],
-      manualEffects: ["Choose or roll for one random settlement. That settlement loses one level (minimum level 1)", "Reduce 1 random structure's tier in that settlement by one and mark it as damaged. If the tier is reduced to zero, remove it entirely"]
+      gameCommands: [
+        { type: 'destroyStructure', count: 1 }
+      ],
+      manualEffects: ["The selected settlement loses one level (minimum level 1)"]
     },
   },
 
   // Auto-convert JSON modifiers to badges
   preview: undefined,
 
-  execute: async (ctx) => {
-    const settlementId = ctx.metadata?.settlement?.id;
-    
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(settlementCollapsePipeline, ctx.outcome, ctx);
-
-    const { createGameCommandsResolver } = await import('../../../services/GameCommandsResolver');
-    const resolver = await createGameCommandsResolver();
-
-    // Failure: damage 2 structures in selected settlement
-    if (ctx.outcome === 'failure') {
-      await resolver.damageStructure(undefined, undefined, 2);
-    }
-
-    // Critical Failure: downgrade 1 structure in selected settlement (settlement level handled as manual effect)
-    if (ctx.outcome === 'criticalFailure') {
-      await resolver.destroyStructure(undefined, undefined, 1);
-    }
-
-    return { success: true };
-  }
+  // PipelineCoordinator handles gameCommands automatically
+  execute: undefined
 };

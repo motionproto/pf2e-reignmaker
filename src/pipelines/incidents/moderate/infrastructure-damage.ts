@@ -39,14 +39,16 @@ export const infrastructureDamagePipeline: CheckPipeline = {
     failure: {
       description: 'Infrastructure damage impacts your kingdom.',
       modifiers: [],
-      manualEffects: ["Choose or roll for one random structure in a random settlement. Mark that structure as damaged"]
+      gameCommands: [
+        { type: 'damageStructure', count: 1 }
+      ]
     },
     criticalFailure: {
       description: 'Widespread infrastructure damage causes chaos.',
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-      ],
-      manualEffects: ["Roll 1d3. Mark that many random structures as damaged (choose or roll for random settlements)"]
+      ]
+      // Note: Critical failure uses dice (1d3) - handled in execute block
     },
   },
 
@@ -54,26 +56,24 @@ export const infrastructureDamagePipeline: CheckPipeline = {
   preview: undefined,
 
   execute: async (ctx) => {
-    const settlementId = ctx.metadata?.settlement?.id;
-    
-    // Apply modifiers from outcome
-    await applyPipelineModifiers(infrastructureDamagePipeline, ctx.outcome, ctx);
-
-    const { createGameCommandsResolver } = await import('../../../services/GameCommandsResolver');
-    const resolver = await createGameCommandsResolver();
-
-    // Failure: damage 1 structure in selected settlement
-    if (ctx.outcome === 'failure') {
-      await resolver.damageStructure(undefined, undefined, 1);
-    }
-
-    // Critical failure: damage 1d3 structures in selected settlement
+    // Critical failure needs dice roll for count
     if (ctx.outcome === 'criticalFailure') {
-      // Roll 1d3 for number of structures to damage
       const roll = Math.floor(Math.random() * 3) + 1;
-      await resolver.damageStructure(undefined, undefined, roll);
+      
+      const { getGameCommandRegistry } = await import('../../../services/gameCommands/GameCommandHandlerRegistry');
+      const registry = getGameCommandRegistry();
+      
+      const command = await registry.process({ type: 'damageStructure', count: roll }, {
+        kingdom: ctx.kingdom,
+        outcome: ctx.outcome,
+        metadata: ctx.metadata
+      });
+      
+      if (command?.commit) {
+        await command.commit();
+      }
     }
-
+    
     return { success: true };
   }
 };
