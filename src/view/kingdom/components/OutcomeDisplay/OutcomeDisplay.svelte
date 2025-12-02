@@ -417,24 +417,42 @@
       return;
     }
 
-    // ✅ NO LONGER NEEDED: PipelineCoordinator now handles modifier storage automatically
-    // This prevents duplicate/conflicting modifier extraction logic
-    // See: PipelineCoordinator.ts Step 3 callback for the canonical extraction
-    
-    // ✅ Clear state in instance via helper (syncs to all clients)
-    if (instance) {
-      await clearInstanceResolutionState(instance.previewId);
+    // ✅ ARCHITECTURE: Call PipelineCoordinator directly instead of dispatching to phases
+    // This eliminates duplicate reroll handlers in ActionsPhase, EventsPhase, UnrestPhase
+    if (!instance) {
+      console.error('[OutcomeDisplay] No instance found for reroll');
+      return;
     }
     
-    // Reset local UI state
-    componentResolutionData = null;
-
-    // Dispatch reroll request with skill info and previous fame
-    // Note: Modifiers are now stored in module-scoped state, not passed as parameters
-    dispatch('performReroll', { 
-      skill: skillName,
-      previousFame: deductResult.previousFame
-    });
+    const instanceId = instance.previewId;
+    console.log(`🔄 [OutcomeDisplay] Rerolling from Step 3 (same pipeline): ${instanceId}`);
+    
+    try {
+      // Import and call PipelineCoordinator.rerollFromStep3() directly
+      const { getPipelineCoordinator } = await import('../../../../services/PipelineCoordinator');
+      const pipelineCoordinator = await getPipelineCoordinator();
+      
+      if (!pipelineCoordinator) {
+        throw new Error('PipelineCoordinator not initialized');
+      }
+      
+      // Rewind to Step 3 and re-execute with SAME context
+      // This preserves metadata, modifiers, and all pipeline state
+      await pipelineCoordinator.rerollFromStep3(instanceId);
+      
+      console.log(`✅ [OutcomeDisplay] Reroll complete for instance ${instanceId}`);
+      
+    } catch (error) {
+      console.error(`❌ [OutcomeDisplay] Reroll failed for instance ${instanceId}:`, error);
+      
+      // Restore fame if the roll failed
+      const { restoreFameAfterFailedReroll } = await import('../../../../controllers/shared/RerollHelpers');
+      if (deductResult.previousFame !== undefined) {
+        await restoreFameAfterFailedReroll(deductResult.previousFame);
+      }
+      
+      ui.notifications?.error('Failed to reroll. Fame has been restored.');
+    }
   }
   
   /**

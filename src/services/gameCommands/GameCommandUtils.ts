@@ -166,3 +166,4 @@ export function getEquipmentDisplayName(equipmentType: string): string {
   return names[equipmentType] || equipmentType;
 }
 
+

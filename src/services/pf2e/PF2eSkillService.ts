@@ -408,17 +408,24 @@ export class PF2eSkillService {
       if (isReroll && instanceId) {
         const currentKingdomState = get(kingdomData);
         
+        console.log(`🔍 [PF2eSkillService] Reroll detected - attempting to load modifiers for instance ${instanceId}`);
+        console.log(`🔍 [PF2eSkillService] Available instances:`, Object.keys(currentKingdomState.turnState?.actionsPhase?.actionInstances || {}));
+        
         // ✅ DIRECT LOOKUP: Load modifiers by instanceId (unique per execution)
         const actionInstance = currentKingdomState.turnState?.actionsPhase?.actionInstances?.[instanceId];
         
         if (actionInstance?.rollModifiers && actionInstance.rollModifiers.length > 0) {
-          console.log(`🔄 [PF2eSkillService] Restoring modifiers from instance ${instanceId}:`, actionInstance.rollModifiers.length);
+          console.log(`✅ [PF2eSkillService] Found stored modifiers for instance ${instanceId}:`, actionInstance.rollModifiers.length);
+          console.log(`🔍 [PF2eSkillService] Stored modifiers details:`,
+            actionInstance.rollModifiers.map(m => ({ label: m.label, modifier: m.modifier, type: (m as any).type, enabled: m.enabled, ignored: m.ignored }))
+          );
           lastRollModifiers = actionInstance.rollModifiers;
           
           // ✅ NO CLEARING: Modifiers persist until turn cleanup (turn manager clears entire turnState)
           // This allows multiple rerolls of the same action if needed
         } else {
-          console.log('ℹ️ [PF2eSkillService] No stored modifiers found for reroll');
+          console.error(`❌ [PF2eSkillService] No stored modifiers found for reroll! Instance ${instanceId}`);
+          console.log(`🔍 [PF2eSkillService] Checking actionInstance:`, actionInstance);
           lastRollModifiers = null;
         }
       }
@@ -493,9 +500,23 @@ export class PF2eSkillService {
         if (!isReroll && instanceId) {
           // Extract modifiers from PF2e message
           const allModifiers = (message as any)?.flags?.pf2e?.modifiers || [];
+          console.log(`🔍 [PF2eSkillService.wrappedCallback] Extracted ${allModifiers.length} total modifiers from PF2e message for instance ${instanceId}`);
+          
+          // Log ALL modifiers before filtering
+          if (allModifiers.length > 0) {
+            console.log(`🔍 [PF2eSkillService.wrappedCallback] ALL modifiers (before filtering):`, 
+              allModifiers.map((m: any) => ({ label: m.label, type: m.type, modifier: m.modifier, enabled: m.enabled, ignored: m.ignored }))
+            );
+          }
+          
           const modifiers = allModifiers.filter((mod: any) => mod.type !== 'ability' && mod.type !== 'proficiency');
+          console.log(`🔍 [PF2eSkillService.wrappedCallback] After filtering: ${modifiers.length} non-ability/non-proficiency modifiers`);
           
           if (modifiers.length > 0) {
+            console.log(`🔍 [PF2eSkillService.wrappedCallback] FILTERED modifiers (to be stored):`,
+              modifiers.map((m: any) => ({ label: m.label, type: m.type, modifier: m.modifier, enabled: m.enabled, ignored: m.ignored }))
+            );
+            
             const { getKingdomActor } = await import('../../stores/KingdomStore');
             const actor = getKingdomActor();
             
@@ -523,11 +544,17 @@ export class PF2eSkillService {
                 };
               });
               
-              console.log(`💾 [PF2eSkillService] Stored modifiers for instance ${instanceId} (isolated per execution)`);
+              console.log(`💾 [PF2eSkillService] Successfully stored ${modifiers.length} modifiers for instance ${instanceId}`);
+            } else {
+              console.error(`❌ [PF2eSkillService] No kingdom actor found - cannot store modifiers!`);
             }
+          } else {
+            console.log(`ℹ️ [PF2eSkillService] No modifiers to store for instance ${instanceId} (all were ability/proficiency)`);
           }
         } else if (isReroll) {
-          console.log('🔄 [PF2eSkillService] This is a reroll - not storing modifiers (already stored from initial roll)');
+          console.log(`🔄 [PF2eSkillService] This is a reroll (instance ${instanceId}) - not storing modifiers (already stored from initial roll)`);
+        } else {
+          console.warn(`⚠️ [PF2eSkillService] wrappedCallback called without instanceId - cannot store modifiers!`);
         }
         
         // Call the pipeline callback (if provided)

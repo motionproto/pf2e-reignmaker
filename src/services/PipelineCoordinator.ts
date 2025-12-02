@@ -484,32 +484,8 @@ export class PipelineCoordinator {
       
       console.log('📊 [PipelineCoordinator] Stored rollBreakdown with modifiers:', ctx.rollData.rollBreakdown?.modifiers);
       
-      // ✅ PERSIST: Store modifiers in kingdom.turnState for rerolls
-      if (modifiers && modifiers.length > 0) {
-        const actor = getKingdomActor();
-        if (actor) {
-          await actor.updateKingdomData((kingdom: any) => {
-            // Initialize if needed
-            if (!kingdom.turnState) kingdom.turnState = {};
-            if (!kingdom.turnState.actionsPhase) {
-              kingdom.turnState.actionsPhase = { activeAids: [], completed: false };
-            }
-            if (!kingdom.turnState.actionsPhase.actionInstances) {
-              kingdom.turnState.actionsPhase.actionInstances = {};
-            }
-            
-            // Store modifiers keyed by instanceId (not actionId, since we can have multiple instances of same action)
-            kingdom.turnState.actionsPhase.actionInstances[ctx.instanceId] = {
-              instanceId: ctx.instanceId,
-              actionId: ctx.actionId,
-              rollModifiers: ctx.rollData.rollBreakdown.modifiers,
-              timestamp: Date.now()
-            };
-          });
-          
-          console.log(`💾 [PipelineCoordinator] Stored ${modifiers.length} modifiers in kingdom.turnState for reroll (instance: ${ctx.instanceId})`);
-        }
-      }
+      // NOTE: Modifier persistence for rerolls is handled by PF2eSkillService.wrappedCallback
+      // This eliminates duplicate storage and ensures consistent modifier extraction
       
       // Dispatch kingdomRollComplete event for listeners (e.g., ArmyDeploymentPanel)
       const rollCompleteEvent = new CustomEvent('kingdomRollComplete', {

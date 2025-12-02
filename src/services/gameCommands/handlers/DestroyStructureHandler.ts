@@ -261,3 +261,4 @@ export class DestroyStructureHandler extends BaseGameCommandHandler {
   }
 }
 
+

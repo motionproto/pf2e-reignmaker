@@ -295,20 +295,36 @@
    
    // Event handler - reroll with fame
    async function handleReroll(event: CustomEvent) {
-      if (!currentIncident) return;
-      const { skill, previousFame, enabledModifiers } = event.detail;
+      if (!currentIncident || !currentIncidentInstance) return;
+      const { skill, previousFame } = event.detail;
 
-      // Reset UI state for new roll
-      await handleCancel();
-
-      // Small delay to ensure UI updates
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Trigger new roll with preserved modifiers
+      // ✅ GET EXISTING INSTANCE ID: Reroll within same pipeline context
+      const instanceId = currentIncidentInstance.previewId;
+      
+      if (!instanceId) {
+         logger.error('[UnrestPhase] No instance found for reroll');
+         return;
+      }
+      
+      console.log(`🔄 [UnrestPhase] Rerolling from Step 3 (same pipeline): ${instanceId}`);
+      
+      // 🔄 Reroll using PipelineCoordinator.rerollFromStep3()
+      const { getPipelineCoordinator } = await import('../../../services/PipelineCoordinator');
+      const pipelineCoordinator = await getPipelineCoordinator();
+      
+      if (!pipelineCoordinator) {
+         throw new Error('PipelineCoordinator not initialized');
+      }
+      
       try {
-         await executeSkillCheck(skill, enabledModifiers);
+         // Rewind to Step 3 and re-execute with SAME context
+         // This preserves metadata, modifiers, and all pipeline state
+         await pipelineCoordinator.rerollFromStep3(instanceId);
+         
+         console.log(`✅ [UnrestPhase] Reroll complete for ${currentIncident.id}`);
+         
       } catch (error) {
-         logger.error('[UnrestPhase] Error during reroll:', error);
+         logger.error(`❌ [UnrestPhase] Reroll failed for ${currentIncident.id}:`, error);
          // Restore fame if the roll failed
          const { restoreFameAfterFailedReroll } = await import('../../../controllers/shared/RerollHelpers');
          if (previousFame !== undefined) {
