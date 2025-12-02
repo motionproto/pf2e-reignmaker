@@ -20,6 +20,10 @@ export const risingTensionsPipeline: CheckPipeline = {
     ],
 
   outcomes: {
+    criticalSuccess: {
+      description: 'Tensions are resolved.',
+      modifiers: []
+    },
     success: {
       description: 'Tensions ease.',
       modifiers: []

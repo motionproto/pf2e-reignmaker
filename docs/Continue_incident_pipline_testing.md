@@ -100,6 +100,13 @@ Continue incident pipeline testing.
 
 **Common Issues:**
 
+- **❌ CRITICAL: Missing criticalSuccess outcome**
+  - ALL incidents must define all four outcomes: `criticalSuccess`, `success`, `failure`, `criticalFailure`
+  - Missing `criticalSuccess` causes errors when players roll natural 20s
+  - Critical success typically has no modifiers (fame bonus handled automatically by UnifiedCheckHandler)
+  - Description should be slightly more positive than regular success
+  - Example: If success = "The strike ends", criticalSuccess = "The strike ends peacefully"
+
 - **❌ CRITICAL: Never re-roll dice in execute functions**
   - Dice are rolled ONCE in the UI (OutcomeBadges.svelte)
   - Rolled values stored in resolvedDice map

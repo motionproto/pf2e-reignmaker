@@ -21,6 +21,11 @@ export const diplomaticIncidentPipeline: CheckPipeline = {
     ],
 
   outcomes: {
+    criticalSuccess: {
+      description: 'Relations improve.',
+      modifiers: [],
+      outcomeBadges: []
+    },
     success: {
       description: 'Relations are maintained.',
       modifiers: [],

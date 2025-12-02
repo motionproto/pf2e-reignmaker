@@ -257,8 +257,8 @@
    </div>
    
    <div class="debug-controls">
-      <div class="debug-notice">
-         <i class="fas fa-info-circle"></i>
+   <div class="debug-notice">
+      <i class="fas fa-info-circle"></i>
          <span>Testing incidents with the PipelineCoordinator system.</span>
       </div>
       

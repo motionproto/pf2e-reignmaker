@@ -8,6 +8,7 @@
 import { BaseGameCommandHandler } from '../GameCommandHandler';
 import type { GameCommandContext } from '../GameCommandHandler';
 import type { PreparedCommand } from '../../../types/game-commands';
+import type { ValidationResult } from '../../hex-selector/types';
 import { logger } from '../../../utils/Logger';
 import { getKingdomActor, updateKingdom } from '../../../stores/KingdomStore';
 
@@ -136,6 +137,52 @@ export class DestroyWorksiteHandler extends BaseGameCommandHandler {
           name: hex.name || `Hex ${hex.id}`,
           worksiteType: hex.worksite?.type || 'Unknown'
         }))
+      }
+    };
+  }
+  
+  /**
+   * Get standard post-apply interaction configuration for hex display
+   * Call this method to add map display to your pipeline
+   */
+  static getMapDisplayInteraction(title?: string) {
+    return {
+      type: 'map-selection' as const,
+      id: 'affectedHexes',
+      mode: 'display' as const,
+      count: (ctx: any) => {
+        const instance = ctx.kingdom?.pendingOutcomes?.find((i: any) => i.previewId === ctx.instanceId);
+        return instance?.metadata?.destroyedHexIds?.length || 0;
+      },
+      colorType: 'destroyed' as const,
+      title: (ctx: any) => {
+        if (title) return title;
+        
+        const instance = ctx.kingdom?.pendingOutcomes?.find((i: any) => i.previewId === ctx.instanceId);
+        const count = instance?.metadata?.destroyedHexIds?.length || 0;
+        return count === 1
+          ? 'Worksite Destroyed'
+          : `${count} Worksites Destroyed`;
+      },
+      condition: (ctx: any) => {
+        const instance = ctx.kingdom?.pendingOutcomes?.find((i: any) => i.previewId === ctx.instanceId);
+        return instance?.metadata?.destroyedHexIds?.length > 0;
+      },
+      existingHexes: (ctx: any) => {
+        const instance = ctx.kingdom?.pendingOutcomes?.find((i: any) => i.previewId === ctx.instanceId);
+        return instance?.metadata?.destroyedHexIds || [];
+      },
+      validateHex: (): ValidationResult => {
+        return { valid: false, message: 'Display only - showing affected hexes' };
+      },
+      allowToggle: false,
+      getHexInfo: (hexId: string, ctx: any) => {
+        const instance = ctx.kingdom?.pendingOutcomes?.find((i: any) => i.previewId === ctx.instanceId);
+        const worksite = instance?.metadata?.destroyedWorksites?.find((w: any) => w.id === hexId);
+        if (worksite) {
+          return `<p style="color: #FF4444;"><strong>Destroyed:</strong> ${worksite.worksiteType}</p><p style="color: #999;">${worksite.name}</p>`;
+        }
+        return '<p style="color: #FF4444;"><strong>Worksite destroyed</strong></p>';
       }
     };
   }

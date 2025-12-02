@@ -20,6 +20,10 @@ export const diseaseOutbreakPipeline: CheckPipeline = {
     ],
 
   outcomes: {
+    criticalSuccess: {
+      description: 'The disease is eradicated.',
+      modifiers: []
+    },
     success: {
       description: 'The disease is contained.',
       modifiers: []
@@ -80,7 +84,7 @@ export const diseaseOutbreakPipeline: CheckPipeline = {
 
   execute: async (ctx) => {
     // Modifiers are already applied automatically by UnifiedCheckHandler
-    
+
     // Critical failure: damage a structure
     if (ctx.outcome === 'criticalFailure') {
       const preparedCommand = ctx.metadata._preparedDamageStructure;

@@ -4,7 +4,8 @@
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../../shared/applyPipelineModifiers';
+import type { GameCommandContext } from '../../../services/gameCommands/GameCommandHandler';
+import { textBadge } from '../../../types/OutcomeBadge';
 
 export const infrastructureDamagePipeline: CheckPipeline = {
   id: 'infrastructure-damage',
@@ -20,18 +21,11 @@ export const infrastructureDamagePipeline: CheckPipeline = {
       { skill: 'arcana', description: 'magical restoration' },
     ],
 
-  preRollInteractions: [
-    {
-      type: 'entity-selection',
-      id: 'settlement',
-      entityType: 'settlement',
-      label: 'Select Settlement with Infrastructure Damage',
-      required: true,
-      filter: (settlement: any) => settlement.structures?.length > 0
-    }
-  ],
-
   outcomes: {
+    criticalSuccess: {
+      description: 'Infrastructure is reinforced.',
+      modifiers: []
+    },
     success: {
       description: 'Damage is prevented.',
       modifiers: []
@@ -39,38 +33,83 @@ export const infrastructureDamagePipeline: CheckPipeline = {
     failure: {
       description: 'Infrastructure damage impacts your kingdom.',
       modifiers: [],
-      gameCommands: [
-        { type: 'damageStructure', count: 1 }
+      outcomeBadges: [
+        textBadge('1 structure will be damaged', 'fa-house-crack', 'negative')
       ]
     },
     criticalFailure: {
       description: 'Widespread infrastructure damage causes chaos.',
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
+      ],
+      outcomeBadges: [
+        textBadge('1d3 structures will be damaged', 'fa-house-crack', 'negative')
       ]
-      // Note: Critical failure uses dice (1d3) - handled in execute block
     },
   },
 
-  // Auto-convert JSON modifiers to badges
-  preview: undefined,
+  preview: {
+    calculate: async (ctx) => {
+      // Only show preview for failure outcomes
+      if (ctx.outcome !== 'failure' && ctx.outcome !== 'criticalFailure') {
+        return { resources: [], outcomeBadges: [], warnings: [] };
+      }
+
+      // Determine count (failure: 1, critical failure: 1d3)
+      let count = 1;
+      if (ctx.outcome === 'criticalFailure') {
+        count = Math.floor(Math.random() * 3) + 1; // Roll 1d3
+        ctx.metadata._rolledCount = count; // Store for execute
+      }
+
+      // Use DamageStructureHandler to prepare the command
+      const { DamageStructureHandler } = await import('../../../services/gameCommands/handlers/DamageStructureHandler');
+      const handler = new DamageStructureHandler();
+      
+      const preparedCommand = await handler.prepare(
+        { type: 'damageStructure', count },
+        { 
+          actionId: 'infrastructure-damage', 
+          outcome: ctx.outcome, 
+          kingdom: ctx.kingdom, 
+          metadata: ctx.metadata 
+        } as GameCommandContext
+      );
+
+      if (!preparedCommand) {
+        return {
+          resources: [],
+          outcomeBadges: [],
+          warnings: ['No structures available to damage']
+        };
+      }
+
+      // Store prepared command for execute step
+      ctx.metadata._preparedDamageStructure = preparedCommand;
+
+      return {
+        resources: [],
+        outcomeBadges: [preparedCommand.outcomeBadge],
+        warnings: []
+      };
+    }
+  },
 
   execute: async (ctx) => {
-    // Critical failure needs dice roll for count
-    if (ctx.outcome === 'criticalFailure') {
-      const roll = Math.floor(Math.random() * 3) + 1;
+    // Modifiers are already applied automatically by UnifiedCheckHandler
+    
+    // Execute structure damage on failure outcomes
+    if (ctx.outcome === 'failure' || ctx.outcome === 'criticalFailure') {
+      const preparedCommand = ctx.metadata._preparedDamageStructure;
       
-      const { getGameCommandRegistry } = await import('../../../services/gameCommands/GameCommandHandlerRegistry');
-      const registry = getGameCommandRegistry();
-      
-      const command = await registry.process({ type: 'damageStructure', count: roll }, {
-        kingdom: ctx.kingdom,
-        outcome: ctx.outcome,
-        metadata: ctx.metadata
-      });
-      
-      if (command?.commit) {
-        await command.commit();
+      if (!preparedCommand) {
+        console.warn('[Infrastructure Damage] No prepared command - skipping damage');
+        return { success: true, message: 'No structures to damage' };
+      }
+
+      // Commit the structure damage
+      if (preparedCommand.commit) {
+        await preparedCommand.commit();
       }
     }
     

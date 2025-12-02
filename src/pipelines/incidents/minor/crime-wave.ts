@@ -20,6 +20,10 @@ export const crimeWavePipeline: CheckPipeline = {
     ],
 
   outcomes: {
+    criticalSuccess: {
+      description: 'Crime is eliminated.',
+      modifiers: []
+    },
     success: {
       description: 'Crime is suppressed.',
       modifiers: []

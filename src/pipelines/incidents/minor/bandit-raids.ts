@@ -5,8 +5,8 @@
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
-import type { ValidationResult } from '../../../services/hex-selector/types';
 import { textBadge } from '../../../types/OutcomeBadge';
+import { DestroyWorksiteHandler } from '../../../services/gameCommands/handlers/DestroyWorksiteHandler';
 
 export const banditRaidsPipeline: CheckPipeline = {
   id: 'bandit-raids',
@@ -23,6 +23,10 @@ export const banditRaidsPipeline: CheckPipeline = {
     ],
 
   outcomes: {
+    criticalSuccess: {
+      description: 'The bandits are routed completely.',
+      modifiers: []
+    },
     success: {
       description: 'The bandits are deterred.',
       modifiers: []
@@ -120,63 +124,7 @@ export const banditRaidsPipeline: CheckPipeline = {
 
   // Post-apply interaction to show destroyed worksites on map
   postApplyInteractions: [
-    {
-      type: 'map-selection',
-      id: 'affectedHexes',
-      mode: 'display',  // EXPLICIT: Display-only mode, no user interaction
-      count: (ctx) => {
-        // Get metadata from instance (populated by preview.calculate)
-        const instance = ctx.kingdom?.pendingOutcomes?.find(i => i.previewId === ctx.instanceId);
-        console.log('[bandit-raids] count() - Looking for instance:', {
-          instanceId: ctx.instanceId,
-          foundInstance: !!instance,
-          metadata: instance?.metadata,
-          destroyedHexIds: instance?.metadata?.destroyedHexIds
-        });
-        return instance?.metadata?.destroyedHexIds?.length || 0;
-      },
-      colorType: 'destroyed',  // Red color for negative outcome
-      title: (ctx) => {
-        const instance = ctx.kingdom?.pendingOutcomes?.find(i => i.previewId === ctx.instanceId);
-        const count = instance?.metadata?.destroyedHexIds?.length || 0;
-        return count === 1
-          ? 'Worksite Destroyed by Bandits'
-          : `${count} Worksites Destroyed by Bandits`;
-      },
-      // Only run on critical failure when worksites were destroyed
-      condition: (ctx) => {
-        if (ctx.outcome !== 'criticalFailure') return false;
-        
-        // Get metadata from instance (synced across clients)
-        const instance = ctx.kingdom?.pendingOutcomes?.find(i => i.previewId === ctx.instanceId);
-        return instance?.metadata?.destroyedHexIds?.length > 0;
-      },
-      // Pre-populate with hexes that will be destroyed
-      existingHexes: (ctx) => {
-        const instance = ctx.kingdom?.pendingOutcomes?.find(i => i.previewId === ctx.instanceId);
-        console.log('[bandit-raids] existingHexes() - Looking for instance:', {
-          instanceId: ctx.instanceId,
-          foundInstance: !!instance,
-          metadata: instance?.metadata,
-          destroyedHexIds: instance?.metadata?.destroyedHexIds
-        });
-        return instance?.metadata?.destroyedHexIds || [];
-      },
-      // Display-only: no validation needed, user can't select hexes
-      validateHex: (): ValidationResult => {
-        return { valid: false, message: 'Display only - showing affected hexes' };
-      },
-      allowToggle: false,  // Disable deselection
-      getHexInfo: (hexId, ctx) => {
-        // Show worksite info for each hex
-        const instance = ctx.kingdom?.pendingOutcomes?.find(i => i.previewId === ctx.instanceId);
-        const worksite = instance?.metadata?.destroyedWorksites?.find((w: any) => w.id === hexId);
-        if (worksite) {
-          return `<p style="color: #FF4444;"><strong>Destroyed:</strong> ${worksite.worksiteType}</p><p style="color: #999;">${worksite.name}</p>`;
-        }
-        return '<p style="color: #FF4444;"><strong>Worksite destroyed</strong></p>';
-      }
-    }
+    DestroyWorksiteHandler.getMapDisplayInteraction('Worksite Destroyed by Bandits')
   ],
 
   // ✅ REMOVED: No longer needed - now using preview.calculate

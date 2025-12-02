@@ -37,10 +37,10 @@ export const INCIDENT_STATUS = new Map<string, IncidentStatus>([
   // Moderate Incidents (Tier 2) - #9-18
   ['assassin-attack', 'tested'],  // #9 (has pre-roll entity selection)
   ['diplomatic-crisis', 'tested'],  // #10
-  ['disease-outbreak', 'testing'],  // #11
-  ['infrastructure-damage', 'untested'],  // #12 (has pre-roll entity selection)
-  ['mass-exodus', 'untested'],  // #13
-  ['production-strike', 'untested'],  // #14
+  ['disease-outbreak', 'tested'],  // #11
+  ['infrastructure-damage', 'tested'],  // #12 (has pre-roll entity selection)
+  ['mass-exodus', 'tested'],  // #13
+  ['production-strike', 'testing'],  // #14
   ['riot', 'untested'],  // #15 (has game commands)
   ['settlement-crisis', 'untested'],  // #16 (has pre-roll entity selection)
   ['tax-revolt', 'untested'],  // #17

@@ -46,6 +46,10 @@ export const workStoppagePipeline: CheckPipeline = {
     ],
 
   outcomes: {
+    criticalSuccess: {
+      description: 'Workers return with renewed vigor.',
+      modifiers: []
+    },
     success: {
       description: 'The workers return.',
       modifiers: []

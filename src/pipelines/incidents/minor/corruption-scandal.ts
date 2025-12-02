@@ -20,6 +20,10 @@ export const corruptionScandalPipeline: CheckPipeline = {
     ],
 
   outcomes: {
+    criticalSuccess: {
+      description: 'The scandal is contained and reforms are implemented.',
+      modifiers: []
+    },
     success: {
       description: 'The scandal is contained.',
       modifiers: []

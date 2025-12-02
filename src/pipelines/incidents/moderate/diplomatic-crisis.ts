@@ -20,6 +20,10 @@ export const diplomaticCrisisPipeline: CheckPipeline = {
     ],
 
   outcomes: {
+    criticalSuccess: {
+      description: 'Relations strengthen.',
+      modifiers: []
+    },
     success: {
       description: 'Relations are maintained.',
       modifiers: []
