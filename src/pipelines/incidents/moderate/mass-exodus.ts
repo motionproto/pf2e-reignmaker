@@ -6,6 +6,7 @@
 import type { CheckPipeline } from '../../../types/CheckPipeline';
 import type { GameCommandContext } from '../../../services/gameCommands/GameCommandHandler';
 import { textBadge } from '../../../types/OutcomeBadge';
+import { DestroyWorksiteHandler } from '../../../services/gameCommands/handlers/DestroyWorksiteHandler';
 
 export const massExodusPipeline: CheckPipeline = {
   id: 'mass-exodus',
@@ -30,22 +31,23 @@ export const massExodusPipeline: CheckPipeline = {
       modifiers: []
     },
     failure: {
-      description: 'Citizens abandon their homes.',
+      description: 'Citizens abandon projects.',
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ],
       outcomeBadges: [
-        textBadge('1 random structure damaged', 'fa-house-crack', 'negative')
+        textBadge('1 random worksite destroyed', 'fa-hammer', 'negative')
       ]
     },
     criticalFailure: {
-      description: 'A mass exodus devastates your kingdom.',
+      description: 'A mass exodus damages your kingdom.',
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
         { type: 'static', resource: 'fame', value: -1, duration: 'immediate' },
+        { type: 'dice', resource: 'gold', formula: '1d4', negative: true, duration: 'immediate' }
       ],
       outcomeBadges: [
-        textBadge('1 random structure destroyed', 'fa-building', 'negative')
+        textBadge('1 random structure damaged', 'fa-house-crack', 'negative')
       ]
     },
   },
@@ -65,8 +67,29 @@ export const massExodusPipeline: CheckPipeline = {
         ctx.metadata = {};
       }
 
-      // For failure: damage structure
+      // For failure: destroy worksite
       if (ctx.outcome === 'failure') {
+        const { DestroyWorksiteHandler } = await import('../../../services/gameCommands/handlers/DestroyWorksiteHandler');
+        const worksiteHandler = new DestroyWorksiteHandler();
+        
+        const preparedWorksite = await worksiteHandler.prepare(
+          { type: 'destroyWorksite', count: 1 },
+          { actionId: 'mass-exodus', outcome: ctx.outcome, kingdom: ctx.kingdom, metadata: ctx.metadata } as GameCommandContext
+        );
+
+        if (preparedWorksite) {
+          if (preparedWorksite.metadata) {
+            Object.assign(ctx.metadata, preparedWorksite.metadata);
+          }
+          ctx.metadata._preparedDestroyWorksite = preparedWorksite;
+          outcomeBadges.push(preparedWorksite.outcomeBadge);
+        } else {
+          warnings.push('No worksites available to destroy');
+        }
+      }
+
+      // For critical failure: damage structure
+      if (ctx.outcome === 'criticalFailure') {
         const { DamageStructureHandler } = await import('../../../services/gameCommands/handlers/DamageStructureHandler');
         const damageHandler = new DamageStructureHandler();
         
@@ -80,24 +103,6 @@ export const massExodusPipeline: CheckPipeline = {
           outcomeBadges.push(preparedDamage.outcomeBadge);
         } else {
           warnings.push('No structures available to damage');
-        }
-      }
-
-      // For critical failure: destroy structure
-      if (ctx.outcome === 'criticalFailure') {
-        const { DestroyStructureHandler } = await import('../../../services/gameCommands/handlers/DestroyStructureHandler');
-        const destroyHandler = new DestroyStructureHandler();
-        
-        const preparedDestroy = await destroyHandler.prepare(
-          { type: 'destroyStructure', count: 1 },
-          { actionId: 'mass-exodus', outcome: ctx.outcome, kingdom: ctx.kingdom, metadata: ctx.metadata } as GameCommandContext
-        );
-
-        if (preparedDestroy) {
-          ctx.metadata._preparedDestroyStructure = preparedDestroy;
-          outcomeBadges.push(preparedDestroy.outcomeBadge);
-        } else {
-          warnings.push('No structures available to destroy');
         }
       }
 
@@ -117,8 +122,17 @@ export const massExodusPipeline: CheckPipeline = {
       return { success: true };
     }
 
-    // Execute structure damage (failure)
+    // Execute worksite destruction (failure)
     if (ctx.outcome === 'failure') {
+      const preparedWorksite = ctx.metadata._preparedDestroyWorksite;
+      if (preparedWorksite?.commit) {
+        await preparedWorksite.commit();
+        console.log('[Mass Exodus] Destroyed worksite');
+      }
+    }
+
+    // Execute structure damage (critical failure)
+    if (ctx.outcome === 'criticalFailure') {
       const preparedDamage = ctx.metadata._preparedDamageStructure;
       if (preparedDamage?.commit) {
         await preparedDamage.commit();
@@ -126,19 +140,12 @@ export const massExodusPipeline: CheckPipeline = {
       }
     }
 
-    // Execute structure destruction (critical failure)
-    if (ctx.outcome === 'criticalFailure') {
-      const preparedDestroy = ctx.metadata._preparedDestroyStructure;
-      if (preparedDestroy?.commit) {
-        await preparedDestroy.commit();
-        console.log('[Mass Exodus] Destroyed structure');
-      }
-    }
-
     return { success: true };
   },
 
-  // No postApplyInteractions needed - structure destruction doesn't use map display
+  postApplyInteractions: [
+    DestroyWorksiteHandler.getMapDisplayInteraction()
+  ],
 
   traits: ["dangerous"]
 };

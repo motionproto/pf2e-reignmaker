@@ -40,9 +40,9 @@ export const INCIDENT_STATUS = new Map<string, IncidentStatus>([
   ['disease-outbreak', 'tested'],  // #11
   ['infrastructure-damage', 'tested'],  // #12 (has pre-roll entity selection)
   ['mass-exodus', 'tested'],  // #13
-  ['production-strike', 'testing'],  // #14
-  ['riot', 'untested'],  // #15 (has game commands)
-  ['settlement-crisis', 'untested'],  // #16 (has pre-roll entity selection)
+  ['production-strike', 'tested'],  // #14
+  ['riot', 'tested'],  // #15 (has game commands)
+  ['settlement-crisis', 'testing'],  // #16 (has pre-roll entity selection)
   ['tax-revolt', 'untested'],  // #17
   ['trade-embargo', 'untested'],  // #18
   
