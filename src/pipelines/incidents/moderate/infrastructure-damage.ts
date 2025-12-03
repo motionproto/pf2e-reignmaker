@@ -12,7 +12,7 @@ export const infrastructureDamagePipeline: CheckPipeline = {
   name: 'Infrastructure Damage',
   description: 'Critical infrastructure is damaged or sabotaged',
   checkType: 'incident',
-  tier: 'moderate',
+  severity: 'moderate',
 
   skills: [
       { skill: 'crafting', description: 'emergency repairs' },

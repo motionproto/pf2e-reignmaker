@@ -10,7 +10,7 @@ export const taxRevoltPipeline: CheckPipeline = {
   name: 'Tax Revolt',
   description: 'Citizens revolt against tax collection',
   checkType: 'incident',
-  tier: 'moderate',
+  severity: 'moderate',
 
   skills: [
       { skill: 'intimidation', description: 'enforce collection' },

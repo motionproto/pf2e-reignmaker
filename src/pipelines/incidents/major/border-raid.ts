@@ -10,7 +10,7 @@ export const borderRaidPipeline: CheckPipeline = {
   name: 'Border Raid',
   description: 'Enemy forces and hostile creatures raid your border territories',
   checkType: 'incident',
-  tier: 'major',
+  severity: 'major',
 
   skills: [
       { skill: 'athletics', description: 'rapid response' },

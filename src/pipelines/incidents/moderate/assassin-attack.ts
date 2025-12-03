@@ -12,7 +12,7 @@ export const assassinAttackPipeline: CheckPipeline = {
   name: 'Assassin Attack',
   description: 'An assassin targets one of your kingdom\'s leaders',
   checkType: 'incident',
-  tier: 2,
+  severity: 'moderate',
 
   skills: [
     { skill: 'athletics', description: 'protect target' },

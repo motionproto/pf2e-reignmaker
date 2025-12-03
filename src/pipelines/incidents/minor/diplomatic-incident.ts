@@ -12,7 +12,7 @@ export const diplomaticIncidentPipeline: CheckPipeline = {
   name: 'Diplomatic Incident',
   description: 'A diplomatic misstep strains relations with neighbors',
   checkType: 'incident',
-  tier: 1,
+  severity: 'minor',
 
   skills: [
       { skill: 'diplomacy', description: 'smooth over' },

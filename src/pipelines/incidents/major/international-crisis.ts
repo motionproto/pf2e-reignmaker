@@ -13,7 +13,7 @@ export const internationalCrisisPipeline: CheckPipeline = {
   name: 'International Crisis',
   description: 'Multiple kingdoms turn against you due to internal chaos',
   checkType: 'incident',
-  tier: 'major',
+  severity: 'major',
 
   skills: [
       { skill: 'diplomacy', description: 'damage control' },

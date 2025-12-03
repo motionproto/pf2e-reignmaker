@@ -10,7 +10,7 @@ export const crimeWavePipeline: CheckPipeline = {
   name: 'Crime Wave',
   description: 'Criminal activity surges throughout your settlements',
   checkType: 'incident',
-  tier: 'minor',
+  severity: 'minor',
 
   skills: [
       { skill: 'intimidation', description: 'crack down on criminals' },

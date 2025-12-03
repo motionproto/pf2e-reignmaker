@@ -13,7 +13,7 @@ export const internationalScandalPipeline: CheckPipeline = {
   name: 'International Scandal',
   description: 'A massive internal scandal undermines your leadership\'s authority',
   checkType: 'incident',
-  tier: 'major',
+  severity: 'major',
 
   skills: [
       { skill: 'performance', description: 'grand gesture' },

@@ -24,7 +24,7 @@ export type IncidentStatus = 'untested' | 'testing' | 'tested';
  * Value: current status
  */
 export const INCIDENT_STATUS = new Map<string, IncidentStatus>([
-  // Minor Incidents (Tier 1) - #1-8
+  // Minor Severity - #1-8
   ['bandit-raids', 'tested'],  // #1
   ['corruption-scandal', 'tested'],  // #2
   ['crime-wave', 'tested'],  // #3
@@ -34,7 +34,7 @@ export const INCIDENT_STATUS = new Map<string, IncidentStatus>([
   ['rising-tensions', 'tested'],  // #7
   ['work-stoppage', 'tested'],  // #8
   
-  // Moderate Incidents (Tier 2) - #9-18
+  // Moderate Severity - #9-18
   ['assassin-attack', 'tested'],  // #9 (has pre-roll entity selection)
   ['diplomatic-crisis', 'tested'],  // #10
   ['disease-outbreak', 'tested'],  // #11
@@ -46,7 +46,7 @@ export const INCIDENT_STATUS = new Map<string, IncidentStatus>([
   ['tax-revolt', 'tested'],  // #17
   ['trade-embargo', 'tested'],  // #18
   
-  // Major Incidents (Tier 3) - #19-29
+  // Major Severity - #19-30
   ['border-raid', 'tested'],  // #19
   ['economic-crash', 'tested'],  // #20 (has game commands)
   ['guerrilla-movement', 'tested'],  // #21
@@ -63,10 +63,10 @@ export const INCIDENT_STATUS = new Map<string, IncidentStatus>([
 
 /**
  * Incident numbers (for display in badges)
- * Maps incident ID to testing order number (by tier, then alphabetically)
+ * Maps incident ID to testing order number (by severity, then alphabetically)
  */
 export const INCIDENT_NUMBERS = new Map<string, number>([
-  // Minor Incidents (Tier 1) - #1-8
+  // Minor Severity - #1-8
   ['bandit-raids', 1],
   ['corruption-scandal', 2],
   ['crime-wave', 3],
@@ -76,7 +76,7 @@ export const INCIDENT_NUMBERS = new Map<string, number>([
   ['rising-tensions', 7],
   ['work-stoppage', 8],
   
-  // Moderate Incidents (Tier 2) - #9-18
+  // Moderate Severity - #9-18
   ['assassin-attack', 9],
   ['diplomatic-crisis', 10],
   ['disease-outbreak', 11],
@@ -88,7 +88,7 @@ export const INCIDENT_NUMBERS = new Map<string, number>([
   ['tax-revolt', 17],
   ['trade-embargo', 18],
   
-  // Major Incidents (Tier 3) - #19-29
+  // Major Severity - #19-30
   ['border-raid', 19],
   ['economic-crash', 20],
   ['guerrilla-movement', 21],
@@ -163,16 +163,16 @@ export function getCompletionStats(): {
 }
 
 /**
- * Get incidents by tier
+ * Get incidents by severity
  */
-export function getIncidentsByTier(tier: 'minor' | 'moderate' | 'major'): string[] {
-  const tierRanges = {
+export function getIncidentsBySeverity(severity: 'minor' | 'moderate' | 'major'): string[] {
+  const severityRanges = {
     minor: [1, 8],
     moderate: [9, 18],
     major: [19, 30]
   };
   
-  const [start, end] = tierRanges[tier];
+  const [start, end] = severityRanges[severity];
   
   return Array.from(INCIDENT_NUMBERS.entries())
     .filter(([_, num]) => num >= start && num <= end)

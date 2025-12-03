@@ -13,7 +13,7 @@ export const massExodusPipeline: CheckPipeline = {
   name: 'Mass Exodus',
   description: 'Large numbers of citizens flee your kingdom',
   checkType: 'incident',
-  tier: 'moderate',
+  severity: 'moderate',
 
   skills: [
       { skill: 'diplomacy', description: 'convince to stay' },

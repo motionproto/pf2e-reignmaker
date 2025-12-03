@@ -10,7 +10,7 @@ export const corruptionScandalPipeline: CheckPipeline = {
   name: 'Corruption Scandal',
   description: 'Corruption among your officials is exposed',
   checkType: 'incident',
-  tier: 'minor',
+  severity: 'minor',
 
   skills: [
       { skill: 'society', description: 'investigation' },

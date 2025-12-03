@@ -22,7 +22,7 @@ export const productionStrikePipeline: CheckPipeline = {
   name: 'Production Strike',
   description: 'Workers strike, halting resource production',
   checkType: 'incident',
-  tier: 'moderate',
+  severity: 'moderate',
 
   skills: [
       { skill: 'diplomacy', description: 'negotiate with workers' },

@@ -36,7 +36,7 @@ export const workStoppagePipeline: CheckPipeline = {
   name: 'Work Stoppage',
   description: 'Workers in your kingdom refuse to continue their labor',
   checkType: 'incident',
-  tier: 'minor',
+  severity: 'minor',
 
   skills: [
       { skill: 'diplomacy', description: 'negotiate with workers' },

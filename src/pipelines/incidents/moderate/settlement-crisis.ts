@@ -12,7 +12,7 @@ export const settlementCrisisPipeline: CheckPipeline = {
   name: 'Settlement Crisis',
   description: 'One of your settlements faces a major crisis',
   checkType: 'incident',
-  tier: 'moderate',
+  severity: 'moderate',
 
   skills: [
       { skill: 'diplomacy', description: 'address concerns' },

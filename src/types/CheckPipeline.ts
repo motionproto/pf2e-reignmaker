@@ -147,9 +147,12 @@ export interface CheckPipeline {
     [resource: string]: number | undefined;  // Allow any resource type
   };
 
-  // Tier/Severity (events/incidents only)
-  tier?: number;
+  // Severity (incidents only) - Use string for explicit intent
+  // Events use numeric tier (1, 2, 3) for different purposes
   severity?: 'minor' | 'moderate' | 'major';
+  
+  // Tier (events only) - Keep for non-incident checks
+  tier?: number;
 
   // Skills
   skills: SkillOption[];

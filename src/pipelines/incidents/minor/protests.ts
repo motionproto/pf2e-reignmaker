@@ -10,7 +10,7 @@ export const protestsPipeline: CheckPipeline = {
   name: 'Protests',
   description: 'Citizens take to the streets in organized protests',
   checkType: 'incident',
-  tier: 'minor',
+  severity: 'minor',
 
   skills: [
       { skill: 'diplomacy', description: 'address crowd' },

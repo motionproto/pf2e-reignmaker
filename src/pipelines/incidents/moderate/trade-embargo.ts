@@ -24,7 +24,7 @@ export const tradeEmbargoPipeline: CheckPipeline = {
   name: 'Trade Embargo',
   description: 'Neighboring kingdoms impose trade restrictions',
   checkType: 'incident',
-  tier: 'moderate',
+  severity: 'moderate',
 
   skills: [
       { skill: 'diplomacy', description: 'negotiate' },

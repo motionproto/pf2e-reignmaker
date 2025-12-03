@@ -11,7 +11,7 @@ export const diplomaticCrisisPipeline: CheckPipeline = {
   name: 'Diplomatic Crisis',
   description: 'A serious diplomatic crisis threatens relations',
   checkType: 'incident',
-  tier: 'moderate',
+  severity: 'moderate',
 
   skills: [
       { skill: 'diplomacy', description: 'smooth over' },

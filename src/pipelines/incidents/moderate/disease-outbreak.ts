@@ -11,7 +11,7 @@ export const diseaseOutbreakPipeline: CheckPipeline = {
   name: 'Disease Outbreak',
   description: 'A dangerous disease spreads through your settlements',
   checkType: 'incident',
-  tier: 'moderate',
+  severity: 'moderate',
 
   skills: [
       { skill: 'medicine', description: 'treat disease' },

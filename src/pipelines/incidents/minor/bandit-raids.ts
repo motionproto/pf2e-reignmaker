@@ -13,7 +13,7 @@ export const banditRaidsPipeline: CheckPipeline = {
   name: 'Bandit Raids',
   description: 'Bandit raids threaten your trade routes and settlements',
   checkType: 'incident',
-  tier: 1,
+  severity: 'minor',
 
   skills: [
       { skill: 'intimidation', description: 'show force' },

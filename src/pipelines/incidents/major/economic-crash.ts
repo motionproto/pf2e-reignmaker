@@ -14,7 +14,7 @@ export const economicCrashPipeline: CheckPipeline = {
   name: 'Economic Crash',
   description: 'A severe economic downturn threatens your kingdom\'s prosperity',
   checkType: 'incident',
-  tier: 'major',
+  severity: 'major',
 
   skills: [
       { skill: 'diplomacy', description: 'stabilize markets' },

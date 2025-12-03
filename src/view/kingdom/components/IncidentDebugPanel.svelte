@@ -49,7 +49,7 @@
       .join(',');
    
    onMount(async () => {
-      // Load incidents by tier from pipeline registry
+      // Load incidents by severity from pipeline registry
       loadIncidents();
       
       // Initialize controller
@@ -65,24 +65,20 @@
    function loadIncidents() {
       const allIncidents = pipelineRegistry.getPipelinesByType('incident');
       
-      // Filter incidents based on tier/severity and tested status
-      // Handle both numeric (1, 2, 3) and string ('minor', 'moderate', 'major') tier/severity formats
+      // Filter incidents by severity and tested status
       minorIncidents = allIncidents.filter((i: any) => {
-         const isTier1 = i.tier === 1 || i.tier === 'minor' || i.severity === 'minor';
          const notTested = getIncidentStatus(i.id) !== 'tested';
-         return isTier1 && (showTestedIncidents || notTested);
+         return i.severity === 'minor' && (showTestedIncidents || notTested);
       });
       
       moderateIncidents = allIncidents.filter((i: any) => {
-         const isTier2 = i.tier === 2 || i.tier === 'moderate' || i.severity === 'moderate';
          const notTested = getIncidentStatus(i.id) !== 'tested';
-         return isTier2 && (showTestedIncidents || notTested);
+         return i.severity === 'moderate' && (showTestedIncidents || notTested);
       });
       
       majorIncidents = allIncidents.filter((i: any) => {
-         const isTier3 = i.tier === 3 || i.tier === 'major' || i.severity === 'major';
          const notTested = getIncidentStatus(i.id) !== 'tested';
-         return isTier3 && (showTestedIncidents || notTested);
+         return i.severity === 'major' && (showTestedIncidents || notTested);
       });
       
       console.log('[IncidentDebugPanel] Loaded incidents:', {
@@ -230,15 +226,12 @@
       return preview?.appliedOutcome || null;
    }
    
-   // Helper function to derive tier trait from tier (handles both number and string formats)
-   function getTierTrait(tier: number | string): string {
-      // If already a valid string tier, return it
-      if (tier === 'minor' || tier === 'moderate' || tier === 'major') {
-         return tier;
+   // Helper function to get severity for display as a trait
+   function getSeverityTrait(severity: string | undefined): string {
+      if (severity === 'minor' || severity === 'moderate' || severity === 'major') {
+         return severity;
       }
-      // Handle numeric tier format
-      const tierMap: Record<number, string> = { 1: 'minor', 2: 'moderate', 3: 'major' };
-      return tierMap[tier as number] || '';
+      return '';
    }
    
    // Filter out traits that aren't useful for incidents (all incidents are dangerous)
@@ -284,7 +277,7 @@
             {@const possibleOutcomes = buildPossibleOutcomes(incident.outcomes)}
             {@const incidentStatus = getIncidentStatus(incident.id)}
             {@const incidentNumber = getIncidentNumber(incident.id)}
-            {@const derivedTraits = filterIncidentTraits([...(incident.traits || []), getTierTrait(incident.tier)])}
+            {@const derivedTraits = filterIncidentTraits([...(incident.traits || []), getSeverityTrait(incident.severity)])}
             <BaseCheckCard
                id={incident.id}
                name={incident.name}
@@ -332,7 +325,7 @@
             {@const possibleOutcomes = buildPossibleOutcomes(incident.outcomes)}
             {@const incidentStatus = getIncidentStatus(incident.id)}
             {@const incidentNumber = getIncidentNumber(incident.id)}
-            {@const derivedTraits = filterIncidentTraits([...(incident.traits || []), getTierTrait(incident.tier)])}
+            {@const derivedTraits = filterIncidentTraits([...(incident.traits || []), getSeverityTrait(incident.severity)])}
             <BaseCheckCard
                id={incident.id}
                name={incident.name}
@@ -380,7 +373,7 @@
             {@const possibleOutcomes = buildPossibleOutcomes(incident.outcomes)}
             {@const incidentStatus = getIncidentStatus(incident.id)}
             {@const incidentNumber = getIncidentNumber(incident.id)}
-            {@const derivedTraits = filterIncidentTraits([...(incident.traits || []), getTierTrait(incident.tier)])}
+            {@const derivedTraits = filterIncidentTraits([...(incident.traits || []), getSeverityTrait(incident.severity)])}
             <BaseCheckCard
                id={incident.id}
                name={incident.name}

@@ -6,8 +6,7 @@
  * NOTE: Incidents use the same core structure as Events.
  * We re-export event types and add incident-specific interface.
  * 
- * Incidents use the EventTier type (minor, moderate, major) from events.
- * The JSON has a redundant 'severity' field which we ignore in favor of 'tier'.
+ * Incidents use severity ('minor', 'moderate', 'major') for explicit categorization.
  */
 
 // Re-export all event types for use with incidents
@@ -30,13 +29,13 @@ export type {
  * 
  * Incidents are similar to events but:
  * - Always triggered by high Unrest (not random)
- * - Have severity tiers (minor, moderate, major) via EventTier
+ * - Have severity levels (minor, moderate, major)
  * - Use same skill/effect structure as events
  */
 export interface KingdomIncident {
   id: string;
   name: string;  // Display name for UI
-  tier: 'minor' | 'moderate' | 'major';
+  severity: 'minor' | 'moderate' | 'major';
   description: string;
   skills?: EventSkill[];
   effects: EventEffects;
@@ -52,7 +51,7 @@ export function isKingdomIncident(obj: any): obj is KingdomIncident {
     typeof obj.id === 'string' &&
     typeof obj.name === 'string' &&
     typeof obj.description === 'string' &&
-    typeof obj.tier === 'string' &&
+    typeof obj.severity === 'string' &&
     typeof obj.effects === 'object'
   );
 }

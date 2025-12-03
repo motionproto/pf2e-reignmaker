@@ -10,7 +10,7 @@ export const risingTensionsPipeline: CheckPipeline = {
   name: 'Rising Tensions',
   description: 'General tensions rise throughout your kingdom',
   checkType: 'incident',
-  tier: 'minor',
+  severity: 'minor',
 
   skills: [
       { skill: 'diplomacy', description: 'calm populace' },

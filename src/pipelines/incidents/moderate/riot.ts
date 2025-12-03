@@ -12,7 +12,7 @@ export const riotPipeline: CheckPipeline = {
   name: 'Riot',
   description: 'Violent riots break out in your settlements',
   checkType: 'incident',
-  tier: 'moderate',
+  severity: 'moderate',
 
   skills: [
       { skill: 'intimidation', description: 'suppress riot' },

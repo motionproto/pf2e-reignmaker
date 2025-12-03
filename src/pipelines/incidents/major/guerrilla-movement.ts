@@ -15,7 +15,7 @@ export const guerrillaMovementPipeline: CheckPipeline = {
   name: 'Guerrilla Movement',
   description: 'Armed rebels seize control of kingdom territory',
   checkType: 'incident',
-  tier: 'major',
+  severity: 'major',
 
   skills: [
       { skill: 'diplomacy', description: 'negotiate with rebels' },

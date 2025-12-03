@@ -26,7 +26,7 @@ export const emigrationThreatPipeline: CheckPipeline = {
   name: 'Emigration Threat',
   description: 'Citizens threaten to leave your kingdom permanently',
   checkType: 'incident',
-  tier: 1,  // minor = 1
+  severity: 'minor',
 
   skills: [
     { skill: 'diplomacy', description: 'convince to stay' },
