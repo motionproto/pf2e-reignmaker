@@ -1,19 +1,19 @@
 <script lang="ts">
    import { onMount } from 'svelte';
-   import { kingdomData } from '../../../stores/KingdomStore';
-   import { pipelineRegistry } from '../../../pipelines/PipelineRegistry';
-   import { buildPossibleOutcomes } from '../../../controllers/shared/PossibleOutcomeHelpers';
-   import { buildEventOutcomes } from '../../../controllers/shared/EventOutcomeHelpers';
-   import { logger } from '../../../utils/Logger';
+   import { kingdomData } from '../../stores/KingdomStore';
+   import { pipelineRegistry } from '../../pipelines/PipelineRegistry';
+   import { buildPossibleOutcomes } from '../../controllers/shared/PossibleOutcomeHelpers';
+   import { buildEventOutcomes } from '../../controllers/shared/EventOutcomeHelpers';
+   import { logger } from '../../utils/Logger';
    
    // Type for loaded incidents
    type LoadedIncident = any;
    
    // Import UI components
-   import BaseCheckCard from './BaseCheckCard.svelte';
+   import BaseCheckCard from '../kingdom/components/BaseCheckCard.svelte';
    
    // Import incident status tracking
-   import { getIncidentStatus, getIncidentNumber } from '../../../constants/migratedIncidents';
+   import { getIncidentStatus, getIncidentNumber } from '../../constants/migratedIncidents';
    
    // Props
    export let hideUntrainedSkills: boolean = true;
@@ -53,7 +53,7 @@
       loadIncidents();
       
       // Initialize controller
-      const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
+      const { createUnrestPhaseController } = await import('../../controllers/UnrestPhaseController');
       unrestPhaseController = await createUnrestPhaseController();
    });
    
@@ -104,8 +104,8 @@
       
       try {
          // Use PipelineCoordinator for incidents
-         const { getPipelineCoordinator } = await import('../../../services/PipelineCoordinator');
-         const { getCurrentUserCharacter } = await import('../../../services/pf2e');
+         const { getPipelineCoordinator } = await import('../../services/PipelineCoordinator');
+         const { getCurrentUserCharacter } = await import('../../services/pf2e');
          
          const pipelineCoordinator = await getPipelineCoordinator();
          const actingCharacter = getCurrentUserCharacter();
@@ -159,7 +159,7 @@
       }
       
       // Use PipelineCoordinator to confirm and execute
-      const { getPipelineCoordinator } = await import('../../../services/PipelineCoordinator');
+      const { getPipelineCoordinator } = await import('../../services/PipelineCoordinator');
       const pipelineCoordinator = await getPipelineCoordinator();
       await pipelineCoordinator.confirmApply(activeInstance.previewId, resolutionData);
    }
@@ -174,7 +174,7 @@
       if (!activeInstance) return;
       
       // Clear the instance
-      const { createOutcomePreviewService } = await import('../../../services/OutcomePreviewService');
+      const { createOutcomePreviewService } = await import('../../services/OutcomePreviewService');
       const outcomePreviewService = await createOutcomePreviewService();
       await outcomePreviewService.clearInstance(activeInstance.previewId);
    }
@@ -599,3 +599,4 @@
       gap: var(--space-12);
    }
 </style>
+

@@ -1,11 +1,11 @@
 <script lang="ts">
    import { onMount } from 'svelte';
-   import { updateKingdom, kingdomData } from '../../../stores/KingdomStore';
-   import { pipelineRegistry } from '../../../pipelines/PipelineRegistry';
-   import { createOutcomePreviewService } from '../../../services/OutcomePreviewService';
+   import { updateKingdom, kingdomData } from '../../stores/KingdomStore';
+   import { pipelineRegistry } from '../../pipelines/PipelineRegistry';
+   import { createOutcomePreviewService } from '../../services/OutcomePreviewService';
    import { get } from 'svelte/store';
-   import type { CheckPipeline } from '../../../types/CheckPipeline';
-   import type { KingdomIncident } from '../../../types/incidents';
+   import type { CheckPipeline } from '../../types/CheckPipeline';
+   import type { KingdomIncident } from '../../types/incidents';
    
    const logger = {
       warn: (...args: any[]) => console.warn('[DebugEventSelector]', ...args),
@@ -431,3 +431,4 @@
       }
    }
 </style>
+

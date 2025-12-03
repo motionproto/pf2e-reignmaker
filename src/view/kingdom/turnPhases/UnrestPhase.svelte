@@ -11,8 +11,6 @@
    
    // Import UI components
    import BaseCheckCard from '../components/BaseCheckCard.svelte';
-   import IncidentDebugPanel from '../components/IncidentDebugPanel.svelte';
-   // Removed: spendPlayerAction, getPlayerAction, resetPlayerAction - now using actionLog
    
    // Import incident status tracking
    import { getIncidentStatus, getIncidentNumber } from '../../../constants/migratedIncidents';
@@ -38,12 +36,6 @@
    
    // Current user ID
    let currentUserId: string | null = null;
-   
-   // Check if current user is GM
-   $: isGM = (globalThis as any).game?.user?.isGM || false;
-   
-   // Debug mode toggle state (default to open for incident testing)
-   let showDebugPanel = true;
    
    // Reactive UI state using shared helper for step completion
    import { getStepCompletion } from '../../../controllers/shared/PhaseHelpers';
@@ -434,24 +426,6 @@
             <div class="no-incident-desc">The kingdom avoids crisis this turn</div>
          </div>
       {/if}
-   {/if}
-   
-   <!-- Debug Panel (GM Only) - Collapsible section for testing all incidents -->
-   {#if isGM}
-      <div class="debug-section">
-         <button 
-            class="debug-toggle"
-            on:click={() => showDebugPanel = !showDebugPanel}
-         >
-            <i class="fas fa-bug"></i>
-            <span>Debug Mode</span>
-            <i class="fas fa-chevron-{showDebugPanel ? 'up' : 'down'}"></i>
-         </button>
-         
-         {#if showDebugPanel}
-            <IncidentDebugPanel {hideUntrainedSkills} />
-         {/if}
-      </div>
    {/if}
 </div>
 
@@ -885,47 +859,5 @@
       text-align: center;
       padding: var(--space-20);
       color: var(--text-secondary);
-   }
-   
-   // Debug section
-   .debug-section {
-      margin-top: var(--space-24);
-      padding-top: var(--space-20);
-      border-top: 1px solid var(--border-faint);
-   }
-   
-   .debug-toggle {
-      display: flex;
-      align-items: center;
-      gap: var(--space-10);
-      width: 100%;
-      padding: var(--space-12) var(--space-16);
-      background: rgba(139, 92, 246, 0.1);
-      border: 1px solid var(--border-special-subtle);
-      border-radius: var(--radius-md);
-      color: rgba(196, 181, 253, 1);
-      font-size: var(--font-md);
-      font-weight: var(--font-weight-medium);
-      cursor: pointer;
-      transition: all var(--transition-fast);
-      margin-bottom: var(--space-16);
-      
-      i:first-child {
-         font-size: var(--font-lg);
-      }
-      
-      span {
-         flex: 1;
-         text-align: left;
-      }
-      
-      i:last-child {
-         font-size: var(--font-md);
-      }
-      
-      &:hover {
-         background: rgba(139, 92, 246, 0.15);
-         border-color: var(--border-special-medium);
-      }
    }
 </style>

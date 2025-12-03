@@ -19,7 +19,7 @@
   import Button from '../components/baseComponents/Button.svelte';
    import BaseCheckCard from '../components/BaseCheckCard.svelte';
    import PlayerActionTracker from '../components/PlayerActionTracker.svelte';
-   import DebugEventSelector from '../components/DebugEventSelector.svelte';
+   import DebugEventSelector from '../../debug/DebugEventSelector.svelte';
    import OngoingEventCard from '../components/OngoingEventCard.svelte';
    import AidSelectionDialog from '../components/AidSelectionDialog.svelte';
    import EventInstanceList from './components/EventInstanceList.svelte';

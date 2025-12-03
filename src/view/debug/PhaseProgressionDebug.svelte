@@ -1,6 +1,6 @@
 <script lang="ts">
-   import { currentPhase, currentTurn, viewingPhase, isCurrentPhaseComplete, advancePhase, kingdomData } from '../../../stores/KingdomStore';
-   import { TurnPhase } from '../../../actors/KingdomActor';
+   import { currentPhase, currentTurn, viewingPhase, isCurrentPhaseComplete, advancePhase, kingdomData } from '../../stores/KingdomStore';
+   import { TurnPhase } from '../../actors/KingdomActor';
    
    const phaseNames: Record<TurnPhase, string> = {
       [TurnPhase.STATUS]: 'Status',
@@ -41,7 +41,7 @@
    }
    
    async function forceCompleteCurrentPhase() {
-      const { PhaseHandler } = await import('../../../models/turn-manager/phase-handler');
+      const { PhaseHandler } = await import('../../models/turn-manager/phase-handler');
       const totalSteps = currentSteps.length;
       
       // Complete all incomplete steps
@@ -351,3 +351,4 @@
       }
    }
 </style>
+
