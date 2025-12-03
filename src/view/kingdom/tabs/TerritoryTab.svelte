@@ -28,13 +28,19 @@
          $allSettlements.forEach(settlement => {
             const hexId = `${settlement.location.x}.${settlement.location.y}`;
             if (!hexIds.has(hexId)) {
+               // Try to find hex ownership (settlement ownership is derived from hex)
+               // If no hex exists, ownership is unknown (null)
+               const existingHex = $kingdomData.hexes?.find((h: any) => 
+                  h.row === settlement.location.x && h.col === settlement.location.y
+               );
+               
                // Create a minimal hex entry for this settlement
                hexes.push({
                   id: hexId,
                   row: settlement.location.x,
                   col: settlement.location.y,
                   terrain: 'Unknown',
-                  claimedBy: settlement.ownedBy || null,
+                  claimedBy: existingHex?.claimedBy ?? null,
                   worksite: null,
                   hasCommodityBonus: false,
                   features: []

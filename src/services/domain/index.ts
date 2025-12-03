@@ -18,3 +18,5 @@
  */
 
 export { diceService } from './DiceService'
+export { kingdomModifierService } from './KingdomModifierService'
+export type { ModifierCheckOptions } from './KingdomModifierService'

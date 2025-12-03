@@ -26,6 +26,10 @@ import { RemoveBorderHexesHandler } from './handlers/RemoveBorderHexesHandler';
 import { ReduceImprisonedHandler } from './handlers/ReduceImprisonedHandler';
 import { DeployArmyHandler } from './handlers/DeployArmyHandler';
 import { ReduceSettlementLevelHandler } from './handlers/ReduceSettlementLevelHandler';
+import { SeizeHexesHandler } from './handlers/SeizeHexesHandler';
+import { SpawnEnemyArmyHandler } from './handlers/SpawnEnemyArmyHandler';
+import { TransferSettlementHandler } from './handlers/TransferSettlementHandler';
+import { DefectArmiesHandler } from './handlers/DefectArmiesHandler';
 
 /**
  * Registry manages all game command handlers
@@ -48,7 +52,11 @@ export class GameCommandHandlerRegistry {
     new RemoveBorderHexesHandler(),
     new ReduceImprisonedHandler(),
     new DeployArmyHandler(),
-    new ReduceSettlementLevelHandler()
+    new ReduceSettlementLevelHandler(),
+    new SeizeHexesHandler(),
+    new SpawnEnemyArmyHandler(),
+    new TransferSettlementHandler(),
+    new DefectArmiesHandler()
   ];
   
   /**
@@ -133,7 +141,7 @@ let registryInstance: GameCommandHandlerRegistry | null = null;
 export function getGameCommandRegistry(): GameCommandHandlerRegistry {
   if (!registryInstance) {
     registryInstance = new GameCommandHandlerRegistry();
-    console.log('[GameCommandHandlerRegistry] Registry initialized with 16 handlers');
+    console.log('[GameCommandHandlerRegistry] Registry initialized with 18 handlers');
   }
   return registryInstance;
 }

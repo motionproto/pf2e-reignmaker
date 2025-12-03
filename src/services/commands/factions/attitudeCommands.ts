@@ -141,10 +141,11 @@ export async function adjustFactionAttitude(
       variant: variant
     },
     commit: async () => {
-      logger.info(`🤝 [adjustFactionAttitude] COMMITTING: Adjusting ${faction.name}`);
+      logger.info(`🤝 [adjustFactionAttitude] COMMITTING: Adjusting ${faction.name} from ${oldAttitude} to ${newAttitude}`);
+      console.log(`🤝 [adjustFactionAttitude] COMMITTING: Adjusting ${faction.name} from ${oldAttitude} to ${newAttitude}`);
       
       // Apply the actual attitude change
-      await factionService.adjustAttitude(
+      const result = await factionService.adjustAttitude(
         selectedFactionId!,
         steps,
         {
@@ -153,7 +154,8 @@ export async function adjustFactionAttitude(
         }
       );
       
-      logger.info(`✅ [adjustFactionAttitude] Successfully adjusted ${faction.name}: ${oldAttitude} → ${newAttitude}`);
+      console.log(`🤝 [adjustFactionAttitude] Result:`, result);
+      logger.info(`✅ [adjustFactionAttitude] Successfully adjusted ${faction.name}: ${oldAttitude} → ${newAttitude}`, result);
     }
   };
 }

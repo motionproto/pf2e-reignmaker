@@ -123,6 +123,7 @@ export interface KingdomData {
   fame: number;
   isAtWar: boolean;
   partyLevel: number;  // Highest level among player characters
+  leadershipPenalty?: number;  // Turn-scoped penalty to all skill checks (e.g., -1 from scandals)
   
   // Events & Modifiers (persistent across turns)
   ongoingEvents: string[];  // Event IDs that persist across turns (legacy - may be deprecated)

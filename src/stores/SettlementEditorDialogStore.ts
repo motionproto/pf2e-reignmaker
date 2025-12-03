@@ -19,7 +19,7 @@ export interface SettlementData {
   level: number;
   isCapital: boolean;
   connectedByRoads: boolean;
-  ownedBy: string | null;
+  // Note: ownedBy removed - ownership is derived from hex.claimedBy
 }
 
 function createSettlementEditorDialogStore() {

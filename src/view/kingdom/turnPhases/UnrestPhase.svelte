@@ -293,46 +293,9 @@
       // Note: Incidents don't consume player actions
    }
    
-   // Event handler - reroll with fame
-   async function handleReroll(event: CustomEvent) {
-      if (!currentIncident || !currentIncidentInstance) return;
-      const { skill, previousFame } = event.detail;
-
-      // ✅ GET EXISTING INSTANCE ID: Reroll within same pipeline context
-      const instanceId = currentIncidentInstance.previewId;
-      
-      if (!instanceId) {
-         logger.error('[UnrestPhase] No instance found for reroll');
-         return;
-      }
-      
-      console.log(`🔄 [UnrestPhase] Rerolling from Step 3 (same pipeline): ${instanceId}`);
-      
-      // 🔄 Reroll using PipelineCoordinator.rerollFromStep3()
-      const { getPipelineCoordinator } = await import('../../../services/PipelineCoordinator');
-      const pipelineCoordinator = await getPipelineCoordinator();
-      
-      if (!pipelineCoordinator) {
-         throw new Error('PipelineCoordinator not initialized');
-      }
-      
-      try {
-         // Rewind to Step 3 and re-execute with SAME context
-         // This preserves metadata, modifiers, and all pipeline state
-         await pipelineCoordinator.rerollFromStep3(instanceId);
-         
-         console.log(`✅ [UnrestPhase] Reroll complete for ${currentIncident.id}`);
-         
-      } catch (error) {
-         logger.error(`❌ [UnrestPhase] Reroll failed for ${currentIncident.id}:`, error);
-         // Restore fame if the roll failed
-         const { restoreFameAfterFailedReroll } = await import('../../../controllers/shared/RerollHelpers');
-         if (previousFame !== undefined) {
-            await restoreFameAfterFailedReroll(previousFame);
-         }
-         ui?.notifications?.error('Failed to reroll. Fame has been restored.');
-      }
-   }
+   // NOTE: Reroll handling has been moved to OutcomeDisplay.svelte
+   // OutcomeDisplay now calls PipelineCoordinator.rerollFromStep3() directly
+   // This eliminates duplicate reroll handlers across phase components
    
    
    // Use status class from provider
@@ -457,7 +420,6 @@
                         on:executeSkill={handleExecuteSkill}
                         on:primary={handleApplyResult}
                         on:cancel={handleCancel}
-                        on:performReroll={handleReroll}
                      />
             {/key}
          {:else}

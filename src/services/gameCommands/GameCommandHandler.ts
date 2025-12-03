@@ -15,14 +15,14 @@ import type { KingdomData } from '../../actors/KingdomActor';
  * Context passed to game command handlers
  */
 export interface GameCommandContext {
-  actionId: string;
+  actionId?: string;
   outcome: string;
   kingdom: KingdomData;
-  metadata: Record<string, any>;
-  pendingActions: any; // PendingActionsState type
+  metadata?: Record<string, any>;
+  pendingActions?: any; // PendingActionsState type
   
   // ✨ NEW: Explicit pending state (replaces global state)
-  pendingState: {
+  pendingState?: {
     armyId?: string;              // For train/disband/outfit
     settlementId?: string;        // For stipend/upgrade
     factionId?: string;           // For diplomatic/economic/military aid

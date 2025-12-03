@@ -615,16 +615,23 @@
       <div class="territory-controls">
         <div 
           class="color-swatch"
-          style="background-color: {selectedClaimOwner === 'player' 
-            ? ($kingdomData.playerKingdomColor || '#5b9bd5')
-            : ($kingdomData.factions?.find(f => f.id === selectedClaimOwner)?.color || '#666666')};"
+          class:unclaimed={selectedClaimOwner === null}
+          style="background-color: {selectedClaimOwner === null
+            ? '#444444'
+            : selectedClaimOwner === 'player' 
+              ? ($kingdomData.playerKingdomColor || '#5b9bd5')
+              : ($kingdomData.factions?.find(f => f.id === selectedClaimOwner)?.color || '#666666')};"
           title="Claim color">
+          {#if selectedClaimOwner === null}
+            <i class="fas fa-times"></i>
+          {/if}
         </div>
         <select 
           class="faction-dropdown"
           bind:value={selectedClaimOwner}
           on:change={() => selectClaimOwner(selectedClaimOwner)}
           title="Select owner to claim hexes">
+          <option value={null}>Unclaimed</option>
           <option value="player">{$kingdomData.name || 'Player Kingdom'}</option>
           {#each $kingdomData.factions || [] as faction}
             <option value={faction.id}>{faction.name}</option>
@@ -857,11 +864,23 @@
           box-shadow: 0 0.1875rem 0.375rem rgba(0, 0, 0, 0.4);
           flex-shrink: 0;
           transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           
           &:hover {
             transform: scale(1.05);
             border-color: var(--border-strong);
             box-shadow: 0 0.25rem 0.5rem var(--overlay-high);
+          }
+          
+          &.unclaimed {
+            border-style: dashed;
+            
+            i {
+              color: rgba(255, 255, 255, 0.5);
+              font-size: var(--font-md);
+            }
           }
         }
         

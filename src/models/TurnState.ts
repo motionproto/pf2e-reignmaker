@@ -129,9 +129,10 @@ export interface AidEntry {
  * Used for reroll modifier preservation and action-specific state
  */
 export interface ActionInstance {
-  instanceId: string;  // Check instance ID
+  instanceId: string;  // Check instance ID (format: T{turn}-{actionId}-{randomId})
   actionId: string;    // Action ID
-  rollModifiers: Array<{ label: string; modifier: number; enabled?: boolean; ignored?: boolean }>;  // Modifiers from the roll
+  turnNumber: number;  // Turn when the roll was made (for validation on reroll)
+  rollModifiers: Array<{ label: string; modifier: number; type?: string; enabled?: boolean; ignored?: boolean }>;  // Modifiers from the roll
   timestamp: number;   // When the roll was made
 }
 

@@ -77,9 +77,11 @@ export class PipelineCoordinator {
     
     // ✅ CRITICAL: Generate instanceId IMMEDIATELY for modifier isolation
     // Each execution (deploy-army #1, #2, #3) gets a unique instanceId
-    // Format: <action-name>-<unique-string> (e.g., "deploy-army-abc123def456")
-    context.instanceId = `${actionId}-${foundry.utils.randomID()}`;
-    console.log(`🆔 [PipelineCoordinator] Generated new instanceId: ${context.instanceId}`);
+    // Format: T<turn>-<action-name>-<unique-string> (e.g., "T5-deploy-army-abc123def456")
+    // Including turn number enables turn-aware validation for reroll modifier retrieval
+    const currentTurn = getKingdomActor()?.getKingdomData()?.currentTurn || 0;
+    context.instanceId = `T${currentTurn}-${actionId}-${foundry.utils.randomID()}`;
+    console.log(`🆔 [PipelineCoordinator] Generated new instanceId: ${context.instanceId} (turn ${currentTurn})`);
     
     log(context, 0, 'initialize', `Starting pipeline for ${actionId}`);
     
@@ -374,12 +376,21 @@ export class PipelineCoordinator {
    * Execute the PF2e skill check roll and capture result
    * ALWAYS RUNS
    * 
-   * Uses native PF2e roll API - no event waiting required!
+   * Uses modular services:
+   * - KingdomModifierService for modifier collection
+   * - RollStateService for reroll modifier persistence
+   * - PF2eSkillService.executeSkillRoll() for pure PF2e integration
    */
   private async step3_executeRoll(ctx: PipelineContext): Promise<void> {
     log(ctx, 3, 'executeRoll', 'Executing skill check');
     
     const pipeline = await getPipeline(ctx);
+    
+    // Import services
+    const { pf2eSkillService } = await import('./pf2e/PF2eSkillService');
+    const { kingdomModifierService } = await import('./domain/KingdomModifierService');
+    const { rollStateService } = await import('./roll/RollStateService');
+    const { fromPF2eModifier } = await import('../types/RollModifier');
     
     // Get actor (character performing the check)
     let actingCharacter = ctx.actor?.fullActor || getCurrentUserCharacter();
@@ -388,7 +399,7 @@ export class PipelineCoordinator {
       throw new Error('No character available for roll');
     }
     
-    // ✅ CRITICAL FIX: Populate actor context with character name
+    // Populate actor context with character info
     if (!ctx.actor) {
       ctx.actor = {} as ActorContext;
     }
@@ -402,126 +413,198 @@ export class PipelineCoordinator {
       ctx.actor.fullActor = actingCharacter;
     }
     
-    // Get skill (from actor context or first skill in pipeline)
+    // Get skill name (from actor context or first skill in pipeline)
     const skillName = (ctx.actor?.selectedSkill || pipeline.skills[0].skill) as KingdomSkill;
+    const skillSlug = pf2eSkillService.getSkillSlug(skillName);
+    let skill = actingCharacter?.skills?.[skillSlug];
+    
+    // Handle lore skill selection
+    if (skillSlug === 'lore' && !skill) {
+      const loreItems = actingCharacter?.itemTypes?.lore || [];
+      const selectedLoreItem = await pf2eSkillService.showLoreSelectionDialog(loreItems);
+      if (!selectedLoreItem) {
+        throw new Error('Action cancelled by user');
+      }
+      skill = actingCharacter.skills?.[selectedLoreItem.slug];
+    }
+    
+    if (!skill) {
+      throw new Error(`Character ${actingCharacter.name} doesn't have skill '${skillName}'`);
+    }
     
     // Calculate DC based on party level (with character level fallback)
-    // IMPORTANT: Use ctx.actor.level if available (from reroll context), otherwise fallback to actor object
     const characterLevel = ctx.actor?.level || actingCharacter.level || 1;
-    
-    // Import getPartyLevel and getLevelBasedDC helpers
     const { getPartyLevel, getLevelBasedDC } = await import('../pipelines/shared/ActionHelpers');
-    
-    // Get party level, falling back to character level if no party
     const effectiveLevel = getPartyLevel(characterLevel);
     const dc = getLevelBasedDC(effectiveLevel);
     
-    // Store DC in context immediately so it's available throughout the pipeline
-    ctx.rollData = {
-      ...(ctx.rollData || {}),
-      dc
-    } as any;
+    // Store DC in context immediately
+    ctx.rollData = { ...(ctx.rollData || {}), dc } as any;
     
-    // ✅ EXPLICIT REROLL FLAG: Set by rerollFromStep3() method
+    // Reroll detection
     const isReroll = ctx.isReroll || false;
+    const currentTurn = ctx.kingdom?.currentTurn || 0;
     
     log(ctx, 3, 'executeRoll', `Rolling ${skillName} vs DC ${dc}`, { characterLevel, effectiveLevel, dc, isReroll });
     
-    // CREATE CALLBACK that resumes pipeline
+    // ========================================
+    // GET MODIFIERS FROM SERVICES
+    // ========================================
+    
+    // 1. Get kingdom modifiers from KingdomModifierService
+    const modifiers = kingdomModifierService.getModifiersForCheck({
+      skillName,
+      actionId: ctx.actionId,
+      checkType: ctx.checkType,
+      onlySettlementId: (ctx.metadata as any)?.onlySettlementId,
+      enabledSettlement: (ctx.metadata as any)?.enabledSettlement,
+      enabledStructure: (ctx.metadata as any)?.enabledStructure
+    });
+    
+    console.log('🔍 [PipelineCoordinator] Kingdom modifiers from service:', modifiers.map(m => ({ 
+      label: m.label, value: m.value, enabled: m.enabled, ignored: m.ignored 
+    })));
+    
+    // 2. Handle reroll - restore modifiers from RollStateService
+    if (isReroll && ctx.instanceId) {
+      console.log(`🔄 [PipelineCoordinator] Reroll detected - loading stored modifiers for instance ${ctx.instanceId}`);
+      
+      const storedModifiers = await rollStateService.getRollModifiers(ctx.instanceId, currentTurn);
+      
+      if (storedModifiers && storedModifiers.length > 0) {
+        console.log(`✅ [PipelineCoordinator] Found ${storedModifiers.length} stored modifiers`);
+        
+        // Track matched labels to avoid duplicates
+        const matchedLabels = new Set<string>();
+        
+        // Enable existing modifiers that match stored modifiers
+        for (const mod of modifiers) {
+          const storedMod = storedModifiers.find(m => m.label === mod.label);
+          if (storedMod) {
+            mod.enabled = true;
+            mod.ignored = false;
+            matchedLabels.add(storedMod.label);
+            console.log(`  ✅ Matched "${mod.label}"`);
+          }
+        }
+        
+        // Add unmatched stored modifiers (custom modifiers from previous roll)
+        for (const storedMod of storedModifiers) {
+          if (!matchedLabels.has(storedMod.label)) {
+            modifiers.push({
+              label: storedMod.label,
+              value: storedMod.value,
+              type: storedMod.type || 'circumstance',
+              enabled: true,
+              ignored: false
+            });
+            console.log(`  ✨ Added unmatched "${storedMod.label}" = ${storedMod.value}`);
+          }
+        }
+      } else {
+        console.warn(`⚠️ [PipelineCoordinator] No stored modifiers found for reroll`);
+      }
+    }
+    
+    // 3. Check for keep-higher aid
+    const useKeepHigher = kingdomModifierService.hasKeepHigherAid(ctx.actionId, ctx.checkType);
+    
+    // ========================================
+    // CREATE CALLBACK
+    // ========================================
+    
     const callback: CheckRollCallback = async (roll, outcome, message, event) => {
       console.log('✅ [Callback] Roll complete:', { outcome, total: roll.total, checkType: ctx.checkType, actionId: ctx.actionId });
 
       try {
-      
-      // Extract modifiers from PF2e message flags
-      // Modifiers are at: message.flags.pf2e.modifiers (NOT .context.modifiers)
-      const allModifiers = (message as any)?.flags?.pf2e?.modifiers || [];
-      
-      // Filter: Only exclude ability and proficiency modifiers (character stats)
-      // Keep everything else (kingdom modifiers, custom modifiers, etc.)
-      // Don't filter by enabled/ignored - that's user's choice in the dialog
-      const modifiers = allModifiers
-        .filter((mod: any) => mod.type !== 'ability' && mod.type !== 'proficiency');
-      
-      console.log('🎲 [PipelineCoordinator] Extracted modifiers from message.flags.pf2e.modifiers:', modifiers.length);
-      
-      // Log detailed modifier info
-      if (modifiers.length > 0) {
-        modifiers.forEach((mod: any, idx: number) => {
-          console.log(`  Modifier ${idx}:`, {
-            label: mod.label,
-            modifier: mod.modifier,
-            enabled: mod.enabled,
-            slug: mod.slug,
-            type: mod.type
-          });
+        // Extract modifiers from PF2e message flags
+        const allModifiers = (message as any)?.flags?.pf2e?.modifiers || [];
+        
+        // Filter: exclude ability and proficiency (recalculated by PF2e on reroll)
+        const rollModifiers = allModifiers.filter((mod: any) => 
+          mod.type !== 'ability' && mod.type !== 'proficiency'
+        );
+        
+        console.log('🎲 [PipelineCoordinator] Extracted modifiers:', rollModifiers.length);
+        
+        // Store modifiers for reroll (only on initial roll)
+        if (!isReroll && ctx.instanceId && rollModifiers.length > 0) {
+          const rollModifiersForStorage = rollModifiers.map((mod: any) => fromPF2eModifier(mod));
+          await rollStateService.storeRollModifiers(
+            ctx.instanceId,
+            currentTurn,
+            ctx.actionId,
+            rollModifiersForStorage
+          );
+          console.log(`💾 [PipelineCoordinator] Stored ${rollModifiersForStorage.length} modifiers for reroll`);
+        }
+        
+        // Update context with roll data
+        const d20Result = roll.dice[0]?.results[0]?.result || 0;
+        const existingDC = ctx.rollData?.dc || dc;
+        ctx.rollData = {
+          skill: skillName,
+          dc: existingDC,
+          roll,
+          outcome: (outcome ?? 'failure') as OutcomeType,
+          rollBreakdown: {
+            d20Result,
+            total: roll.total,
+            dc: existingDC,
+            modifiers: rollModifiers.map((mod: any) => ({
+              label: mod.label || '',
+              modifier: mod.modifier || 0,
+              type: mod.type || 'circumstance',
+              enabled: mod.enabled ?? true,
+              ignored: mod.ignored ?? false
+            }))
+          }
+        };
+        
+        console.log('📊 [PipelineCoordinator] Stored rollBreakdown with modifiers:', ctx.rollData.rollBreakdown?.modifiers);
+        
+        // Dispatch kingdomRollComplete event for listeners
+        const rollCompleteEvent = new CustomEvent('kingdomRollComplete', {
+          detail: {
+            checkId: ctx.actionId,
+            checkType: ctx.checkType || 'action',
+            outcome: ctx.rollData.outcome,
+            actorName: ctx.actor?.actorName || 'Unknown',
+            skillName: skillName,
+            rollBreakdown: ctx.rollData.rollBreakdown
+          }
         });
-      } else {
-        console.log('ℹ️ [PipelineCoordinator] No modifiers in this roll (expected for rolls without modifiers)');
-      }
-      
-      // Update context with roll data (merge with existing DC if present)
-      const d20Result = roll.dice[0]?.results[0]?.result || 0;
-      const existingDC = ctx.rollData?.dc || dc;
-      ctx.rollData = {
-        skill: skillName,
-        dc: existingDC,
-        roll,
-        outcome: (outcome ?? 'failure') as OutcomeType,
-        rollBreakdown: {
-          d20Result,
-          total: roll.total,
-          dc: existingDC,  // Include DC in rollBreakdown for OutcomeDisplay
-          modifiers: modifiers.map((mod: any) => ({
-            label: mod.label || '',
-            modifier: mod.modifier || 0,
-            type: mod.type || 'circumstance',  // ✅ CRITICAL: Store type for reroll restoration
-            enabled: mod.enabled ?? true,
-            ignored: mod.ignored ?? false
-          }))
-        }
-      };
-      
-      console.log('📊 [PipelineCoordinator] Stored rollBreakdown with modifiers:', ctx.rollData.rollBreakdown?.modifiers);
-      
-      // NOTE: Modifier persistence for rerolls is handled by PF2eSkillService.wrappedCallback
-      // This eliminates duplicate storage and ensures consistent modifier extraction
-      
-      // Dispatch kingdomRollComplete event for listeners (e.g., ArmyDeploymentPanel)
-      const rollCompleteEvent = new CustomEvent('kingdomRollComplete', {
-        detail: {
-          checkId: ctx.actionId,
-          checkType: ctx.checkType || 'action',
-          outcome: ctx.rollData.outcome,
-          actorName: ctx.actor?.actorName || 'Unknown',
-          skillName: skillName,
-          rollBreakdown: ctx.rollData.rollBreakdown
-        }
-      });
-      window.dispatchEvent(rollCompleteEvent);
-      
-      // Resume pipeline at Step 4
-      await this.resumeAfterRoll(ctx);
+        window.dispatchEvent(rollCompleteEvent);
+        
+        // Resume pipeline at Step 4
+        await this.resumeAfterRoll(ctx);
       } catch (callbackError) {
         console.error('❌ [PipelineCoordinator] Callback error:', callbackError);
         throw callbackError;
       }
     };
     
-    // Call PF2eSkillService with callback (delegates to skill.roll internally)
-    const { pf2eSkillService } = await import('./pf2e/PF2eSkillService');
+    // ========================================
+    // EXECUTE ROLL VIA PF2eSkillService
+    // ========================================
     
-    await pf2eSkillService.performKingdomSkillCheck(
-      skillName,      // skill name
-      'action',       // check type
-      pipeline.name,  // check name
-      ctx.actionId,   // check ID
-      undefined,      // checkEffects (optional)
-      ctx.actionId,   // actionId for aids
-      callback,       // callback
-      isReroll,       // ← Pass reroll detection from context
-      ctx.instanceId  // ← Pass instanceId for modifier storage
-    );
+    const labelPrefix = ctx.checkType === 'action' ? 'Kingdom Action' : 
+                       ctx.checkType === 'event' ? 'Kingdom Event' : 
+                       'Kingdom Incident';
+    
+    await pf2eSkillService.executeSkillRoll({
+      actor: actingCharacter,
+      skill,
+      dc,
+      label: `${labelPrefix}: ${pipeline.name}`,
+      modifiers,
+      rollTwice: useKeepHigher ? 'keep-higher' : false,
+      callback,
+      extraRollOptions: [
+        `${ctx.checkType}:kingdom`,
+        `${ctx.checkType}:kingdom:${pipeline.name.toLowerCase().replace(/\s+/g, '-')}`
+      ]
+    });
     
     // Step 3 returns - callback will resume pipeline when roll completes
     log(ctx, 3, 'executeRoll', 'Roll initiated with callback');

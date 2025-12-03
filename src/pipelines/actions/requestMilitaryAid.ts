@@ -222,12 +222,14 @@ export const requestMilitaryAidPipeline: CheckPipeline = {
       }
 
       const { getGameCommandRegistry } = await import('../../services/gameCommands/GameCommandHandlerRegistry');
+      const { getPartyLevel } = await import('../../services/gameCommands/GameCommandUtils');
       const registry = getGameCommandRegistry();
+      const partyLevel = getPartyLevel();
       
       const preparedCommand = await registry.process(
         {
           type: 'recruitArmy',
-          level: ctx.kingdom.level,
+          level: partyLevel,
           recruitmentData: {
             name: recruitmentData.name,
             armyType: recruitmentData.armyType,

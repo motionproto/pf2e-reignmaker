@@ -1,25 +1,32 @@
 /**
  * Prison Breaks Incident Pipeline
  *
+ * Failure: Release 50% of imprisoned unrest back to regular unrest
+ * Critical Failure: Release all imprisoned unrest back to regular unrest
  */
 
 import type { CheckPipeline } from '../../../types/CheckPipeline';
-import { applyPipelineModifiers } from '../../shared/applyPipelineModifiers';
+import type { GameCommandContext } from '../../../services/gameCommands/GameCommandHandler';
+import { textBadge } from '../../../types/OutcomeBadge';
 
 export const prisonBreaksPipeline: CheckPipeline = {
   id: 'prison-breaks',
   name: 'Prison Breaks',
   description: 'Mass prison breaks release dangerous criminals',
   checkType: 'incident',
-  tier: 'major',
+  severity: 'major',
 
   skills: [
-      { skill: 'intimidation', description: 'lockdown prisons' },
-      { skill: 'athletics', description: 'pursuit' },
-      { skill: 'society', description: 'negotiation' },
-    ],
+    { skill: 'intimidation', description: 'lockdown prisons' },
+    { skill: 'athletics', description: 'pursuit' },
+    { skill: 'society', description: 'negotiation' },
+  ],
 
   outcomes: {
+    criticalSuccess: {
+      description: 'The prison break is thwarted and security is improved.',
+      modifiers: []  // +1 Fame auto-applied by UnifiedCheckHandler
+    },
     success: {
       description: 'The break is prevented.',
       modifiers: []
@@ -27,22 +34,96 @@ export const prisonBreaksPipeline: CheckPipeline = {
     failure: {
       description: 'A mass prison break releases many criminals.',
       modifiers: [],
-      gameCommands: [
-        { type: 'releaseImprisoned', percentage: 50 }
+      outcomeBadges: [
+        textBadge('50% of imprisoned unrest released', 'fa-door-open', 'negative')
       ]
     },
     criticalFailure: {
       description: 'A complete prison break releases all criminals.',
       modifiers: [],
-      gameCommands: [
-        { type: 'releaseImprisoned', percentage: 'all' }
+      outcomeBadges: [
+        textBadge('All imprisoned unrest released', 'fa-door-open', 'negative')
       ]
     },
   },
 
-  // Auto-convert JSON modifiers to badges (none for this incident, only game commands)
-  preview: undefined,
+  preview: {
+    calculate: async (ctx) => {
+      // Only show preview for failure outcomes
+      if (ctx.outcome !== 'failure' && ctx.outcome !== 'criticalFailure') {
+        return { resources: [], outcomeBadges: [], warnings: [] };
+      }
 
-  // PipelineCoordinator handles gameCommands automatically
-  execute: undefined
+      // Initialize metadata
+      if (!ctx.metadata) {
+        ctx.metadata = {};
+      }
+
+      const percentage = ctx.outcome === 'failure' ? 50 : 'all';
+
+      // Use ReleaseImprisonedHandler to prepare the command
+      const { ReleaseImprisonedHandler } = await import('../../../services/gameCommands/handlers/ReleaseImprisonedHandler');
+      const handler = new ReleaseImprisonedHandler();
+      
+      const preparedCommand = await handler.prepare(
+        { type: 'releaseImprisoned', percentage },
+        { actionId: 'prison-breaks', outcome: ctx.outcome, kingdom: ctx.kingdom, metadata: ctx.metadata } as GameCommandContext
+      );
+      
+      if (!preparedCommand) {
+        return { 
+          resources: [], 
+          outcomeBadges: [],
+          warnings: ['Failed to prepare release command']
+        };
+      }
+      
+      // Store prepared command for execute step
+      ctx.metadata._preparedReleaseImprisoned = preparedCommand;
+      
+      return {
+        resources: [],
+        outcomeBadges: [preparedCommand.outcomeBadge],
+        warnings: []
+      };
+    }
+  },
+
+  execute: async (ctx) => {
+    // Only execute on failure or critical failure
+    if (ctx.outcome !== 'failure' && ctx.outcome !== 'criticalFailure') {
+      return { success: true };
+    }
+    
+    // Get prepared command from preview step
+    const preparedCommand = ctx.metadata._preparedReleaseImprisoned;
+    
+    if (!preparedCommand) {
+      // Fallback: prepare now if somehow missed
+      const percentage = ctx.outcome === 'failure' ? 50 : 'all';
+      
+      const { ReleaseImprisonedHandler } = await import('../../../services/gameCommands/handlers/ReleaseImprisonedHandler');
+      const handler = new ReleaseImprisonedHandler();
+      
+      const fallbackCommand = await handler.prepare(
+        { type: 'releaseImprisoned', percentage },
+        { actionId: 'prison-breaks', outcome: ctx.outcome, kingdom: ctx.kingdom, metadata: ctx.metadata } as GameCommandContext
+      );
+      
+      if (fallbackCommand?.commit) {
+        await fallbackCommand.commit();
+      }
+      
+      return { success: true };
+    }
+    
+    // Commit the release
+    if (preparedCommand.commit) {
+      await preparedCommand.commit();
+    }
+    
+    return { success: true };
+  },
+
+  traits: ["dangerous"],
 };

@@ -146,10 +146,11 @@ export interface Settlement {
   connectedByRoads: boolean;
   isCapital?: boolean; // Whether this settlement is the faction's capital
   
-  // Ownership tracking
-  // - PLAYER_KINGDOM = Owned by player kingdom
-  // - string = Owned by named faction (e.g., "Pitax", "Brevoy")
-  // - null = Unowned/neutral
+  /**
+   * @deprecated Settlement ownership is now derived from hex.claimedBy (single source of truth).
+   * Use getSettlementOwner() from src/utils/settlementOwnership.ts to get the actual owner.
+   * This field is kept for backward compatibility but should not be relied upon.
+   */
   ownedBy: OwnershipValue;
   
   // Resources and state
@@ -262,7 +263,9 @@ export function createKingmakerSettlementId(location: { x: number; y: number }):
  * @param location Settlement location (source of truth)
  * @param tier Settlement tier
  * @param kingmakerLocation Optional - Only used during import, will be removed by sync service
- * @param ownedBy Optional - Faction that owns this settlement (defaults to PLAYER_KINGDOM)
+ * @param ownedBy @deprecated - Ownership is now derived from hex.claimedBy. 
+ *                This parameter is kept for backward compatibility but the actual 
+ *                ownership source of truth is the hex the settlement occupies.
  */
 export function createSettlement(
   name: string,

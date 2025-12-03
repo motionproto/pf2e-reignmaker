@@ -41,10 +41,8 @@
     dispatch('executeSkill', { event, action });
   }
 
-  function handlePerformReroll(event: CustomEvent, action: any) {
-    dispatch('performReroll', { event, action });
-  }
-
+  // NOTE: Reroll handling has been moved to OutcomeDisplay.svelte
+  // OutcomeDisplay now calls PipelineCoordinator.rerollFromStep3() directly
 
   function handleAid(event: CustomEvent) {
     dispatch('aid', event.detail);
@@ -155,7 +153,6 @@
             {actionStatus}
             {actionNumber}
             on:executeSkill={(e) => handleExecuteSkill(e, action)}
-            on:performReroll={(e) => handlePerformReroll(e, action)}
             on:aid={handleAid}
             on:primary={handlePrimary}
             on:cancel={(e) => handleCancel(e.detail.checkId)}

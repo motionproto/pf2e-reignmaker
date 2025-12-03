@@ -10,6 +10,12 @@
    import { logger } from '../../../utils/Logger';
    import { EQUIPMENT_ICONS } from '../../../utils/presentation';
 
+   // Check if current user is GM
+   $: isGM = (globalThis as any).game?.user?.isGM || false;
+   
+   // GM-only: Show all armies toggle
+   let showAllArmies = false;
+
    // Table state
    let searchTerm = '';
    let filterSupport = 'all'; // 'all', 'supported', 'unsupported'
@@ -18,9 +24,11 @@
    
    // Inline editing state
    let editingArmyId: string | null = null;
-   let editingField: 'level' | 'settlement' | 'equipment' | null = null;
+   let editingField: 'level' | 'settlement' | 'equipment' | 'ledBy' | 'location' | null = null;
    let editedValue: string | number = '';
    let editedSettlementId: string = '';
+   let editedLedBy: string = '';
+   let editedLocationSettlementId: string = '';
    let isSaving = false;
    
    // Equipment editing state
@@ -61,16 +69,22 @@
       return level;
    })();
    
+   // Base armies list - either all armies (GM mode) or just current faction's
+   $: baseArmies = showAllArmies && isGM 
+      ? ($kingdomData.armies || []) 
+      : [...$ledArmies];
+   
    // Apply filters
    $: filteredArmies = (() => {
-      let armies = [...$ledArmies];
+      let armies = [...baseArmies];
       
       // Search filter
       if (searchTerm) {
          const term = searchTerm.toLowerCase();
          armies = armies.filter(a => 
             a.name.toLowerCase().includes(term) ||
-            `level ${a.level}`.includes(term)
+            `level ${a.level}`.includes(term) ||
+            (showAllArmies && a.ledBy?.toLowerCase().includes(term))
          );
       }
       
@@ -92,14 +106,64 @@
    );
    
    // Reset to page 1 when filters change
-   $: if (searchTerm || filterSupport) {
+   $: if (searchTerm || filterSupport || showAllArmies) {
       currentPage = 1;
    }
    
-   // Calculate army statistics
-   $: totalArmies = $ledArmies.length;
-   $: supportedArmies = $ledArmies.filter(a => a.isSupported).length;
+   // Calculate army statistics (based on displayed list)
+   $: totalArmies = baseArmies.length;
+   $: supportedArmies = baseArmies.filter(a => a.isSupported).length;
    $: unsupportedArmies = totalArmies - supportedArmies;
+   
+   // Helper to get faction display name
+   function getFactionDisplayName(ledBy: string | null): string {
+      if (!ledBy || ledBy === PLAYER_KINGDOM) return 'Player';
+      // Try to find faction name
+      const faction = $kingdomData.factions?.find(f => f.id === ledBy);
+      return faction?.name || ledBy;
+   }
+   
+   // Army locations on the map (for location column)
+   let armyLocations: Map<string, string> = new Map(); // armyId -> hexId
+   
+   // Refresh army locations when armies change or component mounts
+   async function refreshArmyLocations() {
+      try {
+         const { armyService } = await import('../../../services/army');
+         const locations = armyService.getArmyLocationsOnScene();
+         armyLocations = new Map(locations.map(loc => [loc.armyId, loc.hexId]));
+      } catch (error) {
+         logger.warn('Could not get army locations:', error);
+      }
+   }
+   
+   // Refresh on mount and when armies change
+   $: if ($kingdomData.armies) {
+      refreshArmyLocations();
+   }
+   
+   // Helper to get location display name (settlement name or hex coordinate)
+   function getLocationDisplayName(army: Army): string {
+      const hexId = armyLocations.get(army.id);
+      if (!hexId) return '—'; // Not on map
+      
+      // Check if there's a settlement at this hex
+      const settlements = $kingdomData.settlements || [];
+      for (const settlement of settlements) {
+         // Settlement hex ID format: "row.col" (e.g., "5.03")
+         const settlementHexId = settlement.kingmakerLocation 
+            ? `${settlement.kingmakerLocation.x}.${String(settlement.kingmakerLocation.y).padStart(2, '0')}`
+            : `${settlement.location.x}.${String(settlement.location.y).padStart(2, '0')}`;
+         
+         if (settlementHexId === hexId) {
+            return settlement.name;
+         }
+      }
+      
+      // Return hex coordinate (format: "5.03" -> "5, 3")
+      const [row, col] = hexId.split('.');
+      return `Hex ${row}, ${parseInt(col, 10)}`;
+   }
    
    // Helper functions
    function getSupportStatusIcon(army: Army): string {
@@ -325,10 +389,65 @@
       editedSettlementId = army.supportedBySettlementId || '';
    }
    
+   function startEditingLedBy(army: Army) {
+      editingArmyId = army.id;
+      editingField = 'ledBy';
+      editedLedBy = army.ledBy || PLAYER_KINGDOM;
+   }
+   
+   function startEditingLocation(army: Army) {
+      editingArmyId = army.id;
+      editingField = 'location';
+      // Try to find current settlement from location
+      const hexId = armyLocations.get(army.id);
+      if (hexId) {
+         const settlement = $kingdomData.settlements?.find(s => {
+            const settlementHexId = s.kingmakerLocation 
+               ? `${s.kingmakerLocation.x}.${String(s.kingmakerLocation.y).padStart(2, '0')}`
+               : `${s.location.x}.${String(s.location.y).padStart(2, '0')}`;
+            return settlementHexId === hexId;
+         });
+         editedLocationSettlementId = settlement?.id || '';
+      } else {
+         editedLocationSettlementId = '';
+      }
+   }
+   
+   // Get available settlements for location dropdown
+   $: availableLocationSettlements = (() => {
+      const settlements = $kingdomData.settlements || [];
+      const hexes = $kingdomData.hexes || [];
+      
+      return settlements
+         .filter(s => {
+            // Must have a valid location
+            const hasLocation = s.location.x !== 0 || s.location.y !== 0;
+            if (!hasLocation) return false;
+            
+            // If not GM, only show player-owned settlements
+            if (!isGM) {
+               const hexId = s.kingmakerLocation 
+                  ? `${s.kingmakerLocation.x}.${String(s.kingmakerLocation.y).padStart(2, '0')}`
+                  : `${s.location.x}.${String(s.location.y).padStart(2, '0')}`;
+               const hex = hexes.find((h: any) => h.id === hexId);
+               return hex?.claimedBy === PLAYER_KINGDOM;
+            }
+            
+            return true;
+         })
+         .map(s => ({
+            id: s.id,
+            name: s.name,
+            location: s.location
+         }));
+   })();
+   
    function cancelEdit() {
       editingArmyId = null;
       editingField = null;
       editedValue = '';
+      editedLedBy = '';
+      editedLocationSettlementId = '';
       editingEquipmentArmyId = null;
       editingEquipment = {};
       originalEquipment = {};
@@ -436,7 +555,7 @@
    }
    
    async function saveEdit(armyId: string) {
-      if (!editedValue && editingField !== 'settlement') return;
+      if (!editedValue && editingField !== 'settlement' && editingField !== 'ledBy' && editingField !== 'location') return;
       
       isSaving = true;
       try {
@@ -453,6 +572,28 @@
             );
             // @ts-ignore
             ui.notifications?.info('Army support assignment updated');
+         } else if (editingField === 'ledBy') {
+            // Update faction ownership
+            await armyService.updateArmyFaction(armyId, editedLedBy);
+            // @ts-ignore
+            ui.notifications?.info('Army faction updated');
+         } else if (editingField === 'location') {
+            // Move or place army token at settlement
+            if (!editedLocationSettlementId) {
+               // @ts-ignore
+               ui.notifications?.warn('Please select a settlement');
+               return;
+            }
+            
+            const settlement = $kingdomData.settlements?.find(s => s.id === editedLocationSettlementId);
+            if (!settlement) {
+               throw new Error('Settlement not found');
+            }
+            
+            await armyService.moveArmyToSettlement(armyId, settlement);
+            await refreshArmyLocations();
+            // @ts-ignore
+            ui.notifications?.info(`Army moved to ${settlement.name}`);
          }
          
          cancelEdit();
@@ -478,8 +619,8 @@
       showRecruitDialog = true;
    }
    
-   async function handleRecruitConfirm(event: CustomEvent<{ name: string; settlementId: string | null; armyType: string }>) {
-      const { name, settlementId, armyType } = event.detail;
+   async function handleRecruitConfirm(event: CustomEvent<{ name: string; settlementId: string | null; armyType: string; ledBy?: string }>) {
+      const { name, settlementId, armyType, ledBy } = event.detail;
       
       isCreatingArmy = true;
       try {
@@ -487,8 +628,8 @@
          const { ARMY_TYPES } = await import('../../../utils/armyHelpers');
          const { PLAYER_KINGDOM } = await import('../../../types/ownership');
          
-         // Get the current faction (the one whose tab we're viewing)
-         const factionId = $currentFaction || PLAYER_KINGDOM;
+         // Use GM-selected faction if provided, otherwise use current faction or player kingdom
+         const factionId = ledBy || $currentFaction || PLAYER_KINGDOM;
          
          // Create army with selected type, image, and ledBy faction
          // Token placement is handled by _createArmyInternal, so we don't need to do it here
@@ -645,6 +786,7 @@
 <!-- Recruit Army Dialog -->
 <RecruitArmyDialog
    bind:show={showRecruitDialog}
+   {isGM}
    on:confirm={handleRecruitConfirm}
    on:cancel={handleRecruitCancel}
 />
@@ -698,6 +840,13 @@
          <option value="supported">Supported Only</option>
          <option value="unsupported">Unsupported Only</option>
       </select>
+      
+      {#if isGM}
+         <label class="gm-checkbox">
+            <input type="checkbox" bind:checked={showAllArmies} />
+            <span>Show all factions' armies</span>
+         </label>
+      {/if}
    </div>
    
    <!-- Table -->
@@ -707,6 +856,10 @@
          <thead>
             <tr>
                <th>Name</th>
+               {#if showAllArmies && isGM}
+                  <th>Led By</th>
+               {/if}
+               <th>Location</th>
                <th>Level</th>
                <th>Gear</th>
                <th>Support Status</th>
@@ -719,7 +872,7 @@
                <tr>
                   {#if linkingArmyId === army.id}
                      <!-- Linking mode: Full-width actor search -->
-                     <td colspan="4">
+                     <td colspan={showAllArmies && isGM ? 6 : 5}>
                         <div class="actor-autosuggest">
                            <input 
                               type="text" 
@@ -794,6 +947,71 @@
                               <i class="fas fa-link link-icon"></i>
                            {/if}
                         </button>
+                     </td>
+                     
+                     <!-- Led By Column (GM only when showing all) -->
+                     {#if showAllArmies && isGM}
+                        <td class="led-by-cell">
+                           {#if editingArmyId === army.id && editingField === 'ledBy'}
+                              <div class="inline-edit">
+                                 <select 
+                                    bind:value={editedLedBy}
+                                    class="inline-select"
+                                    disabled={isSaving}
+                                 >
+                                    <option value={PLAYER_KINGDOM}>Player Kingdom</option>
+                                    {#each $kingdomData.factions || [] as faction}
+                                       <option value={faction.id}>{faction.name}</option>
+                                    {/each}
+                                 </select>
+                                 <InlineEditActions
+                                    onSave={() => saveEdit(army.id)}
+                                    onCancel={cancelEdit}
+                                    disabled={isSaving}
+                                 />
+                              </div>
+                           {:else}
+                              <button 
+                                 class="faction-badge editable" 
+                                 class:player={army.ledBy === PLAYER_KINGDOM || !army.ledBy}
+                                 on:click={() => startEditingLedBy(army)}
+                                 title="Click to change faction"
+                              >
+                                 {getFactionDisplayName(army.ledBy)}
+                              </button>
+                           {/if}
+                        </td>
+                     {/if}
+                     
+                     <!-- Location Column -->
+                     <td class="location-cell">
+                        {#if editingArmyId === army.id && editingField === 'location'}
+                           <div class="inline-edit">
+                              <select 
+                                 bind:value={editedLocationSettlementId}
+                                 class="inline-select"
+                                 disabled={isSaving}
+                              >
+                                 <option value="">Select settlement...</option>
+                                 {#each availableLocationSettlements as settlement}
+                                    <option value={settlement.id}>{settlement.name}</option>
+                                 {/each}
+                              </select>
+                              <InlineEditActions
+                                 onSave={() => saveEdit(army.id)}
+                                 onCancel={cancelEdit}
+                                 disabled={isSaving}
+                              />
+                           </div>
+                        {:else}
+                           <button 
+                              class="location-value editable" 
+                              on:click={() => startEditingLocation(army)}
+                              title={armyLocations.get(army.id) ? `Current: ${armyLocations.get(army.id)}` : 'Click to place on map'}
+                           >
+                              {getLocationDisplayName(army)}
+                           </button>
+                        {/if}
                      </td>
                      
                      <!-- Level Column -->
@@ -1154,6 +1372,7 @@
    .table-controls {
       display: flex;
       gap: var(--space-16);
+      align-items: center;
       
       .filter-select {
          padding: var(--space-8);
@@ -1165,6 +1384,122 @@
          &:focus {
             outline: none;
             border-color: var(--color-primary, #5e0000);
+         }
+      }
+      
+      .gm-checkbox {
+         display: flex;
+         align-items: center;
+         gap: var(--space-8);
+         cursor: pointer;
+         padding: var(--space-8) var(--space-12);
+         background: var(--surface-warning-low);
+         border: 1px solid var(--border-warning-subtle);
+         border-radius: var(--radius-md);
+         font-size: var(--font-md);
+         color: var(--text-primary);
+         
+         input[type="checkbox"] {
+            width: 1rem;
+            height: 1rem;
+            cursor: pointer;
+         }
+         
+         span {
+            white-space: nowrap;
+         }
+      }
+   }
+   
+   .led-by-cell {
+      .faction-badge {
+         display: inline-block;
+         padding: var(--space-4) var(--space-8);
+         border-radius: var(--radius-sm);
+         font-size: var(--font-sm);
+         font-weight: 500;
+         background: var(--overlay);
+         border: 1px solid var(--border-subtle);
+         color: var(--text-secondary);
+         
+         &.player {
+            background: var(--surface-success-low);
+            border-color: var(--border-success-subtle);
+            color: var(--color-green);
+         }
+         
+         &.editable {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            
+            &:hover {
+               border-color: var(--border-highlight);
+               background: var(--overlay-high);
+            }
+         }
+      }
+      
+      .inline-edit {
+         display: flex;
+         align-items: center;
+         gap: var(--space-8);
+      }
+      
+      .inline-select {
+         padding: var(--space-4) var(--space-8);
+         background: var(--overlay);
+         border: 1px solid var(--border-default);
+         border-radius: var(--radius-sm);
+         color: var(--text-primary);
+         font-size: var(--font-sm);
+         min-width: 120px;
+         
+         &:focus {
+            outline: none;
+            border-color: var(--color-amber);
+         }
+      }
+   }
+   
+   .location-cell {
+      .location-value {
+         display: inline-block;
+         padding: var(--space-4) var(--space-8);
+         border-radius: var(--radius-sm);
+         font-size: var(--font-sm);
+         color: var(--text-secondary);
+         background: var(--overlay);
+         border: 1px solid var(--border-subtle);
+         
+         &.editable {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            
+            &:hover {
+               border-color: var(--border-highlight);
+               background: var(--overlay-high);
+            }
+         }
+      }
+      
+      .inline-edit {
+         display: flex;
+         align-items: center;
+         gap: var(--space-8);
+      }
+      
+      .inline-select {
+         padding: var(--space-4) var(--space-8);
+         background: var(--overlay);
+         border: 1px solid var(--border-default);
+         border-radius: var(--radius-sm);
+         color: var(--text-primary);
+         font-size: var(--font-sm);
+         min-width: 140px;
+         
+         &:focus {
+            outline: none;
+            border-color: var(--color-amber);
          }
       }
    }

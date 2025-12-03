@@ -17,7 +17,7 @@ export class TrainArmyHandler extends BaseGameCommandHandler {
     const { trainArmy } = await import('../../commands/armies/armyCommands');
     
     // Get armyId from explicit context
-    const armyId = ctx.pendingState.armyId;
+    const armyId = ctx.pendingState?.armyId;
     if (!armyId) {
       console.error('[TrainArmyHandler] No army selected for training');
       throw new Error('Army training requires army selection - ensure army context is provided');

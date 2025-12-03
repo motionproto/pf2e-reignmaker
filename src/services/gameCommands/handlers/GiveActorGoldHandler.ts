@@ -17,7 +17,7 @@ export class GiveActorGoldHandler extends BaseGameCommandHandler {
     const { giveActorGold } = await import('../../commands/resources/playerRewards');
     
     // Get settlementId from command OR from explicit context
-    const settlementId = command.settlementId || ctx.pendingState.settlementId;
+    const settlementId = command.settlementId || ctx.pendingState?.settlementId;
     
     if (!settlementId) {
       console.error('[GiveActorGoldHandler] No settlement selected for gold distribution');

@@ -394,28 +394,9 @@
       // Note: Canceling doesn't add to actionLog, so player can still act
    }
    
-   // Event handler - perform reroll (OutcomeDisplay handles fame and modifier extraction)
-   async function handlePerformReroll(event: CustomEvent) {
-      if (!currentEvent) return;
-      const { skill, previousFame } = event.detail;
-
-      // Reset UI state for new roll (await completion to avoid race conditions)
-      await handleCancel();
-
-      // Trigger new roll - modifiers are preserved via PF2eSkillService.storeModifiersForReroll()
-      // called by OutcomeDisplay.handleReroll() before this event is dispatched
-      try {
-         await executeSkillCheck(skill, null);
-      } catch (error) {
-         logger.error('[EventsPhase] Error during reroll:', error);
-         // Restore fame if the roll failed
-         const { restoreFameAfterFailedReroll } = await import('../../../controllers/shared/RerollHelpers');
-         if (previousFame !== undefined) {
-            await restoreFameAfterFailedReroll(previousFame);
-         }
-         ui?.notifications?.error('Failed to reroll. Fame has been restored.');
-      }
-   }
+   // NOTE: Reroll handling has been moved to OutcomeDisplay.svelte
+   // OutcomeDisplay now calls PipelineCoordinator.rerollFromStep3() directly
+   // This eliminates duplicate reroll handlers across phase components
    
    // Event handler - ignore event (delegate to controller)
    async function handleIgnore(event: CustomEvent) {
@@ -818,7 +799,6 @@
             on:executeSkill={handleExecuteSkill}
             on:primary={handleApplyResult}
             on:cancel={handleCancel}
-            on:performReroll={handlePerformReroll}
             on:ignore={handleIgnore}
             on:aid={handleAid}
          />
@@ -857,9 +837,8 @@
                   on:executeSkill={handleExecuteSkill}
                   on:primary={handleApplyResult}
                   on:cancel={handleCancel}
-               on:performReroll={handlePerformReroll}
-               on:ignore={handleIgnore}
-               on:aid={handleAid}
+                  on:ignore={handleIgnore}
+                  on:aid={handleAid}
                />
             {/each}
          </div>

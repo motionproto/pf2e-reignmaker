@@ -42,22 +42,22 @@ export const INCIDENT_STATUS = new Map<string, IncidentStatus>([
   ['mass-exodus', 'tested'],  // #13
   ['production-strike', 'tested'],  // #14
   ['riot', 'tested'],  // #15 (has game commands)
-  ['settlement-crisis', 'testing'],  // #16 (has pre-roll entity selection)
-  ['tax-revolt', 'untested'],  // #17
-  ['trade-embargo', 'untested'],  // #18
+  ['settlement-crisis', 'tested'],  // #16 (has pre-roll entity selection)
+  ['tax-revolt', 'tested'],  // #17
+  ['trade-embargo', 'tested'],  // #18
   
   // Major Incidents (Tier 3) - #19-29
-  ['border-raid', 'untested'],  // #19
-  ['economic-crash', 'untested'],  // #20 (has game commands)
-  ['guerrilla-movement', 'untested'],  // #21
-  ['international-crisis', 'untested'],  // #22
-  ['international-scandal', 'untested'],  // #23
-  ['mass-desertion-threat', 'untested'],  // #24 (has game commands)
-  ['noble-conspiracy', 'untested'],  // #25
-  ['prison-breaks', 'untested'],  // #26 (has game commands)
-  ['religious-schism', 'untested'],  // #27 (has game commands)
-  ['secession-crisis', 'untested'],  // #28
-  ['settlement-collapse', 'untested'],  // #29 (has pre-roll entity selection)
+  ['border-raid', 'tested'],  // #19
+  ['economic-crash', 'tested'],  // #20 (has game commands)
+  ['guerrilla-movement', 'tested'],  // #21
+  ['international-crisis', 'tested'],  // #22
+  ['international-scandal', 'tested'],  // #23
+  ['mass-desertion-threat', 'tested'],  // #24 (has game commands)
+  ['noble-conspiracy', 'tested'],  // #25
+  ['prison-breaks', 'tested'],  // #26 (has game commands)
+  ['religious-schism', 'tested'],  // #27 (has game commands)
+  ['secession-crisis', 'tested'],  // #28
+  ['settlement-collapse', 'testing'],  // #29 (has pre-roll entity selection)
   ['trade-war', 'untested'],  // #30
 ]);
 

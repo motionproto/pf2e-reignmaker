@@ -296,6 +296,49 @@ export class ReignMakerMapLayer {
   }
 
   /**
+   * Draw multiple hexes with different styles in a single pass
+   * Used for multi-faction territory rendering where each faction has its own color.
+   * Clears the layer once at the start, then draws all hexes.
+   * 
+   * @param hexData - Array of { hexId, style } objects
+   * @param layerId - Target layer ID
+   * @param zIndex - Optional z-index override
+   */
+  drawHexesBatch(
+    hexData: Array<{ hexId: string; style: HexStyle }>, 
+    layerId: LayerId = 'hex-selection', 
+    zIndex?: number
+  ): void {
+    this.ensureInitialized();
+    
+    // Validate and clear layer ONCE before batch drawing
+    this.validateLayerEmpty(layerId);
+    this.clearLayerContent(layerId);
+    
+    const layerZIndex = zIndex ?? this.getDefaultZIndex(layerId);
+    const layer = this.createLayer(layerId, layerZIndex);
+
+    const canvas = (globalThis as any).canvas;
+    if (!canvas?.grid) {
+      logger.warn('[ReignMakerMapLayer] ❌ Canvas grid not available');
+      return;
+    }
+
+    const graphics = new PIXI.Graphics();
+    graphics.name = 'HexBatchGroup';
+    graphics.visible = true;
+
+    let successCount = 0;
+    for (const { hexId, style } of hexData) {
+      const drawn = this.drawSingleHex(graphics, hexId, style, canvas);
+      if (drawn) successCount++;
+    }
+
+    layer.addChild(graphics);
+    this.showLayer(layerId);
+  }
+
+  /**
    * Internal: Draw a single hex to a graphics object
    * Delegates to HexRenderer for the actual drawing logic
    * @returns true if hex was drawn successfully

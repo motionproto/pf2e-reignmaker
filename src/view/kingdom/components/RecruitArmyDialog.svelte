@@ -25,17 +25,25 @@
   
   export let show: boolean = false;
   export let exemptFromUpkeep: boolean = false; // For allied armies (no settlement support needed)
+  export let isGM: boolean = false; // Whether current user is GM (allows faction selection)
   
   const dispatch = createEventDispatcher<{
-    confirm: { name: string; settlementId: string | null; armyType: ArmyType };
+    confirm: { name: string; settlementId: string | null; armyType: ArmyType; ledBy?: string };
     cancel: void;
   }>();
   
   let armyName: string = '';
   let selectedSettlementId: string = '';
   let selectedArmyType: ArmyType = 'infantry';
+  let selectedFaction: string = PLAYER_KINGDOM; // Default to player
   let confirmDisabled = true; // Confirm disabled state
   let userHasEnteredName = false; // Track if user manually entered a name
+  
+  // Available factions for GM to choose from
+  $: availableFactions = [
+    { id: PLAYER_KINGDOM, name: 'Player Kingdom' },
+    ...($kingdomData.factions || []).map(f => ({ id: f.id, name: f.name }))
+  ];
 
   // Reactive validation: only require a name (allow exceeding capacity)
   $: confirmDisabled = !armyName.trim();
@@ -203,7 +211,8 @@
     dispatch('confirm', {
       name: finalName,
       settlementId: selectedSettlementId || null,
-      armyType: selectedArmyType
+      armyType: selectedArmyType,
+      ledBy: isGM ? selectedFaction : PLAYER_KINGDOM
     });
     show = false;
   }
@@ -279,6 +288,23 @@
       {/each}
     </div>
   </div>
+  
+  {#if isGM}
+    <div class="form-group gm-only-section">
+      <label for="faction-select">
+        <i class="fas fa-crown"></i>
+        Led By Faction (GM Only):
+      </label>
+      <select id="faction-select" bind:value={selectedFaction}>
+        {#each availableFactions as faction}
+          <option value={faction.id}>{faction.name}</option>
+        {/each}
+      </select>
+      <small class="help-text">
+        Non-player armies won't require settlement support but will need to be managed manually.
+      </small>
+    </div>
+  {/if}
   
   <div class="form-group">
     <label for="settlement-select">Supported By Settlement:</label>
@@ -467,5 +493,27 @@
     font-size: var(--font-md);
     color: var(--text-primary);
     font-weight: 600;
+  }
+  
+  .gm-only-section {
+    padding: var(--space-16);
+    background: var(--surface-warning-low);
+    border: 1px solid var(--border-warning-subtle);
+    border-radius: var(--radius-sm);
+    margin-top: var(--space-8);
+  }
+  
+  .gm-only-section label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+  }
+  
+  .gm-only-section label i {
+    color: var(--color-amber);
+  }
+  
+  .gm-only-section select {
+    margin-top: var(--space-8);
   }
 </style>

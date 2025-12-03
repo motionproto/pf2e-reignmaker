@@ -9,15 +9,26 @@
  * - Water terrain = automatic road
  * - Settlements count as roads (can chain through them)
  * - Future: River features will count as roads (type: 'river')
- * - Must match faction ownership (settlement.owned === capital.owned)
+ * - Must match faction ownership (derived from hex.claimedBy)
  */
 
 import type { Settlement } from '../models/Settlement';
 import type { KingdomData } from '../actors/KingdomActor';
+import type { OwnershipValue } from '../types/ownership';
 import { hexHasRoads } from '../pipelines/shared/hexValidation';
 import { getAdjacentHexes } from '../utils/hexUtils';
 
 class RoadConnectivityService {
+  /**
+   * Get settlement owner from the hex it occupies (single source of truth)
+   */
+  private getSettlementOwner(settlement: Settlement, kingdom: KingdomData): OwnershipValue {
+    const hex = kingdom.hexes?.find(h => 
+      h.row === settlement.location.x && h.col === settlement.location.y
+    );
+    return hex?.claimedBy ?? null;
+  }
+  
   /**
    * Get adjacent hex IDs using Foundry's grid API
    * Uses canvas.grid.getNeighbors() directly (Foundry v13+)
@@ -93,8 +104,10 @@ class RoadConnectivityService {
       return false;
     }
     
-    // Must be same faction
-    if (settlement.ownedBy !== capital.ownedBy) {
+    // Must be same faction (derive ownership from hex)
+    const settlementOwner = this.getSettlementOwner(settlement, kingdom);
+    const capitalOwner = this.getSettlementOwner(capital, kingdom);
+    if (settlementOwner !== capitalOwner) {
 
       return false;
     }
@@ -145,17 +158,26 @@ class RoadConnectivityService {
    * Used when roads are built or capital changes
    * 
    * @param kingdom - Kingdom data
-   * @param factionId - Faction ID (owned value) to recalculate
+   * @param factionId - Faction ID (hex.claimedBy value) to recalculate, defaults to "player"
    */
-  recalculateAllConnectivity(kingdom: KingdomData, factionId: number = 1): void {
-    const capital = kingdom.settlements?.find(s => s.isCapital && s.ownedBy === factionId as any);
+  recalculateAllConnectivity(kingdom: KingdomData, factionId: OwnershipValue = "player"): void {
+    // Find capital owned by this faction (using hex ownership)
+    const capital = kingdom.settlements?.find(s => {
+      if (!s.isCapital) return false;
+      const owner = this.getSettlementOwner(s, kingdom);
+      return owner === factionId;
+    });
     
     if (!capital) {
 
       return;
     }
 
-    const settlements = kingdom.settlements?.filter(s => s.ownedBy === factionId as any) || [];
+    // Find all settlements owned by this faction (using hex ownership)
+    const settlements = kingdom.settlements?.filter(s => {
+      const owner = this.getSettlementOwner(s, kingdom);
+      return owner === factionId;
+    }) || [];
     
     for (const settlement of settlements) {
       if (settlement.isCapital) {

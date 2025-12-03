@@ -4,6 +4,7 @@
   import { getOverlayManager } from '../../services/map/core/OverlayManager';
   import { getEditorModeService } from '../../services/map/core/EditorModeService';
   import EditorModePanel from './EditorModePanel.svelte';
+  import FactionVisibilityDropdown from './FactionVisibilityDropdown.svelte';
   import { logger } from '../../utils/Logger';
 
   // Toolbar state
@@ -227,15 +228,21 @@
   
   <div class="toolbar-buttons">
     {#each overlays as overlay}
-      <button 
-        class="toolbar-button" 
-        class:active={$activeOverlaysStore.has(overlay.id)}
-        on:click={() => toggleOverlay(overlay.id)}
-        title="Toggle {overlay.name} Overlay"
-      >
-        <i class="fas {overlay.icon}"></i>
-        <span>{overlay.name}</span>
-      </button>
+      <div class="overlay-row">
+        <button 
+          class="toolbar-button" 
+          class:active={$activeOverlaysStore.has(overlay.id)}
+          on:click={() => toggleOverlay(overlay.id)}
+          title="Toggle {overlay.name} Overlay"
+        >
+          <i class="fas {overlay.icon}"></i>
+          <span>{overlay.name}</span>
+        </button>
+        
+        {#if overlay.id === 'territories' && $activeOverlaysStore.has('territories')}
+          <FactionVisibilityDropdown />
+        {/if}
+      </div>
     {/each}
     
     {#if isGM}
@@ -380,6 +387,12 @@
     flex-direction: column;
     gap: var(--space-8);
     padding: var(--space-12);
+  }
+  
+  .overlay-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
   }
   
   .toolbar-divider {

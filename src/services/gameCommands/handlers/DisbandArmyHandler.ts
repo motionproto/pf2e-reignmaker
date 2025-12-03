@@ -17,7 +17,7 @@ export class DisbandArmyHandler extends BaseGameCommandHandler {
     const { disbandArmy } = await import('../../commands/armies/armyCommands');
     
     // Get armyId from explicit context
-    const armyId = ctx.pendingState.armyId;
+    const armyId = ctx.pendingState?.armyId;
     if (!armyId) {
       console.error('[DisbandArmyHandler] No army selected for disbanding');
       throw new Error('Army disbanding requires army selection - ensure army context is provided');

@@ -104,16 +104,21 @@ export class FactionService {
    * @param attitude - New attitude level
    */
   async updateAttitude(factionId: string, attitude: AttitudeLevel): Promise<void> {
+    console.log(`🔄 [FactionService.updateAttitude] Updating faction ${factionId} to ${attitude}`);
 
     await updateKingdom(kingdom => {
       const faction = kingdom.factions?.find((f: Faction) => f.id === factionId);
       if (!faction) {
+        console.error(`❌ [FactionService.updateAttitude] Faction not found in kingdom: ${factionId}`);
         throw new Error(`Faction not found: ${factionId}`);
       }
       
+      console.log(`🔄 [FactionService.updateAttitude] Before: ${faction.name} = ${faction.attitude}`);
       faction.attitude = attitude;
+      console.log(`✅ [FactionService.updateAttitude] After: ${faction.name} = ${faction.attitude}`);
     });
 
+    console.log(`✅ [FactionService.updateAttitude] updateKingdom completed`);
   }
   
   /**
@@ -137,8 +142,11 @@ export class FactionService {
     newAttitude: AttitudeLevel | null;
     reason?: string;
   }> {
+    console.log(`🔍 [FactionService.adjustAttitude] Called with factionId: ${factionId}, steps: ${steps}, options:`, options);
+    
     const faction = this.getFaction(factionId);
     if (!faction) {
+      console.error(`❌ [FactionService.adjustAttitude] Faction not found: ${factionId}`);
       return { 
         success: false, 
         oldAttitude: 'Indifferent', 
@@ -147,9 +155,14 @@ export class FactionService {
       };
     }
 
+    console.log(`🔍 [FactionService.adjustAttitude] Found faction: ${faction.name}, current attitude: ${faction.attitude}`);
+
     const newAttitude = adjustAttitudeBySteps(faction.attitude, steps, options);
     
+    console.log(`🔍 [FactionService.adjustAttitude] Calculated new attitude: ${newAttitude}`);
+    
     if (!newAttitude) {
+      console.error(`❌ [FactionService.adjustAttitude] Cannot adjust attitude`);
       return {
         success: false,
         oldAttitude: faction.attitude,
@@ -158,7 +171,9 @@ export class FactionService {
       };
     }
 
+    console.log(`🔄 [FactionService.adjustAttitude] Calling updateAttitude to save: ${faction.attitude} → ${newAttitude}`);
     await this.updateAttitude(factionId, newAttitude);
+    console.log(`✅ [FactionService.adjustAttitude] Attitude updated successfully`);
 
     return {
       success: true,

@@ -90,6 +90,43 @@ export const allClaimedHexesByFaction = derived(
 );
 
 /**
+ * Which factions should be visible on the territories overlay
+ * Stores faction IDs that are currently visible
+ * Defaults to showing all factions (empty set = all visible)
+ * When a faction is added to this set, it becomes HIDDEN
+ */
+export const hiddenFactions = writable<Set<string>>(new Set());
+
+/**
+ * All hexes grouped by faction (including unclaimed as 'unclaimed')
+ * Used for multi-faction territory display with visibility filtering.
+ * Filtered by World Explorer visibility (GMs see all, players see revealed only)
+ */
+export const allHexesByFaction = derived(
+  kingdomData,
+  ($data) => {
+    const grouped = new Map<string, any[]>();
+    
+    // Group ALL hexes by claimedBy value
+    $data.hexes.forEach(h => {
+      // Use 'unclaimed' as key for null/undefined claimedBy
+      const factionKey = h.claimedBy ?? 'unclaimed';
+      const existing = grouped.get(factionKey) || [];
+      existing.push(h);
+      grouped.set(factionKey, existing);
+    });
+    
+    // Apply visibility filter to each group
+    const filtered = new Map<string, any[]>();
+    grouped.forEach((hexes, faction) => {
+      filtered.set(faction, filterVisibleHexes(hexes));
+    });
+    
+    return filtered;
+  }
+);
+
+/**
  * All settlements with valid map locations
  * Filters out only unmapped settlements (location 0,0)
  * Uses location as the source of truth (kingmakerLocation is discarded after import)
@@ -103,14 +140,20 @@ export const allSettlements = derived(kingdomData, $data => {
 
 /**
  * Owned settlements - settlements belonging to the current faction
- * Uses the explicit `ownedBy` property (simpler than checking hex claiming)
- * Filters for settlements owned by the current faction (ownedBy === currentFaction)
+ * Derives ownership from hex.claimedBy (single source of truth)
+ * Filters for settlements where the hex is owned by the current faction
  * Reactive to faction changes when GMs switch factions
  */
 export const ownedSettlements = derived(
   [kingdomData, currentFaction],
   ([$data, $faction]) => {
-    return $data.settlements.filter(s => s.ownedBy === $faction);
+    return $data.settlements.filter(s => {
+      // Derive ownership from the hex the settlement occupies
+      const hex = $data.hexes.find(h => 
+        h.row === s.location.x && h.col === s.location.y
+      );
+      return hex?.claimedBy === $faction;
+    });
   }
 );
 
@@ -264,11 +307,14 @@ export const availableFactions = derived(kingdomData, $data => {
     }
   });
   
-  // Track which factions have settlements
+  // Track which factions have settlements (derive from hex ownership)
   $data.settlements.forEach(s => {
-    if (s.ownedBy && s.ownedBy !== null) {
-      allFactions.add(s.ownedBy);
-      factionsWithTerritories.add(s.ownedBy);
+    const hex = $data.hexes.find(h => 
+      h.row === s.location.x && h.col === s.location.y
+    );
+    if (hex?.claimedBy && typeof hex.claimedBy === 'string') {
+      allFactions.add(hex.claimedBy);
+      factionsWithTerritories.add(hex.claimedBy);
     }
   });
   
@@ -646,4 +692,61 @@ export function setupFoundrySync(): void {
     }
   });
 
+}
+
+// Hot Module Replacement support - re-initialize store with current actor
+if (import.meta.hot) {
+  import.meta.hot.accept(async () => {
+    logger.info('🔥 [KingdomStore] Module hot reloaded, re-initializing...');
+    
+    // Re-find and re-wrap the kingdom actor
+    try {
+      // Check if game is available (we're in Foundry context)
+      if (typeof game === 'undefined' || !game.actors) {
+        logger.warn('[KingdomStore] Game not available during HMR, skipping re-initialization');
+        return;
+      }
+      
+      const actors = game.actors?.contents || [];
+      
+      // Find party actor with kingdom data
+      let foundActor = null;
+      for (const actor of actors) {
+        if ((actor as any).type === 'party' && (actor as any).getFlag('pf2e-reignmaker', 'kingdom-data')) {
+          foundActor = actor;
+          break;
+        }
+      }
+      
+      // Fallback: any party actor
+      if (!foundActor) {
+        for (const actor of actors) {
+          if ((actor as any).type === 'party') {
+            foundActor = actor;
+            break;
+          }
+        }
+      }
+      
+      if (foundActor) {
+        const wrappedActor = wrapKingdomActor(foundActor);
+        kingdomActor.set(wrappedActor);
+        
+        // Re-setup the Foundry sync hooks
+        setupFoundrySync();
+        
+        // Also update the viewing phase to match current phase
+        const kingdom = wrappedActor.getKingdomData?.();
+        if (kingdom?.currentPhase) {
+          viewingPhase.set(kingdom.currentPhase);
+        }
+        
+        logger.info('🔥 [KingdomStore] Store re-initialized after HMR');
+      } else {
+        logger.warn('[KingdomStore] No kingdom actor found during HMR re-initialization');
+      }
+    } catch (error) {
+      logger.error('[KingdomStore] Failed to re-initialize after HMR:', error);
+    }
+  });
 }

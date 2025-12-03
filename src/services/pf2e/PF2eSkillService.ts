@@ -1,15 +1,22 @@
-// NOTE: Using new simplified ModifierService
-import { createModifierService } from '../ModifierService';
+/**
+ * PF2eSkillService - Pure PF2e system integration
+ * 
+ * This service handles ONLY PF2e system integration:
+ * - Executing skill rolls via skill.roll()
+ * - DC calculation
+ * - Skill slug mapping
+ * - Lore skill selection UI
+ * 
+ * Kingdom-specific modifier logic lives in KingdomModifierService.
+ */
+
 import { get } from 'svelte/store';
 import { kingdomData } from '../../stores/KingdomStore';
 import { PF2eCharacterService } from './PF2eCharacterService';
-import { getSkillPenalty } from '../domain/unrest/UnrestService';
 import { logger } from '../../utils/Logger';
-
-// Temporary variable for reroll modifier processing (loaded from kingdom.turnState during rerolls)
-// NOTE: This is NOT persistent storage - used only during the reroll execution
-// Persistent storage is in kingdom.turnState.actionsPhase.actionInstances (managed by PipelineCoordinator)
-let lastRollModifiers: Array<{ label: string; modifier: number }> | null = null;
+import { rollStateService } from '../roll/RollStateService';
+import { kingdomModifierService } from '../domain/KingdomModifierService';
+import { fromPF2eModifier, toPF2eModifier, type RollModifier } from '../../types/RollModifier';
 
 export interface SkillCheckOptions {
   skillName: string;
@@ -26,6 +33,28 @@ export interface SkillCheckResult {
   roll?: any;
   character?: any;
   error?: string;
+}
+
+/**
+ * Options for executeSkillRoll - pure PF2e integration
+ */
+export interface ExecuteSkillRollOptions {
+  /** The PF2e actor to roll for */
+  actor: any;
+  /** The skill object from actor.skills */
+  skill: any;
+  /** The DC for the check */
+  dc: number;
+  /** Label for the roll (e.g., "Kingdom Action: Claim Hex") */
+  label: string;
+  /** Modifiers to apply to the roll (in RollModifier format) */
+  modifiers: RollModifier[];
+  /** Whether to roll twice and keep higher */
+  rollTwice?: 'keep-higher' | false;
+  /** Callback when roll completes */
+  callback?: (roll: any, outcome: string | null | undefined, message: any, event: Event | null) => Promise<void> | void;
+  /** Extra roll options for PF2e system */
+  extraRollOptions?: string[];
 }
 
 export class PF2eSkillService {
@@ -103,60 +132,55 @@ export class PF2eSkillService {
   }
 
   /**
-   * Convert kingdom modifiers to PF2e format
+   * Map skill name to PF2e system slug
    */
-  private convertToPF2eModifiers(modifiers: any[]): any[] {
+  getSkillSlug(skillName: string): string {
+    return this.skillNameToSlug[skillName.toLowerCase()] || skillName.toLowerCase();
+  }
+
+  /**
+   * Get skill from actor by name
+   */
+  getSkill(actor: any, skillName: string): any {
+    const skillSlug = this.getSkillSlug(skillName);
+    return actor?.skills?.[skillSlug];
+  }
+
+  /**
+   * Convert RollModifier array to PF2e format
+   * Uses proper PF2e Modifier constructor when available
+   */
+  convertToPF2eModifiers(modifiers: RollModifier[]): any[] {
     const pf2eModifiers = [];
     
     for (const mod of modifiers) {
       try {
-        // Create proper PF2e Modifier instances
-        const modifierValue = mod.value || mod.modifier || 0;
-        const modifierLabel = mod.name || mod.label || 'Kingdom Modifier';
-        const modifierType = mod.type || 'circumstance';
-        
         // Use the PF2e Modifier constructor if available
         if (game?.pf2e?.Modifier) {
           const pf2eMod = new game.pf2e.Modifier({
-            label: modifierLabel,
-            modifier: modifierValue,
-            type: modifierType,
-            slug: modifierLabel.toLowerCase().replace(/\s+/g, '-'),
-            ignored: mod.ignored === true,  // Use ignored instead of enabled for settlement modifiers
-            enabled: mod.enabled === true
+            label: mod.label,
+            modifier: mod.value,
+            type: mod.type,
+            slug: mod.label.toLowerCase().replace(/\s+/g, '-'),
+            ignored: mod.ignored,
+            enabled: mod.enabled
           });
           // Force the ignored state after construction (prevents auto-enable by stacking rules)
-          if (mod.ignored === true) {
+          if (mod.ignored) {
             pf2eMod.ignored = true;
             pf2eMod.enabled = false;
-          } else if (mod.enabled === true) {
+          } else if (mod.enabled) {
             pf2eMod.enabled = true;
           }
           pf2eModifiers.push(pf2eMod);
         } else {
-          // Fallback to enhanced object format with test function
-          const pf2eMod = {
-            label: modifierLabel,
-            modifier: modifierValue,
-            type: modifierType,
-            ignored: mod.ignored === true,
-            enabled: mod.enabled === true,
-            test: () => true, // Required by PF2e system
-            slug: modifierLabel.toLowerCase().replace(/\s+/g, '-')
-          };
-          pf2eModifiers.push(pf2eMod);
+          // Fallback to toPF2eModifier helper
+          pf2eModifiers.push(toPF2eModifier(mod));
         }
       } catch (error) {
         logger.warn('Failed to create PF2e modifier:', error, mod);
         // Fallback to basic object with test function
-        pf2eModifiers.push({
-          label: mod.name || mod.label || 'Kingdom Modifier',
-          modifier: mod.value || mod.modifier || 0,
-          type: mod.type || 'circumstance',
-          ignored: mod.ignored === true,
-          enabled: mod.enabled === true,
-          test: () => true
-        });
+        pf2eModifiers.push(toPF2eModifier(mod));
       }
     }
     
@@ -164,152 +188,40 @@ export class PF2eSkillService {
   }
 
   /**
-   * Get kingdom modifiers for skill checks
-   * @param skillName - Skill being checked (for structure bonuses)
-   * @param actionId - Optional action ID to retrieve aid bonuses for that specific action/event
-   * @param checkType - Optional check type to determine which phase aids to check
-   * @param onlySettlementId - Optional settlement ID to only include that specific settlement's modifiers
+   * Execute a PF2e skill roll with provided options
+   * Pure PF2e integration - no kingdom logic
    */
-  private async getKingdomModifiers(skillName: string, actionId?: string, checkType?: 'action' | 'event' | 'incident', onlySettlementId?: string): Promise<any[]> {
-    const currentKingdomState = get(kingdomData);
-    const kingdomModifiers: any[] = [];
+  async executeSkillRoll(options: ExecuteSkillRollOptions): Promise<any> {
+    const { actor, skill, dc, label, modifiers, rollTwice, callback, extraRollOptions } = options;
     
-    // Import structures service for on-the-fly calculation
-    const { structuresService } = await import('../structures');
+    // Convert modifiers to PF2e format
+    const pf2eModifiers = this.convertToPF2eModifiers(modifiers);
     
-    // Add settlement infrastructure bonuses - calculate on-the-fly
-    // Only include settlements with valid map locations
-    // Default to disabled so players can manually enable the relevant settlement
-    if (currentKingdomState?.settlements) {
-      // Filter settlements
-      let mappedSettlements = currentKingdomState.settlements.filter(
-        s => s.location.x !== 0 || s.location.y !== 0
-      );
-      
-      // If onlySettlementId is specified, filter to just that settlement
-      if (onlySettlementId) {
-        mappedSettlements = mappedSettlements.filter(s => s.id === onlySettlementId);
-        console.log('🏘️ [PF2eSkillService] Filtering to settlement:', onlySettlementId);
-      }
-      
-      for (const settlement of mappedSettlements) {
-        // Calculate skill bonuses on-the-fly from structures
-        if (settlement.structureIds && settlement.structureIds.length > 0) {
-          const bonusMap: Record<string, { bonus: number; structureName: string }> = {};
-          
-          for (const structureId of settlement.structureIds) {
-            // Skip damaged structures
-            if (structuresService.isStructureDamaged(settlement, structureId)) {
-              continue;
-            }
-            
-            const structure = structuresService.getStructure(structureId);
-            if (structure?.type === 'skill' && structure.effects.skillsSupported) {
-              const bonus = structure.effects.skillBonus || 0;
-              for (const skill of structure.effects.skillsSupported) {
-                const currentBonus = bonusMap[skill]?.bonus || 0;
-                if (bonus > currentBonus) {
-                  bonusMap[skill] = {
-                    bonus,
-                    structureName: structure.name
-                  };
-                }
-              }
-            }
-          }
-          
-          // Add modifier for this settlement if it has a bonus for this skill
-          if (bonusMap[skillName]) {
-            kingdomModifiers.push({
-              name: `${settlement.name} ${bonusMap[skillName].structureName}`,
-              value: bonusMap[skillName].bonus,
-              type: 'circumstance',
-              ignored: true  // Set to false when rolling from specific settlement
-            });
-          }
-        }
-      }
-    }
+    // Log modifiers for debugging
+    console.log('🔧 [PF2eSkillService.executeSkillRoll] Modifier count:', pf2eModifiers.length);
+    pf2eModifiers.forEach((mod, index) => {
+      console.log(`  [${index}] "${mod.label}" → enabled: ${mod.enabled}, ignored: ${mod.ignored}, modifier: ${mod.modifier}, type: ${mod.type}`);
+    });
     
-    // Add unrest penalty if applicable using centralized service
-    const unrest = currentKingdomState?.unrest || 0;
-    const penalty = getSkillPenalty(unrest);
+    // Execute the PF2e skill roll
+    const rollResult = await skill.roll({
+      dc: { value: dc },
+      label,
+      modifiers: pf2eModifiers,
+      rollTwice: rollTwice || false,
+      skipDialog: false,
+      callback,
+      extraRollOptions: extraRollOptions || []
+    });
     
-    if (penalty < 0) {
-      kingdomModifiers.push({
-        name: 'Unrest Penalty',
-        value: penalty,
-        type: 'circumstance',
-        enabled: true
-      });
-    }
-    
-    // Add aid bonuses based on check type
-    if (actionId && currentKingdomState?.turnState) {
-      let aids: any[] = [];
-      
-      // Check for event aids
-      if (checkType === 'event' && currentKingdomState.turnState.eventsPhase?.activeAids) {
-        aids = currentKingdomState.turnState.eventsPhase.activeAids.filter(
-          aid => aid.targetActionId === actionId
-        );
-      }
-      // Check for action aids
-      else if (currentKingdomState.turnState.actionsPhase?.activeAids) {
-        aids = currentKingdomState.turnState.actionsPhase.activeAids.filter(
-          aid => aid.targetActionId === actionId
-        );
-      }
-      
-      for (const aid of aids) {
-        if (aid.bonus > 0) {
-          kingdomModifiers.push({
-            name: `Aid from ${aid.characterName} (${aid.skillUsed})`,
-            value: aid.bonus,
-            type: 'circumstance',
-            enabled: true
-          });
-        }
-      }
-    }
-    
-    return kingdomModifiers;
-  }
-
-  /**
-   * Check if an action/event has a critical success aid that grants keep higher
-   * @param actionId - The action/event ID to check
-   * @param checkType - The type of check to determine which phase aids to check
-   * @returns true if the check should use rollTwice: "keep-higher"
-   */
-  private shouldUseKeepHigher(actionId?: string, checkType?: 'action' | 'event' | 'incident'): boolean {
-    if (!actionId) return false;
-    
-    const currentKingdomState = get(kingdomData);
-    if (!currentKingdomState?.turnState) return false;
-    
-    let aids: any[] = [];
-    
-    // Check for event aids
-    if (checkType === 'event' && currentKingdomState.turnState.eventsPhase?.activeAids) {
-      aids = currentKingdomState.turnState.eventsPhase.activeAids.filter(
-        aid => aid.targetActionId === actionId
-      );
-    }
-    // Check for action aids
-    else if (currentKingdomState.turnState.actionsPhase?.activeAids) {
-      aids = currentKingdomState.turnState.actionsPhase.activeAids.filter(
-        aid => aid.targetActionId === actionId
-      );
-    }
-    
-    // Return true if any aid grants keep higher
-    return aids.some(aid => aid.grantKeepHigher);
+    return rollResult;
   }
 
   /**
    * Generic kingdom skill check function with modifier support
    * Used for all kingdom-related skill checks (actions, events, incidents)
+   * 
+   * @deprecated Use PipelineCoordinator with KingdomModifierService and executeSkillRoll instead
    */
   async performKingdomSkillCheck(
     skillName: string,
@@ -318,12 +230,11 @@ export class PF2eSkillService {
     checkId: string,
     checkEffects?: any,
     actionId?: string,  // Optional action ID for aid bonuses
-    callback?: (roll: any, outcome: string | null | undefined, message: any, event: Event | null) => Promise<void> | void,  // Callback for PF2e native callback pattern
+    callback?: (roll: any, outcome: string | null | undefined, message: any, event: Event | null) => Promise<void> | void,
     isReroll?: boolean,  // Only apply stored modifiers on rerolls
-    instanceId?: string  // NEW: Instance ID for loading modifiers on reroll
+    instanceId?: string  // Instance ID for loading modifiers on reroll
   ): Promise<any> {
     try {
-
       // Get or select character
       let actor = this.characterService.getCurrentUserCharacter();
       
@@ -336,7 +247,7 @@ export class PF2eSkillService {
       }
       
       // Map skill name to system slug
-      const skillSlug = this.skillNameToSlug[skillName.toLowerCase()] || skillName.toLowerCase();
+      const skillSlug = this.getSkillSlug(skillName);
       let skill = actor?.skills?.[skillSlug];
       
       // Special handling for lore skills - let user select which lore to use
@@ -354,8 +265,6 @@ export class PF2eSkillService {
       
       // After lore selection, verify we have a skill
       if (!skill) {
-        // For lore, we've already handled the case above - this shouldn't happen
-        // For other skills, this might be an issue with skill mapping
         logger.error(`❌ [PF2eSkillService] Character ${actor.name} doesn't have skill '${skillName}' (slug: ${skillSlug}).`);
         ui.notifications?.error(`${actor.name} doesn't have the ${skillName} skill.`);
         return null; // Cancel the roll
@@ -367,122 +276,69 @@ export class PF2eSkillService {
       
       console.log('🎮 [PF2eSkillService] checkEffects received:', checkEffects);
       
-      // Get kingdom modifiers (including aids for this action/event)
-      // Pass onlySettlementId if specified in checkEffects
-      const kingdomModifiers = await this.getKingdomModifiers(
-        skillName, 
-        actionId || checkId, 
+      // Get kingdom modifiers from KingdomModifierService
+      const kingdomModifiers = kingdomModifierService.getModifiersForCheck({
+        skillName,
+        actionId: actionId || checkId,
         checkType,
-        checkEffects?.onlySettlementId
-      );
+        onlySettlementId: checkEffects?.onlySettlementId,
+        enabledSettlement: checkEffects?.enabledSettlement,
+        enabledStructure: checkEffects?.enabledStructure
+      });
       
       console.log('🔍 [PF2eSkillService] Kingdom modifiers:', kingdomModifiers.map(m => ({ 
-        name: m.name, 
+        label: m.label, 
         value: m.value, 
         enabled: m.enabled, 
         ignored: m.ignored 
       })));
       
-      // If checkEffects contains settlement/structure info, enable that specific modifier
-      if (checkEffects?.enabledSettlement && checkEffects?.enabledStructure) {
-        const targetModifierName = `${checkEffects.enabledSettlement} ${checkEffects.enabledStructure}`;
-        console.log('🎯 [PF2eSkillService] Trying to enable modifier:', targetModifierName);
-        
-        let found = false;
-        for (const mod of kingdomModifiers) {
-          if (mod.name === targetModifierName) {
-            mod.ignored = false;  // Un-ignore this specific modifier
-            found = true;
-            console.log('✅ [PF2eSkillService] Enabled modifier:', mod.name);
-            break;
-          }
-        }
-        
-        if (!found) {
-          console.warn('⚠️ [PF2eSkillService] Could not find modifier to enable:', targetModifierName);
-          console.log('Available modifiers:', kingdomModifiers.map(m => m.name));
-        }
-      }
-      
-      // Apply stored modifiers ONLY on rerolls
+      // Apply stored modifiers ONLY on rerolls - use RollStateService
       if (isReroll && instanceId) {
         const currentKingdomState = get(kingdomData);
+        const currentTurn = currentKingdomState?.currentTurn || 0;
         
-        console.log(`🔍 [PF2eSkillService] Reroll detected - attempting to load modifiers for instance ${instanceId}`);
-        console.log(`🔍 [PF2eSkillService] Available instances:`, Object.keys(currentKingdomState.turnState?.actionsPhase?.actionInstances || {}));
+        console.log(`🔍 [PF2eSkillService] Reroll detected - using RollStateService to load modifiers for instance ${instanceId}`);
         
-        // ✅ DIRECT LOOKUP: Load modifiers by instanceId (unique per execution)
-        const actionInstance = currentKingdomState.turnState?.actionsPhase?.actionInstances?.[instanceId];
+        // Use RollStateService for modifier retrieval (turn-aware)
+        const storedModifiers = await rollStateService.getRollModifiers(instanceId, currentTurn);
         
-        if (actionInstance?.rollModifiers && actionInstance.rollModifiers.length > 0) {
-          console.log(`✅ [PF2eSkillService] Found stored modifiers for instance ${instanceId}:`, actionInstance.rollModifiers.length);
-          console.log(`🔍 [PF2eSkillService] Stored modifiers details:`,
-            actionInstance.rollModifiers.map(m => ({ label: m.label, modifier: m.modifier, type: (m as any).type, enabled: m.enabled, ignored: m.ignored }))
-          );
-          lastRollModifiers = actionInstance.rollModifiers;
+        if (storedModifiers && storedModifiers.length > 0) {
+          console.log(`✅ [PF2eSkillService] Found ${storedModifiers.length} stored modifiers via RollStateService`);
           
-          // ✅ NO CLEARING: Modifiers persist until turn cleanup (turn manager clears entire turnState)
-          // This allows multiple rerolls of the same action if needed
+          // Track which labels we've matched
+          const matchedLabels = new Set<string>();
+          
+          // First pass: enable existing modifiers that match by label
+          for (const mod of kingdomModifiers) {
+            const previousMod = storedModifiers.find(m => m.label === mod.label);
+            if (previousMod) {
+              mod.enabled = true;
+              mod.ignored = false;
+              matchedLabels.add(previousMod.label);
+              console.log(`  ✅ Matched kingdom modifier "${mod.label}" with stored modifier "${previousMod.label}"`);
+            }
+          }
+          
+          // Second pass: add ALL modifiers from previous roll that we haven't matched
+          for (const prevMod of storedModifiers) {
+            if (!matchedLabels.has(prevMod.label)) {
+              kingdomModifiers.push({
+                label: prevMod.label,
+                value: prevMod.value,
+                type: prevMod.type || 'circumstance',
+                enabled: true,
+                ignored: false
+              });
+              console.log(`  ✨ Adding unmatched modifier from previous roll: "${prevMod.label}" = ${prevMod.value} (type: ${prevMod.type || 'circumstance'})`);
+            }
+          }
+          
+          console.log(`🔄 [PF2eSkillService] Restored ${storedModifiers.length} modifiers (${matchedLabels.size} matched, ${storedModifiers.length - matchedLabels.size} added)`);
         } else {
-          console.error(`❌ [PF2eSkillService] No stored modifiers found for reroll! Instance ${instanceId}`);
-          console.log(`🔍 [PF2eSkillService] Checking actionInstance:`, actionInstance);
-          lastRollModifiers = null;
+          console.error(`❌ [PF2eSkillService] No stored modifiers found for reroll via RollStateService! Instance ${instanceId}`);
         }
       }
-      
-      // Apply modifiers if found (only happens on rerolls now)
-      if (lastRollModifiers && lastRollModifiers.length > 0) {
-        console.log('🔄 [PF2eSkillService] Applying stored modifiers from previous roll:', lastRollModifiers.length);
-        
-        // Track which labels we've matched
-        const matchedLabels = new Set<string>();
-        
-        // First pass: enable existing modifiers that match by label
-        for (const mod of kingdomModifiers) {
-          const previousMod = lastRollModifiers.find(m => m.label === mod.name);
-          if (previousMod) {
-            mod.enabled = true;
-            matchedLabels.add(previousMod.label);  // Track by previousMod.label (what we matched against)
-            console.log(`  ✅ Matched kingdom modifier "${mod.name}" with stored modifier "${previousMod.label}"`);
-          }
-        }
-        
-        // Second pass: add ALL modifiers from previous roll that we haven't matched
-        // This includes:
-        // - Custom modifiers added by the user
-        // - PF2e system modifiers (ability, proficiency, etc.)
-        // - Any other modifiers from the previous roll
-        for (const prevMod of lastRollModifiers) {
-          if (!matchedLabels.has(prevMod.label)) {
-            // Add this modifier to kingdomModifiers so it gets converted and passed to PF2e
-            // ✅ CRITICAL: Preserve original modifier type (not all modifiers are circumstance)
-            kingdomModifiers.push({
-              name: prevMod.label,
-              value: prevMod.modifier,
-              type: (prevMod as any).type || 'circumstance',  // Use stored type, fallback to circumstance
-              enabled: true
-            });
-            console.log(`  ✨ Adding unmatched modifier from previous roll: "${prevMod.label}" = ${prevMod.modifier} (type: ${(prevMod as any).type || 'circumstance'})`);
-          }
-        }
-        
-        console.log(`🔄 [PF2eSkillService] Restored ${lastRollModifiers.length} modifiers (${matchedLabels.size} matched, ${lastRollModifiers.length - matchedLabels.size} added)`);
-        
-        // Clear stored modifiers after applying (prevent reuse on next action)
-        lastRollModifiers = null;
-      }
-      
-      // Convert to PF2e format
-      const pf2eModifiers = this.convertToPF2eModifiers(kingdomModifiers);
-      
-      // Log each modifier individually to avoid console collapsing
-      console.log('🔧 [PF2eSkillService] After conversion - Modifier count:', pf2eModifiers.length);
-      pf2eModifiers.forEach((mod, index) => {
-        console.log(`  [${index}] "${mod.label}" → enabled: ${mod.enabled}, ignored: ${mod.ignored}, modifier: ${mod.modifier}, type: ${mod.type}`);
-      });
-      
-      // Get skill proficiency rank for aid bonuses
-      const proficiencyRank = skill?.rank || 0; // 0=untrained, 1=trained, 2=expert, 3=master, 4=legendary
       
       // Determine label based on check type
       const labelPrefix = checkType === 'action' ? 'Kingdom Action' : 
@@ -490,71 +346,35 @@ export class PF2eSkillService {
                          'Kingdom Incident';
       
       // Check if we should use rollTwice (keep higher) for this action/event
-      const useKeepHigher = this.shouldUseKeepHigher(actionId || checkId, checkType);
+      const useKeepHigher = kingdomModifierService.hasKeepHigherAid(actionId || checkId, checkType);
       
-      // ✅ WRAP CALLBACK: Store modifiers BEFORE calling pipeline callback
-      // This centralizes ALL reroll logic in PF2eSkillService
+      // Create wrapped callback for modifier storage
+      const currentKingdomState = get(kingdomData);
+      const currentTurn = currentKingdomState?.currentTurn || 0;
+      
       const wrappedCallback = async (roll: any, outcome: string | null | undefined, message: any, event: Event | null) => {
-        // ✅ REROLL SUPPORT: Store modifiers ONLY on initial roll (not on rerolls)
-        // KEY: Use instanceId (unique per execution) for complete isolation
+        // Store modifiers ONLY on initial roll (not on rerolls)
         if (!isReroll && instanceId) {
           // Extract modifiers from PF2e message
           const allModifiers = (message as any)?.flags?.pf2e?.modifiers || [];
           console.log(`🔍 [PF2eSkillService.wrappedCallback] Extracted ${allModifiers.length} total modifiers from PF2e message for instance ${instanceId}`);
           
-          // Log ALL modifiers before filtering
-          if (allModifiers.length > 0) {
-            console.log(`🔍 [PF2eSkillService.wrappedCallback] ALL modifiers (before filtering):`, 
-              allModifiers.map((m: any) => ({ label: m.label, type: m.type, modifier: m.modifier, enabled: m.enabled, ignored: m.ignored }))
+          // Filter out ability and proficiency (recalculated by PF2e on reroll)
+          const filteredModifiers = allModifiers.filter((mod: any) => mod.type !== 'ability' && mod.type !== 'proficiency');
+          console.log(`🔍 [PF2eSkillService.wrappedCallback] After filtering: ${filteredModifiers.length} non-ability/non-proficiency modifiers`);
+          
+          if (filteredModifiers.length > 0) {
+            // Convert to RollModifier format and store via RollStateService
+            const rollModifiers: RollModifier[] = filteredModifiers.map((mod: any) => fromPF2eModifier(mod));
+            
+            // Delegate to RollStateService for storage
+            await rollStateService.storeRollModifiers(
+              instanceId,
+              currentTurn,
+              actionId || checkId,
+              rollModifiers
             );
           }
-          
-          const modifiers = allModifiers.filter((mod: any) => mod.type !== 'ability' && mod.type !== 'proficiency');
-          console.log(`🔍 [PF2eSkillService.wrappedCallback] After filtering: ${modifiers.length} non-ability/non-proficiency modifiers`);
-          
-          if (modifiers.length > 0) {
-            console.log(`🔍 [PF2eSkillService.wrappedCallback] FILTERED modifiers (to be stored):`,
-              modifiers.map((m: any) => ({ label: m.label, type: m.type, modifier: m.modifier, enabled: m.enabled, ignored: m.ignored }))
-            );
-            
-            const { getKingdomActor } = await import('../../stores/KingdomStore');
-            const actor = getKingdomActor();
-            
-            if (actor) {
-              await actor.updateKingdomData((kingdom: any) => {
-                // Initialize actionInstances if needed
-                if (!kingdom.turnState) kingdom.turnState = {};
-                if (!kingdom.turnState.actionsPhase) kingdom.turnState.actionsPhase = { activeAids: [] };
-                if (!kingdom.turnState.actionsPhase.actionInstances) {
-                  kingdom.turnState.actionsPhase.actionInstances = {};
-                }
-                
-                // ✅ KEY: Store by instanceId (unique per execution) for complete isolation
-                kingdom.turnState.actionsPhase.actionInstances[instanceId] = {
-                  instanceId: instanceId,
-                  actionId: actionId || checkId,
-                  rollModifiers: modifiers.map((mod: any) => ({
-                    label: mod.label || '',
-                    modifier: mod.modifier || 0,
-                    type: mod.type || 'circumstance',
-                    enabled: mod.enabled ?? true,
-                    ignored: mod.ignored ?? false
-                  })),
-                  timestamp: Date.now()
-                };
-              });
-              
-              console.log(`💾 [PF2eSkillService] Successfully stored ${modifiers.length} modifiers for instance ${instanceId}`);
-            } else {
-              console.error(`❌ [PF2eSkillService] No kingdom actor found - cannot store modifiers!`);
-            }
-          } else {
-            console.log(`ℹ️ [PF2eSkillService] No modifiers to store for instance ${instanceId} (all were ability/proficiency)`);
-          }
-        } else if (isReroll) {
-          console.log(`🔄 [PF2eSkillService] This is a reroll (instance ${instanceId}) - not storing modifiers (already stored from initial roll)`);
-        } else {
-          console.warn(`⚠️ [PF2eSkillService] wrappedCallback called without instanceId - cannot store modifiers!`);
         }
         
         // Call the pipeline callback (if provided)
@@ -563,21 +383,20 @@ export class PF2eSkillService {
         }
       };
       
-      // Trigger the PF2e system roll with DC and modifiers
-      const rollResult = await skill.roll({
-        dc: { value: dc },
+      // Execute the roll using the new method
+      return await this.executeSkillRoll({
+        actor,
+        skill,
+        dc,
         label: `${labelPrefix}: ${checkName}`,
-        modifiers: pf2eModifiers,
+        modifiers: kingdomModifiers,
         rollTwice: useKeepHigher ? 'keep-higher' : false,
-        skipDialog: false,
-        callback: wrappedCallback,  // ✅ Use wrapped callback for modifier storage
+        callback: wrappedCallback,
         extraRollOptions: [
           `${checkType}:kingdom`,
           `${checkType}:kingdom:${checkName.toLowerCase().replace(/\s+/g, '-')}`
         ]
       });
-
-      return rollResult;
       
     } catch (error) {
       logger.error(`❌ [PF2eSkillService] Failed to perform kingdom ${checkType} roll:`, error);
@@ -588,6 +407,7 @@ export class PF2eSkillService {
 
   /**
    * Legacy wrapper for backward compatibility with action rolls
+   * @deprecated Use PipelineCoordinator instead
    */
   async performKingdomActionRoll(
     actor: any,
@@ -596,7 +416,7 @@ export class PF2eSkillService {
     actionName: string,
     actionId: string,
     actionEffects: any,
-    targetActionId?: string  // NEW: Optional parameter for aid rolls to specify the action being aided
+    targetActionId?: string
   ): Promise<any> {
     // If an actor was provided, temporarily set it as the user's character
     const originalCharacter = this.characterService.getCurrentUserCharacter();
@@ -605,14 +425,13 @@ export class PF2eSkillService {
     }
     
     // Perform the skill check
-    // Use targetActionId if provided (for aid rolls), otherwise use actionId
     const result = await this.performKingdomSkillCheck(
       skillName,
       'action',
       actionName,
       actionId,
       actionEffects,
-      targetActionId || actionId  // Pass the target action ID for aid bonuses
+      targetActionId || actionId
     );
     
     // Restore original character if we changed it
@@ -630,7 +449,6 @@ export class PF2eSkillService {
     if (!character?.skills) {
       return {};
     }
-
     return character.skills;
   }
 
@@ -639,7 +457,7 @@ export class PF2eSkillService {
    */
   isCharacterProficientInSkill(character: any, skill: string): boolean {
     const skills = this.getCharacterSkills(character);
-    const skillSlug = this.skillNameToSlug[skill.toLowerCase()] || skill.toLowerCase();
+    const skillSlug = this.getSkillSlug(skill);
     const skillData = skills[skillSlug];
     
     if (!skillData) {
@@ -655,7 +473,7 @@ export class PF2eSkillService {
    */
   getCharacterSkillModifier(character: any, skill: string): number {
     const skills = this.getCharacterSkills(character);
-    const skillSlug = this.skillNameToSlug[skill.toLowerCase()] || skill.toLowerCase();
+    const skillSlug = this.getSkillSlug(skill);
     const skillData = skills[skillSlug];
     
     if (!skillData) {
@@ -669,7 +487,7 @@ export class PF2eSkillService {
    * Show a dialog to select which lore skill to use
    * Uses the standard LoreSelectionDialog Svelte component
    */
-  private async showLoreSelectionDialog(loreItems: any[]): Promise<any | null> {
+  async showLoreSelectionDialog(loreItems: any[]): Promise<any | null> {
     return new Promise(async (resolve) => {
       // Dynamically import the dialog component
       const { default: LoreSelectionDialog } = await import('../../view/kingdom/components/LoreSelectionDialog.svelte');
@@ -706,6 +524,7 @@ export class PF2eSkillService {
 
 // Legacy function exports for backward compatibility
 export const pf2eSkillService = PF2eSkillService.getInstance();
+
 export const performKingdomSkillCheck = (
   skillName: string,
   checkType: 'action' | 'event' | 'incident',

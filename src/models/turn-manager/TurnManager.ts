@@ -252,6 +252,9 @@ export class TurnManager {
             kingdom.currentPhaseStepIndex = 0;
             kingdom.oncePerTurnActions = [];
             
+            // ✅ Reset turn-scoped penalties
+            kingdom.leadershipPenalty = 0;
+            
             // ✅ Reset turnState for new turn - clears all phase-specific data
             // including completionsByAction, activeAids, appliedOutcomes, factionsAidedThisTurn, etc.
             kingdom.turnState = createDefaultTurnState(kingdom.currentTurn);

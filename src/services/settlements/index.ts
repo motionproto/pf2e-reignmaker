@@ -452,9 +452,20 @@ export class SettlementService {
       
       // Calculate road connectivity (if not capital)
       if (!s.isCapital) {
-        const capital = k.settlements.find(
-          set => set.isCapital && set.ownedBy === s.ownedBy
+        // Get this settlement's hex ownership (single source of truth)
+        const currentHex = k.hexes.find((h: any) => 
+          h.row === s.location.x && h.col === s.location.y
         );
+        const currentOwner = currentHex?.claimedBy;
+        
+        // Find capital of the same faction (by hex ownership)
+        const capital = k.settlements.find((set: Settlement) => {
+          if (!set.isCapital) return false;
+          const setHex = k.hexes.find((h: any) => 
+            h.row === set.location.x && h.col === set.location.y
+          );
+          return setHex?.claimedBy === currentOwner;
+        });
         
         s.connectedByRoads = capital
           ? roadConnectivityService.isConnectedToCapital(s, capital, k)

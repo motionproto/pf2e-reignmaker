@@ -19,11 +19,11 @@ export class AdjustFactionHandler extends BaseGameCommandHandler {
     
     // Get factionId from command OR from explicit context OR from metadata
     const factionId = command.factionId || 
-                      ctx.pendingState.factionId || 
-                      ctx.metadata.factionId;
+                      ctx.pendingState?.factionId || 
+                      ctx.metadata?.factionId;
     
-    const factionName = ctx.pendingState.factionName ||
-                        ctx.metadata.factionName || 
+    const factionName = ctx.pendingState?.factionName ||
+                        ctx.metadata?.factionName || 
                         'faction';
     
     if (!factionId) {

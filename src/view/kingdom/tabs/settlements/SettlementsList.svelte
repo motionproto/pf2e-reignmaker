@@ -98,13 +98,12 @@
    async function handleCreateSettlement() {
       try {
 
-         // Create a new settlement at (0,0) - unlinked, owned by current faction
+         // Create a new settlement at (0,0) - unlinked
+         // Note: Ownership is derived from hex.claimedBy, not settlement.ownedBy
          const newSettlement = createSettlement(
             'New Settlement',
             { x: 0, y: 0 },
-            SettlementTier.VILLAGE,
-            undefined, // kingmakerLocation
-            get(currentFaction) // Use current faction
+            SettlementTier.VILLAGE
          );
 
          // Add to kingdom
@@ -141,13 +140,12 @@
             break;
       }
       
-      // Create a settlement at the hex location, owned by current faction
+      // Create a settlement at the hex location
+      // Note: Ownership is derived from hex.claimedBy, not settlement.ownedBy
       const newSettlement = createSettlement(
          hex.name || 'New Settlement',  // Use feature name if available
          { x: hex.x, y: hex.y },
-         hex.tier,
-         undefined, // kingmakerLocation
-         get(currentFaction) // Use current faction
+         hex.tier
       );
       
       // Set the appropriate level for the tier

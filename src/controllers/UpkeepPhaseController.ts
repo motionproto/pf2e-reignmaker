@@ -374,6 +374,71 @@ export async function createUpkeepPhaseController() {
       if (totalUnrest > 0) {
 
       }
+      
+      // Check for unsupported armies and trigger morale checks
+      await this.processUnsupportedArmies();
+    },
+    
+    /**
+     * Process unsupported armies - increment turnsUnsupported and trigger morale checks
+     * Called at the end of processMilitarySupport
+     */
+    async processUnsupportedArmies() {
+      const { kingdomData, updateKingdom } = await import('../stores/KingdomStore');
+      const { PLAYER_KINGDOM } = await import('../types/ownership');
+      const kingdom = get(kingdomData);
+      
+      // Find player armies that are unsupported and not exempt from upkeep
+      const playerArmies = (kingdom.armies || []).filter((a: any) => 
+        a.ledBy === PLAYER_KINGDOM && !a.exemptFromUpkeep
+      );
+      
+      const unsupportedArmies = playerArmies.filter((a: any) => !a.isSupported);
+      
+      if (unsupportedArmies.length === 0) {
+        logger.info('✅ [UpkeepPhaseController] All armies are supported');
+        return;
+      }
+      
+      logger.warn(`⚠️ [UpkeepPhaseController] ${unsupportedArmies.length} unsupported armies found`);
+      
+      // Increment turnsUnsupported for each unsupported army
+      await updateKingdom((k: any) => {
+        for (const unsupported of unsupportedArmies) {
+          const army = k.armies.find((a: any) => a.id === unsupported.id);
+          if (army) {
+            army.turnsUnsupported = (army.turnsUnsupported || 0) + 1;
+            logger.info(`📉 [UpkeepPhaseController] ${army.name} now unsupported for ${army.turnsUnsupported} turn(s)`);
+          }
+        }
+      });
+      
+      // Trigger morale checks for unsupported armies
+      const armyIds = unsupportedArmies.map((a: any) => a.id);
+      
+      try {
+        const { armyService } = await import('../services/army');
+        
+        // Show notification before opening morale panel
+        const ui = (globalThis as any).ui;
+        ui?.notifications?.warn(`${unsupportedArmies.length} unsupported ${unsupportedArmies.length === 1 ? 'army requires' : 'armies require'} morale check!`);
+        
+        // Open morale check panel with custom title for unsupported armies
+        const results = await armyService.checkArmyMorale(armyIds, { title: 'Unsupported Armies' });
+        
+        // Log results
+        const disbanded = results.filter(r => r.disbanded).length;
+        const survived = results.filter(r => !r.disbanded).length;
+        
+        if (disbanded > 0) {
+          logger.warn(`💀 [UpkeepPhaseController] ${disbanded} army/armies disbanded from failed morale checks`);
+        }
+        if (survived > 0) {
+          logger.info(`✅ [UpkeepPhaseController] ${survived} army/armies passed morale checks`);
+        }
+      } catch (error) {
+        logger.error('❌ [UpkeepPhaseController] Failed to process morale checks:', error);
+      }
     },
 
     /**

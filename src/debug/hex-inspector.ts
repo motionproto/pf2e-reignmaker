@@ -135,7 +135,7 @@ class HexInspector {
         console.log('   ID:', settlement.id);
         console.log('   Tier:', settlement.tier);
         console.log('   Level:', settlement.level);
-        console.log('   Owned By:', settlement.ownedBy || 'unknown');
+        console.log('   Owned By (hex):', hexAny.claimedBy ?? 'unclaimed');
       }
       
       // Adjacent hexes (using Foundry API)

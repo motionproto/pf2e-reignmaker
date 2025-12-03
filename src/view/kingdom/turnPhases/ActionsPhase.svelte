@@ -356,41 +356,9 @@
     }
   }
   
-  // Handle performReroll from OutcomeDisplay (via BaseCheckCard)
-  async function handlePerformReroll(event: CustomEvent, action: any) {
-    const { skill, previousFame } = event.detail;
-
-    // ✅ GET EXISTING INSTANCE ID: Reroll within same pipeline context
-    const instanceId = currentActionInstances.get(action.id);
-    
-    if (!instanceId) {
-      console.error(`❌ [ActionsPhase] No instance found for reroll: ${action.id}`);
-      return;
-    }
-    
-    console.log(`🔄 [ActionsPhase] Rerolling from Step 3 (same pipeline): ${instanceId}`);
-    
-    // 🔄 Reroll using PipelineCoordinator.rerollFromStep3()
-    if (!pipelineCoordinator) {
-      throw new Error('PipelineCoordinator not initialized');
-    }
-    
-    try {
-      // Rewind to Step 3 and re-execute with SAME context
-      // This preserves metadata, modifiers, and all pipeline state
-      await pipelineCoordinator.rerollFromStep3(instanceId);
-      
-      console.log(`✅ [ActionsPhase] Reroll complete for ${action.id}`);
-      
-    } catch (error) {
-      console.error(`❌ [ActionsPhase] Reroll failed for ${action.id}:`, error);
-      // Restore fame if the roll failed
-      const { restoreFameAfterFailedReroll } = await import('../../../controllers/shared/RerollHelpers');
-      if (previousFame !== undefined) {
-        await restoreFameAfterFailedReroll(previousFame);
-      }
-    }
-  }
+  // NOTE: Reroll handling has been moved to OutcomeDisplay.svelte
+  // OutcomeDisplay now calls PipelineCoordinator.rerollFromStep3() directly
+  // This eliminates duplicate reroll handlers across phase components
   
   // Handle canceling an action result
   async function handleActionResultCancel(actionId: string) {
@@ -536,7 +504,6 @@
         {hideUntrainedSkills}
         on:toggle={(e) => toggleAction(e.detail.actionId)}
         on:executeSkill={(e) => handleExecuteSkill(e.detail.event, e.detail.action)}
-        on:performReroll={(e) => handlePerformReroll(e.detail.event, e.detail.action)}
         on:aid={handleAid}
         on:primary={applyActionEffects}
         on:cancel={(e) => handleActionResultCancel(e.detail.actionId)}

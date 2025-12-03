@@ -7,8 +7,29 @@ import type { Army } from '../../models/Army';
 import type { Settlement } from '../../models/Settlement';
 import { SettlementTierConfig } from '../../models/Settlement';
 import type { KingdomData } from '../../actors/KingdomActor';
-import { PLAYER_KINGDOM } from '../../types/ownership';
+import { PLAYER_KINGDOM, type OwnershipValue } from '../../types/ownership';
 import { logger } from '../../utils/Logger';
+import { positionToOffset, offsetToHexId } from '../hex-selector/coordinates';
+
+/**
+ * Represents an army's location on the scene map
+ */
+export interface ArmyLocation {
+  /** Hex coordinate ID in "row.col" format (e.g., "50.18") */
+  hexId: string;
+  /** Army name */
+  name: string;
+  /** Army type (cavalry, infantry, etc.) */
+  type: string | undefined;
+  /** Army level */
+  level: number;
+  /** Faction leading this army (PLAYER_KINGDOM or faction ID) */
+  ledBy: OwnershipValue;
+  /** Internal army ID */
+  armyId: string;
+  /** Foundry actor ID */
+  actorId: string;
+}
 
 export class ArmyService {
   /**
@@ -380,6 +401,7 @@ export class ArmyService {
     refund: number;
     actorId?: string;
   }> {
+    logger.info(`🔧 [ArmyService] _disbandArmyInternal called: armyId=${armyId}, deleteActor=${deleteActor}`);
 
     const actor = getKingdomActor();
     if (!actor) {
@@ -398,13 +420,18 @@ export class ArmyService {
     }
     
     const actorId = army.actorId;
+    logger.info(`🔧 [ArmyService] Found army: ${army.name}, actorId: ${actorId}`);
     
     // Remove all tokens for this army from all scenes
     if (actorId) {
+      logger.info(`🗑️ [ArmyService] Removing tokens for actorId: ${actorId}`);
       await this._removeArmyTokensFromAllScenes(actorId, army.name);
+    } else {
+      logger.warn(`⚠️ [ArmyService] No actorId found for army ${army.name}, skipping token removal`);
     }
     
     // Remove army from kingdom (no refund)
+    logger.info(`🗑️ [ArmyService] Removing army from kingdom data`);
     await updateKingdom((kingdom: KingdomData) => {
       kingdom.armies = kingdom.armies.filter((a: Army) => a.id !== armyId);
       
@@ -419,11 +446,15 @@ export class ArmyService {
       const game = (globalThis as any).game;
       const npcActor = game?.actors?.get(actorId);
       
+      logger.info(`🗑️ [ArmyService] Attempting to delete actor: ${actorId}, found: ${!!npcActor}`);
+      
       if (npcActor) {
         // Remove metadata before deleting to prevent hook interference
         await npcActor.unsetFlag('pf2e-reignmaker', 'army-metadata');
         await npcActor.delete();
         logger.info(`🗑️ [ArmyService] Deleted actor ${npcActor.name} with army`);
+      } else {
+        logger.warn(`⚠️ [ArmyService] Actor ${actorId} not found in game.actors`);
       }
     } else if (!deleteActor && actorId) {
       // Unlink the actor (remove metadata only)
@@ -435,6 +466,7 @@ export class ArmyService {
       }
     }
 
+    logger.info(`✅ [ArmyService] Disband complete for ${army.name}`);
     return {
       armyName: army.name,
       refund: 0,
@@ -794,6 +826,105 @@ export class ArmyService {
   }
   
   /**
+   * Update army faction ownership (GM only)
+   * 
+   * @param armyId - Army ID
+   * @param newFactionId - New faction ID (e.g., 'player', or a faction UUID)
+   */
+  async updateArmyFaction(armyId: string, newFactionId: string): Promise<void> {
+    await updateKingdom((kingdom: KingdomData) => {
+      const army = kingdom.armies?.find((a: Army) => a.id === armyId);
+      if (!army) {
+        throw new Error(`Army not found: ${armyId}`);
+      }
+      
+      const oldFactionId = army.ledBy;
+      
+      // Update faction ownership
+      army.ledBy = newFactionId;
+      army.supportedBy = newFactionId;
+      
+      // If changing to non-player faction, clear settlement support
+      if (newFactionId !== 'player') {
+        // Remove from old settlement's supportedUnits
+        if (army.supportedBySettlementId) {
+          const oldSettlement = kingdom.settlements?.find(s => s.id === army.supportedBySettlementId);
+          if (oldSettlement) {
+            oldSettlement.supportedUnits = oldSettlement.supportedUnits.filter(id => id !== armyId);
+          }
+          army.supportedBySettlementId = null;
+        }
+        // Non-player armies are considered "supported" by their faction
+        army.isSupported = true;
+      } else {
+        // Changing to player - starts unsupported until assigned to settlement
+        army.isSupported = false;
+      }
+      
+      logger.info(`[ArmyService] Updated army "${army.name}" faction from "${oldFactionId}" to "${newFactionId}"`);
+    });
+    
+    // Sync to actor
+    await this.syncArmyToActor(armyId);
+  }
+  
+  /**
+   * Move an army's token to a settlement location.
+   * If the army has no token, creates one at the settlement.
+   * 
+   * @param armyId - Army ID
+   * @param settlement - Settlement with location data
+   */
+  async moveArmyToSettlement(armyId: string, settlement: { id: string; name: string; location: { x: number; y: number } }): Promise<void> {
+    const actor = getKingdomActor();
+    const kingdom = actor?.getKingdomData();
+    
+    if (!kingdom) {
+      throw new Error('No kingdom data available');
+    }
+    
+    const army = kingdom.armies?.find((a: Army) => a.id === armyId);
+    if (!army) {
+      throw new Error(`Army not found: ${armyId}`);
+    }
+    
+    if (!army.actorId) {
+      throw new Error('Army has no linked actor');
+    }
+    
+    const game = (globalThis as any).game;
+    const canvas = (globalThis as any).canvas;
+    const scene = canvas?.scene;
+    
+    if (!scene || !canvas?.grid) {
+      throw new Error('No active scene or canvas available');
+    }
+    
+    // Calculate pixel coordinates for settlement hex
+    const i = settlement.location.x; // row
+    const j = settlement.location.y; // column
+    const center = canvas.grid.getCenterPoint({ i, j });
+    
+    // Check if token already exists on this scene
+    const existingToken = scene.tokens.find((t: any) => t.actorId === army.actorId);
+    
+    if (existingToken) {
+      // Move existing token
+      logger.info(`[ArmyService] Moving existing token for ${army.name} to ${settlement.name} (${center.x}, ${center.y})`);
+      await existingToken.update({
+        x: center.x,
+        y: center.y
+      });
+    } else {
+      // Create new token at settlement
+      logger.info(`[ArmyService] Creating token for ${army.name} at ${settlement.name} (${center.x}, ${center.y})`);
+      await this.placeArmyToken(army.actorId, scene.id, center.x, center.y);
+    }
+    
+    logger.info(`[ArmyService] Army ${army.name} moved to ${settlement.name}`);
+  }
+  
+  /**
    * Update army actor properties (routes through GM via ActionDispatcher)
    * Updates both the actor and syncs changes back to kingdom data
    * 
@@ -1133,6 +1264,89 @@ export class ArmyService {
     }
     
     return { canTrain: true };
+  }
+  
+  /**
+   * Check morale for one or more armies
+   * Opens a floating panel UI for the player to roll morale checks
+   * 
+   * @param armyIds - IDs of armies that need morale checks
+   * @param options - Optional configuration (title for the panel)
+   * @returns Array of morale check results
+   */
+  async checkArmyMorale(armyIds: string[], options?: { title?: string }): Promise<import('../../types/MoraleCheck').MoraleCheckResult[]> {
+    const { armyMoralePanel } = await import('./ArmyMoralePanel');
+    return await armyMoralePanel.checkArmyMorale(armyIds, options);
+  }
+  
+  /**
+   * Get the locations of all armies currently on the active scene
+   * Returns army information with hex coordinates for each army token found
+   * 
+   * @returns Array of army locations with hex coordinates and army details
+   */
+  getArmyLocationsOnScene(): ArmyLocation[] {
+    const canvas = (globalThis as any).canvas;
+    
+    if (!canvas?.scene || !canvas?.tokens) {
+      logger.warn('[ArmyService] Cannot get army locations - canvas not ready');
+      return [];
+    }
+    
+    const armyLocations: ArmyLocation[] = [];
+    const actor = getKingdomActor();
+    const kingdom = actor?.getKingdomData();
+    
+    if (!kingdom?.armies) {
+      logger.info('[ArmyService] No armies in kingdom data');
+      return [];
+    }
+    
+    // Iterate through all tokens on the scene
+    for (const token of canvas.tokens.placeables) {
+      try {
+        const tokenDoc = token.document;
+        const tokenActor = tokenDoc?.actor;
+        
+        if (!tokenActor) continue;
+        
+        // Check if this actor has army metadata
+        const armyMetadata = tokenActor.getFlag('pf2e-reignmaker', 'army-metadata');
+        if (!armyMetadata?.armyId) continue;
+        
+        // Find the corresponding army in kingdom data
+        const army = kingdom.armies.find((a: Army) => a.id === armyMetadata.armyId);
+        if (!army) {
+          logger.warn(`[ArmyService] Token has army metadata but army not found in kingdom: ${armyMetadata.armyId}`);
+          continue;
+        }
+        
+        // Get token center position (tokens are positioned by top-left corner)
+        const gridSize = canvas.grid?.size || 100;
+        const tokenCenterX = tokenDoc.x + (tokenDoc.width * gridSize) / 2;
+        const tokenCenterY = tokenDoc.y + (tokenDoc.height * gridSize) / 2;
+        
+        // Convert position to hex coordinates
+        const offset = positionToOffset(tokenCenterX, tokenCenterY);
+        const hexId = offsetToHexId(offset);
+        
+        armyLocations.push({
+          hexId,
+          name: army.name,
+          type: army.type,
+          level: army.level,
+          ledBy: army.ledBy,
+          armyId: army.id,
+          actorId: army.actorId || tokenActor.id
+        });
+        
+      } catch (error) {
+        logger.error('[ArmyService] Error processing token for army location:', error);
+      }
+    }
+    
+    logger.info(`[ArmyService] Found ${armyLocations.length} army location(s) on scene`);
+    return armyLocations;
   }
 }
 

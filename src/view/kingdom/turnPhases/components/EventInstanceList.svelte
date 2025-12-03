@@ -117,7 +117,6 @@
             on:executeSkill
             on:primary
             on:cancel
-            on:performReroll
             on:ignore
             on:aid
           />

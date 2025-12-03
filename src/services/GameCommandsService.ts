@@ -378,6 +378,11 @@ export async function createGameCommandsService() {
         return;
       }
 
+      if (resource === 'leadershipPenalty') {
+        await this.applyLeadershipPenalty(value, modifierName, result);
+        return;
+      }
+
       // Handle standard resources (gold, food, lumber, stone, ore)
       let hasShortfall = false;
       
@@ -438,6 +443,20 @@ export async function createGameCommandsService() {
       });
 
       result.applied.resources.push({ resource: 'fame', value });
+    },
+
+    /**
+     * Apply leadership penalty (turn-scoped check penalty)
+     */
+    async applyLeadershipPenalty(value: number, modifierName: string, result: ApplyOutcomeResult): Promise<void> {
+      await updateKingdom(kingdom => {
+        const currentPenalty = kingdom.leadershipPenalty || 0;
+        const newPenalty = currentPenalty + value;
+        kingdom.leadershipPenalty = newPenalty;
+        logger.info(`  📊 Leadership penalty: ${currentPenalty} → ${newPenalty} (${value >= 0 ? '+' : ''}${value})`);
+      });
+
+      result.applied.resources.push({ resource: 'leadershipPenalty', value });
     },
 
     /**

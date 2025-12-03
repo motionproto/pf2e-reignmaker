@@ -65,22 +65,22 @@
    function loadIncidents() {
       const allIncidents = pipelineRegistry.getPipelinesByType('incident');
       
-      // Filter incidents based on tier and tested status
-      // Handle both numeric (1, 2, 3) and string ('minor', 'moderate', 'major') tier formats
+      // Filter incidents based on tier/severity and tested status
+      // Handle both numeric (1, 2, 3) and string ('minor', 'moderate', 'major') tier/severity formats
       minorIncidents = allIncidents.filter((i: any) => {
-         const isTier1 = i.tier === 1 || i.tier === 'minor';
+         const isTier1 = i.tier === 1 || i.tier === 'minor' || i.severity === 'minor';
          const notTested = getIncidentStatus(i.id) !== 'tested';
          return isTier1 && (showTestedIncidents || notTested);
       });
       
       moderateIncidents = allIncidents.filter((i: any) => {
-         const isTier2 = i.tier === 2 || i.tier === 'moderate';
+         const isTier2 = i.tier === 2 || i.tier === 'moderate' || i.severity === 'moderate';
          const notTested = getIncidentStatus(i.id) !== 'tested';
          return isTier2 && (showTestedIncidents || notTested);
       });
       
       majorIncidents = allIncidents.filter((i: any) => {
-         const isTier3 = i.tier === 3 || i.tier === 'major';
+         const isTier3 = i.tier === 3 || i.tier === 'major' || i.severity === 'major';
          const notTested = getIncidentStatus(i.id) !== 'tested';
          return isTier3 && (showTestedIncidents || notTested);
       });
