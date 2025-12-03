@@ -23,8 +23,9 @@ export class DestroyStructureHandler extends BaseGameCommandHandler {
     const category = command.category;
     const targetTier = command.targetTier;
     const count = command.count || 1;
+    const settlementId = command.settlementId; // Optional: target specific settlement
     
-    logger.info(`[DestroyStructureHandler] Preparing to destroy ${count} structure(s)${category ? ` in category ${category}` : ''}`);
+    logger.info(`[DestroyStructureHandler] Preparing to destroy ${count} structure(s)${category ? ` in category ${category}` : ''}${settlementId ? ` in settlement ${settlementId}` : ''}`);
     
     // Get current kingdom data
     const actor = getKingdomActor();
@@ -54,13 +55,18 @@ export class DestroyStructureHandler extends BaseGameCommandHandler {
       previousTierName?: string;
     }> = [];
     
+    // Filter settlements if settlementId is specified
+    const settlements = settlementId 
+      ? (kingdom.settlements || []).filter((s: any) => s.id === settlementId)
+      : (kingdom.settlements || []);
+    
     // Select 'count' structures
     for (let i = 0; i < count; i++) {
       let targetStructure: any = null;
       let targetSettlement: any = null;
 
-      // Search all settlements for matching structures
-      for (const settlement of kingdom.settlements || []) {
+      // Search settlements for matching structures
+      for (const settlement of settlements) {
         for (const structureId of settlement.structureIds || []) {
           const structure = structuresService.getStructure(structureId);
           if (!structure) continue;

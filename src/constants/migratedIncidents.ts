@@ -57,8 +57,8 @@ export const INCIDENT_STATUS = new Map<string, IncidentStatus>([
   ['prison-breaks', 'tested'],  // #26 (has game commands)
   ['religious-schism', 'tested'],  // #27 (has game commands)
   ['secession-crisis', 'tested'],  // #28
-  ['settlement-collapse', 'testing'],  // #29 (has pre-roll entity selection)
-  ['trade-war', 'untested'],  // #30
+  ['settlement-collapse', 'tested'],  // #29 (has pre-roll entity selection)
+  ['trade-war', 'tested'],  // #30
 ]);
 
 /**

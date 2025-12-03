@@ -21,6 +21,10 @@ export interface StructureTargetingConfig {
   type: 'random' | 'category-filtered';
   preferredCategories?: string[];
   fallbackToRandom: boolean;
+  /** If specified, only target structures in this settlement */
+  settlementId?: string;
+  /** Structure IDs to exclude from selection (e.g., already selected) */
+  excludeStructureIds?: string[];
 }
 
 /**
@@ -55,10 +59,25 @@ export class StructureTargetingService {
     // Step 1: Collect all undamaged structures with their settlements
     const candidateStructures: Array<{ settlement: Settlement; structure: Structure }> = [];
     
-    for (const settlement of kingdom.settlements) {
+    // Filter settlements if settlementId is specified
+    const settlements = config.settlementId 
+      ? kingdom.settlements.filter(s => s.id === config.settlementId)
+      : kingdom.settlements;
+    
+    if (config.settlementId && settlements.length === 0) {
+      logger.warn(`[StructureTargeting] Settlement not found: ${config.settlementId}`);
+      return null;
+    }
+    
+    for (const settlement of settlements) {
       for (const structureId of settlement.structureIds) {
         // Skip damaged structures
         if (structuresService.isStructureDamaged(settlement, structureId)) {
+          continue;
+        }
+        
+        // Skip excluded structures (e.g., already selected in this batch)
+        if (config.excludeStructureIds?.includes(structureId)) {
           continue;
         }
         

@@ -17,8 +17,10 @@ export class DamageStructureHandler extends BaseGameCommandHandler {
   
   async prepare(command: any, ctx: GameCommandContext): Promise<PreparedCommand | null> {
     const count = command.count || 1;
+    const settlementId = command.settlementId; // Optional: target specific settlement
+    const preferredCategories = command.category ? [command.category] : command.preferredCategories;
     
-    logger.info(`[DamageStructureHandler] Preparing to damage ${count} structure(s)`);
+    logger.info(`[DamageStructureHandler] Preparing to damage ${count} structure(s)${settlementId ? ` in settlement ${settlementId}` : ''}`);
     
     // Get current kingdom data
     const actor = getKingdomActor();
@@ -44,16 +46,25 @@ export class DamageStructureHandler extends BaseGameCommandHandler {
       settlementName: string;
     }> = [];
     
+    // Track selected structure IDs to avoid duplicates
+    const excludeStructureIds: string[] = [];
+    
     for (let i = 0; i < count; i++) {
       const targetResult = structureTargetingService.selectStructureForDamage({
-        type: 'random',
-        fallbackToRandom: true
+        type: preferredCategories ? 'category-filtered' : 'random',
+        preferredCategories,
+        fallbackToRandom: true,
+        settlementId,
+        excludeStructureIds
       });
       
       if (!targetResult) {
         logger.warn(`[DamageStructureHandler] No more structures available to damage (selected ${i}/${count})`);
         break;
       }
+      
+      // Add to exclude list for next iteration
+      excludeStructureIds.push(targetResult.structure.id);
       
       selectedStructures.push({
         structureId: targetResult.structure.id,
@@ -77,22 +88,17 @@ export class DamageStructureHandler extends BaseGameCommandHandler {
       };
     }
     
-    // Create badge text
-    let badgeText: string;
-    if (selectedStructures.length === 1) {
-      badgeText = `${selectedStructures[0].structureName} in ${selectedStructures[0].settlementName} will be damaged`;
-    } else {
-      badgeText = `${selectedStructures.length} structures will be damaged: ${selectedStructures.map(s => s.structureName).join(', ')}`;
-    }
+    // Create one badge per structure
+    const outcomeBadges = selectedStructures.map(s => ({
+      icon: 'fa-house-crack',
+      template: `The ${s.structureName} in ${s.settlementName} is damaged`,
+      variant: 'negative' as const
+    }));
     
-    logger.info(`[DamageStructureHandler] Preview: ${badgeText}`);
+    logger.info(`[DamageStructureHandler] Preview: ${outcomeBadges.length} structure(s) to damage`);
     
     return {
-      outcomeBadge: {
-        icon: 'fa-house-crack',
-        template: badgeText,
-        variant: 'negative'
-      },
+      outcomeBadges,
       commit: async () => {
         logger.info(`[DamageStructureHandler] Damaging ${selectedStructures.length} structure(s)`);
         
