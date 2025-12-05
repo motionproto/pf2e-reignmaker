@@ -23,14 +23,14 @@ export const criminalTrialPipeline: CheckPipeline = {
       description: 'Justice triumphs.',
       endsEvent: true,
       modifiers: [
-        { type: 'static', resource: 'unrest', value: -2, duration: 'immediate' }
+        { type: 'dice', resource: 'unrest', formula: '2d3', negative: true, duration: 'immediate' }
       ]
     },
     success: {
       description: 'Justice is served.',
       endsEvent: true,
       modifiers: [
-        { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
+        { type: 'dice', resource: 'unrest', formula: '1d3', negative: true, duration: 'immediate' }
       ]
     },
     failure: {
@@ -42,7 +42,7 @@ export const criminalTrialPipeline: CheckPipeline = {
       description: 'Justice is miscarried.',
       endsEvent: true,
       modifiers: [
-        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
+        { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' }
       ]
     },
   },

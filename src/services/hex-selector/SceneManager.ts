@@ -124,8 +124,12 @@ export class SceneManager {
     
     switch (colorType) {
       case 'claim':
+        // Show territory for claiming + demanded hex indicator + interactive hover
+        actionViewOverlays = ['territories', 'territory-border', 'demanded-hex', 'interactive-hover'];
+        break;
+        
       case 'scout':
-        // Show territory for claiming/scouting + interactive hover
+        // Show territory for scouting + interactive hover
         actionViewOverlays = ['territories', 'territory-border', 'interactive-hover'];
         break;
         
@@ -153,6 +157,11 @@ export class SceneManager {
       case 'destroyed':
         // Show worksites being destroyed (same overlays as worksite creation but in display mode)
         actionViewOverlays = ['territories', 'territory-border', 'worksites', 'settlement-icons', 'settlement-labels', 'interactive-hover'];
+        break;
+        
+      case 'demanded':
+        // Show territory and borders for demanded hex display (helps player see where to claim)
+        actionViewOverlays = ['territories', 'territory-border', 'interactive-hover'];
         break;
     }
 

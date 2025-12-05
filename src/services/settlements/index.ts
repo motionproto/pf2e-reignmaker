@@ -1,7 +1,7 @@
 // Settlement Service for PF2e Kingdom Lite
 // Manages settlement operations and calculations
 
-import { get } from 'svelte/store';
+import { get, derived } from 'svelte/store';
 import { PLAYER_KINGDOM } from '../../types/ownership';
 import { kingdomData } from '../../stores/KingdomStore';
 import type { Settlement } from '../../models/Settlement';
@@ -10,6 +10,35 @@ import { structuresService } from '../structures';
 import { territoryService } from '../territory';
 import { roadConnectivityService } from '../RoadConnectivityService';
 import { logger } from '../../utils/Logger';
+
+/**
+ * Structure Demand - represents a citizen demand for a specific structure
+ */
+export interface StructureDemand {
+  modifierId: string;
+  eventInstanceId: string;
+  structureId: string;
+  structureName: string;
+  settlementId: string;
+  settlementName: string;
+}
+
+/**
+ * Derived store: active structure demands from kingdom data
+ * Automatically updates when activeModifiers changes
+ */
+export const structureDemands = derived(kingdomData, ($kingdom) => {
+  return ($kingdom.activeModifiers || [])
+    .filter((m: any) => m.sourceType === 'custom' && m.sourceName === 'Demand Structure Event')
+    .map((m: any): StructureDemand => ({
+      modifierId: m.id,
+      eventInstanceId: m.sourceId,
+      structureId: m.metadata?.demandedStructureId || '',
+      structureName: m.metadata?.demandedStructureName || '',
+      settlementId: m.metadata?.demandedSettlementId || '',
+      settlementName: m.metadata?.demandedSettlementName || ''
+    }));
+});
 
 export class SettlementService {
   /**
@@ -370,6 +399,7 @@ export class SettlementService {
   /**
    * PUBLIC API: Add a structure to a settlement
    * Automatically recalculates settlement and kingdom capacities
+   * Also checks for and fulfills any matching structure demands
    */
   async addStructure(settlementId: string, structureId: string): Promise<void> {
 
@@ -385,6 +415,11 @@ export class SettlementService {
     await this.recalculateSettlement(settlementId);
     await this.recalculateKingdom();
 
+    // Check for demand fulfillment (reactive - single point of truth)
+    const demand = this.checkDemandFulfillment(settlementId, structureId);
+    if (demand) {
+      await this.fulfillDemand(demand);
+    }
   }
   
   /**
@@ -1011,6 +1046,115 @@ export class SettlementService {
     
     await this.updateSettlement(settlementId, updates);
 
+  }
+
+  // ============================================
+  // STRUCTURE DEMAND MANAGEMENT
+  // ============================================
+
+  /**
+   * Register a new structure demand from a Demand Structure event
+   * Creates an activeModifier that tracks the demand
+   * 
+   * @param demand - The demand details (structure, settlement, event instance)
+   * @returns The modifier ID created
+   */
+  async registerDemand(demand: {
+    structureId: string;
+    structureName: string;
+    settlementId: string;
+    settlementName: string;
+    eventInstanceId: string;
+    currentTurn: number;
+  }): Promise<string> {
+    const { updateKingdom } = await import('../../stores/KingdomStore');
+    
+    const modifierId = `demand-structure-${demand.structureId}-${Date.now()}`;
+    
+    logger.info(`[SettlementService] Registering structure demand: ${demand.structureName} in ${demand.settlementName}`);
+    
+    await updateKingdom(kingdom => {
+      if (!kingdom.activeModifiers) {
+        kingdom.activeModifiers = [];
+      }
+      
+      kingdom.activeModifiers.push({
+        id: modifierId,
+        name: 'Citizen Demand Structure',
+        description: `Citizens of ${demand.settlementName} demand a ${demand.structureName}.`,
+        icon: 'fa-bullhorn',
+        tier: 1,
+        sourceType: 'custom',
+        sourceId: demand.eventInstanceId,
+        sourceName: 'Demand Structure Event',
+        startTurn: demand.currentTurn,
+        modifiers: [
+          { type: 'static', resource: 'unrest', value: 1, duration: 'ongoing' }
+        ],
+        metadata: {
+          demandedStructureId: demand.structureId,
+          demandedStructureName: demand.structureName,
+          demandedSettlementId: demand.settlementId,
+          demandedSettlementName: demand.settlementName
+        }
+      });
+    });
+    
+    logger.info(`[SettlementService] Created demand modifier: ${modifierId}`);
+    return modifierId;
+  }
+
+  /**
+   * Check if adding a structure fulfills any active demand
+   * 
+   * @param settlementId - The settlement where structure was added
+   * @param structureId - The structure that was added
+   * @returns The matching demand if found, null otherwise
+   */
+  checkDemandFulfillment(settlementId: string, structureId: string): StructureDemand | null {
+    const demands = get(structureDemands);
+    
+    // Find a demand matching this structure and settlement
+    const matchingDemand = demands.find(d => 
+      d.structureId === structureId && d.settlementId === settlementId
+    );
+    
+    if (matchingDemand) {
+      logger.info(`[SettlementService] Found matching demand: ${matchingDemand.structureName} in ${matchingDemand.settlementName}`);
+    }
+    
+    return matchingDemand || null;
+  }
+
+  /**
+   * Fulfill a structure demand - show reward dialog and remove modifier
+   * 
+   * @param demand - The demand to fulfill
+   */
+  async fulfillDemand(demand: StructureDemand): Promise<void> {
+    logger.info(`[SettlementService] Fulfilling demand: ${demand.structureName} in ${demand.settlementName}`);
+    
+    // Import and show dialog
+    const { DemandStructureFulfilledDialog } = await import('../../ui/dialogs/DemandStructureFulfilledDialog');
+    
+    const result = await DemandStructureFulfilledDialog.show({
+      structureId: demand.structureId,
+      structureName: demand.structureName,
+      settlementName: demand.settlementName,
+      eventInstanceId: demand.eventInstanceId,
+      modifierId: demand.modifierId
+    });
+    
+    if (result) {
+      await DemandStructureFulfilledDialog.applyRewards(
+        demand.structureId,
+        demand.structureName,
+        result,
+        demand.eventInstanceId,
+        demand.modifierId,
+        demand.settlementName
+      );
+    }
   }
 }
 

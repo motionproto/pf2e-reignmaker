@@ -77,7 +77,6 @@
           skillName: checkInstance.appliedOutcome.skillName || '',
           modifiers: checkInstance.appliedOutcome.modifiers || [],
           effect: checkInstance.appliedOutcome.effect || '',
-          specialEffects: checkInstance.appliedOutcome.specialEffects || [],
           rollBreakdown: checkInstance.appliedOutcome.rollBreakdown,
           effectsApplied: checkInstance.appliedOutcome.effectsApplied || false,
           componentName: checkInstance.appliedOutcome.componentName  // ✅ CRITICAL: Preserve for OutcomeDisplay registry lookup

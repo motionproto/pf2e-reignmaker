@@ -22,15 +22,13 @@ export const foodShortagePipeline: CheckPipeline = {
     criticalSuccess: {
       description: 'The crisis is averted.',
       endsEvent: true,
-      modifiers: [
-        { type: 'dice', resource: 'food', formula: '1d4', negative: true, duration: 'immediate' }
-      ]
+      modifiers: []
     },
     success: {
       description: 'The shortage is controlled.',
       endsEvent: true,
       modifiers: [
-        { type: 'dice', resource: 'food', formula: '1d6+1', negative: true, duration: 'immediate' }
+        { type: 'dice', resource: 'food', formula: '1d4', negative: true, duration: 'immediate' }
       ]
     },
     failure: {

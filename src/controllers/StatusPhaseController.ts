@@ -66,6 +66,9 @@ export async function createStatusPhaseController() {
         // Apply permanent modifiers from structures
         await this.applyPermanentModifiers();
         
+        // Apply ongoing modifiers (custom events like demand-structure)
+        await this.applyOngoingModifiers();
+        
         // Apply automatic structure effects (Donjon converts unrest, etc.)
         await this.applyAutomaticStructureEffects();
         
@@ -170,11 +173,12 @@ export async function createStatusPhaseController() {
     },
 
     /**
-     * Apply base unrest from kingdom size and metropolises
+     * Apply base unrest from kingdom size, metropolises, and demanded hexes
      * 
      * Base unrest sources (per Reignmaker rules):
      * - Kingdom size: +1 unrest per X hexes (configurable, default 8)
      * - Metropolis complexity: +1 unrest per Metropolis
+     * - Citizens Demand Expansion: +1 unrest per unclaimed demanded hex
      */
     async applyBaseUnrest() {
       const actor = getKingdomActor();
@@ -204,42 +208,58 @@ export async function createStatusPhaseController() {
         (s: Settlement) => s.tier === SettlementTier.METROPOLIS
       ).length;
       
-      const totalBaseUnrest = hexUnrest + metropolisCount;
+      // Count demanded hexes that are NOT claimed by the player
+      // These generate +1 unrest per hex until claimed
+      const PLAYER_KINGDOM = 'player';
+      const demandedHexCount = (kingdom.hexes || []).filter((h: any) => {
+        const features = h.features || [];
+        const hasDemanded = features.some((f: any) => f.type === 'demanded');
+        const notPlayerClaimed = !h.claimedBy || h.claimedBy !== PLAYER_KINGDOM;
+        return hasDemanded && notPlayerClaimed;
+      }).length;
+      
+      const totalBaseUnrest = hexUnrest + metropolisCount + demandedHexCount;
 
+      // Create display-only modifiers for Status phase UI
+      const displayModifiers: any[] = [];
+      
+      if (hexUnrest > 0) {
+        displayModifiers.push({
+          id: 'status-size-unrest',
+          name: `Kingdom Size (${kingdom.size} hexes)`,
+          description: `Larger kingdoms are harder to govern (${kingdom.size} ÷ ${hexesPerUnrest} = ${hexUnrest})`,
+          sourceType: 'structure',
+          modifiers: [{
+            type: 'static',
+            resource: 'unrest',
+            value: hexUnrest,
+            duration: 'permanent'
+          }]
+        });
+      }
+      
+      if (metropolisCount > 0) {
+        displayModifiers.push({
+          id: 'status-metropolis-unrest',
+          name: 'Metropolis Complexity',
+          description: `${metropolisCount} ${metropolisCount === 1 ? 'metropolis' : 'metropolises'} create additional governance complexity`,
+          sourceType: 'structure',
+          modifiers: [{
+            type: 'static',
+            resource: 'unrest',
+            value: metropolisCount,
+            duration: 'permanent'
+          }]
+        });
+      }
+      
+      // Note: Demanded hex unrest is displayed separately in CitizensDemandExpansion component
+      // but we still need to actually apply the unrest here
+      if (demandedHexCount > 0) {
+        logger.info(`⚠️ [StatusPhaseController] Citizens demand expansion: ${demandedHexCount} unclaimed hex(es) = +${demandedHexCount} unrest`);
+      }
+      
       if (totalBaseUnrest > 0) {
-        // Create display-only modifiers for Status phase UI
-        const displayModifiers: any[] = [];
-        
-        if (hexUnrest > 0) {
-          displayModifiers.push({
-            id: 'status-size-unrest',
-            name: 'Kingdom Size',
-            description: `Larger kingdoms are harder to govern (hexes ÷ ${hexesPerUnrest}, rounded down)`,
-            sourceType: 'structure',
-            modifiers: [{
-              type: 'static',
-              resource: 'unrest',
-              value: hexUnrest,
-              duration: 'permanent'
-            }]
-          });
-        }
-        
-        if (metropolisCount > 0) {
-          displayModifiers.push({
-            id: 'status-metropolis-unrest',
-            name: 'Metropolis Complexity',
-            description: `${metropolisCount} ${metropolisCount === 1 ? 'metropolis' : 'metropolises'} create additional governance complexity`,
-            sourceType: 'structure',
-            modifiers: [{
-              type: 'static',
-              resource: 'unrest',
-              value: metropolisCount,
-              duration: 'permanent'
-            }]
-          });
-        }
-        
         await actor.updateKingdomData((k: KingdomData) => {
           k.unrest = (k.unrest || 0) + totalBaseUnrest;
           
@@ -248,7 +268,13 @@ export async function createStatusPhaseController() {
             k.turnState.statusPhase.displayModifiers = displayModifiers;
           }
         });
-
+      } else {
+        // Even with 0 unrest, we need to initialize the display modifiers
+        await actor.updateKingdomData((k: KingdomData) => {
+          if (k.turnState) {
+            k.turnState.statusPhase.displayModifiers = displayModifiers;
+          }
+        });
       }
     },
 
@@ -320,6 +346,64 @@ export async function createStatusPhaseController() {
               const newValue = Math.max(0, currentValue + value);
               kingdom.resources[resource] = newValue;
 
+            });
+          }
+        }
+      }
+    },
+
+    /**
+     * Apply ongoing modifiers from custom sources (e.g., demand-structure event)
+     * 
+     * Ongoing modifiers generate their effects each turn until removed.
+     * This is different from permanent modifiers (structures) and immediate/turn-based modifiers.
+     */
+    async applyOngoingModifiers() {
+      const actor = getKingdomActor();
+      if (!actor) {
+        logger.error('❌ [StatusPhaseController] No KingdomActor available');
+        return;
+      }
+
+      const kingdom = actor.getKingdomData();
+      if (!kingdom) {
+        logger.error('❌ [StatusPhaseController] No kingdom data available');
+        return;
+      }
+
+      // Find modifiers with ongoing duration
+      const ongoingModifiers = (kingdom.activeModifiers || []).filter(
+        (mod: any) => mod.modifiers?.some((m: any) => m.duration === 'ongoing')
+      );
+
+      if (ongoingModifiers.length === 0) {
+        return;
+      }
+
+      logger.info(`📊 [StatusPhaseController] Applying ${ongoingModifiers.length} ongoing modifier(s)`);
+
+      // Apply each ongoing modifier's effects
+      for (const modifier of ongoingModifiers) {
+        for (const mod of modifier.modifiers || []) {
+          if (mod.duration === 'ongoing') {
+            const resource = mod.resource;
+            const value = typeof mod.value === 'string' ? parseInt(mod.value, 10) : mod.value;
+            
+            if (isNaN(value)) {
+              logger.warn(`⚠️ [StatusPhaseController] Invalid ongoing modifier value: ${mod.value} for ${resource}`);
+              continue;
+            }
+
+            logger.info(`  → ${modifier.name}: ${value > 0 ? '+' : ''}${value} ${resource}`);
+
+            await actor.updateKingdomData((k: KingdomData) => {
+              if (!k.resources) {
+                k.resources = {} as any;
+              }
+
+              const currentValue = k.resources[resource] || 0;
+              const newValue = Math.max(0, currentValue + value);
+              k.resources[resource] = newValue;
             });
           }
         }
@@ -422,7 +506,7 @@ export async function createStatusPhaseController() {
           // Create result tracker
           const result = {
             success: true,
-            applied: { resources: [], specialEffects: [] }
+            applied: { resources: [] }
           };
           
           // Convert regular unrest to imprisoned unrest

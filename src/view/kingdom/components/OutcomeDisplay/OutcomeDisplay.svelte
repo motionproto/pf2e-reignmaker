@@ -72,8 +72,6 @@
   $: compact = false;  // Can be made a prop if needed
   $: showFameReroll = preview.checkType !== 'action';  // Only events/incidents can reroll with fame
   $: showCancel = true;  // Can be made a prop if needed
-  $: showIgnoreEvent = preview.checkType === 'event';  // Only events can be ignored
-  $: ignoreEventDisabled = false;  // Can be made a prop if needed
   
   // Derive all data from preview
   $: outcome = preview.appliedOutcome?.outcome || 'success';
@@ -86,7 +84,7 @@
   $: rollBreakdown = preview.appliedOutcome?.rollBreakdown;
   $: shortfallResources = preview.appliedOutcome?.shortfallResources || [];
   $: applied = preview.appliedOutcome?.effectsApplied || false;
-  $: isIgnored = false;  // Not tracked in OutcomePreview yet
+  $: isIgnored = preview.appliedOutcome?.isIgnored || false;
   $: choices = preview.appliedOutcome?.choices;
   $: outcomeBadges = preview.appliedOutcome?.outcomeBadges || [];
   
@@ -645,9 +643,6 @@
     outcome={outcome} 
     {actorName} 
     {skillName}
-    showIgnoreButton={showIgnoreEvent}
-    ignoreButtonDisabled={ignoreEventDisabled}
-    on:ignore
   />
   
   <div class="resolution-details">

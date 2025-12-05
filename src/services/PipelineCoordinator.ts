@@ -281,7 +281,14 @@ export class PipelineCoordinator {
       logs: []  // Initialize logs array for resumed execution
     };
     
-    console.log(`🔄 [PipelineCoordinator] Reconstructed context, executing Steps 7-9`);
+    console.log(`🔄 [PipelineCoordinator] Reconstructed context:`, {
+      actionId: ctx.actionId,
+      checkType: ctx.checkType,
+      outcome: ctx.rollData?.outcome,
+      instanceId: ctx.instanceId,
+      appliedOutcome: instance.appliedOutcome
+    });
+    console.log(`🔄 [PipelineCoordinator] Executing Steps 7-9`);
     
     // Execute Steps 7-9 (post-apply interactions, execute, cleanup)
     try {
@@ -786,6 +793,30 @@ export class PipelineCoordinator {
     // ✅ STEP 5C: Merge badges intelligently
     // Custom preview badges are always ADDED to modifier badges
     // Static badges are fallback (only used if no custom preview)
+    
+    // ✅ STEP 5C.1: Add "Ends Event" badge for ongoing events (only if outcome ends the event)
+    const eventStatusBadges: any[] = [];
+    if (ctx.checkType === 'event' && outcomeData && pipeline.outcomes) {
+      // Check if this event has any ongoing outcomes
+      const allOutcomes = [
+        pipeline.outcomes.criticalSuccess,
+        pipeline.outcomes.success,
+        pipeline.outcomes.failure,
+        pipeline.outcomes.criticalFailure
+      ].filter(Boolean);
+      const hasOngoingOutcome = allOutcomes.some((o: any) => o.endsEvent === false);
+      
+      // Only show "Ends Event" badge if event has ongoing outcomes AND this outcome ends it
+      const endsEvent = outcomeData.endsEvent !== false;
+      if (hasOngoingOutcome && endsEvent) {
+        eventStatusBadges.push({
+          icon: 'fa-check-circle',
+          template: 'Ends Event',
+          variant: 'positive'
+        });
+      }
+    }
+    
     const preview = {
       resources: customPreview.resources || [],
       outcomeBadges: [
@@ -793,7 +824,8 @@ export class PipelineCoordinator {
         ...(customPreview.outcomeBadges && customPreview.outcomeBadges.length > 0
           ? customPreview.outcomeBadges  // Add custom badges if present
           : staticBadges  // Otherwise add static badges as fallback
-        )
+        ),
+        ...eventStatusBadges  // Add event status badge for ongoing events
       ]
     };
     
@@ -974,24 +1006,30 @@ export class PipelineCoordinator {
 
     // TRACK ACTION in actionLog (so player can't perform unlimited actions)
     // Note: Incidents don't consume player actions, they're separate checks
+    // Events DO consume player actions (responding to an event uses your turn action)
     const game = (window as any).game;
     const userId = ctx.userId || game?.user?.id;
     const userName = game?.user?.name;
     const actorName = ctx.actor?.actorName || 'Unknown';
 
-    if (userId && userName && ctx.checkType === 'action') {
+    if (userId && userName && (ctx.checkType === 'action' || ctx.checkType === 'event')) {
       const { createGameCommandsService } = await import('./GameCommandsService');
       const gameCommandsService = await createGameCommandsService();
+
+      // Include outcome in action name for proper display in PlayerActionTracker
+      // Format: "action-id-outcome" (e.g., "assassination-attempt-criticalFailure")
+      const outcome = ctx.rollData?.outcome || 'unknown';
+      const actionNameWithOutcome = `${ctx.actionId}-${outcome}`;
 
       await gameCommandsService.trackPlayerAction(
         userId,
         userName,
         actorName,
-        ctx.actionId,
+        actionNameWithOutcome,
         turnPhase
       );
 
-      log(ctx, 9, 'cleanup', `Tracked action for user ${userName}`);
+      log(ctx, 9, 'cleanup', `Tracked ${ctx.checkType} for user ${userName}: ${actionNameWithOutcome}`);
     }
 
     // COMPLETE PHASE STEPS based on checkType

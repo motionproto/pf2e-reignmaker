@@ -73,6 +73,7 @@ export class HexRenderer {
       case 'unclaim': return 'hoverUnclaim';
       case 'worksite': return 'hoverWorksite';
       case 'destroyed': return 'hoverDestroyed';
+      case 'demanded': return 'hoverDemanded';
       default: return 'hoverClaim';
     }
   }
@@ -90,6 +91,7 @@ export class HexRenderer {
       case 'unclaim': return 'newUnclaim';
       case 'worksite': return 'newWorksite';
       case 'destroyed': return 'newDestroyed';
+      case 'demanded': return 'newDemanded';
       default: return 'newClaim';
     }
   }

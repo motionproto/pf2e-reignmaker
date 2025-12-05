@@ -61,16 +61,35 @@
     }
   });
   
-  // Add critical success fame as a badge
+  // Check if there's already a fame badge in the outcome badges
+  $: existingFameBadge = unifiedBadges.find(b => 
+    b.template?.toLowerCase().includes('fame') || 
+    (b as any).suffix?.toLowerCase() === 'fame' ||
+    (b as any)._isFame
+  );
+  
+  // Calculate total fame (existing + critical success bonus)
+  $: existingFameAmount = existingFameBadge?.value?.type === 'static' 
+    ? (existingFameBadge.value.amount || 0) 
+    : 0;
+  
+  // Add critical success fame - combine with existing if present
   $: fameBadge = outcome === 'criticalSuccess' ? [({
     icon: 'fa-star',
-    template: 'Fame increased by {{value}}',
-    value: { type: 'static' as const, amount: 1 },
+    template: existingFameBadge 
+      ? `Fame increased by {{value}}` 
+      : 'Fame increased by {{value}}',
+    value: { type: 'static' as const, amount: 1 + existingFameAmount },
     variant: 'positive' as const,
     _isFame: true
   } as UnifiedOutcomeBadge)] : [];
   
-  $: allBadges = [...unifiedBadges, ...fameBadge];
+  // Filter out existing fame badges if we're combining them
+  $: filteredBadges = outcome === 'criticalSuccess' && existingFameBadge
+    ? unifiedBadges.filter(b => b !== existingFameBadge)
+    : unifiedBadges;
+  
+  $: allBadges = [...filteredBadges, ...fameBadge];
   $: hasAllBadges = allBadges.length > 0;
   
   let rolledBadges = new Map<number, number>();

@@ -21,26 +21,24 @@ export const tradeAgreementPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'An exclusive trade deal is secured.',
-      endsEvent: true,
       modifiers: [
-        { type: 'dice', resource: 'gold', formula: '1d4', duration: 'immediate' }
+        { type: 'dice', resource: 'gold', formula: '2d3', duration: 'immediate' }
       ]
     },
     success: {
       description: 'A standard agreement is reached.',
-      endsEvent: true,
       modifiers: [
-        { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
+        { type: 'dice', resource: 'gold', formula: '1d3', duration: 'immediate' }
       ]
     },
     failure: {
       description: 'The terms are poor.',
-      endsEvent: true,
-      modifiers: []
+      modifiers: [
+        { type: 'static', resource: 'gold', value: -1, duration: 'immediate' }
+      ]
     },
     criticalFailure: {
       description: 'A trade dispute erupts.',
-      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'gold', value: -1, duration: 'immediate' },
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },

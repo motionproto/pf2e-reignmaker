@@ -39,7 +39,7 @@ export const archaeologicalFindPipeline: CheckPipeline = {
       description: 'Only minor artifacts are found.',
       endsEvent: true,
       modifiers: [
-        { type: 'choice', resources: ["food", "lumber", "ore", "stone"], value: 1, negative: false, duration: 'immediate' }
+        { type: 'choice-buttons', resources: ["food", "lumber", "ore", "stone"], value: 1, negative: false, duration: 'immediate' }
       ]
     },
     criticalFailure: {

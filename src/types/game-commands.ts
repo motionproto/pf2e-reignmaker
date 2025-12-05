@@ -60,3 +60,10 @@ export interface ResolveResult {
     [key: string]: any;
   };
 }
+
+/**
+ * Result of executing a game command via registry.executeCommand()
+ * 
+ * Re-exported from GameCommandHandler for convenience
+ */
+export type { GameCommandResult } from '../services/gameCommands/GameCommandHandler';

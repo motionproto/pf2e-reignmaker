@@ -1,13 +1,17 @@
 /**
- * Natures Blessing Event Pipeline
+ * Nature's Blessing Event Pipeline
  *
+ * Critical Success: +1 Fame, +2d3 food
+ * Success: +1d3 food
+ * Failure: Nothing
+ * Critical Failure: Nothing (beneficial event, no punishment)
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
 
 export const naturesBlessingPipeline: CheckPipeline = {
   id: 'natures-blessing',
-  name: 'Natures Blessing',
+  name: "Nature's Blessing",
   description: 'A natural wonder appears in your kingdom - rare flowers, aurora, or returning wildlife.',
   checkType: 'event',
   tier: 1,
@@ -20,31 +24,25 @@ export const naturesBlessingPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'The blessing inspires the kingdom.',
-      endsEvent: true,
+      description: 'Word spreads of the wonder, and nature provides a bountiful harvest.',
       modifiers: [
-        { type: 'static', resource: 'unrest', value: -2, duration: 'immediate' },
-        { type: 'static', resource: 'gold', value: 1, duration: 'immediate' },
+        { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
+        { type: 'dice', resource: 'food', formula: '2d3', duration: 'immediate' },
       ]
     },
     success: {
-      description: 'The omen is pleasant.',
-      endsEvent: true,
+      description: 'The blessing yields a bountiful harvest.',
       modifiers: [
-        { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
+        { type: 'dice', resource: 'food', formula: '1d3', duration: 'immediate' }
       ]
     },
     failure: {
-      description: 'The wonder fades quickly.',
-      endsEvent: false,
+      description: 'The wonder fades before it can be celebrated.',
       modifiers: []
     },
     criticalFailure: {
-      description: 'Arguments erupt over its meaning.',
-      endsEvent: true,
-      modifiers: [
-        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-      ]
+      description: 'Debates over its meaning are harmless.',
+      modifiers: []
     },
   },
 

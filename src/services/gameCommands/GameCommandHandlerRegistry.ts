@@ -5,7 +5,7 @@
  * Routes game commands to appropriate handlers using the handler pattern.
  */
 
-import type { GameCommandHandler, GameCommandContext } from './GameCommandHandler';
+import type { GameCommandHandler, GameCommandContext, GameCommandResult } from './GameCommandHandler';
 import type { PreparedCommand } from '../../types/game-commands';
 
 // Import all handlers
@@ -26,10 +26,12 @@ import { RemoveBorderHexesHandler } from './handlers/RemoveBorderHexesHandler';
 import { ReduceImprisonedHandler } from './handlers/ReduceImprisonedHandler';
 import { DeployArmyHandler } from './handlers/DeployArmyHandler';
 import { ReduceSettlementLevelHandler } from './handlers/ReduceSettlementLevelHandler';
+import { IncreaseSettlementLevelHandler } from './handlers/IncreaseSettlementLevelHandler';
 import { SeizeHexesHandler } from './handlers/SeizeHexesHandler';
 import { SpawnEnemyArmyHandler } from './handlers/SpawnEnemyArmyHandler';
 import { TransferSettlementHandler } from './handlers/TransferSettlementHandler';
 import { DefectArmiesHandler } from './handlers/DefectArmiesHandler';
+import { ConvertUnrestToImprisonedHandler } from './handlers/ConvertUnrestToImprisonedHandler';
 
 /**
  * Registry manages all game command handlers
@@ -53,10 +55,12 @@ export class GameCommandHandlerRegistry {
     new ReduceImprisonedHandler(),
     new DeployArmyHandler(),
     new ReduceSettlementLevelHandler(),
+    new IncreaseSettlementLevelHandler(),
     new SeizeHexesHandler(),
     new SpawnEnemyArmyHandler(),
     new TransferSettlementHandler(),
-    new DefectArmiesHandler()
+    new DefectArmiesHandler(),
+    new ConvertUnrestToImprisonedHandler()
   ];
   
   /**
@@ -101,6 +105,42 @@ export class GameCommandHandlerRegistry {
   }
   
   /**
+   * Execute a game command immediately (process + commit)
+   * 
+   * Use this method when commands should execute automatically without
+   * user preview/confirmation. Typically used by:
+   * - UnifiedCheckHandler for `pipeline.outcomes.gameCommands`
+   * - Any automatic outcome effect
+   * 
+   * For interactive commands that need user preview/selection,
+   * use process() instead and call commit() after user confirms.
+   * 
+   * @param command - Game command from action outcome
+   * @param ctx - Context with kingdom data, outcome, metadata
+   * @returns Result with success status
+   */
+  async executeCommand(command: any, ctx: GameCommandContext): Promise<GameCommandResult> {
+    try {
+      const prepared = await this.process(command, ctx);
+      
+      if (!prepared) {
+        // Handler returned null - command was skipped (user cancelled or no-op)
+        return { success: true, skipped: true };
+      }
+      
+      // Execute the commit function
+      await prepared.commit();
+      
+      console.log(`[GameCommandHandlerRegistry] Command executed successfully: ${command.type}`);
+      return { success: true };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`[GameCommandHandlerRegistry] Command execution failed: ${command.type}`, error);
+      return { success: false, error: errorMessage };
+    }
+  }
+  
+  /**
    * Get list of all registered command types
    */
   getSupportedCommands(): string[] {
@@ -141,7 +181,7 @@ let registryInstance: GameCommandHandlerRegistry | null = null;
 export function getGameCommandRegistry(): GameCommandHandlerRegistry {
   if (!registryInstance) {
     registryInstance = new GameCommandHandlerRegistry();
-    console.log('[GameCommandHandlerRegistry] Registry initialized with 18 handlers');
+    console.log(`[GameCommandHandlerRegistry] Registry initialized with 21 handlers`);
   }
   return registryInstance;
 }

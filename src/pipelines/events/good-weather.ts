@@ -23,7 +23,7 @@ export const goodWeatherPipeline: CheckPipeline = {
       description: 'The perfect weather holds.',
       endsEvent: false,
       modifiers: [
-        { type: 'dice', resource: 'food', formula: '1d4', duration: 'immediate' },
+        { type: 'dice', resource: 'food', formula: '2d3', duration: 'immediate' },
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' },
       ]
     },
@@ -31,7 +31,7 @@ export const goodWeatherPipeline: CheckPipeline = {
       description: 'The good weather continues.',
       endsEvent: false,
       modifiers: [
-        { type: 'dice', resource: 'food', formula: '1d4', duration: 'immediate' }
+        { type: 'dice', resource: 'food', formula: '1d3', duration: 'immediate' }
       ]
     },
     failure: {
@@ -42,9 +42,7 @@ export const goodWeatherPipeline: CheckPipeline = {
     criticalFailure: {
       description: 'The weather turns bad.',
       endsEvent: true,
-      modifiers: [
-        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-      ]
+      modifiers: []
     },
   },
 

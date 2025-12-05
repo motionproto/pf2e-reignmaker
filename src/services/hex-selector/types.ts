@@ -5,7 +5,7 @@
 /**
  * Type of hex selection action
  */
-export type HexSelectionType = 'claim' | 'road' | 'settlement' | 'scout' | 'fortify' | 'unclaim' | 'worksite' | 'destroyed';
+export type HexSelectionType = 'claim' | 'road' | 'settlement' | 'scout' | 'fortify' | 'unclaim' | 'worksite' | 'destroyed' | 'demanded';
 
 /**
  * Color configuration for hex highlighting
@@ -91,5 +91,11 @@ export const HEX_HIGHLIGHT_COLORS: Record<string, ColorConfig> = {
   // Destroyed/Negative Outcomes (for showing destroyed worksites, damaged structures, etc.)
   existingDestroyed: { color: 0x8B0000, alpha: 0.3 },  // Dark red
   newDestroyed: { color: 0xFF4444, alpha: 0.7 },        // Bright red (selected)
-  hoverDestroyed: { color: 0xFF6666, alpha: 0.4 }       // Light red (hover)
+  hoverDestroyed: { color: 0xFF6666, alpha: 0.4 },       // Light red (hover)
+  
+  // Demanded Expansion (for showing hexes citizens demand be claimed)
+  // Uses green like claim action - this is a hex that SHOULD be claimed
+  existingDemanded: { color: 0x3CB371, alpha: 0.3 },   // Dark green (matches scouted)
+  newDemanded: { color: 0x90EE90, alpha: 0.7 },        // Light green (matches claim)
+  hoverDemanded: { color: 0x90EE90, alpha: 0.4 }       // Light green (hover)
 };

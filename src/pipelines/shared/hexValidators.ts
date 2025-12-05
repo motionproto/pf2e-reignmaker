@@ -282,3 +282,33 @@ export function validateAll(
   }
   return { valid: true };
 }
+
+/**
+ * Check if a player-controlled army is currently occupying a hex
+ * Uses ArmyService to get army token positions on the scene
+ * 
+ * @param hexId - The hex ID to check for army occupation
+ * @returns true if a player army (ledBy === PLAYER_KINGDOM) is in the hex
+ */
+export function hasPlayerArmyInHex(hexId: string): boolean {
+  try {
+    // Dynamic import to avoid circular dependencies
+    const { armyService } = require('../../services/army/index');
+    
+    const armyLocations = armyService.getArmyLocationsOnScene();
+    
+    // Check if any player-led army is at this hex
+    const hasArmy = armyLocations.some((loc: any) => 
+      loc.hexId === hexId && loc.ledBy === PLAYER_KINGDOM
+    );
+    
+    if (hasArmy) {
+      logger.info(`[HexValidators] Found player army in hex ${hexId}`);
+    }
+    
+    return hasArmy;
+  } catch (error) {
+    logger.error(`[HexValidators] Error checking army occupation for ${hexId}:`, error);
+    return false; // Conservative - don't allow if we can't check
+  }
+}

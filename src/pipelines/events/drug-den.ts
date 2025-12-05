@@ -30,7 +30,7 @@ export const drugDenPipeline: CheckPipeline = {
       description: 'Major arrests disrupt the drug trade.',
       endsEvent: true,
       modifiers: [
-        { type: 'static', resource: 'imprisoned_unrest', value: 1, duration: 'immediate' }
+        { type: 'static', resource: 'imprisonedUnrest', value: 1, duration: 'immediate' }
       ]
     },
     failure: {

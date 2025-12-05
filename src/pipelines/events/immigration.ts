@@ -1,9 +1,14 @@
 /**
  * Immigration Event Pipeline
  *
+ * Critical Success: +1 settlement level for random settlement
+ * Success: +1d3 gold (economy boost)
+ * Failure/Critical Failure: No penalty (beneficial event)
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
+import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
+import { textBadge } from '../../types/OutcomeBadge';
 
 export const immigrationPipeline: CheckPipeline = {
   id: 'immigration',
@@ -20,34 +25,99 @@ export const immigrationPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'A major influx of settlers arrives.',
-      endsEvent: true,
-      modifiers: [
-        { type: 'dice', resource: 'gold', formula: '1d4', duration: 'immediate' }
+      description: 'A wave of settlers brings growth and prosperity.',
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('+1 level for random settlement', 'fa-city', 'positive')
       ]
     },
     success: {
-      description: 'Settlers arrive steadily.',
-      endsEvent: true,
+      description: 'Immigration stimulates the local economy.',
       modifiers: [
-        { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
+        { type: 'dice', resource: 'gold', formula: '1d3', duration: 'immediate' }
       ]
     },
     failure: {
       description: 'Few settlers decide to stay.',
-      endsEvent: false,
       modifiers: []
     },
     criticalFailure: {
-      description: 'Integration problems arise.',
-      endsEvent: true,
-      modifiers: [
-        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-      ]
+      description: 'Seasonal workers return home.',
+      modifiers: []
     },
   },
 
   preview: {
+    calculate: async (ctx) => {
+      const outcomeBadges: any[] = [];
+      const warnings: string[] = [];
+      
+      // Only show settlement level preview for critical success
+      if (ctx.outcome !== 'criticalSuccess') {
+        return { resources: [], outcomeBadges: [], warnings: [] };
+      }
+      
+      // Import handler
+      const { IncreaseSettlementLevelHandler } = await import('../../services/gameCommands/handlers/IncreaseSettlementLevelHandler');
+      const handler = new IncreaseSettlementLevelHandler();
+      
+      const preparedCommand = await handler.prepare(
+        { type: 'increaseSettlementLevel', increase: 1 },
+        { actionId: 'immigration', outcome: ctx.outcome, kingdom: ctx.kingdom, metadata: ctx.metadata } as GameCommandContext
+      );
+      
+      if (!preparedCommand) {
+        warnings.push('No settlements available');
+        return { resources: [], outcomeBadges: [], warnings };
+      }
+      
+      // Store prepared command for execute step
+      if (!ctx.metadata) {
+        ctx.metadata = {};
+      }
+      ctx.metadata._preparedIncreaseLevel = preparedCommand;
+      
+      return {
+        resources: [],
+        outcomeBadges: [preparedCommand.outcomeBadge],
+        warnings
+      };
+    }
+  },
+
+  execute: async (ctx) => {
+    // Only execute on critical success
+    if (ctx.outcome !== 'criticalSuccess') {
+      return { success: true };
+    }
+    
+    // Get prepared command from preview step
+    const preparedCommand = ctx.metadata._preparedIncreaseLevel;
+    
+    if (!preparedCommand) {
+      // Fallback: prepare now if somehow missed
+      const { IncreaseSettlementLevelHandler } = await import('../../services/gameCommands/handlers/IncreaseSettlementLevelHandler');
+      const handler = new IncreaseSettlementLevelHandler();
+      
+      const fallbackCommand = await handler.prepare(
+        { type: 'increaseSettlementLevel', increase: 1 },
+        { actionId: 'immigration', outcome: ctx.outcome, kingdom: ctx.kingdom, metadata: ctx.metadata } as GameCommandContext
+      );
+      
+      if (!fallbackCommand?.commit) {
+        return { success: true, message: 'No settlements to increase' };
+      }
+      
+      await fallbackCommand.commit();
+      return { success: true };
+    }
+    
+    // Commit the settlement level increase
+    if (preparedCommand.commit) {
+      await preparedCommand.commit();
+    }
+    
+    return { success: true };
   },
 
   traits: ["beneficial"],

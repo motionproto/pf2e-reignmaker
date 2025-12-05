@@ -18,3 +18,4 @@ export { createSettlementLabelsOverlay } from './SettlementLabelsOverlay';
 export { createFortificationsOverlay } from './FortificationsOverlay';
 export { createInteractiveHoverOverlay } from './InteractiveHoverOverlay';
 export { createBlockedEdgesDebugOverlay } from './BlockedEdgesDebugOverlay';
+export { createDemandedHexOverlay } from './DemandedHexOverlay';

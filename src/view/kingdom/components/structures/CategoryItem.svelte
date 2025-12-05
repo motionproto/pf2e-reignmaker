@@ -7,12 +7,11 @@
   export let isInProgress: boolean = false;
   export let showSkills: boolean = true;
   export let currentTier: number | undefined = undefined;
+  export let hasDemand: boolean = false;
 </script>
 
 <button
-  class="category-item {isSelected ? 'selected' : ''} {isInProgress
-    ? 'in-progress'
-    : ''}"
+  class="category-item {isSelected ? 'selected' : ''} {isInProgress ? 'in-progress' : ''}"
   on:click
 >
   {#if currentTier !== undefined}
@@ -25,6 +24,9 @@
       <div class="category-skills">{skills.join(", ")}</div>
     {/if}
   </div>
+  {#if hasDemand}
+    <i class="fas fa-exclamation-triangle demand-icon" title="Citizen Demand"></i>
+  {/if}
 </button>
 
 <style lang="scss">
@@ -101,6 +103,13 @@
         word-wrap: break-word;
         font-size: var(--font-sm);
       }
+    }
+    
+    .demand-icon {
+      color: var(--color-amber);
+      font-size: var(--font-lg);
+      flex-shrink: 0;
+      margin-left: auto;
     }
 
     .tier-badge {

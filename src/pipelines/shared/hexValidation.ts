@@ -150,3 +150,113 @@ export function isHexExplored(hexId: string): boolean {
     return true; // Default to true on error (permissive)
   }
 }
+
+/**
+ * Get all hexes within N steps of any starting hex
+ * Uses breadth-first search to find hexes within distance
+ * 
+ * @param startHexIds - Array of hex IDs to start from
+ * @param distance - Maximum distance in hex steps
+ * @param kingdom - Kingdom data to search in
+ * @param filter - Optional filter function to include only certain hexes
+ * @returns Array of hex objects within the specified distance
+ */
+export function getHexesWithinDistance(
+  startHexIds: string[],
+  distance: number,
+  kingdom: KingdomData,
+  filter?: (hex: any) => boolean
+): any[] {
+  const visited = new Set<string>(startHexIds);
+  const result: any[] = [];
+  let currentLevel = [...startHexIds];
+  
+  for (let d = 0; d < distance; d++) {
+    const nextLevel: string[] = [];
+    
+    for (const hexId of currentLevel) {
+      const neighbors = getAdjacentHexIds(hexId);
+      
+      for (const neighborId of neighbors) {
+        if (visited.has(neighborId)) continue;
+        visited.add(neighborId);
+        
+        const hex = getHex(neighborId, kingdom);
+        if (!hex) continue;
+        
+        if (!filter || filter(hex)) {
+          result.push(hex);
+        }
+        
+        // Continue exploring from this hex even if it doesn't pass filter
+        nextLevel.push(neighborId);
+      }
+    }
+    
+    currentLevel = nextLevel;
+  }
+  
+  return result;
+}
+
+/**
+ * Get hexes at EXACTLY N steps from any starting hex (not closer)
+ * Uses breadth-first search to find hexes at the exact distance
+ * 
+ * @param startHexIds - Array of hex IDs to start from
+ * @param distance - Exact distance in hex steps (e.g., 2 = exactly 2 steps away)
+ * @param kingdom - Kingdom data to search in
+ * @param filter - Optional filter function to include only certain hexes
+ * @returns Array of hex objects at exactly the specified distance
+ */
+export function getHexesAtExactDistance(
+  startHexIds: string[],
+  distance: number,
+  kingdom: KingdomData,
+  filter?: (hex: any) => boolean
+): any[] {
+  if (distance < 1) {
+    logger.warn('[HexValidation] getHexesAtExactDistance called with distance < 1');
+    return [];
+  }
+  
+  const visited = new Set<string>(startHexIds);
+  let currentLevel = [...startHexIds];
+  
+  // BFS to reach the exact distance level
+  for (let d = 0; d < distance; d++) {
+    const nextLevel: string[] = [];
+    
+    for (const hexId of currentLevel) {
+      const neighbors = getAdjacentHexIds(hexId);
+      
+      for (const neighborId of neighbors) {
+        if (visited.has(neighborId)) continue;
+        visited.add(neighborId);
+        nextLevel.push(neighborId);
+      }
+    }
+    
+    currentLevel = nextLevel;
+    
+    // If we run out of hexes before reaching target distance, return empty
+    if (currentLevel.length === 0 && d < distance - 1) {
+      logger.info(`[HexValidation] No hexes found at distance ${distance} - ran out at distance ${d + 1}`);
+      return [];
+    }
+  }
+  
+  // currentLevel now contains hexes at exactly 'distance' steps
+  // Apply filter and return matching hexes
+  const result: any[] = [];
+  for (const hexId of currentLevel) {
+    const hex = getHex(hexId, kingdom);
+    if (!hex) continue;
+    
+    if (!filter || filter(hex)) {
+      result.push(hex);
+    }
+  }
+  
+  return result;
+}

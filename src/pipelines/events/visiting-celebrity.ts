@@ -20,28 +20,25 @@ export const visitingCelebrityPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'The visit is spectacular.',
-      endsEvent: true,
+      description: 'The celebrity is utterly charmed and sings your praises across the land.',
       modifiers: [
-        { type: 'dice', resource: 'gold', formula: '1d4', duration: 'immediate' },
-        { type: 'static', resource: 'unrest', value: -2, duration: 'immediate' },
+        { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
+        { type: 'dice', resource: 'gold', formula: '1d3', duration: 'immediate' },
+        { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' },
       ]
     },
     success: {
-      description: 'The visit is pleasant.',
-      endsEvent: true,
+      description: 'The celebrity enjoys the festivities and leaves generous gifts behind.',
       modifiers: [
-        { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
+        { type: 'dice', resource: 'gold', formula: '1d3', duration: 'immediate' }
       ]
     },
     failure: {
-      description: 'The visit is mediocre.',
-      endsEvent: false,
+      description: 'The celebrity departs without fanfare, already forgetting your name.',
       modifiers: []
     },
     criticalFailure: {
-      description: 'The celebrity is offended.',
-      endsEvent: true,
+      description: 'The celebrity storms off in a huff, loudly complaining about your hospitality.',
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]

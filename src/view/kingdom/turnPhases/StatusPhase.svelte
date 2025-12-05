@@ -8,9 +8,34 @@ import Notification from '../components/baseComponents/Notification.svelte';
 import { setSelectedTab } from '../../../stores/ui';
 import { SettlementTier } from '../../../models/Settlement';
 import { logger } from '../../../utils/Logger';
+import { onMount } from 'svelte';
+import CitizensDemandExpansion from './components/CitizensDemandExpansion.svelte';
+import CitizensDemandStructure from './components/CitizensDemandStructure.svelte';
 
 // Props - add the missing prop to fix the warning
 export let isViewingCurrentPhase: boolean = true;
+
+// Debug: Log when component mounts
+onMount(() => {
+   // This alert CANNOT be missed - proves the code is running
+   const allHexes = $kingdomData.hexes || [];
+   const withDemanded = allHexes.filter((h: any) => 
+      h.features?.some((f: any) => f.type === 'demanded')
+   );
+   
+   // Use ui.notifications which shows in Foundry UI
+   const ui = (globalThis as any).ui;
+   ui?.notifications?.info(`[DEBUG] StatusPhase mounted. Hexes: ${allHexes.length}, With demanded: ${withDemanded.length}`);
+   
+   console.warn('[StatusPhase] ========== COMPONENT MOUNTED ==========');
+   console.warn('[StatusPhase] Hex count:', allHexes.length);
+   console.warn('[StatusPhase] Hexes with DEMANDED feature:', withDemanded.length);
+   
+   withDemanded.forEach((h: any) => {
+      console.warn(`  Demanded hex ${h.id}: claimedBy=${h.claimedBy}`);
+   });
+   console.warn('[StatusPhase] ========================================');
+});
 
 // Reactive: Get hexes with unlinked settlement features (in claimed territory)
 // Explicitly track dependencies for Svelte reactivity
@@ -80,6 +105,30 @@ $: unassignedHexes = hexes
 
 // Reactive: Check if kingdom has a capital
 $: hasCapital = $kingdomData.settlements?.some(s => s.isCapital === true) ?? false;
+
+// Debug: Always log hex data when component mounts or hexes change
+$: {
+   console.log('[StatusPhase] ===== HEX DATA DEBUG =====');
+   console.log('[StatusPhase] Total hexes:', hexes.length);
+   
+   // Find ALL hexes with ANY features
+   const hexesWithFeatures = hexes.filter((h: any) => h.features && h.features.length > 0);
+   console.log('[StatusPhase] Hexes with features:', hexesWithFeatures.length);
+   hexesWithFeatures.forEach((h: any) => {
+      console.log(`  - Hex ${h.id}: claimedBy=${h.claimedBy}, features=`, h.features);
+   });
+   
+   // Find hexes specifically with 'demanded' feature
+   const withDemanded = hexes.filter((h: any) => 
+      h.features?.some((f: any) => f.type === 'demanded')
+   );
+   console.log('[StatusPhase] Hexes with demanded feature:', withDemanded.length);
+   withDemanded.forEach((h: any) => {
+      const feat = h.features.find((f: any) => f.type === 'demanded');
+      console.log(`  - Hex ${h.id}: claimedBy="${h.claimedBy}", feat=`, feat);
+   });
+   console.log('[StatusPhase] ===========================');
+}
 
 // Handler to navigate to settlements tab
 function navigateToSettlements() {
@@ -238,6 +287,12 @@ async function initializePhase() {
          </div>
       </div>
    {/if}
+
+   <!-- Citizens Demand Expansion -->
+   <CitizensDemandExpansion />
+   
+   <!-- Citizens Demand Structure -->
+   <CitizensDemandStructure />
 </div>
 
 <style lang="scss">

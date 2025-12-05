@@ -217,6 +217,7 @@ export async function createBuildStructureController() {
 
     /**
      * Complete a build project and add structure to settlement
+     * Note: Demand fulfillment is handled automatically by settlementService.addStructure()
      */
     async completeProject(projectId: string): Promise<BuildResult> {
       const kingdom = get(kingdomData);
@@ -244,7 +245,7 @@ export async function createBuildStructureController() {
         return { success: false, error: 'Structure definition not found' };
       }
 
-      // Add structure to settlement using proper service (handles recalculation)
+      // Add structure to settlement using proper service (handles recalculation AND demand fulfillment)
       const { settlementService } = await import('../services/settlements');
       await settlementService.addStructure(settlement.id, project.structureId);
       

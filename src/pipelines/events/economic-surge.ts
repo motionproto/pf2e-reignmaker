@@ -23,14 +23,14 @@ export const economicSurgePipeline: CheckPipeline = {
       description: 'Trade flourishes throughout the kingdom.',
       endsEvent: false,
       modifiers: [
-        { type: 'dice', resource: 'gold', formula: '1d4', duration: 'immediate' }
+        { type: 'dice', resource: 'gold', formula: '2d3', duration: 'immediate' }
       ]
     },
     success: {
       description: 'The economy grows steadily.',
       endsEvent: false,
       modifiers: [
-        { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
+        { type: 'dice', resource: 'gold', formula: '1d3', duration: 'immediate' }
       ]
     },
     failure: {
@@ -41,9 +41,7 @@ export const economicSurgePipeline: CheckPipeline = {
     criticalFailure: {
       description: 'The economic bubble bursts.',
       endsEvent: true,
-      modifiers: [
-        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-      ]
+      modifiers: []
     },
   },
 

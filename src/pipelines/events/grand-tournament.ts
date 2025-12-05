@@ -24,15 +24,17 @@ export const grandTournamentPipeline: CheckPipeline = {
       endsEvent: true,
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '1d4', duration: 'immediate' },
-        { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' },
-        { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
+        { type: 'static', resource: 'unrest', value: -2, duration: 'immediate' },
+        { type: 'static', resource: 'fame', value: 1, duration: 'immediate' }
       ]
     },
     success: {
       description: 'The tournament goes well.',
       endsEvent: true,
       modifiers: [
-        { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
+        { type: 'static', resource: 'gold', value: 1, duration: 'immediate' },
+        { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' },
+        { type: 'static', resource: 'fame', value: 1, duration: 'immediate' }
       ]
     },
     failure: {

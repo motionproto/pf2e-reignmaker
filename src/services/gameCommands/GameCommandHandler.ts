@@ -6,10 +6,52 @@
  * 
  * Each game command type (recruitArmy, outfitArmy, etc.) gets its own
  * handler class, making the code more maintainable and testable.
+ * 
+ * ## Two Execution Patterns
+ * 
+ * ### Prepare/Commit Pattern (Interactive)
+ * Used when user preview is needed or command requires UI interaction.
+ * ```typescript
+ * const prepared = await registry.process(command, ctx);
+ * // Show prepared.outcomeBadge to user
+ * // User clicks Apply
+ * await prepared.commit();
+ * ```
+ * 
+ * ### Immediate Execute Pattern (Automatic)
+ * Used when command should run without user intervention.
+ * ```typescript
+ * const result = await registry.executeCommand(command, ctx);
+ * // Command is already applied
+ * ```
+ * 
+ * ## When to Use Each Pattern
+ * 
+ * | Scenario | Pattern |
+ * |----------|---------|
+ * | User must choose options (equipment, settlement) | Prepare/Commit |
+ * | Preview shows specific affected entities | Prepare/Commit |
+ * | Post-apply interaction needs metadata | Prepare/Commit |
+ * | Commands in `pipeline.outcomes.gameCommands` | Immediate Execute |
+ * | Simple automatic outcome effects | Immediate Execute |
  */
 
 import type { PreparedCommand } from '../../types/game-commands';
 import type { KingdomData } from '../../actors/KingdomActor';
+
+/**
+ * Result of executing a game command via registry.executeCommand()
+ */
+export interface GameCommandResult {
+  /** Whether the command executed successfully */
+  success: boolean;
+  /** Error message if success is false */
+  error?: string;
+  /** Informational message about what happened */
+  message?: string;
+  /** Whether the command was skipped (user cancelled or no-op) */
+  skipped?: boolean;
+}
 
 /**
  * Context passed to game command handlers
@@ -21,7 +63,7 @@ export interface GameCommandContext {
   metadata?: Record<string, any>;
   pendingActions?: any; // PendingActionsState type
   
-  // ✨ NEW: Explicit pending state (replaces global state)
+  // Explicit pending state (replaces global state)
   pendingState?: {
     armyId?: string;              // For train/disband/outfit
     settlementId?: string;        // For stipend/upgrade
@@ -34,17 +76,27 @@ export interface GameCommandContext {
 
 /**
  * Base interface for game command handlers
+ * 
+ * All handlers must implement canHandle() and prepare().
+ * The prepare() method returns a PreparedCommand with an outcomeBadge
+ * for preview and a commit() function for deferred execution.
  */
 export interface GameCommandHandler {
   /**
    * Check if this handler can process the given command
+   * @param command - Command object with at minimum a `type` property
    */
   canHandle(command: any): boolean;
   
   /**
    * Prepare the command (generate preview, return commit function)
    * 
-   * @returns PreparedCommand with specialEffect and commit(), or null to skip
+   * This method should NOT modify game state. All state changes
+   * should happen in the returned commit() function.
+   * 
+   * @param command - The command to prepare
+   * @param ctx - Context with kingdom data, outcome, metadata
+   * @returns PreparedCommand with outcomeBadge and commit(), or null to skip
    */
   prepare(command: any, ctx: GameCommandContext): Promise<PreparedCommand | null>;
 }

@@ -821,9 +821,21 @@ export class UnifiedCheckHandler {
       
       console.log(`🔄 [UnifiedCheckHandler] Completing default execution path`);
 
-      // Execute game commands (actions only)
-      if (pipeline.gameCommands) {
-        await this.executeGameCommands(pipeline.gameCommands, context);
+      // Execute outcome-specific game commands
+      const outcomeData = pipeline.outcomes?.[context.outcome];
+      console.log(`🎮 [UnifiedCheckHandler] Checking for game commands:`, {
+        checkId,
+        outcome: context.outcome,
+        hasOutcomeData: !!outcomeData,
+        gameCommandsCount: outcomeData?.gameCommands?.length || 0,
+        outcomeKeys: Object.keys(pipeline.outcomes || {})
+      });
+      
+      if (outcomeData?.gameCommands && outcomeData.gameCommands.length > 0) {
+        console.log(`🎮 [UnifiedCheckHandler] Found ${outcomeData.gameCommands.length} game commands to execute:`, outcomeData.gameCommands);
+        await this.executeGameCommands(outcomeData.gameCommands, context);
+      } else {
+        console.log(`🎮 [UnifiedCheckHandler] No game commands found for outcome: ${context.outcome}`);
       }
 
       // Handle persistence (events/incidents only)
@@ -928,13 +940,39 @@ export class UnifiedCheckHandler {
   /**
    * Execute game commands
    *
-   * TODO: Delegate to game command execution functions
+   * Delegates to GameCommandHandlerRegistry for execution
    */
   private async executeGameCommands(
     commands: any[],
     context: CheckContext
   ): Promise<void> {
     console.log(`🎮 [UnifiedCheckHandler] Executing ${commands.length} game commands`);
+    
+    const { getGameCommandRegistry } = await import('./gameCommands/GameCommandHandlerRegistry');
+    const registry = getGameCommandRegistry();
+    
+    for (const command of commands) {
+      console.log(`🎮 [UnifiedCheckHandler] Executing command: ${command.type}`);
+      
+      const commandContext = {
+        actionId: context.check?.id || '',
+        outcome: context.outcome,
+        kingdom: context.kingdom,
+        metadata: context.metadata || {}
+      };
+      
+      try {
+        const result = await registry.executeCommand(command, commandContext);
+        
+        if (result && !result.success) {
+          console.error(`❌ [UnifiedCheckHandler] Command ${command.type} failed:`, result.error);
+        } else {
+          console.log(`✅ [UnifiedCheckHandler] Command ${command.type} executed successfully`);
+        }
+      } catch (error) {
+        console.error(`❌ [UnifiedCheckHandler] Command ${command.type} threw error:`, error);
+      }
+    }
   }
 
   /**

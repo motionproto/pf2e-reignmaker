@@ -19,7 +19,8 @@
   import Button from '../components/baseComponents/Button.svelte';
    import BaseCheckCard from '../components/BaseCheckCard.svelte';
    import PlayerActionTracker from '../components/PlayerActionTracker.svelte';
-   import DebugEventSelector from '../../debug/DebugEventSelector.svelte';
+   import EventDebugPanel from '../../debug/EventDebugPanel.svelte';
+   import { isDebugPanelEnabled } from '../../../debug/debugConfig';
    import OngoingEventCard from '../components/OngoingEventCard.svelte';
    import AidSelectionDialog from '../components/AidSelectionDialog.svelte';
    import EventInstanceList from './components/EventInstanceList.svelte';
@@ -135,7 +136,7 @@
          instance,
          event,
          outcomes,
-         possibleOutcomes: buildPossibleOutcomes(event.outcomes),
+         possibleOutcomes: buildPossibleOutcomes(event.outcomes, true),
          isBeingResolved,
          isResolvedByMe,
          isResolvedByOther,
@@ -239,7 +240,7 @@
    }
    
    // Build possible outcomes for the event (synchronous - must be available for render)
-   $: possibleOutcomes = currentEvent ? buildPossibleOutcomes(currentEvent.outcomes) : [];
+   $: possibleOutcomes = currentEvent ? buildPossibleOutcomes(currentEvent.outcomes, true) : [];
    
    // Build outcomes array for BaseCheckCard
    // Build outcomes for current event using shared helper
@@ -400,8 +401,6 @@
    
    // Event handler - ignore event (delegate to controller)
    async function handleIgnore(event: CustomEvent) {
-      if (!eventPhaseController) return;
-      
       const { checkId } = event.detail;
       
       // Determine which event this ignore is for
@@ -422,8 +421,9 @@
          return;
       }
 
-      // ✅ ARCHITECTURE FIX: Delegate to controller, no business logic in UI
-      const result = await eventPhaseController.ignoreEvent(targetEventId);
+      // ✅ Use centralized IgnoreEventService for consistent handling
+      const { ignoreEventService } = await import('../../../services/IgnoreEventService');
+      const result = await ignoreEventService.ignoreEvent(targetEventId);
       
       if (result.success) {
          // Clear local state if it was the current event
@@ -766,11 +766,13 @@
       </div>
    {/if}
    
-   <!-- Active Event Card - Show when an event needs to be resolved -->
-   <!-- Debug Event Selector (GM Only) - Always visible for GMs to browse events -->
-   {#if isGM}
-      <DebugEventSelector type="event" currentItemId={currentEventInstance?.previewId || null} />
+   <!-- Event Debug Panel (GM Only) - Full testing panel for all events -->
+   <!-- Controlled by DEBUG_PANELS.events in src/debug/debugConfig.ts -->
+   {#if isGM && isDebugPanelEnabled('events')}
+      <EventDebugPanel {hideUntrainedSkills} />
    {/if}
+   
+   <!-- Active Event Card - Show when an event needs to be resolved -->
    
    {#if currentEventInstance && currentEventInstance.checkData}
       {#key `${currentEventInstance.checkId}-${activeAidsCount}`}

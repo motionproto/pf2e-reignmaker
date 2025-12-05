@@ -55,7 +55,7 @@ export const examplePipeline: CheckPipeline = {
   skills: [{ skill: 'politics', description: 'convince the council' }],
   
   // Step 5: Outcome Interactions (optional)
-  preview: { calculate: async (ctx) => ({ resources: [], specialEffects: [] }) },
+  preview: { calculate: async (ctx) => ({ resources: [], outcomeBadges: [] }) },
   
   // Step 7: Post-Apply Interactions (optional)
   postApplyInteractions: [/* custom components */],

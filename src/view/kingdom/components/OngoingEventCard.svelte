@@ -15,7 +15,7 @@
   $: event = instance.eventData;
   $: resolution = instance.appliedOutcome || null;
   $: resolved = !!resolution;
-  $: possibleOutcomes = event ? buildPossibleOutcomes(event.outcomes) : [];
+  $: possibleOutcomes = event ? buildPossibleOutcomes(event.outcomes, true) : [];
   
   // Build outcomes array for BaseCheckCard using shared helper
   $: eventOutcomes = event ? buildEventOutcomes(event) : [];

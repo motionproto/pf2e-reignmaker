@@ -46,7 +46,7 @@ export const dealWithUnrestPipeline: CheckPipeline = {
         resources: [
           { resource: 'unrest', value: -2 }
         ],
-        specialEffects: [],
+        outcomeBadges: [],
         warnings: []
       };
     },

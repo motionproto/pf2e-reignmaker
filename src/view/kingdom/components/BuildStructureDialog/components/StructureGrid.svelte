@@ -8,6 +8,7 @@
   import { getSkillsForCategory } from '../../../logic/BuildStructureDialogLogic';
   import { getMaxTierBuiltInCategory } from '../logic/structureFiltering';
   import type { Settlement } from '../../../../../models/Settlement';
+  import { kingdomData } from '../../../../../stores/KingdomStore';
   
   export let selectedCategory: string;
   export let categoryStructures: Structure[];
@@ -20,6 +21,31 @@
   export let capacityInfo: { atCapacity: boolean; current: number; max: number };
   
   const dispatch = createEventDispatcher();
+  
+  // Get demanded structure IDs from active modifiers (Demand Structure event)
+  $: demandedStructureIds = new Set<string>(
+    ($kingdomData.activeModifiers || [])
+      .filter((m: any) => m.sourceType === 'custom' && m.sourceName === 'Demand Structure Event')
+      .map((m: any) => {
+        // Prefer metadata (cleaner storage)
+        if (m.metadata?.demandedStructureId) {
+          return m.metadata.demandedStructureId;
+        }
+        // Fallback: Extract structure ID from modifier id: "demand-structure-{structureId}-{timestamp}"
+        const parts = m.id.split('-');
+        if (parts.length >= 4 && parts[0] === 'demand' && parts[1] === 'structure') {
+          // Rejoin the structure ID parts (structure IDs can contain hyphens)
+          return parts.slice(2, -1).join('-');
+        }
+        return null;
+      })
+      .filter((id: string | null): id is string => id !== null)
+  );
+  
+  // Helper to check if structure is demanded
+  function isStructureDemanded(structureId: string): boolean {
+    return demandedStructureIds.has(structureId);
+  }
   
   // Calculate max tier built in this category
   $: maxTierBuilt = selectedSettlement 
@@ -105,9 +131,9 @@
           {structure}
           locked={isStructureLocked(structure)}
           {selectedStructureId}
-          {successMessage}
           {selectedSettlement}
           atCapacity={false}
+          isDemanded={isStructureDemanded(structure.id)}
           on:build={handleBuild}
           on:select={handleSelect}
           on:cancel={handleCancel}

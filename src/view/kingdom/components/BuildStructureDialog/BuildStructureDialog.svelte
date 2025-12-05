@@ -121,6 +121,36 @@
       .filter((cat): cat is string => cat !== null)
   );
   
+  // Get settlement IDs that have active structure demands
+  $: demandedSettlementIds = new Set<string>(
+    ($kingdomData.activeModifiers || [])
+      .filter((m: any) => m.sourceType === 'custom' && m.sourceName === 'Demand Structure Event')
+      .map((m: any) => m.metadata?.demandedSettlementId)
+      .filter((id: string | undefined): id is string => !!id)
+  );
+  
+  // Get categories with demands for the currently selected settlement
+  $: demandedCategories = new Set<string>(
+    ($kingdomData.activeModifiers || [])
+      .filter((m: any) => 
+        m.sourceType === 'custom' && 
+        m.sourceName === 'Demand Structure Event' &&
+        m.metadata?.demandedSettlementId === selectedSettlementId
+      )
+      .map((m: any) => {
+        // Get the structure's category
+        const structureId = m.metadata?.demandedStructureId;
+        if (structureId) {
+          const structure = structuresService.getStructure(structureId);
+          if (structure?.category) {
+            return getCategoryDisplayName(structure.category);
+          }
+        }
+        return null;
+      })
+      .filter((cat: string | null): cat is string => cat !== null)
+  );
+  
   // Get skill categories for checking if category is skill-based
   $: skillCategories = getUniqueCategories(
     availableStructures.filter(s => 'skills' in s && Array.isArray(s.skills) && s.skills.length > 0)
@@ -202,7 +232,7 @@
         </h2>
         <div class="header-controls">
           <!-- Settlement Selector -->
-          <SettlementSelector bind:selectedSettlementId {settlements} />
+          <SettlementSelector bind:selectedSettlementId {settlements} {demandedSettlementIds} />
           <button class="close-button" on:click={handleClose}>
             <i class="fas fa-times"></i>
           </button>
@@ -227,6 +257,7 @@
                 {categoriesInProgress}
                 {selectedSettlementId}
                 {settlements}
+                {demandedCategories}
                 on:select={handleSelectCategory}
               />
             </div>

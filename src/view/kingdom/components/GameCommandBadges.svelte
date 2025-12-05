@@ -192,6 +192,19 @@
         // Show dice formula or number directly
         return `Reduce imprisoned (${command.amount})`;
       
+      case 'convertUnrestToImprisoned':
+        // Badge handled by outcomeBadges in the pipeline
+        return '';
+      
+      // Worksite Management
+      case 'destroyWorksite':
+        const wsCount = command.count || 1;
+        return `Destroy ${wsCount} Worksite${wsCount !== 1 ? 's' : ''}`;
+      
+      // Character Actions
+      case 'spendPlayerAction':
+        return 'Leader loses action';
+      
       // Territory Management
       case 'removeBorderHexes':
         const removeCount = typeof command.count === 'number' ? command.count : command.dice;

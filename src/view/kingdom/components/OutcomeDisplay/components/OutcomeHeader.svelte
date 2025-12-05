@@ -1,13 +1,7 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
-  
   export let outcome: string;
   export let actorName: string;
   export let skillName: string | undefined = undefined;
-  export let showIgnoreButton: boolean = false;
-  export let ignoreButtonDisabled: boolean = false;
-  
-  const dispatch = createEventDispatcher();
   
   interface OutcomeProps {
     label: string;
@@ -57,10 +51,6 @@
   }
   
   $: outcomeProps = getOutcomeDisplayProps(outcome);
-  
-  function handleIgnore() {
-    dispatch('ignore');
-  }
 </script>
 
 <div class="resolution-header {outcomeProps.surfaceClass}">
@@ -73,17 +63,6 @@
       <div class="actor-info">
         {actorName}{#if skillName}&nbsp;used {skillName}{/if}
       </div>
-    {/if}
-    {#if showIgnoreButton}
-      <button
-        class="ignore-button"
-        disabled={ignoreButtonDisabled}
-        on:click={handleIgnore}
-        title="Ignore this event and apply failure effects"
-      >
-        <i class="fas fa-times-circle"></i>
-        Ignore Event
-      </button>
     {/if}
   </div>
 </div>
@@ -156,37 +135,6 @@
         color: var(--text-secondary);
         font-size: var(--font-md);
         font-weight: var(--font-weight-medium);
-      }
-      
-      .ignore-button {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--space-6);
-        padding: var(--space-6) var(--space-12);
-        background: var(--surface-primary);
-        border: 1px solid var(--border-primary);
-        border-radius: var(--radius-md);
-        color: var(--color-red);
-        font-size: var(--font-sm);
-        font-weight: var(--font-weight-medium);
-        cursor: pointer;
-        transition: all 0.2s ease;
-        white-space: nowrap;
-        
-        i {
-          font-size: var(--font-md);
-        }
-        
-        &:hover:not(:disabled) {
-          background: var(--surface-primary-high);
-          border-color: var(--border-primary-medium);
-          transform: translateY(-0.0625rem);
-        }
-        
-        &:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
       }
     }
   }

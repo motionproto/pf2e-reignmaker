@@ -3,6 +3,11 @@
   
   export let settlements: Settlement[];
   export let selectedSettlementId: string;
+  export let demandedSettlementIds: Set<string> = new Set();
+  
+  function hasDemand(settlementId: string): boolean {
+    return demandedSettlementIds.has(settlementId);
+  }
 </script>
 
 <div class="settlement-selector">
@@ -13,7 +18,7 @@
   >
     {#each settlements as settlement}
       <option value={settlement.id}>
-        {settlement.name} ({settlement.tier})
+        {settlement.name} ({settlement.tier}){hasDemand(settlement.id) ? ' ⚠️' : ''}
       </option>
     {/each}
   </select>

@@ -404,7 +404,9 @@ export class SelectionPanelManager {
     if (this.config.mode === 'display') {
       // Display mode: use the custom title directly
       title = this.config.title;
-      icon = this.config.colorType === 'destroyed' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+      icon = this.config.colorType === 'destroyed' ? 'fa-exclamation-triangle' 
+           : this.config.colorType === 'demanded' ? 'fa-bullseye'
+           : 'fa-info-circle';
     } else {
       // Interactive mode: use action-specific messages
       const actionMessages: Record<string, string> = {
@@ -415,7 +417,8 @@ export class SelectionPanelManager {
         fortify: 'Hex Fortified!',
         unclaim: 'Hexes Unclaimed!',
         worksite: 'Worksite Created!',
-        destroyed: 'Worksites Destroyed!'
+        destroyed: 'Worksites Destroyed!',
+        demanded: 'Citizens Demand This Hex!'
       };
       title = actionMessages[this.config.colorType] || 'Selection Complete!';
       icon = this.config.colorType === 'scout' ? 'fa-map-marked-alt' : 'fa-check-circle';

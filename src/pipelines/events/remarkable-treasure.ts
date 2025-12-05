@@ -21,29 +21,25 @@ export const remarkableTreasurePipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'A legendary treasure is discovered.',
-      endsEvent: true,
       modifiers: [
-        { type: 'dice', resource: 'gold', formula: '1d6+1', duration: 'immediate' },
+        { type: 'dice', resource: 'gold', formula: '2d3', duration: 'immediate' },
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' },
       ]
     },
     success: {
       description: 'A valuable treasure is found.',
-      endsEvent: true,
       modifiers: [
-        { type: 'dice', resource: 'gold', formula: '1d4', duration: 'immediate' }
+        { type: 'dice', resource: 'gold', formula: '1d3', duration: 'immediate' }
       ]
     },
     failure: {
       description: 'The treasure is of modest value.',
-      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
       ]
     },
     criticalFailure: {
       description: 'The treasure is cursed.',
-      endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]

@@ -290,6 +290,7 @@ export class BuildQueueService {
 
   /**
    * Complete a project - add to settlement, mark as completed
+   * Note: Demand fulfillment is handled automatically by settlementService.addStructure()
    */
   async completeProject(projectId: string): Promise<void> {
 
@@ -322,11 +323,10 @@ export class BuildQueueService {
 
     });
 
-    // Add structure using centralized service (handles recalculation)
+    // Add structure using centralized service (handles recalculation AND demand fulfillment)
     if (settlementId && structureId) {
       const { settlementService } = await import('../settlements');
       await settlementService.addStructure(settlementId, structureId);
-
     }
   }
 }

@@ -83,7 +83,7 @@
           {@const eventData = item.event || item.instance?.checkData || item.checkData}
           {@const instance = item.instance || item}
           {@const outcomes = buildOutcomes(eventData)}
-          {@const possibleOutcomes = eventData ? buildPossibleOutcomes(eventData.effects) : []}
+          {@const possibleOutcomes = eventData ? buildPossibleOutcomes(eventData.effects, true) : []}
           {@const aidResult = eventData ? getAidResult(eventData.id) : null}
           {@const resolution = item.instance?.appliedOutcome || item.appliedOutcome || null}
           {@const resolved = !!resolution}

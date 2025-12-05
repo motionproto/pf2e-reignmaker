@@ -17,6 +17,7 @@ export type GameCommandType =
   // Settlement & Construction
   | 'foundSettlement'
   | 'upgradeSettlement'
+  | 'increaseSettlementLevel'
   | 'buildStructure'
   | 'repairStructure'
   | 'createWorksite'
@@ -62,6 +63,7 @@ export type GameCommandType =
   // Unrest Management (Additional)
   | 'releaseImprisoned'
   | 'reduceImprisoned'
+  | 'convertUnrestToImprisoned'
   
   // Territory Management
   | 'removeBorderHexes'
@@ -329,6 +331,17 @@ export interface ReduceImprisonedCommand extends BaseGameCommand {
 }
 
 /**
+ * Convert unrest to imprisoned unrest command
+ * Automatically allocates to settlements with justice structures
+ * Used by events like Notorious Heist
+ */
+export interface ConvertUnrestToImprisonedCommand extends BaseGameCommand {
+  type: 'convertUnrestToImprisoned';
+  amount: number;               // Amount of unrest to convert
+  bonusUnrestReduction?: number; // Additional unrest reduction if conversion succeeds
+}
+
+/**
  * Remove border hexes command
  * Used by incidents like border raids that cause loss of territory
  */
@@ -404,6 +417,7 @@ export type GameCommand =
   | DestroyStructureCommand
   | ReleaseImprisonedCommand
   | ReduceImprisonedCommand
+  | ConvertUnrestToImprisonedCommand
   | RemoveBorderHexesCommand
   | DestroyWorksiteCommand
   | SpendPlayerActionCommand;

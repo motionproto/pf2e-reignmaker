@@ -11,6 +11,7 @@
   export let selectedStructureId: string;
   export let selectedSettlement: any;
   export let atCapacity: boolean = false;
+  export let isDemanded: boolean = false;
   
   const dispatch = createEventDispatcher();
   
@@ -46,7 +47,15 @@
   <!-- Header Row -->
   <div class="structure-header">
     <div class="header-left">
-      <h4>{structure.name}</h4>
+      <h4>
+        {structure.name}
+        {#if isDemanded}
+          <span class="demanded-badge">
+            <i class="fas fa-exclamation-triangle"></i>
+            Citizen Demand
+          </span>
+        {/if}
+      </h4>
     </div>
     
     <div class="badges">
@@ -148,6 +157,27 @@
       font-size: var(--font-xl);
       font-family: var(--font-sans-rm);
       font-weight: var(--font-weight-semibold);
+      display: flex;
+      align-items: center;
+      gap: var(--space-12);
+      
+      .demanded-badge {
+        font-size: var(--font-md);
+        font-weight: var(--font-weight-semibold);
+        padding: var(--space-4) var(--space-8);
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--color-amber);
+        display: flex;
+        align-items: center;
+        gap: var(--space-6);
+        white-space: nowrap;
+        color: var(--color-amber);
+        background: transparent;
+        
+        i {
+          font-size: var(--font-md);
+        }
+      }
     }
     
     .badges {

@@ -2,10 +2,16 @@
    import type { Settlement } from '../../../../models/Settlement';
    import { createSettlement, SettlementTier } from '../../../../models/Settlement';
    import { kingdomData, updateKingdom, currentFaction, availableFactions } from '../../../../stores/KingdomStore';
+   import { structureDemands } from '../../../../services/settlements';
    import { getTierIcon, getTierColor, getStructureCount, getMaxStructures, getLocationString } from './settlements.utils';
    import { getSettlementStatusIcon } from '../../utils/presentation';
    import { PLAYER_KINGDOM } from '../../../../types/ownership';
    import { get } from 'svelte/store';
+   
+   // Helper to check if a settlement has an active demand
+   function hasDemand(settlementId: string): boolean {
+      return $structureDemands.some(d => d.settlementId === settlementId);
+   }
    
    export let settlements: Settlement[] = [];
    export let selectedSettlement: Settlement | null = null;
@@ -305,6 +311,9 @@
                      {/if}
                      {#if settlement.wasFedLastTurn === false}
                         <i class="fas {getSettlementStatusIcon('unfed')} status-unfed" title="Not fed - No gold"></i>
+                     {/if}
+                     {#if hasDemand(settlement.id)}
+                        <i class="fas fa-bullhorn status-demand" title="Citizens demand a structure"></i>
                      {/if}
                      <span class="tier-badge {getTierColor(settlement.tier)}">{settlement.tier}</span>
                      <span class="level-number">{settlement.level}</span>
@@ -657,6 +666,12 @@
          
          .status-unfed {
             color: #dc3545; // Red color for unfed
+            font-size: var(--font-md);
+            flex-shrink: 0;
+         }
+         
+         .status-demand {
+            color: var(--color-amber); // Amber for citizen demand
             font-size: var(--font-md);
             flex-shrink: 0;
          }

@@ -6,24 +6,26 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import { claimHexesExecution } from '../../execution/territory/claimHexes';
 import {
-  validateUnclaimed,
   validateNotPending,
   validateExplored,
   validateAdjacentToClaimed,
   safeValidation,
   getFreshKingdomData,
+  hasPlayerArmyInHex,
   type ValidationResult
 } from '../shared/hexValidators';
+import { PLAYER_KINGDOM } from '../../types/ownership';
+import { logger } from '../../utils/Logger';
 
 export const claimHexesPipeline: CheckPipeline = {
   // === BASE DATA ===
   id: 'claim-hexes',
   name: 'Claim Hexes',
-  description: 'Expand your kingdom\'s borders by claiming adjacent wilderness hexes through surveying, settlement, and administrative control. Hexes must be adjacent to controlled territory.',
+  description: 'Expand your kingdom\'s borders by claiming adjacent wilderness hexes through surveying, settlement, and administrative control. Hexes must be adjacent to controlled territory. Enemy territory can only be claimed if occupied by your army.',
   brief: 'Expand your kingdom\'s territorial control',
   category: 'expand-borders',
   checkType: 'action',
-  special: 'Can only claim hexes adjacent to existing kingdom territory',
+  special: 'Can only claim hexes adjacent to existing territory. Enemy territory requires army occupation.',
 
   skills: [
     { skill: 'survival', description: 'wilderness expertise' },
@@ -75,9 +77,28 @@ export const claimHexesPipeline: CheckPipeline = {
       validateHex: (hexId: string, pendingClaims: string[] = []): ValidationResult => {
         return safeValidation(() => {
           const kingdom = getFreshKingdomData();
+          const hex = kingdom.hexes?.find((h: any) => h.id === hexId);
           
-          const unclaimedResult = validateUnclaimed(hexId, kingdom);
-          if (!unclaimedResult.valid) return unclaimedResult;
+          if (!hex) {
+            return { valid: false, message: 'Hex not found in kingdom data' };
+          }
+          
+          // Already claimed by player?
+          if (hex.claimedBy === PLAYER_KINGDOM) {
+            return { valid: false, message: 'This hex is already claimed by your kingdom' };
+          }
+          
+          // Enemy territory? Requires army occupation
+          if (hex.claimedBy && hex.claimedBy !== PLAYER_KINGDOM) {
+            if (!hasPlayerArmyInHex(hexId)) {
+              return { 
+                valid: false, 
+                message: 'You need an army occupying this hex to claim enemy territory' 
+              };
+            }
+            // Army is present - allow claiming enemy territory
+            logger.info(`[ClaimHexes] Hex ${hexId} is enemy territory but player army is present - allowing conquest`);
+          }
           
           const notPendingResult = validateNotPending(hexId, pendingClaims);
           if (!notPendingResult.valid) return notPendingResult;
@@ -123,7 +144,46 @@ export const claimHexesPipeline: CheckPipeline = {
           };
         }
         
+        // Get kingdom data BEFORE claiming to check for demanded hexes
+        const kingdom = getFreshKingdomData();
+        const demandedHexesToResolve: Array<{ hexId: string; terrain: string; eventInstanceId?: string }> = [];
+        
+        for (const hexId of hexIds) {
+          const hex = kingdom.hexes?.find((h: any) => h.id === hexId);
+          if (hex?.features?.some((f: any) => f.type === 'demanded')) {
+            const demandedFeature = hex.features.find((f: any) => f.type === 'demanded');
+            demandedHexesToResolve.push({
+              hexId,
+              terrain: hex.terrain || 'unknown',
+              eventInstanceId: demandedFeature?.eventInstanceId
+            });
+            logger.info(`[ClaimHexes] Hex ${hexId} has 'demanded' feature - will trigger resolution dialog`);
+          }
+        }
+        
+        // Claim the hexes
         await claimHexesExecution(hexIds);
+        
+        // After claiming, show dialog for any demanded hexes that were claimed
+        for (const demandedHex of demandedHexesToResolve) {
+          const { DemandFulfilledDialog } = await import('../../ui/dialogs/DemandFulfilledDialog');
+          const result = await DemandFulfilledDialog.show({
+            hexId: demandedHex.hexId,
+            terrain: demandedHex.terrain,
+            eventInstanceId: demandedHex.eventInstanceId
+          });
+          
+          if (result) {
+            await DemandFulfilledDialog.applyRewards(
+              demandedHex.hexId,
+              result,
+              demandedHex.eventInstanceId
+            );
+          } else {
+            logger.info(`[ClaimHexes] User cancelled demand resolution for hex ${demandedHex.hexId}`);
+          }
+        }
+        
         return { success: true };
         
       case 'failure':

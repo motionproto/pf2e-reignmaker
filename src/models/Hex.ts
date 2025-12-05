@@ -195,7 +195,7 @@ export interface RiverSegment {
  * Extensible for future features like roads, landmarks, etc.
  */
 export interface HexFeature {
-  type: 'settlement' | 'road' | 'landmark' | 'river' | 'other';
+  type: 'settlement' | 'road' | 'landmark' | 'river' | 'demanded' | 'other';
   
   // Settlement-specific fields (when type = 'settlement')
   linked?: boolean;          // true = has Settlement object, false = vacant marker
@@ -206,6 +206,11 @@ export interface HexFeature {
   
   // River-specific fields (when type = 'river')
   segments?: RiverSegment[];  // River segments (new edge-to-edge system)
+  
+  // Demanded-specific fields (when type = 'demanded')
+  // Citizens demand this hex be claimed - added by demand-expansion event
+  eventInstanceId?: string;  // Link back to the event instance that created this demand
+  createdTurn?: number;      // Turn when the demand was created
   
   // Extensible for future feature types
   [key: string]: any;

@@ -74,6 +74,10 @@
   export let incidentStatus: 'untested' | 'testing' | 'tested' | null = null;
   export let incidentNumber: number | undefined = undefined;  // Incident number for testing badge (1-30)
   
+  // Event status tracking
+  export let eventStatus: 'untested' | 'testing' | 'tested' | null = null;
+  export let eventNumber: number | undefined = undefined;  // Event number for testing badge (1-37)
+  
   // State props
   export let expanded: boolean = false;
   export let available: boolean = true;
@@ -87,7 +91,6 @@
     stateChanges?: Record<string, any>;
     modifiers?: any[];
     manualEffects?: string[];
-    specialEffects?: (string | import('../../../types/special-effects').SpecialEffect)[];  // Supports both legacy strings and new structured format
     shortfallResources?: string[];
     rollBreakdown?: any;
     isIgnored?: boolean;  // Flag to hide reroll button for ignored events
@@ -158,7 +161,6 @@
       stateChanges: resolution!.stateChanges || {},
       modifiers: resolution!.modifiers || [],
       manualEffects: resolution!.manualEffects || [],
-      specialEffects: resolution!.specialEffects || [],
       shortfallResources: resolution!.shortfallResources || [],
       rollBreakdown: resolution!.rollBreakdown,
       isIgnored: resolution!.isIgnored || false,
@@ -400,6 +402,8 @@
     {actionNumber}
     {incidentStatus}
     {incidentNumber}
+    {eventStatus}
+    {eventNumber}
     on:toggle={toggleExpanded}
   />
   
@@ -474,7 +478,6 @@
                   on:click={handleIgnoreClick}
                   title="Ignore this event and apply failure effects"
                 >
-                  <i class="fas fa-times-circle"></i>
                   Ignore Event
                 </button>
               {/if}
@@ -709,9 +712,6 @@
     }
     
     .ignore-button-inline {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--space-8);
       padding: var(--space-10) var(--space-16);
       background: var(--surface-primary);
       border: 1px solid var(--border-primary);
@@ -722,10 +722,6 @@
       cursor: pointer;
       transition: all 0.2s ease;
       white-space: nowrap;
-      
-      i {
-        font-size: var(--font-md);
-      }
       
       &:hover:not(:disabled) {
         background: var(--surface-primary-high);

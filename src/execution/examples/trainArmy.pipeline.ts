@@ -80,23 +80,21 @@ export const trainArmyPipeline: CheckPipeline = {
           action: 'modify',
           details: `Will train to level ${partyLevel}`
         }],
-        specialEffects: [],
+        outcomeBadges: [],
         warnings: []
       };
 
       // Add training bonus preview based on outcome
       if (ctx.outcome === 'criticalSuccess') {
-        preview.specialEffects.push({
-          type: 'status',
-          message: 'Elite Training: +2 attack/AC for 1 month',
+        preview.outcomeBadges!.push({
           icon: 'fa-star',
+          template: 'Elite Training: +2 attack/AC for 1 month',
           variant: 'positive'
         });
       } else if (ctx.outcome === 'success') {
-        preview.specialEffects.push({
-          type: 'status',
-          message: 'Standard Training: +1 attack for 1 month',
+        preview.outcomeBadges!.push({
           icon: 'fa-shield',
+          template: 'Standard Training: +1 attack for 1 month',
           variant: 'positive'
         });
       }

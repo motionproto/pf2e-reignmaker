@@ -24,18 +24,48 @@ export interface OutcomeEffects {
 }
 
 /**
+ * Check if any outcome in the event has endsEvent: false (is ongoing)
+ */
+function hasOngoingOutcome(outcomes: OutcomeEffects): boolean {
+  const allOutcomes = [
+    outcomes.criticalSuccess,
+    outcomes.success,
+    outcomes.failure,
+    outcomes.criticalFailure
+  ].filter(Boolean) as Outcome[];
+  
+  return allOutcomes.some(o => o.endsEvent === false);
+}
+
+/**
  * Build PossibleOutcome array from pipeline outcomes
  * 
  * If criticalSuccess is missing, uses success outcome for that slot.
+ * 
+ * @param outcomes - Pipeline outcomes object
+ * @param isEvent - If true, adds "Ends Event" badge for ongoing events
  */
-export function buildPossibleOutcomes(outcomes?: OutcomeEffects): PossibleOutcome[] {
+export function buildPossibleOutcomes(outcomes?: OutcomeEffects, isEvent: boolean = false): PossibleOutcome[] {
   if (!outcomes) return [];
   
   const results: PossibleOutcome[] = [];
   
+  // Only show "Ends Event" badges if this event has at least one ongoing outcome
+  const showEndsEventBadges = isEvent && hasOngoingOutcome(outcomes);
+  
   // Critical Success - use success if criticalSuccess is missing
   const critSuccessOutcome = outcomes.criticalSuccess ?? outcomes.success;
   if (critSuccessOutcome) {
+    const outcomeBadges = [...(critSuccessOutcome.outcomeBadges ?? [])];
+    // Only show "Ends Event" badge on outcomes that end the event (for ongoing events)
+    if (showEndsEventBadges && critSuccessOutcome.endsEvent !== false) {
+      outcomeBadges.push({
+        icon: 'fa-check-circle',
+        template: 'Ends Event',
+        variant: 'positive'
+      });
+    }
+    
     results.push({
       result: 'criticalSuccess',
       label: 'Critical Success',
@@ -43,11 +73,20 @@ export function buildPossibleOutcomes(outcomes?: OutcomeEffects): PossibleOutcom
       modifiers: critSuccessOutcome.modifiers,
       manualEffects: critSuccessOutcome.manualEffects ?? [],
       gameCommands: critSuccessOutcome.gameCommands ?? [],
-      outcomeBadges: critSuccessOutcome.outcomeBadges ?? []
+      outcomeBadges
     });
   }
   
   if (outcomes.success) {
+    const outcomeBadges = [...(outcomes.success.outcomeBadges ?? [])];
+    if (showEndsEventBadges && outcomes.success.endsEvent !== false) {
+      outcomeBadges.push({
+        icon: 'fa-check-circle',
+        template: 'Ends Event',
+        variant: 'positive'
+      });
+    }
+    
     results.push({
       result: 'success',
       label: 'Success',
@@ -55,11 +94,20 @@ export function buildPossibleOutcomes(outcomes?: OutcomeEffects): PossibleOutcom
       modifiers: outcomes.success.modifiers,
       manualEffects: outcomes.success.manualEffects ?? [],
       gameCommands: outcomes.success.gameCommands ?? [],
-      outcomeBadges: outcomes.success.outcomeBadges ?? []
+      outcomeBadges
     });
   }
   
   if (outcomes.failure) {
+    const outcomeBadges = [...(outcomes.failure.outcomeBadges ?? [])];
+    if (showEndsEventBadges && outcomes.failure.endsEvent !== false) {
+      outcomeBadges.push({
+        icon: 'fa-check-circle',
+        template: 'Ends Event',
+        variant: 'positive'
+      });
+    }
+    
     results.push({
       result: 'failure',
       label: 'Failure',
@@ -67,11 +115,20 @@ export function buildPossibleOutcomes(outcomes?: OutcomeEffects): PossibleOutcom
       modifiers: outcomes.failure.modifiers,
       manualEffects: outcomes.failure.manualEffects ?? [],
       gameCommands: outcomes.failure.gameCommands ?? [],
-      outcomeBadges: outcomes.failure.outcomeBadges ?? []
+      outcomeBadges
     });
   }
   
   if (outcomes.criticalFailure) {
+    const outcomeBadges = [...(outcomes.criticalFailure.outcomeBadges ?? [])];
+    if (showEndsEventBadges && outcomes.criticalFailure.endsEvent !== false) {
+      outcomeBadges.push({
+        icon: 'fa-check-circle',
+        template: 'Ends Event',
+        variant: 'positive'
+      });
+    }
+    
     results.push({
       result: 'criticalFailure',
       label: 'Critical Failure',
@@ -79,7 +136,7 @@ export function buildPossibleOutcomes(outcomes?: OutcomeEffects): PossibleOutcom
       modifiers: outcomes.criticalFailure.modifiers,
       manualEffects: outcomes.criticalFailure.manualEffects ?? [],
       gameCommands: outcomes.criticalFailure.gameCommands ?? [],
-      outcomeBadges: outcomes.criticalFailure.outcomeBadges ?? []
+      outcomeBadges
     });
   }
   

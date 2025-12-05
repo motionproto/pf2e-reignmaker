@@ -7,24 +7,19 @@
 
 <div class="custom-modifier-display">
   <div class="modifier-header">
-    <div class="modifier-title">
-      <span class="modifier-name">{modifier.name || modifier.sourceName}</span>
-    </div>
+    <span class="modifier-name">{modifier.name || modifier.sourceName}</span>
+    {#if modifier.modifiers && modifier.modifiers.length > 0}
+      <AdjustmentBadges modifiers={modifier.modifiers} />
+    {/if}
   </div>
   
-  <div class="modifier-details">
-    <div class="modifier-content">
-      {#if modifier.description}
-        <div class="modifier-description">
-          {modifier.description}
-        </div>
-      {/if}
-      
-      {#if modifier.modifiers && modifier.modifiers.length > 0}
-        <AdjustmentBadges modifiers={modifier.modifiers} />
-      {/if}
+  {#if modifier.description}
+    <div class="modifier-details">
+      <div class="modifier-description">
+        {modifier.description}
+      </div>
     </div>
-  </div>
+  {/if}
 </div>
 
 <style lang="scss">
@@ -38,36 +33,26 @@
   }
   
   .modifier-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-12);
     padding: var(--space-12) var(--space-16);
     background: var(--surface-low);
     border-bottom: 1px solid var(--border-default);
   }
   
-  .modifier-title {
-    display: flex;
-    align-items: center;
-    gap: var(--space-12);
-  }
-  
   .modifier-name {
     font-size: var(--font-lg);
     font-weight: var(--font-weight-semibold);
-    color: var(--text-secondary); /* Neutral gray color */
+    color: var(--text-secondary);
   }
   
   .modifier-details {
     padding: var(--space-12) var(--space-16);
   }
   
-  .modifier-content {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: var(--space-16);
-  }
-  
   .modifier-description {
-    flex: 1;
     color: var(--text-secondary);
     font-size: var(--font-md);
     line-height: 1.5;

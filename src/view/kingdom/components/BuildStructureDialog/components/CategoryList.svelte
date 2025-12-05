@@ -24,6 +24,7 @@
   export let categoriesInProgress: Set<string>;
   export let selectedSettlementId: string;
   export let settlements: Settlement[];
+  export let demandedCategories: Set<string> = new Set();
   
   const dispatch = createEventDispatcher();
   
@@ -68,6 +69,7 @@
             currentTier={getCurrentTier(category)}
             isSelected={selectedCategory === category}
             isInProgress={categoriesInProgress.has(category)}
+            hasDemand={demandedCategories.has(category)}
             on:click={() => selectCategory(category)}
           />
         {/each}
@@ -85,6 +87,7 @@
             currentTier={getCurrentTier(category)}
             isSelected={selectedCategory === category}
             isInProgress={categoriesInProgress.has(category)}
+            hasDemand={demandedCategories.has(category)}
             showSkills={false}
             on:click={() => selectCategory(category)}
           />

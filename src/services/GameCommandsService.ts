@@ -4,10 +4,12 @@
  * Responsibilities:
  * - Apply immediate effects from events, incidents, and actions
  * - Handle resource modifications (gold, food, unrest, etc.)
- * - Handle special effects (structure damage, imprisoned unrest, hex claims)
  * - Create ongoing modifiers when needed (via ModifierService)
  * - Prevent double-application of outcomes
  * - Provide clear logging of all changes
+ * 
+ * Note: Structure damage/destroy and hex claims are handled via the game commands
+ * system (see gameCommands/ handlers), not as resource modifiers.
  * 
  * Architecture:
  * - Service = Complex operations & utilities
@@ -24,10 +26,6 @@ import type { ActionLogEntry } from '../models/TurnState';
 import type { TurnPhase } from '../actors/KingdomActor';
 import { logger } from '../utils/Logger';
 import { structuresService } from './structures';
-import { structureTargetingService } from './structures/targeting';
-import { eventStructureTargetingConfigs } from '../data-compiled/event-structure-targeting';
-import { StructureCondition } from '../models/Settlement';
-import { PLAYER_KINGDOM } from '../types/ownership';
 
 /**
  * Source type for the outcome
@@ -291,14 +289,6 @@ export async function createGameCommandsService() {
         // Static modifier: { type: 'static', resource, value, duration? }
         const modifierLabel = `${params.sourceName} (${params.outcome})`;
         
-        // Check if this is a special effect (not a standard resource)
-        const specialEffectTypes = ['damage_structure', 'destroy_structure', 'claim_hex'];
-        if (specialEffectTypes.includes(modifier.resource as string)) {
-          // Special effects always apply immediately, regardless of duration
-          await this.applySpecialEffect(modifier.resource as string, params, result);
-          return;
-        }
-        
         // Skip ongoing modifiers for standard resources (applied during Status phase)
         if (modifier.duration === 'ongoing') {
           logger.info(`  ℹ️ Skipping 'ongoing' modifier for '${modifier.resource}' (applied during Status phase)`);
@@ -549,190 +539,6 @@ export async function createGameCommandsService() {
     },
 
     /**
-     * Handle special effects (structure damage, imprisoned unrest, etc.)
-     * 
-     * These are effects that don't fit the standard resource model.
-     */
-    async applySpecialEffect(
-      effectType: string,
-      params: ApplyOutcomeParams,
-      result: ApplyOutcomeResult
-    ): Promise<void> {
-
-      switch (effectType) {
-        case 'damage_structure':
-          await this.damageStructure(params, result);
-          break;
-        case 'destroy_structure':
-          await this.destroyStructure(params, result);
-          break;
-        case 'claim_hex':
-          await this.claimHex(params, result);
-          break;
-        default:
-          logger.warn(`⚠️ [GameCommands] Unknown special effect type: ${effectType}`);
-      }
-    },
-
-    /**
-     * Damage a random structure in a settlement
-     */
-    async damageStructure(params: ApplyOutcomeParams, result: ApplyOutcomeResult): Promise<void> {
-      logger.info(`[GameCommands] Attempting to damage structure for event: ${params.sourceId}`);
-      
-      // Get targeting config for this event
-      const config = eventStructureTargetingConfigs[params.sourceId];
-      if (!config) {
-        logger.warn(`[GameCommands] No targeting config found for event: ${params.sourceId}`);
-        return;
-      }
-
-      // Select a structure to damage
-      const target = structureTargetingService.selectStructureForDamage(config);
-      if (!target) {
-        logger.warn(`[GameCommands] No eligible structures found to damage`);
-        return;
-      }
-
-      // Apply damage to the structure
-      await updateKingdom(kingdom => {
-        const settlement = kingdom.settlements.find(s => s.id === target.settlement.id);
-        if (!settlement) {
-          logger.error(`[GameCommands] Settlement not found: ${target.settlement.id}`);
-          return;
-        }
-
-        // Initialize structureConditions if needed
-        if (!settlement.structureConditions) {
-          settlement.structureConditions = {};
-        }
-
-      // ✅ Immutable: Reassign object to trigger Svelte reactivity
-      settlement.structureConditions = {
-        ...settlement.structureConditions,
-        [target.structure.id]: StructureCondition.DAMAGED
-      };
-      logger.info(`[GameCommands] Damaged structure: ${target.structure.name} in ${settlement.name}`);
-    });
-    
-    // Recalculate settlement and kingdom capacities (handles imprisoned unrest + food excess)
-    const { settlementService } = await import('./settlements');
-    await settlementService.recalculateAfterStructureChange(target.settlement.id);
-
-    // Log to chat
-      const message = `<p><strong>Structure Damaged:</strong> ${target.structure.name} in ${target.settlement.name} has been damaged and provides no bonuses until repaired.</p>`;
-      ChatMessage.create({
-        content: message,
-        speaker: { alias: 'Kingdom Management' }
-      });
-
-    },
-
-    /**
-     * Destroy a random structure in a settlement
-     */
-    async destroyStructure(params: ApplyOutcomeParams, result: ApplyOutcomeResult): Promise<void> {
-      logger.info(`[GameCommands] Attempting to destroy structure for event: ${params.sourceId}`);
-      
-      // Get targeting config for this event
-      const config = eventStructureTargetingConfigs[params.sourceId];
-      if (!config) {
-        logger.warn(`[GameCommands] No targeting config found for event: ${params.sourceId}`);
-        return;
-      }
-
-      // Select a structure to destroy
-      const target = structureTargetingService.selectStructureForDamage(config);
-      if (!target) {
-        logger.warn(`[GameCommands] No eligible structures found to destroy`);
-        return;
-      }
-
-      // Apply destruction based on tier
-      let message = '';
-      
-      if (target.structure.tier === 1) {
-        // Tier 1 structures are removed entirely
-        await updateKingdom(kingdom => {
-          const settlement = kingdom.settlements.find(s => s.id === target.settlement.id);
-          if (!settlement) {
-            logger.error(`[GameCommands] Settlement not found: ${target.settlement.id}`);
-            return;
-          }
-
-          // Remove structure from settlement
-          settlement.structureIds = settlement.structureIds.filter(id => id !== target.structure.id);
-          
-          // Remove from structureConditions if present
-          if (settlement.structureConditions) {
-            delete settlement.structureConditions[target.structure.id];
-          }
-
-          logger.info(`[GameCommands] Destroyed tier 1 structure: ${target.structure.name} in ${settlement.name}`);
-        });
-
-        message = `<p><strong>Structure Destroyed:</strong> ${target.structure.name} in ${target.settlement.name} has been completely destroyed and removed.</p>`;
-        
-      } else {
-        // Tier 2+ structures downgrade to previous tier (damaged)
-        const previousTierId = target.structure.upgradeFrom;
-        if (!previousTierId) {
-          logger.error(`[GameCommands] Cannot downgrade structure - no upgradeFrom found: ${target.structure.id}`);
-          return;
-        }
-
-        const previousStructure = structuresService.getStructure(previousTierId);
-        if (!previousStructure) {
-          logger.error(`[GameCommands] Previous tier structure not found: ${previousTierId}`);
-          return;
-        }
-
-        await updateKingdom(kingdom => {
-          const settlement = kingdom.settlements.find(s => s.id === target.settlement.id);
-          if (!settlement) {
-            logger.error(`[GameCommands] Settlement not found: ${target.settlement.id}`);
-            return;
-          }
-
-          // Remove current tier structure
-          settlement.structureIds = settlement.structureIds.filter(id => id !== target.structure.id);
-          
-          // ✅ Immutable: Reassign array to trigger Svelte reactivity
-          settlement.structureIds = [...settlement.structureIds, previousTierId];
-          
-          // Initialize structureConditions if needed
-          if (!settlement.structureConditions) {
-            settlement.structureConditions = {};
-          }
-          
-          // ✅ Immutable: Reassign object to trigger Svelte reactivity
-          settlement.structureConditions = {
-            ...settlement.structureConditions,
-            [previousTierId]: StructureCondition.DAMAGED
-          };
-          
-          // Remove current tier from structureConditions if present
-          delete settlement.structureConditions[target.structure.id];
-
-          logger.info(`[GameCommands] Destroyed tier ${target.structure.tier} structure: ${target.structure.name}, downgraded to ${previousStructure.name} (damaged) in ${settlement.name}`);
-        });
-
-        message = `<p><strong>Structure Destroyed:</strong> ${target.structure.name} in ${target.settlement.name} has been destroyed, downgrading to ${previousStructure.name} (damaged).</p>`;
-      }
-      
-      // Recalculate settlement and kingdom capacities (handles imprisoned unrest + food excess)
-      const { settlementService } = await import('./settlements');
-      await settlementService.recalculateAfterStructureChange(target.settlement.id);
-
-      // Log to chat
-      ChatMessage.create({
-        content: message,
-        speaker: { alias: 'Kingdom Management' }
-      });
-
-    },
-
-    /**
      * Allocate imprisoned unrest to settlements with justice structures
      * 
      * @param allocations - Map of settlementId → amount to store
@@ -806,61 +612,6 @@ export async function createGameCommandsService() {
       }
     },
 
-    /**
-     * Claim hexes for the kingdom (interactive selection)
-     */
-    async claimHex(params: ApplyOutcomeParams, result: ApplyOutcomeResult): Promise<void> {
-      logger.info(`[GameCommands] Initiating hex claim for event: ${params.sourceId}`);
-      
-      // Import hex selector service and validator
-      const { hexSelectorService } = await import('../services/hex-selector');
-      const { validateClaimHex } = await import('../pipelines/shared/claimHexValidator');
-      
-      // Get number of hexes to claim from first modifier with claim_hex resource
-      const claimModifier = params.modifiers.find(m => (m as any).resource === 'claim_hex');
-      const hexCount = claimModifier ? (claimModifier as any).value : 1;
-      
-      logger.info(`[GameCommands] Requesting selection of ${hexCount} hex(es)`);
-      
-      // Call hex selector with claim validation
-      const selectedHexes = await hexSelectorService.selectHexes({
-        title: `Claim ${hexCount} Hex${hexCount !== 1 ? 'es' : ''} (${params.sourceName})`,
-        count: hexCount,
-        colorType: 'claim',
-        validationFn: validateClaimHex,
-        allowToggle: true
-      });
-      
-      // Check if user cancelled
-      if (!selectedHexes) {
-        logger.info(`[GameCommands] Hex selection cancelled by user`);
-        return;
-      }
-      
-      logger.info(`[GameCommands] User selected hexes:`, selectedHexes);
-      
-      // Apply claims to kingdom data
-      await updateKingdom(kingdom => {
-        for (const hexId of selectedHexes) {
-          const hex = kingdom.hexes.find(h => h.id === hexId);
-          if (hex) {
-            hex.claimedBy = PLAYER_KINGDOM;
-            logger.info(`[GameCommands] Claimed hex: ${hexId}`);
-          } else {
-            logger.warn(`[GameCommands] Hex not found in kingdom data: ${hexId}`);
-          }
-        }
-      });
-      
-      // Log to chat
-      const hexList = selectedHexes.join(', ');
-      const message = `<p><strong>Territory Claimed:</strong> ${hexCount} hex${hexCount !== 1 ? 'es' : ''} claimed (${hexList})</p>`;
-      ChatMessage.create({
-        content: message,
-        speaker: { alias: 'Kingdom Management' }
-      });
-      
-    }
   };
 }
 

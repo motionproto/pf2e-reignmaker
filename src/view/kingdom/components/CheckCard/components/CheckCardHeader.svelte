@@ -21,6 +21,10 @@
   export let incidentStatus: 'untested' | 'testing' | 'tested' | null = null;
   export let incidentNumber: number | null | undefined = undefined;  // Incident number for testing badge (1-30)
   
+  // Event status tracking
+  export let eventStatus: 'untested' | 'testing' | 'tested' | null = null;
+  export let eventNumber: number | null | undefined = undefined;  // Event number for testing badge (1-37)
+  
   const dispatch = createEventDispatcher();
   
   function handleClick(event: Event) {
@@ -87,6 +91,19 @@
               untested
             </span>
           {/if}
+          {#if eventStatus === 'tested' && eventNumber}
+            <span class="event-badge tested" title="Tested with PipelineCoordinator">
+              #{eventNumber} ✓
+            </span>
+          {:else if eventStatus === 'testing' && eventNumber}
+            <span class="event-badge testing" title="Currently being tested">
+              #{eventNumber} ⟳
+            </span>
+          {:else if eventStatus === 'untested' && eventNumber}
+            <span class="event-badge untested" title="Pipeline exists, needs testing">
+              #{eventNumber}
+            </span>
+          {/if}
           <div class="expand-icon-wrapper">
             <i class="fas fa-chevron-{expanded ? 'down' : 'right'} expand-icon"></i>
           </div>
@@ -130,6 +147,19 @@
           {:else if incidentStatus === 'untested'}
             <span class="incident-badge untested" title="Pipeline exists, needs testing">
               untested
+            </span>
+          {/if}
+          {#if eventStatus === 'tested' && eventNumber}
+            <span class="event-badge tested" title="Tested with PipelineCoordinator">
+              #{eventNumber} ✓
+            </span>
+          {:else if eventStatus === 'testing' && eventNumber}
+            <span class="event-badge testing" title="Currently being tested">
+              #{eventNumber} ⟳
+            </span>
+          {:else if eventStatus === 'untested' && eventNumber}
+            <span class="event-badge untested" title="Pipeline exists, needs testing">
+              #{eventNumber}
             </span>
           {/if}
         </div>
@@ -407,6 +437,39 @@
         i {
           font-size: var(--font-xs);
         }
+      }
+    }
+    
+    .event-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-4) var(--space-10);
+      border-radius: var(--radius-full);
+      font-size: var(--font-xs);
+      font-weight: var(--font-weight-semibold);
+      letter-spacing: 0.05rem;
+      line-height: 1.2;
+      flex-shrink: 0;
+      cursor: help;
+      
+      &.untested {
+        color: var(--text-tertiary);
+        background: transparent;
+        opacity: 0.6;
+        font-weight: var(--font-weight-normal);
+      }
+      
+      &.testing {
+        background: transparent;
+        border: 1px solid var(--text-primary);
+        color: var(--text-primary);
+      }
+      
+      &.tested {
+        background: var(--surface-success);
+        border: 1px solid var(--border-success);
+        color: var(--color-green);
       }
     }
   }

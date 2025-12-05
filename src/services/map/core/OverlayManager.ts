@@ -37,7 +37,8 @@ import {
   createSettlementLabelsOverlay,
   createFortificationsOverlay,
   createInteractiveHoverOverlay,
-  createBlockedEdgesDebugOverlay
+  createBlockedEdgesDebugOverlay,
+  createDemandedHexOverlay
 } from '../overlays';
 
 /**
@@ -622,8 +623,27 @@ export class OverlayManager {
         }
       }
 
+      // Auto-show data-dependent overlays that should always be active when data exists
+      await this.showDataDependentOverlays();
+
     } catch (error) {
       logger.error('[OverlayManager] Failed to restore state:', error);
+    }
+  }
+
+  /**
+   * Show overlays that should always be active when their data conditions are met
+   * These overlays show important game state (like demanded hexes) and shouldn't require
+   * manual activation by the user.
+   */
+  private async showDataDependentOverlays(): Promise<void> {
+    // List of overlays that should auto-show when they have data
+    const dataDependentOverlays = ['demanded-hex'];
+    
+    for (const overlayId of dataDependentOverlays) {
+      if (this.overlays.has(overlayId) && !this.isOverlayActive(overlayId)) {
+        await this.showOverlay(overlayId);
+      }
     }
   }
 
@@ -650,6 +670,9 @@ export class OverlayManager {
     
     // Debug overlays (GM only, shown in overlay panel)
     this.registerOverlay(createBlockedEdgesDebugOverlay(this.mapLayer, boundIsActive));
+    
+    // Event-based overlays (shown when relevant events are active)
+    this.registerOverlay(createDemandedHexOverlay(this.mapLayer, boundIsActive));
     
     // Internal overlays (used during map interactions, not shown in overlay panel)
     this.registerOverlay(createInteractiveHoverOverlay(this.mapLayer, boundIsActive));

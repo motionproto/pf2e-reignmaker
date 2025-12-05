@@ -29,6 +29,11 @@
       : actualPhase;
    
    // Debug which phase is being displayed
+   $: {
+      console.warn('[TurnTab] 🔴 Phase debug:', { actualPhase, displayPhase, viewingPhase: $viewingPhase });
+      console.warn('[TurnTab] 🔴 TurnPhase.STATUS =', TurnPhase.STATUS);
+      console.warn('[TurnTab] 🔴 displayPhase === TurnPhase.STATUS?', displayPhase === TurnPhase.STATUS);
+   }
 
    // Initialize viewingPhase to match actual phase only on mount
    // Don't use reactive statement as it interferes with manual phase selection

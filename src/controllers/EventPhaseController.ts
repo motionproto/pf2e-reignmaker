@@ -49,6 +49,58 @@ export interface IncidentResolution {
     message: string;
 }
 
+/**
+ * Check if any demand-expansion events have been fulfilled (target hex claimed)
+ * This is a FALLBACK check - normally resolution happens immediately via Claim Hex action.
+ * This catches edge cases where a hex was claimed via other means (e.g., seize, debug).
+ * 
+ * Uses hex features (type: 'demanded') as the source of truth.
+ * A demand is fulfilled when a hex with 'demanded' feature is claimed by player.
+ */
+async function checkDemandExpansionFulfilled(kingdom: KingdomData | null | undefined): Promise<void> {
+    if (!kingdom) return;
+    
+    const { PLAYER_KINGDOM } = await import('../types/ownership');
+    
+    // Find hexes with 'demanded' feature that are now claimed by player
+    const fulfilledHexes = kingdom.hexes?.filter(
+        (hex: any) => 
+            hex.claimedBy === PLAYER_KINGDOM &&
+            hex.features?.some((f: any) => f.type === 'demanded')
+    ) || [];
+    
+    if (fulfilledHexes.length === 0) return;
+    
+    // Silent cleanup - the dialog is shown during Claim Hex action
+    // This fallback handles edge cases (claimed via debug/seize/other means)
+    logger.info(`[EventPhaseController] Found ${fulfilledHexes.length} fulfilled demand expansion(s) - cleaning up silently`);
+    
+    const { updateKingdom } = await import('../stores/KingdomStore');
+    
+    await updateKingdom(kingdom => {
+        for (const hex of fulfilledHexes) {
+            const targetHex = kingdom.hexes?.find((h: any) => h.id === hex.id);
+            if (targetHex?.features) {
+                const demandedFeature = targetHex.features.find((f: any) => f.type === 'demanded');
+                const eventInstanceId = demandedFeature?.eventInstanceId;
+                
+                // Remove 'demanded' feature
+                targetHex.features = targetHex.features.filter((f: any) => f.type !== 'demanded');
+                logger.info(`[EventPhaseController] Removed 'demanded' feature from hex ${hex.id}`);
+                
+                // Mark event as resolved if we have the instance ID
+                if (eventInstanceId) {
+                    const idx = kingdom.pendingOutcomes?.findIndex((i: any) => i.previewId === eventInstanceId);
+                    if (idx !== undefined && idx >= 0) {
+                        kingdom.pendingOutcomes[idx].status = 'resolved';
+                        logger.info(`[EventPhaseController] Marked event ${eventInstanceId} as resolved`);
+                    }
+                }
+            }
+        }
+    });
+}
+
 export async function createEventPhaseController() {
     const modifierService = await createModifierService();
     const gameCommandsService = await createGameCommandsService();
@@ -87,6 +139,9 @@ export async function createEventPhaseController() {
                 // NEW ARCHITECTURE: Clear completed events and reset ongoing event resolutions
                 await outcomePreviewService.clearCompleted('event', kingdom?.currentTurn);
                 await outcomePreviewService.clearOngoingResolutions('event');
+                
+                // Check for fulfilled demand-expansion events (target hex was claimed)
+                await checkDemandExpansionFulfilled(kingdom);
                 
         // Read CURRENT state from turnState (single source of truth)
         const eventRolled = kingdom?.turnState?.eventsPhase?.eventRolled ?? false;
@@ -396,17 +451,33 @@ export async function createEventPhaseController() {
                 });
             }
             
-            // After resolution, mark instance as resolved if it ends the event
-            // This applies to BOTH new events and existing ongoing events
-            if (!isIgnored && outcomeData?.endsEvent) {
+            // After resolution, handle instance status based on whether event ends
+            // - endsEvent: true -> status = 'resolved' (event is done)
+            // - endsEvent: false -> status = 'pending' (ongoing, needs to persist for overlays)
+            if (!isIgnored) {
                 await updateKingdom(kingdom => {
                     // Find the instance (either existing or newly created)
                     const instance = kingdom.pendingOutcomes?.find(
-                        i => i.checkType === 'event' && i.checkId === eventId && i.status !== 'resolved'
+                        i => i.checkType === 'event' && i.checkId === eventId
                     );
                     if (instance) {
-                        instance.status = 'resolved';
-
+                        if (outcomeData?.endsEvent === false) {
+                            // Ongoing event - reset to 'pending' so overlays can find it
+                            // (storeOutcome sets 'resolved', but ongoing events need to stay 'pending')
+                            instance.status = 'pending';
+                            logger.info(`[EventPhaseController] Ongoing event ${eventId} - status reset to 'pending'`);
+                        } else if (outcomeData?.endsEvent) {
+                            instance.status = 'resolved';
+                            
+                            // If this was a demand-expansion event that ends, remove the 'demanded' feature
+                            if (eventId === 'demand-expansion' && instance.metadata?.targetHexId) {
+                                const hex = kingdom.hexes?.find((h: any) => h.id === instance.metadata.targetHexId);
+                                if (hex?.features) {
+                                    hex.features = hex.features.filter((f: any) => f.type !== 'demanded');
+                                    logger.info(`[EventPhaseController] Removed 'demanded' feature from hex ${instance.metadata.targetHexId} - event ended`);
+                                }
+                            }
+                        }
                     }
                 });
             }
@@ -469,107 +540,16 @@ export async function createEventPhaseController() {
         
         /**
          * Ignore event - controller method (called from UI)
-         * Architecture: UI delegates to controller for all business logic
+         * 
+         * @deprecated Use ignoreEventService.ignoreEvent() directly instead.
+         * This method is kept for backwards compatibility but delegates to the service.
          */
-        async ignoreEvent(eventId: string): Promise<{ success: boolean; error?: string }> {
-
-            const event = pipelineRegistry.getPipeline(eventId);
-            if (!event) {
-                return { success: false, error: 'Event not found' };
-            }
-            
-            const isBeneficial = event.traits?.includes('beneficial');
-            const isDangerous = event.traits?.includes('dangerous');
-            const outcomeData = event.outcomes.failure;
-            
-            // Handle beneficial events: Apply failure outcome immediately
-            if (isBeneficial && !isDangerous && outcomeData) {
-
-                // Apply failure outcome using existing resolveEvent logic
-                const result = await this.resolveEvent(
-                    eventId,
-                    'failure',
-                    { 
-                        numericModifiers: [],
-                        manualEffects: [],
-                        complexActions: []
-                    },
-                    true, // isIgnored = true (skips player tracking)
-                    'Event Ignored',
-                    '',
-                    undefined
-                );
-
-                return result;
-            }
-            
-            // Determine if this event should create an ongoing instance (dangerous events only)
-            const shouldCreateInstance = isDangerous;
-            
-            if (shouldCreateInstance && outcomeData) {
-                const { getKingdomActor } = await import('../stores/KingdomStore');
-                const actor = getKingdomActor();
-                const kingdom = actor?.getKingdomData();
-                
-                if (kingdom) {
-                    // Check if an instance already exists (created by performEventCheck)
-                    const existingInstance = kingdom.pendingOutcomes?.find(
-                        (i: any) => i.checkType === 'event' && i.checkId === event.id && i.status === 'pending'
-                    );
-                    
-                    let instanceId: string;
-                    
-                    if (existingInstance) {
-                        // Use existing instance from performEventCheck
-                        instanceId = existingInstance.instanceId;
-
-                    } else {
-                        // Create new instance (fallback for edge cases)
-                        instanceId = await outcomePreviewService.createInstance(
-                            'event',
-                            event.id,
-                            event,
-                            kingdom.currentTurn
-                        );
-
-                    }
-                    
-                    // Build failure outcome preview
-                    const resolution = {
-                        outcome: 'failure' as const,
-                        actorName: 'Event Ignored',
-                        skillName: '',
-                        effect: outcomeData.description,
-                        modifiers: outcomeData.modifiers || [],
-                        manualEffects: outcomeData.manualEffects || [],
-                        gameCommands: outcomeData.gameCommands || [],
-                        effectsApplied: false,
-                        isIgnored: true,  // Flag to hide reroll button
-                        shortfallResources: []  // Events don't have shortfall resources
-                    };
-                    
-                    // Store preview in instance
-                    await updateKingdom(kingdom => {
-                        const instance = kingdom.pendingOutcomes?.find(i => i.previewId === instanceId);
-                        if (instance) {
-                            instance.appliedOutcome = resolution;
-
-                        }
-                    });
-                }
-            }
-            
-            // Clear current event from turnState (moves to ongoing section if instance created)
-            await updateKingdom(kingdom => {
-                if (kingdom.turnState?.eventsPhase?.eventId === eventId) {
-                    kingdom.turnState.eventsPhase.eventId = null;
-                    kingdom.turnState.eventsPhase.eventInstanceId = null;
-                    kingdom.turnState.eventsPhase.eventTriggered = false;
-
-                }
+        async ignoreEvent(eventId: string, metadata?: Record<string, any>): Promise<{ success: boolean; error?: string }> {
+            // Delegate to centralized IgnoreEventService
+            const { ignoreEventService } = await import('../services/IgnoreEventService');
+            return ignoreEventService.ignoreEvent(eventId, {
+                isDebugTest: metadata?.isDebugTest || false
             });
-            
-            return { success: true };
         },
         
         /**

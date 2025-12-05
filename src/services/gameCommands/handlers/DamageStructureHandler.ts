@@ -16,9 +16,17 @@ export class DamageStructureHandler extends BaseGameCommandHandler {
   }
   
   async prepare(command: any, ctx: GameCommandContext): Promise<PreparedCommand | null> {
-    const count = command.count || 1;
+    let count = command.count || 1;
     const settlementId = command.settlementId; // Optional: target specific settlement
     const preferredCategories = command.category ? [command.category] : command.preferredCategories;
+    
+    // Handle dice formula (e.g., '1d3')
+    if (typeof count === 'string') {
+      const roll = new Roll(count);
+      await roll.evaluate({ async: true });
+      count = roll.total || 1;
+      logger.info(`[DamageStructureHandler] Rolled ${command.count} = ${count}`);
+    }
     
     logger.info(`[DamageStructureHandler] Preparing to damage ${count} structure(s)${settlementId ? ` in settlement ${settlementId}` : ''}`);
     

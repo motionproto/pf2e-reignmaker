@@ -1,12 +1,15 @@
 <script lang="ts">
    import type { Settlement } from '../../../../models/Settlement';
    import { updateKingdom, kingdomData } from '../../../../stores/KingdomStore';
-   import { settlementService } from '../../../../services/settlements';
+   import { settlementService, structureDemands } from '../../../../services/settlements';
    import { getSettlementStatusIcon } from '../../utils/presentation';
    import { SettlementTierConfig, getNextTier, getNextTierRequirements } from '../../../../models/Settlement';
    import Dialog from '../../components/baseComponents/Dialog.svelte';
    
    export let settlement: Settlement;
+   
+   // Check if this settlement has a structure demand
+   $: settlementDemand = $structureDemands.find(d => d.settlementId === settlement.id);
    
    let showCapitalConfirm = false;
    let oldCapitalName = '';
@@ -193,6 +196,14 @@
                   <i class="fas fa-times-circle status-bad"></i>
                   <span>Not connected to capital by roads</span>
                {/if}
+            </div>
+         {/if}
+         
+         <!-- Citizen Demand Status -->
+         {#if settlementDemand}
+            <div class="status-item">
+               <i class="fas fa-bullhorn status-warning"></i>
+               <span>Citizens demand a <strong>{settlementDemand.structureName}</strong> (+1 Unrest/turn)</span>
             </div>
          {/if}
          
