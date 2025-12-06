@@ -20,29 +20,34 @@ export const sensationalCrimePipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'The criminal is caught spectacularly.',
+      description: 'The criminal is caught and stolen goods are recovered!',
+      endsEvent: true,
+      modifiers: [
+        { type: 'dice', resource: 'gold', formula: '1d3', duration: 'immediate' },
+        { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
+      ]
+    },
+    success: {
+      description: 'The crime is solved and the public is reassured.',
       endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
       ]
     },
-    success: {
-      description: 'The crime is solved.',
-      endsEvent: true,
-      modifiers: []
-    },
     failure: {
-      description: 'The criminal escapes.',
+      description: 'The criminal escapes with their ill-gotten gains.',
       endsEvent: true,
       modifiers: [
-        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
+        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
+        { type: 'dice', resource: 'gold', formula: '1d3', negative: true, duration: 'immediate' }
       ]
     },
     criticalFailure: {
-      description: 'Copycat crimes emerge.',
+      description: 'Copycat crimes emerge, spreading fear and losses.',
       endsEvent: true,
       modifiers: [
-        { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
+        { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' },
+        { type: 'dice', resource: 'gold', formula: '1d3', negative: true, duration: 'immediate' }
       ]
     },
   },

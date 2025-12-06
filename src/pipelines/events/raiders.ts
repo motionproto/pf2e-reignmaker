@@ -1,9 +1,13 @@
 /**
  * Raiders Event Pipeline
  *
+ * Armed raiders threaten settlements and trade routes.
+ * Critical failure destroys a worksite.
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
+import { textBadge } from '../../types/OutcomeBadge';
+import { DestroyWorksiteHandler } from '../../services/gameCommands/handlers/DestroyWorksiteHandler';
 
 export const raidersPipeline: CheckPipeline = {
   id: 'raiders',
@@ -20,39 +24,119 @@ export const raidersPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'The raiders are defeated.',
+      description: 'The raiders are defeated and their loot recovered!',
       endsEvent: true,
       modifiers: [
-        { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
+        { type: 'dice', resource: 'gold', formula: '1d3', duration: 'immediate' },
+        { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
       ]
     },
     success: {
-      description: 'The raiders are repelled.',
+      description: 'The raiders are repelled and the people feel protected.',
       endsEvent: true,
-      modifiers: []
+      modifiers: [
+        { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
+      ]
     },
     failure: {
       description: 'The raiders plunder your holdings.',
       endsEvent: false,
       modifiers: [
-        { type: 'dice', resource: 'gold', formula: '1d4', negative: true, duration: 'immediate' },
-        { type: 'dice', resource: 'food', formula: '1d4', negative: true, duration: 'immediate' },
-        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
+        { type: 'dice', resource: 'gold', formula: '1d3', negative: true, duration: 'immediate' },
+        { type: 'dice', resource: 'food', formula: '1d3', negative: true, duration: 'immediate' },
+        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
     },
     criticalFailure: {
-      description: 'A major raid devastates the area.',
+      description: 'A major raid devastates the area, destroying a worksite.',
       endsEvent: false,
       modifiers: [
-        { type: 'dice', resource: 'gold', formula: '1d4', negative: true, duration: 'immediate' },
-        { type: 'dice', resource: 'food', formula: '1d4', negative: true, duration: 'immediate' },
-        { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' },
+        { type: 'dice', resource: 'gold', formula: '1d3', negative: true, duration: 'immediate' },
+        { type: 'dice', resource: 'food', formula: '1d3', negative: true, duration: 'immediate' },
+        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
+      ],
+      outcomeBadges: [
+        textBadge('Destroy 1 worksite', 'fa-hammer', 'negative')
       ]
     },
   },
 
   preview: {
+    calculate: async (ctx) => {
+      // Only show preview on critical failure
+      if (ctx.outcome !== 'criticalFailure') {
+        return { resources: [], outcomeBadges: [], warnings: [] };
+      }
+
+      // Call handler to generate preview and metadata
+      const { DestroyWorksiteHandler } = await import('../../services/gameCommands/handlers/DestroyWorksiteHandler');
+      const handler = new DestroyWorksiteHandler();
+      
+      const preparedCommand = await handler.prepare(
+        { type: 'destroyWorksite', count: 1 },
+        { actionId: 'raiders', outcome: ctx.outcome, kingdom: ctx.kingdom, metadata: ctx.metadata }
+      );
+      
+      if (!preparedCommand) {
+        return { resources: [], outcomeBadges: [], warnings: ['No worksites available to destroy'] };
+      }
+      
+      // Store metadata in context for post-apply interactions
+      // IMPORTANT: Mutate existing object, don't reassign (so PipelineCoordinator sees changes)
+      if (preparedCommand.metadata) {
+        Object.assign(ctx.metadata, preparedCommand.metadata);
+      }
+      
+      // Store prepared command for execute step
+      ctx.metadata._preparedDestroyWorksite = preparedCommand;
+      
+      return {
+        resources: [],
+        outcomeBadges: [preparedCommand.outcomeBadge],
+        warnings: []
+      };
+    }
   },
+
+  execute: async (ctx) => {
+    // Only execute worksite destruction on critical failure
+    if (ctx.outcome !== 'criticalFailure') {
+      return { success: true };
+    }
+    
+    // Get prepared command from preview step
+    const preparedCommand = ctx.metadata?._preparedDestroyWorksite;
+    
+    if (!preparedCommand) {
+      // Fallback: prepare now if somehow missed
+      const { getGameCommandRegistry } = await import('../../services/gameCommands/GameCommandHandlerRegistry');
+      const registry = getGameCommandRegistry();
+      
+      const fallbackCommand = await registry.process(
+        { type: 'destroyWorksite', count: 1 },
+        { kingdom: ctx.kingdom, outcome: ctx.outcome, metadata: ctx.metadata }
+      );
+      
+      if (!fallbackCommand?.commit) {
+        return { success: true, message: 'No worksites to destroy' };
+      }
+      
+      await fallbackCommand.commit();
+      return { success: true };
+    }
+    
+    // Commit the worksite destruction
+    if (preparedCommand.commit) {
+      await preparedCommand.commit();
+    }
+    
+    return { success: true };
+  },
+
+  // Post-apply interaction to show destroyed worksites on map
+  postApplyInteractions: [
+    DestroyWorksiteHandler.getMapDisplayInteraction('Worksite Destroyed by Raiders')
+  ],
 
   traits: ["dangerous", "ongoing"],
 };

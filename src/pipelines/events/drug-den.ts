@@ -20,17 +20,17 @@ export const drugDenPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'The drug ring is destroyed.',
+      description: 'The drug ring is destroyed and the community rallies together.',
       endsEvent: true,
       modifiers: [
-        { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
+        { type: 'dice', resource: 'unrest', formula: '-1d3', duration: 'immediate' }
       ]
     },
     success: {
       description: 'Major arrests disrupt the drug trade.',
       endsEvent: true,
       modifiers: [
-        { type: 'static', resource: 'imprisonedUnrest', value: 1, duration: 'immediate' }
+        { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
       ]
     },
     failure: {

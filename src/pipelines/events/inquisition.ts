@@ -35,7 +35,7 @@ export const inquisitionPipeline: CheckPipeline = {
       description: 'The persecution spreads.',
       endsEvent: false,
       modifiers: [
-        { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
+        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
     },
     criticalFailure: {
