@@ -52,6 +52,20 @@ export interface SimulationConfig {
   
   /** Verbose logging */
   verbose: boolean;
+  
+  // === BALANCE TESTING OPTIONS ===
+  
+  /** Hexes per unrest point (default 8, set to 1000 to disable size-based unrest) */
+  hexesPerUnrest: number;
+  
+  /** Enable fame → unrest conversion in upkeep (1 fame = -1 unrest) */
+  fameConvertsToUnrest: boolean;
+  
+  /** Enable fame → gold conversion in upkeep (1 fame = 1 gold) */
+  fameConvertsToGold: boolean;
+  
+  /** Gold cost per structure tier (0 = no cost, 1 = tier gold, 2 = 2x tier) */
+  structureGoldCostPerTier: number;
 }
 
 /**
@@ -70,7 +84,12 @@ export const DEFAULT_CONFIG: SimulationConfig = {
   playerCount: 4,
   actionsPerPlayer: 1,  // Per rules: 1 action per player per turn
   outputFormat: 'console',
-  verbose: false
+  verbose: false,
+  // Balance testing defaults (production rules)
+  hexesPerUnrest: 8,           // Standard rules: +1 unrest per 8 hexes
+  fameConvertsToUnrest: false, // Fame does NOT auto-convert to unrest reduction
+  fameConvertsToGold: false,   // Fame does NOT auto-convert to gold
+  structureGoldCostPerTier: 0, // No gold cost on structures
 };
 
 /**

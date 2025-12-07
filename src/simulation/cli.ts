@@ -13,11 +13,12 @@ import { readFileSync } from 'fs';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import type { KingdomData, Settlement } from '../actors/KingdomActor';
-import { KingdomSimulator } from './KingdomSimulator';
+import { HeadlessSimulator } from './HeadlessSimulator';
 import { StatisticsCollector } from './StatisticsCollector';
 import { ReportGenerator } from './ReportGenerator';
 import type { SimulationConfig, StrategyType, SimulationRunResult, SimulationResults } from './SimulationConfig';
 import { DEFAULT_CONFIG } from './SimulationConfig';
+import { listPresets, getConfigPreset, applyPreset, CONFIG_PRESETS } from './configs';
 import {
   BalancedStrategy,
   EconomicStrategy,
@@ -139,6 +140,47 @@ function parseArgs(): Partial<SimulationConfig> {
         i++;
         break;
         
+      case '--hexes-per-unrest':
+        config.hexesPerUnrest = parseInt(nextArg, 10);
+        i++;
+        break;
+        
+      case '--fame-converts':
+        // Legacy: --fame-converts true means unrest reduction
+        config.fameConvertsToUnrest = nextArg === 'true' || nextArg === '1';
+        i++;
+        break;
+        
+      case '--fame':
+        // New: --fame none|unrest|gold
+        if (nextArg === 'unrest') {
+          config.fameConvertsToUnrest = true;
+          config.fameConvertsToGold = false;
+        } else if (nextArg === 'gold') {
+          config.fameConvertsToUnrest = false;
+          config.fameConvertsToGold = true;
+        } else {
+          config.fameConvertsToUnrest = false;
+          config.fameConvertsToGold = false;
+        }
+        i++;
+        break;
+        
+      case '--structure-gold':
+        config.structureGoldCostPerTier = parseInt(nextArg, 10);
+        i++;
+        break;
+        
+      case '--config':
+      case '-c':
+        (config as any)._presetName = nextArg;
+        i++;
+        break;
+        
+      case '--list-configs':
+        (config as any)._listConfigs = true;
+        break;
+        
       case '--verbose':
       case '-v':
         config.verbose = true;
@@ -183,6 +225,14 @@ OPTIONS:
   --output, -o <type>   Output format: console, json, html (default: console)
   --verbose, -v         Show detailed output
   --help, -h            Show this help message
+
+CONFIGURATION PRESETS:
+  --config, -c <name>   Use a named configuration preset
+  --list-configs        List all available presets
+
+BALANCE TESTING (override preset settings):
+  --hexes-per-unrest <N>  Hexes per +1 unrest (default: 8, use 1000 to disable)
+  --fame-converts <bool>  Fame auto-converts to unrest reduction (default: false)
 
 EXAMPLES:
   # Run 10 simulations of 50 turns each at party level 5
@@ -343,12 +393,46 @@ function log(message: string, config?: { outputFormat?: string }): void {
 
 async function main(): Promise<void> {
   // Parse command line arguments first to know output format
-  const cliConfig = parseArgs();
-  const config: SimulationConfig = { ...DEFAULT_CONFIG, ...cliConfig };
+  const cliConfig = parseArgs() as any;
+  
+  // Handle --list-configs
+  if (cliConfig._listConfigs) {
+    listPresets();
+    return;
+  }
+  
+  // Apply preset if specified, then override with CLI args
+  let config: SimulationConfig;
+  const presetName = cliConfig._presetName;
+  
+  if (presetName) {
+    const preset = getConfigPreset(presetName);
+    if (!preset) {
+      console.error(`Unknown preset: ${presetName}`);
+      console.error('Use --list-configs to see available presets');
+      process.exit(1);
+    }
+    // Remove internal flags before merging
+    delete cliConfig._presetName;
+    delete cliConfig._listConfigs;
+    config = applyPreset(presetName, cliConfig);
+  } else {
+    delete cliConfig._presetName;
+    delete cliConfig._listConfigs;
+    config = { ...DEFAULT_CONFIG, ...cliConfig };
+  }
   
   log('========================================', config);
   log('  PF2E Reignmaker Kingdom Simulator', config);
   log('========================================\n', config);
+  
+  // Show preset name if used
+  if (presetName) {
+    const preset = getConfigPreset(presetName)!;
+    log(`Preset: ${preset.name}`, config);
+    log(`  ${preset.description}`, config);
+    log('', config);
+  }
   
   log('Configuration:', config);
   log(`  Turns per run: ${config.turns}`, config);
@@ -363,20 +447,26 @@ async function main(): Promise<void> {
   if (config.seed !== undefined) {
     log(`  Random seed: ${config.seed}`, config);
   }
+  // Balance settings
+  log('Balance Settings:', config);
+  log(`  Hexes per unrest: ${config.hexesPerUnrest}${config.hexesPerUnrest === 8 ? ' (production)' : ' ⚙️'}`, config);
+  const fameMode = config.fameConvertsToUnrest ? 'unrest reduction' : 
+                   config.fameConvertsToGold ? 'gold' : 'none (production)';
+  log(`  Fame conversion: ${fameMode}${fameMode !== 'none (production)' ? ' ⚙️' : ''}`, config);
+  log(`  Structure gold cost: ${config.structureGoldCostPerTier}g per tier${config.structureGoldCostPerTier === 0 ? ' (production)' : ' ⚙️'}`, config);
   log('', config);
   
-  // Load starter kingdom
-  let starterKingdom: KingdomData;
+  // Log starter kingdom info (load once just for logging)
   try {
-    starterKingdom = loadStarterKingdom();
-    const claimedHexes = starterKingdom.hexes?.filter(h => h.claimedBy === 'player') || [];
+    const sampleKingdom = loadStarterKingdom();
+    const claimedHexes = sampleKingdom.hexes?.filter(h => h.claimedBy === 'player') || [];
     log(`Loaded world from base-world.json`, config);
     log(`  Starting hex: ${STARTING_HEX_ID}`, config);
-    log(`  Kingdom name: "${starterKingdom.name}"`, config);
+    log(`  Kingdom name: "${sampleKingdom.name}"`, config);
     log(`  Starting hexes claimed: ${claimedHexes.length}`, config);
-    log(`  Starting settlements: ${starterKingdom.settlements?.length || 0}`, config);
-    log(`  Starting resources: gold=${starterKingdom.resources.gold}, food=${starterKingdom.resources.food}, lumber=${starterKingdom.resources.lumber}, stone=${starterKingdom.resources.stone}, ore=${starterKingdom.resources.ore}`, config);
-    log(`  Total hexes in map: ${starterKingdom.hexes?.length || 0}`, config);
+    log(`  Starting settlements: ${sampleKingdom.settlements?.length || 0}`, config);
+    log(`  Starting resources: gold=${sampleKingdom.resources.gold}, food=${sampleKingdom.resources.food}, lumber=${sampleKingdom.resources.lumber}, stone=${sampleKingdom.resources.stone}, ore=${sampleKingdom.resources.ore}`, config);
+    log(`  Total hexes in map: ${sampleKingdom.hexes?.length || 0}`, config);
     log('', config);
   } catch (error) {
     console.error('Failed to load world data:', error);
@@ -398,7 +488,10 @@ async function main(): Promise<void> {
     const runConfig = { ...config, seed: runSeed };
     const runStrategy = createStrategy(config.strategy, runSeed);
     
-    const simulator = new KingdomSimulator(runConfig, runStrategy);
+    // Load fresh kingdom for each run to prevent mutation across runs
+    const starterKingdom = loadStarterKingdom();
+    // Use HeadlessSimulator which uses real domain layer and services
+    const simulator = new HeadlessSimulator(runConfig, runStrategy);
     const result = simulator.runSimulation(starterKingdom);
     result.runNumber = i + 1;
     runs.push(result);

@@ -11,8 +11,9 @@ import type { SimulationResults, SimulationStatistics, SimulationRunResult } fro
 import { StatisticsCollector } from './StatisticsCollector';
 import {
   generateLineChart,
-  generateOutcomeChart,
-  type LineChartData
+  generatePieChart,
+  type LineChartData,
+  type PieChartData
 } from './NivoChartGenerator';
 
 /**
@@ -152,6 +153,9 @@ export class ReportGenerator {
     const unrestProgression = this.statsCollector.getResourceProgression(results.runs, 'unrest');
     const goldProgression = this.statsCollector.getResourceProgression(results.runs, 'gold');
     const foodProgression = this.statsCollector.getResourceProgression(results.runs, 'food');
+    const lumberProgression = this.statsCollector.getResourceProgression(results.runs, 'lumber');
+    const stoneProgression = this.statsCollector.getResourceProgression(results.runs, 'stone');
+    const oreProgression = this.statsCollector.getResourceProgression(results.runs, 'ore');
     
     return `<!DOCTYPE html>
 <html lang="en">
@@ -250,6 +254,32 @@ export class ReportGenerator {
     .stat-value.warning { color: var(--color-amber); }
     .stat-value.danger { color: var(--status-critical-failure); }
     
+    .stat-boxes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .stat-box {
+      background: var(--surface-low);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      text-align: center;
+      min-width: 80px;
+    }
+    .stat-box-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+    }
+    .stat-box-value {
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: var(--text-primary);
+    }
+    .stat-box.warning .stat-box-value { color: var(--color-amber); }
+    .stat-box.danger .stat-box-value { color: var(--status-critical-failure); }
+    
     .progress-bar {
       height: 8px;
       background: var(--surface-low);
@@ -324,108 +354,96 @@ export class ReportGenerator {
     .warning-box.danger h4 { color: var(--danger); }
     
     .timestamp { color: var(--text-dim); font-size: 0.875rem; margin-top: 2rem; }
+    
+    /* Sticky Header Bar */
+    .sticky-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border-default);
+      padding: 0.75rem 1.5rem;
+      margin: -1rem -1rem 1rem -1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .sticky-header h1 { 
+      margin: 0; 
+      border: none; 
+      padding: 0; 
+      font-size: 1.25rem;
+    }
+    .view-selector {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .view-selector label {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+    .view-selector select {
+      padding: 0.5rem 1rem;
+      background: var(--surface-low);
+      border: 1px solid var(--border-default);
+      border-radius: 4px;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .view-selector select:focus {
+      outline: none;
+      border-color: var(--color-amber);
+    }
+    
+    /* Config Summary */
+    .config-summary {
+      background: var(--surface-high);
+      border-left: 4px solid var(--color-crimson);
+      padding: 0.75rem 1.5rem;
+      margin-bottom: 2rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    
+    /* View switching */
+    .view-content { display: none; }
+    .view-content.active { display: block; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Kingdom Simulation Report</h1>
+    <h1 style="font-size: 1.5rem; border-bottom: 2px solid var(--color-crimson); padding-bottom: 0.5rem; margin-bottom: 1rem;">Kingdom Simulation Report</h1>
     
-    <h2>Configuration</h2>
-    <div class="grid">
-      <div class="card">
-        <div class="stat">
-          <div class="stat-label">Simulation Runs</div>
-          <div class="stat-value">${stats.runCount}</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Turns per Run</div>
-          <div class="stat-value">${stats.config.turns}</div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="stat">
-          <div class="stat-label">Party Level</div>
-          <div class="stat-value">${stats.config.partyLevel}</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Strategy</div>
-          <div class="stat-value">${stats.config.strategy}</div>
-        </div>
-      </div>
+    <div class="config-summary">
+      ${stats.runCount} runs × ${stats.config.turns} turns • 
+      Level 1→16 • 
+      Hexes/Unrest: ${stats.config.hexesPerUnrest} • 
+      Fame: ${stats.config.fameConvertsToUnrest ? '→Unrest' : stats.config.fameConvertsToGold ? '→Gold' : 'none'} • 
+      Structure Gold: ${stats.config.structureGoldCostPerTier}g/tier
     </div>
     
     <h2>Outcome Distribution</h2>
-    <div class="card">
-      <table>
-        <tr>
-          <th>Outcome</th>
-          <th>Count</th>
-          <th>Percentage</th>
-          <th></th>
-        </tr>
-        <tr>
-          <td>Critical Success</td>
-          <td>${stats.totalOutcomes.criticalSuccess}</td>
-          <td>${stats.outcomePercentages.criticalSuccess}%</td>
-          <td><div class="progress-bar"><div class="progress-fill success" style="width: ${stats.outcomePercentages.criticalSuccess}%"></div></div></td>
-        </tr>
-        <tr>
-          <td>Success</td>
-          <td>${stats.totalOutcomes.success}</td>
-          <td>${stats.outcomePercentages.success}%</td>
-          <td><div class="progress-bar"><div class="progress-fill success" style="width: ${stats.outcomePercentages.success}%"></div></div></td>
-        </tr>
-        <tr>
-          <td>Failure</td>
-          <td>${stats.totalOutcomes.failure}</td>
-          <td>${stats.outcomePercentages.failure}%</td>
-          <td><div class="progress-bar"><div class="progress-fill warning" style="width: ${stats.outcomePercentages.failure}%"></div></div></td>
-        </tr>
-        <tr>
-          <td>Critical Failure</td>
-          <td>${stats.totalOutcomes.criticalFailure}</td>
-          <td>${stats.outcomePercentages.criticalFailure}%</td>
-          <td><div class="progress-bar"><div class="progress-fill danger" style="width: ${stats.outcomePercentages.criticalFailure}%"></div></div></td>
-        </tr>
+    <div class="card" style="display: grid; grid-template-columns: 1fr auto; gap: 1.5rem; align-items: center;">
+      <div style="display: flex; justify-content: center;">
+        ${this.generateOutcomePieChart(stats.totalOutcomes)}
+      </div>
+      <table style="font-size: 0.8rem; white-space: nowrap;">
+        <tr><td style="color: #4ade80;">⭐ Crit Success</td><td style="text-align: right; padding-left: 0.5rem;">${stats.totalOutcomes.criticalSuccess}</td><td style="text-align: right; padding-left: 0.5rem; color: var(--text-muted);">${stats.outcomePercentages.criticalSuccess}%</td></tr>
+        <tr><td style="color: #166534;">✓ Success</td><td style="text-align: right; padding-left: 0.5rem;">${stats.totalOutcomes.success}</td><td style="text-align: right; padding-left: 0.5rem; color: var(--text-muted);">${stats.outcomePercentages.success}%</td></tr>
+        <tr><td style="color: #fbbf24;">✗ Failure</td><td style="text-align: right; padding-left: 0.5rem;">${stats.totalOutcomes.failure}</td><td style="text-align: right; padding-left: 0.5rem; color: var(--text-muted);">${stats.outcomePercentages.failure}%</td></tr>
+        <tr><td style="color: #ef4444;">💀 Crit Failure</td><td style="text-align: right; padding-left: 0.5rem;">${stats.totalOutcomes.criticalFailure}</td><td style="text-align: right; padding-left: 0.5rem; color: var(--text-muted);">${stats.outcomePercentages.criticalFailure}%</td></tr>
       </table>
     </div>
     
-    <h2>End-Game Averages</h2>
-    <div class="grid">
-      <div class="card">
-        <div class="stat">
-          <div class="stat-label">Gold</div>
-          <div class="stat-value">${stats.averageEndGold}</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Food</div>
-          <div class="stat-value">${stats.averageEndFood}</div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="stat">
-          <div class="stat-label">Unrest</div>
-          <div class="stat-value ${stats.averageEndUnrest >= 5 ? 'danger' : stats.averageEndUnrest >= 3 ? 'warning' : 'success'}">${stats.averageEndUnrest}</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Fame</div>
-          <div class="stat-value">${stats.averageEndFame}</div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="stat">
-          <div class="stat-label">Hex Growth</div>
-          <div class="stat-value">+${stats.averageHexGrowth}</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Settlement Growth</div>
-          <div class="stat-value">+${stats.averageSettlementGrowth}</div>
-        </div>
-      </div>
+    <h2 id="endGameTitle">End-Game Averages</h2>
+    <div id="endGameStats">
+      ${this.generateEndGameStatsHtml(stats, results.runs)}
     </div>
     
     <h2>Action Distribution</h2>
-    ${this.generateActionAnalysisHtml(results.runs)}
+    <div id="actionDistribution"></div>
     
     <h2>Unrest Death Spiral Analysis</h2>
     <div class="grid">
@@ -461,24 +479,26 @@ export class ReportGenerator {
     
     <div class="card" style="margin-bottom: 1.5rem;">
       <h3>💰 Gold & 🌾 Food Over Time</h3>
-      <div class="nivo-chart">
-        ${this.generateResourceChart(results.runs, ['gold', 'food'])}
-      </div>
+      <div class="nivo-chart" id="goldFoodChart"></div>
     </div>
     
     <div class="card" style="margin-bottom: 1.5rem;">
-      <h3>😤 Unrest & 🗺️ Territory Over Time</h3>
-      <div class="nivo-chart">
-        ${this.generateResourceChart(results.runs, ['unrest', 'hexes'])}
-      </div>
+      <h3>🗺️ Territory Over Time</h3>
+      <div class="nivo-chart" id="territoryChart"></div>
     </div>
     
-    <h2>Material Resources</h2>
     <div class="card" style="margin-bottom: 1.5rem;">
-      <h3>🪵 Lumber, 🪨 Stone & ⛏️ Ore Over Time</h3>
-      <div class="nivo-chart">
-        ${this.generateResourceChart(results.runs, ['lumber', 'stone', 'ore'])}
-      </div>
+      <h3>😤 Unrest Over Time</h3>
+      <div class="nivo-chart" id="unrestChart"></div>
+    </div>
+    
+    <h2>Resource Income</h2>
+    <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.85rem;">
+      Lumber, Stone, and Ore decay at the start of each turn. Only Food and Gold are preserved.
+    </p>
+    <div class="card" style="margin-bottom: 1.5rem;">
+      <h3>🪵 Lumber, 🪨 Stone & ⛏️ Ore Income Per Turn</h3>
+      <div class="nivo-chart" id="incomeChart"></div>
     </div>
     
     <h2>Kingdom Growth Summary</h2>
@@ -534,16 +554,164 @@ export class ReportGenerator {
     
     ${this.generateWarningsHtml(stats, unrestAnalysis)}
     
-    <h2>Settlements Summary</h2>
-    ${this.generateSettlementsSummaryHtml(results.runs[0])}
+    <h2>Run Details</h2>
+    <div id="runDetails">
+      <h3>Settlements</h3>
+      <div id="settlementsContainer"></div>
+      
+      <h3 style="margin-top: 1.5rem;">Turn-by-Turn Breakdown</h3>
+      <div id="turnBreakdownContainer"></div>
+    </div>
     
-    <h2>Turn-by-Turn Breakdown</h2>
-    ${this.generateTurnBreakdownHtml(results.runs[0])}
+    <script>
+      const viewData = {
+        endGameStats: ${JSON.stringify({
+          avg: this.generateEndGameStatsHtml(stats, results.runs),
+          ...Object.fromEntries(results.runs.map((run, i) => [i, this.generateRunEndGameStatsHtml(run)]))
+        })},
+        actionDistribution: ${JSON.stringify({
+          avg: this.generateActionAnalysisHtml(results.runs),
+          ...Object.fromEntries(results.runs.map((run, i) => [i, this.generateActionAnalysisHtml([run])]))
+        })},
+        settlements: ${JSON.stringify({
+          avg: '<p style="color: var(--text-muted);">Select a specific run to view settlements</p>',
+          ...Object.fromEntries(results.runs.map((run, i) => [i, this.generateSettlementsSummaryHtml(run)]))
+        })},
+        turnBreakdown: ${JSON.stringify({
+          avg: '<p style="color: var(--text-muted);">Select a specific run to view turn breakdown</p>',
+          ...Object.fromEntries(results.runs.map((run, i) => [i, this.generateTurnBreakdownHtml(run)]))
+        })},
+        charts: ${JSON.stringify({
+          goldFood: {
+            avg: this.generateResourceChart(results.runs, ['gold', 'food']),
+            ...Object.fromEntries(results.runs.map((run, i) => [i, this.generateResourceChart([run], ['gold', 'food'])]))
+          },
+          territory: {
+            avg: this.generateResourceChart(results.runs, ['hexes']),
+            ...Object.fromEntries(results.runs.map((run, i) => [i, this.generateResourceChart([run], ['hexes'])]))
+          },
+          unrest: {
+            avg: this.generateResourceChart(results.runs, ['unrest']),
+            ...Object.fromEntries(results.runs.map((run, i) => [i, this.generateResourceChart([run], ['unrest'])]))
+          },
+          income: {
+            avg: this.generateIncomeChart(results.runs, ['lumber', 'stone', 'ore']),
+            ...Object.fromEntries(results.runs.map((run, i) => [i, this.generateIncomeChart([run], ['lumber', 'stone', 'ore'])]))
+          }
+        })}
+      };
+      
+      function switchView(value) {
+        const key = value === 'avg' ? 'avg' : parseInt(value);
+        
+        // Update title
+        document.getElementById('endGameTitle').textContent = 
+          value === 'avg' ? 'End-Game Averages' : 'End-Game Totals (Run ' + (parseInt(value) + 1) + ')';
+        
+        // Update end game stats
+        document.getElementById('endGameStats').innerHTML = viewData.endGameStats[key];
+        
+        // Update action distribution
+        document.getElementById('actionDistribution').innerHTML = viewData.actionDistribution[key];
+        
+        // Update settlements and turn breakdown
+        document.getElementById('settlementsContainer').innerHTML = viewData.settlements[key];
+        document.getElementById('turnBreakdownContainer').innerHTML = viewData.turnBreakdown[key];
+        
+        // Update charts
+        document.getElementById('goldFoodChart').innerHTML = viewData.charts.goldFood[key];
+        document.getElementById('territoryChart').innerHTML = viewData.charts.territory[key];
+        document.getElementById('unrestChart').innerHTML = viewData.charts.unrest[key];
+        document.getElementById('incomeChart').innerHTML = viewData.charts.income[key];
+      }
+      
+      // Initialize with average view
+      switchView('avg');
+    </script>
     
     <p class="timestamp">Generated: ${results.timestamp}</p>
   </div>
 </body>
 </html>`;
+  }
+  
+  /**
+   * Generate end-game stats HTML for average view
+   */
+  private generateEndGameStatsHtml(stats: SimulationStatistics, runs: SimulationRunResult[]): string {
+    return `
+    <div class="card">
+      <div class="stat-boxes">
+        <div class="stat-box">
+          <div class="stat-box-label">💰 Gold</div>
+          <div class="stat-box-value">${stats.averageEndGold}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">🌾 Food</div>
+          <div class="stat-box-value">${stats.averageEndFood}</div>
+        </div>
+        <div class="stat-box ${stats.averageEndUnrest >= 5 ? 'danger' : stats.averageEndUnrest >= 3 ? 'warning' : ''}">
+          <div class="stat-box-label">😤 Unrest</div>
+          <div class="stat-box-value">${stats.averageEndUnrest}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">⭐ Fame</div>
+          <div class="stat-box-value">${stats.averageEndFame}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">⬡ Hexes</div>
+          <div class="stat-box-value">+${stats.averageHexGrowth}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">🏘️ Settlements</div>
+          <div class="stat-box-value">+${stats.averageSettlementGrowth}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+  
+  /**
+   * Generate end-game stats HTML for a specific run
+   */
+  private generateRunEndGameStatsHtml(run: SimulationRunResult): string {
+    const final = run.finalState;
+    const gold = final?.resources?.gold || 0;
+    const food = final?.resources?.food || 0;
+    const unrest = final?.unrest || 0;
+    const fame = final?.fame || 0;
+    const hexes = final?.hexes?.filter((h: any) => h.claimedBy === 'player').length || 0;
+    const settlements = final?.settlements?.length || 0;
+    const collapsed = run.collapsed ? ' <span style="color: var(--status-critical-failure);">(Collapsed)</span>' : '';
+    
+    return `
+    <div class="card">
+      <div class="stat-boxes">
+        <div class="stat-box">
+          <div class="stat-box-label">💰 Gold</div>
+          <div class="stat-box-value">${gold}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">🌾 Food</div>
+          <div class="stat-box-value">${food}</div>
+        </div>
+        <div class="stat-box ${unrest >= 5 ? 'danger' : unrest >= 3 ? 'warning' : ''}">
+          <div class="stat-box-label">😤 Unrest${collapsed}</div>
+          <div class="stat-box-value">${unrest}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">⭐ Fame</div>
+          <div class="stat-box-value">${fame}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">⬡ Hexes</div>
+          <div class="stat-box-value">${hexes}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">🏘️ Settlements</div>
+          <div class="stat-box-value">${settlements}</div>
+        </div>
+      </div>
+    </div>`;
   }
   
   /**
@@ -963,14 +1131,14 @@ export class ReportGenerator {
    */
   private generateResourceChart(runs: SimulationRunResult[], resources: string[]): string {
     const colorMap: Record<string, string> = {
-      gold: '#fbbf24',
-      food: '#4ade80',
-      lumber: '#8b5a2b',
-      stone: '#94a3b8',
-      ore: '#f97316',
-      unrest: '#ef4444',
-      fame: '#a78bfa',
-      hexes: '#60a5fa'
+      gold: '#fbbf24',     // Amber/yellow
+      food: '#f97316',     // Orange (wheat color)
+      lumber: '#22c55e',   // Green
+      stone: '#94a3b8',    // Gray
+      ore: '#3b82f6',      // Blue
+      unrest: '#ef4444',   // Red
+      fame: '#a78bfa',     // Purple
+      hexes: '#60a5fa'     // Light blue
     };
 
     const data: LineChartData[] = resources.map(resource => {
@@ -992,6 +1160,89 @@ export class ReportGenerator {
       // Fallback to simple display if Nivo fails
       return `<p style="color: var(--text-dim);">Chart generation failed. Data: ${JSON.stringify(data.map(d => ({ id: d.id, points: d.data.length })))}</p>`;
     }
+  }
+
+  /**
+   * Generate outcome distribution pie chart
+   */
+  private generateOutcomePieChart(outcomes: Record<string, number>): string {
+    const data: PieChartData[] = [
+      { id: 'critSuccess', label: 'Crit Success', value: outcomes.criticalSuccess || 0, color: '#4ade80' },  // Bright green
+      { id: 'success', label: 'Success', value: outcomes.success || 0, color: '#166534' },                   // Dark green
+      { id: 'failure', label: 'Failure', value: outcomes.failure || 0, color: '#fbbf24' },
+      { id: 'critFailure', label: 'Crit Failure', value: outcomes.criticalFailure || 0, color: '#ef4444' }
+    ];
+
+    try {
+      return generatePieChart(data, 350, 300);
+    } catch (error) {
+      return `<p style="color: var(--text-dim);">Pie chart generation failed</p>`;
+    }
+  }
+
+  /**
+   * Generate resource income chart (per-turn income, not accumulated)
+   */
+  private generateIncomeChart(runs: SimulationRunResult[], resources: string[]): string {
+    const colorMap: Record<string, string> = {
+      lumber: '#22c55e',   // Green
+      stone: '#94a3b8',    // Gray
+      ore: '#3b82f6',      // Blue
+      food: '#f97316',     // Orange
+      gold: '#fbbf24'      // Amber
+    };
+
+    const data: LineChartData[] = resources.map(resource => {
+      const incomeData = this.getResourceIncomeProgression(runs, resource);
+      return {
+        id: resource.charAt(0).toUpperCase() + resource.slice(1),
+        color: colorMap[resource] || '#e94560',
+        data: incomeData.map(p => ({ x: p.turn, y: p.avg }))
+      };
+    });
+
+    try {
+      return generateLineChart(data, 700, 280, {
+        xLabel: 'Turn',
+        yLabel: 'Income',
+        enableArea: true
+      });
+    } catch (error) {
+      return `<p style="color: var(--text-dim);">Income chart generation failed</p>`;
+    }
+  }
+
+  /**
+   * Get turn-by-turn resource income (from worksites/settlements, not accumulated)
+   */
+  private getResourceIncomeProgression(
+    runs: SimulationRunResult[],
+    resource: string
+  ): { turn: number; avg: number }[] {
+    const progression: { turn: number; avg: number }[] = [];
+    
+    if (runs.length === 0 || runs[0].turns.length === 0) return progression;
+    
+    const turnCount = runs[0].turns.length;
+    
+    for (let t = 0; t < turnCount; t++) {
+      const values: number[] = [];
+      
+      for (const run of runs) {
+        if (run.turns[t]) {
+          const pd = run.turns[t].phaseDetails;
+          const worksiteProduction = pd?.resources?.worksiteProduction || {};
+          values.push(worksiteProduction[resource] || 0);
+        }
+      }
+      
+      if (values.length > 0) {
+        const avg = values.reduce((a, b) => a + b, 0) / values.length;
+        progression.push({ turn: t + 1, avg: Math.round(avg * 10) / 10 });
+      }
+    }
+    
+    return progression;
   }
 
   /**

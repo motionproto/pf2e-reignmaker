@@ -129,38 +129,100 @@ export class BalancedStrategy implements Strategy {
     }
     
     // =====================================================
-    // PRIORITY 3: EXPANSION - Scout and claim, but carefully!
+    // PRIORITY 3: EXPANSION - Scout and claim DIVERSE terrain!
     // More territory = more resources BUT also more unrest (+1 per 8 hexes)
-    // Balance expansion with sustainability
+    // Prioritize hills/mountains for stone/ore (rarer than forests)
     // =====================================================
-    // Only expand when unrest is well under control
-    // And limit total size to prevent unrest death spiral
     const maxSustainableHexes = 40; // ~5 unrest/turn from size, manageable with structures
+    
+    // Check what terrain types we already have worksites on
+    const worksiteTerrains = (kingdom.hexes || [])
+      .filter(h => h.worksite && h.claimedBy === 'player')
+      .map(h => h.terrain);
+    const hasQuarry = worksiteTerrains.some(t => t === 'hills' || t === 'mountains');
+    const hasMine = worksiteTerrains.some(t => t === 'mountains');
+    
+    // Prioritize expansion if we need diverse terrain
+    const needDiverseTerrain = !hasQuarry || !hasMine;
+    const expansionChance = needDiverseTerrain ? 0.8 : 0.5;
+    
     if (unrest <= 3 && claimedHexes < maxSustainableHexes) {
-      // Scout to reveal new territory (60% chance)
+      // Scout to reveal new territory
       const scoutAction = available.find(a => a.id === 'send-scouts');
-      if (scoutAction && this.rng() < 0.6) return scoutAction;
+      if (scoutAction && this.rng() < expansionChance) return scoutAction;
       
-      // Claim available hexes (70% chance)
+      // Claim available hexes
       const claimAction = available.find(a => a.id === 'claim-hexes');
-      if (claimAction && this.rng() < 0.7) return claimAction;
+      if (claimAction && this.rng() < expansionChance) return claimAction;
     }
     
     // =====================================================
-    // PRIORITY 4: WORKSITES - Passive income is king!
-    // Each worksite produces 1-2 resources EVERY turn.
-    // Creating 4 worksites early = 120-240 free resources over 120 turns
+    // PRIORITY 4: WORKSITES - Passive income, but DIVERSIFIED!
+    // Don't over-produce one resource - balance lumber/stone/ore/food
+    // Target: ~4 lumber, ~4 stone, ~2 ore, ~6 food per turn
     // =====================================================
     const worksites = kingdom.hexes?.filter(h => h.worksite).length || 0;
     const worksiteAction = available.find(a => a.id === 'create-worksite');
+    const production = kingdom.worksiteProduction || {};
     
-    // Aggressively build worksites until we have a good base (1 per 2 hexes claimed)
-    if (worksiteAction && worksites < Math.floor(claimedHexes / 2)) {
-      if (this.rng() < 0.8) return worksiteAction;
+    // Check current production levels
+    const lumberProd = production.lumber || 0;
+    const stoneProd = production.stone || 0;
+    const oreProd = production.ore || 0;
+    const foodProd = production.food || 0;
+    
+    // Only create more worksites if we're under-producing somewhere
+    const needMoreLumber = lumberProd < 6;
+    const needMoreStone = stoneProd < 4;
+    const needMoreOre = oreProd < 2;
+    const needMoreFood = foodProd < 8;
+    const needAnyResource = needMoreLumber || needMoreStone || needMoreOre || needMoreFood;
+    
+    // Build worksites if under-diversified (1 per 3 hexes, but only if we need the resources)
+    if (worksiteAction && worksites < Math.floor(claimedHexes / 3) && needAnyResource) {
+      if (this.rng() < 0.7) return worksiteAction;
     }
     
     // =====================================================
-    // PRIORITY 5: LOW FOOD - Need food to survive upkeep
+    // PRIORITY 5: TRADE - Convert resources strategically
+    // Lumber/stone/ore decay each turn - sell before losing them!
+    // Or use gold to buy needed building materials
+    // =====================================================
+    const lumber = kingdom.resources?.lumber || 0;
+    const stone = kingdom.resources?.stone || 0;
+    
+    // SELL: If we have resources that would decay AND don't need them immediately
+    // Sell if > 4 of any resource (they'll decay anyway)
+    const queueNeeds = this.calculateQueueNeeds(kingdom);
+    const excessLumber = lumber > Math.max(4, queueNeeds.lumber || 0);
+    const excessStone = stone > Math.max(4, queueNeeds.stone || 0);
+    const excessOre = ore > Math.max(4, queueNeeds.ore || 0);
+    
+    if ((excessLumber || excessStone || excessOre) && this.rng() < 0.6) {
+      const sellAction = available.find(a => a.id === 'sell-surplus');
+      if (sellAction) return sellAction;
+    }
+    
+    // PURCHASE: Convert gold to building materials
+    // Gold accumulates but resources decay - convert gold to materials before they're needed
+    const queueSizeForPurchase = kingdom.buildQueue?.length || 0;
+    const needsMaterials = lumber < 3 || stone < 3 || ore < 3;
+    const hasGoldToSpare = gold >= 6;
+    
+    // Always try to convert gold when we have excess and need materials
+    if (needsMaterials && hasGoldToSpare && this.rng() < 0.4) {
+      const purchaseAction = available.find(a => a.id === 'purchase-resources');
+      if (purchaseAction) return purchaseAction;
+    }
+    
+    // Also purchase if build queue is stalled
+    if (queueSizeForPurchase > 0 && (lumber < 2 || stone < 2 || ore < 2) && gold >= 4) {
+      const purchaseAction = available.find(a => a.id === 'purchase-resources');
+      if (purchaseAction && this.rng() < 0.6) return purchaseAction;
+    }
+    
+    // =====================================================
+    // PRIORITY 6: LOW FOOD - Need food to survive upkeep
     // Only harvest if worksites aren't sufficient yet
     // =====================================================
     if (food < settlements * 2 && worksites < 2) {
@@ -169,17 +231,21 @@ export class BalancedStrategy implements Strategy {
     }
     
     // =====================================================
-    // PRIORITY 6: BUILD STRUCTURES (limited - queue handles payment)
-    // Structures provide ongoing benefits but shouldn't dominate
+    // PRIORITY 7: BUILD STRUCTURES (queue as many as you want!)
+    // Structures provide ongoing benefits - queue freely, payment happens over time
     // =====================================================
     const queueSize = kingdom.buildQueue?.length || 0;
-    if (settlements > 0 && !hasStructures && queueSize === 0) {
+    
+    // First structure is high priority
+    if (settlements > 0 && !hasStructures) {
       const buildAction = available.find(a => a.id === 'build-structure');
       if (buildAction) return buildAction;
     }
     
-    // Only queue more if queue is empty (15% chance)
-    if (settlements > 0 && queueSize === 0 && this.rng() < 0.15) {
+    // Queue more structures - can queue freely, completion depends on resources
+    // Higher chance when queue is small, lower when queue is large
+    const queueChance = queueSize < 3 ? 0.4 : queueSize < 6 ? 0.2 : 0.1;
+    if (settlements > 0 && this.rng() < queueChance) {
       const buildAction = available.find(a => a.id === 'build-structure');
       if (buildAction) return buildAction;
     }
@@ -231,9 +297,10 @@ export class BalancedStrategy implements Strategy {
       'train-army': 10,        // Military - level up armies
       'outfit-army': 8,        // Military - equip armies
       'collect-stipend': 10,
+      'purchase-resources': 8, // Trade - convert gold to building materials
+      'sell-surplus': 8,       // Trade - save resources from decay
       'establish-settlement': 8,
       'harvest-resources': 5,  // Low priority - use worksites instead!
-      'sell-surplus': 5,
       'build-roads': 5
     };
     
@@ -246,5 +313,24 @@ export class BalancedStrategy implements Strategy {
     }
     
     return pickRandom(weightedPool, this.rng);
+  }
+  
+  /**
+   * Calculate total resources needed by build queue
+   */
+  private calculateQueueNeeds(kingdom: KingdomData): Record<string, number> {
+    const needs: Record<string, number> = { lumber: 0, stone: 0, ore: 0, gold: 0 };
+    
+    for (const project of kingdom.buildQueue || []) {
+      for (const [resource, required] of Object.entries(project.requiredCost || {})) {
+        const paid = project.paidCost?.[resource] || 0;
+        const remaining = required - paid;
+        if (remaining > 0) {
+          needs[resource] = (needs[resource] || 0) + remaining;
+        }
+      }
+    }
+    
+    return needs;
   }
 }

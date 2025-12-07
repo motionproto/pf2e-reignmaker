@@ -211,24 +211,36 @@ export function generatePieChart(
     return '<svg width="400" height="300"><text x="200" y="150" text-anchor="middle" fill="#a0a0a0">No data available</text></svg>';
   }
 
+  // Create colors with 20% opacity for fill, full opacity for stroke
+  const fillColors = data.map(d => {
+    // Convert hex to rgba with 20% opacity
+    const hex = d.color.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, 0.25)`;
+  });
+
   const chart = React.createElement(Pie, {
     data,
     width,
     height,
     theme: darkTheme,
     margin: { top: 20, right: 80, bottom: 20, left: 80 },
-    innerRadius: 0.5,
-    padAngle: 0.7,
-    cornerRadius: 3,
-    colors: data.map(d => d.color),
-    borderWidth: 1,
-    borderColor: { from: 'color', modifiers: [['darker', 0.2]] },
+    innerRadius: 0,           // Full pie, not donut
+    padAngle: 1,
+    cornerRadius: 0,          // No rounded corners
+    sortByValue: false,       // Keep order as provided (crit success first)
+    startAngle: -90,          // Start at top
+    colors: fillColors,
+    borderWidth: 3,
+    borderColor: ({ data: d }: any) => d.color,  // Full opacity stroke
+    enableArcLinkLabels: true,
     arcLinkLabelsSkipAngle: 10,
     arcLinkLabelsTextColor: '#eaeaea',
     arcLinkLabelsThickness: 2,
-    arcLinkLabelsColor: { from: 'color' },
-    arcLabelsSkipAngle: 10,
-    arcLabelsTextColor: { from: 'color', modifiers: [['darker', 2]] }
+    arcLinkLabelsColor: ({ data: d }: any) => d.color,
+    enableArcLabels: false
   });
 
   try {

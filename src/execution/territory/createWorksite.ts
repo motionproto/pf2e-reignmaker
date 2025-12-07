@@ -3,11 +3,14 @@
  *
  * Pure execution logic for creating worksites on hexes.
  * Preview logic is handled by pipeline configuration.
+ * 
+ * Uses domain layer for pure logic, wraps with Foundry store updates.
  */
 
 import { updateKingdom } from '../../stores/KingdomStore';
 import { logger } from '../../utils/Logger';
 import { validateCreateWorksite } from '../../pipelines/shared/worksiteValidator';
+import { applyCreateWorksite } from '../../domain/territory/worksiteLogic';
 
 /**
  * Execute worksite creation on a hex
@@ -36,26 +39,16 @@ export async function createWorksiteExecution(hexId: string, worksiteType: strin
     return;
   }
 
-  // Update Kingdom Store - Set worksite on hex
+  // Update Kingdom Store using domain layer pure logic
   await updateKingdom(kingdom => {
-    // Find the hex
-    const hex = kingdom.hexes.find((h: any) => h.id === hexId);
+    // Use domain layer for pure worksite creation logic
+    const success = applyCreateWorksite(kingdom, hexId, worksiteType);
     
-    if (!hex) {
+    if (success) {
+      logger.info(`[createWorksiteExecution] Successfully created worksite on hex ${hexId}`);
+    } else {
       logger.warn(`[createWorksiteExecution] Hex ${hexId} not found in Kingdom Store`);
-      return;
     }
-
-    // Auto-convert Mine to Bog Mine on swamp terrain
-    let finalWorksiteType = worksiteType;
-    if (worksiteType === 'Mine' && hex.terrain === 'swamp') {
-      finalWorksiteType = 'Bog Mine';
-      logger.info(`[createWorksiteExecution] Auto-converted to Bog Mine on swamp terrain`);
-    }
-
-    // Set worksite
-    logger.info(`[createWorksiteExecution] Setting ${finalWorksiteType} on hex ${hexId}`);
-    hex.worksite = { type: finalWorksiteType };
   });
 
   // Recalculate production (worksites affect resource production)
