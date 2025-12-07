@@ -75,7 +75,12 @@ export const settlementCrisisPipeline: CheckPipeline = {
 
         if (preparedDamage) {
           ctx.metadata._preparedDamageStructure = preparedDamage;
-          outcomeBadges.push(preparedDamage.outcomeBadge);
+          // Support both single badge and array of badges
+          if (preparedDamage.outcomeBadges) {
+            outcomeBadges.push(...preparedDamage.outcomeBadges);
+          } else if (preparedDamage.outcomeBadge) {
+            outcomeBadges.push(preparedDamage.outcomeBadge);
+          }
         } else {
           warnings.push('No structures available to damage');
         }
@@ -94,7 +99,12 @@ export const settlementCrisisPipeline: CheckPipeline = {
 
         if (preparedReduce) {
           ctx.metadata._preparedReduceSettlement = preparedReduce;
-          outcomeBadges.push(preparedReduce.outcomeBadge);
+          // Support both single badge and array of badges
+          if (preparedReduce.outcomeBadges) {
+            outcomeBadges.push(...preparedReduce.outcomeBadges);
+          } else if (preparedReduce.outcomeBadge) {
+            outcomeBadges.push(preparedReduce.outcomeBadge);
+          }
         } else {
           warnings.push('No settlements available to reduce (all at minimum level)');
         }
@@ -110,7 +120,12 @@ export const settlementCrisisPipeline: CheckPipeline = {
 
         if (preparedDamage) {
           ctx.metadata._preparedDamageStructure = preparedDamage;
-          outcomeBadges.push(preparedDamage.outcomeBadge);
+          // Support both single badge and array of badges
+          if (preparedDamage.outcomeBadges) {
+            outcomeBadges.push(...preparedDamage.outcomeBadges);
+          } else if (preparedDamage.outcomeBadge) {
+            outcomeBadges.push(preparedDamage.outcomeBadge);
+          }
         } else {
           warnings.push('No structures available to damage');
         }

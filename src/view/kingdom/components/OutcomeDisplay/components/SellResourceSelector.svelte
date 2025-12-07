@@ -2,10 +2,6 @@
   import { createEventDispatcher, onMount, onDestroy } from 'svelte';
   import { kingdomData } from '../../../../../stores/KingdomStore';
   import type { OutcomePreview } from '../../../../../models/OutcomePreview';
-  import { 
-    updateInstanceResolutionState,
-    getInstanceResolutionState 
-  } from '../../../../../controllers/shared/ResolutionStateHelpers';
   import { getBestTradeRates, getCriticalSuccessRates } from '../../../../../services/commerce/tradeRates';
   import { getValidationContext } from '../context/ValidationContext';
 
@@ -15,7 +11,7 @@
 
   const dispatch = createEventDispatcher();
   
-  // ✨ NEW: Register with validation context
+  // ✨ Register with validation context
   const validationContext = getValidationContext();
   const providerId = 'sell-resource-selector';
 
@@ -27,15 +23,6 @@
     ? getCriticalSuccessRates() 
     : getBestTradeRates();
   
-  // Debug logging
-  $: console.log('🔍 [SellResourceSelector] Trade rates:', {
-    outcome,
-    isCritSuccess: outcome === 'criticalSuccess',
-    tier: tradeRates.tier,
-    sell: tradeRates.sell,
-    buy: tradeRates.buy
-  });
-  
   // Note: For selling, resourceCost is resources spent, goldGain is gold received
   $: resourceCost = tradeRates.sell.resourceCost;
   $: goldGain = tradeRates.sell.goldGain;
@@ -43,11 +30,8 @@
   // Get available resources
   $: availableResources = $kingdomData.resources || {};
   
-  // Get resolution state from instance (only for selectedResource)
-  $: resolutionState = getInstanceResolutionState(instance);
-  $: selectedResource = resolutionState.customComponentData?.selectedResource || '';
-  
-  // Use local state for amount (no actor updates on every change)
+  // Local UI state (not persisted to instance - OutcomeDisplay handles that via resolution event)
+  let selectedResource = '';
   let selectedAmount = 2;
   
   // Get max sellable amount for selected resource
@@ -95,21 +79,12 @@
     return resource.charAt(0).toUpperCase() + resource.slice(1);
   }
 
-  async function handleResourceSelect(resource: string) {
-    if (!instance) return;
-
-    // Update local state
+  function handleResourceSelect(resource: string) {
+    // Update local UI state
     selectedResource = resource;
     selectedAmount = resourceCost; // Reset to minimum valid amount
     
-    // Persist selectedResource to metadata (for ActionPhaseController)
-    await updateInstanceResolutionState(instance.previewId, {
-      customComponentData: { 
-        selectedResource: resource
-      }
-    });
-    
-    // Notify parent
+    // Notify parent (OutcomeDisplay handles persistence via resolution event)
     notifySelectionChanged();
   }
   

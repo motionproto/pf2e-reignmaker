@@ -68,11 +68,11 @@ export class RemoveBorderHexesHandler extends BaseGameCommandHandler {
     if (borderHexes.length === 0) {
       logger.warn('[RemoveBorderHexesHandler] No border hexes available to remove');
       return {
-        outcomeBadge: {
+        outcomeBadges: [{
           icon: 'fa-exclamation-triangle',
           template: 'No border hexes available to remove',
           variant: 'neutral'
-        },
+        }],
         commit: async () => {
           logger.info('[RemoveBorderHexesHandler] No border hexes - skipping');
         }
@@ -110,11 +110,11 @@ export class RemoveBorderHexesHandler extends BaseGameCommandHandler {
     logger.info(`[RemoveBorderHexesHandler] Preview: ${badgeText}`);
     
     return {
-      outcomeBadge: {
+      outcomeBadges: [{
         icon: 'fa-map',
         template: badgeText,
         variant: 'negative'
-      },
+      }],
       commit: async () => {
         logger.info(`[RemoveBorderHexesHandler] Removing ${selectedHexes.length} border hex(es)`);
         
@@ -148,6 +148,8 @@ export class RemoveBorderHexesHandler extends BaseGameCommandHandler {
     };
   }
 }
+
+
 
 
 

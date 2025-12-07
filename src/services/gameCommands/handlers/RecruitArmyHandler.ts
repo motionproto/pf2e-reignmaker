@@ -26,16 +26,17 @@ export class RecruitArmyHandler extends BaseGameCommandHandler {
     
     const exemptFromUpkeep = command.exemptFromUpkeep === true;
     
-    // ⚠️ VALIDATION: Recruitment data must be in context
-    const recruitmentData = ctx.pendingState?.recruitmentData;
+    // Get recruitment data from command or context (supports both patterns)
+    const recruitmentData = command.recruitmentData || ctx.pendingState?.recruitmentData;
     if (!recruitmentData) {
-      console.error('[RecruitArmyHandler] No recruitment data in context');
+      console.error('[RecruitArmyHandler] No recruitment data in command or context');
       throw new Error('Army recruitment requires recruitment data - ensure army details are provided');
     }
     
-    // ⚠️ VALIDATION: For allied armies, faction ID must be in context
-    if (exemptFromUpkeep && !ctx.pendingState?.factionId) {
-      console.error('[RecruitArmyHandler] Allied army recruitment requires factionId in context');
+    // For allied armies, faction context can come from recruitmentData.supportedBy or ctx.pendingState
+    const supportedBy = recruitmentData.supportedBy || ctx.pendingState?.factionName;
+    if (exemptFromUpkeep && !supportedBy && !ctx.pendingState?.factionId) {
+      console.error('[RecruitArmyHandler] Allied army recruitment requires faction context');
       throw new Error('Allied army recruitment requires faction context - ensure faction is selected before recruitment');
     }
     
@@ -44,7 +45,7 @@ export class RecruitArmyHandler extends BaseGameCommandHandler {
       name: recruitmentData.name,
       armyType: recruitmentData.armyType,
       settlementId: recruitmentData.settlementId || null,
-      supportedBy: exemptFromUpkeep ? ctx.pendingState?.factionName : undefined
+      supportedBy: exemptFromUpkeep ? supportedBy : undefined
     }, exemptFromUpkeep);
     
     return this.normalizeResult(result, 'Army recruited');

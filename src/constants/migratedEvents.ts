@@ -50,7 +50,7 @@ export const EVENT_STATUS = new Map<string, EventStatus>([
   ['public-scandal', 'tested'],
   ['raiders', 'tested'],
   ['sensational-crime', 'tested'],
-  ['undead-uprising', 'testing'],
+  ['undead-uprising', 'tested'],
 ]);
 
 /**

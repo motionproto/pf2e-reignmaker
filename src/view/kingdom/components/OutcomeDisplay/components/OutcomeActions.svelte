@@ -8,6 +8,7 @@
   export let effectivePrimaryLabel: string = '';
   export let primaryButtonDisabled: boolean = false;
   export let currentFame: number = 0;
+  export let applied: boolean = false;  // New prop to show "Applied" confirmation
   
   const dispatch = createEventDispatcher();
   
@@ -64,6 +65,11 @@
       {/if}
     </div>
   </div>
+{:else if applied}
+  <div class="resolution-applied">
+    <i class="fas fa-check-circle"></i>
+    <span>Results Applied</span>
+  </div>
 {/if}
 
 <style lang="scss">
@@ -97,6 +103,29 @@
         flex: 0 1 auto;
         min-width: 7.5rem;
       }
+    }
+  }
+  
+  .resolution-applied {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-8);
+    padding: var(--space-16);
+    border-top: 1px solid var(--border-faint);
+    background: linear-gradient(135deg,
+      rgba(34, 197, 94, 0.1),
+      rgba(34, 197, 94, 0.05));
+    
+    i {
+      color: var(--color-green);
+      font-size: var(--font-xl);
+    }
+    
+    span {
+      color: var(--color-green-light);
+      font-size: var(--font-md);
+      font-weight: var(--font-weight-semibold);
     }
   }
 </style>

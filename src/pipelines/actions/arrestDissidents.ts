@@ -4,7 +4,10 @@
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { hasUnrestToArrest, calculateImprisonmentCapacity } from '../shared/ActionHelpers';
+import { hasUnrestToArrest } from '../shared/ActionHelpers';
+import { structuresService } from '../../services/structures';
+import { get } from 'svelte/store';
+import { currentFaction } from '../../stores/KingdomStore';
 import ArrestDissidentsResolution from '../../view/kingdom/components/OutcomeDisplay/components/ArrestDissidentsResolution.svelte';
 
 export const arrestDissidentsPipeline: CheckPipeline = {
@@ -51,8 +54,25 @@ export const arrestDissidentsPipeline: CheckPipeline = {
       return { met: false, reason: 'No unrest to arrest' };
     }
     
-    const capacity = calculateImprisonmentCapacity(kingdom);
-    if (capacity.available <= 0) {
+    // Calculate imprisonment capacity only from owned settlements
+    const faction = get(currentFaction);
+    let availableCapacity = 0;
+    
+    for (const settlement of kingdom.settlements || []) {
+      // Check if settlement is owned by current faction
+      const hex = kingdom.hexes?.find((h: any) => 
+        h.row === settlement.location.x && h.col === settlement.location.y
+      );
+      if (hex?.claimedBy !== faction) {
+        continue;
+      }
+      
+      const capacity = structuresService.calculateImprisonedUnrestCapacity(settlement);
+      const used = settlement.imprisonedUnrest || 0;
+      availableCapacity += Math.max(0, capacity - used);
+    }
+    
+    if (availableCapacity <= 0) {
       return { met: false, reason: 'No justice structures with available capacity' };
     }
     

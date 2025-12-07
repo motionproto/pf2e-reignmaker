@@ -82,7 +82,12 @@ export const massExodusPipeline: CheckPipeline = {
             Object.assign(ctx.metadata, preparedWorksite.metadata);
           }
           ctx.metadata._preparedDestroyWorksite = preparedWorksite;
-          outcomeBadges.push(preparedWorksite.outcomeBadge);
+          // Support both single badge and array of badges
+          if (preparedWorksite.outcomeBadges) {
+            outcomeBadges.push(...preparedWorksite.outcomeBadges);
+          } else if (preparedWorksite.outcomeBadge) {
+            outcomeBadges.push(preparedWorksite.outcomeBadge);
+          }
         } else {
           warnings.push('No worksites available to destroy');
         }
@@ -100,7 +105,12 @@ export const massExodusPipeline: CheckPipeline = {
 
         if (preparedDamage) {
           ctx.metadata._preparedDamageStructure = preparedDamage;
-          outcomeBadges.push(preparedDamage.outcomeBadge);
+          // Support both single badge and array of badges
+          if (preparedDamage.outcomeBadges) {
+            outcomeBadges.push(...preparedDamage.outcomeBadges);
+          } else if (preparedDamage.outcomeBadge) {
+            outcomeBadges.push(preparedDamage.outcomeBadge);
+          }
         } else {
           warnings.push('No structures available to damage');
         }

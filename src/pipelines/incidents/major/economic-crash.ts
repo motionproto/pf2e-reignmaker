@@ -79,7 +79,12 @@ export const economicCrashPipeline: CheckPipeline = {
 
         if (preparedDamage) {
           ctx.metadata._preparedDamageStructure = preparedDamage;
-          outcomeBadges.push(preparedDamage.outcomeBadge);
+          // Support both single badge and array of badges
+          if (preparedDamage.outcomeBadges) {
+            outcomeBadges.push(...preparedDamage.outcomeBadges);
+          } else if (preparedDamage.outcomeBadge) {
+            outcomeBadges.push(preparedDamage.outcomeBadge);
+          }
         } else {
           warnings.push('No structures available to damage');
         }
@@ -107,7 +112,12 @@ export const economicCrashPipeline: CheckPipeline = {
 
         if (preparedDestroy && preparedDestroy.commit) {
           ctx.metadata._preparedDestroyStructure = preparedDestroy;
-          outcomeBadges.push(preparedDestroy.outcomeBadge);
+          // Support both single badge and array of badges
+          if (preparedDestroy.outcomeBadges) {
+            outcomeBadges.push(...preparedDestroy.outcomeBadges);
+          } else if (preparedDestroy.outcomeBadge) {
+            outcomeBadges.push(preparedDestroy.outcomeBadge);
+          }
         } else {
           warnings.push('No commerce or crafting structures available to destroy');
         }

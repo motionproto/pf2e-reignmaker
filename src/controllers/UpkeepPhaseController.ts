@@ -40,11 +40,16 @@ export async function createUpkeepPhaseController() {
         // No workarounds needed - steps reflect kingdom state directly
         
         // Check if military support is needed (armies OR fortifications requiring maintenance)
-        // Only count non-exempt armies (allied armies don't require upkeep)
-        const hasArmies = (kingdom.armies || []).filter((a: any) => !a.exemptFromUpkeep).length > 0;
+        // Only count player-led, non-exempt armies (allied armies don't require upkeep)
+        const { PLAYER_KINGDOM } = await import('../types/ownership');
+        const hasArmies = (kingdom.armies || []).filter((a: any) => 
+          a.ledBy === PLAYER_KINGDOM && !a.exemptFromUpkeep
+        ).length > 0;
         const hexes = kingdom.hexes || [];
         const currentTurn = kingdom.currentTurn;
+        // Only check fortifications on player-claimed hexes
         const hasFortifications = hexes.some(hex => 
+          hex.claimedBy === PLAYER_KINGDOM &&
           hex.fortification && 
           hex.fortification.tier > 0 && 
           hex.fortification.turnBuilt !== currentTurn  // Skip fortifications built this turn
@@ -128,6 +133,53 @@ export async function createUpkeepPhaseController() {
         return createPhaseResult(false, error instanceof Error ? error.message : 'Unknown error');
       }
     },
+    
+    /**
+     * Process end-of-turn fame tracking
+     * Fame is NO LONGER converted to unrest reduction automatically.
+     * Fame is now ONLY used for rerolls (player choice during checks).
+     * This makes unrest management require active engagement through actions and structures.
+     */
+    async processFameConversion() {
+      const actor = getKingdomActor();
+      if (!actor) {
+        logger.error('❌ [UpkeepPhaseController] No KingdomActor available');
+        return;
+      }
+
+      const kingdom = actor.getKingdomData();
+      if (!kingdom) {
+        logger.error('❌ [UpkeepPhaseController] No kingdom data available');
+        return;
+      }
+      
+      // Check if we already processed this turn
+      if (kingdom.turnState?.upkeepPhase?.fameConversion) {
+        return; // Already processed
+      }
+
+      const currentFame = kingdom.fame || 0;
+      
+      logger.info(`⭐ [UpkeepPhaseController] End of turn: ${currentFame} unspent fame (fame no longer converts to unrest reduction)`);
+
+      // Store result in turnState for UI display (no unrest reduction applied)
+      await actor.updateKingdomData((k: any) => {
+        // Fame does NOT reduce unrest anymore - must use Deal with Unrest action or structures
+        // Just record what happened for the UI
+        if (k.turnState?.upkeepPhase) {
+          k.turnState.upkeepPhase.fameConversion = {
+            fameUsed: currentFame,
+            unrestReduced: 0  // No automatic reduction
+          };
+        }
+      });
+      
+      if (currentFame > 0) {
+        logger.info(`⭐ [UpkeepPhaseController] ${currentFame} fame expires unused (save it for rerolls next time!)`);
+      } else {
+        logger.info(`⭐ [UpkeepPhaseController] No fame accumulated this turn`);
+      }
+    },
 
     /**
      * Process food consumption for settlements
@@ -137,14 +189,19 @@ export async function createUpkeepPhaseController() {
      * Excess food beyond storage capacity is automatically lost
      */
     async processFoodConsumption() {
-      const { kingdomData, claimedSettlements } = await import('../stores/KingdomStore');
+      const { kingdomData } = await import('../stores/KingdomStore');
+      const { PLAYER_KINGDOM } = await import('../types/ownership');
       const { SettlementTierConfig, SettlementTier } = await import('../models/Settlement');
       const { settlementService } = await import('../services/settlements');
       const kingdom = get(kingdomData);
+      const hexes = kingdom.hexes || [];
       
-      // Use centralized claimedSettlements store (filters by claimed territory)
-      const settlements = get(claimedSettlements);
-      const allSettlements = kingdom.settlements || [];
+      // IMPORTANT: Always filter for PLAYER_KINGDOM settlements, not the currentFaction view
+      // The GM may be viewing a different faction, but upkeep always applies to the player's kingdom
+      const settlements = (kingdom.settlements || []).filter(s => {
+        const hex = hexes.find(h => h.row === s.location.x && h.col === s.location.y);
+        return hex?.claimedBy === PLAYER_KINGDOM;
+      });
       
       const armies = kingdom.armies || [];
       const currentFood = kingdom.resources?.food || 0;
@@ -247,10 +304,14 @@ export async function createUpkeepPhaseController() {
      */
     async processMilitarySupport() {
       const { kingdomData } = await import('../stores/KingdomStore');
+      const { PLAYER_KINGDOM } = await import('../types/ownership');
       const kingdom = get(kingdomData);
       
-      // Count only non-exempt armies for upkeep
-      const armyCount = (kingdom.armies || []).filter((a: any) => !a.exemptFromUpkeep).length;
+      // Count only player-led, non-exempt armies for upkeep
+      // Allied armies and armies led by other factions don't require player upkeep
+      const armyCount = (kingdom.armies || []).filter((a: any) => 
+        a.ledBy === PLAYER_KINGDOM && !a.exemptFromUpkeep
+      ).length;
       const hexes = kingdom.hexes || [];
       
       const actor = getKingdomActor();
@@ -277,6 +338,7 @@ export async function createUpkeepPhaseController() {
       }
       
       // Calculate fortification maintenance costs
+      // Only include fortifications on player-claimed hexes
       // Skip maintenance for fortifications built/upgraded this turn
       const currentTurn = kingdom.currentTurn;
       let totalFortificationCost = 0;
@@ -284,6 +346,9 @@ export async function createUpkeepPhaseController() {
       const skippedNewFortifications: string[] = [];
       
       for (const hex of hexes) {
+        // Only maintain fortifications on player-claimed hexes
+        if (hex.claimedBy !== PLAYER_KINGDOM) continue;
+        
         if (hex.fortification && hex.fortification.tier > 0) {
           // Skip maintenance if built/upgraded this turn
           if (hex.fortification.turnBuilt === currentTurn) {
@@ -548,11 +613,15 @@ export async function createUpkeepPhaseController() {
       // Use proper consumption service
       const { calculateConsumption, calculateArmySupportCapacity, calculateUnsupportedArmies } = await import('../services/economics/consumption');
       const { SettlementTierConfig, SettlementTier } = await import('../models/Settlement');
+      const { PLAYER_KINGDOM } = await import('../types/ownership');
       
       const settlements = kingdomData.settlements || [];
       const allArmies = kingdomData.armies || [];
-      // Filter out exempt armies for consumption calculations
-      const armies = allArmies.filter((a: any) => !a.exemptFromUpkeep);
+      // Filter for player-led, non-exempt armies for consumption calculations
+      // Allied armies and armies led by other factions don't require player upkeep
+      const armies = allArmies.filter((a: any) => 
+        a.ledBy === PLAYER_KINGDOM && !a.exemptFromUpkeep
+      );
       const hexes = kingdomData.hexes || [];
       const consumption = calculateConsumption(settlements, armies, hexes);
       const armySupport = calculateArmySupportCapacity(settlements, hexes);
@@ -576,12 +645,15 @@ export async function createUpkeepPhaseController() {
       };
       
       // Calculate which settlements would be fed/unfed based on current food (simulation)
-      // Use centralized claimedSettlements store (already filtered by claimed territory)
-      const { claimedSettlements: claimedSettlementsStore } = await import('../stores/KingdomStore');
-      const claimedSettlementsData = get(claimedSettlementsStore);
+      // IMPORTANT: Always filter for PLAYER_KINGDOM settlements, not the currentFaction view
+      // The GM may be viewing a different faction, but upkeep always applies to the player's kingdom
+      const playerSettlements = (kingdomData.settlements || []).filter((s: any) => {
+        const hex = hexes.find(h => h.row === s.location.x && h.col === s.location.y);
+        return hex?.claimedBy === PLAYER_KINGDOM;
+      });
       
       // Sort by priority: capital first, then by tier (descending)
-      const sortedSettlements = [...claimedSettlementsData].sort((a, b) => {
+      const sortedSettlements = [...playerSettlements].sort((a, b) => {
         // Capital always comes first
         if (a.isCapital && !b.isCapital) return -1;
         if (!a.isCapital && b.isCapital) return 1;
@@ -627,11 +699,15 @@ export async function createUpkeepPhaseController() {
       const armyFoodShortage = Math.max(0, consumption.armyFood - foodRemainingForArmies);
       
       // Calculate fortification maintenance costs (skip fortifications built this turn)
+      // Only include fortifications on player-claimed hexes
       const currentTurn = kingdomData.currentTurn;
       let totalFortificationCost = 0;
       let fortificationCount = 0;
       
       for (const hex of hexes) {
+        // Only maintain fortifications on player-claimed hexes
+        if (hex.claimedBy !== PLAYER_KINGDOM) continue;
+        
         if (hex.fortification && hex.fortification.tier > 0) {
           // Skip maintenance if built/upgraded this turn
           if (hex.fortification.turnBuilt === currentTurn) {

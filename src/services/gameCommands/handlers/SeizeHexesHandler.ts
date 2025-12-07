@@ -73,11 +73,11 @@ export class SeizeHexesHandler extends BaseGameCommandHandler {
       if (selectedHexes.length === 0) {
         logger.warn('[SeizeHexesHandler] No specified hexes are player-owned');
         return {
-          outcomeBadge: {
+          outcomeBadges: [{
             icon: 'fa-exclamation-triangle',
             template: 'No player-owned hexes to seize from selection',
             variant: 'neutral'
-          },
+          }],
           commit: async () => {
             logger.info('[SeizeHexesHandler] No hexes to seize - skipping');
           }
@@ -110,11 +110,11 @@ export class SeizeHexesHandler extends BaseGameCommandHandler {
       if (eligibleHexes.length === 0) {
         logger.warn('[SeizeHexesHandler] No eligible hexes available to seize');
         return {
-          outcomeBadge: {
+          outcomeBadges: [{
             icon: 'fa-exclamation-triangle',
             template: 'No eligible hexes to seize (all have settlements)',
             variant: 'neutral'
-          },
+          }],
           commit: async () => {
             logger.info('[SeizeHexesHandler] No hexes to seize - skipping');
           }
@@ -127,11 +127,11 @@ export class SeizeHexesHandler extends BaseGameCommandHandler {
       if (selectedHexes.length === 0) {
         logger.warn('[SeizeHexesHandler] Could not select any hexes');
         return {
-          outcomeBadge: {
+          outcomeBadges: [{
             icon: 'fa-exclamation-triangle',
             template: 'Could not select any hexes to seize',
             variant: 'neutral'
-          },
+          }],
           commit: async () => {
             logger.info('[SeizeHexesHandler] No hexes selected - skipping');
           }
@@ -158,11 +158,11 @@ export class SeizeHexesHandler extends BaseGameCommandHandler {
     const capturedFactionName = targetFactionName;
     
     return {
-      outcomeBadge: {
+      outcomeBadges: [{
         icon: 'fa-flag',
         template: message,
         variant: 'negative'
-      },
+      }],
       commit: async () => {
         logger.info(`[SeizeHexesHandler] Seizing ${actualCount} hex(es) for ${capturedFactionName}`);
         

@@ -125,7 +125,12 @@ export const settlementCollapsePipeline: CheckPipeline = {
         
         if (preparedDestroy) {
           ctx.metadata._preparedDestroy = preparedDestroy;
-          outcomeBadges.push(preparedDestroy.outcomeBadge);
+          // Support both single badge and array of badges
+          if (preparedDestroy.outcomeBadges) {
+            outcomeBadges.push(...preparedDestroy.outcomeBadges);
+          } else if (preparedDestroy.outcomeBadge) {
+            outcomeBadges.push(preparedDestroy.outcomeBadge);
+          }
         }
         
         // Reduce settlement level
@@ -137,7 +142,12 @@ export const settlementCollapsePipeline: CheckPipeline = {
         
         if (preparedReduce) {
           ctx.metadata._preparedReduce = preparedReduce;
-          outcomeBadges.push(preparedReduce.outcomeBadge);
+          // Support both single badge and array of badges
+          if (preparedReduce.outcomeBadges) {
+            outcomeBadges.push(...preparedReduce.outcomeBadges);
+          } else if (preparedReduce.outcomeBadge) {
+            outcomeBadges.push(preparedReduce.outcomeBadge);
+          }
         }
       }
       

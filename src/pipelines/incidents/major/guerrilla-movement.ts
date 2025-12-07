@@ -86,8 +86,12 @@ export const guerrillaMovementPipeline: CheckPipeline = {
         // Store prepared command for execute step
         ctx.metadata._preparedSeizeHexes = preparedSeize;
         
-        // Add badge
-        outcomeBadges.push(preparedSeize.outcomeBadge);
+        // Support both single badge and array of badges
+        if (preparedSeize.outcomeBadges) {
+          outcomeBadges.push(...preparedSeize.outcomeBadges);
+        } else if (preparedSeize.outcomeBadge) {
+          outcomeBadges.push(preparedSeize.outcomeBadge);
+        }
       } else {
         warnings.push('No eligible hexes available to seize');
       }
@@ -116,8 +120,12 @@ export const guerrillaMovementPipeline: CheckPipeline = {
           // Store prepared command for execute step
           ctx.metadata._preparedSpawnArmy = preparedArmy;
           
-          // Add badge
-          outcomeBadges.push(preparedArmy.outcomeBadge);
+          // Support both single badge and array of badges
+          if (preparedArmy.outcomeBadges) {
+            outcomeBadges.push(...preparedArmy.outcomeBadges);
+          } else if (preparedArmy.outcomeBadge) {
+            outcomeBadges.push(preparedArmy.outcomeBadge);
+          }
         } else {
           warnings.push('Could not prepare enemy army');
         }

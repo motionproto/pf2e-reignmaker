@@ -19,8 +19,14 @@
     "svelte": "^4.2.20"
   },
   "devDependencies": {
+    "@nivo/bar": "^0.99.0",
+    "@nivo/core": "^0.99.0",
+    "@nivo/line": "^0.99.0",
+    "@nivo/pie": "^0.99.0",
     "@sveltejs/vite-plugin-svelte": "^3.1.2",
     "foundry-pf2e": "github:7H3LaughingMan/foundry-pf2e",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
     "svelte-check": "^4.0.9",
     "svelte-preprocess": "^6.0.3",
     "tslib": "^2.8.1",
@@ -49,7 +55,8 @@
     "proxy": "npm run dev",
     "check-migration": "node buildscripts/check-action-migration.cjs",
     "check-migration:verbose": "node buildscripts/check-action-migration.cjs --verbose",
-    "test-pipeline": "tsx src/tests/pipeline-coordinator.test.ts"
+    "test-pipeline": "tsx src/tests/pipeline-coordinator.test.ts",
+    "simulate": "tsx src/simulation/cli.ts"
   },
   "repository": {
     "type": "git",

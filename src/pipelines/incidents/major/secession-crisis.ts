@@ -91,7 +91,12 @@ export const secessionCrisisPipeline: CheckPipeline = {
 
         if (preparedReduce) {
           ctx.metadata._preparedReduceLevel = preparedReduce;
-          outcomeBadges.push(preparedReduce.outcomeBadge);
+          // Support both single badge and array of badges
+          if (preparedReduce.outcomeBadges) {
+            outcomeBadges.push(...preparedReduce.outcomeBadges);
+          } else if (preparedReduce.outcomeBadge) {
+            outcomeBadges.push(preparedReduce.outcomeBadge);
+          }
         } else {
           warnings.push('No settlements available to reduce level');
         }
@@ -107,7 +112,12 @@ export const secessionCrisisPipeline: CheckPipeline = {
 
         if (preparedDestroy) {
           ctx.metadata._preparedDestroyStructure = preparedDestroy;
-          outcomeBadges.push(preparedDestroy.outcomeBadge);
+          // Support both single badge and array of badges
+          if (preparedDestroy.outcomeBadges) {
+            outcomeBadges.push(...preparedDestroy.outcomeBadges);
+          } else if (preparedDestroy.outcomeBadge) {
+            outcomeBadges.push(preparedDestroy.outcomeBadge);
+          }
         } else {
           warnings.push('No structures available to destroy');
         }
@@ -197,7 +207,12 @@ export const secessionCrisisPipeline: CheckPipeline = {
         
         if (preparedSeize) {
           ctx.metadata._preparedSeize = preparedSeize;
-          outcomeBadges.push(preparedSeize.outcomeBadge);
+          // Support both single badge and array of badges
+          if (preparedSeize.outcomeBadges) {
+            outcomeBadges.push(...preparedSeize.outcomeBadges);
+          } else if (preparedSeize.outcomeBadge) {
+            outcomeBadges.push(preparedSeize.outcomeBadge);
+          }
           
           // Copy seize metadata for map display
           if (preparedSeize.metadata) {
@@ -219,7 +234,12 @@ export const secessionCrisisPipeline: CheckPipeline = {
         
         if (preparedTransfer) {
           ctx.metadata._preparedTransfer = preparedTransfer;
-          outcomeBadges.push(preparedTransfer.outcomeBadge);
+          // Support both single badge and array of badges
+          if (preparedTransfer.outcomeBadges) {
+            outcomeBadges.push(...preparedTransfer.outcomeBadges);
+          } else if (preparedTransfer.outcomeBadge) {
+            outcomeBadges.push(preparedTransfer.outcomeBadge);
+          }
         }
         
         // === STEP 5: Prepare DefectArmiesHandler ===
@@ -238,7 +258,12 @@ export const secessionCrisisPipeline: CheckPipeline = {
           ctx.metadata._preparedDefect = preparedDefect;
           // Only add badge if armies actually defected (not "No armies in area")
           if (preparedDefect.metadata?.defectedArmies?.length > 0) {
-            outcomeBadges.push(preparedDefect.outcomeBadge);
+            // Support both single badge and array of badges
+            if (preparedDefect.outcomeBadges) {
+              outcomeBadges.push(...preparedDefect.outcomeBadges);
+            } else if (preparedDefect.outcomeBadge) {
+              outcomeBadges.push(preparedDefect.outcomeBadge);
+            }
           }
         }
       }

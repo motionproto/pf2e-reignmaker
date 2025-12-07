@@ -82,7 +82,12 @@ export const cultActivityPipeline: CheckPipeline = {
 
         if (prepared) {
           ctx.metadata._preparedConvertUnrest = prepared;
-          outcomeBadges.push(prepared.outcomeBadge);
+          // Support both single badge and array of badges
+          if (prepared.outcomeBadges) {
+            outcomeBadges.push(...prepared.outcomeBadges);
+          } else if (prepared.outcomeBadge) {
+            outcomeBadges.push(prepared.outcomeBadge);
+          }
         }
       }
 

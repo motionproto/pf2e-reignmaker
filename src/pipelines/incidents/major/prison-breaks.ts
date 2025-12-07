@@ -81,9 +81,17 @@ export const prisonBreaksPipeline: CheckPipeline = {
       // Store prepared command for execute step
       ctx.metadata._preparedReleaseImprisoned = preparedCommand;
       
+      // Support both single badge and array of badges
+      const outcomeBadges: any[] = [];
+      if (preparedCommand.outcomeBadges) {
+        outcomeBadges.push(...preparedCommand.outcomeBadges);
+      } else if (preparedCommand.outcomeBadge) {
+        outcomeBadges.push(preparedCommand.outcomeBadge);
+      }
+      
       return {
         resources: [],
-        outcomeBadges: [preparedCommand.outcomeBadge],
+        outcomeBadges,
         warnings: []
       };
     }

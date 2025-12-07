@@ -227,7 +227,7 @@
   
   // 1. DICE ROLL REQUIREMENTS
   // Check for dice in both badges and modifiers
-  $: hasDiceInBadges = outcomeBadges?.some(b => b.value?.type === 'dice') || false;
+  $: hasDiceInBadges = outcomeBadges?.some(b => b && b.value?.type === 'dice') || false;
   $: hasDiceInModifiers = standaloneDiceModifiers.length > 0 || hasStateChangeDice;
   $: requiresDiceRoll = hasDiceInBadges || hasDiceInModifiers;
   
@@ -247,7 +247,7 @@
     
     // Check dice badges
     const badgeDiceResolved = !hasDiceInBadges || outcomeBadges.every((badge, idx) => 
-      badge.value?.type !== 'dice' || resolvedDice.has(idx)
+      !badge || badge.value?.type !== 'dice' || resolvedDice.has(idx)
     );
     
     return standaloneDiceResolved && stateChangeDiceResolved && badgeDiceResolved;
@@ -688,6 +688,7 @@
     {effectivePrimaryLabel}
     {primaryButtonDisabled}
     {currentFame}
+    {applied}
     on:cancel={handleCancel}
     on:reroll={handleReroll}
     on:primary={handlePrimary}

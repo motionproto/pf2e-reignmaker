@@ -57,11 +57,11 @@ export class TransferSettlementHandler extends BaseGameCommandHandler {
     if (!settlement) {
       logger.warn(`[TransferSettlementHandler] Settlement not found: ${settlementId}`);
       return {
-        outcomeBadge: {
+        outcomeBadges: [{
           icon: 'fa-exclamation-triangle',
           template: 'Settlement not found',
           variant: 'info'
-        },
+        }],
         commit: async () => {
           logger.info('[TransferSettlementHandler] Settlement not found - skipping');
         }
@@ -78,11 +78,11 @@ export class TransferSettlementHandler extends BaseGameCommandHandler {
     if (currentOwner === toFaction) {
       logger.info(`[TransferSettlementHandler] Settlement ${settlement.name} already owned by ${toFaction}`);
       return {
-        outcomeBadge: {
+        outcomeBadges: [{
           icon: 'fa-check',
           template: `${settlement.name} already owned by ${toFaction}`,
           variant: 'info'
-        },
+        }],
         commit: async () => {
           logger.info('[TransferSettlementHandler] No change needed - skipping');
         }
@@ -93,11 +93,11 @@ export class TransferSettlementHandler extends BaseGameCommandHandler {
     if (currentOwner !== PLAYER_KINGDOM) {
       logger.warn(`[TransferSettlementHandler] Settlement ${settlement.name} is not player-owned (owned by ${currentOwner})`);
       return {
-        outcomeBadge: {
+        outcomeBadges: [{
           icon: 'fa-exclamation-triangle',
           template: `${settlement.name} is not player-owned`,
           variant: 'info'
-        },
+        }],
         commit: async () => {
           logger.info('[TransferSettlementHandler] Not player-owned - skipping');
         }
@@ -106,14 +106,34 @@ export class TransferSettlementHandler extends BaseGameCommandHandler {
     
     const factionName = command.factionName || toFaction;
     
-    logger.info(`[TransferSettlementHandler] Will transfer ${settlement.name} to ${factionName}`);
+    // Track imprisoned unrest that will be lost with the settlement
+    const imprisonedUnrest = settlement.imprisonedUnrest || 0;
     
-    return {
-      outcomeBadge: {
+    logger.info(`[TransferSettlementHandler] Will transfer ${settlement.name} to ${factionName}`);
+    if (imprisonedUnrest > 0) {
+      logger.info(`[TransferSettlementHandler] Settlement has ${imprisonedUnrest} imprisoned unrest that will be lost`);
+    }
+    
+    // Build outcome badges
+    const outcomeBadges = [
+      {
         icon: 'fa-city',
         template: `${settlement.name} secedes to ${factionName}`,
         variant: 'negative'
-      },
+      }
+    ];
+    
+    // Add badge for imprisoned unrest if any
+    if (imprisonedUnrest > 0) {
+      outcomeBadges.push({
+        icon: 'fa-handcuffs',
+        template: `${imprisonedUnrest} imprisoned unrest lost`,
+        variant: 'negative'
+      });
+    }
+    
+    return {
+      outcomeBadges,
       commit: async () => {
         logger.info(`[TransferSettlementHandler] Transferring ${settlement.name} to ${toFaction}`);
         
@@ -137,11 +157,22 @@ export class TransferSettlementHandler extends BaseGameCommandHandler {
           } else {
             logger.error(`[TransferSettlementHandler] Hex not found for settlement: ${targetSettlement.name}`);
           }
+          
+          // Clear imprisoned unrest - it goes with the seceding settlement
+          // (the new faction takes control of those prisoners)
+          if (targetSettlement.imprisonedUnrest && targetSettlement.imprisonedUnrest > 0) {
+            logger.info(`[TransferSettlementHandler] Clearing ${targetSettlement.imprisonedUnrest} imprisoned unrest from ${targetSettlement.name}`);
+            targetSettlement.imprisonedUnrest = 0;
+          }
         });
         
         // Chat message
+        let chatContent = `<p><strong>Settlement Secedes!</strong></p><p><strong>${settlement.name}</strong> has declared independence and joined the ${factionName} faction.</p>`;
+        if (imprisonedUnrest > 0) {
+          chatContent += `<p><em>${imprisonedUnrest} imprisoned unrest was lost with the settlement.</em></p>`;
+        }
         ChatMessage.create({
-          content: `<p><strong>Settlement Secedes!</strong></p><p><strong>${settlement.name}</strong> has declared independence and joined the ${factionName} faction.</p>`,
+          content: chatContent,
           speaker: ChatMessage.getSpeaker()
         });
         
@@ -151,7 +182,8 @@ export class TransferSettlementHandler extends BaseGameCommandHandler {
         settlementId: settlement.id,
         settlementName: settlement.name,
         toFaction,
-        factionName
+        factionName,
+        imprisonedUnrestLost: imprisonedUnrest
       }
     };
   }

@@ -40,10 +40,11 @@ export class PipelineCoordinator {
   
   // Check instance service
   private checkInstanceService: any;
+  private servicesInitialized: Promise<void>;
 
   constructor() {
     console.log('🔧 [PipelineCoordinator] Initializing');
-    this.initializeServices();
+    this.servicesInitialized = this.initializeServices();
   }
 
   /**
@@ -51,6 +52,14 @@ export class PipelineCoordinator {
    */
   private async initializeServices(): Promise<void> {
     this.checkInstanceService = await createOutcomePreviewService();
+    console.log('✅ [PipelineCoordinator] Services initialized');
+  }
+  
+  /**
+   * Ensure services are initialized before use
+   */
+  private async ensureServices(): Promise<void> {
+    await this.servicesInitialized;
   }
 
   /**
@@ -80,8 +89,25 @@ export class PipelineCoordinator {
     // Format: T<turn>-<action-name>-<unique-string> (e.g., "T5-deploy-army-abc123def456")
     // Including turn number enables turn-aware validation for reroll modifier retrieval
     const currentTurn = getKingdomActor()?.getKingdomData()?.currentTurn || 0;
-    context.instanceId = `T${currentTurn}-${actionId}-${foundry.utils.randomID()}`;
-    console.log(`🆔 [PipelineCoordinator] Generated new instanceId: ${context.instanceId} (turn ${currentTurn})`);
+    const kingdom = getKingdomActor()?.getKingdomData();
+    
+    // ✅ REUSE existing instanceId for events if one exists in turnState
+    // EventPhaseController creates an instanceId when an event triggers (d20 check).
+    // We should reuse that ID for the skill roll so EventsPhase.currentEventInstance can find the outcome.
+    // Note: Incidents don't use this pattern - they match by being first in pendingOutcomes
+    let existingInstanceId: string | null = null;
+    
+    if (checkType === 'event' && kingdom?.turnState?.eventsPhase?.eventId === actionId) {
+      existingInstanceId = kingdom.turnState.eventsPhase.eventInstanceId;
+    }
+    
+    if (existingInstanceId) {
+      context.instanceId = existingInstanceId;
+      console.log(`🆔 [PipelineCoordinator] Reusing existing instanceId: ${context.instanceId}`);
+    } else {
+      context.instanceId = `T${currentTurn}-${actionId}-${foundry.utils.randomID()}`;
+      console.log(`🆔 [PipelineCoordinator] Generated new instanceId: ${context.instanceId} (turn ${currentTurn})`);
+    }
     
     log(context, 0, 'initialize', `Starting pipeline for ${actionId}`);
     
@@ -171,10 +197,10 @@ export class PipelineCoordinator {
     // ✅ EXPLICIT: Mark context as reroll (used by Step 3 to load modifiers)
     context.isReroll = true;
     
-    // Clear old outcome preview (will be recreated in Step 4)
-    if (this.checkInstanceService) {
-      await this.checkInstanceService.clearInstance(instanceId);
-    }
+    // ✅ DON'T clear the instance here!
+    // Clearing triggers Svelte reactivity which nulls the instance prop in OutcomeDisplay
+    // before the new roll completes. Instead, step4_createCheckInstance will update
+    // the existing instance in-place via createActionOutcomePreview().
     
     // Re-execute Step 3 with SAME context (modifiers already stored)
     await this.step3_executeRoll(context);
@@ -232,6 +258,9 @@ export class PipelineCoordinator {
    */
   private async resumeFromPersistedPreview(instanceId: string, resolutionData?: any): Promise<void> {
     console.log(`🔄 [PipelineCoordinator] Resuming from persisted preview: ${instanceId}`);
+    
+    // Ensure services are initialized
+    await this.ensureServices();
     
     // Get persisted preview from kingdom data
     const actor = getKingdomActor();
@@ -817,16 +846,39 @@ export class PipelineCoordinator {
       }
     }
     
+    // DIAGNOSTIC: Log badge sources before combining
+    const customOrStaticBadges = customPreview.outcomeBadges && customPreview.outcomeBadges.length > 0
+      ? customPreview.outcomeBadges
+      : staticBadges;
+    
+    const combinedBadges = [
+      ...modifierBadges,
+      ...customOrStaticBadges,
+      ...eventStatusBadges
+    ];
+    
+    // Check for nulls and log their source
+    const nullIndices = combinedBadges.map((b, i) => ({ index: i, isNull: b === null || b === undefined, badge: b }))
+      .filter(item => item.isNull);
+    if (nullIndices.length > 0) {
+      console.error('🚨 [PipelineCoordinator] NULL BADGES DETECTED in preview:', {
+        actionId: ctx.actionId,
+        outcome: ctx.rollData?.outcome,
+        modifierBadgesCount: modifierBadges.length,
+        modifierBadgesNulls: modifierBadges.filter(b => b === null || b === undefined).length,
+        customOrStaticBadgesCount: customOrStaticBadges.length,
+        customOrStaticBadgesNulls: customOrStaticBadges.filter(b => b === null || b === undefined).length,
+        eventStatusBadgesCount: eventStatusBadges.length,
+        eventStatusBadgesNulls: eventStatusBadges.filter(b => b === null || b === undefined).length,
+        usingCustomBadges: customPreview.outcomeBadges && customPreview.outcomeBadges.length > 0,
+        nullIndices
+      });
+    }
+    
     const preview = {
       resources: customPreview.resources || [],
-      outcomeBadges: [
-        ...modifierBadges,  // ALWAYS include auto-converted modifier badges
-        ...(customPreview.outcomeBadges && customPreview.outcomeBadges.length > 0
-          ? customPreview.outcomeBadges  // Add custom badges if present
-          : staticBadges  // Otherwise add static badges as fallback
-        ),
-        ...eventStatusBadges  // Add event status badge for ongoing events
-      ]
+      // Combine all badge sources and filter out any null/undefined values
+      outcomeBadges: combinedBadges.filter(badge => badge !== null && badge !== undefined)
     };
     
     // Store preview in context
@@ -848,6 +900,15 @@ export class PipelineCoordinator {
             console.log('🔧 [PipelineCoordinator] Found instance, updating...');
             
             if (preview.outcomeBadges && preview.outcomeBadges.length > 0) {
+              // DIAGNOSTIC: Check for nulls before storing
+              const nullsInPreview = preview.outcomeBadges.filter(b => b === null || b === undefined);
+              if (nullsInPreview.length > 0) {
+                console.error('🚨 [PipelineCoordinator] About to store badges with NULLS:', {
+                  total: preview.outcomeBadges.length,
+                  nullCount: nullsInPreview.length,
+                  badges: preview.outcomeBadges
+                });
+              }
               instance.appliedOutcome.outcomeBadges = preview.outcomeBadges;
               console.log('✅ [PipelineCoordinator] Updated outcomeBadges:', instance.appliedOutcome.outcomeBadges);
             }
@@ -996,6 +1057,15 @@ export class PipelineCoordinator {
    */
   private async step9_cleanup(ctx: PipelineContext): Promise<void> {
     log(ctx, 9, 'cleanup', 'Cleaning up');
+    
+    // Ensure services are initialized
+    await this.ensureServices();
+
+    // Mark instance as applied BEFORE deletion (hides buttons in UI)
+    if (ctx.instanceId && this.checkInstanceService) {
+      await this.checkInstanceService.markApplied(ctx.instanceId);
+      log(ctx, 9, 'cleanup', `Marked instance as applied: ${ctx.instanceId}`);
+    }
 
     const { TurnPhase } = await import('../actors/KingdomActor');
 
@@ -1048,13 +1118,11 @@ export class PipelineCoordinator {
       log(ctx, 9, 'cleanup', 'Completed RESOLVE_EVENT and APPLY_MODIFIERS phase steps');
     }
 
-    // DELETE check instance completely from pendingOutcomes
-    if (ctx.instanceId && this.checkInstanceService) {
-      await this.checkInstanceService.clearInstance(ctx.instanceId);
-      log(ctx, 9, 'cleanup', `Deleted check instance: ${ctx.instanceId}`);
-
-      // Remove from pending contexts
+    // Remove from pending contexts (instance stays in pendingOutcomes until end of turn)
+    // The card remains visible in "applied" state - cleaned up at end of turn
+    if (ctx.instanceId) {
       this.pendingContexts.delete(ctx.instanceId);
+      log(ctx, 9, 'cleanup', `Removed context for instance: ${ctx.instanceId} (card remains visible)`);
     }
 
     log(ctx, 9, 'cleanup', 'Cleanup complete');

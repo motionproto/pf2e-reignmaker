@@ -33,7 +33,17 @@
    $: buildCompleted = getStepCompletion(currentSteps, 2); // Step 2 = build-queue
    
    // Phase automatically completes when all steps are done
-   $: allStepsComplete = areAllStepsComplete(currentSteps);
+   // Upkeep phase has exactly 3 steps - verify we have the right steps before checking completion
+   $: allStepsComplete = currentSteps.length === 3 && areAllStepsComplete(currentSteps);
+   
+   // Reactive: Get fame conversion result from turnState
+   $: fameConversion = $kingdomData.turnState?.upkeepPhase?.fameConversion;
+   
+   // Reactive: Trigger fame conversion when all steps complete
+   // Only runs when we have valid Upkeep steps (length === 3), controller is ready, and hasn't been processed yet
+   $: if (allStepsComplete && upkeepController && !fameConversion) {
+      upkeepController.processFameConversion();
+   }
    
    // Debug step completion states
 
@@ -230,6 +240,17 @@
 
 <div class="upkeep-phase">
    
+   <!-- Fame Summary Banner - only shows after all Upkeep steps complete -->
+   {#if fameConversion && allStepsComplete}
+      <div class="fame-banner" class:success={fameConversion.fameUsed > 0}>
+         <i class="fas fa-star"></i>
+         {#if fameConversion.fameUsed > 0}
+            <span><strong>{fameConversion.fameUsed} fame expires.</strong> Use fame during checks to reroll failures!</span>
+         {:else}
+            <span>No fame accumulated. Critical successes grant +1 fame.</span>
+         {/if}
+      </div>
+   {/if}
    
    <!-- Phase Steps Grid Container -->
    <div class="phase-steps-grid">
@@ -580,6 +601,44 @@
       display: flex;
       flex-direction: column;
       gap: var(--space-20);
+   }
+   
+   .fame-banner {
+      display: flex;
+      align-items: center;
+      gap: var(--space-12);
+      padding: var(--space-12) var(--space-20);
+      background: linear-gradient(135deg, 
+         rgba(234, 179, 8, 0.15), 
+         rgba(234, 179, 8, 0.05));
+      border: 1px solid rgba(234, 179, 8, 0.4);
+      border-radius: var(--radius-md);
+      
+      i {
+         font-size: var(--font-xl);
+         color: var(--color-amber);
+         flex-shrink: 0;
+      }
+      
+      span {
+         color: var(--text-secondary);
+         font-size: var(--font-md);
+      }
+      
+      &.success {
+         background: linear-gradient(135deg, 
+            rgba(34, 197, 94, 0.15), 
+            rgba(34, 197, 94, 0.05));
+         border-color: rgba(34, 197, 94, 0.4);
+         
+         i {
+            color: var(--color-green);
+         }
+         
+         span {
+            color: var(--color-green);
+         }
+      }
    }
    
    // New grid container for responsive columns

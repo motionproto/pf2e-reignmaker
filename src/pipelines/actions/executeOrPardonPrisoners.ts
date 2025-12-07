@@ -7,6 +7,8 @@ import type { CheckPipeline } from '../../types/CheckPipeline';
 import { structuresService } from '../../services/structures';
 import { reduceImprisonedExecution } from '../../execution';
 import { textBadge, diceBadge, valueBadge } from '../../types/OutcomeBadge';
+import { get } from 'svelte/store';
+import { currentFaction } from '../../stores/KingdomStore';
 
 export const executeOrPardonPrisonersPipeline: CheckPipeline = {
   // === BASE DATA ===
@@ -46,7 +48,16 @@ export const executeOrPardonPrisonersPipeline: CheckPipeline = {
 
   // === TYPESCRIPT LOGIC ===
   requirements: (kingdom) => {
+    const faction = get(currentFaction);
     const hasEligibleSettlement = kingdom.settlements?.some((s: any) => {
+      // Only check settlements owned by the current faction
+      const hex = kingdom?.hexes?.find((h: any) => 
+        h.row === s.location.x && h.col === s.location.y
+      );
+      if (hex?.claimedBy !== faction) {
+        return false;
+      }
+      
       const imprisonedUnrest = s.imprisonedUnrest || 0;
       const capacity = structuresService.calculateImprisonedUnrestCapacity(s);
       return imprisonedUnrest > 0 && capacity > 0;
@@ -65,7 +76,16 @@ export const executeOrPardonPrisonersPipeline: CheckPipeline = {
       entityType: 'settlement',
       label: 'Select Settlement with Imprisoned Unrest',
       required: true,
-      filter: (settlement: any) => {
+      filter: (settlement: any, kingdom: any) => {
+        // Only include settlements owned by the current faction
+        const faction = get(currentFaction);
+        const hex = kingdom?.hexes?.find((h: any) => 
+          h.row === settlement.location.x && h.col === settlement.location.y
+        );
+        if (hex?.claimedBy !== faction) {
+          return false;
+        }
+        
         const imprisonedUnrest = settlement.imprisonedUnrest || 0;
         const capacity = structuresService.calculateImprisonedUnrestCapacity(settlement);
         

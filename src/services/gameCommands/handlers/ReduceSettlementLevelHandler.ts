@@ -51,11 +51,11 @@ export class ReduceSettlementLevelHandler extends BaseGameCommandHandler {
     if (!targetSettlement) {
       logger.warn('[ReduceSettlementLevelHandler] No eligible settlements to reduce (all at level 1)');
       return {
-        outcomeBadge: {
+        outcomeBadges: [{
           icon: 'fa-exclamation-triangle',
           template: 'No settlements available to reduce (all at minimum level)',
           variant: 'neutral'
-        },
+        }],
         commit: async () => {
           logger.info('[ReduceSettlementLevelHandler] No settlements to reduce - skipping');
         }
@@ -74,11 +74,11 @@ export class ReduceSettlementLevelHandler extends BaseGameCommandHandler {
     logger.info(`[ReduceSettlementLevelHandler] Preview: ${message}`);
     
     return {
-      outcomeBadge: {
+      outcomeBadges: [{
         icon: 'fa-city',
         template: message,
         variant: 'negative'
-      },
+      }],
       commit: async () => {
         logger.info(`[ReduceSettlementLevelHandler] Reducing ${targetSettlement.name} from level ${oldLevel} to ${newLevel}`);
         

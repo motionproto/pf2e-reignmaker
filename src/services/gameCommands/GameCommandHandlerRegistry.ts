@@ -11,8 +11,7 @@ import type { PreparedCommand } from '../../types/game-commands';
 // Import all handlers
 import { GiveActorGoldHandler } from './handlers/GiveActorGoldHandler';
 import { RecruitArmyHandler } from './handlers/RecruitArmyHandler';
-import { DisbandArmyHandler } from './handlers/DisbandArmyHandler';
-import { TrainArmyHandler } from './handlers/TrainArmyHandler';
+// Note: DisbandArmyHandler and TrainArmyHandler removed - pipelines use direct execution functions
 import { FoundSettlementHandler } from './handlers/FoundSettlementHandler';
 import { AdjustFactionHandler } from './handlers/AdjustFactionHandler';
 import { OutfitArmyHandler } from './handlers/OutfitArmyHandler';
@@ -40,8 +39,6 @@ export class GameCommandHandlerRegistry {
   private handlers: GameCommandHandler[] = [
     new GiveActorGoldHandler(),
     new RecruitArmyHandler(),
-    new DisbandArmyHandler(),
-    new TrainArmyHandler(),
     new FoundSettlementHandler(),
     new AdjustFactionHandler(),
     new OutfitArmyHandler(),
@@ -151,8 +148,6 @@ export class GameCommandHandlerRegistry {
     const knownTypes = [
       'giveActorGold',
       'recruitArmy',
-      'disbandArmy',
-      'trainArmy',
       'foundSettlement',
       'adjustFactionAttitude',
       'requestMilitaryAidFactionAttitude',
@@ -181,7 +176,7 @@ let registryInstance: GameCommandHandlerRegistry | null = null;
 export function getGameCommandRegistry(): GameCommandHandlerRegistry {
   if (!registryInstance) {
     registryInstance = new GameCommandHandlerRegistry();
-    console.log(`[GameCommandHandlerRegistry] Registry initialized with 21 handlers`);
+    console.log(`[GameCommandHandlerRegistry] Registry initialized with 19 handlers`);
   }
   return registryInstance;
 }

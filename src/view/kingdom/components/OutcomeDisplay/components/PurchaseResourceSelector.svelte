@@ -2,14 +2,10 @@
   import { createEventDispatcher, onMount, onDestroy } from 'svelte';
   import { kingdomData } from '../../../../../stores/KingdomStore';
   import type { OutcomePreview } from '../../../../../models/OutcomePreview';
-  import { 
-    updateInstanceResolutionState,
-    getInstanceResolutionState 
-  } from '../../../../../controllers/shared/ResolutionStateHelpers';
   import { getBestTradeRates, getCriticalSuccessRates } from '../../../../../services/commerce/tradeRates';
   import { getValidationContext } from '../context/ValidationContext';
 
-  // Props
+  // Props (instance kept for interface compatibility but not used for state)
   export let instance: OutcomePreview | null = null;
   export let outcome: string;
 

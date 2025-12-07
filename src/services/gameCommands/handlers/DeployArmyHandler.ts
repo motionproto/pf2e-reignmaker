@@ -92,11 +92,11 @@ export class DeployArmyHandler extends BaseGameCommandHandler {
     logger.info(`[DeployArmyHandler] Preview: ${badgeText}`);
     
     return {
-      outcomeBadge: {
+      outcomeBadges: [{
         icon: 'fa-flag',
         template: badgeText,
         variant: outcome === 'criticalFailure' ? 'negative' : 'positive'
-      },
+      }],
       commit: async () => {
         logger.info(`[DeployArmyHandler] Deploying ${army.name}`);
         
@@ -123,6 +123,8 @@ export class DeployArmyHandler extends BaseGameCommandHandler {
     };
   }
 }
+
+
 
 
 

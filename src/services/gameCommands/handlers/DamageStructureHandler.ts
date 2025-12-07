@@ -85,11 +85,11 @@ export class DamageStructureHandler extends BaseGameCommandHandler {
     if (selectedStructures.length === 0) {
       logger.warn('[DamageStructureHandler] No structures available to damage');
       return {
-        outcomeBadge: {
+        outcomeBadges: [{
           icon: 'fa-exclamation-triangle',
           template: 'No structures available to damage',
           variant: 'neutral'
-        },
+        }],
         commit: async () => {
           logger.info('[DamageStructureHandler] No structures to affect - skipping');
         }

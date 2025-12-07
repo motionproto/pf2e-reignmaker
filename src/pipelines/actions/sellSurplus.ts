@@ -75,6 +75,22 @@ export const sellSurplusPipeline: CheckPipeline = {
       component: 'SellResourceSelector',
       condition: (ctx) => {
         return ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess';
+      },
+      onComplete: async (data: any, ctx: any) => {
+        const { selectedResource, selectedAmount, goldGained } = data || {};
+        
+        if (!selectedResource || !selectedAmount || goldGained === undefined) {
+          throw new Error('No resource selection was made');
+        }
+        
+        const result = await applyResourceChanges([
+          { resource: selectedResource, amount: -selectedAmount },
+          { resource: 'gold', amount: goldGained }
+        ], 'sell-surplus');
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to sell resources');
+        }
       }
     }
   ],
@@ -104,21 +120,7 @@ export const sellSurplusPipeline: CheckPipeline = {
     switch (ctx.outcome) {
       case 'criticalSuccess':
       case 'success':
-        const customData = ctx.resolutionData?.customComponentData;
-        
-        if (!customData?.selectedResource || !customData?.selectedAmount || customData?.goldGained === undefined) {
-          return { success: true };
-        }
-        
-        const saleResult = await applyResourceChanges([
-          { resource: customData.selectedResource, amount: -customData.selectedAmount },
-          { resource: 'gold', amount: customData.goldGained }
-        ], 'sell-surplus');
-        
-        if (!saleResult.success) {
-          throw new Error(saleResult.error || 'Failed to sell resources');
-        }
-        
+        // Resource changes are applied by onComplete handler in postRollInteractions
         return { success: true };
         
       case 'criticalFailure':

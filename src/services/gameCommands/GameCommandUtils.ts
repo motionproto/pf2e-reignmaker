@@ -166,6 +166,39 @@ export function getEquipmentDisplayName(equipmentType: string): string {
   return names[equipmentType] || equipmentType;
 }
 
+/**
+ * Extract outcome badges from a PreparedCommand
+ * 
+ * Handles both single badge (outcomeBadge) and array of badges (outcomeBadges)
+ * patterns. Game command handlers may return either format:
+ * - outcomeBadge: single badge (typical for single-target commands)
+ * - outcomeBadges: array of badges (for multi-target commands like damage multiple structures)
+ * 
+ * @param preparedCommand - The prepared command from a handler
+ * @returns Array of outcome badges (may be empty)
+ * 
+ * @example
+ * const preparedDamage = await damageHandler.prepare(...);
+ * if (preparedDamage) {
+ *   outcomeBadges.push(...extractBadges(preparedDamage));
+ * }
+ */
+export function extractBadges(preparedCommand: { outcomeBadge?: any; outcomeBadges?: any[] } | null | undefined): any[] {
+  if (!preparedCommand) return [];
+  
+  if (preparedCommand.outcomeBadges && preparedCommand.outcomeBadges.length > 0) {
+    return preparedCommand.outcomeBadges;
+  }
+  
+  if (preparedCommand.outcomeBadge) {
+    return [preparedCommand.outcomeBadge];
+  }
+  
+  return [];
+}
+
+
+
 
 
 

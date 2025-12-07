@@ -46,11 +46,11 @@ export class ReleaseImprisonedHandler extends BaseGameCommandHandler {
     if (totalImprisoned === 0) {
       logger.warn('[ReleaseImprisonedHandler] No imprisoned unrest to release');
       return {
-        outcomeBadge: {
+        outcomeBadges: [{
           icon: 'fa-exclamation-triangle',
           template: 'No imprisoned unrest to release',
           variant: 'neutral'
-        },
+        }],
         commit: async () => {
           logger.info('[ReleaseImprisonedHandler] No imprisoned unrest - skipping');
         }
@@ -64,11 +64,11 @@ export class ReleaseImprisonedHandler extends BaseGameCommandHandler {
     if (amountToRelease === 0) {
       logger.warn('[ReleaseImprisonedHandler] Amount to release rounded down to 0');
       return {
-        outcomeBadge: {
+        outcomeBadges: [{
           icon: 'fa-exclamation-triangle',
           template: 'No imprisoned unrest to release (rounded down to 0)',
           variant: 'neutral'
-        },
+        }],
         commit: async () => {
           logger.info('[ReleaseImprisonedHandler] Amount rounded to 0 - skipping');
         }
@@ -82,11 +82,11 @@ export class ReleaseImprisonedHandler extends BaseGameCommandHandler {
     logger.info(`[ReleaseImprisonedHandler] Preview: ${badgeText}`);
     
     return {
-      outcomeBadge: {
+      outcomeBadges: [{
         icon: 'fa-door-open',
         template: badgeText,
         variant: 'negative'
-      },
+      }],
       commit: async () => {
         logger.info(`[ReleaseImprisonedHandler] Releasing ${amountToRelease} imprisoned unrest`);
         
@@ -132,6 +132,8 @@ export class ReleaseImprisonedHandler extends BaseGameCommandHandler {
     };
   }
 }
+
+
 
 
 

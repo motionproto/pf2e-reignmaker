@@ -777,9 +777,15 @@ export class UnifiedCheckHandler {
           const conditionMet = !interaction.condition || interaction.condition(context);
           
           if (conditionMet && interaction.onComplete) {
-            console.log(`🎯 [UnifiedCheckHandler] Calling postRollInteractions.onComplete for ${interaction.id || interaction.type}`);
+            // ✅ FIX: Pass interaction-specific data, not the whole customComponentData object
+            // Data is stored at customComponentData[interaction.id] by OutcomeDisplay.handleComponentResolution()
+            const interactionData = interaction.id 
+              ? context.resolutionData.customComponentData[interaction.id]
+              : context.resolutionData.customComponentData;
+            
+            console.log(`🎯 [UnifiedCheckHandler] Calling postRollInteractions.onComplete for ${interaction.id || interaction.type}`, { interactionData });
             try {
-              await interaction.onComplete(context.resolutionData.customComponentData, context);
+              await interaction.onComplete(interactionData, context);
               console.log(`✅ [UnifiedCheckHandler] onComplete handler succeeded`);
             } catch (error) {
               console.error(`❌ [UnifiedCheckHandler] onComplete handler failed:`, error);

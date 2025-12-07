@@ -68,6 +68,22 @@ export const purchaseResourcesPipeline: CheckPipeline = {
       component: 'PurchaseResourceSelector',
       condition: (ctx) => {
         return ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess';
+      },
+      onComplete: async (data: any, ctx: any) => {
+        const { selectedResource, selectedAmount, goldCost } = data || {};
+        
+        if (!selectedResource || !selectedAmount || goldCost === undefined) {
+          throw new Error('No resource selection was made');
+        }
+        
+        const result = await applyResourceChanges([
+          { resource: 'gold', amount: -goldCost },
+          { resource: selectedResource, amount: selectedAmount }
+        ], 'purchase-resources');
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to purchase resources');
+        }
       }
     }
   ],
@@ -76,21 +92,7 @@ export const purchaseResourcesPipeline: CheckPipeline = {
     switch (ctx.outcome) {
       case 'criticalSuccess':
       case 'success':
-        const customData = ctx.resolutionData?.customComponentData;
-        
-        if (!customData?.selectedResource || !customData?.selectedAmount || customData?.goldCost === undefined) {
-          return { success: true };
-        }
-        
-        const purchaseResult = await applyResourceChanges([
-          { resource: 'gold', amount: -customData.goldCost },
-          { resource: customData.selectedResource, amount: customData.selectedAmount }
-        ], 'purchase-resources');
-        
-        if (!purchaseResult.success) {
-          throw new Error(purchaseResult.error || 'Failed to purchase resources');
-        }
-        
+        // Resource changes are applied by onComplete handler in postRollInteractions
         return { success: true };
         
       case 'criticalFailure':

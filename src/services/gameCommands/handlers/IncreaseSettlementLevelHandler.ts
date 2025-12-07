@@ -51,11 +51,11 @@ export class IncreaseSettlementLevelHandler extends BaseGameCommandHandler {
     if (!targetSettlement) {
       logger.warn('[IncreaseSettlementLevelHandler] No settlements available');
       return {
-        outcomeBadge: {
+        outcomeBadges: [{
           icon: 'fa-exclamation-triangle',
           template: 'No settlements available to increase',
           variant: 'neutral'
-        },
+        }],
         commit: async () => {
           logger.info('[IncreaseSettlementLevelHandler] No settlements to increase - skipping');
         }
@@ -71,11 +71,11 @@ export class IncreaseSettlementLevelHandler extends BaseGameCommandHandler {
     logger.info(`[IncreaseSettlementLevelHandler] Preview: ${message}`);
     
     return {
-      outcomeBadge: {
+      outcomeBadges: [{
         icon: 'fa-city',
         template: message,
         variant: 'positive'
-      },
+      }],
       commit: async () => {
         logger.info(`[IncreaseSettlementLevelHandler] Increasing ${targetSettlement.name} from level ${oldLevel} to ${newLevel}`);
         

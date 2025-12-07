@@ -161,11 +161,11 @@ export class DestroyStructureHandler extends BaseGameCommandHandler {
     if (selectedStructures.length === 0) {
       logger.warn(`[DestroyStructureHandler] No structures available to destroy${category ? ` in category '${category}'` : ''}`);
       return {
-        outcomeBadge: {
+        outcomeBadges: [{
           icon: 'fa-exclamation-triangle',
           template: `No structures available to destroy${category ? ` in category '${category}'` : ''}`,
           variant: 'neutral'
-        },
+        }],
         commit: async () => {
           logger.info('[DestroyStructureHandler] No structures to affect - skipping');
         }
@@ -185,11 +185,11 @@ export class DestroyStructureHandler extends BaseGameCommandHandler {
     logger.info(`[DestroyStructureHandler] Preview: ${badgeText}`);
     
     return {
-      outcomeBadge: {
+      outcomeBadges: [{
         icon: 'fa-house-chimney-crack',
         template: badgeText,
         variant: 'negative'
-      },
+      }],
       commit: async () => {
         logger.info(`[DestroyStructureHandler] Destroying ${selectedStructures.length} structure(s)`);
         

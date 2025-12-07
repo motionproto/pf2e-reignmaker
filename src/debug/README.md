@@ -12,7 +12,7 @@ Edit `src/debug/debugConfig.ts` to enable/disable panels:
 
 ```typescript
 export const DEBUG_PANELS = {
-  events: true,      // Event testing panel (37 events)
+  events: false,     // Event testing panel (37/37 COMPLETE ✅)
   incidents: true,   // Incident testing panel (30 incidents)
   phaseProgression: false,
 };
@@ -23,11 +23,11 @@ export const DEBUG_MODE = true;
 
 ### Available Panels
 
-| Panel | Location | Used In | Description |
-|-------|----------|---------|-------------|
-| **EventDebugPanel** | `src/view/debug/EventDebugPanel.svelte` | EventsPhase | Test all 37 events by trait category |
-| **IncidentDebugPanel** | `src/view/debug/IncidentDebugPanel.svelte` | UnrestPhase | Test all 30 incidents by severity |
-| **PhaseProgressionDebug** | `src/view/debug/PhaseProgressionDebug.svelte` | - | View phase step states |
+| Panel | Location | Used In | Status |
+|-------|----------|---------|--------|
+| **EventDebugPanel** | `src/view/debug/EventDebugPanel.svelte` | EventsPhase | ✅ **COMPLETE** (37/37 tested) |
+| **IncidentDebugPanel** | `src/view/debug/IncidentDebugPanel.svelte` | UnrestPhase | Testing in progress |
+| **PhaseProgressionDebug** | `src/view/debug/PhaseProgressionDebug.svelte` | - | Disabled |
 
 ### Status Tracking Files
 

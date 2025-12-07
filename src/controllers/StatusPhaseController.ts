@@ -30,16 +30,29 @@ export async function createStatusPhaseController() {
         const guardResult = checkPhaseGuard(TurnPhase.STATUS, 'StatusPhaseController');
         if (guardResult) return guardResult;
         
+        // Initialize or reset turnState FIRST (Phase 1 of TurnState Migration)
+        // This must happen before checking completion status
+        await this.ensureTurnState();
+        
+        // Clean up any stale base modifiers from displayModifiers (now computed reactively)
+        // This handles legacy data from before the reactive refactor
+        await this.cleanupStaleDisplayModifiers();
+        
+        // Check if Status phase was already completed this turn (prevents duplicate processing)
+        // This handles the case where user navigates away and back to Status phase
+        const actor = getKingdomActor();
+        const kingdom = actor?.getKingdomData();
+        if (kingdom?.turnState?.statusPhase?.completed) {
+          logger.info('✅ [StatusPhaseController] Status phase already completed this turn, skipping re-processing');
+          return createPhaseResult(true);
+        }
+        
         // Initialize single step that handles all status processing
         const steps = [
           { name: 'Status' }
         ];
         
         await initializePhaseSteps(steps);
-        
-        // Initialize or reset turnState (Phase 1 of TurnState Migration)
-        // Data is guaranteed to exist by this point (initialized in Stage 1)
-        await this.ensureTurnState();
         
         // Clear applied outcomes from previous turn
         await this.clearAppliedOutcomes();
@@ -53,6 +66,9 @@ export async function createStatusPhaseController() {
         // ✅ ONE-TIME turn initialization (runs at START of every turn, including Turn 1)
         // Process resource decay from previous turn
         await this.processResourceDecay();
+        
+        // NOTE: Fame conversion moved to Upkeep Phase (end of turn) for better UX
+        // Fame is now converted to unrest reduction after all upkeep steps complete
         
         // Initialize Fame to 1 for this turn
         await this.initializeFame();
@@ -71,6 +87,13 @@ export async function createStatusPhaseController() {
         
         // Apply automatic structure effects (Donjon converts unrest, etc.)
         await this.applyAutomaticStructureEffects();
+        
+        // Mark Status phase as completed BEFORE completing the step
+        await actor?.updateKingdomData((k: KingdomData) => {
+          if (k.turnState?.statusPhase) {
+            k.turnState.statusPhase.completed = true;
+          }
+        });
         
         // Auto-complete the single step immediately (using type-safe constant)
         await completePhaseStepByIndex(StatusPhaseSteps.STATUS);
@@ -107,6 +130,50 @@ export async function createStatusPhaseController() {
       // This is now automatically handled by turnState reset
       // No need to manually clear - turnState.unrestPhase resets on turn advance
 
+    },
+
+    /**
+     * Clean up stale and duplicate modifiers from displayModifiers
+     * 
+     * This cleanup removes:
+     * 1. Legacy stored base modifiers (now computed reactively in UI)
+     * 2. Fame conversion modifiers (now handled in Upkeep Phase)
+     * 3. Duplicate modifiers with the same ID (legacy data accumulation)
+     */
+    async cleanupStaleDisplayModifiers() {
+      const actor = getKingdomActor();
+      if (!actor) return;
+      
+      await actor.updateKingdomData((k: KingdomData) => {
+        if (!k.turnState?.statusPhase?.displayModifiers) return;
+        
+        const before = k.turnState.statusPhase.displayModifiers.length;
+        
+        // Filter out modifiers that are no longer displayed in Status Phase:
+        // - Base modifiers (now computed reactively in UI)
+        // - Fame conversion (moved to Upkeep Phase)
+        let filtered = k.turnState.statusPhase.displayModifiers.filter(
+          (m: any) => m.id && 
+            !m.id.startsWith('status-size') && 
+            !m.id.startsWith('status-metropolis') &&
+            !m.id.startsWith('fame-conversion')
+        );
+        
+        // Deduplicate by ID - keep only the first occurrence of each ID
+        const seen = new Set<string>();
+        filtered = filtered.filter((m: any) => {
+          if (seen.has(m.id)) return false;
+          seen.add(m.id);
+          return true;
+        });
+        
+        k.turnState.statusPhase.displayModifiers = filtered;
+        const removed = before - filtered.length;
+        
+        if (removed > 0) {
+          logger.info(`🧹 [StatusPhaseController] Cleaned up ${removed} stale/duplicate modifier(s) from displayModifiers`);
+        }
+      });
     },
 
     /**
@@ -158,6 +225,9 @@ export async function createStatusPhaseController() {
         }
       });
     },
+
+    // NOTE: processFameConversion() moved to UpkeepPhaseController
+    // Fame is now converted to unrest reduction at end of turn (after all upkeep steps complete)
 
     /**
      * Initialize Fame to 1 for the turn
@@ -220,38 +290,9 @@ export async function createStatusPhaseController() {
       
       const totalBaseUnrest = hexUnrest + metropolisCount + demandedHexCount;
 
-      // Create display-only modifiers for Status phase UI
-      const displayModifiers: any[] = [];
-      
-      if (hexUnrest > 0) {
-        displayModifiers.push({
-          id: 'status-size-unrest',
-          name: `Kingdom Size (${kingdom.size} hexes)`,
-          description: `Larger kingdoms are harder to govern (${kingdom.size} ÷ ${hexesPerUnrest} = ${hexUnrest})`,
-          sourceType: 'structure',
-          modifiers: [{
-            type: 'static',
-            resource: 'unrest',
-            value: hexUnrest,
-            duration: 'permanent'
-          }]
-        });
-      }
-      
-      if (metropolisCount > 0) {
-        displayModifiers.push({
-          id: 'status-metropolis-unrest',
-          name: 'Metropolis Complexity',
-          description: `${metropolisCount} ${metropolisCount === 1 ? 'metropolis' : 'metropolises'} create additional governance complexity`,
-          sourceType: 'structure',
-          modifiers: [{
-            type: 'static',
-            resource: 'unrest',
-            value: metropolisCount,
-            duration: 'permanent'
-          }]
-        });
-      }
+      // Note: Base status modifiers (size, metropolis) are now computed REACTIVELY
+      // in StatusPhase.svelte, not stored here. This prevents duplicate display issues.
+      // Only one-time events (fame conversion, donjon) are stored in displayModifiers.
       
       // Note: Demanded hex unrest is displayed separately in CitizensDemandExpansion component
       // but we still need to actually apply the unrest here
@@ -263,16 +304,16 @@ export async function createStatusPhaseController() {
         await actor.updateKingdomData((k: KingdomData) => {
           k.unrest = (k.unrest || 0) + totalBaseUnrest;
           
-          // Store display modifiers in turnState for Status phase UI
-          if (k.turnState) {
-            k.turnState.statusPhase.displayModifiers = displayModifiers;
+          // Ensure displayModifiers array exists for one-time events
+          if (k.turnState && !k.turnState.statusPhase.displayModifiers) {
+            k.turnState.statusPhase.displayModifiers = [];
           }
         });
       } else {
-        // Even with 0 unrest, we need to initialize the display modifiers
+        // Even with 0 unrest, we need to ensure displayModifiers array exists
         await actor.updateKingdomData((k: KingdomData) => {
-          if (k.turnState) {
-            k.turnState.statusPhase.displayModifiers = displayModifiers;
+          if (k.turnState && !k.turnState.statusPhase.displayModifiers) {
+            k.turnState.statusPhase.displayModifiers = [];
           }
         });
       }

@@ -49,11 +49,11 @@ export class DestroyWorksiteHandler extends BaseGameCommandHandler {
     if (hexesWithWorksites.length === 0) {
       logger.warn('[DestroyWorksiteHandler] No worksites available to destroy');
       return {
-        outcomeBadge: {
+        outcomeBadges: [{
           icon: 'fa-exclamation-triangle',
           template: 'No worksites available to destroy',
           variant: 'neutral'
-        },
+        }],
         commit: async () => {
           logger.info('[DestroyWorksiteHandler] No worksites to destroy - skipping');
         }
@@ -85,11 +85,11 @@ export class DestroyWorksiteHandler extends BaseGameCommandHandler {
     logger.info(`[DestroyWorksiteHandler] Preview: ${message}`);
     
     return {
-      outcomeBadge: {
+      outcomeBadges: [{
         icon: 'fa-industry',
         template: message,
         variant: 'negative'
-      },
+      }],
       commit: async () => {
         logger.info(`[DestroyWorksiteHandler] Destroying ${actualCount} worksite(s)`);
         

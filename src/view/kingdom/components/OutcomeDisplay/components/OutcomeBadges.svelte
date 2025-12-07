@@ -22,12 +22,28 @@
   $: hasCustomCost = customComponentData && typeof customComponentData.cost === 'number';
   $: hasOutcomeBadges = outcomeBadges && outcomeBadges.length > 0;
   
-  $: unifiedBadges = outcomeBadges.map(badge => 
+  // DIAGNOSTIC: Log incoming badges to find null sources
+  $: {
+    if (outcomeBadges && outcomeBadges.length > 0) {
+      const nullBadges = outcomeBadges.map((b, i) => ({ index: i, isNull: b === null, isUndefined: b === undefined, badge: b }))
+        .filter(item => item.isNull || item.isUndefined);
+      if (nullBadges.length > 0) {
+        console.error('🚨 [OutcomeBadges] NULL BADGES DETECTED:', nullBadges);
+        console.error('🚨 [OutcomeBadges] Full badges array:', outcomeBadges);
+        console.trace('🚨 [OutcomeBadges] Stack trace for null badges');
+      }
+    }
+  }
+  
+  // Filter out null/undefined badges before processing
+  $: safeBadges = (outcomeBadges || []).filter(b => b !== null && b !== undefined);
+  
+  $: unifiedBadges = safeBadges.map(badge => 
     isLegacyBadge(badge) ? convertLegacyBadge(badge) : badge
   );
   
   // Track which badges need dice rolls
-  $: diceBadges = allBadges.filter(badge => badge.value?.type === 'dice');
+  $: diceBadges = allBadges.filter(badge => badge && badge.value?.type === 'dice');
   $: hasDiceBadges = diceBadges.length > 0;
   
   // Check if all dice badges are resolved
@@ -63,9 +79,11 @@
   
   // Check if there's already a fame badge in the outcome badges
   $: existingFameBadge = unifiedBadges.find(b => 
-    b.template?.toLowerCase().includes('fame') || 
-    (b as any).suffix?.toLowerCase() === 'fame' ||
-    (b as any)._isFame
+    b && (
+      b.template?.toLowerCase().includes('fame') || 
+      (b as any).suffix?.toLowerCase() === 'fame' ||
+      (b as any)._isFame
+    )
   );
   
   // Calculate total fame (existing + critical success bonus)
@@ -86,10 +104,10 @@
   
   // Filter out existing fame badges if we're combining them
   $: filteredBadges = outcome === 'criticalSuccess' && existingFameBadge
-    ? unifiedBadges.filter(b => b !== existingFameBadge)
-    : unifiedBadges;
+    ? unifiedBadges.filter(b => b && b !== existingFameBadge)
+    : unifiedBadges.filter(b => b);
   
-  $: allBadges = [...filteredBadges, ...fameBadge];
+  $: allBadges = [...filteredBadges, ...fameBadge].filter(b => b);
   $: hasAllBadges = allBadges.length > 0;
   
   let rolledBadges = new Map<number, number>();

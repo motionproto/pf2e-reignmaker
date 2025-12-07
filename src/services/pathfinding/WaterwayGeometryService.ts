@@ -111,18 +111,11 @@ class WaterwayGeometryService {
     const currentHash = this.getRiverDataHash(kingdom);
     this.lastKingdomDataHash = currentHash;
     
-    console.log('[WaterwayGeometryService] ========== REBUILDING GEOMETRY ==========');
-    console.log('[WaterwayGeometryService] River paths:', kingdom.rivers?.paths?.length || 0);
-    console.log('[WaterwayGeometryService] Hexes:', kingdom.hexes?.length || 0);
-    logger.info('[WaterwayGeometryService] Rebuilding geometry from kingdom data');
-    
     // Compute segments
     const segments = this.computeSegments(kingdom, canvas);
-    console.log('[WaterwayGeometryService] Computed segments:', segments.length);
     
     // Compute blocked edges
     const blockedEdges = this.computeBlockedEdges(kingdom.hexes || [], segments, canvas);
-    console.log('[WaterwayGeometryService] Computed blocked edges:', blockedEdges.size);
     
     // Update store
     this.geometryStore.set({
@@ -231,7 +224,7 @@ class WaterwayGeometryService {
     // Get segments that don't have crossings (only these block movement)
     const blockingSegments = segments.filter(s => !s.hasCrossing);
     
-    console.log(`[WaterwayGeometryService] Computing blocked edges: ${hexes.length} hexes, ${blockingSegments.length} blocking segments`);
+    // Silently compute blocked edges - avoid console spam
     
     if (blockingSegments.length === 0) {
       return blockedEdges;
@@ -275,9 +268,6 @@ class WaterwayGeometryService {
         // Check if movement line intersects any blocking river segment
         for (const segment of blockingSegments) {
           if (lineSegmentsIntersect(fromCenter, toCenter, segment.start, segment.end)) {
-            console.log(`[WaterwayGeometryService] BLOCKED: ${hex.id} -> ${neighborId} intersects segment ${segment.pathId}:${segment.segmentIndex}`);
-            console.log(`  Movement line: (${fromCenter.x},${fromCenter.y}) -> (${toCenter.x},${toCenter.y})`);
-            console.log(`  River segment: (${segment.start.x},${segment.start.y}) -> (${segment.end.x},${segment.end.y})`);
             blockedEdges.add(edgeKey);
             break; // No need to check more segments for this edge
           }
@@ -330,11 +320,8 @@ class WaterwayGeometryService {
    * Force rebuild (for editor use)
    */
   forceRebuild(): void {
-    console.log('[WaterwayGeometryService] ========== FORCE REBUILD CALLED ==========');
     this.lastKingdomDataHash = ''; // Clear cache
     const kingdom = get(kingdomData);
-    console.log('[WaterwayGeometryService] Kingdom has rivers?', !!kingdom.rivers?.paths);
-    console.log('[WaterwayGeometryService] Kingdom has hexes?', !!kingdom.hexes);
     this.rebuild(kingdom);
   }
   

@@ -62,11 +62,11 @@ export class DefectArmiesHandler extends BaseGameCommandHandler {
     if (armiesInHexes.length === 0) {
       logger.info('[DefectArmiesHandler] No player armies found in specified hexes');
       return {
-        outcomeBadge: {
+        outcomeBadges: [{
           icon: 'fa-check',
           template: 'No armies in area',
           variant: 'neutral'
-        },
+        }],
         commit: async () => {
           logger.info('[DefectArmiesHandler] No armies to defect - skipping');
         },
@@ -93,11 +93,11 @@ export class DefectArmiesHandler extends BaseGameCommandHandler {
     }));
     
     return {
-      outcomeBadge: {
+      outcomeBadges: [{
         icon: 'fa-people-group',
         template: message,
         variant: 'negative'
-      },
+      }],
       commit: async () => {
         logger.info(`[DefectArmiesHandler] Defecting ${capturedArmies.length} armies to ${toFaction}`);
         

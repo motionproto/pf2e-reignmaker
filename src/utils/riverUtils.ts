@@ -4,7 +4,6 @@
  */
 
 import type { EdgeDirection } from '../models/Hex';
-import { logger } from './Logger';
 import { getAdjacentHexes } from './hexUtils';
 
 /**
@@ -33,7 +32,7 @@ export function getEdgeMidpoint(
   canvas: any
 ): { x: number; y: number } | null {
   if (!canvas?.grid) {
-    logger.warn('[riverUtils] Canvas grid not available');
+    // Silent return - canvas not ready is expected during startup
     return null;
   }
 
@@ -44,7 +43,8 @@ export function getEdgeMidpoint(
 
   const vertices = canvas.grid.getVertices({ i: hexI, j: hexJ });
   if (!vertices || vertices.length !== 6) {
-    logger.warn('[riverUtils] Could not get vertices for hex');
+    // Silent return - invalid hex coordinates are common for out-of-bounds points
+    // Caller should handle null gracefully
     return null;
   }
 
@@ -83,7 +83,7 @@ export function getHexCenter(
   canvas: any
 ): { x: number; y: number } | null {
   if (!canvas?.grid) {
-    logger.warn('[riverUtils] Canvas grid not available');
+    // Silent return - canvas not ready is expected during startup
     return null;
   }
 
@@ -130,7 +130,7 @@ export function getNeighborFromEdge(
   canvas: any
 ): { i: number; j: number } | null {
   if (!canvas?.grid) {
-    logger.warn('[riverUtils] Canvas grid not available');
+    // Silent return - canvas not ready is expected during startup
     return null;
   }
 

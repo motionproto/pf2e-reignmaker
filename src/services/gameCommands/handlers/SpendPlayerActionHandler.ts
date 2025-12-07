@@ -43,11 +43,11 @@ export class SpendPlayerActionHandler extends BaseGameCommandHandler {
     if (players.length === 0) {
       logger.warn('[SpendPlayerActionHandler] No logged-in players available');
       return {
-        outcomeBadge: {
+        outcomeBadges: [{
           icon: 'fa-exclamation-triangle',
           template: 'No logged-in players available to spend action',
           variant: 'neutral'
-        },
+        }],
         commit: async () => {
           logger.info('[SpendPlayerActionHandler] No logged-in players to affect - skipping');
         }
@@ -66,11 +66,11 @@ export class SpendPlayerActionHandler extends BaseGameCommandHandler {
     if (playersWhoHaventActed.length === 0) {
       logger.warn('[SpendPlayerActionHandler] All players have already acted');
       return {
-        outcomeBadge: {
+        outcomeBadges: [{
           icon: 'fa-exclamation-triangle',
           template: 'All players have already acted this turn',
           variant: 'neutral'
-        },
+        }],
         commit: async () => {
           logger.info('[SpendPlayerActionHandler] All players acted - skipping');
         }
@@ -124,11 +124,11 @@ export class SpendPlayerActionHandler extends BaseGameCommandHandler {
     const finalCharacterName = characterName;  // Capture for closure
     
     return {
-      outcomeBadge: {
+      outcomeBadges: [{
         icon: 'fa-user-injured',
         template: message,
         variant: 'negative'
-      },
+      }],
       commit: async () => {
         logger.info(`[SpendPlayerActionHandler] Spending action for ${finalCharacterName}`);
         

@@ -1,0 +1,283 @@
+{
+  "name": "Stolen Lands Kingdom",
+  "currentTurn": 1,
+  "currentPhase": "Actions",
+  "currentPhaseStepIndex": 0,
+  "setupComplete": true,
+  
+  "_comment": "Starting conditions per Reignmaker rules: First settlement is sponsored, claim settlement hex + all adjacent hexes (7 total), collect one resource from each adjacent hex, start with 4 gold seed capital",
+  
+  "resources": {
+    "gold": 4,
+    "food": 2,
+    "lumber": 2,
+    "stone": 1,
+    "ore": 1,
+    "foodCapacity": 4,
+    "armyCapacity": 1,
+    "diplomaticCapacity": 1,
+    "imprisonedUnrestCapacity": 0
+  },
+  
+  "hexes": [
+    {
+      "id": "5.5",
+      "row": 5,
+      "col": 5,
+      "terrain": "plains",
+      "claimedBy": "player",
+      "hasRoad": false,
+      "features": [
+        {
+          "type": "settlement",
+          "linked": true,
+          "settlementId": "settlement-oleg",
+          "tier": "Village",
+          "name": "Oleg's Trading Post"
+        }
+      ],
+      "_comment": "Settlement hex - center of starting territory"
+    },
+    {
+      "id": "5.6",
+      "row": 5,
+      "col": 6,
+      "terrain": "plains",
+      "claimedBy": "player",
+      "hasRoad": false,
+      "features": [],
+      "_comment": "Adjacent hex - collected 1 food (plains)"
+    },
+    {
+      "id": "6.5",
+      "row": 6,
+      "col": 5,
+      "terrain": "forest",
+      "claimedBy": "player",
+      "hasRoad": false,
+      "features": [],
+      "_comment": "Adjacent hex - collected 1 lumber (forest)"
+    },
+    {
+      "id": "6.6",
+      "row": 6,
+      "col": 6,
+      "terrain": "hills",
+      "claimedBy": "player",
+      "hasRoad": false,
+      "features": [],
+      "_comment": "Adjacent hex - collected 1 stone (hills)"
+    },
+    {
+      "id": "4.5",
+      "row": 4,
+      "col": 5,
+      "terrain": "plains",
+      "claimedBy": "player",
+      "hasRoad": false,
+      "features": [],
+      "_comment": "Adjacent hex - collected 1 food (plains)"
+    },
+    {
+      "id": "5.4",
+      "row": 5,
+      "col": 4,
+      "terrain": "forest",
+      "claimedBy": "player",
+      "hasRoad": false,
+      "features": [],
+      "_comment": "Adjacent hex - collected 1 lumber (forest)"
+    },
+    {
+      "id": "4.6",
+      "row": 4,
+      "col": 6,
+      "terrain": "mountains",
+      "claimedBy": "player",
+      "hasRoad": false,
+      "features": [],
+      "_comment": "Adjacent hex - collected 1 ore (mountains)"
+    },
+    {
+      "id": "6.4",
+      "row": 6,
+      "col": 4,
+      "terrain": "swamp",
+      "claimedBy": null,
+      "hasRoad": false,
+      "features": [],
+      "_comment": "Unclaimed - available for expansion"
+    },
+    {
+      "id": "7.5",
+      "row": 7,
+      "col": 5,
+      "terrain": "mountains",
+      "claimedBy": null,
+      "hasRoad": false,
+      "features": [],
+      "_comment": "Unclaimed - available for expansion"
+    },
+    {
+      "id": "7.6",
+      "row": 7,
+      "col": 6,
+      "terrain": "forest",
+      "claimedBy": null,
+      "hasRoad": false,
+      "features": [],
+      "_comment": "Unclaimed - available for expansion"
+    },
+    {
+      "id": "4.4",
+      "row": 4,
+      "col": 4,
+      "terrain": "hills",
+      "claimedBy": null,
+      "hasRoad": false,
+      "features": [],
+      "_comment": "Unclaimed - available for expansion"
+    },
+    {
+      "id": "3.5",
+      "row": 3,
+      "col": 5,
+      "terrain": "plains",
+      "claimedBy": null,
+      "hasRoad": false,
+      "features": [],
+      "_comment": "Unclaimed - available for expansion"
+    },
+    {
+      "id": "3.6",
+      "row": 3,
+      "col": 6,
+      "terrain": "forest",
+      "claimedBy": null,
+      "hasRoad": false,
+      "features": [],
+      "_comment": "Unclaimed - available for expansion"
+    }
+  ],
+  
+  "settlements": [
+    {
+      "id": "settlement-oleg",
+      "name": "Oleg's Trading Post",
+      "location": { "x": 5, "y": 5 },
+      "level": 1,
+      "tier": "Village",
+      "structureIds": [],
+      "structureConditions": {},
+      "connectedByRoads": false,
+      "isCapital": true,
+      "ownedBy": "player",
+      "storedFood": 0,
+      "imprisonedUnrest": 0,
+      "supportedUnits": [],
+      "wasFedLastTurn": true,
+      "skillBonuses": {},
+      "_comment": "Village consumes 1 food/turn, generates 1 gold/turn when fed"
+    }
+  ],
+  
+  "size": 7,
+  "worksiteCount": {},
+  "worksiteProduction": {},
+  
+  "armies": [],
+  "buildQueue": [],
+  
+  "factions": [
+    {
+      "id": "default-swordlords-restov",
+      "name": "Swordlords of Restov",
+      "attitude": "Indifferent",
+      "color": "#d94d4d"
+    },
+    {
+      "id": "default-steelscale-kobolds",
+      "name": "Steelscale Kobolds",
+      "attitude": "Indifferent",
+      "color": "#4dd9d9"
+    },
+    {
+      "id": "default-house-surtova",
+      "name": "Brevoy, Royal House Surtova",
+      "attitude": "Indifferent",
+      "color": "#a6d94d"
+    },
+    {
+      "id": "default-house-lodovka",
+      "name": "House Lodovka, Issia",
+      "attitude": "Indifferent",
+      "color": "#a64dd9"
+    },
+    {
+      "id": "default-house-lebeda",
+      "name": "House Lebeda, Rostland",
+      "attitude": "Indifferent",
+      "color": "#d9c34d"
+    },
+    {
+      "id": "default-house-garess",
+      "name": "House Garess",
+      "attitude": "Indifferent",
+      "color": "#4d73d9"
+    },
+    {
+      "id": "default-house-medvyed",
+      "name": "House Medvyed",
+      "attitude": "Indifferent",
+      "color": "#4dd973"
+    },
+    {
+      "id": "default-house-orlovsky",
+      "name": "House Orlovsky",
+      "attitude": "Indifferent",
+      "color": "#d94da6"
+    },
+    {
+      "id": "default-church-erastil",
+      "name": "Church of Erastil",
+      "attitude": "Indifferent",
+      "color": "#d98e4d"
+    },
+    {
+      "id": "default-church-abadar",
+      "name": "Church of Abadar",
+      "attitude": "Indifferent",
+      "color": "#4d8ed9"
+    },
+    {
+      "id": "default-church-gorum",
+      "name": "Church of Gorum",
+      "attitude": "Indifferent",
+      "color": "#4dd98e"
+    },
+    {
+      "id": "default-church-pharasma",
+      "name": "Church of Pharasma",
+      "attitude": "Indifferent",
+      "color": "#d94dc3"
+    }
+  ],
+  
+  "playerKingdomColor": "#5b9bd5",
+  
+  "unrest": 0,
+  "imprisonedUnrest": 0,
+  "fame": 0,
+  "isAtWar": false,
+  "partyLevel": 1,
+  
+  "ongoingEvents": [],
+  "pendingOutcomes": [],
+  "activeModifiers": [],
+  "eventDC": 15,
+  
+  "currentPhaseSteps": [],
+  "phaseComplete": false,
+  "oncePerTurnActions": [],
+  "factionsAidedThisTurn": []
+}

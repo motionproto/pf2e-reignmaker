@@ -137,6 +137,82 @@ function navigateToSettlements() {
 
 // Constants
 const MAX_FAME = 3;
+const DEFAULT_HEXES_PER_UNREST = 8;
+
+// Get hexes per unrest setting (reactive)
+$: hexesPerUnrest = (() => {
+   try {
+      // @ts-ignore - Foundry globals
+      return (game?.settings?.get?.('pf2e-reignmaker', 'hexesPerUnrest') as number) || DEFAULT_HEXES_PER_UNREST;
+   } catch {
+      return DEFAULT_HEXES_PER_UNREST;
+   }
+})();
+
+// Computed: Base status modifiers (reactive from kingdom data)
+$: computedStatusModifiers = (() => {
+   const modifiers: any[] = [];
+   
+   // Kingdom Size unrest
+   const hexUnrest = Math.floor(($kingdomData.size || 0) / hexesPerUnrest);
+   if (hexUnrest > 0) {
+      modifiers.push({
+         id: 'status-size-unrest',
+         name: `Kingdom Size (${$kingdomData.size} hexes)`,
+         description: `Larger kingdoms are harder to govern (${$kingdomData.size} ÷ ${hexesPerUnrest} = ${hexUnrest})`,
+         sourceType: 'structure',
+         modifiers: [{
+            type: 'static',
+            resource: 'unrest',
+            value: hexUnrest,
+            duration: 'permanent'
+         }]
+      });
+   }
+   
+   // Metropolis Complexity unrest
+   const metropolisCount = ($kingdomData.settlements || []).filter(
+      (s: any) => s.tier === SettlementTier.METROPOLIS
+   ).length;
+   if (metropolisCount > 0) {
+      modifiers.push({
+         id: 'status-metropolis-unrest',
+         name: 'Metropolis Complexity',
+         description: `${metropolisCount} ${metropolisCount === 1 ? 'metropolis' : 'metropolises'} create additional governance complexity`,
+         sourceType: 'structure',
+         modifiers: [{
+            type: 'static',
+            resource: 'unrest',
+            value: metropolisCount,
+            duration: 'permanent'
+         }]
+      });
+   }
+   
+   return modifiers;
+})();
+
+// Computed: One-time event modifiers from turnState (donjon conversion, etc.)
+// Filter out base modifiers (now computed reactively) and fame conversion (moved to Upkeep)
+// Also deduplicate by ID to handle legacy data with duplicates
+$: eventModifiers = (() => {
+   const raw = ($kingdomData.turnState?.statusPhase?.displayModifiers || []).filter(
+      (m: any) => m.id && 
+         !m.id.startsWith('status-size') && 
+         !m.id.startsWith('status-metropolis') &&
+         !m.id.startsWith('fame-conversion')  // Fame conversion now shown in Upkeep Phase
+   );
+   // Deduplicate by ID - keep only the first occurrence of each ID
+   const seen = new Set<string>();
+   return raw.filter((m: any) => {
+      if (seen.has(m.id)) return false;
+      seen.add(m.id);
+      return true;
+   });
+})();
+
+// Combined: All status modifiers for display
+$: allStatusModifiers = [...computedStatusModifiers, ...eventModifiers];
 
 // Better initialization - wait for store to be ready before initializing phase
 let hasInitialized = false;
@@ -256,8 +332,8 @@ async function initializePhase() {
       </div>
    </div>
 
-   <!-- Status Phase Modifiers (Size, Metropolises) -->
-   {#if $kingdomData.turnState?.statusPhase?.displayModifiers && $kingdomData.turnState.statusPhase.displayModifiers.length > 0}
+   <!-- Status Phase Modifiers (Size, Metropolises, Fame Conversion, etc.) -->
+   {#if allStatusModifiers.length > 0}
       <div class="status-modifiers">
          <div class="section-header-minimal">
             <i class="fas fa-balance-scale"></i>
@@ -265,7 +341,7 @@ async function initializePhase() {
          </div>
 
          <div class="modifiers-stack">
-            {#each $kingdomData.turnState.statusPhase.displayModifiers as modifier}
+            {#each allStatusModifiers as modifier (modifier.id)}
                <CustomModifierDisplay {modifier} />
             {/each}
          </div>

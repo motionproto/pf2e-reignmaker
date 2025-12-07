@@ -107,8 +107,12 @@ export const emigrationThreatPipeline: CheckPipeline = {
           // Store prepared command for execute step
           ctx.metadata._preparedDestroyWorksite = preparedCommand;
 
-          // Add worksite badge
-          outcomeBadges.push(preparedCommand.outcomeBadge);
+          // Support both single badge and array of badges
+          if (preparedCommand.outcomeBadges) {
+            outcomeBadges.push(...preparedCommand.outcomeBadges);
+          } else if (preparedCommand.outcomeBadge) {
+            outcomeBadges.push(preparedCommand.outcomeBadge);
+          }
         }
       }
 

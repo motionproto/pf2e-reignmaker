@@ -18,18 +18,20 @@ import type { UnifiedOutcomeBadge } from './OutcomeBadge';
  */
 export interface PreparedCommand {
   /**
-   * Outcome badge to display in preview (singular)
+   * Outcome badges to display in preview
    * Shows user what will happen when they click Apply
    * Uses UnifiedOutcomeBadge format for consistency with other badges
-   */
-  outcomeBadge?: UnifiedOutcomeBadge;
-  
-  /**
-   * Outcome badges to display in preview (multiple)
-   * Use when a command affects multiple entities (e.g., multiple structures)
-   * Each badge represents one affected entity
+   * 
+   * Always returns an array, even for single badges.
+   * This is the preferred field - use this instead of outcomeBadge.
    */
   outcomeBadges?: UnifiedOutcomeBadge[];
+  
+  /**
+   * @deprecated Use `outcomeBadges` instead. This field exists for backwards compatibility.
+   * Single outcome badge - will be migrated to outcomeBadges array.
+   */
+  outcomeBadge?: UnifiedOutcomeBadge;
   
   /**
    * Commit function - executes when user clicks Apply

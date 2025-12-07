@@ -79,11 +79,11 @@ export class SpawnEnemyArmyHandler extends BaseGameCommandHandler {
     logger.info(`[SpawnEnemyArmyHandler] Preview: ${message}`);
     
     return {
-      outcomeBadge: {
+      outcomeBadges: [{
         icon: 'fa-shield',
         template: message,
         variant: 'negative'
-      },
+      }],
       commit: async () => {
         // Recalculate level from fresh party data to ensure accuracy
         const freshActor = getKingdomActor();

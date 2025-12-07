@@ -100,13 +100,13 @@
       ? activeEventInstances.find(i => i.previewId === $kingdomData.turnState?.eventsPhase?.eventInstanceId)
       : null;
    
-   // Filter instances: ongoing = pending but NOT debug instances
+   // Filter instances: ongoing = all events EXCEPT the current event (regardless of status)
    // Debug mode should be completely separate - don't show ANY debug instances as ongoing
-   // Only show true "ongoing events" from actual gameplay
+   // Resolved ongoing events show their resolution inline (no separate "Resolved" section)
+   $: currentEventInstanceId = $kingdomData.turnState?.eventsPhase?.eventInstanceId;
    $: ongoingEventInstances = isGM ? [] : activeEventInstances.filter(instance => 
-      instance.status === 'pending'
+      instance.previewId !== currentEventInstanceId
    );
-   $: resolvedEventInstances = activeEventInstances.filter(instance => instance.status === 'resolved');
    
    // Build outcomes for ongoing events from pendingOutcomes  
    $: ongoingEventsWithOutcomes = ongoingEventInstances.map(instance => {
@@ -118,7 +118,8 @@
          return {
             instance,
             event,
-            outcomes: []
+            outcomes: [],
+            isResolved: false
          };
       }
       
@@ -132,6 +133,9 @@
       const isResolvedByOther = isBeingResolved && !isResolvedByMe;
       const resolverName = progress?.playerName || 'Another player';
       
+      // Derive resolved state from instance status (shows resolution inline)
+      const isResolved = instance.status !== 'pending';
+      
       return {
          instance,
          event,
@@ -140,7 +144,8 @@
          isBeingResolved,
          isResolvedByMe,
          isResolvedByOther,
-         resolverName
+         resolverName,
+         isResolved
       };
    });
    
@@ -346,6 +351,8 @@
    
    // Event handler - apply result
    async function handleApplyResult(event: CustomEvent) {
+      console.log('🟡 [EventsPhase] handleApplyResult called', event.detail);
+      
       // Get resolution data and instance ID from the event
       const resolutionData = event.detail.resolution;
       const checkId = event.detail.checkId;
@@ -356,25 +363,33 @@
       // Check current event instance first
       if (currentEventInstance && currentEventInstance.previewId) {
          instanceId = currentEventInstance.previewId;
+         console.log('🟡 [EventsPhase] Using currentEventInstance.previewId:', instanceId);
       }
 
       // If checkId is provided and differs, look up ongoing event instance
-      if (checkId && checkId !== currentEventInstance?.previewId) {
+      // Note: For main events, checkId is the event ID (e.g., 'archaeological-find')
+      // For ongoing events, checkId is the previewId (UUID)
+      if (checkId && checkId !== currentEventInstance?.previewId && !instanceId) {
          const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.instance.previewId === checkId);
          if (ongoingEvent) {
             instanceId = ongoingEvent.instance.previewId;
+            console.log('🟡 [EventsPhase] Found ongoing event instance:', instanceId);
          }
       }
 
       if (!instanceId) {
-         logger.error(`❌ [EventsPhase] No instance ID found for apply result`);
+         logger.error(`❌ [EventsPhase] No instance ID found for apply result. checkId: ${checkId}`);
          return;
       }
 
+      console.log('🟡 [EventsPhase] Calling pipelineCoordinator.confirmApply with instanceId:', instanceId);
+      
       // Use PipelineCoordinator to confirm and execute (same as actions/incidents)
       const { getPipelineCoordinator } = await import('../../../services/PipelineCoordinator');
       const pipelineCoordinator = await getPipelineCoordinator();
-      pipelineCoordinator.confirmApply(instanceId, resolutionData);
+      await pipelineCoordinator.confirmApply(instanceId, resolutionData);
+      
+      console.log('🟡 [EventsPhase] confirmApply completed');
 
       // Pipeline handles Steps 7-9: post-apply interactions, execute, cleanup
    }
@@ -775,6 +790,7 @@
    <!-- Active Event Card - Show when an event needs to be resolved -->
    
    {#if currentEventInstance && currentEventInstance.checkData}
+      {@const isEventResolved = currentEventInstance.status !== 'pending'}
       {#key `${currentEventInstance.checkId}-${activeAidsCount}`}
          <BaseCheckCard
             id={currentEventInstance.checkId}
@@ -789,13 +805,13 @@
             showCompletions={false}
             showAvailability={false}
             showSpecial={false}
-            showIgnoreButton={true}
+            showIgnoreButton={!isEventResolved}
             {isViewingCurrentPhase}
             {possibleOutcomes}
-            showAidButton={true}
+            showAidButton={!isEventResolved}
             aidResult={currentEvent ? getAidResultForEvent(currentEvent.id) : null}
-            resolved={eventResolved}
-            resolution={eventResolution}
+            resolved={isEventResolved}
+            resolution={currentEventInstance.appliedOutcome || eventResolution}
             skillSectionTitle="Choose Your Response:"
             {hideUntrainedSkills}
             on:executeSkill={handleExecuteSkill}
@@ -826,16 +842,18 @@
                   showCompletions={false}
                   showAvailability={false}
                   showSpecial={false}
-                  showIgnoreButton={true}
+                  showIgnoreButton={!item.isResolved}
                   {isViewingCurrentPhase}
                   possibleOutcomes={item.possibleOutcomes}
-                  showAidButton={true}
+                  showAidButton={!item.isResolved}
                   aidResult={getAidResultForEvent(item.event.id)}
                   skillSectionTitle="Choose Your Response:"
                   {hideUntrainedSkills}
                   resolutionInProgress={item.isBeingResolved}
                   resolvingPlayerName={item.resolverName}
                   isBeingResolvedByOther={item.isResolvedByOther}
+                  resolved={item.isResolved}
+                  resolution={item.instance.appliedOutcome || null}
                   on:executeSkill={handleExecuteSkill}
                   on:primary={handleApplyResult}
                   on:cancel={handleCancel}
@@ -847,38 +865,6 @@
       </div>
    {/if}
    
-   <!-- Resolved Events - Completed events showing their outcomes -->
-   {#if resolvedEventInstances.length > 0}
-      <div class="resolved-events-section">
-         <h2 class="resolved-events-header">Resolved Events</h2>
-         <div class="resolved-events-list">
-            {#each resolvedEventInstances as instance}
-               {@const eventData = instance.checkData}
-               <BaseCheckCard
-                  id={instance.checkId}
-                  name={eventData.name}
-                  description={eventData.description}
-                  skills={eventData.skills}
-                  outcomes={[]}
-                  traits={eventData.traits || []}
-                  checkType="event"
-                  expandable={false}
-                  showCompletions={false}
-                  showAvailability={false}
-                  showSpecial={false}
-                  showIgnoreButton={false}
-                  isViewingCurrentPhase={false}
-                  possibleOutcomes={[]}
-                  showAidButton={false}
-                  {hideUntrainedSkills}
-               resolved={true}
-               resolution={instance.appliedOutcome || null}
-               skillSectionTitle=""
-            />
-            {/each}
-         </div>
-      </div>
-   {/if}
 </div>
 
 <!-- Aid Selection Dialog -->
@@ -1109,23 +1095,6 @@
    }
    
    .ongoing-events-list {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-16);
-   }
-   
-   .resolved-events-section {
-      padding: var(--space-20) 0;
-   }
-   
-   .resolved-events-header {
-      margin: 0 0 var(--space-16) 0;
-      color: var(--text-accent);
-      font-size: var(--font-xl);
-      font-weight: var(--font-weight-normal);
-   }
-   
-   .resolved-events-list {
       display: flex;
       flex-direction: column;
       gap: var(--space-16);

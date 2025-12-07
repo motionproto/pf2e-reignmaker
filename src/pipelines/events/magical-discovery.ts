@@ -106,7 +106,12 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
         
         if (preparedCommand) {
           ctx.metadata._preparedDestroyWorksite = preparedCommand;
-          outcomeBadges.push(preparedCommand.outcomeBadge);
+          // Support both single badge and array of badges
+          if (preparedCommand.outcomeBadges) {
+            outcomeBadges.push(...preparedCommand.outcomeBadges);
+          } else if (preparedCommand.outcomeBadge) {
+            outcomeBadges.push(preparedCommand.outcomeBadge);
+          }
         } else {
           warnings.push('No worksites available to destroy');
         }

@@ -41,41 +41,39 @@
       }
     }
     
-    // Map settlements with eligibility info
-    settlementInfo = (kingdomData.settlements || []).map((s: any) => {
-      const info: any = { settlement: s };
-      
-      // Apply filter if provided
-      if (!filter) {
-        // No filter - all settlements eligible
-        info.eligible = true;
-      } else {
-        const result = filter(s, kingdomData);
+    // Map settlements with eligibility info and filter out ineligible ones
+    settlementInfo = (kingdomData.settlements || [])
+      .map((s: any) => {
+        const info: any = { settlement: s };
         
-        // Handle both boolean and object returns
-        if (typeof result === 'boolean') {
-          info.eligible = result;
+        // Apply filter if provided
+        if (!filter) {
+          // No filter - all settlements eligible
+          info.eligible = true;
         } else {
-          info.eligible = result.eligible;
-          info.reason = result.reason;
+          const result = filter(s, kingdomData);
+          
+          // Handle both boolean and object returns
+          if (typeof result === 'boolean') {
+            info.eligible = result;
+          } else {
+            info.eligible = result.eligible;
+            info.reason = result.reason;
+          }
         }
-      }
-      
-      // Get supplementary info if function provided
-      if (getSupplementaryInfo) {
-        info.supplementaryInfo = getSupplementaryInfo(s);
-      }
-      
-      return info;
-    });
+        
+        // Get supplementary info if function provided
+        if (getSupplementaryInfo) {
+          info.supplementaryInfo = getSupplementaryInfo(s);
+        }
+        
+        return info;
+      })
+      // Filter out ineligible settlements - only show eligible ones
+      .filter(info => info.eligible);
     
-    // Sort: eligible first, then by name
-    settlementInfo.sort((a, b) => {
-      if (a.eligible !== b.eligible) {
-        return a.eligible ? -1 : 1;
-      }
-      return a.settlement.name.localeCompare(b.settlement.name);
-    });
+    // Sort by name
+    settlementInfo.sort((a, b) => a.settlement.name.localeCompare(b.settlement.name));
   }
   
   function selectSettlement(info: { settlement: any; eligible: boolean; reason?: string }) {

@@ -112,6 +112,9 @@ export async function buildIgnoredEventResolution(
     outcomeBadges = [...outcomeBadges, ...outcomeData.outcomeBadges];
   }
   
+  // Filter out any null/undefined badges
+  outcomeBadges = outcomeBadges.filter(badge => badge !== null && badge !== undefined);
+  
   const resolution: IgnoredEventResolution = {
     outcome: 'failure',
     actorName,

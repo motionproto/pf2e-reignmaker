@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { kingdomData } from '../../../../../stores/KingdomStore';
+  import { kingdomData, currentFaction } from '../../../../../stores/KingdomStore';
   import { structuresService } from '../../../../../services/structures';
   import type { OutcomePreview } from '../../../../../models/OutcomePreview';
 
@@ -20,8 +20,15 @@
   // Get current unrest
   $: currentUnrest = $kingdomData?.unrest || 0;
 
-  // Get settlements with justice structures
+  // Get settlements with justice structures (only owned settlements)
   $: settlementsWithJustice = ($kingdomData?.settlements || [])
+    .filter(settlement => {
+      // Only include settlements owned by the current faction
+      const hex = $kingdomData?.hexes?.find(h => 
+        h.row === settlement.location.x && h.col === settlement.location.y
+      );
+      return hex?.claimedBy === $currentFaction;
+    })
     .map(settlement => {
       const capacity = structuresService.calculateImprisonedUnrestCapacity(settlement);
       const currentImprisoned = settlement.imprisonedUnrest || 0;

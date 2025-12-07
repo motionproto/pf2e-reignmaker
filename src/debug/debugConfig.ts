@@ -20,8 +20,10 @@ export const DEBUG_PANELS = {
    * 
    * Location: src/view/debug/EventDebugPanel.svelte
    * Used in: EventsPhase.svelte
+   * 
+   * STATUS: Testing complete (37/37 events tested)
    */
-  events: true,
+  events: false,
 
   /**
    * Incident Debug Panel

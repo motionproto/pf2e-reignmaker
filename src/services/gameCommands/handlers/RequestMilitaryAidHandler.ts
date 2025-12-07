@@ -101,11 +101,11 @@ export class RequestMilitaryAidHandler extends BaseGameCommandHandler {
       
       // Return PreparedCommand with commit function that adds gold
       return {
-        outcomeBadge: {
+        outcomeBadges: [{
           icon: 'fa-coins',
           template: 'Received 1 Gold (no armies to outfit)',
           variant: 'info'
-        },
+        }],
         commit: async () => {
           console.log('[RequestMilitaryAidHandler] COMMITTING: Adding 1 gold');
           

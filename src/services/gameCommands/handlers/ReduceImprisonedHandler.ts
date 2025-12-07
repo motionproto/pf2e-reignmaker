@@ -48,11 +48,11 @@ export class ReduceImprisonedHandler extends BaseGameCommandHandler {
     if (currentImprisoned === 0) {
       logger.warn(`[ReduceImprisonedHandler] ${settlement.name} has no imprisoned unrest`);
       return {
-        outcomeBadge: {
+        outcomeBadges: [{
           icon: 'fa-exclamation-triangle',
           template: `${settlement.name} has no imprisoned unrest`,
           variant: 'neutral'
-        },
+        }],
         commit: async () => {
           logger.info('[ReduceImprisonedHandler] No imprisoned unrest - skipping');
         }
@@ -89,11 +89,11 @@ export class ReduceImprisonedHandler extends BaseGameCommandHandler {
     logger.info(`[ReduceImprisonedHandler] Preview: ${badgeText}`);
     
     return {
-      outcomeBadge: {
+      outcomeBadges: [{
         icon: 'fa-user-check',
         template: badgeText,
         variant: 'positive'
-      },
+      }],
       commit: async () => {
         logger.info(`[ReduceImprisonedHandler] Reducing ${amountToReduce} imprisoned unrest in ${settlement.name}`);
         
@@ -124,6 +124,8 @@ export class ReduceImprisonedHandler extends BaseGameCommandHandler {
     };
   }
 }
+
+
 
 
 

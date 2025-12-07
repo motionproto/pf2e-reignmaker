@@ -13,6 +13,7 @@ import { PLAYER_KINGDOM } from '../types/ownership';
 import { filterVisibleHexes, filterVisibleHexIds } from '../utils/visibility-filter';
 import { logger } from '../utils/Logger';
 import { wrapKingdomActor } from '../utils/kingdom-actor-wrapper';
+import { createDefaultTurnState } from '../models/TurnState';
 
 // Core actor store - this is the single source of truth
 export const kingdomActor = writable<KingdomActor | null>(null);
@@ -378,10 +379,42 @@ export function initializeKingdomActor(actor: any): void {
   const kingdom = actor.getKingdomData?.() || actor.getFlag?.('pf2e-reignmaker', 'kingdom-data') as KingdomData;
   if (kingdom) {
     viewingPhase.set(kingdom.currentPhase);
+    
+    // Ensure turnState is valid for current turn (handles page refresh, reconnect, etc.)
+    ensureTurnStateValid(actor, kingdom);
   }
 
   // Initialize TurnManager for phase progression
   initializeTurnManager();
+}
+
+/**
+ * Ensure turnState is valid for the current turn.
+ * This handles cases where the page is refreshed or user reconnects mid-turn.
+ * If turnState is missing or from a different turn, reset it.
+ */
+async function ensureTurnStateValid(actor: any, kingdom: KingdomData): Promise<void> {
+  const currentTurn = kingdom.currentTurn || 1;
+  
+  // Case 1: No turnState exists
+  if (!kingdom.turnState) {
+    logger.info(`[KingdomStore] No turnState found, creating fresh state for turn ${currentTurn}`);
+    await actor.updateKingdomData((k: KingdomData) => {
+      k.turnState = createDefaultTurnState(currentTurn);
+    });
+    return;
+  }
+  
+  // Case 2: turnState exists but from a different turn (stale data)
+  if (kingdom.turnState.turnNumber !== currentTurn) {
+    logger.info(`[KingdomStore] Stale turnState (turn ${kingdom.turnState.turnNumber}) doesn't match current turn ${currentTurn}, resetting`);
+    await actor.updateKingdomData((k: KingdomData) => {
+      k.turnState = createDefaultTurnState(currentTurn);
+    });
+    return;
+  }
+  
+  // Case 3: turnState exists and matches current turn - all good
 }
 
 /**

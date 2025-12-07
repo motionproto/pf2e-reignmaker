@@ -92,11 +92,11 @@ export class ConvertUnrestToImprisonedHandler extends BaseGameCommandHandler {
     logger.info(`[ConvertUnrestToImprisoned] Preview: ${message}`);
 
     return {
-      outcomeBadge: {
+      outcomeBadges: [{
         icon: '',
         template: message,
         variant: hasPositiveEffect ? 'positive' : 'neutral'
-      },
+      }],
       commit: async () => {
         logger.info(`[ConvertUnrestToImprisoned] Executing command`);
 

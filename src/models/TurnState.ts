@@ -157,6 +157,10 @@ export interface UpkeepPhaseState {
   consumptionPaid: boolean;
   militarySupportPaid: boolean;
   buildProjectsAdvanced: boolean;
+  fameConversion?: {
+    fameUsed: number;
+    unrestReduced: number;
+  };
 }
 
 /**
