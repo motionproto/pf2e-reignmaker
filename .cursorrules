@@ -5,7 +5,7 @@
 ### 1. Single Source of Truth
 - **Party Actor Flags** = ONLY persistent data source
 - Kingdom data stored at: `actor.getFlag('pf2e-reignmaker', 'kingdom-data')`
-- All writes go through wrapped actor methods
+- All writes go through wrapped actor methods (see Kingdom Actor Wrapper below)
 - Stores are derived/reactive, never written to directly
 
 ### 2. Kingmaker Integration (IMPORT ONLY)
@@ -27,12 +27,39 @@ await updateKingdom(kingdom => {
 });
 ```
 
-**WRONG Usage:**
+**WRONG Usage (Common Mistake):**
 ```typescript
 // ❌ NEVER do this during gameplay
 await markHexesInKingmaker(hexIds);        // Write to Kingmaker
 await territoryService.syncFromKingmaker(); // Read from Kingmaker
+// This creates a circular dependency and breaks reactivity!
 ```
+
+**Data Flow Rules:**
+```
+Initial Setup (ONE TIME ONLY):
+  Kingmaker → syncFromKingmaker() → Kingdom Store
+
+Regular Gameplay (ALWAYS):
+  User Action → updateKingdom() → Kingdom Store → Reactive Overlays
+
+NEVER:
+  User Action → Kingmaker → sync → Kingdom Store ❌
+```
+
+**Why This Matters:**
+- Kingdom Store is the source of truth for gameplay
+- Reactive overlays subscribe to Kingdom Store, not Kingmaker
+- Writing to Kingmaker creates sync issues and delays
+- Kingmaker is a separate module with its own state management
+- We only read from Kingmaker during initial setup to import map data
+
+### 3. Kingdom Actor Wrapper Pattern
+- Party actors are regular Foundry Actors, NOT KingdomActor instances
+- `wrapKingdomActor()` adds kingdom methods to party actors at runtime
+- Wrapper applied during actor discovery in `kingdomSync.ts`
+- Methods: `getKingdomData()`, `setKingdomData()`, `updateKingdomData()`, etc.
+- All code uses these wrapped methods for consistent data access
 
 ### 3. Clean Separation of Concerns
 - **Svelte components** = Presentation only (UI, user interaction, display logic)
@@ -108,29 +135,13 @@ All actions follow this standardized pipeline through `PipelineCoordinator`.
 ### 10. Testing
 - Test actions within Foundry VTT, not standalone
 - Use `src/constants/migratedActions.ts` to track testing status
-- Follow `docs/refactoring/TESTING_GUIDE.md` for systematic testing
-- Check `docs/refactoring/DEBUGGING_GUIDE.md` for common issues
+- Follow `docs/guides/testing-guide.md` for systematic testing
+- Check `docs/guides/debugging-guide.md` for common issues
 
+---
 
+## Full Documentation
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+**For complete architecture details:** [`.clinerules/CORE_PRINCIPLES.md`](.clinerules/CORE_PRINCIPLES.md)  
+**For development constraints:** [`.clinerules/DEV_CONSTRAINTS.md`](.clinerules/DEV_CONSTRAINTS.md)  
+**For implementation guides:** [`docs/README.md`](docs/README.md)

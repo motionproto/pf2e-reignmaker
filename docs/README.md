@@ -10,10 +10,10 @@ This documentation describes the architecture and core systems of the Reignmaker
 
 1. **[ARCHITECTURE.md](ARCHITECTURE.md)** - Complete system overview
 2. **Choose your task type:**
-   - **Understanding checks/outcomes?** → [systems/core/outcome-display-system.md](systems/core/outcome-display-system.md)
-   - **Working with pipelines?** → [systems/core/pipeline-coordinator.md](systems/core/pipeline-coordinator.md)
-   - **Modifying resources?** → [systems/core/typed-modifiers-system.md](systems/core/typed-modifiers-system.md)
-   - **Debugging issues?** → [refactoring/DEBUGGING_GUIDE.md](refactoring/DEBUGGING_GUIDE.md)
+   - **Understanding checks/outcomes?** → [core-systems/checks/outcome-display-system.md](core-systems/checks/outcome-display-system.md)
+   - **Working with pipelines?** → [core-systems/pipeline/pipeline-coordinator.md](core-systems/pipeline/pipeline-coordinator.md)
+   - **Modifying resources?** → [core-systems/effects/typed-modifiers-system.md](core-systems/effects/typed-modifiers-system.md)
+   - **Debugging issues?** → [guides/debugging-guide.md](guides/debugging-guide.md)
 
 **Key architectural rules (read ARCHITECTURE.md for details):**
 - ✅ Party Actor Flags = Single source of truth
@@ -29,87 +29,87 @@ This documentation describes the architecture and core systems of the Reignmaker
 New to the project? Start here:
 
 1. **[ARCHITECTURE.md](ARCHITECTURE.md)** - Comprehensive overview of the entire system
-2. **[systems/core/pipeline-patterns.md](systems/core/pipeline-patterns.md)** - Pattern reference for implementing actions
+2. **[core-systems/pipeline/pipeline-patterns.md](core-systems/pipeline/pipeline-patterns.md)** - Pattern reference for implementing actions
 3. Pick a system to learn more about (see Core Systems below)
 
 ---
 
 ## Core Systems
 
-### Core Architecture (systems/core/)
+### Core Architecture (core-systems/)
 
-**[Pipeline Coordinator](systems/core/pipeline-coordinator.md)** - 9-step pipeline architecture for all player actions
+**[Pipeline Coordinator](core-systems/pipeline-coordinator.md)** - 9-step pipeline architecture for all player actions
 - Step-by-step execution flow
 - Requirements checking
 - Pre-roll and post-roll interactions
 
-**[Turn and Phase System](systems/core/turn-and-phase-system.md)** - Kingdom turn progression through six phases
+**[Turn and Phase System](core-systems/turn-and-phase-system.md)** - Kingdom turn progression through six phases
 - Turn lifecycle and phase order
 - TurnState (per-turn data management)
 - Self-executing phase architecture
 
-**[Phase Controllers](systems/core/phase-controllers.md)** - Phase-specific business logic
+**[Phase Controllers](core-systems/phase-controllers.md)** - Phase-specific business logic
 - Factory function pattern
 - Phase guard protection
 - Six phase controller implementations
 
-**[OutcomeDisplay System](systems/core/outcome-display-system.md)** - Universal outcome renderer
+**[OutcomeDisplay System](core-systems/outcome-display-system.md)** - Universal outcome renderer
 - Automatic component inference from modifier types
 - Unified badge system
 - Custom component integration
 
-**[Typed Modifiers System](systems/core/typed-modifiers-system.md)** - Type-safe resource modifications
+**[Typed Modifiers System](core-systems/typed-modifiers-system.md)** - Type-safe resource modifications
 - StaticModifier, DiceModifier, ChoiceModifier
 - Duration types (immediate, ongoing, turn-count)
 - Manual effects vs game commands
 
-**[Game Commands System](systems/core/game-commands-system.md)** - Non-resource effects
+**[Game Commands System](core-systems/game-commands-system.md)** - Non-resource effects
 - 25+ typed command definitions
 - Territory, construction, military, diplomatic commands
 - Service architecture
 
-**[Events and Incidents](systems/core/events-and-incidents-system.md)** - Random kingdom events
+**[Events and Incidents](core-systems/events-and-incidents-system.md)** - Random kingdom events
 - Event structure and traits
 - Incident severity tiers
 - Outcome modifiers
 
-**[Check Type Differences](systems/core/check-type-differences.md)** - Events vs Incidents vs Actions
+**[Check Type Differences](core-systems/check-type-differences.md)** - Events vs Incidents vs Actions
 - Triggering mechanisms
 - Persistence patterns
 - Pipeline differences
 
-### Map Systems (systems/map/)
+### Map Systems (map-systems/)
 
-**[Hex Selection Flow](systems/map/HEX_SELECTION_FLOW_GUIDE.md)** - Map-based interaction for actions
+**[Hex Selection Flow](map-systems/HEX_SELECTION_FLOW_GUIDE.md)** - Map-based interaction for actions
 - Selection state machine
 - Visual states and timing
 - Integration with pipelines
 
-**[Map Selection Pattern](systems/map/MAP_SELECTION_PATTERN.md)** - Selection patterns
+**[Map Selection Pattern](map-systems/MAP_SELECTION_PATTERN.md)** - Selection patterns
 - Hex selection patterns
 - Validation strategies
 
-**[Canonical Edge System](systems/map/canonical-edge-system.md)** - Hex border management
+**[Canonical Edge System](map-systems/canonical-edge-system.md)** - Hex border management
 - Single source of truth for edges
 - Edge ID format
 - River and road integration
 
-**[River Editor](systems/map/river-editor-implementation-summary.md)** - River editing tools
+**[River Editor](map-systems/river-editor-implementation-summary.md)** - River editing tools
 - River segment management
 - Flow direction handling
 
-### Gameplay Systems (systems/gameplay/)
+### Gameplay Systems (gameplay-systems/)
 
-**[Army Pathfinding](systems/gameplay/army-pathfinding-system.md)** - A* pathfinding for armies
+**[Army Pathfinding](gameplay-systems/army-pathfinding-system.md)** - A* pathfinding for armies
 - Movement range calculation
 - Visual path preview
 - Terrain costs
 
-**[Army Actor Linking](systems/gameplay/army-actor-linking.md)** - Army management
+**[Army Actor Linking](gameplay-systems/army-actor-linking.md)** - Army management
 - Actor integration
 - Army lifecycle
 
-**[App Window Management](systems/gameplay/app-window-management.md)** - UI visibility control
+**[App Window Management](gameplay-systems/app-window-management.md)** - UI visibility control
 - CSS-based hide/show
 - Map interaction mode
 
@@ -123,43 +123,48 @@ docs/
 ├── ARCHITECTURE.md                    (comprehensive system overview)
 ├── BUILD_SYSTEM.md                    (build system reference)
 │
-├── systems/                           (architecture documentation)
-│   ├── core/                          (core architecture fundamentals)
-│   │   ├── pipeline-coordinator.md    ⭐ 9-step action pipeline
+├── core-systems/                      (core architecture fundamentals)
+│   ├── README.md                      (quick reference index)
+│   ├── pipeline/                      (pipeline execution)
+│   │   ├── pipeline-coordinator.md    ⭐ 9-step execution flow
 │   │   ├── pipeline-patterns.md       ⭐ Implementation patterns
-│   │   ├── turn-and-phase-system.md   (turn progression)
-│   │   ├── phase-controllers.md       (phase business logic)
+│   │   └── ROLL_FLOW.md               (roll execution flow)
+│   ├── checks/                        (check execution & outcomes)
 │   │   ├── outcome-display-system.md  ⭐ Universal outcome renderer
-│   │   ├── typed-modifiers-system.md  (resource modifications)
-│   │   ├── game-commands-system.md    (non-resource effects)
+│   │   ├── check-type-differences.md  (events vs incidents vs actions)
 │   │   ├── events-and-incidents-system.md (random events)
-│   │   └── check-type-differences.md  (action/event/incident)
-│   │
-│   ├── map/                           (map and territory features)
-│   │   ├── HEX_SELECTION_FLOW_GUIDE.md (map interactions)
-│   │   ├── MAP_SELECTION_PATTERN.md    (selection patterns)
-│   │   ├── canonical-edge-system.md    (hex borders)
-│   │   └── river-editor-implementation-summary.md (river editing)
-│   │
-│   └── gameplay/                      (gameplay features)
-│       ├── army-pathfinding-system.md (army movement)
-│       ├── army-actor-linking.md      (army management)
-│       └── app-window-management.md   (window lifecycle)
+│   │   └── apply-button-validation.md (result validation)
+│   ├── effects/                       (resource & game effects)
+│   │   ├── typed-modifiers-system.md  (resource modifications)
+│   │   └── game-commands-system.md    (non-resource effects)
+│   ├── phases/                        (turn & phase management)
+│   │   ├── turn-and-phase-system.md   (turn progression)
+│   │   └── phase-controllers.md       (phase business logic)
+│   └── services/                      (core services)
+│       ├── skill-service.md           (PF2e skill service)
+│       └── SERVICE_CONTRACTS.md       (service responsibilities)
 │
-├── refactoring/                       (implementation guides)
-│   ├── README.md                      (migration overview)
-│   ├── DEBUGGING_GUIDE.md             ⭐ Common issues & fixes
-│   ├── TESTING_GUIDE.md               (systematic testing)
-│   └── INCIDENT_PIPELINE_AUDIT.md     (incident architecture)
+├── map-systems/                       (map and territory features)
+│   ├── HEX_SELECTION_FLOW_GUIDE.md    (map interactions)
+│   ├── MAP_SELECTION_PATTERN.md       (selection patterns)
+│   ├── canonical-edge-system.md       (hex borders)
+│   └── river-editor-implementation-summary.md (river editing)
 │
-├── design-system/                     (UI/UX patterns)
+├── gameplay-systems/                  (gameplay features)
+│   ├── army-pathfinding-system.md     (army movement)
+│   ├── army-actor-linking.md          (army management)
+│   └── app-window-management.md       (window lifecycle)
+│
+├── guides/                            (practical guides)
+│   ├── debugging-guide.md             ⭐ Common issues & fixes
+│   └── testing-guide.md               (systematic testing)
+│
+├── design/                            (UI/UX patterns)
 │   ├── choice-buttons.md              (choice UI component)
 │   └── surface-background-system.md   (color system)
 │
-└── todo/                              (development tracking)
-    ├── known_issues.md                (bug list)
-    ├── hex-selector-territory-layer-issue.md
-    └── production_recalculation.md
+└── planning/                          (development tracking)
+    └── (future planning files)
 ```
 
 **⭐ = Most frequently referenced by AI agents**
@@ -176,7 +181,7 @@ These documents focus on **architectural principles and data flow**, not impleme
 - **What are the key patterns?** - Architectural patterns
 
 **Not included:**
-- Step-by-step tutorials (see systems/core/pipeline-patterns.md)
+- Step-by-step tutorials (see core-systems/pipeline-patterns.md)
 - Complete API documentation (see TypeScript types in code)
 - Detailed code walkthroughs (see actual implementations)
 
@@ -227,31 +232,30 @@ From [ARCHITECTURE.md](ARCHITECTURE.md):
 
 ### I need to implement a new action
 
-1. Read: [systems/core/pipeline-patterns.md](systems/core/pipeline-patterns.md)
+1. Read: [core-systems/pipeline/pipeline-patterns.md](core-systems/pipeline/pipeline-patterns.md)
 2. Find your pattern and copy structure from similar action
 3. Test in Foundry - roll, apply, verify state changes
 
 ### I need to understand how actions work
 
-1. Read: [systems/core/pipeline-coordinator.md](systems/core/pipeline-coordinator.md)
-2. Read: [systems/core/outcome-display-system.md](systems/core/outcome-display-system.md)
+1. Read: [core-systems/pipeline/pipeline-coordinator.md](core-systems/pipeline/pipeline-coordinator.md)
+2. Read: [core-systems/checks/outcome-display-system.md](core-systems/checks/outcome-display-system.md)
 3. Look at: `src/pipelines/actions/` for examples
 
 ### I need to modify resources or apply effects
 
-1. Read: [systems/core/typed-modifiers-system.md](systems/core/typed-modifiers-system.md)
-2. Read: [systems/core/game-commands-system.md](systems/core/game-commands-system.md)
+1. Read: [core-systems/effects/typed-modifiers-system.md](core-systems/effects/typed-modifiers-system.md)
+2. Read: [core-systems/effects/game-commands-system.md](core-systems/effects/game-commands-system.md)
 3. Use explicit types (StaticModifier, DiceModifier, etc.)
 
 ### I'm debugging an issue
 
-1. Read: [refactoring/DEBUGGING_GUIDE.md](refactoring/DEBUGGING_GUIDE.md)
-2. Check: [todo/known_issues.md](todo/known_issues.md)
-3. Follow the systematic debugging checklist
+1. Read: [guides/debugging-guide.md](guides/debugging-guide.md)
+2. Follow the systematic debugging checklist
 
 ### I need to test changes
 
-1. Read: [refactoring/TESTING_GUIDE.md](refactoring/TESTING_GUIDE.md)
+1. Read: [guides/testing-guide.md](guides/testing-guide.md)
 2. Check: `src/constants/migratedActions.ts` for testing status
 3. Follow the systematic testing approach
 
@@ -262,10 +266,10 @@ From [ARCHITECTURE.md](ARCHITECTURE.md):
 **Recommended reading order:**
 
 1. [ARCHITECTURE.md](ARCHITECTURE.md) - Get the big picture (30 min)
-2. [systems/core/pipeline-coordinator.md](systems/core/pipeline-coordinator.md) - Understand action flow (15 min)
-3. [systems/core/outcome-display-system.md](systems/core/outcome-display-system.md) - Learn outcome rendering (15 min)
-4. [systems/core/pipeline-patterns.md](systems/core/pipeline-patterns.md) - See practical patterns (20 min)
-5. [systems/core/turn-and-phase-system.md](systems/core/turn-and-phase-system.md) - Understand turn flow (15 min)
+2. [core-systems/pipeline/pipeline-coordinator.md](core-systems/pipeline/pipeline-coordinator.md) - Understand action flow (15 min)
+3. [core-systems/checks/outcome-display-system.md](core-systems/checks/outcome-display-system.md) - Learn outcome rendering (15 min)
+4. [core-systems/pipeline/pipeline-patterns.md](core-systems/pipeline/pipeline-patterns.md) - See practical patterns (20 min)
+5. [core-systems/phases/turn-and-phase-system.md](core-systems/phases/turn-and-phase-system.md) - Understand turn flow (15 min)
 
 Then explore the codebase with this architectural context.
 
@@ -285,4 +289,4 @@ When adding new features:
 
 ---
 
-**Questions?** Check the comprehensive [ARCHITECTURE.md](ARCHITECTURE.md) or explore the system-specific docs in `systems/`.
+**Questions?** Check the comprehensive [ARCHITECTURE.md](ARCHITECTURE.md) or explore the system-specific docs in `core-systems/`, `map-systems/`, and `gameplay-systems/`.

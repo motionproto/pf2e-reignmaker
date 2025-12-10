@@ -396,6 +396,6 @@ if (!storedModifiers || storedModifiers.length === 0) {
 ## Related Documentation
 
 - [SERVICE_CONTRACTS.md](SERVICE_CONTRACTS.md) - Service responsibilities and boundaries
-- [PF2E_SKILL_SERVICE_REFACTOR.md](PF2E_SKILL_SERVICE_REFACTOR.md) - Refactoring details
+- [skill-service.md](skill-service.md) - PF2e skill service documentation
 - [ARCHITECTURE.md](../ARCHITECTURE.md) - Overall system architecture
 - [docs/refactoring/TESTING_GUIDE.md](../refactoring/TESTING_GUIDE.md) - Testing procedures
