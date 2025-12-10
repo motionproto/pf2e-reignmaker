@@ -56,7 +56,7 @@
          console.log('[SimpleEventSelector] Step 1: Clearing kingdom data...');
          // Clear event phase data from turnState and pendingOutcomes
          await updateKingdom(kingdom => {
-            // Clear event phase data
+            // Clear event phase data (including selectedApproach for voting)
             if (kingdom.turnState?.eventsPhase) {
                kingdom.turnState.eventsPhase = {
                   completed: false,
@@ -67,7 +67,8 @@
                   eventId: null,
                   eventInstanceId: null,
                   activeAids: [],
-                  appliedOutcomes: []
+                  appliedOutcomes: [],
+                  selectedApproach: null  // Clear voting selection
                };
             }
             

@@ -51,9 +51,20 @@
       .map((u: any) => VoteService.getPlayerCharacterName(u.id));
   })();
   
-  function handleContinue() {
+  async function handleContinue() {
     if (!winningChoice) return;
     
+    // Store selection in kingdom store (triggers reactivity for all clients)
+    const { getKingdomActor } = await import('../../../../../stores/KingdomStore');
+    const actor = getKingdomActor();
+    if (actor) {
+      await actor.updateKingdomData((kingdom: any) => {
+        if (!kingdom.turnState?.eventsPhase) return;
+        kingdom.turnState.eventsPhase.selectedApproach = winningChoice;
+      });
+    }
+    
+    // Then dispatch to parent
     if (winningChoice === '__ignore__') {
       dispatch('ignore');
     } else {
@@ -214,10 +225,6 @@
             <i class={option.icon}></i>
           {/if}
           <span class="option-label">{option.label}</span>
-          
-          {#if winningChoice === option.id}
-            <span class="winner-icon">🏆</span>
-          {/if}
         </button>
         
         {#if option.id === '__ignore__'}
@@ -395,16 +402,16 @@
       box-shadow: 0 0.125rem 0.5rem var(--overlay-low);
     }
     
-    // Winner state
+    // Winner state (green and faded)
     &.winner {
-      background: var(--surface-success);
-      border-color: var(--border-success-strong);
-      box-shadow: 0 0 1rem rgba(34, 197, 94, 0.5);
+      background: rgba(34, 197, 94, 0.15);  // Green, faded (15% opacity)
+      border-color: rgba(34, 197, 94, 0.4);  // Green border, faded
+      box-shadow: 0 0 1rem rgba(34, 197, 94, 0.3);
       animation: pulse-winner 2s ease-in-out infinite;
       
       .winner-icon {
         margin-left: var(--space-8);
-        animation: bounce 1s ease-in-out infinite;
+        // Removed bounce animation
       }
     }
     

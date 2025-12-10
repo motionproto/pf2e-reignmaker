@@ -107,6 +107,7 @@ export interface EventsPhaseState {
   }>;
   activeAids: AidEntry[];  // Aid bonuses available for the current event
   resolvedOngoingEvents?: string[];  // Event IDs resolved this turn (for phase gate)
+  selectedApproach?: string | null;  // Stores winning vote choice (for strategic events)
 }
 
 /**

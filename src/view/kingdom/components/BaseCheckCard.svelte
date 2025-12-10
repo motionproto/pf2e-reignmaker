@@ -138,8 +138,11 @@
   let isRolling: boolean = false;
   let localUsedSkill: string = '';
   
-  // NEW: Track choice state (for both preRollChoice and strategicChoice)
-  let selectedApproach: string | null = null;
+  // NEW: Track choice state - read from kingdom store for strategic choices (events)
+  // This ensures both debug and production events use the same code path
+  $: selectedApproach = isStrategicChoice 
+    ? ($kingdomData.turnState?.eventsPhase?.selectedApproach || null)
+    : null;
   
   // Computed: Which choice system are we using?
   $: activeChoice = strategicChoice || preRollChoice;
