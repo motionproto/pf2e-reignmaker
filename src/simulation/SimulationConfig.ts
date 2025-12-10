@@ -66,6 +66,9 @@ export interface SimulationConfig {
   
   /** Gold cost per structure tier (0 = no cost, 1 = tier gold, 2 = 2x tier) */
   structureGoldCostPerTier: number;
+  
+  /** Use pipeline execution with auto-resolved data (true) or direct simulation (false) */
+  usePipelines?: boolean;
 }
 
 /**
@@ -201,12 +204,22 @@ export interface SimulationStatistics {
   averageEndUnrest: number;
   averageEndFame: number;
   
+  // Territory averages (absolute final values)
+  avgFinalHexes: number;
+  avgSettlements: number;
+  
   // Outcome distributions
   totalOutcomes: Record<string, number>;
   outcomePercentages: Record<string, number>;
+  /** Outcome distribution as decimals (0-1) for formatPercent() */
+  outcomeDistribution: Record<string, number>;
+  
+  // Action statistics
+  actionCounts: Record<string, number>;
+  totalActions: number;
   
   // Critical metrics
-  collapseRate: number; // % of runs that hit unrest >= 10
+  collapseRate: number; // decimal (0-1) for formatPercent()
   averagePeakUnrest: number;
   averageBankruptcyTurns: number;
   
@@ -222,6 +235,10 @@ export interface SimulationStatistics {
     atUnrest7: number; // % of runs that stabilized at unrest 7
     neverRecovered: number; // % of runs that spiraled to collapse
   };
+  
+  // Aliases for UI compatibility
+  avgFinalGold: number;
+  avgFinalUnrest: number;
 }
 
 /**

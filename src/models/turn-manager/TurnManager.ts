@@ -230,6 +230,83 @@ export class TurnManager {
     }
     
     /**
+     * End-of-turn cleanup - runs BEFORE turn increments
+     * Processes everything that "closes out" the current turn
+     */
+    private async endOfTurnCleanup(): Promise<void> {
+        logger.info('🧹 [TurnManager] Running end-of-turn cleanup...');
+        
+        const { updateKingdom, kingdomData } = await import('../../stores/KingdomStore');
+        const { get } = await import('svelte/store');
+        const kingdom = get(kingdomData);
+        
+        // 1. Resource decay (moved from StatusPhaseController)
+        await updateKingdom(k => {
+            const decayed = {
+                lumber: k.resources.lumber || 0,
+                stone: k.resources.stone || 0,
+                ore: k.resources.ore || 0
+            };
+            k.resources.lumber = 0;
+            k.resources.stone = 0;
+            k.resources.ore = 0;
+            
+            if (decayed.lumber > 0 || decayed.stone > 0 || decayed.ore > 0) {
+                logger.info(`📦 [TurnManager] Resource decay: lumber=${decayed.lumber}, stone=${decayed.stone}, ore=${decayed.ore}`);
+            }
+        });
+        
+        // 2. Fame conversion (moved from UpkeepPhaseController)
+        // NOTE: Fame conversion is currently disabled per game rules
+        // Fame is now ONLY used for rerolls, not automatic unrest reduction
+        const currentFame = kingdom.fame || 0;
+        if (currentFame > 0) {
+            logger.info(`⭐ [TurnManager] ${currentFame} fame expires unused (save it for rerolls next time!)`);
+        }
+        
+        // 3. Vote cleanup (moved from UpkeepPhaseController)
+        const { VoteService } = await import('../../services/VoteService');
+        await VoteService.cleanupOldVotes();
+        logger.info('🗳️ [TurnManager] Cleaned up old votes');
+        
+        logger.info('✅ [TurnManager] End-of-turn cleanup complete');
+    }
+
+    /**
+     * Initialize new turn - runs AFTER cleanup, sets up fresh turn state
+     */
+    private async initializeTurn(): Promise<void> {
+        logger.info('🎬 [TurnManager] Initializing new turn...');
+        
+        const { createDefaultTurnState } = await import('../TurnState');
+        const { updateKingdom, kingdomData } = await import('../../stores/KingdomStore');
+        const { get } = await import('svelte/store');
+        const currentKingdom = get(kingdomData);
+        
+        await updateKingdom(kingdom => {
+            // 1. Increment turn number
+            kingdom.currentTurn++;
+            
+            // 2. Reset to STATUS phase
+            kingdom.currentPhase = TurnPhase.STATUS;
+            kingdom.currentPhaseSteps = [];
+            kingdom.currentPhaseStepIndex = 0;
+            kingdom.oncePerTurnActions = [];
+            
+            // 3. Reset turn-scoped penalties
+            kingdom.leadershipPenalty = 0;
+            
+            // 4. Reset turnState for new turn
+            kingdom.turnState = createDefaultTurnState(kingdom.currentTurn);
+            
+            // 5. Initialize fame for new turn (moved from StatusPhaseController)
+            kingdom.fame = 1;
+        });
+        
+        logger.info(`✅ [TurnManager] Turn ${currentKingdom.currentTurn + 1} initialized`);
+    }
+
+    /**
      * End the current turn and start a new one
      */
     async endTurn(): Promise<void> {
@@ -239,38 +316,15 @@ export class TurnManager {
 
         this.onTurnEnded?.(currentKingdom.currentTurn);
         
-        // Player actions are automatically reset via turnState reset below
+        // ✅ NEW: Call end-of-turn cleanup FIRST
+        await this.endOfTurnCleanup();
         
-        // Import TurnState utilities
-        const { createDefaultTurnState } = await import('../TurnState');
+        // ✅ NEW: Call turn initialization (increments turn, resets state)
+        await this.initializeTurn();
         
-        const { updateKingdom } = await import('../../stores/KingdomStore');
-        await updateKingdom((kingdom) => {
-            kingdom.currentTurn++;
-            kingdom.currentPhase = TurnPhase.STATUS;
-            kingdom.currentPhaseSteps = [];
-            kingdom.currentPhaseStepIndex = 0;
-            kingdom.oncePerTurnActions = [];
-            
-            // ✅ Reset turn-scoped penalties
-            kingdom.leadershipPenalty = 0;
-            
-            // ✅ Reset turnState for new turn - clears all phase-specific data
-            // including completionsByAction, activeAids, appliedOutcomes, factionsAidedThisTurn, etc.
-            kingdom.turnState = createDefaultTurnState(kingdom.currentTurn);
-            
-            // Active modifiers are now managed by ModifierService
-            // Duration is handled in the EventModifier format within each modifier's modifiers array
-            // Cleanup is handled by ModifierService.cleanupExpiredModifiers() during Status phase
-        });
-        
-        // ✅ Turn initialization now handled by StatusPhaseController.startPhase()
-        // This ensures initialization happens at the START of the turn (including Turn 1),
-        // not at the end of the previous turn
-        
+        // ✅ Existing notification logic (unchanged)
         this.onTurnChanged?.(currentKingdom.currentTurn + 1);
         this.onPhaseChanged?.(TurnPhase.STATUS);
-
     }
     
     /**

@@ -14,9 +14,12 @@
 import type { KingdomData } from '../actors/KingdomActor';
 import { createDefaultKingdom } from '../actors/KingdomActor';
 import { logger } from '../utils/Logger';
+import { ensurePlayerOwnership } from './kingdom-permissions';
 
 const MODULE_ID = 'pf2e-reignmaker';
 const KINGDOM_DATA_KEY = 'kingdom-data';
+
+declare const game: any;
 
 /**
  * Wraps a party actor with kingdom-specific methods
@@ -56,6 +59,16 @@ export function wrapKingdomActor(actor: any): any {
   actor.initializeKingdom = async function(name: string = 'New Kingdom'): Promise<void> {
     const defaultKingdom = createDefaultKingdom(name);
     await this.setKingdomData(defaultKingdom);
+    
+    // Ensure all players have ownership when kingdom data is initialized
+    if (game?.user?.isGM) {
+      await ensurePlayerOwnership(this);
+    }
+  };
+  
+  // Add ensurePlayerOwnership method
+  actor.ensurePlayerOwnership = async function(): Promise<boolean> {
+    return await ensurePlayerOwnership(this);
   };
   
   // Add isCurrentPhaseComplete method

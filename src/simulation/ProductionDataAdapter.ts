@@ -3,7 +3,7 @@
  * 
  * Provides simulation with real game data:
  * - Structures loaded from StructuresService (browser) or embedded data (Node.js)
- * - Actions from pipeline definitions
+ * - Actions from PipelineRegistry (single source of truth)
  * 
  * This replaces the hardcoded GameDataLoader.
  * 
@@ -12,6 +12,7 @@
  */
 
 import type { KingdomData, Settlement } from '../actors/KingdomActor';
+import type { CheckPipeline } from '../types/CheckPipeline';
 
 // Import domain layer for helper functions
 import { hasStructureCapacity, getTierNumber } from '../domain/settlements/tierLogic';
@@ -224,251 +225,95 @@ export function getStructure(id: string): SimulationStructure | undefined {
 }
 
 // ============================================================
-// ACTION DEFINITIONS
-// Actions are defined here since they don't have a direct JSON source
-// These match the pipeline definitions in src/pipelines/actions/
+// ACTION DEFINITIONS - Now sourced directly from PipelineRegistry
+// Single source of truth - no more duplication!
 // ============================================================
 
-export interface SimulationAction {
-  id: string;
-  name: string;
-  category: string;
-  cost?: Record<string, number>;
-  requirements?: {
-    minSettlements?: number;
-    minHexes?: number;
-    minGold?: number;
-    minFood?: number;
-    minLumber?: number;
-    minStone?: number;
-    minOre?: number;
-    hasArmy?: boolean;
-    hasSettlement?: boolean;
-  };
-  outcomes: {
-    criticalSuccess?: { modifiers: any[]; effects?: string[] };
-    success?: { modifiers: any[]; effects?: string[] };
-    failure?: { modifiers: any[]; effects?: string[] };
-    criticalFailure?: { modifiers: any[]; effects?: string[] };
-  };
+// Cache for pipeline registry (lazy loaded)
+let cachedPipelineRegistry: any = null;
+
+/**
+ * Get pipeline registry (lazy loaded to avoid circular imports)
+ */
+async function getPipelineRegistry(): Promise<any> {
+  if (cachedPipelineRegistry) return cachedPipelineRegistry;
+  
+  try {
+    const { pipelineRegistry } = await import('../pipelines/PipelineRegistry');
+    // Ensure registry is initialized
+    if (!pipelineRegistry.isInitialized()) {
+      pipelineRegistry.initialize();
+    }
+    cachedPipelineRegistry = pipelineRegistry;
+    return pipelineRegistry;
+  } catch (e) {
+    console.warn('[ProductionDataAdapter] Failed to load PipelineRegistry:', e);
+    return null;
+  }
 }
 
 /**
- * All actions from production pipelines
- * These definitions match src/pipelines/actions/*.ts
+ * Get all action pipelines from the registry
+ * Returns all 27 actions defined in the game
  */
-export const ALL_ACTIONS: SimulationAction[] = [
-  // Economic Actions
-  {
-    id: 'collect-stipend',
-    name: 'Collect Stipend',
-    category: 'economic',
-    outcomes: {
-      criticalSuccess: { modifiers: [{ type: 'dice', resource: 'gold', formula: '2d6', duration: 'immediate' }] },
-      success: { modifiers: [{ type: 'dice', resource: 'gold', formula: '1d6', duration: 'immediate' }] },
-      failure: { modifiers: [] },
-      criticalFailure: { modifiers: [{ type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }] }
-    }
-  },
-  {
-    id: 'sell-surplus',
-    name: 'Sell Surplus',
-    category: 'economic',
-    outcomes: {
-      criticalSuccess: { modifiers: [{ type: 'dice', resource: 'gold', formula: '2d4', duration: 'immediate' }] },
-      success: { modifiers: [{ type: 'dice', resource: 'gold', formula: '1d4', duration: 'immediate' }] },
-      failure: { modifiers: [] },
-      criticalFailure: { modifiers: [{ type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }] }
-    }
-  },
-  {
-    id: 'purchase-resources',
-    name: 'Purchase Resources',
-    category: 'economic',
-    requirements: { minGold: 2 },
-    outcomes: {
-      criticalSuccess: { modifiers: [], effects: ['Gain 4 commodities for 2 gold'] },
-      success: { modifiers: [], effects: ['Gain 2 commodities for 2 gold'] },
-      failure: { modifiers: [] },
-      criticalFailure: { modifiers: [{ type: 'dice', resource: 'gold', formula: '1d4', negative: true, duration: 'immediate' }] }
-    }
-  },
+export async function getAllActions(): Promise<CheckPipeline[]> {
+  const registry = await getPipelineRegistry();
+  if (!registry) return [];
   
-  // Territory Actions
-  {
-    id: 'claim-hexes',
-    name: 'Claim Hexes',
-    category: 'territory',
-    outcomes: {
-      criticalSuccess: { modifiers: [], effects: ['Claim up to proficiency rank hexes (min 2)'] },
-      success: { modifiers: [], effects: ['Claim 1 hex'] },
-      failure: { modifiers: [] },
-      criticalFailure: { modifiers: [{ type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }] }
-    }
-  },
-  {
-    id: 'send-scouts',
-    name: 'Send Scouts',
-    category: 'territory',
-    outcomes: {
-      criticalSuccess: { modifiers: [], effects: ['Reveal 4 hexes'] },
-      success: { modifiers: [], effects: ['Reveal 2 hexes'] },
-      failure: { modifiers: [], effects: ['Reveal 1 hex'] },
-      criticalFailure: { modifiers: [{ type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }] }
-    }
-  },
-  {
-    id: 'create-worksite',
-    name: 'Create Worksite',
-    category: 'territory',
-    outcomes: {
-      criticalSuccess: { modifiers: [], effects: ['Create worksite with bonus'] },
-      success: { modifiers: [], effects: ['Create worksite'] },
-      failure: { modifiers: [] },
-      criticalFailure: { modifiers: [{ type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }] }
-    }
-  },
+  return registry.getPipelinesByType('action');
+}
+
+/**
+ * Get a specific action pipeline by ID
+ */
+export async function getActionPipeline(actionId: string): Promise<CheckPipeline | null> {
+  const registry = await getPipelineRegistry();
+  if (!registry) return null;
   
-  // Settlement Actions
-  {
-    id: 'establish-settlement',
-    name: 'Establish Settlement',
-    category: 'settlement',
-    cost: { food: 2, lumber: 2 },
-    outcomes: {
-      criticalSuccess: { modifiers: [], effects: ['Found settlement with free structure'] },
-      success: { modifiers: [], effects: ['Found settlement'] },
-      failure: { modifiers: [] },
-      criticalFailure: { modifiers: [{ type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }] }
-    }
-  },
-  {
-    id: 'build-structure',
-    name: 'Build Structure',
-    category: 'settlement',
-    requirements: { hasSettlement: true },
-    outcomes: {
-      criticalSuccess: { modifiers: [], effects: ['Build at reduced cost'] },
-      success: { modifiers: [], effects: ['Queue structure'] },
-      failure: { modifiers: [] },
-      criticalFailure: { modifiers: [{ type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }] }
-    }
-  },
-  {
-    id: 'upgrade-settlement',
-    name: 'Upgrade Settlement',
-    category: 'settlement',
-    requirements: { hasSettlement: true },
-    outcomes: {
-      criticalSuccess: { modifiers: [], effects: ['Upgrade at reduced cost'] },
-      success: { modifiers: [], effects: ['Upgrade settlement'] },
-      failure: { modifiers: [] },
-      criticalFailure: { modifiers: [{ type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }] }
-    }
-  },
-  
-  // Stability Actions
-  {
-    id: 'deal-with-unrest',
-    name: 'Deal with Unrest',
-    category: 'stability',
-    outcomes: {
-      criticalSuccess: { modifiers: [{ type: 'static', resource: 'unrest', value: -2, duration: 'immediate' }] },
-      success: { modifiers: [{ type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }] },
-      failure: { modifiers: [] },
-      criticalFailure: { modifiers: [{ type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }] }
-    }
-  },
-  
-  // Military Actions
-  {
-    id: 'recruit-unit',
-    name: 'Recruit Unit',
-    category: 'military',
-    cost: { gold: 2, food: 1 },
-    outcomes: {
-      criticalSuccess: { modifiers: [], effects: ['Recruit army with bonus'] },
-      success: { modifiers: [], effects: ['Recruit army'] },
-      failure: { modifiers: [] },
-      criticalFailure: { modifiers: [{ type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }] }
-    }
-  },
-  {
-    id: 'train-army',
-    name: 'Train Army',
-    category: 'military',
-    cost: { gold: 1 },
-    requirements: { hasArmy: true },
-    outcomes: {
-      criticalSuccess: { modifiers: [], effects: ['Army gains 2 levels'] },
-      success: { modifiers: [], effects: ['Army gains 1 level'] },
-      failure: { modifiers: [] },
-      criticalFailure: { modifiers: [{ type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }] }
-    }
-  }
-];
+  return registry.getPipeline(actionId) || null;
+}
 
 // Debug flag - set to true to see detailed canPerformAction logs
 const DEBUG_ACTION_CHECKS = false;
 
 /**
  * Check if an action can be performed given current kingdom state
- * Uses domain layer functions for validation
+ * Uses pipeline's own requirements (single source of truth)
+ * Only adds simulation-specific checks for territory actions
  */
 export function canPerformAction(
-  action: SimulationAction,
+  pipeline: CheckPipeline,
   kingdom: KingdomData,
   exploredHexIds: Set<string>
 ): boolean {
   const debug = (msg: string) => {
-    if (DEBUG_ACTION_CHECKS) console.log(`  [canPerform ${action.id}] ${msg}`);
+    if (DEBUG_ACTION_CHECKS) console.log(`  [canPerform ${pipeline.id}] ${msg}`);
   };
   
-  // Check resource requirements
-  if (action.requirements) {
-    const r = action.requirements;
-    const res = kingdom.resources;
-    
-    if (r.minGold && (res.gold || 0) < r.minGold) {
-      debug(`blocked: minGold ${r.minGold} > ${res.gold || 0}`);
-      return false;
+  // Use pipeline's own requirements check (single source of truth)
+  if (pipeline.requirements) {
+    try {
+      const result = pipeline.requirements(kingdom);
+      if (!result.met) {
+        debug(`blocked by pipeline requirements: ${result.reason || 'unknown'}`);
+        return false;
+      }
+    } catch (e) {
+      // Some requirements may fail in simulation mode (e.g., worldExplorerService)
+      debug(`requirements check threw: ${e}`);
     }
-    if (r.minFood && (res.food || 0) < r.minFood) {
-      debug(`blocked: minFood ${r.minFood} > ${res.food || 0}`);
-      return false;
-    }
-    if (r.minLumber && (res.lumber || 0) < r.minLumber) {
-      debug(`blocked: minLumber ${r.minLumber} > ${res.lumber || 0}`);
-      return false;
-    }
-    if (r.minStone && (res.stone || 0) < r.minStone) {
-      debug(`blocked: minStone ${r.minStone} > ${res.stone || 0}`);
-      return false;
-    }
-    if (r.minOre && (res.ore || 0) < r.minOre) {
-      debug(`blocked: minOre ${r.minOre} > ${res.ore || 0}`);
-      return false;
-    }
-    if (r.hasArmy && (kingdom.armies?.length || 0) === 0) {
-      debug(`blocked: hasArmy required but none`);
-      return false;
-    }
-    if (r.hasSettlement && (kingdom.settlements?.length || 0) === 0) {
-      debug(`blocked: hasSettlement required but none`);
+  }
+  
+  // Use pipeline's cost definition
+  if (pipeline.cost) {
+    if (!canAfford(kingdom, pipeline.cost)) {
+      debug(`blocked: can't afford ${JSON.stringify(pipeline.cost)}`);
       return false;
     }
   }
   
-  // Check action costs
-  if (action.cost) {
-    if (!canAfford(kingdom, action.cost)) {
-      debug(`blocked: can't afford ${JSON.stringify(action.cost)}`);
-      return false;
-    }
-  }
-  
-  // Action-specific checks using domain layer
-  switch (action.id) {
+  // Simulation-specific territory checks (not in pipeline requirements)
+  switch (pipeline.id) {
     case 'claim-hexes': {
       const claimable = getClaimableHexes(kingdom, exploredHexIds);
       debug(`claimable hexes: ${claimable.length}`);
@@ -525,16 +370,65 @@ export function canPerformAction(
     }
     
     case 'purchase-resources': {
-      // Need gold and be low on some resource
+      // Need gold - relax the "needs resources" check to allow more flexibility
       const r = kingdom.resources;
       if ((r.gold || 0) < 2) {
         debug(`blocked: gold ${r.gold || 0} < 2`);
         return false;
       }
-      const needsResources = (r.food || 0) < 5 || (r.lumber || 0) < 5 || 
-             (r.stone || 0) < 5 || (r.ore || 0) < 5;
-      debug(`needsResources: ${needsResources}`);
-      return needsResources;
+      debug(`purchase allowed with gold: ${r.gold}`);
+      return true;
+    }
+    
+    case 'harvest-resources': {
+      // Can always harvest if we have claimed hexes
+      const claimedHexes = kingdom.hexes?.filter(h => h.claimedBy === 'player').length || 0;
+      debug(`harvest: ${claimedHexes} claimed hexes`);
+      return claimedHexes > 0;
+    }
+    
+    case 'build-roads':
+    case 'fortify-hex': {
+      // Need multiple claimed hexes
+      const claimedHexes = kingdom.hexes?.filter(h => h.claimedBy === 'player').length || 0;
+      debug(`roads/fortify: ${claimedHexes} claimed hexes`);
+      return claimedHexes >= 2;
+    }
+    
+    case 'train-army':
+    case 'outfit-army':
+    case 'deploy-army':
+    case 'disband-army': {
+      // Need at least one army
+      const hasArmy = (kingdom.armies?.length || 0) > 0;
+      debug(`army action: hasArmy=${hasArmy}`);
+      return hasArmy;
+    }
+    
+    case 'repair-structure': {
+      // Need damaged structures
+      for (const settlement of kingdom.settlements || []) {
+        if (settlement.structures?.some(s => s.damaged)) {
+          debug(`repair: found damaged structure`);
+          return true;
+        }
+      }
+      debug(`repair: no damaged structures`);
+      return false;
+    }
+    
+    case 'arrest-dissidents': {
+      // Need some unrest to arrest
+      const hasUnrest = (kingdom.unrest || 0) >= 2;
+      debug(`arrest: unrest=${kingdom.unrest}, can=${hasUnrest}`);
+      return hasUnrest;
+    }
+    
+    case 'execute-or-pardon-prisoners': {
+      // Need imprisoned unrest
+      const hasImprisoned = (kingdom.imprisonedUnrest || 0) > 0;
+      debug(`execute/pardon: imprisoned=${kingdom.imprisonedUnrest}`);
+      return hasImprisoned;
     }
     
     default:

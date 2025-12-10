@@ -30,7 +30,6 @@
    import NotesTab        from './tabs/NotesTab.svelte';
    import SettingsTab     from './tabs/SettingsTab.svelte';
    import VisualsTab      from './tabs/VisualsTab.svelte';
-   import SimulationTab   from './tabs/SimulationTab.svelte';
    
    import type { KingdomApp } from './KingdomApp';
 
@@ -240,8 +239,6 @@
                <NotesTab />
             {:else if $uiState.selectedTab === 'visuals'}
                <VisualsTab />
-            {:else if $uiState.selectedTab === 'simulation'}
-               <SimulationTab />
             {/if}
          </div>
       </div>

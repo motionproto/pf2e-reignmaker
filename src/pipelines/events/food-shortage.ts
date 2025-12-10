@@ -1,6 +1,8 @@
 /**
  * Food Shortage Event Pipeline
  *
+ * Disease, weather, or pests destroy agricultural production.
+ * Simple failure outcomes with static penalties.
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
@@ -13,10 +15,10 @@ export const foodShortagePipeline: CheckPipeline = {
   tier: 1,
 
   skills: [
-      { skill: 'nature', description: 'agricultural expertise' },
-      { skill: 'survival', description: 'emergency measures' },
-      { skill: 'diplomacy', description: 'coordinate relief' },
-    ],
+    { skill: 'nature', description: 'agricultural expertise' },
+    { skill: 'survival', description: 'emergency measures' },
+    { skill: 'diplomacy', description: 'coordinate relief' },
+  ],
 
   outcomes: {
     criticalSuccess: {
@@ -28,29 +30,33 @@ export const foodShortagePipeline: CheckPipeline = {
       description: 'The shortage is controlled.',
       endsEvent: true,
       modifiers: [
-        { type: 'dice', resource: 'food', formula: '1d4', negative: true, duration: 'immediate' }
+        { type: 'static', resource: 'food', value: -2, duration: 'immediate' }
       ]
     },
     failure: {
       description: 'A severe shortage develops.',
       endsEvent: false,
       modifiers: [
-        { type: 'dice', resource: 'food', formula: '2d4', negative: true, duration: 'immediate' },
-        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
+        { type: 'static', resource: 'food', value: -3, duration: 'immediate' },
+        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
       ]
     },
     criticalFailure: {
       description: 'Famine threatens the kingdom.',
       endsEvent: false,
       modifiers: [
-        { type: 'dice', resource: 'food', formula: '2d6+1', negative: true, duration: 'immediate' },
-        { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' },
+        { type: 'static', resource: 'food', value: -5, duration: 'immediate' },
+        { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
       ]
     },
   },
 
   preview: {
+    calculate: async (ctx) => {
+      // Static modifiers are handled automatically by the system
+      return { resources: [], outcomeBadges: [] };
+    }
   },
 
-  traits: ["dangerous", "ongoing"],
+  traits: ['dangerous', 'ongoing'],
 };

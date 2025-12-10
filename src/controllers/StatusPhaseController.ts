@@ -1,6 +1,9 @@
 /**
- * StatusPhaseController - Shows kingdom status and processes resource decay
- * This phase auto-completes immediately and processes resource decay from previous turn.
+ * StatusPhaseController - Shows kingdom status and applies ongoing modifiers
+ * This phase auto-completes immediately.
+ * 
+ * NOTE: Resource decay and fame initialization are now handled by TurnManager.endOfTurnCleanup() 
+ * and TurnManager.initializeTurn(), not here.
  */
 
 import { getKingdomActor } from '../stores/KingdomStore';
@@ -29,10 +32,6 @@ export async function createStatusPhaseController() {
         // Phase guard - prevents initialization when not in Status phase or already initialized
         const guardResult = checkPhaseGuard(TurnPhase.STATUS, 'StatusPhaseController');
         if (guardResult) return guardResult;
-        
-        // Initialize or reset turnState FIRST (Phase 1 of TurnState Migration)
-        // This must happen before checking completion status
-        await this.ensureTurnState();
         
         // Clean up any stale base modifiers from displayModifiers (now computed reactively)
         // This handles legacy data from before the reactive refactor
@@ -63,15 +62,8 @@ export async function createStatusPhaseController() {
         // Clear completed build projects from previous turn
         await this.clearCompletedProjects();
         
-        // ✅ ONE-TIME turn initialization (runs at START of every turn, including Turn 1)
-        // Process resource decay from previous turn
-        await this.processResourceDecay();
-        
-        // NOTE: Fame conversion moved to Upkeep Phase (end of turn) for better UX
-        // Fame is now converted to unrest reduction after all upkeep steps complete
-        
-        // Initialize Fame to 1 for this turn
-        await this.initializeFame();
+        // NOTE: Resource decay, fame initialization, and turnState reset
+        // are now handled by TurnManager.endOfTurnCleanup() and TurnManager.initializeTurn()
         
         // Apply base unrest (size + metropolises)
         await this.applyBaseUnrest();
@@ -199,48 +191,6 @@ export async function createStatusPhaseController() {
       });
     },
 
-    /**
-     * NEW: Process resource decay from previous turn
-     * Moved from UpkeepPhaseController to start of new turn
-     */
-    async processResourceDecay() {
-      const actor = getKingdomActor();
-      if (!actor) {
-        logger.error('❌ [StatusPhaseController] No KingdomActor available');
-        return;
-      }
-      
-      // Clear non-storable resources (lumber, stone, ore)
-      await actor.updateKingdomData((kingdom: KingdomData) => {
-        const decayedLumber = kingdom.resources.lumber || 0;
-        const decayedStone = kingdom.resources.stone || 0;
-        const decayedOre = kingdom.resources.ore || 0;
-        
-        kingdom.resources.lumber = 0;
-        kingdom.resources.stone = 0;
-        kingdom.resources.ore = 0;
-        
-        if (decayedLumber > 0 || decayedStone > 0 || decayedOre > 0) {
-
-        }
-      });
-    },
-
-    // NOTE: processFameConversion() moved to UpkeepPhaseController
-    // Fame is now converted to unrest reduction at end of turn (after all upkeep steps complete)
-
-    /**
-     * Initialize Fame to 1 for the turn
-     */
-    async initializeFame() {
-      const actor = getKingdomActor();
-      if (actor) {
-        await actor.updateKingdomData((kingdom: KingdomData) => {
-          kingdom.fame = 1;
-        });
-
-      }
-    },
 
     /**
      * Apply base unrest from kingdom size, metropolises, and demanded hexes

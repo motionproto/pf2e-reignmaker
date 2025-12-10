@@ -14,8 +14,7 @@
       { id: 'territory', label: 'Territory', icon: 'fa-map' },
       { id: 'structures', label: 'Structures', icon: 'fa-hammer' },
       { id: 'notes', label: 'Notes', icon: 'fa-book' },
-      { id: 'visuals', label: 'Visuals', icon: 'fa-palette' },
-      { id: 'simulation', label: 'Simulate', icon: 'fa-flask' }
+      { id: 'visuals', label: 'Visuals', icon: 'fa-palette' }
    ];
    
    function selectTab(tabId: string) {

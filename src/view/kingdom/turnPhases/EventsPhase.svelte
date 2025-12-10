@@ -16,10 +16,11 @@
   import type { CheckPipeline } from '../../../types/CheckPipeline';
   import type { EventSkill } from '../../../types/events';
   import { pipelineRegistry } from '../../../pipelines/PipelineRegistry';
-  import Button from '../components/baseComponents/Button.svelte';
+   import Button from '../components/baseComponents/Button.svelte';
    import BaseCheckCard from '../components/BaseCheckCard.svelte';
    import PlayerActionTracker from '../components/PlayerActionTracker.svelte';
    import EventDebugPanel from '../../debug/EventDebugPanel.svelte';
+   import SimpleEventSelector from '../../debug/SimpleEventSelector.svelte';
    import { isDebugPanelEnabled } from '../../../debug/debugConfig';
    import OngoingEventCard from '../components/OngoingEventCard.svelte';
    import AidSelectionDialog from '../components/AidSelectionDialog.svelte';
@@ -171,7 +172,7 @@
       console.log('🔵 [EventsPhase] Component mounting...');
       
       // Initialize the controller and service
-      eventPhaseController = await createEventPhaseController(null);
+      eventPhaseController = await createEventPhaseController();
       gameCommandsService = await createGameCommandsService();
       
       // Initialize the phase (this sets up currentPhaseSteps!)
@@ -781,6 +782,11 @@
       </div>
    {/if}
    
+   <!-- Simple Event Selector (GM Only) - Always shown for GMs -->
+   {#if isGM}
+      <SimpleEventSelector />
+   {/if}
+   
    <!-- Event Debug Panel (GM Only) - Full testing panel for all events -->
    <!-- Controlled by DEBUG_PANELS.events in src/debug/debugConfig.ts -->
    {#if isGM && isDebugPanelEnabled('events')}
@@ -801,6 +807,7 @@
             traits={currentEventInstance.checkData.traits || []}
             checkType="event"
             outcomePreview={currentEventInstance}
+            strategicChoice={currentEventInstance.checkData.strategicChoice}
             expandable={false}
             showCompletions={false}
             showAvailability={false}

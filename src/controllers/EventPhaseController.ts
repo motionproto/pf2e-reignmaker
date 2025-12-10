@@ -169,6 +169,70 @@ export async function createEventPhaseController() {
         },
 
         /**
+         * Trigger a specific event by ID (for debug/testing)
+         * Bypasses the random roll and directly sets up the event
+         */
+        async triggerSpecificEvent(eventId: string): Promise<{
+            success: boolean;
+            error?: string;
+        }> {
+            try {
+                // Get the event from registry
+                const event = pipelineRegistry.getPipeline(eventId);
+                if (!event) {
+                    logger.error(`❌ [EventPhaseController] Event ${eventId} not found`);
+                    return { success: false, error: 'Event not found' };
+                }
+                
+                state.currentEvent = event;
+                state.eventCheckRoll = 20; // Auto-succeed
+                state.eventDC = 15; // Reset DC
+                
+                // Create instance for the event
+                const { getKingdomActor } = await import('../stores/KingdomStore');
+                const actor = getKingdomActor();
+                const kingdom = actor?.getKingdomData();
+                
+                if (actor && kingdom) {
+                    // Create new instance
+                    const instanceId = await outcomePreviewService.createInstance(
+                        'event',
+                        event.id,
+                        event,
+                        kingdom.currentTurn
+                    );
+                    
+                    // Update kingdom state to mark event as triggered
+                    await actor.updateKingdomData((kingdom: any) => {
+                        kingdom.eventDC = 15;
+                        
+                        if (kingdom.turnState) {
+                            kingdom.turnState.eventsPhase.eventRolled = true;
+                            kingdom.turnState.eventsPhase.eventRoll = 20;
+                            kingdom.turnState.eventsPhase.eventTriggered = true;
+                            kingdom.turnState.eventsPhase.eventId = event.id;
+                            kingdom.turnState.eventsPhase.eventInstanceId = instanceId;
+                        }
+                    });
+                    
+                    // Complete the event roll step
+                    await completePhaseStepByIndex(EventsPhaseSteps.EVENT_ROLL);
+                    
+                    logger.info(`✅ [EventPhaseController] Triggered event: ${event.name}`);
+                    return { success: true };
+                }
+                
+                return { success: false, error: 'No kingdom actor found' };
+            } catch (error) {
+                logger.error(`❌ [EventPhaseController] Error triggering event:`, error);
+                return { 
+                    success: false, 
+                    error: error instanceof Error ? error.message : 'Unknown error' 
+                };
+            }
+        },
+        
+        /**
          * Perform event check with DC management
          */
         async performEventCheck(currentDC: number): Promise<{
@@ -199,7 +263,6 @@ export async function createEventPhaseController() {
             
             if (triggered) {
                 // Event triggered - get random event and reset DC to 15
-                const { pipelineRegistry } = await import('../pipelines/PipelineRegistry');
                 const allEvents = pipelineRegistry.getPipelinesByType('event');
                 event = allEvents[Math.floor(Math.random() * allEvents.length)] as any;
                 newDC = 15;
@@ -389,7 +452,6 @@ export async function createEventPhaseController() {
 
             // Execute pipeline for game commands (damageStructure, etc.) if one exists
             // Note: Modifiers are already applied above, so pipeline.execute should only handle game commands
-            const { pipelineRegistry } = await import('../pipelines/PipelineRegistry');
             const pipeline = pipelineRegistry.getPipeline(eventId);
 
             if (pipeline?.execute) {

@@ -169,10 +169,20 @@ export class PipelineIntegrationAdapter {
 
       return { success: true };
     } catch (error) {
-      logger.error(`❌ [PipelineAdapter] Failed to execute ${actionId}:`, error);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      
+      // Suppress common "selection incomplete" errors during simulation - these are expected
+      const isSelectionError = errorMsg.includes('selection incomplete') || 
+                              errorMsg.includes('Settlement ID not found') ||
+                              errorMsg.includes('No valid selection available');
+      
+      if (!isSelectionError) {
+        logger.error(`❌ [PipelineAdapter] Failed to execute ${actionId}:`, error);
+      }
+      
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: errorMsg
       };
     }
   }

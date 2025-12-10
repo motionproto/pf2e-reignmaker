@@ -32,6 +32,8 @@ export async function createUpkeepPhaseController() {
         const guardResult = checkPhaseGuard(TurnPhase.UPKEEP, 'UpkeepPhaseController');
         if (guardResult) return guardResult;
         
+        // NOTE: Vote cleanup now handled by TurnManager.endOfTurnCleanup()
+        
         // Get current kingdom state
         const { kingdomData } = await import('../stores/KingdomStore');
         const kingdom = get(kingdomData);

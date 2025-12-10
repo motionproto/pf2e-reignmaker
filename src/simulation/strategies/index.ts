@@ -2,10 +2,15 @@
  * Strategy System
  * 
  * Defines how simulated players choose actions based on kingdom state.
+ * Now uses CheckPipeline directly from PipelineRegistry (single source of truth).
  */
 
 import type { KingdomData } from '../../actors/KingdomActor';
-import type { SimCheck } from '../SimulationData';
+import type { CheckPipeline } from '../../types/CheckPipeline';
+import { ExpansionStrategy } from './ExpansionStrategy';
+
+// Re-export for backward compatibility
+export type { CheckPipeline };
 
 /**
  * Strategy interface - defines how a simulated player chooses actions
@@ -16,15 +21,15 @@ export interface Strategy {
   /**
    * Select an action to perform
    * @param kingdom - Current kingdom state
-   * @param availableActions - List of all action definitions
+   * @param availableActions - List of all action pipelines from registry
    * @param canPerform - Function to check if action requirements are met
-   * @returns Selected action or null if no action available
+   * @returns Selected action pipeline or null if no action available
    */
   selectAction(
     kingdom: KingdomData,
-    availableActions: SimCheck[],
-    canPerform: (action: SimCheck) => boolean
-  ): SimCheck | null;
+    availableActions: CheckPipeline[],
+    canPerform: (action: CheckPipeline) => boolean
+  ): CheckPipeline | null;
 }
 
 /**
@@ -37,7 +42,8 @@ export type ActionCategory =
   | 'territory-expansion'
   | 'military'
   | 'infrastructure'
-  | 'economic';
+  | 'economic'
+  | 'diplomatic';
 
 /**
  * Categorize actions by their primary effect
@@ -46,6 +52,8 @@ export function categorizeAction(actionId: string): ActionCategory {
   switch (actionId) {
     case 'deal-with-unrest':
     case 'arrest-dissidents':
+    case 'execute-or-pardon-prisoners':
+    case 'infiltration':
       return 'unrest-reduction';
       
     case 'harvest-resources':
@@ -69,7 +77,9 @@ export function categorizeAction(actionId: string): ActionCategory {
     case 'train-army':
     case 'deploy-army':
     case 'outfit-army':
+    case 'disband-army':
     case 'request-military-aid':
+    case 'tend-wounded':
       return 'military';
       
     case 'build-roads':
@@ -78,6 +88,10 @@ export function categorizeAction(actionId: string): ActionCategory {
     case 'upgrade-settlement':
     case 'repair-structure':
       return 'infrastructure';
+      
+    case 'establish-diplomatic-relations':
+    case 'diplomatic-mission':
+      return 'diplomatic';
       
     default:
       return 'resource-generation';
@@ -88,14 +102,14 @@ export function categorizeAction(actionId: string): ActionCategory {
  * Helper to filter available actions
  */
 export function getAvailableActions(
-  actions: SimCheck[],
-  canPerform: (action: SimCheck) => boolean,
+  actions: CheckPipeline[],
+  canPerform: (action: CheckPipeline) => boolean,
   categories?: ActionCategory[]
-): SimCheck[] {
+): CheckPipeline[] {
   let filtered = actions.filter(a => canPerform(a));
   
   if (categories && categories.length > 0) {
-    filtered = filtered.filter(a => a.category && categories.includes(a.category as ActionCategory));
+    filtered = filtered.filter(a => a.category && categories.includes(categorizeAction(a.id)));
   }
   
   return filtered;
@@ -108,6 +122,23 @@ export function pickRandom<T>(items: T[], rng: () => number = Math.random): T | 
   if (items.length === 0) return null;
   const index = Math.floor(rng() * items.length);
   return items[index];
+}
+
+/**
+ * Kingdom phases for dynamic weight calculation
+ */
+export type KingdomPhase = 'early' | 'mid' | 'late';
+
+/**
+ * Determine current kingdom phase based on development
+ */
+export function getKingdomPhase(kingdom: KingdomData): KingdomPhase {
+  const hexes = kingdom.hexes?.filter(h => h.claimedBy === 'player').length || 0;
+  const settlements = kingdom.settlements?.length || 0;
+  
+  if (hexes < 15 || settlements < 2) return 'early';
+  if (hexes < 40 || settlements < 4) return 'mid';
+  return 'late';
 }
 
 // Re-export strategies

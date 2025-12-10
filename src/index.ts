@@ -255,6 +255,9 @@ Hooks.once('init', () => {
         import('./services/kingdom/handlers').then(({ registerKingdomHandlers }) => {
             registerKingdomHandlers();
         });
+        import('./services/handlers/VoteHandler').then(({ registerVoteHandlers }) => {
+            registerVoteHandlers();
+        });
     } catch (error) {
         console.error('PF2E ReignMaker | Failed to initialize action dispatcher:', error);
     }
@@ -328,6 +331,10 @@ Hooks.once('ready', async () => {
         // Initialize party level sync hooks
         const { initializePartyLevelHooks } = await import('./hooks/partyLevelHooks');
         initializePartyLevelHooks();
+        
+        // Initialize vote system hooks
+        const { initializeVoteHooks } = await import('./hooks/voteHooks');
+        initializeVoteHooks();
     } catch (error) {
         console.error('[Module] Failed to initialize kingdom system:', error);
     }

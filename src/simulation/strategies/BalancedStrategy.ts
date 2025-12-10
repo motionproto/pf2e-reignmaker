@@ -2,16 +2,18 @@
  * Balanced Strategy - Smarter AI for realistic gameplay
  * 
  * Key improvements:
+ * - Dynamic phase-based weights (early/mid/late game)
  * - Prioritize unrest reduction EARLY (at 2+, not 5+)
  * - Build unrest-reducing structures proactively
  * - Balance expansion with stability
  * - Ensure food supply before expanding
+ * - Context-aware reductions (stop scouting when >80 explored)
  */
 
 import type { KingdomData } from '../../actors/KingdomActor';
-import type { SimCheck } from '../SimulationData';
-import type { Strategy } from './index';
-import { pickRandom } from './index';
+import type { CheckPipeline } from '../../types/CheckPipeline';
+import type { Strategy, KingdomPhase } from './index';
+import { pickRandom, getKingdomPhase } from './index';
 
 export class BalancedStrategy implements Strategy {
   name = 'Balanced';
@@ -23,9 +25,9 @@ export class BalancedStrategy implements Strategy {
   
   selectAction(
     kingdom: KingdomData,
-    availableActions: SimCheck[],
-    canPerform: (action: SimCheck) => boolean
-  ): SimCheck | null {
+    availableActions: CheckPipeline[],
+    canPerform: (action: CheckPipeline) => boolean
+  ): CheckPipeline | null {
     const available = availableActions.filter(a => canPerform(a));
     if (available.length === 0) return null;
     
@@ -146,12 +148,20 @@ export class BalancedStrategy implements Strategy {
     const needDiverseTerrain = !hasQuarry || !hasMine;
     const expansionChance = needDiverseTerrain ? 0.8 : 0.5;
     
+    // Count unclaimed hexes we can see (approximation: hexes adjacent to claimed territory)
+    const claimedHexIds = new Set((kingdom.hexes || []).filter(h => h.claimedBy === 'player').map(h => h.id));
+    const visibleUnclaimedHexes = (kingdom.hexes || []).filter(h => 
+      !h.claimedBy && this.isAdjacentToClaimed(h.id, claimedHexIds)
+    ).length;
+    
     if (unrest <= 3 && claimedHexes < maxSustainableHexes) {
-      // Scout to reveal new territory
-      const scoutAction = available.find(a => a.id === 'send-scouts');
-      if (scoutAction && this.rng() < expansionChance) return scoutAction;
+      // Only scout if we have less than 6 visible unclaimed hexes
+      if (visibleUnclaimedHexes < 6) {
+        const scoutAction = available.find(a => a.id === 'send-scouts');
+        if (scoutAction && this.rng() < expansionChance) return scoutAction;
+      }
       
-      // Claim available hexes
+      // Claim available hexes (always try if available)
       const claimAction = available.find(a => a.id === 'claim-hexes');
       if (claimAction && this.rng() < expansionChance) return claimAction;
     }
@@ -252,10 +262,26 @@ export class BalancedStrategy implements Strategy {
     
     // =====================================================
     // PRIORITY 7: ECONOMIC ACTIONS - Gold is essential
+    // Use economic aid and diplomatic relations when struggling
     // =====================================================
+    
+    // Request economic aid if very low on gold (can be done once every few turns)
+    if (gold < 3 && this.rng() < 0.4) {
+      const economicAidAction = available.find(a => a.id === 'request-economic-aid');
+      if (economicAidAction) return economicAidAction;
+    }
+    
+    // Establish diplomatic relations early (benefits for trade, aid, etc.)
+    // Only do this occasionally and when stable
+    if (unrest <= 3 && gold >= 2 && this.rng() < 0.15) {
+      const diplomaticAction = available.find(a => a.id === 'establish-diplomatic-relations');
+      if (diplomaticAction) return diplomaticAction;
+    }
+    
+    // Collect stipend from counting house
     if (gold < 5) {
       const economicActions = available.filter(a => 
-        ['collect-stipend', 'sell-surplus', 'request-economic-aid'].includes(a.id)
+        ['collect-stipend', 'sell-surplus'].includes(a.id)
       );
       if (economicActions.length > 0 && this.rng() < 0.5) {
         return pickRandom(economicActions, this.rng);
@@ -264,10 +290,34 @@ export class BalancedStrategy implements Strategy {
     
     // =====================================================
     // PRIORITY 8: NEW SETTLEMENTS - When territory supports it
+    // Each settlement requires 1 food/turn, but provides gold + support
+    // Target: 1 settlement per 15-20 hexes
     // =====================================================
-    if (claimedHexes >= 10 && settlements < 2 && gold >= 4 && unrest <= 3) {
+    const settlementsNeeded = Math.floor(claimedHexes / 15);
+    
+    if (settlements < settlementsNeeded && settlements < 4 && gold >= 4 && unrest <= 3 && food >= (settlements + 1) * 3) {
       const settlementAction = available.find(a => a.id === 'establish-settlement');
-      if (settlementAction && this.rng() < 0.4) return settlementAction;
+      if (settlementAction && this.rng() < 0.5) return settlementAction;
+    }
+    
+    // =====================================================
+    // PRIORITY 8.5: UPGRADE SETTLEMENTS - Grow your kingdom!
+    // Upgrade Village -> Town -> City as soon as requirements are met
+    // Higher tier = more structures, better economy
+    // =====================================================
+    if (settlements > 0 && gold >= 10 && unrest <= 4) {
+      const firstSettlement = kingdom.settlements?.[0];
+      
+      // Check if we can upgrade (need lots available and resources)
+      const canUpgrade = firstSettlement && (
+        (firstSettlement.level === 1 && firstSettlement.tier === 'Village') ||
+        (firstSettlement.level >= 4 && firstSettlement.tier === 'Town')
+      );
+      
+      if (canUpgrade) {
+        const upgradeAction = available.find(a => a.id === 'upgrade-settlement');
+        if (upgradeAction && this.rng() < 0.6) return upgradeAction;
+      }
     }
     
     // =====================================================
@@ -284,27 +334,12 @@ export class BalancedStrategy implements Strategy {
     if (worksiteAction && this.rng() < 0.5) return worksiteAction;
     
     // =====================================================
-    // FALLBACK: Weighted random selection
-    // Note: harvest-resources is LOW priority - worksites are better!
+    // FALLBACK: Dynamic phase-based weighted random selection
+    // Weights adapt based on kingdom phase and current state
     // =====================================================
-    const weights: Record<string, number> = {
-      'create-worksite': 20,  // High priority - passive income!
-      // deal-with-unrest: NOT in fallback - only triggered by explicit priority checks above
-      'build-structure': 18,
-      'claim-hexes': 18,       // Expansion is important!
-      'send-scouts': 15,       // Need to explore before claiming
-      'recruit-unit': 12,      // Military - maintain army
-      'train-army': 10,        // Military - level up armies
-      'outfit-army': 8,        // Military - equip armies
-      'collect-stipend': 10,
-      'purchase-resources': 8, // Trade - convert gold to building materials
-      'sell-surplus': 8,       // Trade - save resources from decay
-      'establish-settlement': 8,
-      'harvest-resources': 5,  // Low priority - use worksites instead!
-      'build-roads': 5
-    };
+    const weights = this.getDynamicWeights(kingdom);
     
-    const weightedPool: SimCheck[] = [];
+    const weightedPool: CheckPipeline[] = [];
     for (const action of available) {
       const weight = weights[action.id] || 5;
       for (let i = 0; i < weight; i++) {
@@ -313,6 +348,110 @@ export class BalancedStrategy implements Strategy {
     }
     
     return pickRandom(weightedPool, this.rng);
+  }
+  
+  /**
+   * Get dynamic weights based on kingdom phase and current state
+   */
+  private getDynamicWeights(kingdom: KingdomData): Record<string, number> {
+    const phase = getKingdomPhase(kingdom);
+    const hexes = kingdom.hexes?.filter(h => h.claimedBy === 'player').length || 0;
+    const explored = kingdom.hexes?.filter(h => h.explored).length || 0;
+    const worksites = kingdom.hexes?.filter(h => h.worksite).length || 0;
+    const settlements = kingdom.settlements?.length || 0;
+    
+    const weights: Record<string, number> = {};
+    
+    // =====================================================
+    // EARLY PHASE: Focus on expansion and basic infrastructure
+    // =====================================================
+    if (phase === 'early') {
+      weights['send-scouts'] = 18;
+      weights['claim-hexes'] = 18;
+      weights['create-worksite'] = 16;
+      weights['harvest-resources'] = 12;  // Important early before worksites
+      weights['build-structure'] = 14;
+      weights['collect-stipend'] = 10;
+      weights['establish-settlement'] = 10;
+      weights['sell-surplus'] = 8;
+      weights['purchase-resources'] = 6;
+      weights['recruit-unit'] = 6;
+      weights['build-roads'] = 4;
+    }
+    // =====================================================
+    // MID PHASE: Balanced growth across all areas
+    // =====================================================
+    else if (phase === 'mid') {
+      weights['send-scouts'] = 10;
+      weights['claim-hexes'] = 12;
+      weights['create-worksite'] = 14;
+      weights['build-structure'] = 20;    // Higher priority - develop settlements
+      weights['establish-settlement'] = 12;
+      weights['upgrade-settlement'] = 10;
+      weights['build-roads'] = 8;
+      weights['purchase-resources'] = 10;
+      weights['sell-surplus'] = 10;
+      weights['collect-stipend'] = 8;
+      weights['harvest-resources'] = 6;
+      weights['recruit-unit'] = 10;
+      weights['train-army'] = 8;
+      weights['outfit-army'] = 6;
+      weights['establish-diplomatic-relations'] = 8;
+      weights['request-economic-aid'] = 6;
+    }
+    // =====================================================
+    // LATE PHASE: Optimization and advanced development
+    // =====================================================
+    else {
+      weights['send-scouts'] = 5;         // Much lower - most territory explored
+      weights['claim-hexes'] = 8;
+      weights['build-structure'] = 25;    // Focus on development
+      weights['build-roads'] = 12;
+      weights['upgrade-settlement'] = 15;
+      weights['establish-diplomatic-relations'] = 12;
+      weights['diplomatic-mission'] = 10;
+      weights['recruit-unit'] = 10;
+      weights['train-army'] = 10;
+      weights['outfit-army'] = 8;
+      weights['collect-stipend'] = 8;
+      weights['purchase-resources'] = 8;
+      weights['sell-surplus'] = 8;
+      weights['create-worksite'] = 8;
+      weights['fortify-hex'] = 8;
+      weights['repair-structure'] = 6;
+      weights['request-economic-aid'] = 6;
+      weights['request-military-aid'] = 6;
+    }
+    
+    // =====================================================
+    // Context-aware adjustments (apply on top of phase weights)
+    // =====================================================
+    
+    // Reduce scouting when already explored a lot
+    if (explored > 80) {
+      weights['send-scouts'] = 2;
+    } else if (explored > 50) {
+      weights['send-scouts'] = Math.min(weights['send-scouts'] || 10, 6);
+    }
+    
+    // Reduce claiming when territory is large
+    if (hexes > 60) {
+      weights['claim-hexes'] = 5;
+    } else if (hexes > 40) {
+      weights['claim-hexes'] = Math.min(weights['claim-hexes'] || 12, 8);
+    }
+    
+    // Increase harvest when worksites are few
+    if (worksites < 3) {
+      weights['harvest-resources'] = 15;
+    }
+    
+    // Increase road building when multiple settlements exist
+    if (settlements >= 2) {
+      weights['build-roads'] = Math.max(weights['build-roads'] || 5, 10);
+    }
+    
+    return weights;
   }
   
   /**
@@ -332,5 +471,144 @@ export class BalancedStrategy implements Strategy {
     }
     
     return needs;
+  }
+  
+  /**
+   * Get prioritized structure types based on kingdom needs
+   * Returns structure names in priority order for prepareResolutionData
+   * Now with category diversity tracking
+   */
+  getPriorityStructures(kingdom: KingdomData): string[] {
+    const unrest = kingdom.unrest || 0;
+    const armies = kingdom.armies || [];
+    const settlements = kingdom.settlements || [];
+    
+    // Count existing structures to avoid duplicates
+    const existingStructures = new Set<string>();
+    const categoryCount: Record<string, number> = {};
+    
+    for (const settlement of settlements) {
+      for (const structure of settlement.structures || []) {
+        const id = structure.id || structure.name.toLowerCase();
+        existingStructures.add(id);
+        
+        // Track by category
+        const category = structure.category || 'unknown';
+        categoryCount[category] = (categoryCount[category] || 0) + 1;
+      }
+    }
+    
+    const priorities: string[] = [];
+    
+    // =====================================================
+    // CRITICAL: Unrest reduction (if unrest >= 3)
+    // =====================================================
+    if (unrest >= 3) {
+      if (!existingStructures.has('tavern')) priorities.push('Tavern');
+      if (!existingStructures.has('shrine')) priorities.push('Shrine');
+      if (!existingStructures.has('temple')) priorities.push('Temple');
+      if (!existingStructures.has('theater')) priorities.push('Theater');
+      if (!existingStructures.has('arena')) priorities.push('Arena');
+    }
+    
+    // =====================================================
+    // HIGH: Army support (if armies >= support capacity)
+    // =====================================================
+    const currentArmies = armies.length;
+    let armySupportCapacity = 0;
+    for (const settlement of settlements) {
+      armySupportCapacity += 1;
+      for (const structure of settlement.structures || []) {
+        if (structure.id === 'garrison') armySupportCapacity += 1;
+        if (structure.id === 'fortress') armySupportCapacity += 2;
+      }
+    }
+    
+    if (currentArmies >= armySupportCapacity - 1) {
+      if (!existingStructures.has('garrison')) priorities.push('Garrison');
+      if (!existingStructures.has('fortress')) priorities.push('Fortress');
+    }
+    
+    // =====================================================
+    // CATEGORY DIVERSITY: Rotate through under-represented categories
+    // =====================================================
+    
+    // Define category rotation with example structures
+    const categoryStructures: Record<string, string[]> = {
+      'commercial': ['Counting House', 'Market', 'Trade Shop', 'Bank'],
+      'entertainment': ['Tavern', 'Inn', 'Theater', 'Arena'],
+      'religious': ['Shrine', 'Temple', 'Cathedral', 'Graveyard'],
+      'residential': ['Houses', 'Tenement', 'Mansion'],
+      'military': ['Garrison', 'Barracks', 'Fortress', 'Watchtower'],
+      'storage': ['Granary', 'Storehouses', 'Warehouse'],
+      'crafting': ['Smithy', 'Foundry', 'Mill']
+    };
+    
+    // Sort categories by count (least first)
+    const sortedCategories = Object.keys(categoryStructures)
+      .sort((a, b) => (categoryCount[a] || 0) - (categoryCount[b] || 0));
+    
+    // Add structures from under-represented categories
+    for (const category of sortedCategories.slice(0, 3)) {
+      for (const structureName of categoryStructures[category] || []) {
+        const structureId = structureName.toLowerCase().replace(/\s+/g, '-');
+        if (!existingStructures.has(structureId) && !priorities.includes(structureName)) {
+          priorities.push(structureName);
+          break; // Only one per category to encourage diversity
+        }
+      }
+    }
+    
+    // =====================================================
+    // BASELINE: Essential structures every kingdom should have
+    // =====================================================
+    if (!existingStructures.has('counting-house')) {
+      priorities.push('Counting House');
+    }
+    if (!existingStructures.has('market') && !existingStructures.has('marketplace')) {
+      priorities.push('Marketplace');
+    }
+    if (!existingStructures.has('jail')) {
+      priorities.push('Jail');
+    }
+    if (!existingStructures.has('granary')) {
+      priorities.push('Granary');
+    }
+    
+    // =====================================================
+    // ADVANCED: Later-game structures
+    // =====================================================
+    if (unrest >= 4 && !existingStructures.has('cathedral')) {
+      priorities.push('Cathedral');
+    }
+    if (!existingStructures.has('library')) {
+      priorities.push('Library');
+    }
+    
+    // FALLBACK: Generic useful structures
+    if (!existingStructures.has('smithy')) priorities.push('Smithy');
+    if (!existingStructures.has('watchtower')) priorities.push('Watchtower');
+    
+    return priorities;
+  }
+  
+  /**
+   * Check if a hex is adjacent to any claimed hex
+   */
+  private isAdjacentToClaimed(hexId: string, claimedHexIds: Set<string>): boolean {
+    const [rowStr, colStr] = hexId.split('.');
+    const row = parseInt(rowStr, 10);
+    const col = parseInt(colStr, 10);
+    
+    // Offset coordinate neighbors (odd-q vertical layout)
+    const adjacentOffsets = col % 2 === 0
+      ? [[-1, 0], [-1, 1], [0, -1], [0, 1], [1, 0], [1, 1]]   // Even column
+      : [[-1, -1], [-1, 0], [0, -1], [0, 1], [1, -1], [1, 0]]; // Odd column
+    
+    for (const [dr, dc] of adjacentOffsets) {
+      const neighborId = `${row + dr}.${col + dc}`;
+      if (claimedHexIds.has(neighborId)) return true;
+    }
+    return false;
   }
 }

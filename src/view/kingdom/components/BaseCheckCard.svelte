@@ -35,6 +35,7 @@
   import AdditionalInfo from './CheckCard/components/AdditionalInfo.svelte';
   import OutcomeRenderer from './OutcomeRenderer.svelte';
   import ActionConfirmDialog from './ActionConfirmDialog.svelte';
+  import PreRollChoiceSelector from './CheckCard/components/PreRollChoiceSelector.svelte';
   
   import type { OutcomePreview } from '../../../models/OutcomePreview';
   
@@ -120,6 +121,10 @@
   export let customResolutionComponent: any = null;  // Svelte component constructor
   export let customResolutionProps: Record<string, any> = {};  // Props to pass to custom component
   
+  // NEW: Pre-roll choice configuration
+  export let preRollChoice: any = null;  // Pre-roll choice configuration from pipeline (actions)
+  export let strategicChoice: any = null;  // Strategic choice configuration from pipeline (events)
+  
   // Check if current user is GM
   $: isGM = (globalThis as any).game?.user?.isGM || false;
   
@@ -132,6 +137,23 @@
   // UI state only (not business logic)
   let isRolling: boolean = false;
   let localUsedSkill: string = '';
+  
+  // NEW: Track choice state (for both preRollChoice and strategicChoice)
+  let selectedApproach: string | null = null;
+  
+  // Computed: Which choice system are we using?
+  $: activeChoice = strategicChoice || preRollChoice;
+  $: isStrategicChoice = !!strategicChoice;  // Events use strategic choice (affects when to show outcomes)
+  
+  // Computed: Display name with strategic choice appended (e.g., "Criminal Trial: Harsh Punishment")
+  $: displayName = (() => {
+    if (!selectedApproach || !activeChoice?.options) return name;
+    
+    const option = activeChoice.options.find((o: any) => o.id === selectedApproach);
+    if (!option) return name;
+    
+    return `${name}: ${option.label}`;
+  })();
   
   // Build display preview from outcomePreview (reactive to kingdom store) OR resolution (fallback)
   // IMPORTANT: Use outcomePreview when available as it's reactive to store updates in Step 5
@@ -238,6 +260,14 @@
       return pf2eSkillService.isCharacterProficientInSkill(currentCharacter, skillOption.skill);
     });
   })();
+  
+  // NEW: Filter skills based on selected approach (for choice-based events/actions)
+  $: effectiveSkills = selectedApproach && activeChoice?.options
+    ? skillsWithLore.filter(s => {
+        const option = activeChoice.options.find((o: any) => o.id === selectedApproach);
+        return option?.skills?.includes(s.skill);
+      })
+    : skillsWithLore;
   
   // Get skill bonuses for all skills (including injected lore)
   $: skillBonuses = getSkillBonuses(skillsWithLore.map(s => s.skill));
@@ -370,6 +400,15 @@
     });
   }
   
+  // NEW: Handle approach selection
+  function handleApproachSelect(event: CustomEvent) {
+    const { optionId } = event.detail;
+    selectedApproach = optionId;
+    
+    // Dispatch to parent to store in metadata
+    dispatch('approachSelected', { approach: optionId });
+  }
+  
   // Format possible outcomes for OutcomesSection (actions only)
   $: formattedOutcomes = (outcomes || []).map(o => ({
     result: o.type,
@@ -378,7 +417,9 @@
            o.type === 'failure' ? 'Failure' : 'Critical Failure',
     description: o.description,
     modifiers: (o.modifiers || []) as any,  // Cast to any - old format compatibility
-    gameCommands: o.gameCommands || []
+    gameCommands: o.gameCommands || [],
+    manualEffects: [],  // No manual effects for basic outcomes
+    outcomeBadges: []   // No outcome badges for basic outcomes
   }));
   
   // Get card state class - never show as fully resolved for actions
@@ -388,7 +429,7 @@
 <div class="base-check-card {checkType}-card {!available ? 'not-available' : ''} {expandable && expanded ? 'expanded' : ''} {cardStateClass}">
   <!-- Header for all card types -->
   <CheckCardHeader
-    {name}
+    name={displayName}
     {brief}
     {resolved}
     {available}
@@ -435,17 +476,6 @@
           </div>
         {/if}
         
-        <!-- Before resolution: Show skills and possible outcomes -->
-        {#if (possibleOutcomes?.length || 0) > 0 || (expandable && (formattedOutcomes?.length || 0) > 0)}
-          {#if expandable}
-            <!-- Actions use OutcomesSection -->
-            <OutcomesSection possibleOutcomes={formattedOutcomes} />
-          {:else}
-            <!-- Events/Incidents use PossibleOutcomes -->
-            <PossibleOutcomes outcomes={possibleOutcomes} showTitle={false} />
-          {/if}
-        {/if}
-        
         <!-- Availability notice for non-expandable cards (events/incidents) -->
         {#if !expandable && !available && missingRequirements.length > 0}
           <div class="availability-notice-banner">
@@ -455,75 +485,73 @@
           </div>
         {/if}
         
-        <!-- Completion notifications (actions only, stacked results from all players) -->
+        <!-- Completion notifications (actions only) -->
         {#if showCompletions}
           <CompletionNotifications actionId={id} />
         {/if}
         
-        <!-- Skills section - only show when not resolved or when action (actions can have multiple resolutions) -->
+        <!-- Skills section (MOVED BEFORE OUTCOMES) -->
         {#if skills && skills.length > 0 && (!resolved || checkType === 'action')}
           <div class="skill-options">
-            <!-- Slot for pre-skill content (e.g., commerce tier info) -->
             <slot name="pre-skill-content"></slot>
             
-            <div class="skill-options-header">
-              <div class="skill-options-title">{skillSectionTitle}</div>
-            </div>
-            <div class="skill-tags">
-              <!-- Ignore Event button as first item (events only) -->
-              {#if showIgnoreButton && checkType === 'event'}
-                <button
-                  class="ignore-button-inline"
-                  disabled={isRolling || !isViewingCurrentPhase || resolved}
-                  on:click={handleIgnoreClick}
-                  title="Ignore this event and apply failure effects"
-                >
-                  Ignore Event
-                </button>
-              {/if}
-              
-              <!-- Aid Another button/badge as second item if enabled (but not on aid actions themselves) -->
-              {#if effectiveShowAidButton}
-                {#if aidResult && aidResult.bonus !== 0}
-                  <!-- Aid result badge - shown after aid check completes (bonus or penalty) -->
-                  <div class="aid-result-badge-inline {aidResult.outcome === 'criticalSuccess' ? 'critical-success' : aidResult.outcome === 'success' ? 'success' : 'failure'}">
-                    <i class="fas fa-hands-helping"></i>
-                    <span>
-                      {#if aidResult.outcome === 'criticalSuccess'}
-                        Aid by {aidResult.characterName || 'Unknown'}: +{aidResult.bonus} (keep higher)
-                      {:else if aidResult.bonus > 0}
-                        Aid by {aidResult.characterName || 'Unknown'}: +{aidResult.bonus}
-                      {:else}
-                        Aid by {aidResult.characterName || 'Unknown'}: {aidResult.bonus}
-                      {/if}
-                    </span>
-                  </div>
-                {:else}
-                  <!-- Aid Another button - shown before aid check or if aid failed -->
-                  <button 
-                    class="aid-button-inline"
-                    on:click={handleAidClick}
-                    disabled={isRolling || !isViewingCurrentPhase || (resolved && checkType !== 'action') || (!available && showAvailability) || isBeingResolvedByOther}
-                  >
-                    <i class="fas fa-hands-helping"></i>
-                    Aid Another
-                  </button>
+            <!-- Choice selector OR skill tags -->
+            {#if activeChoice && !selectedApproach && !resolved}
+              <PreRollChoiceSelector
+                label={activeChoice.label}
+                options={activeChoice.options}
+                disabled={isRolling || !isViewingCurrentPhase}
+                showIgnoreButton={showIgnoreButton && checkType === 'event'}
+                eventId={id}
+                enableVoting={checkType === 'event'}
+                on:select={handleApproachSelect}
+                on:ignore={handleIgnoreClick}
+              />
+            {:else}
+              <div class="skill-options-header">
+                <div class="skill-options-title">{skillSectionTitle}</div>
+              </div>
+              <div class="skill-tags">
+                {#if effectiveShowAidButton}
+                  {#if aidResult && aidResult.bonus !== 0}
+                    <div class="aid-result-badge-inline {aidResult.outcome === 'criticalSuccess' ? 'critical-success' : aidResult.outcome === 'success' ? 'success' : 'failure'}">
+                      <i class="fas fa-hands-helping"></i>
+                      <span>
+                        {#if aidResult.outcome === 'criticalSuccess'}
+                          Aid by {aidResult.characterName || 'Unknown'}: +{aidResult.bonus} (keep higher)
+                        {:else if aidResult.bonus > 0}
+                          Aid by {aidResult.characterName || 'Unknown'}: +{aidResult.bonus}
+                        {:else}
+                          Aid by {aidResult.characterName || 'Unknown'}: {aidResult.bonus}
+                        {/if}
+                      </span>
+                    </div>
+                  {:else}
+                    <button 
+                      class="aid-button-inline"
+                      on:click={handleAidClick}
+                      disabled={isRolling || !isViewingCurrentPhase || (resolved && checkType !== 'action') || (!available && showAvailability) || isBeingResolvedByOther}
+                    >
+                      <i class="fas fa-hands-helping"></i>
+                      Aid Another
+                    </button>
+                  {/if}
                 {/if}
-              {/if}
-              
-              {#each skillsWithLore as skillOption}
-                {@const bonus = skillBonuses.get(skillOption.skill) ?? null}
-                <SkillTag
-                  skill={skillOption.skill}
-                  description={skillOption.description || ''}
-                  bonus={bonus}
-                  selected={localUsedSkill === skillOption.skill}
-                  disabled={isRolling || !isViewingCurrentPhase || (resolved && checkType !== 'action') || (!available && showAvailability) || isBeingResolvedByOther}
-                  loading={isRolling && localUsedSkill === skillOption.skill}
-                  on:execute={() => handleSkillClick(skillOption.skill)}
-                />
-              {/each}
-            </div>
+                
+                {#each effectiveSkills as skillOption}
+                  {@const bonus = skillBonuses.get(skillOption.skill) ?? null}
+                  <SkillTag
+                    skill={skillOption.skill}
+                    description={skillOption.description || ''}
+                    bonus={bonus}
+                    selected={localUsedSkill === skillOption.skill}
+                    disabled={isRolling || !isViewingCurrentPhase || (resolved && checkType !== 'action') || (!available && showAvailability) || isBeingResolvedByOther}
+                    loading={isRolling && localUsedSkill === skillOption.skill}
+                    on:execute={() => handleSkillClick(skillOption.skill)}
+                  />
+                {/each}
+              </div>
+            {/if}
             
             {#if isBeingResolvedByOther}
               <div class="resolution-progress-notice">
@@ -532,6 +560,22 @@
               </div>
             {/if}
           </div>
+        {/if}
+        
+        <!-- Possible Outcomes section (MOVED AFTER SKILLS) -->
+        {#if isStrategicChoice && !selectedApproach}
+          <!-- STATE 1: Strategic choice only (hide outcomes until choice made) -->
+        {:else}
+          <!-- STATE 2: Show possible outcomes (after choice or no choice needed) -->
+          {#if (possibleOutcomes?.length || 0) > 0 || (expandable && (formattedOutcomes?.length || 0) > 0)}
+            {#if expandable}
+              <!-- Actions use OutcomesSection -->
+              <OutcomesSection possibleOutcomes={formattedOutcomes} />
+            {:else}
+              <!-- Events/Incidents use PossibleOutcomes -->
+              <PossibleOutcomes outcomes={possibleOutcomes} showTitle={false} />
+            {/if}
+          {/if}
         {/if}
       {/if}
       

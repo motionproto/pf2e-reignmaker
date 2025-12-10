@@ -8,7 +8,7 @@
  */
 
 import type { KingdomData } from '../../actors/KingdomActor';
-import type { SimCheck } from '../SimulationData';
+import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { Strategy } from './index';
 import { categorizeAction, pickRandom } from './index';
 
@@ -22,9 +22,9 @@ export class EconomicStrategy implements Strategy {
   
   selectAction(
     kingdom: KingdomData,
-    availableActions: SimCheck[],
-    canPerform: (action: SimCheck) => boolean
-  ): SimCheck | null {
+    availableActions: CheckPipeline[],
+    canPerform: (action: CheckPipeline) => boolean
+  ): CheckPipeline | null {
     const available = availableActions.filter(a => canPerform(a));
     if (available.length === 0) return null;
     

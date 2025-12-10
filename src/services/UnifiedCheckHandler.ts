@@ -725,6 +725,12 @@ export class UnifiedCheckHandler {
 
     console.log(`🔍 [UnifiedCheckHandler] Calculating preview for ${checkId}`);
 
+    // If preview is not defined, return empty preview
+    if (!pipeline.preview) {
+      console.warn(`⚠️ [UnifiedCheckHandler] No preview defined for ${checkId}`);
+      return createEmptyPreviewData();
+    }
+
     // If preview is provided by interaction (map selection), skip calculation
     if ((pipeline.preview as any).providedByInteraction) {
       console.log(`⏭️ [UnifiedCheckHandler] Preview provided by interaction`);
@@ -851,7 +857,17 @@ export class UnifiedCheckHandler {
 
       console.log(`✅ [UnifiedCheckHandler] Default execution completed`);
     } catch (error) {
-      console.error(`❌ [UnifiedCheckHandler] Check execution failed:`, error);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      
+      // Suppress common "selection incomplete" errors during simulation - these are expected
+      const isSelectionError = errorMsg.includes('selection incomplete') || 
+                              errorMsg.includes('Settlement ID not found') ||
+                              errorMsg.includes('No valid selection available');
+      
+      if (!isSelectionError) {
+        console.error(`❌ [UnifiedCheckHandler] Check execution failed:`, error);
+      }
+      
       throw error;
     }
   }
@@ -1011,10 +1027,8 @@ export class UnifiedCheckHandler {
       throw new Error('Pipeline missing skills');
     }
 
-    // Pre-roll interactions allowed for actions and incidents
-    if (pipeline.checkType === 'event' && pipeline.preRollInteractions) {
-      throw new Error('Pre-roll interactions not allowed for events');
-    }
+    // Pre-roll interactions allowed for all check types (actions, events, incidents)
+    // Events use pre-roll interactions for strategic approach selection (e.g., feud, criminal-trial)
 
     // Game commands only for actions
     if (pipeline.checkType !== 'action' && pipeline.gameCommands) {

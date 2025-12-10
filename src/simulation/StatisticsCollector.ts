@@ -68,6 +68,10 @@ export class StatisticsCollector {
     let collapseCount = 0;
     let totalHexGrowth = 0;
     let totalSettlementGrowth = 0;
+    let totalFinalHexes = 0;
+    let totalFinalSettlements = 0;
+    const actionCounts: Record<string, number> = {};
+    let totalActions = 0;
     
     for (const run of runs) {
       // Sum outcomes
@@ -86,14 +90,26 @@ export class StatisticsCollector {
       totalBankruptcyTurns += run.bankruptcyTurns;
       if (run.collapseOccurred) collapseCount++;
       
+      // Final state metrics (absolute values)
+      const endHexes = run.finalState.hexes?.filter(h => h.claimedBy === 'player').length || 0;
+      totalFinalHexes += endHexes;
+      totalFinalSettlements += run.finalState.settlements?.length || 0;
+      
       // Growth metrics - based on Reignmaker rules starting conditions
       // First settlement claims hex + all 6 adjacent = 7 hexes
       const startHexes = 7;
-      const endHexes = run.finalState.hexes?.filter(h => h.claimedBy === 'player').length || 0;
       totalHexGrowth += endHexes - startHexes;
       
       const startSettlements = 1; // Sponsored first settlement
       totalSettlementGrowth += (run.finalState.settlements?.length || 0) - startSettlements;
+      
+      // Action counts
+      for (const turn of run.turns) {
+        for (const action of turn.actions) {
+          actionCounts[action.checkId] = (actionCounts[action.checkId] || 0) + 1;
+          totalActions++;
+        }
+      }
     }
     
     // Calculate total checks for percentages
@@ -110,22 +126,43 @@ export class StatisticsCollector {
     // Unrest analysis
     const unrestAnalysis = this.analyzeUnrest(runs);
     
+    // Calculate outcome distribution as decimals for formatPercent()
+    const outcomeDistribution: Record<string, number> = {};
+    for (const [outcome, percentage] of Object.entries(outcomePercentages)) {
+      outcomeDistribution[outcome] = percentage / 100; // Convert to decimal
+    }
+    
+    // Average resource values
+    const avgGold = Math.round(totalGold / runs.length * 10) / 10;
+    const avgUnrest = Math.round(totalUnrest / runs.length * 10) / 10;
+    const avgHexes = Math.round(totalFinalHexes / runs.length * 10) / 10;
+    const avgSettlements = Math.round(totalFinalSettlements / runs.length * 10) / 10;
+    
     return {
       config,
       runCount: runs.length,
       
       // Averages
-      averageEndGold: Math.round(totalGold / runs.length * 10) / 10,
+      averageEndGold: avgGold,
       averageEndFood: Math.round(totalFood / runs.length * 10) / 10,
-      averageEndUnrest: Math.round(totalUnrest / runs.length * 10) / 10,
+      averageEndUnrest: avgUnrest,
       averageEndFame: Math.round(totalFame / runs.length * 10) / 10,
+      
+      // Territory averages
+      avgFinalHexes: avgHexes,
+      avgSettlements,
       
       // Outcomes
       totalOutcomes,
       outcomePercentages,
+      outcomeDistribution,
       
-      // Critical metrics
-      collapseRate: Math.round((collapseCount / runs.length) * 1000) / 10,
+      // Actions
+      actionCounts,
+      totalActions,
+      
+      // Critical metrics - collapseRate as decimal (0-1) for formatPercent()
+      collapseRate: collapseCount / runs.length,
       averagePeakUnrest: Math.round(totalPeakUnrest / runs.length * 10) / 10,
       averageBankruptcyTurns: Math.round(totalBankruptcyTurns / runs.length * 10) / 10,
       
@@ -140,7 +177,11 @@ export class StatisticsCollector {
         atUnrest5: this.calculateStabilizationRate(runs, 5),
         atUnrest7: this.calculateStabilizationRate(runs, 7),
         neverRecovered: Math.round((collapseCount / runs.length) * 100)
-      }
+      },
+      
+      // Aliases for UI compatibility
+      avgFinalGold: avgGold,
+      avgFinalUnrest: avgUnrest
     };
   }
   

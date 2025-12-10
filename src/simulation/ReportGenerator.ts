@@ -625,8 +625,8 @@ export class ReportGenerator {
         document.getElementById('incomeChart').innerHTML = viewData.charts.income[key];
       }
       
-      // Initialize with average view
-      switchView('avg');
+      // Initialize with run 0 if only one run, otherwise average view
+      switchView(${JSON.stringify(results.runs.length === 1 ? '0' : 'avg')});
     </script>
     
     <p class="timestamp">Generated: ${results.timestamp}</p>

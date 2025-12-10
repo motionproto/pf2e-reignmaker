@@ -15,6 +15,7 @@
 import type { EventModifier, ResourceType } from './modifiers';
 import type { KingdomSkill } from './events';
 import type { KingdomData } from '../actors/KingdomActor';
+import type { EventResponseChoices } from './EventResponseChoice';
 
 // Re-export for convenience
 export type { EventModifier, ResourceType, KingdomSkill };
@@ -73,7 +74,35 @@ export interface Interaction {
     };
   };
   
+  // NEW: Choice-specific fields
+  affectsSkills?: boolean;  // If true, choice filters available skills
+  options?: ChoiceOption[];  // Choice options (for type='choice')
+  
+  // NEW: Personality tracking
+  personality?: string;  // Personality trait affected by this choice
+  
   [key: string]: any;  // Type-specific properties
+}
+
+/**
+ * Choice option for choice-based interactions
+ */
+export interface ChoiceOption {
+  id: string;
+  label: string;
+  description: string;
+  icon?: string;  // Emoji or icon class
+  skills?: string[];  // Skills available for this choice (if affectsSkills=true)
+  modifiers?: EventModifier[];  // Modifiers to apply
+  gameCommands?: GameCommand[];  // Game commands to execute
+  outcomeModifiers?: {  // Modifiers per outcome (overrides base)
+    criticalSuccess?: { [resource: string]: number };
+    success?: { [resource: string]: number };
+    failure?: { [resource: string]: number };
+    criticalFailure?: { [resource: string]: number };
+  };
+  onComplete?: (choice: any, ctx: any) => Promise<void>;  // Custom logic
+  personality?: string;  // Personality trait for this choice
 }
 
 /**
@@ -221,6 +250,16 @@ export interface CheckPipeline {
 
   // Traits (events/incidents only)
   traits?: Trait[];
+
+  // Event-specific response choices (events only)
+  // These are conceptually different from preRollInteractions (which are for actions)
+  // Event response choices represent the player's strategic approach to handling the event
+  responseChoices?: EventResponseChoices;
+  
+  // NEW: Strategic choice (events only)
+  // Renamed from responseChoices to clarify purpose - this is the event's strategic approach selector
+  // that appears BEFORE skills are shown and determines which skills are available
+  strategicChoice?: EventResponseChoices;
 
   // Persistence (events/incidents only)
   endsCheck?: boolean;  // Default: true

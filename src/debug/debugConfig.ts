@@ -21,7 +21,7 @@ export const DEBUG_PANELS = {
    * Location: src/view/debug/EventDebugPanel.svelte
    * Used in: EventsPhase.svelte
    * 
-   * STATUS: Testing complete (37/37 events tested)
+   * STATUS: Disabled - using SimpleEventSelector instead
    */
   events: false,
 
@@ -55,4 +55,3 @@ export const DEBUG_MODE = true;
 export function isDebugPanelEnabled(panel: keyof typeof DEBUG_PANELS): boolean {
   return DEBUG_MODE && DEBUG_PANELS[panel];
 }
-

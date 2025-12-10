@@ -273,6 +273,13 @@ export class PipelineRegistry {
   private initialized = false;
 
   /**
+   * Check if the registry has been initialized
+   */
+  isInitialized(): boolean {
+    return this.initialized;
+  }
+
+  /**
    * Initialize the registry and register all pipelines
    */
   initialize(): void {

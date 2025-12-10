@@ -19,12 +19,15 @@ import { createDefaultTurnState } from '../models/TurnState';
 export const kingdomActor = writable<KingdomActor | null>(null);
 
 // Derived kingdom data - automatically updates when actor updates
-export const kingdomData = derived(kingdomActor, ($actor): KingdomData => {
-  if (!$actor) return createDefaultKingdom();
-  // Actor is wrapped with getKingdomData() method by wrapKingdomActor()
-  const data = $actor.getKingdomData?.() || $actor.getFlag?.('pf2e-reignmaker', 'kingdom-data') as KingdomData;
-  return data || createDefaultKingdom();
-});
+export const kingdomData = derived(
+  kingdomActor,
+  ($actor): KingdomData => {
+    if (!$actor) return createDefaultKingdom();
+    // Actor is wrapped with getKingdomData() method by wrapKingdomActor()
+    const data = $actor.getKingdomData?.() || $actor.getFlag?.('pf2e-reignmaker', 'kingdom-data') as KingdomData;
+    return data || createDefaultKingdom();
+  }
+);
 
 // Convenience derived stores for common UI needs
 export const currentTurn = derived(kingdomData, $data => $data.currentTurn);
@@ -38,6 +41,13 @@ export const imprisonedUnrest = derived(settlements, $settlements => {
   return $settlements.reduce((sum, s) => sum + (s.imprisonedUnrest || 0), 0);
 });
 export const fame = derived(kingdomData, $data => $data.fame);
+
+// Event votes - reactive store for voting system
+export const eventVotes = derived(kingdomActor, $actor => {
+  if (!$actor) return [];
+  const votes = $actor.getFlag?.('pf2e-reignmaker', 'eventVotes');
+  return (votes || []) as any[];
+});
 
 // Current faction view (GM-only feature)
 // Allows GMs to switch between viewing different factions' territories
@@ -697,8 +707,9 @@ export function setupFoundrySync(): void {
     
     // Check if this is our kingdom actor
     if (currentActor && actor.id === currentActor.id) {
-      // Check if kingdom data was updated
-      if (changes.flags?.['pf2e-reignmaker']?.['kingdom-data']) {
+      // Check if kingdom data OR eventVotes was updated
+      if (changes.flags?.['pf2e-reignmaker']?.['kingdom-data'] || 
+          changes.flags?.['pf2e-reignmaker']?.['eventVotes']) {
 
         // CRITICAL: Re-wrap the actor to maintain kingdom methods
         // The actor from Foundry's updateActor hook is unwrapped

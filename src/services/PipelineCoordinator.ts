@@ -380,6 +380,7 @@ export class PipelineCoordinator {
    * OPTIONAL - only runs if pipeline has preRollInteractions
    * 
    * Examples: Select settlement, choose army, configure options
+   * NEW: Handles skill filtering for choice-based interactions
    */
   private async step2_preRollInteractions(ctx: PipelineContext): Promise<void> {
     log(ctx, 2, 'preRollInteractions', 'Starting pre-roll interactions');
@@ -402,6 +403,29 @@ export class PipelineCoordinator {
     
     // Store metadata in context
     ctx.metadata = { ...ctx.metadata, ...metadata };
+    
+    // NEW: Handle skill filtering for choice-based interactions
+    // Check if any interaction has affectsSkills flag
+    for (const interaction of pipeline.preRollInteractions) {
+      if (interaction.type === 'choice' && interaction.affectsSkills && interaction.options) {
+        // Get the selected choice from metadata
+        const selectedChoice = metadata[interaction.id || 'approach'];
+        
+        if (selectedChoice) {
+          // Find the matching option
+          const selectedOption = interaction.options.find((o: any) => o.id === selectedChoice);
+          
+          if (selectedOption?.skills) {
+            // Store filtered skills in metadata for use in Step 3
+            metadata.availableSkills = selectedOption.skills;
+            log(ctx, 2, 'preRollInteractions', `Skills filtered to: ${selectedOption.skills.join(', ')}`, {
+              choice: selectedChoice,
+              skills: selectedOption.skills
+            });
+          }
+        }
+      }
+    }
     
     log(ctx, 2, 'preRollInteractions', 'Pre-roll interactions complete', metadata);
   }

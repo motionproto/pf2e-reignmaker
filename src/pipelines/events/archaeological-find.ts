@@ -1,6 +1,8 @@
 /**
  * Archaeological Find Event Pipeline
  *
+ * Ancient ruins or artifacts are discovered in your territory.
+ * Uses ChoiceModifier for simple resource selection.
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
@@ -13,33 +15,31 @@ export const archaeologicalFindPipeline: CheckPipeline = {
   tier: 1,
 
   skills: [
-      { skill: 'society', description: 'historical research' },
-      { skill: 'religion', description: 'divine significance' },
-      { skill: 'occultism', description: 'arcane investigation' },
-    ],
+    { skill: 'society', description: 'historical research' },
+    { skill: 'religion', description: 'divine significance' },
+    { skill: 'occultism', description: 'arcane investigation' },
+  ],
 
   outcomes: {
     criticalSuccess: {
-      description: 'A major discovery brings wealth and fame.',
+      description: 'A major discovery - choose how to leverage it.',
       endsEvent: true,
       modifiers: [
-        { type: 'dice', resource: 'gold', formula: '1d4', duration: 'immediate' },
-        { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' },
-        { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
+        { type: 'choice', resources: ['fame', 'gold'], value: 3, duration: 'immediate' }
       ]
     },
     success: {
-      description: 'Valuable artifacts are uncovered.',
+      description: 'Valuable artifacts are uncovered - choose the benefit.',
       endsEvent: true,
       modifiers: [
-        { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
+        { type: 'choice', resources: ['fame', 'gold'], value: 2, duration: 'immediate' }
       ]
     },
     failure: {
       description: 'Only minor artifacts are found.',
       endsEvent: true,
       modifiers: [
-        { type: 'choice-buttons', resources: ["food", "lumber", "ore", "stone"], value: 1, negative: false, duration: 'immediate' }
+        { type: 'choice', resources: ['food', 'lumber', 'ore', 'stone'], value: 1, duration: 'immediate' }
       ]
     },
     criticalFailure: {
@@ -52,7 +52,11 @@ export const archaeologicalFindPipeline: CheckPipeline = {
   },
 
   preview: {
+    calculate: async (ctx) => {
+      // ChoiceModifier is handled automatically by the system
+      return { resources: [], outcomeBadges: [] };
+    }
   },
 
-  traits: ["beneficial"],
+  traits: ['beneficial'],
 };

@@ -7,6 +7,7 @@ import { setupFoundrySync, updateOnlinePlayers } from '../stores/KingdomStore';
 import { wrapKingdomActor } from '../utils/kingdom-actor-wrapper';
 import type { KingdomActor } from '../actors/KingdomActor';
 import { logger } from '../utils/Logger';
+import { checkAndFixPermissions } from '../utils/kingdom-permissions';
 
 declare const Hooks: any;
 declare const game: any;
@@ -36,16 +37,14 @@ function setupGameHooks(): void {
   
   // Hook for when a party actor with kingdom data is created
   Hooks.on('createActor', (actor: any, options: any, userId: string) => {
-    if ((actor.type === 'party' && actor.getFlag('pf2e-reignmaker', 'kingdom-data')) || 
-        actor.getFlag('pf2e-reignmaker', 'isKingdom')) {
+    if (actor.type === 'party' && actor.getFlag('pf2e-reignmaker', 'kingdom-data')) {
 
     }
   });
   
   // Hook for when a party actor with kingdom data is deleted
   Hooks.on('deleteActor', (actor: any, options: any, userId: string) => {
-    if ((actor.type === 'party' && actor.getFlag('pf2e-reignmaker', 'kingdom-data')) || 
-        actor.getFlag('pf2e-reignmaker', 'isKingdom')) {
+    if (actor.type === 'party' && actor.getFlag('pf2e-reignmaker', 'kingdom-data')) {
 
     }
   });
@@ -86,6 +85,12 @@ async function initializeKingdomActor(): Promise<void> {
     return;
   }
   
+  // Check and fix permissions on load (GM only, players get warning)
+  // This ensures all players have ownership access to the kingdom actor
+  if (kingdomActor.getKingdomData()) {
+    await checkAndFixPermissions(kingdomActor);
+  }
+  
   // Initialize the actor in our store system
   const { initializeKingdomActor } = await import('../stores/KingdomStore');
   initializeKingdomActor(kingdomActor);
@@ -112,14 +117,6 @@ function findKingdomActor(): any | null {
   // Second, look for party actor WITHOUT kingdom data (we'll initialize it)
   for (const actor of actors) {
     if (actor.type === 'party') {
-
-      return wrapKingdomActor(actor);
-    }
-  }
-  
-  // Fallback: Look for actor with kingdom flag (old system)
-  for (const actor of actors) {
-    if (actor.getFlag('pf2e-reignmaker', 'isKingdom')) {
 
       return wrapKingdomActor(actor);
     }

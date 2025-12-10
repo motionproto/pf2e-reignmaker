@@ -1,13 +1,13 @@
 /**
  * Fix Kingdom Actor Permissions
  * 
- * This macro helps GMs grant all players OWNER permission on a kingdom actor.
+ * This macro helps GMs grant all players OWNER permission on party actors with kingdom data.
  * This is necessary for collaborative kingdom management where all players
  * need to be able to modify the kingdom data.
  * 
  * Usage:
- * 1. Select the Kingdom Actor in the actors directory
- * 2. Run this macro
+ * 1. Run this macro
+ * 2. Select the party actor with kingdom data
  * 3. All players will be granted OWNER permission
  */
 
@@ -18,11 +18,13 @@ async function fixKingdomPermissions() {
     return;
   }
   
-  // Get all actors in the world
-  const kingdomActors = game.actors.filter(a => a.type === 'kingdom');
+  // Get all party actors with kingdom data
+  const kingdomActors = game.actors.filter(a => 
+    a.type === 'party' && a.getFlag('pf2e-reignmaker', 'kingdom-data')
+  );
   
   if (kingdomActors.length === 0) {
-    ui.notifications.warn("No kingdom actors found in this world.");
+    ui.notifications.warn("No party actors with kingdom data found in this world. Please ensure the party actor has kingdom data initialized.");
     return;
   }
   
@@ -45,8 +47,8 @@ async function fixKingdomPermissions() {
           </select>
         </div>
         <p style="margin-top: 1em; font-size: 0.9em; color: #666;">
-          This will grant all non-GM players OWNER permission on the selected kingdom actor,
-          allowing them to fully interact with and modify the kingdom.
+          This will grant all non-GM players OWNER permission on the selected party actor,
+          allowing them to fully interact with and modify the kingdom data stored in the actor's flags.
         </p>
       </form>
     `,

@@ -55,9 +55,7 @@
     "proxy": "npm run dev",
     "check-migration": "node buildscripts/check-action-migration.cjs",
     "check-migration:verbose": "node buildscripts/check-action-migration.cjs --verbose",
-    "test-pipeline": "tsx src/tests/pipeline-coordinator.test.ts",
-    "simulate": "tsx src/simulation/cli.ts",
-    "simulate:server": "tsx src/simulation/server.ts"
+    "test-pipeline": "tsx src/tests/pipeline-coordinator.test.ts"
   },
   "repository": {
     "type": "git",

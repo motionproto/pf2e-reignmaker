@@ -8,6 +8,9 @@
 
 import { logger } from '../utils/Logger';
 import type { KingdomActor } from '../actors/KingdomActor';
+import { ensurePlayerOwnership } from '../utils/kingdom-permissions';
+
+declare const game: any;
 
 /**
  * Initialize all kingdom derived data after import
@@ -43,6 +46,12 @@ export async function initializeKingdomData(actor: any): Promise<void> {
     // 4. Wait for Foundry flag synchronization to propagate
     // Give the Foundry actor update system time to sync across clients
     await new Promise(resolve => setTimeout(resolve, 150));
+
+    // 5. Ensure all players have ownership (GM only)
+    if (game?.user?.isGM) {
+      await ensurePlayerOwnership(actor);
+      logger.info('✅ [KingdomInit] Player ownership ensured');
+    }
 
   } catch (error) {
     logger.error('❌ [KingdomInit] Initialization failed:', error);
