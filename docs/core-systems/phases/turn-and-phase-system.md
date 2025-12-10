@@ -67,11 +67,6 @@ interface TurnState {
 ```
 Turn N Start (STATUS phase)
   ↓
-StatusPhaseController.ensureTurnState()
-  - If !turnState → create new
-  - If turnState.turnNumber !== currentTurn → reset
-  - Otherwise → preserve (phase navigation)
-  ↓
 Phases execute in sequence (STATUS → RESOURCES → ... → UPKEEP)
   ↓
 After UPKEEP completes
@@ -79,12 +74,25 @@ After UPKEEP completes
 TurnManager.nextPhase() detects end of PHASE_ORDER
   ↓
 TurnManager.endTurn()
-  - Increment currentTurn
-  - Reset to STATUS phase
-  - Clear oncePerTurnActions
-  - Decrement modifier durations
+  ├─→ endOfTurnCleanup() [private]
+  │     ├─→ Resource decay (lumber, stone, ore → 0)
+  │     ├─→ Fame expires (unused fame lost)
+  │     └─→ Vote cleanup (old votes removed)
+  │
+  └─→ initializeTurn() [private]
+        ├─→ Increment currentTurn
+        ├─→ Reset to STATUS phase
+        ├─→ Reset turnState (create fresh)
+        ├─→ Clear oncePerTurnActions
+        ├─→ Reset leadershipPenalty
+        └─→ Initialize fame = 1
   ↓
 Turn N+1 Start (STATUS phase)
+  ↓
+StatusPhaseController.startPhase()
+  - Phase guard check
+  - Apply ongoing modifiers
+  - Apply custom modifiers
 ```
 
 ### Phase Lifecycle

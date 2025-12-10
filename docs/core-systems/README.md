@@ -4,14 +4,13 @@
 
 **[pipeline/](pipeline/)** - Pipeline execution system
 - [pipeline-coordinator.md](pipeline/pipeline-coordinator.md) ⭐ 9-step execution flow
-- [pipeline-patterns.md](pipeline/pipeline-patterns.md) ⭐ Implementation patterns
-- [ROLL_FLOW.md](pipeline/ROLL_FLOW.md) - Complete roll execution flow
+- [pipeline-patterns.md](pipeline/pipeline-patterns.md) ⭐ Implementation patterns  
+- [pipeline-implementation-guide.md](pipeline/pipeline-implementation-guide.md) - Developer quick start
+- [pipeline-advanced-features.md](pipeline/pipeline-advanced-features.md) - Custom components, reroll
+- [ROLL_FLOW.md](pipeline/ROLL_FLOW.md) - Roll execution details
 
 **[checks/](checks/)** - Check execution & outcomes
-- [outcome-display-system.md](checks/outcome-display-system.md) ⭐ Result rendering
-- [check-type-differences.md](checks/check-type-differences.md) - Events vs Incidents vs Actions
-- [events-and-incidents-system.md](checks/events-and-incidents-system.md) - Random events
-- [apply-button-validation.md](checks/apply-button-validation.md) - Result validation
+- [check-card.md](checks/check-card.md) ⭐ Universal check card UI & interaction patterns
 
 **[effects/](effects/)** - Resource & game effects
 - [typed-modifiers-system.md](effects/typed-modifiers-system.md) - Resource modifications
@@ -29,17 +28,21 @@
 
 ## Quick Navigation by Task
 
-**Implementing action?**
-→ [pipeline/pipeline-patterns.md](pipeline/pipeline-patterns.md)
+**Implementing new action/event?**
+→ [pipeline/pipeline-implementation-guide.md](pipeline/pipeline-implementation-guide.md) (quick start)  
+→ [pipeline/pipeline-patterns.md](pipeline/pipeline-patterns.md) (pattern reference)
 
 **Understanding execution flow?**
 → [pipeline/pipeline-coordinator.md](pipeline/pipeline-coordinator.md)
+
+**Need custom components or reroll?**
+→ [pipeline/pipeline-advanced-features.md](pipeline/pipeline-advanced-features.md)
 
 **Debugging roll issues?**
 → [pipeline/ROLL_FLOW.md](pipeline/ROLL_FLOW.md)
 
 **Working with outcomes?**
-→ [checks/outcome-display-system.md](checks/outcome-display-system.md)
+→ [checks/check-card.md](checks/check-card.md)
 
 **Modifying resources?**
 → [effects/typed-modifiers-system.md](effects/typed-modifiers-system.md)

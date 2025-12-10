@@ -1,56 +1,57 @@
 # Service Contracts
 
-This document defines the responsibilities and boundaries of each service in the roll/resolution system.
+**Purpose:** Define responsibilities and boundaries of services in the check execution system
 
-## Roll Execution Layer
+**Last Updated:** 2025-12-10
 
-### KingdomModifierService (`src/services/domain/KingdomModifierService.ts`)
+---
 
-**Responsibility:** Extract kingdom-specific modifiers for skill checks
+## Overview
 
-**Public API:**
-- `getModifiersForCheck(options)` - Get all applicable modifiers for a skill check
-- `hasKeepHigherAid(actionId, checkType)` - Check if any aid grants keep-higher
+Services follow clear separation of concerns:
+- **Roll Execution** - Collect modifiers, execute PF2e rolls
+- **Pipeline** - Orchestrate multi-step check flows
+- **Resolution** - Apply outcomes to kingdom state
+- **Domain** - Kingdom-specific business logic
 
-**Options:**
+---
+
+## Roll Execution Services
+
+### KingdomModifierService
+**Location:** `src/services/domain/KingdomModifierService.ts`
+
+**Responsibility:** Collect kingdom-specific modifiers for skill checks
+
+**Key Methods:**
 ```typescript
-interface ModifierCheckOptions {
+getModifiersForCheck(options: {
   skillName: string;
   actionId?: string;
   checkType: 'action' | 'event' | 'incident';
   onlySettlementId?: string;
-  enabledSettlement?: string;
-  enabledStructure?: string;
-}
+}) => RollModifier[]
+
+hasKeepHigherAid(actionId, checkType) => boolean
 ```
 
 **Modifier Sources:**
-- Structure bonuses (via `structuresService`)
-- Unrest penalty (via `UnrestService`)
-- Active aids (from `turnState.actionsPhase/eventsPhase.activeAids`)
+- Structure bonuses (via StructuresService)
+- Unrest penalties (via UnrestService)
+- Active aids (from turnState)
 
-**Does NOT:**
-- Execute rolls
-- Interact with PF2e system
-- Store state
+**Does NOT:** Execute rolls, interact with PF2e system, store state
 
 ---
 
-### PF2eSkillService (`src/services/pf2e/PF2eSkillService.ts`)
+### PF2eSkillService
+**Location:** `src/services/pf2e/PF2eSkillService.ts`
 
-**Responsibility:** Pure PF2e system integration for skill checks
+**Responsibility:** Pure PF2e system integration
 
-**Public API:**
-- `executeSkillRoll(options)` - Execute a PF2e skill roll with provided modifiers
-- `getSkillSlug(skillName)` - Map skill name to PF2e system slug
-- `getSkill(actor, skillName)` - Get skill from actor by name
-- `getKingdomActionDC(characterLevel?)` - Calculate DC based on character level
-- `convertToPF2eModifiers(modifiers)` - Convert RollModifier[] to PF2e format
-- `showLoreSelectionDialog(loreItems)` - Show lore skill selection UI
-
-**ExecuteSkillRoll Options:**
+**Key Methods:**
 ```typescript
-interface ExecuteSkillRollOptions {
+executeSkillRoll(options: {
   actor: any;
   skill: any;
   dc: number;
@@ -58,244 +59,170 @@ interface ExecuteSkillRollOptions {
   modifiers: RollModifier[];
   rollTwice?: 'keep-higher' | false;
   callback?: RollCallback;
-  extraRollOptions?: string[];
-}
+}) => Promise<any>
+
+getKingdomActionDC(characterLevel?) => number
+getSkillSlug(skillName) => string
+convertToPF2eModifiers(modifiers) => PF2eModifier[]
 ```
 
-**Legacy API (deprecated):**
-- `performKingdomSkillCheck()` - Full skill check with modifier collection (uses KingdomModifierService internally)
-- `performKingdomActionRoll()` - Legacy wrapper for backward compatibility
+**Does NOT:** Collect kingdom modifiers, store state, orchestrate pipelines
 
-**Dependencies:**
-- `PF2eCharacterService` - For character selection
-
-**Does NOT:**
-- Collect kingdom modifiers (that's KingdomModifierService)
-- Store modifier state (that's RollStateService)
-- Manage pipeline state
-- Orchestrate multi-step flows
+**See:** [skill-service.md](./skill-service.md) for complete API
 
 ---
 
-### RollStateService (`src/services/roll/RollStateService.ts`)
+### RollStateService
+**Location:** `src/services/roll/RollStateService.ts`
 
-**Responsibility:** Manage roll modifier state for rerolls
+**Responsibility:** Persist roll modifiers for rerolls
 
-**Public API:**
-- `storeRollModifiers(instanceId, turnNumber, actionId, modifiers)` - Store modifiers from initial roll
-- `getRollModifiers(instanceId, currentTurn)` - Retrieve modifiers for reroll (turn-aware)
-- `clearStaleTurnData(currentTurn)` - Clear data from previous turns
-- `clearAllRollState()` - Clear all roll state
-- `hasStoredModifiers(instanceId)` - Check if modifiers exist for instance
+**Key Methods:**
+```typescript
+storeRollModifiers(instanceId, turnNumber, actionId, modifiers) => Promise<void>
+getRollModifiers(instanceId, currentTurn) => Promise<RollModifier[]>
+clearStaleTurnData(currentTurn) => Promise<void>
+```
 
-**Storage Location:** `kingdom.turnState.actionsPhase.actionInstances[instanceId]`
+**Storage:** `kingdom.turnState.actionsPhase.actionInstances[instanceId]`
 
-**Does NOT:**
-- Execute rolls
-- Interact with PF2e system
-- Collect kingdom modifiers
+**Instance ID Format:** `T{turn}-{actionId}-{randomId}` (e.g., `T5-deploy-army-abc123`)
 
 ---
 
-### PF2eRollService (`src/services/pf2e/PF2eRollService.ts`)
+## Pipeline Services
 
-**Responsibility:** Pure utility functions for roll calculations
+### PipelineCoordinator
+**Location:** `src/services/PipelineCoordinator.ts`
 
-**Public API:**
-- `calculateOutcome(roll, dc)` - Determine outcome from roll result
-- `getDegreeOfSuccess(roll, dc)` - Get degree of success enum
+**Responsibility:** Orchestrate 9-step check execution
 
-**Does NOT:**
-- Execute rolls
-- Store state
-- Interact with actors
-
----
-
-## Pipeline Layer
-
-### PipelineCoordinator (`src/services/PipelineCoordinator.ts`)
-
-**Responsibility:** Orchestrate the 9-step action pipeline
-
-**Public API:**
-- `executePipeline(actionId, initialContext)` - Start new pipeline execution
-- `rerollFromStep3(instanceId)` - Rewind to Step 3 and re-execute roll
-- `confirmApply(instanceId, resolutionData?)` - Resume pipeline after user confirms
-
-**State Management:**
-- `pendingContexts` Map - In-memory pipeline contexts awaiting user action
-- Generates `instanceId` in format: `T{turn}-{actionId}-{randomId}`
+**Key Methods:**
+```typescript
+executePipeline(actionId, initialContext) => Promise<PipelineContext>
+rerollFromStep3(instanceId) => Promise<void>
+confirmApply(instanceId, resolutionData?) => Promise<void>
+```
 
 **Step 3 Flow:**
-```
-1. Call KingdomModifierService.getModifiersForCheck()
-2. If reroll: Call RollStateService.getRollModifiers() and merge
-3. Check KingdomModifierService.hasKeepHigherAid()
-4. Call PF2eSkillService.executeSkillRoll()
-5. In callback: Call RollStateService.storeRollModifiers() (initial roll only)
-```
+1. Call `KingdomModifierService.getModifiersForCheck()`
+2. If reroll: Call `RollStateService.getRollModifiers()` and merge
+3. Check `KingdomModifierService.hasKeepHigherAid()`
+4. Call `PF2eSkillService.executeSkillRoll()`
+5. In callback: Call `RollStateService.storeRollModifiers()` (initial roll only)
 
-**Does NOT:**
-- Collect kingdom modifiers directly (delegates to KingdomModifierService)
-- Execute PF2e rolls directly (delegates to PF2eSkillService)
-- Apply game effects (delegates to GameCommandsService)
+**State:** `pendingContexts` Map (in-memory, awaiting user action)
+
+**See:** [../pipeline/pipeline-coordinator.md](../pipeline/pipeline-coordinator.md)
 
 ---
 
-### OutcomePreviewService (`src/services/OutcomePreviewService.ts`)
+### OutcomePreviewService
+**Location:** `src/services/OutcomePreviewService.ts`
 
 **Responsibility:** Manage outcome preview lifecycle
 
-**Public API:**
-- `createInstance(checkType, checkId, checkData, currentTurn, metadata?)` - Create new preview
-- `getInstance(previewId, kingdom)` - Get preview by ID
-- `storeOutcome(previewId, outcome, resolutionData, options)` - Store roll outcome
-- `markApplied(previewId)` - Mark effects as applied
-- `clearInstance(previewId)` - Delete preview
+**Key Methods:**
+```typescript
+createInstance(checkType, checkId, checkData, currentTurn, metadata?) => Promise<string>
+getInstance(previewId, kingdom) => OutcomePreview | null
+storeOutcome(previewId, outcome, resolutionData, options) => Promise<void>
+markApplied(previewId) => Promise<void>
+clearInstance(previewId) => Promise<void>
+```
 
-**Storage Location:** `kingdom.pendingOutcomes[]`
-
-**Does NOT:**
-- Execute rolls
-- Orchestrate pipeline steps
-- Apply game effects
+**Storage:** `kingdom.pendingOutcomes[]`
 
 ---
 
-## Resolution Layer
+### UnifiedCheckHandler
+**Location:** `src/services/UnifiedCheckHandler.ts`
 
-### OutcomeApplicationService (`src/services/resolution/OutcomeApplicationService.ts`)
+**Responsibility:** Execute check interactions (pre-roll, post-roll, post-apply)
 
-**Responsibility:** Apply resolved outcomes to kingdom state
-
-**Does NOT:**
-- Execute rolls
-- Manage UI state
-- Handle rerolls
-
----
-
-### UnifiedCheckHandler (`src/services/UnifiedCheckHandler.ts`)
-
-**Responsibility:** Handle check interactions (pre-roll, post-roll, post-apply)
-
-**Public API:**
-- `executePreRollInteractions(checkId, checkType, metadata)` - Run pre-roll interactions
-- `executePostRollInteractions(checkId, outcome)` - Run post-roll interactions
-- `executePostApplyInteractions(instanceId, outcome)` - Run post-apply interactions
-
-**Does NOT:**
-- Execute rolls
-- Store state
-- Apply game effects directly
+**Key Methods:**
+```typescript
+executePreRollInteractions(checkId, checkType, metadata) => Promise<CheckMetadata>
+executePostRollInteractions(checkId, outcome) => Promise<void>
+executePostApplyInteractions(instanceId, outcome) => Promise<void>
+```
 
 ---
 
-## Domain Layer
+## Domain Services
 
-### ModifierService (`src/services/ModifierService.ts`)
+### ModifierService
+**Location:** `src/services/ModifierService.ts`
 
 **Responsibility:** Manage ongoing kingdom modifiers (NOT roll modifiers)
 
-**Public API:**
-- `applyModifier(modifier)` - Apply a new modifier
-- `removeExpiredModifiers()` - Clean up expired modifiers
-- `getActiveModifiers()` - Get summary of active modifiers
+**Key Methods:**
+```typescript
+applyModifier(modifier: ActiveModifier) => Promise<void>
+removeExpiredModifiers() => Promise<void>
+getActiveModifiers() => ActiveModifier[]
+```
 
-**Does NOT:**
-- Handle roll modifiers (that's RollStateService)
-- Execute rolls
-- Interact with PF2e system
-
----
-
-### GameCommandsService (`src/services/GameCommandsService.ts`)
-
-**Responsibility:** Apply kingdom state changes via game commands
-
-**Does NOT:**
-- Execute rolls
-- Manage UI state
-- Handle rerolls
+**Note:** Roll modifiers handled by RollStateService
 
 ---
 
-## Component Layer
+### GameCommandsService
+**Location:** `src/services/GameCommandsService.ts`
 
-### OutcomeDisplay (`src/view/kingdom/components/OutcomeDisplay/OutcomeDisplay.svelte`)
+**Responsibility:** Apply kingdom state changes
 
-**Responsibility:** Display roll outcomes and handle user interactions
-
-**Key Behaviors:**
-- Handles "Reroll with Fame" button click
-- Calls `PipelineCoordinator.rerollFromStep3()` directly (not via events)
-- Displays outcome badges, modifiers, and effects
-
-**Does NOT:**
-- Execute rolls directly
-- Store modifier state
-- Dispatch reroll events to parent components
+**Key Methods:**
+```typescript
+applyNumericModifiers(modifiers, outcome) => Promise<void>
+applyOutcome(options) => Promise<void>
+trackPlayerAction(playerId, playerName, actorName, actionId, phase) => Promise<void>
+```
 
 ---
 
-## Data Flow Summary
+## Data Flow
 
 ### Initial Roll
 ```
-User clicks skill button
-  → Phase component calls executeSkillCheck()
-    → PipelineCoordinator.executePipeline()
-      → Step 3:
-        → KingdomModifierService.getModifiersForCheck()
-        → KingdomModifierService.hasKeepHigherAid()
-        → PF2eSkillService.executeSkillRoll()
-          → PF2e skill.roll() with callback
-            → callback extracts modifiers
-              → RollStateService.storeRollModifiers()
-            → Pipeline continues to Step 4+
+PipelineCoordinator.executePipeline()
+  → Step 3:
+    → KingdomModifierService.getModifiersForCheck()
+    → PF2eSkillService.executeSkillRoll()
+      → PF2e skill.roll()
+        → callback:
+          → RollStateService.storeRollModifiers()
 ```
 
 ### Reroll
 ```
-User clicks "Reroll with Fame" in OutcomeDisplay
-  → OutcomeDisplay.handleReroll()
-    → Deduct fame
-    → PipelineCoordinator.rerollFromStep3(instanceId)
-      → Marks context.isReroll = true
-      → Step 3:
-        → KingdomModifierService.getModifiersForCheck()
-        → RollStateService.getRollModifiers(instanceId, currentTurn)
-        → Merge stored modifiers with fresh kingdom modifiers
-        → PF2eSkillService.executeSkillRoll()
-          → PF2e skill.roll() (does NOT store modifiers on reroll)
-          → Pipeline continues to Step 4+
+OutcomeDisplay → handleReroll()
+  → PipelineCoordinator.rerollFromStep3(instanceId)
+    → context.isReroll = true
+    → Step 3:
+      → KingdomModifierService.getModifiersForCheck()
+      → RollStateService.getRollModifiers()  // Restore stored modifiers
+      → Merge fresh + stored modifiers
+      → PF2eSkillService.executeSkillRoll()
+        → callback: (does NOT store on reroll)
 ```
 
 ---
 
-## Key Design Decisions
+## Key Design Principles
 
-### 1. Single Source of Truth for Modifiers
-RollStateService is the ONLY place that stores/retrieves roll modifiers for rerolls.
+1. **Single Source of Truth** - RollStateService is ONLY place storing roll modifiers
+2. **Domain Separation** - Kingdom logic (KingdomModifierService) separate from PF2e integration (PF2eSkillService)
+3. **Turn-Aware Storage** - Modifiers include turnNumber for validation/cleanup
+4. **No Module State** - All state in kingdom data (persisted), not module variables (transient)
+5. **Direct Reroll** - OutcomeDisplay calls PipelineCoordinator directly, no event bubbling
 
-### 2. KingdomModifierService is Domain Logic
-Lives in `domain/` not `pf2e/` because it deals with kingdom concepts (structures, unrest, aids), not PF2e concepts.
+---
 
-### 3. PF2eSkillService is Pure PF2e
-Contains only DC calculation, skill slug mapping, and `skill.roll()` invocation. No kingdom-specific logic.
+## Related Documentation
 
-### 4. Turn-Aware Storage
-Modifiers include `turnNumber` to enable validation and cleanup at turn boundaries.
+- [../pipeline/pipeline-coordinator.md](../pipeline/pipeline-coordinator.md) - Pipeline execution
+- [../pipeline/ROLL_FLOW.md](../pipeline/ROLL_FLOW.md) - Complete roll flow
+- [skill-service.md](./skill-service.md) - PF2e integration details
 
-### 5. Instance ID Format
-Format: `T{turn}-{actionId}-{randomId}` (e.g., `T5-deploy-army-abc123`)
-- Includes turn for traceability
-- Includes action ID for debugging
-- Random suffix for uniqueness
-
-### 6. Centralized Reroll Handling
-OutcomeDisplay calls PipelineCoordinator directly for rerolls, eliminating duplicate handlers in phase components.
-
-### 7. No Module-Level State
-RollStateService stores state in kingdom data (persisted), not in module-level variables (transient).
+**Status:** ✅ Accurate as of 2025-12-10

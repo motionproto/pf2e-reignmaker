@@ -899,9 +899,10 @@ execute: async (ctx) => {
 ## Related Documentation
 
 - **Full Architecture:** [pipeline-coordinator.md](./pipeline-coordinator.md)
-- **Testing Guide:** [../../refactoring/TESTING_GUIDE.md](../../refactoring/TESTING_GUIDE.md)
-- **Debugging Guide:** [../../refactoring/DEBUGGING_GUIDE.md](../../refactoring/DEBUGGING_GUIDE.md)
-- **Resource Modification Best Practices:** [../../refactoring/resource-modification-audit.md](../../refactoring/resource-modification-audit.md)
+- **Advanced Features:** [pipeline-advanced-features.md](./pipeline-advanced-features.md)
+- **Implementation Guide:** [pipeline-implementation-guide.md](./pipeline-implementation-guide.md)
+- **Testing Guide:** [../../guides/testing-guide.md](../../guides/testing-guide.md)
+- **Debugging Guide:** [../../guides/debugging-guide.md](../../guides/debugging-guide.md)
 
 ## Helper Functions Reference
 

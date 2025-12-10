@@ -395,7 +395,7 @@ if (!storedModifiers || storedModifiers.length === 0) {
 
 ## Related Documentation
 
-- [SERVICE_CONTRACTS.md](SERVICE_CONTRACTS.md) - Service responsibilities and boundaries
-- [skill-service.md](skill-service.md) - PF2e skill service documentation
-- [ARCHITECTURE.md](../ARCHITECTURE.md) - Overall system architecture
-- [docs/refactoring/TESTING_GUIDE.md](../refactoring/TESTING_GUIDE.md) - Testing procedures
+- [../services/SERVICE_CONTRACTS.md](../services/SERVICE_CONTRACTS.md) - Service responsibilities and boundaries
+- [../services/skill-service.md](../services/skill-service.md) - PF2e skill service documentation
+- [../../ARCHITECTURE.md](../../ARCHITECTURE.md) - Overall system architecture
+- [../../guides/testing-guide.md](../../guides/testing-guide.md) - Testing procedures

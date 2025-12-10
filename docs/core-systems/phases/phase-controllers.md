@@ -2,6 +2,8 @@
 
 **Purpose:** Implement phase-specific business logic following standardized patterns
 
+**Last Updated:** 2025-12-10
+
 ---
 
 ## Overview
@@ -9,10 +11,6 @@
 Phase controllers execute the business logic for each of the six kingdom turn phases. They follow a factory function pattern with consistent initialization, execution, and completion flows.
 
 **Key Principle:** Controllers contain business logic only - no UI concerns, no direct data access.
-
-**Architecture Note:** For check-based phases (Events, Unrest, Actions), controllers trigger **PipelineCoordinator** for execution while handling phase-specific triggering and persistence logic.
-
-**See:** `docs/systems/core/pipeline-coordinator.md` for complete check execution architecture.
 
 ---
 
@@ -115,37 +113,6 @@ if (await isStepCompletedByIndex(0)) {
 
 **Key Benefit:** Helpers abstract the complexity of TurnManager/PhaseHandler interaction.
 
-### Dynamic Steps
-
-Some phases add steps conditionally:
-
-```typescript
-async performCheck() {
-  const result = await this.checkForCondition();
-  
-  if (result.triggered) {
-    // Add resolve step dynamically
-    await updateKingdom(kingdom => {
-      const hasResolveStep = kingdom.currentPhaseSteps.some(
-        s => s.id === 'resolve-condition'
-      );
-      
-      if (!hasResolveStep) {
-        kingdom.currentPhaseSteps.push({
-          id: 'resolve-condition',
-          name: 'Resolve Triggered Condition',
-          completed: 0
-        });
-      }
-    });
-  }
-  
-  await completePhaseStepByIndex(0);
-}
-```
-
-**Use Case:** Events and Unrest phases add resolution steps when checks trigger.
-
 ---
 
 ## Six Phase Controllers
@@ -175,91 +142,245 @@ async performCheck() {
 
 **Purpose:** Handle kingdom events (immediate and ongoing)
 
-**Pattern:** Trigger PipelineCoordinator for event execution
+**Pattern:** Custom event execution with OutcomePreviewService
 
 **Key Operations:**
-- `selectEvent()` - Choose random event or continue ongoing event
-- `performEventCheck()` - Trigger PipelineCoordinator with event ID
-- `ignoreEvent()` - Bypass pipeline for ignored events (separate flow)
-- Event persistence management (turnState.eventsPhase)
 
-**Integration:**
 ```typescript
-async performEventCheck(eventId: string) {
-  const coordinator = new PipelineCoordinator();
-  const context = await coordinator.executePipeline(eventId, {
-    checkType: 'event',
-    userId: game.userId
+// Roll for event (d20 vs DC)
+async performEventCheck(currentDC: number): Promise<{
+  triggered: boolean;
+  event: CheckPipeline | null;
+  roll: number;
+  newDC: number;
+}> {
+  const roll = Math.floor(Math.random() * 20) + 1;
+  const triggered = roll >= currentDC;
+  
+  if (triggered) {
+    // Select random event
+    const allEvents = pipelineRegistry.getPipelinesByType('event');
+    const event = allEvents[Math.floor(Math.random() * allEvents.length)];
+    
+    // Create OutcomePreview instance
+    const instanceId = await outcomePreviewService.createInstance(
+      'event',
+      event.id,
+      event,
+      kingdom.currentTurn
+    );
+    
+    // Update turnState for display
+    await updateKingdom(k => {
+      k.eventDC = 15; // Reset DC
+      k.turnState.eventsPhase.eventRolled = true;
+      k.turnState.eventsPhase.eventTriggered = true;
+      k.turnState.eventsPhase.eventId = event.id;
+      k.turnState.eventsPhase.eventInstanceId = instanceId;
+    });
+    
+    newDC = 15;
+  } else {
+    // Reduce DC by 5 (minimum 6)
+    newDC = Math.max(6, currentDC - 5);
+    await completePhaseStepByIndex(EventsPhaseSteps.RESOLVE_EVENT);
+    await completePhaseStepByIndex(EventsPhaseSteps.APPLY_MODIFIERS);
+  }
+  
+  return { triggered, event, roll, newDC };
+}
+
+// Resolve event outcome
+async resolveEvent(
+  eventId: string,
+  outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
+  resolutionData: ResolutionData,
+  isIgnored: boolean = false,
+  actorName?: string,
+  skillName?: string,
+  playerId?: string
+) {
+  // Apply numeric modifiers (pre-rolled dice)
+  await applyResolvedOutcome(resolutionData, outcome);
+  
+  // Execute pipeline for game commands (if defined)
+  const pipeline = pipelineRegistry.getPipeline(eventId);
+  if (pipeline?.execute) {
+    await pipeline.execute({
+      outcome,
+      kingdom,
+      resolutionData,
+      check: pipeline,
+      metadata: {},
+      modifiersAlreadyApplied: true
+    });
+  }
+  
+  // Update instance with appliedOutcome
+  await updateKingdom(kingdom => {
+    const instance = kingdom.pendingOutcomes?.find(i => i.previewId === instanceId);
+    if (instance) {
+      instance.appliedOutcome = {
+        outcome,
+        actorName,
+        skillName,
+        effect: outcomeData?.description || '',
+        modifiers: resolvedModifiers,
+        manualEffects: outcomeData?.manualEffects || [],
+        gameCommands: outcomeData?.gameCommands || [],
+        effectsApplied: true,
+        shortfallResources: []
+      };
+    }
   });
   
-  return { success: context.executionResult?.success };
+  // Complete steps
+  await completePhaseStepByIndex(EventsPhaseSteps.RESOLVE_EVENT);
+  await completePhaseStepByIndex(EventsPhaseSteps.APPLY_MODIFIERS);
+  
+  return { success: true };
+}
+
+// Ignore event (delegates to IgnoreEventService)
+async ignoreEvent(eventId: string, metadata?: Record<string, any>) {
+  const { ignoreEventService } = await import('../services/IgnoreEventService');
+  return ignoreEventService.ignoreEvent(eventId, {
+    isDebugTest: metadata?.isDebugTest || false
+  });
 }
 ```
 
-**See:** `docs/systems/core/check-type-differences.md` for event-specific behavior.
+**Key Details:**
+- Does NOT use PipelineCoordinator directly
+- Manages OutcomePreviewService for instance creation
+- Custom resolution logic with turnState integration
+- Delegates ignore flow to IgnoreEventService
 
 ### UnrestPhaseController
 
-**Purpose:** Calculate unrest, handle incidents
+**Purpose:** Calculate unrest, check for incidents
 
-**Pattern:** Trigger d100 check, execute via PipelineCoordinator if triggered
+**Pattern:** Roll d100 for incident, create instance if triggered
 
 **Key Operations:**
-- `calculateUnrest()` - Display current unrest level
-- `checkForIncidents()` - d100 roll vs unrest, trigger pipeline if incident occurs
-- Incident persistence management (turnState.unrestPhase)
 
-**Integration:**
 ```typescript
-async checkForIncidents() {
-  const unrestLevel = kingdom.unrest;
-  const roll = d100();
+// Roll for incident based on unrest level
+async rollForIncident(): Promise<{
+  incidentTriggered: boolean;
+  roll: number;
+  chance: number;
+  incidentId: string | null;
+  instanceId: string | null;
+}> {
+  const unrest = kingdom.unrest || 0;
+  const tier = getUnrestTier(unrest);
+  const incidentChance = getIncidentChance(unrest);
   
-  if (roll <= unrestLevel) {
-    const severity = determineSeverity(unrestLevel);
-    const incident = selectIncident(severity);
+  // Roll for incident
+  const roll = Math.random();
+  const incidentTriggered = roll < incidentChance;
+  
+  if (incidentTriggered) {
+    // Load incident from pipeline registry
+    const severity = tier === 1 ? 'minor' : tier === 2 ? 'moderate' : 'major';
+    const allIncidents = pipelineRegistry.getPipelinesByType('incident');
+    const incidents = allIncidents.filter(p => p.severity === severity);
+    const incident = incidents[Math.floor(Math.random() * incidents.length)];
     
-    const coordinator = new PipelineCoordinator();
-    await coordinator.executePipeline(incident.id, {
-      checkType: 'incident',
-      userId: game.userId
+    // Create OutcomePreview instance
+    const instanceId = await outcomePreviewService.createInstance(
+      'incident',
+      incident.id,
+      incident,
+      kingdom.currentTurn
+    );
+    
+    // Update turnState for display
+    await updateKingdom(k => {
+      k.turnState.unrestPhase.incidentRolled = true;
+      k.turnState.unrestPhase.incidentRoll = Math.round(roll * 100);
+      k.turnState.unrestPhase.incidentTriggered = true;
     });
+    
+    return { incidentTriggered: true, roll, chance, incidentId: incident.id, instanceId };
   }
+  
+  // No incident - complete steps
+  await completePhaseStepByIndex(UnrestPhaseSteps.RESOLVE_INCIDENT);
+  return { incidentTriggered: false, roll, chance, incidentId: null, instanceId: null };
 }
 ```
 
-**See:** `docs/systems/core/check-type-differences.md` for incident-specific behavior.
+**Key Details:**
+- Rolls d100 vs unrest level for incident check
+- Creates OutcomePreview instance if incident triggers
+- Incident resolution handled by UI components (not controller)
+- Uses OutcomePreviewService for persistence
 
 ### ActionPhaseController
 
 **Purpose:** Execute player kingdom actions
 
-**Pattern:** Trigger PipelineCoordinator for each action
+**Pattern:** Delegates to PipelineIntegrationAdapter
 
 **Key Operations:**
-- Action selection and validation
-- Trigger PipelineCoordinator with action ID
-- Handle pre-roll interactions (Step 2)
-- Handle post-apply interactions (Step 7)
-- Action logging (turnState.actionsPhase)
 
-**Integration:**
 ```typescript
-async performAction(actionId: string) {
-  const coordinator = new PipelineCoordinator();
-  const context = await coordinator.executePipeline(actionId, {
-    checkType: 'action',
-    userId: game.userId
-  });
+// Resolve action with pre-computed resolution data
+async resolveAction(
+  actionId: string,
+  outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
+  resolutionData: ResolutionData,
+  actorName?: string,
+  skillName?: string,
+  playerId?: string,
+  instanceId?: string
+) {
+  // Check if action uses pipeline system
+  if (shouldUsePipeline(actionId) && PipelineIntegrationAdapter.hasPipeline(actionId)) {
+    // Convert legacy ResolutionData to pipeline format
+    const pipelineResolutionData: PipelineResolutionData = {
+      diceRolls: resolutionData.diceRolls || {},
+      choices: resolutionData.choices || {},
+      allocations: resolutionData.allocations || {},
+      compoundData: resolutionData.compoundData || {},
+      numericModifiers: resolutionData.numericModifiers || [],
+      manualEffects: resolutionData.manualEffects || [],
+      customComponentData: resolutionData.customComponentData || null
+    };
+    
+    // Get stored metadata from instance
+    let metadata: CheckMetadata = {};
+    if (instanceId) {
+      const storedInstance = kingdom.pendingOutcomes?.find(i => i.previewId === instanceId);
+      if (storedInstance?.metadata) {
+        metadata = storedInstance.metadata;
+      }
+    }
+    
+    // Execute via PipelineIntegrationAdapter
+    return await PipelineIntegrationAdapter.executePipelineAction(
+      actionId,
+      outcome,
+      kingdom,
+      metadata,
+      pipelineResolutionData
+    );
+  }
   
-  // Log action
-  await trackPlayerAction(actionId, context.rollData?.outcome);
-  
-  return { success: context.executionResult?.success };
+  // Action not migrated - show error
+  logger.error(`Action ${actionId} not found in pipeline system`);
+  return { success: false, error: 'Action not migrated' };
 }
 ```
 
-**See:** `docs/systems/core/check-type-differences.md` for action-specific behavior (pre/post interactions, custom components).
+**Key Details:**
+- Uses PipelineIntegrationAdapter for action execution
+- Adapter bridges legacy system to new pipeline architecture
+- Pre-roll interactions (Step 2) handled by UI before rolling
+- Post-apply interactions (Step 7) handled by UI after apply button
+- Action logging via GameCommandsService
 
 ### UpkeepPhaseController
 
@@ -276,61 +397,34 @@ async performAction(actionId: string) {
 
 ## Integration Patterns
 
-### With PipelineCoordinator
-
-Controllers trigger pipeline for all check execution:
-
-```typescript
-// Phase controller triggers pipeline
-const coordinator = new PipelineCoordinator();
-const context = await coordinator.executePipeline(checkId, {
-  checkType: this.checkType,  // 'event' | 'incident' | 'action'
-  userId: game.userId
-});
-
-// Pipeline handles:
-// - Requirements check (Step 1)
-// - Pre-roll interactions (Step 2)
-// - Roll execution (Step 3)
-// - Outcome display (Step 4)
-// - User interactions (Step 5)
-// - Apply button wait (Step 6)
-// - Post-apply interactions (Step 7)
-// - Effect execution (Step 8)
-// - Cleanup (Step 9)
-
-return { success: context.executionResult?.success };
-```
-
-**Pattern:** Controllers focus on phase-specific logic (triggering, persistence), PipelineCoordinator handles execution.
-
-**See:** `docs/systems/core/pipeline-coordinator.md` for complete 9-step flow.
-
 ### With OutcomePreviewService
 
-PipelineCoordinator manages OutcomePreview internally:
+Controllers create and manage check instances:
 
 ```typescript
-// Controllers no longer call OutcomePreviewService directly
-// PipelineCoordinator handles:
-// - Step 4: createInstance()
-// - Step 4: storeOutcome()
-// - Step 8: markApplied()
+// Create instance (Event/Unrest controllers)
+const instanceId = await outcomePreviewService.createInstance(
+  'event', // or 'incident'
+  checkId,
+  checkPipeline,
+  currentTurn
+);
+
+// Update instance with outcome
+await updateKingdom(kingdom => {
+  const instance = kingdom.pendingOutcomes?.find(i => i.previewId === instanceId);
+  if (instance) {
+    instance.appliedOutcome = {
+      outcome,
+      actorName,
+      skillName,
+      effect: description,
+      modifiers: resolvedModifiers,
+      effectsApplied: true
+    };
+  }
+});
 ```
-
-**Pattern:** Controllers delegate to PipelineCoordinator, which uses OutcomePreviewService.
-
-### With GameCommandsService & GameCommandsResolver
-
-PipelineCoordinator applies effects at Step 8:
-
-```typescript
-// PipelineCoordinator Step 8: Execute Action
-await gameCommandsService.applyNumericModifiers(resolutionData.numericModifiers);
-await gameCommandsResolver.executeGameCommands(resolutionData.gameCommands);
-```
-
-**Pattern:** Controllers don't call these directly - PipelineCoordinator handles effect application.
 
 ### With TurnState
 
@@ -345,6 +439,23 @@ await updateKingdom(k => {
   k.turnState.eventsPhase.eventTriggered = true;
   k.turnState.eventsPhase.eventId = eventId;
 });
+```
+
+### With Services
+
+Controllers delegate complex operations:
+
+```typescript
+// GameCommandsService for resource changes
+const gameCommandsService = await createGameCommandsService();
+await gameCommandsService.applyNumericModifiers(modifiers, outcome);
+
+// IgnoreEventService for event ignoring
+const { ignoreEventService } = await import('../services/IgnoreEventService');
+return ignoreEventService.ignoreEvent(eventId, options);
+
+// ActionAvailabilityService for requirement checks
+return actionAvailabilityService.checkRequirements(action, kingdom);
 ```
 
 ---
@@ -411,7 +522,6 @@ await completePhaseStepByIndex(EventsPhaseSteps.RESOLVE_EVENT);
 
 - ❌ Access TurnManager or PhaseHandler directly
 - ❌ Perform UI operations in controllers
-- ❌ Bypass OutcomePreviewService for check data
 - ❌ Use magic numbers for step indices
 - ❌ Trigger other controllers (phases are self-executing)
 - ❌ Mix data access with business logic
@@ -457,22 +567,26 @@ Phase Controllers provide:
 - ✅ Standardized factory function pattern
 - ✅ Required phase guard protection
 - ✅ Consistent step management
-- ✅ Clear integration points (trigger PipelineCoordinator for checks)
+- ✅ Clear service delegation (OutcomePreviewService, IgnoreEventService, etc.)
 - ✅ Separation of concerns (business logic only)
 - ✅ Type-safe step references
 
 **Architecture:**
-- **Check-based phases** (Events, Unrest, Actions) trigger PipelineCoordinator for execution
-- **Non-check phases** (Status, Resource, Upkeep) execute directly
+- **Event/Unrest phases** create OutcomePreview instances directly
+- **Action phase** delegates to PipelineIntegrationAdapter
+- **Status/Resource/Upkeep phases** execute directly without checks
 - Controllers handle phase-specific logic (triggering, persistence, state management)
-- PipelineCoordinator handles unified check execution (9-step flow)
+- UI components handle user interactions and display
 
 This architecture ensures maintainable, testable phase implementations that follow consistent patterns across all six kingdom phases.
 
 ---
 
 **Related Documents:**
-- `docs/systems/core/pipeline-coordinator.md` - Check execution architecture (9-step flow)
-- `docs/systems/core/check-type-differences.md` - Events vs Incidents vs Actions
-- `docs/systems/core/turn-and-phase-system.md` - Turn/phase progression architecture
-- `docs/ARCHITECTURE.md` - Overall system architecture
+- [turn-and-phase-system.md](./turn-and-phase-system.md) - Turn/phase progression architecture
+- [../../ARCHITECTURE.md](../../ARCHITECTURE.md) - Overall system architecture
+- [../pipeline/pipeline-coordinator.md](../pipeline/pipeline-coordinator.md) - Pipeline execution system
+- [../../guides/debugging-guide.md](../../guides/debugging-guide.md) - Debugging guide
+
+**Status:** ✅ Accurate as of 2025-12-10  
+**Last Updated:** 2025-12-10

@@ -10,7 +10,7 @@ This documentation describes the architecture and core systems of the Reignmaker
 
 1. **[ARCHITECTURE.md](ARCHITECTURE.md)** - Complete system overview
 2. **Choose your task type:**
-   - **Understanding checks/outcomes?** → [core-systems/checks/outcome-display-system.md](core-systems/checks/outcome-display-system.md)
+   - **Understanding checks/outcomes?** → [core-systems/checks/check-card.md](core-systems/checks/check-card.md)
    - **Working with pipelines?** → [core-systems/pipeline/pipeline-coordinator.md](core-systems/pipeline/pipeline-coordinator.md)
    - **Modifying resources?** → [core-systems/effects/typed-modifiers-system.md](core-systems/effects/typed-modifiers-system.md)
    - **Debugging issues?** → [guides/debugging-guide.md](guides/debugging-guide.md)
