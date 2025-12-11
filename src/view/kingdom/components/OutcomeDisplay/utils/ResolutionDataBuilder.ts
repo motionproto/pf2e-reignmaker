@@ -39,42 +39,60 @@ export function buildResolutionData(options: {
   
   // ✨ AUTO-CONVERT OUTCOME BADGES: Extract resource from badge template
   // This allows badges to work without manually creating matching modifiers
+  // Handles both dice badges (after rolling) and static badges
   if (outcomeBadges && outcomeBadges.length > 0) {
     for (let i = 0; i < outcomeBadges.length; i++) {
       const badge = outcomeBadges[i];
-      
-      // Skip badges without dice values
-      if (!badge.value || badge.value.type !== 'dice') continue;
-      
-      // Skip fame badges (handled separately)
+
+      // Skip badges without values
+      if (!badge.value) continue;
+
+      // Skip fame badges (handled separately by critical success bonus)
       if ((badge as any)._isFame) continue;
-      
-      // Get badge index for rolled value lookup
-      const badgeIndex = (badge as any)._modifierIndex ?? i;
-      const rolledValue = resolvedDice.get(badgeIndex);
-      
-      // Skip if not rolled yet
-      if (rolledValue === undefined) continue;
-      
-      // Extract resource from template (e.g., "Lose {{value}} Lumber" -> "lumber")
-      // Handles: "Lose/Gain/Remove {{value}} [resource]" patterns
-      const templateMatch = badge.template?.match(/(?:Lose|Gain|Remove)\s+\{\{value\}\}\s+(\w+)/i);
-      if (!templateMatch) continue;
-      
-      // Special case: "imprisoned unrest" -> "imprisoned" (our internal resource name)
-      let resource = templateMatch[1].toLowerCase();
-      if (resource === 'imprisoned') {
-        resource = 'imprisoned'; // Already correct
+
+      // Extract resource from template using multiple patterns
+      // Pattern 1: "Lose/Gain/Remove/Reduce {{value}} [resource]"
+      // Pattern 2: "Reduce [resource] by {{value}}"
+      let templateMatch = badge.template?.match(/(?:Lose|Gain|Remove|Reduce)\s+\{\{value\}\}\s+(\w+)/i);
+      if (!templateMatch) {
+        templateMatch = badge.template?.match(/(?:Reduce)\s+(\w+)\s+by\s+\{\{value\}\}/i);
       }
-      
-      // Determine if negative (lose vs gain)
-      const isNegative = badge.template?.toLowerCase().includes('lose') || 
-                         badge.variant === 'negative';
-      
-      const finalValue = isNegative ? -Math.abs(rolledValue) : rolledValue;
-      
-      numericModifiers.push({ resource, value: finalValue });
-      console.log(`✨ [ResolutionDataBuilder] Auto-converted badge: ${resource} = ${finalValue}`);
+
+      if (!templateMatch) continue;
+
+      // Get resource name (lowercase)
+      let resource = templateMatch[1].toLowerCase();
+
+      // Determine if negative based on template text ONLY
+      // "Lose", "Reduce", "Remove" = subtract the value
+      // "Gain" = add the value
+      // Note: badge.variant is for UI styling only (whether outcome is good/bad for player),
+      // NOT for determining the sign. e.g., "Gain Unrest" has variant='negative' (bad for player)
+      // but should ADD unrest, not subtract it.
+      const templateLower = badge.template?.toLowerCase() || '';
+      const isNegative = templateLower.includes('lose') ||
+                         templateLower.includes('reduce') ||
+                         templateLower.includes('remove');
+
+      // Handle dice badges (need rolled value)
+      if (badge.value.type === 'dice') {
+        const badgeIndex = (badge as any)._modifierIndex ?? i;
+        const rolledValue = resolvedDice.get(badgeIndex);
+
+        // Skip if not rolled yet
+        if (rolledValue === undefined) continue;
+
+        const finalValue = isNegative ? -Math.abs(rolledValue) : rolledValue;
+        numericModifiers.push({ resource, value: finalValue });
+        console.log(`✨ [ResolutionDataBuilder] Auto-converted dice badge: ${resource} = ${finalValue}`);
+      }
+      // Handle static badges (use amount directly)
+      else if (badge.value.type === 'static') {
+        const amount = badge.value.amount;
+        const finalValue = isNegative ? -Math.abs(amount) : amount;
+        numericModifiers.push({ resource, value: finalValue });
+        console.log(`✨ [ResolutionDataBuilder] Auto-converted static badge: ${resource} = ${finalValue}`);
+      }
     }
   }
   

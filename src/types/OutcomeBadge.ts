@@ -112,11 +112,11 @@ export function renderBadgeToString(badge: UnifiedOutcomeBadge): string {
   
   // Replace value
   if (badge.value) {
-    const valueStr = badge.value.type === 'static' 
+    const valueStr = badge.value.type === 'static'
       ? badge.value.amount.toString()
-      : badge.value.result !== undefined 
+      : badge.value.result !== undefined
         ? badge.value.result.toString()
-        : `[${badge.value.formula}]`;
+        : badge.value.formula;
     result = result.replace(/\{\{value\}\}/g, valueStr);
   }
   

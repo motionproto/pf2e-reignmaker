@@ -1,14 +1,18 @@
 /**
- * Immigration Event Pipeline
+ * Immigration Event Pipeline (CHOICE-BASED)
  *
- * Critical Success: +1 settlement level for random settlement
- * Success: +1d3 gold (economy boost)
- * Failure/Critical Failure: No penalty (beneficial event)
+ * New settlers arrive seeking homes in your kingdom.
+ * How will you handle the population influx?
+ *
+ * Approaches:
+ * - Welcome All Freely (V) - Open borders and generous integration
+ * - Controlled Integration (P) - Vetting and systematic settlement
+ * - Exploit as Labor (R) - Relocate and use as cheap workforce
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
-import { textBadge } from '../../types/OutcomeBadge';
+import { valueBadge, textBadge, diceBadge } from '../../types/OutcomeBadge';
 
 export const immigrationPipeline: CheckPipeline = {
   id: 'immigration',
@@ -17,113 +21,284 @@ export const immigrationPipeline: CheckPipeline = {
   checkType: 'event',
   tier: 1,
 
+  // Strategic choice - triggers voting system
+  // Options ordered: Virtuous (left) → Practical (center) → Ruthless (right)
+  strategicChoice: {
+    label: 'How will you handle the new arrivals?',
+    required: true,
+    options: [
+      {
+        id: 'welcome-all',
+        label: 'Welcome All Freely',
+        description: 'Open borders and generous integration support',
+        icon: 'fas fa-door-open',
+        skills: ['diplomacy', 'society'],
+        personality: { virtuous: 3 },
+        outcomeBadges: {
+          criticalSuccess: [
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
+            textBadge('Gain 1 new worksite', 'fas fa-industry', 'positive')
+          ],
+          success: [
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
+            textBadge('Gain 1 new worksite', 'fas fa-industry', 'positive')
+          ],
+          failure: [
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
+            textBadge('Gain 1 new worksite', 'fas fa-industry', 'positive')
+          ],
+          criticalFailure: [
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative'),
+            textBadge('Gain 1 new worksite', 'fas fa-industry', 'positive')
+          ]
+        }
+      },
+      {
+        id: 'controlled',
+        label: 'Controlled Integration',
+        description: 'Systematic vetting and settlement program',
+        icon: 'fas fa-clipboard-check',
+        skills: ['society', 'survival'],
+        personality: { practical: 3 },
+        outcomeBadges: {
+          criticalSuccess: [
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
+            diceBadge('Gain {{value}} Gold (skilled workers)', 'fas fa-coins', '1d3', 'positive')
+          ],
+          success: [
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
+            valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
+          ],
+          failure: [
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+          ],
+          criticalFailure: [
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+          ]
+        }
+      },
+      {
+        id: 'exploit',
+        label: 'Exploit as Labor',
+        description: 'Relocate and use as cheap workforce',
+        icon: 'fas fa-hammer',
+        skills: ['intimidation', 'warfare'],
+        personality: { ruthless: 3 },
+        outcomeBadges: {
+          criticalSuccess: [
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive'),
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
+            textBadge('Gain 2 new worksites', 'fas fa-industry', 'positive')
+          ],
+          success: [
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
+            textBadge('Gain 2 new worksites', 'fas fa-industry', 'positive')
+          ],
+          failure: [
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
+            textBadge('Gain 1 new worksite', 'fas fa-industry', 'positive')
+          ],
+          criticalFailure: [
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
+            textBadge('-1 faction relation', 'fas fa-users-slash', 'negative'),
+            textBadge('Gain 1 new worksite', 'fas fa-industry', 'positive')
+          ]
+        }
+      }
+    ]
+  },
+
   skills: [
-      { skill: 'diplomacy', description: 'welcome newcomers' },
-      { skill: 'society', description: 'integrate settlers' },
-      { skill: 'survival', description: 'find them land' },
-    ],
+    { skill: 'diplomacy', description: 'welcome newcomers' },
+    { skill: 'society', description: 'integrate settlers' },
+    { skill: 'survival', description: 'find them land' },
+    { skill: 'intimidation', description: 'enforce labor assignments' },
+    { skill: 'warfare', description: 'relocate population' },
+  ],
 
   outcomes: {
     criticalSuccess: {
-      description: 'A wave of settlers brings growth and prosperity.',
+      description: 'Immigration brings prosperity to your kingdom.',
+      endsEvent: true,
       modifiers: [],
-      outcomeBadges: [
-        textBadge('+1 level for random settlement', 'fa-city', 'positive')
-      ]
+      outcomeBadges: []
     },
     success: {
-      description: 'Immigration stimulates the local economy.',
-      modifiers: [
-        { type: 'dice', resource: 'gold', formula: '1d3', duration: 'immediate' }
-      ]
+      description: 'New settlers integrate smoothly.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
     },
     failure: {
-      description: 'Few settlers decide to stay.',
-      modifiers: []
+      description: 'Integration proves difficult and costly.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
     },
     criticalFailure: {
-      description: 'Seasonal workers return home.',
-      modifiers: []
+      description: 'The immigration wave creates significant problems.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
     },
   },
 
   preview: {
     calculate: async (ctx) => {
-      const outcomeBadges: any[] = [];
-      const warnings: string[] = [];
-      
-      // Only show settlement level preview for critical success
-      if (ctx.outcome !== 'criticalSuccess') {
-        return { resources: [], outcomeBadges: [], warnings: [] };
-      }
-      
-      // Import handler
-      const { IncreaseSettlementLevelHandler } = await import('../../services/gameCommands/handlers/IncreaseSettlementLevelHandler');
-      const handler = new IncreaseSettlementLevelHandler();
-      
-      const preparedCommand = await handler.prepare(
-        { type: 'increaseSettlementLevel', increase: 1 },
-        { actionId: 'immigration', outcome: ctx.outcome, kingdom: ctx.kingdom, metadata: ctx.metadata } as GameCommandContext
-      );
-      
-      if (!preparedCommand) {
-        warnings.push('No settlements available');
-        return { resources: [], outcomeBadges: [], warnings };
-      }
-      
-      // Store prepared command for execute step
-      if (!ctx.metadata) {
-        ctx.metadata = {};
-      }
-      ctx.metadata._preparedIncreaseLevel = preparedCommand;
-      
-      // Support both single badge and array of badges
-      if (preparedCommand.outcomeBadges) {
-        outcomeBadges.push(...preparedCommand.outcomeBadges);
-      } else if (preparedCommand.outcomeBadge) {
-        outcomeBadges.push(preparedCommand.outcomeBadge);
-      }
-      
-      return {
-        resources: [],
-        outcomeBadges,
-        warnings
+      // Read approach from kingdom store (set by PreRollChoiceSelector voting)
+      const { get } = await import('svelte/store');
+      const { kingdomData } = await import('../../stores/KingdomStore');
+      const kingdom = get(kingdomData);
+      const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
+      const outcome = ctx.outcome;
+
+      // Find the selected approach option
+      const selectedOption = immigrationPipeline.strategicChoice?.options.find(opt => opt.id === approach);
+
+      // Get outcome badges from the selected approach
+      const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
+      const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
+
+      // Calculate modifiers and prepare game commands based on approach
+      let modifiers: any[] = [];
+      const commandContext: GameCommandContext = {
+        actionId: 'immigration',
+        outcome: ctx.outcome,
+        kingdom: ctx.kingdom,
+        metadata: ctx.metadata || {}
       };
+
+      if (approach === 'welcome-all') {
+        // Welcome All Freely (Virtuous)
+        if (outcome === 'criticalSuccess') {
+          modifiers = [
+            { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
+            { type: 'dice', resource: 'unrest', formula: '1d3', negative: true, duration: 'immediate' }
+          ];
+          // Gain 1 new worksite - would require a CreateWorksiteHandler
+          ctx.metadata._newWorksites = 1;
+        } else if (outcome === 'success') {
+          modifiers = [
+            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
+          ];
+          ctx.metadata._newWorksites = 1;
+        } else if (outcome === 'failure') {
+          modifiers = [
+            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
+            { type: 'dice', resource: 'gold', formula: '1d3', negative: true, duration: 'immediate' }
+          ];
+          ctx.metadata._newWorksites = 1;
+        } else if (outcome === 'criticalFailure') {
+          modifiers = [
+            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
+            { type: 'dice', resource: 'gold', formula: '2d3', negative: true, duration: 'immediate' }
+          ];
+          ctx.metadata._newWorksites = 1;
+        }
+      } else if (approach === 'controlled') {
+        // Controlled Integration (Practical)
+        if (outcome === 'criticalSuccess') {
+          modifiers = [
+            { type: 'dice', resource: 'unrest', formula: '1d3', negative: true, duration: 'immediate' },
+            { type: 'dice', resource: 'gold', formula: '1d3', duration: 'immediate' }
+          ];
+        } else if (outcome === 'success') {
+          modifiers = [
+            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' },
+            { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
+          ];
+        } else if (outcome === 'failure') {
+          modifiers = [
+            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
+          ];
+        } else if (outcome === 'criticalFailure') {
+          modifiers = [
+            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' }
+          ];
+        }
+      } else if (approach === 'exploit') {
+        // Exploit as Labor (Ruthless)
+        if (outcome === 'criticalSuccess') {
+          modifiers = [
+            { type: 'dice', resource: 'gold', formula: '2d3', duration: 'immediate' },
+            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
+          ];
+          ctx.metadata._newWorksites = 2;
+        } else if (outcome === 'success') {
+          modifiers = [
+            { type: 'dice', resource: 'gold', formula: '1d3', duration: 'immediate' },
+            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
+          ];
+          ctx.metadata._newWorksites = 2;
+        } else if (outcome === 'failure') {
+          modifiers = [
+            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
+            { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
+          ];
+          ctx.metadata._newWorksites = 1;
+        } else if (outcome === 'criticalFailure') {
+          modifiers = [
+            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
+            { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
+          ];
+          ctx.metadata._newWorksites = 1;
+          // Adjust faction -1
+          const { AdjustFactionHandler } = await import('../../services/gameCommands/handlers/AdjustFactionHandler');
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFaction', adjustment: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedAdjustFaction = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        }
+      }
+
+      // Store modifiers in context for execute step
+      ctx.metadata._outcomeModifiers = modifiers;
+
+      return { resources: [], outcomeBadges };
     }
   },
 
   execute: async (ctx) => {
-    // Only execute on critical success
-    if (ctx.outcome !== 'criticalSuccess') {
-      return { success: true };
-    }
-    
-    // Get prepared command from preview step
-    const preparedCommand = ctx.metadata._preparedIncreaseLevel;
-    
-    if (!preparedCommand) {
-      // Fallback: prepare now if somehow missed
-      const { IncreaseSettlementLevelHandler } = await import('../../services/gameCommands/handlers/IncreaseSettlementLevelHandler');
-      const handler = new IncreaseSettlementLevelHandler();
-      
-      const fallbackCommand = await handler.prepare(
-        { type: 'increaseSettlementLevel', increase: 1 },
-        { actionId: 'immigration', outcome: ctx.outcome, kingdom: ctx.kingdom, metadata: ctx.metadata } as GameCommandContext
-      );
-      
-      if (!fallbackCommand?.commit) {
-        return { success: true, message: 'No settlements to increase' };
+    // NOTE: Standard modifiers (unrest, gold, fame) are applied automatically by
+    // ResolutionDataBuilder + GameCommandsService via outcomeBadges.
+    // This execute() only handles special game commands.
+
+    const { get } = await import('svelte/store');
+    const { kingdomData } = await import('../../stores/KingdomStore');
+    const kingdom = get(kingdomData);
+    const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
+    const outcome = ctx.outcome;
+
+    // Execute faction adjustment for ruthless critical failure
+    if (approach === 'exploit' && outcome === 'criticalFailure') {
+      const factionCommand = ctx.metadata?._preparedAdjustFaction;
+      if (factionCommand?.commit) {
+        await factionCommand.commit();
       }
-      
-      await fallbackCommand.commit();
-      return { success: true };
     }
-    
-    // Commit the settlement level increase
-    if (preparedCommand.commit) {
-      await preparedCommand.commit();
-    }
-    
+
+    // TODO: Implement worksite creation
+    // The _newWorksites metadata indicates how many worksites should be created
+    // This would require a CreateWorksiteHandler or similar system
+
+    // TODO: Track personality choice (Phase 4)
+    // await personalityTracker.recordChoice(approach, personality);
+
     return { success: true };
   },
 

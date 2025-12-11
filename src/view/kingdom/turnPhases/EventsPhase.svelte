@@ -34,7 +34,28 @@
    } from '../../../services/pf2e';
    import { buildPossibleOutcomes } from '../../../controllers/shared/PossibleOutcomeHelpers';
    import { buildEventOutcomes } from '../../../controllers/shared/EventOutcomeHelpers';
-   import { getApproachOutcomeBadges } from '../../../controllers/shared/ApproachOutcomeBadges';
+   import { textBadge } from '../../../types/OutcomeBadge';
+
+   /**
+    * Get outcome badges from the pipeline's strategicChoice options
+    * Reads directly from the event definition instead of a separate lookup file
+    */
+   function getOutcomeBadgesFromPipeline(
+      event: CheckPipeline,
+      approachId: string | null,
+      outcomeType: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure'
+   ): any[] {
+      if (!approachId || !event.strategicChoice?.options) {
+         return [textBadge('Select an approach to see possible outcomes', 'fas fa-question-circle', 'info')];
+      }
+
+      const selectedOption = event.strategicChoice.options.find(opt => opt.id === approachId);
+      if (!selectedOption?.outcomeBadges) {
+         return [];
+      }
+
+      return selectedOption.outcomeBadges[outcomeType] || [];
+   }
 
    // Initialize controller and service
    let eventPhaseController: any;
@@ -145,19 +166,14 @@
          possibleOutcomes: (() => {
             const outcomes = buildPossibleOutcomes(event.outcomes, true);
             const selectedApproach = $kingdomData.turnState?.eventsPhase?.selectedApproach;
-            
-            // If event has strategic choice and approach is selected, inject approach-specific badges
+
+            // If event has strategic choice and approach is selected, inject approach-specific badges from pipeline
             if (event.strategicChoice && selectedApproach) {
                outcomes.forEach(outcome => {
-                  const approachBadges = getApproachOutcomeBadges(
-                     event.id,
-                     selectedApproach,
-                     outcome.result
-                  );
-                  outcome.outcomeBadges = approachBadges;
+                  outcome.outcomeBadges = getOutcomeBadgesFromPipeline(event, selectedApproach, outcome.result);
                });
             }
-            
+
             return outcomes;
          })(),
          isBeingResolved,
@@ -269,19 +285,14 @@
       const event = currentEvent; // Capture for closure
       const outcomes = buildPossibleOutcomes(event.outcomes, true);
       const selectedApproach = $kingdomData.turnState?.eventsPhase?.selectedApproach;
-      
-      // If event has strategic choice and approach is selected, inject approach-specific badges
+
+      // If event has strategic choice and approach is selected, inject approach-specific badges from pipeline
       if (event.strategicChoice && selectedApproach) {
          outcomes.forEach(outcome => {
-            const approachBadges = getApproachOutcomeBadges(
-               event.id,
-               selectedApproach,
-               outcome.result
-            );
-            outcome.outcomeBadges = approachBadges;
+            outcome.outcomeBadges = getOutcomeBadgesFromPipeline(event, selectedApproach, outcome.result);
          });
       }
-      
+
       return outcomes;
    })() : [];
    

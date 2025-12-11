@@ -62,7 +62,7 @@
      - S: -1 Unrest, imprison 1d2 dissidents (convert unrest to imprisoned if available)
      - F: +1 Unrest
      - CF: +1d3 Unrest, -1 Fame
-- **Status:** Complete, needs rebalancing to new ranges
+- **Status:** Complete - uses `ConvertUnrestToImprisonedHandler` for harsh approach. Note: Mercy pardon requires settlement selection UI (use Execute or Pardon Prisoners action instead).
 
 ### 2. Feud ✅
 - **Dimension:** Conflict resolution approach
@@ -864,3 +864,191 @@ Match outcome types to personality:
 - **Fame is rare** - Auto-awarded on CS, only add explicit Fame for reputation-focused events
 - **Keep totals balanced** - Multiple resources okay but stay within overall ranges
 - **Reference existing actions** - When using game commands, reference existing action implementations (Arrest Dissidents, Train Army, Outfit Army, Claim Stipend, Execute Prisoners, etc.)
+
+---
+
+## Technical Implementation Guide
+
+### How Modifiers Flow Through the Pipeline
+
+Understanding the modifier flow is critical for implementing events correctly:
+
+```
+1. preview.calculate() → returns outcomeBadges for display
+2. OutcomeBadges.svelte → displays badges, user rolls dice
+3. ResolutionDataBuilder → converts badges to numericModifiers
+4. UnifiedCheckHandler.applyDefaultModifiers() → applies via GameCommandsService
+5. execute() → ONLY handles special game commands (not standard modifiers)
+```
+
+### Standard Modifiers (Auto-Applied)
+
+**DO NOT manually apply these in execute()** - they are handled automatically:
+- Unrest changes (`±1`, `±1d3`)
+- Fame changes (`±1`)
+- Gold changes (`±1d3`, `±2d3`)
+- Food/Lumber/Stone/Ore changes (`±1d4`, `±2d4`)
+
+The `ResolutionDataBuilder` extracts these from outcome badges using template patterns:
+- `"Gain {{value}} Gold"` → `+gold`
+- `"Lose {{value}} Gold"` → `-gold`
+- `"Reduce Unrest by {{value}}"` → `-unrest`
+- `"Gain {{value}} Unrest"` → `+unrest`
+
+### Badge Template Patterns
+
+Use these exact patterns in badges for auto-conversion to work:
+
+```typescript
+// These patterns are auto-converted to numericModifiers:
+diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')  // -unrest
+diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')  // +unrest
+valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')  // +fame
+diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')  // -gold
+diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')  // +gold
+
+// Text-only badges (NOT auto-converted, need game commands):
+textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+textBadge('Imprison 2 in Anvilgate', 'fas fa-handcuffs', 'info')
+```
+
+### Game Commands (Manual Execution Required)
+
+These require explicit handling in `preview.calculate()` and `execute()`:
+
+| Effect | Handler | Example |
+|--------|---------|---------|
+| Convert unrest to imprisoned | `ConvertUnrestToImprisonedHandler` | Imprison 1d3 dissidents |
+| Adjust faction relations | `AdjustFactionHandler` | Adjust 1 faction +1/-1 |
+| Damage structure | `DamageStructureHandler` | Damage 1 structure |
+| Destroy structure | `DestroyStructureHandler` | Destroy 1 structure |
+| Destroy worksite | `DestroyWorksiteHandler` | Destroy 1 worksite |
+| Reduce imprisoned | `ReduceImprisonedHandler` | Remove 1d3 imprisoned (pardon) |
+| Spawn enemy army | `SpawnEnemyArmyHandler` | Spawn enemy army |
+| Spend player action | `SpendPlayerActionHandler` | Lose 1 leader action |
+
+### Implementing Game Commands in Events
+
+Follow this pattern for game commands:
+
+```typescript
+// In preview.calculate():
+import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
+import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
+
+preview: {
+  calculate: async (ctx) => {
+    const outcomeBadges = [...]; // Get from strategicChoice option
+
+    if (approach === 'force' && outcome === 'criticalSuccess') {
+      const commandContext: GameCommandContext = {
+        actionId: 'event-id',
+        outcome: ctx.outcome,
+        kingdom: ctx.kingdom,
+        metadata: ctx.metadata || {}
+      };
+
+      // Roll dice for variable amounts
+      const roll = new Roll('1d3');
+      await roll.evaluate({ async: true });
+      const imprisonCount = roll.total || 1;
+
+      // Prepare the handler
+      const handler = new ConvertUnrestToImprisonedHandler();
+      const command = await handler.prepare(
+        { type: 'convertUnrestToImprisoned', amount: imprisonCount },
+        commandContext
+      );
+
+      // Store for execute() and add badges
+      if (command) {
+        ctx.metadata._preparedImprison = command;
+        if (command.outcomeBadges) {
+          outcomeBadges.push(...command.outcomeBadges);
+        } else if (command.outcomeBadge) {
+          outcomeBadges.push(command.outcomeBadge);
+        }
+      }
+    }
+
+    return { resources: [], outcomeBadges };
+  }
+},
+
+// In execute():
+execute: async (ctx) => {
+  // NOTE: Standard modifiers are auto-applied via ResolutionDataBuilder
+  // Only execute special game commands here
+
+  const imprisonCommand = ctx.metadata?._preparedImprison;
+  if (imprisonCommand?.commit) {
+    await imprisonCommand.commit();
+  }
+
+  return { success: true };
+}
+```
+
+### Common Mistakes to Avoid
+
+1. **DON'T manually apply standard modifiers in execute()**
+   ```typescript
+   // ❌ WRONG - This duplicates work done by ResolutionDataBuilder
+   execute: async (ctx) => {
+     await updateKingdom(k => {
+       k.unrest += 1;  // DON'T DO THIS
+       k.fame -= 1;    // DON'T DO THIS
+     });
+   }
+   ```
+
+2. **DON'T skip game command preparation**
+   ```typescript
+   // ❌ WRONG - Can't just set metadata and expect it to work
+   ctx.metadata._imprisonDissidents = '1d3';  // This does nothing!
+
+   // ✅ RIGHT - Prepare the handler
+   const handler = new ConvertUnrestToImprisonedHandler();
+   const command = await handler.prepare(...);
+   ctx.metadata._preparedImprison = command;
+   ```
+
+3. **DON'T forget to commit prepared commands**
+   ```typescript
+   // ❌ WRONG - Preparing without committing
+   const command = await handler.prepare(...);
+   // Missing: command.commit()
+
+   // ✅ RIGHT - Store and commit in execute()
+   ctx.metadata._preparedCommand = command;
+   // Then in execute():
+   if (ctx.metadata._preparedCommand?.commit) {
+     await ctx.metadata._preparedCommand.commit();
+   }
+   ```
+
+4. **DO use consistent badge template patterns**
+   ```typescript
+   // ❌ WRONG - Won't be auto-converted
+   textBadge('-1d3 Unrest', ...)
+
+   // ✅ RIGHT - Auto-converted by ResolutionDataBuilder
+   diceBadge('Reduce Unrest by {{value}}', ..., '1d3', 'positive')
+   ```
+
+### Available Game Command Handlers
+
+Located in `src/services/gameCommands/handlers/`:
+
+| Handler | Command Type | Purpose |
+|---------|--------------|---------|
+| `ConvertUnrestToImprisonedHandler` | `convertUnrestToImprisoned` | Convert unrest → imprisoned (auto-distributes) |
+| `AdjustFactionHandler` | `adjustFaction` | Change faction relations |
+| `DamageStructureHandler` | `damageStructure` | Damage structure(s) |
+| `DestroyStructureHandler` | `destroyStructure` | Destroy structure(s) |
+| `DestroyWorksiteHandler` | `destroyWorksite` | Destroy worksite(s) |
+| `ReduceImprisonedHandler` | `reduceImprisoned` | Reduce imprisoned (requires settlementId) |
+| `SpendPlayerActionHandler` | `spendPlayerAction` | Consume leader action |
+| `SpawnEnemyArmyHandler` | `spawnEnemyArmy` | Create hostile army |
+
+See `src/services/gameCommands/README.md` for complete documentation.

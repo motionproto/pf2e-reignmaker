@@ -2,15 +2,19 @@
  * Criminal Trial Event Pipeline (CHOICE-BASED)
  *
  * Authorities catch a notorious criminal - how will you administer justice?
- * 
+ *
  * Approaches:
- * - Fair Trial (Society/Diplomacy) - Just and transparent
- * - Harsh Punishment (Intimidation/Performance) - Deter future crime
- * - Show Mercy (Religion/Diplomacy) - Compassion and forgiveness
+ * - Show Mercy (Religion/Diplomacy) - Compassion and forgiveness (Virtuous)
+ * - Fair Trial (Society/Diplomacy) - Just and transparent (Practical)
+ * - Harsh Punishment (Intimidation/Performance) - Deter future crime (Ruthless)
+ *
+ * Based on EVENT_MIGRATION_STATUS.md specifications
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { valueBadge, textBadge } from '../../types/OutcomeBadge';
+import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
+import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
+import { valueBadge, textBadge, diceBadge } from '../../types/OutcomeBadge';
 
 export const criminalTrialPipeline: CheckPipeline = {
   id: 'criminal-trial',
@@ -34,17 +38,19 @@ export const criminalTrialPipeline: CheckPipeline = {
         personality: { virtuous: 3 },
         outcomeBadges: {
           criticalSuccess: [
-            valueBadge('Gain {{value}} Fame', 'fas fa-star', 2, 'positive'),
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
+            diceBadge('Remove {{value}} imprisoned (pardoned)', 'fas fa-unlock', '1d3', 'info')
           ],
           success: [
-            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
+            valueBadge('Remove {{value}} imprisoned (pardoned)', 'fas fa-unlock', 1, 'info')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 2, 'negative')
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ],
           criticalFailure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 3, 'negative')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
           ]
         }
       },
@@ -57,18 +63,17 @@ export const criminalTrialPipeline: CheckPipeline = {
         personality: { practical: 3 },
         outcomeBadges: {
           criticalSuccess: [
-            valueBadge('Gain {{value}} Fame', 'fas fa-star', 2, 'positive'),
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
           ],
           success: [
-            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
             valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
           ],
           failure: [
             valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ],
           criticalFailure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 2, 'negative')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
           ]
         }
       },
@@ -81,16 +86,18 @@ export const criminalTrialPipeline: CheckPipeline = {
         personality: { ruthless: 3 },
         outcomeBadges: {
           criticalSuccess: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 3, 'positive')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
+            diceBadge('Imprison {{value}} dissidents', 'fas fa-handcuffs', '1d3', 'info')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 2, 'positive')
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
+            diceBadge('Imprison {{value}} dissidents', 'fas fa-handcuffs', '1d2', 'info')
           ],
           failure: [
             valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ],
           criticalFailure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 2, 'negative'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
             valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
           ]
         }
@@ -110,26 +117,26 @@ export const criminalTrialPipeline: CheckPipeline = {
     criticalSuccess: {
       description: 'Your handling of justice is exemplary.',
       endsEvent: true,
-      modifiers: [], // Modified by choice
-      outcomeBadges: [] // Will be populated dynamically based on approach
+      modifiers: [],
+      outcomeBadges: []
     },
     success: {
       description: 'Justice is served effectively.',
       endsEvent: true,
-      modifiers: [], // Modified by choice
-      outcomeBadges: [] // Will be populated dynamically based on approach
+      modifiers: [],
+      outcomeBadges: []
     },
     failure: {
       description: 'Complications arise from your approach.',
       endsEvent: true,
-      modifiers: [], // Modified by choice
-      outcomeBadges: [] // Will be populated dynamically based on approach
+      modifiers: [],
+      outcomeBadges: []
     },
     criticalFailure: {
       description: 'Your approach backfires severely.',
       endsEvent: true,
-      modifiers: [], // Modified by choice
-      outcomeBadges: [] // Will be populated dynamically based on approach
+      modifiers: [],
+      outcomeBadges: []
     },
   },
 
@@ -144,55 +151,118 @@ export const criminalTrialPipeline: CheckPipeline = {
 
       // Find the selected approach option
       const selectedOption = criminalTrialPipeline.strategicChoice?.options.find(opt => opt.id === approach);
-      
+
       // Get outcome badges from the selected approach
       const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
-      const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] || [];
+      const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
 
       // Calculate modifiers based on approach
       let modifiers: any[] = [];
-      
-      if (approach === 'fair') {
+
+      if (approach === 'mercy') {
+        // Show Mercy (Virtuous)
         if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'static', resource: 'fame', value: 2, duration: 'immediate' },
-            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
-          ];
-        } else if (outcome === 'success') {
           modifiers = [
             { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
+            { type: 'dice', resource: 'unrest', formula: '-1d3', negative: true, duration: 'immediate' }
+          ];
+          // TODO: Remove 1d3 imprisoned (pardoned)
+          ctx.metadata._removeImprisoned = '1d3';
+        } else if (outcome === 'success') {
+          modifiers = [
+            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
+          ];
+          // TODO: Remove 1 imprisoned (pardoned)
+          ctx.metadata._removeImprisoned = 1;
+        } else if (outcome === 'failure') {
+          modifiers = [
+            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
+          ];
+        } else if (outcome === 'criticalFailure') {
+          modifiers = [
+            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' }
+          ];
+        }
+      } else if (approach === 'fair') {
+        // Fair Trial (Practical)
+        if (outcome === 'criticalSuccess') {
+          modifiers = [
+            { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
+            { type: 'dice', resource: 'unrest', formula: '-1d3', negative: true, duration: 'immediate' }
+          ];
+        } else if (outcome === 'success') {
+          modifiers = [
             { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
           ];
         } else if (outcome === 'failure') {
-          modifiers = [{ type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }];
+          modifiers = [
+            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
+          ];
         } else if (outcome === 'criticalFailure') {
-          modifiers = [{ type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }];
+          modifiers = [
+            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' }
+          ];
         }
       } else if (approach === 'harsh') {
+        // Harsh Punishment (Ruthless)
+        const commandContext: GameCommandContext = {
+          actionId: 'criminal-trial',
+          outcome: ctx.outcome,
+          kingdom: ctx.kingdom,
+          metadata: ctx.metadata || {}
+        };
+
         if (outcome === 'criticalSuccess') {
-          modifiers = [{ type: 'static', resource: 'unrest', value: -3, duration: 'immediate' }];
-        } else if (outcome === 'success') {
-          modifiers = [{ type: 'static', resource: 'unrest', value: -2, duration: 'immediate' }];
-        } else if (outcome === 'failure') {
-          modifiers = [{ type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }];
-        } else if (outcome === 'criticalFailure') {
           modifiers = [
-            { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' },
-            { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
+            { type: 'dice', resource: 'unrest', formula: '-1d3', negative: true, duration: 'immediate' }
           ];
-        }
-      } else if (approach === 'mercy') {
-        if (outcome === 'criticalSuccess') {
+          // Imprison 1d3 dissidents (convert unrest to imprisoned)
+          const imprisonHandler = new ConvertUnrestToImprisonedHandler();
+          const roll = new Roll('1d3');
+          await roll.evaluate({ async: true });
+          const imprisonCount = roll.total || 1;
+          const imprisonCommand = await imprisonHandler.prepare(
+            { type: 'convertUnrestToImprisoned', amount: imprisonCount },
+            commandContext
+          );
+          if (imprisonCommand) {
+            ctx.metadata._preparedImprison = imprisonCommand;
+            if (imprisonCommand.outcomeBadges) {
+              outcomeBadges.push(...imprisonCommand.outcomeBadges);
+            } else if (imprisonCommand.outcomeBadge) {
+              outcomeBadges.push(imprisonCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'success') {
           modifiers = [
-            { type: 'static', resource: 'fame', value: 2, duration: 'immediate' },
             { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
           ];
-        } else if (outcome === 'success') {
-          modifiers = [{ type: 'static', resource: 'fame', value: 1, duration: 'immediate' }];
+          // Imprison 1d2 dissidents
+          const imprisonHandler = new ConvertUnrestToImprisonedHandler();
+          const roll = new Roll('1d2');
+          await roll.evaluate({ async: true });
+          const imprisonCount = roll.total || 1;
+          const imprisonCommand = await imprisonHandler.prepare(
+            { type: 'convertUnrestToImprisoned', amount: imprisonCount },
+            commandContext
+          );
+          if (imprisonCommand) {
+            ctx.metadata._preparedImprison = imprisonCommand;
+            if (imprisonCommand.outcomeBadges) {
+              outcomeBadges.push(...imprisonCommand.outcomeBadges);
+            } else if (imprisonCommand.outcomeBadge) {
+              outcomeBadges.push(imprisonCommand.outcomeBadge);
+            }
+          }
         } else if (outcome === 'failure') {
-          modifiers = [{ type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }];
+          modifiers = [
+            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
+          ];
         } else if (outcome === 'criticalFailure') {
-          modifiers = [{ type: 'static', resource: 'unrest', value: 3, duration: 'immediate' }];
+          modifiers = [
+            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
+            { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
+          ];
         }
       }
 
@@ -204,23 +274,19 @@ export const criminalTrialPipeline: CheckPipeline = {
   },
 
   execute: async (ctx) => {
-    // Apply modifiers calculated in preview
-    const modifiers = ctx.metadata?._outcomeModifiers || [];
-    if (modifiers.length > 0) {
-      const { updateKingdom } = await import('../../stores/KingdomStore');
-      await updateKingdom((kingdom) => {
-        for (const mod of modifiers) {
-          if (mod.resource === 'unrest') {
-            kingdom.unrest = Math.max(0, kingdom.unrest + mod.value);
-          } else if (mod.resource === 'fame') {
-            kingdom.fame = Math.max(0, kingdom.fame + mod.value);
-          }
-        }
-      });
+    // NOTE: Standard modifiers (unrest, gold, fame) are applied automatically by
+    // ResolutionDataBuilder + GameCommandsService via outcomeBadges.
+    // This execute() only handles special game commands.
+
+    // Execute imprisonment (harsh approach - success/critical success)
+    const imprisonCommand = ctx.metadata?._preparedImprison;
+    if (imprisonCommand?.commit) {
+      await imprisonCommand.commit();
     }
 
-    // TODO: Track personality choice (Phase 4)
-    // await personalityTracker.recordChoice(approach, personality);
+    // NOTE: Mercy approach's "pardon prisoners" (reduce imprisoned) would require
+    // settlement selection UI - not implemented in this event yet.
+    // Use the "Execute or Pardon Prisoners" action instead.
 
     return { success: true };
   },

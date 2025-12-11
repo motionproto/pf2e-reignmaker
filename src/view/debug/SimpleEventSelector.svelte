@@ -6,18 +6,29 @@
    // Load all events sorted by name
    let allEvents = pipelineRegistry.getPipelinesByType('event')
       .sort((a, b) => a.name.localeCompare(b.name));
-   
-   // List of pre-roll choice event IDs (strategic approach selection)
-   const PRE_ROLL_CHOICE_EVENTS = [
-      'feud',
-      'criminal-trial',
-      'public-scandal',
-      'inquisition'
-   ];
-   
-   // Helper to check if event has pre-roll choices
-   function hasPreRollChoice(eventId: string): boolean {
-      return PRE_ROLL_CHOICE_EVENTS.includes(eventId);
+
+   // Map of migrated event IDs to their migration order number
+   // These events use the strategic choice pattern with voting
+   const MIGRATED_EVENTS: Record<string, number> = {
+      'criminal-trial': 1,
+      'feud': 2,
+      'inquisition': 3,
+      'public-scandal': 4,
+      'plague': 5,
+      'food-shortage': 6,
+      'natural-disaster': 7,
+      'immigration': 8,
+      'assassination-attempt': 9
+   };
+
+   // Helper to check if event has been migrated to strategic choice pattern
+   function isMigrated(eventId: string): boolean {
+      return eventId in MIGRATED_EVENTS;
+   }
+
+   // Helper to get migration order number
+   function getMigrationNumber(eventId: string): number | null {
+      return MIGRATED_EVENTS[eventId] ?? null;
    }
    
    let selectedEventId = '';
@@ -125,7 +136,11 @@
          <option value="">-- Select Event --</option>
          {#each allEvents as event}
             <option value={event.id}>
-               {hasPreRollChoice(event.id) ? '🎯 ' : ''}{event.name}
+               {#if isMigrated(event.id)}
+                  ✅ [{getMigrationNumber(event.id)}] {event.name}
+               {:else}
+                  {event.name}
+               {/if}
             </option>
          {/each}
       </select>
