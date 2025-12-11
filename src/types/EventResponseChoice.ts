@@ -34,6 +34,18 @@ export interface EventResponseChoice {
     failure?: any[];
     criticalFailure?: any[];
   };
+  
+  /**
+   * Outcome descriptions for this strategic choice
+   * Maps outcome types to description strings
+   * Used to show choice-specific outcome text
+   */
+  outcomeDescriptions?: {
+    criticalSuccess?: string;
+    success?: string;
+    failure?: string;
+    criticalFailure?: string;
+  };
 }
 
 export interface EventResponseChoices {

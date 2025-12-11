@@ -14,8 +14,9 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
-import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { valueBadge, textBadge, diceBadge } from '../../types/OutcomeBadge';
+import { factionService } from '../../services/factions';
+import { adjustAttitudeBySteps } from '../../utils/faction-attitude-adjuster';
 
 export const inquisitionPipeline: CheckPipeline = {
   id: 'inquisition',
@@ -31,12 +32,18 @@ export const inquisitionPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'protect',
+        id: 'virtuous',
         label: 'Protect the Accused',
         description: 'Stand against persecution',
         icon: 'fas fa-shield-alt',
         skills: ['diplomacy', 'society'],
         personality: { virtuous: 4 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Your stand against persecution inspires the kingdom. The accused are vindicated and your moral leadership earns respect.',
+          success: 'Your protection prevents violence. Fair hearings replace witch hunts.',
+          failure: 'Zealots denounce you as heretic-sympathizer. Division and unrest grow.',
+          criticalFailure: 'Your intervention backfires. Zealots spark riots and persecution intensifies.'
+        },
         outcomeBadges: {
           criticalSuccess: [
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
@@ -54,12 +61,18 @@ export const inquisitionPipeline: CheckPipeline = {
         }
       },
       {
-        id: 'neutral',
+        id: 'practical',
         label: 'Stay Neutral',
         description: 'Let the church and people work it out',
         icon: 'fas fa-balance-scale',
         skills: ['society', 'deception'],
         personality: { practical: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Your calculated neutrality proves masterful. Both sides offer gifts and the inquisition fizzles out.',
+          success: 'Your neutral stance lets cooler heads prevail. Grateful moderates offer tribute.',
+          failure: 'Your neutrality breeds contempt from both sides. Resentment and unrest grow.',
+          criticalFailure: 'Your cowardly neutrality satisfies no one. Violence spirals and your reputation suffers.'
+        },
         outcomeBadges: {
           criticalSuccess: [
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
@@ -79,12 +92,18 @@ export const inquisitionPipeline: CheckPipeline = {
         }
       },
       {
-        id: 'support',
+        id: 'ruthless',
         label: 'Support Inquisitors',
         description: 'Endorse the hunt for heresy',
         icon: 'fas fa-fire',
         skills: ['religion', 'intimidation'],
         personality: { ruthless: 4 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Your theocratic enforcement crushes dissent. The accused are imprisoned and religious authorities praise your piety.',
+          success: 'Your support empowers decisive action. Swift arrests silence criticism and establish order.',
+          failure: 'Your persecution sparks outrage. Neighboring kingdoms condemn the brutality.',
+          criticalFailure: 'Your zealous support triggers international condemnation. Allied nations are horrified.'
+        },
         outcomeBadges: {
           criticalSuccess: [
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
@@ -118,25 +137,25 @@ export const inquisitionPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'Your response is highly effective.',
+      description: 'Your response succeeds brilliantly.',
       endsEvent: true,
       modifiers: [],
       outcomeBadges: []
     },
     success: {
-      description: 'The situation is resolved.',
+      description: 'The situation resolves according to your approach.',
       endsEvent: true,
       modifiers: [],
       outcomeBadges: []
     },
     failure: {
-      description: 'The persecution continues.',
+      description: 'The persecution continues despite your efforts.',
       endsEvent: false,
       modifiers: [],
       outcomeBadges: []
     },
     criticalFailure: {
-      description: 'Violence erupts.',
+      description: 'Your approach sparks violence.',
       endsEvent: false,
       modifiers: [],
       outcomeBadges: []
@@ -162,7 +181,7 @@ export const inquisitionPipeline: CheckPipeline = {
       // Calculate modifiers based on approach
       let modifiers: any[] = [];
 
-      if (approach === 'protect') {
+      if (approach === 'virtuous') {
         // Protect the Accused (Virtuous)
         if (outcome === 'criticalSuccess') {
           modifiers = [
@@ -182,7 +201,7 @@ export const inquisitionPipeline: CheckPipeline = {
             { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' }
           ];
         }
-      } else if (approach === 'neutral') {
+      } else if (approach === 'practical') {
         // Stay Neutral (Practical)
         if (outcome === 'criticalSuccess') {
           modifiers = [
@@ -204,7 +223,7 @@ export const inquisitionPipeline: CheckPipeline = {
             { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
           ];
         }
-      } else if (approach === 'support') {
+      } else if (approach === 'ruthless') {
         // Support Inquisitors (Ruthless)
         const commandContext: GameCommandContext = {
           actionId: 'inquisition',
@@ -220,7 +239,7 @@ export const inquisitionPipeline: CheckPipeline = {
           // Imprison 1d3 heretics (convert unrest to imprisoned)
           const imprisonHandler = new ConvertUnrestToImprisonedHandler();
           const roll = new Roll('1d3');
-          await roll.evaluate({ async: true });
+          await roll.evaluate();
           const imprisonCount = roll.total || 1;
           const imprisonCommand = await imprisonHandler.prepare(
             { type: 'convertUnrestToImprisoned', amount: imprisonCount },
@@ -241,7 +260,7 @@ export const inquisitionPipeline: CheckPipeline = {
           // Imprison 1d2 heretics
           const imprisonHandler = new ConvertUnrestToImprisonedHandler();
           const roll = new Roll('1d2');
-          await roll.evaluate({ async: true });
+          await roll.evaluate();
           const imprisonCount = roll.total || 1;
           const imprisonCommand = await imprisonHandler.prepare(
             { type: 'convertUnrestToImprisoned', amount: imprisonCount },
@@ -265,18 +284,32 @@ export const inquisitionPipeline: CheckPipeline = {
             { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
             { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
           ];
-          // Adjust 1 faction -1
-          const factionHandler = new AdjustFactionHandler();
-          const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFaction', adjustment: -1, count: 1 },
-            commandContext
+          // Adjust 1 random faction -1
+          const eligibleFactions = (kingdom.factions || []).filter((f: any) =>
+            f.attitude && f.attitude !== 'Hostile'
           );
-          if (factionCommand) {
-            ctx.metadata._preparedAdjustFaction = factionCommand;
-            if (factionCommand.outcomeBadges) {
-              outcomeBadges.push(...factionCommand.outcomeBadges);
-            } else if (factionCommand.outcomeBadge) {
-              outcomeBadges.push(factionCommand.outcomeBadge);
+          if (eligibleFactions.length > 0) {
+            const randomFaction = eligibleFactions[Math.floor(Math.random() * eligibleFactions.length)];
+            const newAttitude = adjustAttitudeBySteps(randomFaction.attitude, -1);
+            ctx.metadata._factionAdjustment = {
+              factionId: randomFaction.id,
+              factionName: randomFaction.name,
+              oldAttitude: randomFaction.attitude,
+              newAttitude: newAttitude,
+              steps: -1
+            };
+            if (newAttitude) {
+              const specificBadge = textBadge(
+                `Relations with ${randomFaction.name} worsen: ${randomFaction.attitude} → ${newAttitude}`,
+                'fas fa-handshake-slash',
+                'negative'
+              );
+              
+              // Replace generic badge with specific one
+              const { replaceGenericFactionBadge } = await import('../../utils/badge-helpers');
+              const updatedBadges = replaceGenericFactionBadge(outcomeBadges, specificBadge);
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...updatedBadges);
             }
           }
         }
@@ -301,9 +334,12 @@ export const inquisitionPipeline: CheckPipeline = {
     }
 
     // Execute faction adjustment (support approach - critical failure)
-    const factionCommand = ctx.metadata?._preparedAdjustFaction;
-    if (factionCommand?.commit) {
-      await factionCommand.commit();
+    const factionAdjustment = ctx.metadata?._factionAdjustment;
+    if (factionAdjustment?.factionId && factionAdjustment?.newAttitude) {
+      await factionService.adjustAttitude(
+        factionAdjustment.factionId,
+        factionAdjustment.steps
+      );
     }
 
     return { success: true };

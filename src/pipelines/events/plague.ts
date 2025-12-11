@@ -27,12 +27,18 @@ export const plaguePipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'treatment',
+        id: 'virtuous',
         label: 'Provide Free Treatment',
         description: 'Care for all citizens regardless of cost',
         icon: 'fas fa-hand-holding-medical',
         skills: ['medicine', 'religion'],
         personality: { virtuous: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Your selfless care saves countless lives and earns deep gratitude from your people.',
+          success: 'Free treatment contains the plague while maintaining public trust.',
+          failure: 'The cost of treating everyone strains resources as the plague spreads.',
+          criticalFailure: 'Your treatment efforts are overwhelmed, draining resources as the plague spreads uncontrollably.'
+        },
         outcomeBadges: {
           criticalSuccess: [
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
@@ -55,12 +61,18 @@ export const plaguePipeline: CheckPipeline = {
         }
       },
       {
-        id: 'quarantine',
+        id: 'practical',
         label: 'Quarantine Effectively',
         description: 'Contain the spread and compensate losses',
         icon: 'fas fa-house-medical-circle-check',
         skills: ['society', 'medicine'],
         personality: { practical: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Your systematic quarantine stops the plague with minimal disruption.',
+          success: 'Effective containment measures limit the spread and calm fears.',
+          failure: 'Quarantine measures prove insufficient as the plague continues spreading.',
+          criticalFailure: 'Your quarantine fails catastrophically, draining resources while the plague rages on.'
+        },
         outcomeBadges: {
           criticalSuccess: [
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
@@ -79,12 +91,18 @@ export const plaguePipeline: CheckPipeline = {
         }
       },
       {
-        id: 'lockdown',
+        id: 'ruthless',
         label: 'Lock Down Hard',
         description: 'Burn infected areas to stop the spread',
         icon: 'fas fa-fire',
         skills: ['intimidation', 'survival'],
         personality: { ruthless: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Your brutal lockdown eradicates the plague completely, and salvaged assets fill your treasury.',
+          success: 'Harsh measures stop the spread, though some assets are seized in the process.',
+          failure: 'Your brutal approach damages infrastructure while failing to stop the plague.',
+          criticalFailure: 'Your draconian measures destroy property, damage relationships, and fail to contain the outbreak.'
+        },
         outcomeBadges: {
           criticalSuccess: [
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
@@ -119,26 +137,26 @@ export const plaguePipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'The plague is contained with minimal impact.',
+      description: 'Your approach stops the plague completely.',
       endsEvent: true,
       modifiers: [],
       outcomeBadges: []
     },
     success: {
-      description: 'Your response effectively manages the outbreak.',
+      description: 'The plague is brought under control.',
       endsEvent: true,
       modifiers: [],
       outcomeBadges: []
     },
     failure: {
       description: 'The plague spreads despite your efforts.',
-      endsEvent: false,
+      endsEvent: true,
       modifiers: [],
       outcomeBadges: []
     },
     criticalFailure: {
-      description: 'A devastating outbreak overwhelms your response.',
-      endsEvent: false,
+      description: 'Your approach worsens the outbreak.',
+      endsEvent: true,
       modifiers: [],
       outcomeBadges: []
     },
@@ -163,7 +181,7 @@ export const plaguePipeline: CheckPipeline = {
       // Calculate modifiers and prepare game commands based on approach
       let modifiers: any[] = [];
 
-      if (approach === 'treatment') {
+      if (approach === 'virtuous') {
         // Provide Free Treatment (Virtuous)
         if (outcome === 'criticalSuccess') {
           modifiers = [
@@ -186,9 +204,10 @@ export const plaguePipeline: CheckPipeline = {
             { type: 'dice', resource: 'gold', formula: '1d3', negative: true, duration: 'immediate' },
             { type: 'dice', resource: 'food', formula: '2d4', negative: true, duration: 'immediate' }
           ];
-          // TODO: Add ongoing plague effect (-1d4 Food/turn for 2 turns)
+          // Mark that ongoing plague effect should be added (-1d4 Food/turn for 2 turns)
+          ctx.metadata._addOngoingPlague = true;
         }
-      } else if (approach === 'quarantine') {
+      } else if (approach === 'practical') {
         // Quarantine Effectively (Practical)
         if (outcome === 'criticalSuccess') {
           modifiers = [
@@ -209,7 +228,7 @@ export const plaguePipeline: CheckPipeline = {
             { type: 'dice', resource: 'gold', formula: '2d3', negative: true, duration: 'immediate' }
           ];
         }
-      } else if (approach === 'lockdown') {
+      } else if (approach === 'ruthless') {
         // Lock Down Hard (Ruthless)
         if (outcome === 'criticalSuccess') {
           modifiers = [
@@ -272,19 +291,33 @@ export const plaguePipeline: CheckPipeline = {
               outcomeBadges.push(destroyCommand.outcomeBadge);
             }
           }
-          // Adjust faction -1
-          const { AdjustFactionHandler } = await import('../../services/gameCommands/handlers/AdjustFactionHandler');
-          const factionHandler = new AdjustFactionHandler();
-          const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFaction', adjustment: -1, count: 1 },
-            commandContext
+          // Adjust 1 random faction -1
+          const { adjustAttitudeBySteps } = await import('../../utils/faction-attitude-adjuster');
+          const eligibleFactions = (kingdom.factions || []).filter((f: any) =>
+            f.attitude && f.attitude !== 'Hostile'
           );
-          if (factionCommand) {
-            ctx.metadata._preparedAdjustFaction = factionCommand;
-            if (factionCommand.outcomeBadges) {
-              outcomeBadges.push(...factionCommand.outcomeBadges);
-            } else if (factionCommand.outcomeBadge) {
-              outcomeBadges.push(factionCommand.outcomeBadge);
+          if (eligibleFactions.length > 0) {
+            const randomFaction = eligibleFactions[Math.floor(Math.random() * eligibleFactions.length)];
+            const newAttitude = adjustAttitudeBySteps(randomFaction.attitude, -1);
+            ctx.metadata._factionAdjustment = {
+              factionId: randomFaction.id,
+              factionName: randomFaction.name,
+              oldAttitude: randomFaction.attitude,
+              newAttitude: newAttitude,
+              steps: -1
+            };
+            if (newAttitude) {
+              const specificBadge = {
+                icon: 'fas fa-handshake-slash',
+                template: `Relations with ${randomFaction.name} worsen: ${randomFaction.attitude} → ${newAttitude}`,
+                variant: 'negative'
+              };
+              
+              // Replace generic badge with specific one
+              const { replaceGenericFactionBadge } = await import('../../utils/badge-helpers');
+              const updatedBadges = replaceGenericFactionBadge(outcomeBadges, specificBadge);
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...updatedBadges);
             }
           }
         }
@@ -308,8 +341,43 @@ export const plaguePipeline: CheckPipeline = {
     const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
     const outcome = ctx.outcome;
 
+    // Execute game commands for treatment approach
+    if (approach === 'virtuous') {
+      if (outcome === 'criticalFailure' && ctx.metadata?._addOngoingPlague) {
+        // Add ongoing plague modifier directly to kingdom
+        const { updateKingdom } = await import('../../stores/KingdomStore');
+        const currentTurn = kingdom.turn || 1;
+        const modifierId = `ongoing-plague-${Date.now()}`;
+
+        await updateKingdom(k => {
+          if (!k.activeModifiers) {
+            k.activeModifiers = [];
+          }
+          k.activeModifiers.push({
+            id: modifierId,
+            name: 'Plague Spreads',
+            description: 'The plague continues to ravage your kingdom, spoiling food stores.',
+            icon: 'fas fa-biohazard',
+            tier: 1,
+            sourceType: 'custom',
+            sourceId: ctx.instanceId || 'plague-event',
+            sourceName: 'Plague Event',
+            startTurn: currentTurn,
+            modifiers: [
+              { type: 'dice', resource: 'food', formula: '1d4', negative: true, duration: 2 }
+            ]
+          });
+        });
+
+        ChatMessage.create({
+          content: `<p><strong>Ongoing Effect:</strong> Plague Spreads</p><p>The plague continues to ravage your kingdom, spoiling food stores.</p><p><em>Effect: -1d4 Food per turn for 2 turns</em></p>`,
+          speaker: ChatMessage.getSpeaker()
+        });
+      }
+    }
+
     // Execute game commands for lockdown approach
-    if (approach === 'lockdown') {
+    if (approach === 'ruthless') {
       if (outcome === 'failure') {
         const damageCommand = ctx.metadata?._preparedDamageStructure;
         if (damageCommand?.commit) {
@@ -320,9 +388,13 @@ export const plaguePipeline: CheckPipeline = {
         if (destroyCommand?.commit) {
           await destroyCommand.commit();
         }
-        const factionCommand = ctx.metadata?._preparedAdjustFaction;
-        if (factionCommand?.commit) {
-          await factionCommand.commit();
+        const factionAdjustment = ctx.metadata?._factionAdjustment;
+        if (factionAdjustment?.factionId && factionAdjustment?.newAttitude) {
+          const { factionService } = await import('../../services/factions');
+          await factionService.adjustAttitude(
+            factionAdjustment.factionId,
+            factionAdjustment.steps
+          );
         }
       }
     }

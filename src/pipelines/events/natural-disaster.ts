@@ -13,6 +13,7 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { valueBadge, textBadge, diceBadge } from '../../types/OutcomeBadge';
+import { PLAYER_KINGDOM } from '../../types/ownership';
 
 export const naturalDisasterPipeline: CheckPipeline = {
   id: 'natural-disaster',
@@ -34,6 +35,12 @@ export const naturalDisasterPipeline: CheckPipeline = {
         icon: 'fas fa-people-roof',
         skills: ['survival', 'medicine'],
         personality: { virtuous: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Heroic evacuation saves countless lives. Gratitude and unity compensate for damage.',
+          success: 'Rescue operations save many lives. Swift evacuation prevents casualties.',
+          failure: 'Rescue efforts lag behind disaster. Buildings and worksites collapse.',
+          criticalFailure: 'Chaotic evacuation proves insufficient. Infrastructure destroyed, people displaced.'
+        },
         outcomeBadges: {
           criticalSuccess: [
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
@@ -57,12 +64,18 @@ export const naturalDisasterPipeline: CheckPipeline = {
         }
       },
       {
-        id: 'balanced',
+        id: 'practical',
         label: 'Balanced Response',
         description: 'Balanced evacuation and damage control',
         icon: 'fas fa-scale-balanced',
         skills: ['society', 'crafting'],
         personality: { practical: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Organized response achieves balance. Lives saved, property damage minimized.',
+          success: 'Balanced approach manages both priorities adequately. Casualties prevented.',
+          failure: 'Resources spread too thin. Buildings and worksites lost.',
+          criticalFailure: 'Confusion leads to delayed decisions. Multiple buildings damaged.'
+        },
         outcomeBadges: {
           criticalSuccess: [
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
@@ -87,8 +100,14 @@ export const naturalDisasterPipeline: CheckPipeline = {
         label: 'Save Assets',
         description: 'Deploy troops to protect valuable structures',
         icon: 'fas fa-building-shield',
-        skills: ['warfare', 'intimidation'],
+        skills: ['intimidation'],
         personality: { ruthless: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Ruthless salvage yields building materials. Citizens resent being abandoned.',
+          success: 'Property protection saves some buildings. Inadequate rescue efforts anger citizens.',
+          failure: 'Soldiers injured saving buildings that collapse anyway. Reputation suffers.',
+          criticalFailure: 'Exhausted troops fail. People die while soldiers protect empty structures.'
+        },
         outcomeBadges: {
           criticalSuccess: [
             diceBadge('Gain {{value}} Lumber/Stone/Ore (salvaged)', 'fas fa-boxes-stacked', '2d4', 'positive'),
@@ -119,31 +138,30 @@ export const naturalDisasterPipeline: CheckPipeline = {
     { skill: 'crafting', description: 'emergency shelters' },
     { skill: 'society', description: 'coordinate relief' },
     { skill: 'medicine', description: 'treat the injured' },
-    { skill: 'warfare', description: 'deploy troops' },
     { skill: 'intimidation', description: 'enforce evacuation' },
   ],
 
   outcomes: {
     criticalSuccess: {
-      description: 'The disaster is handled with minimal casualties.',
+      description: 'Your priorities prove wise in the crisis.',
       endsEvent: true,
       modifiers: [],
       outcomeBadges: []
     },
     success: {
-      description: 'The disaster is managed effectively.',
+      description: 'The disaster is managed according to your priorities.',
       endsEvent: true,
       modifiers: [],
       outcomeBadges: []
     },
     failure: {
-      description: 'Major damage occurs despite your efforts.',
+      description: 'The disaster causes significant damage.',
       endsEvent: true,
       modifiers: [],
       outcomeBadges: []
     },
     criticalFailure: {
-      description: 'The disaster causes devastating losses.',
+      description: 'Your approach leads to catastrophic losses.',
       endsEvent: true,
       modifiers: [],
       outcomeBadges: []
@@ -247,7 +265,7 @@ export const naturalDisasterPipeline: CheckPipeline = {
             else if (worksiteCmd.outcomeBadge) outcomeBadges.push(worksiteCmd.outcomeBadge);
           }
         }
-      } else if (approach === 'balanced') {
+      } else if (approach === 'practical') {
         // Balanced Response (Practical)
         if (outcome === 'criticalSuccess') {
           modifiers = [
@@ -335,7 +353,17 @@ export const naturalDisasterPipeline: CheckPipeline = {
             { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
             { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
           ];
-          // 1 army gains enfeebled - TODO: implement army condition handler
+          // 1 army gains enfeebled - select random player army
+          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
+          if (playerArmies.length > 0) {
+            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
+            ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'enfeebled', value: 1 };
+            // Update badge with army name
+            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army gains enfeebled'));
+            if (armyBadgeIndex >= 0) {
+              outcomeBadges[armyBadgeIndex] = textBadge(`${randomArmy.name} gains enfeebled`, 'fas fa-person-falling', 'negative');
+            }
+          }
         } else if (outcome === 'criticalFailure') {
           modifiers = [
             { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
@@ -350,7 +378,17 @@ export const naturalDisasterPipeline: CheckPipeline = {
             if (cmd.outcomeBadges) outcomeBadges.push(...cmd.outcomeBadges);
             else if (cmd.outcomeBadge) outcomeBadges.push(cmd.outcomeBadge);
           }
-          // 1 army gains enfeebled - TODO: implement army condition handler
+          // 1 army gains enfeebled - select random player army
+          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
+          if (playerArmies.length > 0) {
+            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
+            ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'enfeebled', value: 1 };
+            // Update badge with army name
+            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army gains enfeebled'));
+            if (armyBadgeIndex >= 0) {
+              outcomeBadges[armyBadgeIndex] = textBadge(`${randomArmy.name} gains enfeebled`, 'fas fa-person-falling', 'negative');
+            }
+          }
         }
       }
 
@@ -382,8 +420,12 @@ export const naturalDisasterPipeline: CheckPipeline = {
       await worksiteCommand.commit();
     }
 
-    // TODO: Track personality choice (Phase 4)
-    // await personalityTracker.recordChoice(approach, personality);
+    // Execute army condition (Save Assets failure/critical failure)
+    const armyCondition = ctx.metadata?._armyCondition;
+    if (armyCondition?.actorId) {
+      const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
+      await applyArmyConditionExecution(armyCondition.actorId, armyCondition.condition, armyCondition.value);
+    }
 
     return { success: true };
   },

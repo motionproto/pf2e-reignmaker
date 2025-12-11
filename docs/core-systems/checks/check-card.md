@@ -541,6 +541,157 @@ All checks use the same Check Card UI, but differ in triggering and persistence:
 
 ---
 
+## Badge Helper Utilities
+
+### Targeted Actions with Automatic Selection
+
+For actions that target a specific entity (settlement, structure, etc.) based on capacity, use the **Badge Helper Utilities** in `src/utils/badge-helpers.ts`.
+
+This pattern is useful when you need to:
+- Select a target with the most available capacity
+- Show the target name in the badge before dice are rolled
+- Support both dice formulas and static amounts
+
+**Common use cases:**
+- Imprisonment (selecting settlement with most prison capacity)
+- Structure damage/repair (selecting structure)
+- Resource allocation (selecting storage location)
+- Faction relations (selecting faction)
+
+### Import
+
+```typescript
+import { createTargetedDiceBadge, createTargetedStaticBadge } from '../../../utils/badge-helpers';
+import type { ActionTarget } from '../../../utils/badge-helpers';
+```
+
+### Usage: Dice Formula
+
+```typescript
+// Build targets array
+const targets: ActionTarget[] = settlements.map(settlement => ({
+  id: settlement.id,
+  name: settlement.name,
+  capacity: calculateAvailableCapacity(settlement)
+}));
+
+// Create badge with automatic target selection
+const { badge, targetId, targetName, maxCapacity } = createTargetedDiceBadge({
+  formula: '1d3',
+  action: 'Imprison',
+  targets,
+  icon: 'fas fa-handcuffs',
+  variant: 'info',
+  noTargetMessage: 'No prisons available'  // Optional
+});
+
+// Badge shows: "Imprison 1d3 in Hoofton"
+// After roll: "Imprison 2 in Hoofton"
+```
+
+### Usage: Static Amount
+
+```typescript
+const { badge, targetId, targetName, maxCapacity } = createTargetedStaticBadge({
+  amount: 5,
+  action: 'Repair',
+  targets: repairableStructures,
+  icon: 'fas fa-hammer',
+  variant: 'positive'
+});
+
+// Badge shows: "Repair 5 in Oakdale"
+```
+
+### How It Works
+
+1. **Target Selection**: Automatically selects the target with the **most available capacity**
+2. **Capacity Filtering**: Ignores targets with 0 capacity
+3. **Badge Creation**: Includes target name in the template
+4. **Metadata Return**: Returns `targetId`, `targetName`, and `maxCapacity` for use in commit phase
+
+### Complete Example: Game Command Handler
+
+```typescript
+import { createTargetedDiceBadge } from '../../../utils/badge-helpers';
+import type { ActionTarget } from '../../../utils/badge-helpers';
+
+async prepare(command: any, ctx: GameCommandContext): Promise<PreparedCommand | null> {
+  const diceFormula = command.diceFormula;
+  
+  // Build targets with available capacity
+  const targets: ActionTarget[] = settlements.map(s => ({
+    id: s.id,
+    name: s.name,
+    capacity: calculateCapacity(s) - s.currentAmount
+  }));
+  
+  // Create badge
+  const { badge, targetId, targetName, maxCapacity } = createTargetedDiceBadge({
+    formula: diceFormula,
+    action: 'Imprison',
+    targets,
+    icon: 'fas fa-handcuffs',
+    variant: 'info'
+  });
+  
+  // Store target for commit
+  const metadata = { targetId, targetName, maxCapacity };
+  
+  return {
+    outcomeBadges: [badge],
+    metadata,
+    commit: async () => {
+      // Use targetId to apply effect
+      await applyToTarget(metadata.targetId, rollResult);
+    }
+  };
+}
+```
+
+### ActionTarget Interface
+
+```typescript
+interface ActionTarget {
+  id: string;
+  name: string;
+  capacity: number;  // Available capacity for the action
+}
+```
+
+### Return Value
+
+```typescript
+{
+  badge: UnifiedOutcomeBadge;  // The badge to display
+  targetId: string | null;     // ID of selected target (null if none available)
+  targetName: string | null;   // Name of selected target
+  maxCapacity: number;         // Max capacity of selected target
+}
+```
+
+### No Target Available
+
+If no targets have capacity, returns a text badge:
+
+```typescript
+{
+  badge: textBadge('No prisons available', 'fas fa-handcuffs', 'info'),
+  targetId: null,
+  targetName: null,
+  maxCapacity: 0
+}
+```
+
+### Best Practices
+
+1. **Build fresh targets** - Calculate capacity at prepare time, not during construction
+2. **Filter by capacity** - Only include targets with available space
+3. **Store metadata** - Save targetId for the commit phase
+4. **Cap amounts** - In commit, use `min(rollResult, maxCapacity)` to respect limits
+
+---
+
 ## For Developers
 
 ### Adding Static Badges to Pipeline

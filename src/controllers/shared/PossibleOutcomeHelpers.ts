@@ -44,8 +44,18 @@ function hasOngoingOutcome(outcomes: OutcomeEffects): boolean {
  * 
  * @param outcomes - Pipeline outcomes object
  * @param isEvent - If true, adds "Ends Event" badge for ongoing events
+ * @param choiceDescriptions - Optional choice-specific outcome descriptions (overrides pipeline descriptions)
  */
-export function buildPossibleOutcomes(outcomes?: OutcomeEffects, isEvent: boolean = false): PossibleOutcome[] {
+export function buildPossibleOutcomes(
+  outcomes?: OutcomeEffects, 
+  isEvent: boolean = false,
+  choiceDescriptions?: {
+    criticalSuccess?: string;
+    success?: string;
+    failure?: string;
+    criticalFailure?: string;
+  }
+): PossibleOutcome[] {
   if (!outcomes) return [];
   
   const results: PossibleOutcome[] = [];
@@ -69,7 +79,7 @@ export function buildPossibleOutcomes(outcomes?: OutcomeEffects, isEvent: boolea
     results.push({
       result: 'criticalSuccess',
       label: 'Critical Success',
-      description: critSuccessOutcome.description,
+      description: choiceDescriptions?.criticalSuccess || critSuccessOutcome.description,
       modifiers: critSuccessOutcome.modifiers,
       manualEffects: critSuccessOutcome.manualEffects ?? [],
       gameCommands: critSuccessOutcome.gameCommands ?? [],
@@ -90,7 +100,7 @@ export function buildPossibleOutcomes(outcomes?: OutcomeEffects, isEvent: boolea
     results.push({
       result: 'success',
       label: 'Success',
-      description: outcomes.success.description,
+      description: choiceDescriptions?.success || outcomes.success.description,
       modifiers: outcomes.success.modifiers,
       manualEffects: outcomes.success.manualEffects ?? [],
       gameCommands: outcomes.success.gameCommands ?? [],
@@ -111,7 +121,7 @@ export function buildPossibleOutcomes(outcomes?: OutcomeEffects, isEvent: boolea
     results.push({
       result: 'failure',
       label: 'Failure',
-      description: outcomes.failure.description,
+      description: choiceDescriptions?.failure || outcomes.failure.description,
       modifiers: outcomes.failure.modifiers,
       manualEffects: outcomes.failure.manualEffects ?? [],
       gameCommands: outcomes.failure.gameCommands ?? [],
@@ -132,7 +142,7 @@ export function buildPossibleOutcomes(outcomes?: OutcomeEffects, isEvent: boolea
     results.push({
       result: 'criticalFailure',
       label: 'Critical Failure',
-      description: outcomes.criticalFailure.description,
+      description: choiceDescriptions?.criticalFailure || outcomes.criticalFailure.description,
       modifiers: outcomes.criticalFailure.modifiers,
       manualEffects: outcomes.criticalFailure.manualEffects ?? [],
       gameCommands: outcomes.criticalFailure.gameCommands ?? [],
@@ -175,4 +185,3 @@ export function formatOutcomeMessage(message: string, modifiers?: any[]): string
   
   return `${message} (${modifierText})`;
 }
-

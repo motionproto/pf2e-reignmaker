@@ -406,19 +406,54 @@ export async function createGameCommandsService() {
 
     /**
      * Apply unrest changes with special handling
+     *
+     * Special rule: If reducing unrest below 0 (kingdom already at peace),
+     * award 1d3 gold per point of unrest that would have been reduced.
+     * This is the opposite of the shortfall penalty for resources.
      */
     async applyUnrestChange(value: number, modifierName: string, result: ApplyOutcomeResult): Promise<void> {
       logger.info(`📊 [GameCommands] applyUnrestChange called: value=${value}, modifierName="${modifierName}"`);
-      
+
+      let excessReduction = 0;
+
       await updateKingdom(kingdom => {
         const currentUnrest = kingdom.unrest || 0;
-        const newUnrest = Math.max(0, currentUnrest + value);
+        const targetUnrest = currentUnrest + value;
+
+        // Check if we're trying to reduce unrest below 0
+        if (value < 0 && targetUnrest < 0) {
+          excessReduction = Math.abs(targetUnrest); // How much "wasted" reduction
+          logger.info(`📊 [GameCommands] Excess unrest reduction detected: ${excessReduction} points`);
+        }
+
+        const newUnrest = Math.max(0, targetUnrest);
         logger.info(`📊 [GameCommands] Unrest change: ${currentUnrest} → ${newUnrest} (${value >= 0 ? '+' : ''}${value})`);
         kingdom.unrest = newUnrest;
-
       });
 
       result.applied.resources.push({ resource: 'unrest', value });
+
+      // Award gold bonus for excess unrest reduction (kingdom at peace bonus)
+      if (excessReduction > 0) {
+        // Roll 1d3 gold per point of excess reduction
+        let totalGoldBonus = 0;
+        for (let i = 0; i < excessReduction; i++) {
+          const roll = new Roll('1d3');
+          await roll.evaluate({ async: true });
+          totalGoldBonus += roll.total || 1;
+        }
+
+        logger.info(`📊 [GameCommands] Kingdom at peace bonus: +${totalGoldBonus} gold (${excessReduction} × 1d3)`);
+
+        // Apply the gold bonus
+        await this.applyResourceChange('gold', totalGoldBonus, `${modifierName} (peace dividend)`, result, true);
+
+        // Show floating number and chat message
+        ChatMessage.create({
+          content: `<p><strong>Kingdom at Peace:</strong> Your people's contentment yields a peace dividend of <strong>+${totalGoldBonus} Gold</strong> (${excessReduction} × 1d3).</p>`,
+          speaker: ChatMessage.getSpeaker()
+        });
+      }
     },
 
     /**

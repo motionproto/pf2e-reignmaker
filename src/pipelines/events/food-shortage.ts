@@ -13,6 +13,7 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { valueBadge, textBadge, diceBadge } from '../../types/OutcomeBadge';
+import { PLAYER_KINGDOM } from '../../types/ownership';
 
 export const foodShortagePipeline: CheckPipeline = {
   id: 'food-shortage',
@@ -34,6 +35,12 @@ export const foodShortagePipeline: CheckPipeline = {
         icon: 'fas fa-hand-holding-heart',
         skills: ['diplomacy', 'society'],
         personality: { virtuous: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Generous distribution inspires donations and sharing. Unity strengthens despite depleted supplies.',
+          success: 'Compassion eases suffering. Communities rally together in gratitude.',
+          failure: 'Generosity strains resources dangerously. One army unit falls ill from inadequate provisions.',
+          criticalFailure: 'Supplies exhausted helping everyone. Troops demoralized, civilians starving.'
+        },
         outcomeBadges: {
           criticalSuccess: [
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
@@ -63,6 +70,12 @@ export const foodShortagePipeline: CheckPipeline = {
         icon: 'fas fa-scale-balanced',
         skills: ['society', 'nature'],
         personality: { practical: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Efficient rationing prevents hoarding and waste. Crisis passes with minimal suffering.',
+          success: 'Systematic distribution maintains stability. Citizens accept temporary hardships.',
+          failure: 'Bureaucratic delays spoil food. Frustrated citizens grow discontent.',
+          criticalFailure: 'Rationing collapses into chaos. Corrupt officials hoard, black markets flourish.'
+        },
         outcomeBadges: {
           criticalSuccess: [
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
@@ -87,8 +100,14 @@ export const foodShortagePipeline: CheckPipeline = {
         label: 'Prioritize Elite',
         description: 'Military and leadership first, let the poor suffer',
         icon: 'fas fa-crown',
-        skills: ['intimidation', 'warfare'],
+        skills: ['intimidation'],
         personality: { ruthless: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Swift enforcement crushes dissent. Elite well-fed, masses submit to discipline.',
+          success: 'Military strong while commoners starve. Resentment simmers beneath order.',
+          failure: 'Starving commoners riot. Mobs damage buildings seeking food.',
+          criticalFailure: 'Mass starvation triggers rebellion. Buildings destroyed, reputation ruined.'
+        },
         outcomeBadges: {
           criticalSuccess: [
             diceBadge('Lose {{value}} Food', 'fas fa-wheat-awn', '1d4', 'negative'),
@@ -120,31 +139,30 @@ export const foodShortagePipeline: CheckPipeline = {
     { skill: 'diplomacy', description: 'coordinate relief' },
     { skill: 'society', description: 'systematic rationing' },
     { skill: 'intimidation', description: 'enforce order' },
-    { skill: 'warfare', description: 'military logistics' },
   ],
 
   outcomes: {
     criticalSuccess: {
-      description: 'The crisis is managed effectively.',
+      description: 'Your approach manages the crisis admirably.',
       endsEvent: true,
       modifiers: [],
       outcomeBadges: []
     },
     success: {
-      description: 'The shortage is controlled.',
+      description: 'The food shortage is handled appropriately.',
       endsEvent: true,
       modifiers: [],
       outcomeBadges: []
     },
     failure: {
-      description: 'A severe shortage develops.',
-      endsEvent: false,
+      description: 'The shortage causes hardship.',
+      endsEvent: true,
       modifiers: [],
       outcomeBadges: []
     },
     criticalFailure: {
-      description: 'Famine threatens the kingdom.',
-      endsEvent: false,
+      description: 'Your approach deepens the crisis.',
+      endsEvent: true,
       modifiers: [],
       outcomeBadges: []
     },
@@ -187,13 +205,33 @@ export const foodShortagePipeline: CheckPipeline = {
             { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
             { type: 'dice', resource: 'food', formula: '2d4', negative: true, duration: 'immediate' }
           ];
-          // 1 army gains sickened - TODO: implement army condition handler
+          // 1 army gains sickened - select random player army
+          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
+          if (playerArmies.length > 0) {
+            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
+            ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'sickened', value: 1 };
+            // Update badge with army name
+            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army gains sickened'));
+            if (armyBadgeIndex >= 0) {
+              outcomeBadges[armyBadgeIndex] = textBadge(`${randomArmy.name} gains sickened`, 'fas fa-skull', 'negative');
+            }
+          }
         } else if (outcome === 'criticalFailure') {
           modifiers = [
             { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
             { type: 'dice', resource: 'food', formula: '2d4', negative: true, duration: 'immediate' }
           ];
-          // 1 army rolls morale check - TODO: implement army morale handler
+          // 1 army rolls morale check - select random player army (morale check handled by GM)
+          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
+          if (playerArmies.length > 0) {
+            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
+            ctx.metadata._armyMoraleCheck = { actorId: randomArmy.actorId, armyName: randomArmy.name };
+            // Update badge with army name
+            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army rolls morale'));
+            if (armyBadgeIndex >= 0) {
+              outcomeBadges[armyBadgeIndex] = textBadge(`${randomArmy.name} rolls morale check`, 'fas fa-person-falling-burst', 'negative');
+            }
+          }
         }
       } else if (approach === 'rationing') {
         // Controlled Rationing (Practical)
@@ -235,7 +273,7 @@ export const foodShortagePipeline: CheckPipeline = {
           };
           // Roll 1d4 for imprisoned count
           const roll = new Roll('1d4');
-          await roll.evaluate({ async: true });
+          await roll.evaluate();
           const imprisonCount = roll.total || 1;
           const imprisonCommand = await imprisonHandler.prepare(
             { type: 'convertUnrestToImprisoned', amount: imprisonCount },
@@ -329,7 +367,26 @@ export const foodShortagePipeline: CheckPipeline = {
     const outcome = ctx.outcome;
 
     // Execute game commands based on approach and outcome
-    if (approach === 'prioritize-elite') {
+    if (approach === 'feed-people') {
+      // Feed the People: failure applies sickened to army
+      if (outcome === 'failure') {
+        const armyCondition = ctx.metadata?._armyCondition;
+        if (armyCondition?.actorId) {
+          const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
+          await applyArmyConditionExecution(armyCondition.actorId, armyCondition.condition, armyCondition.value);
+        }
+      }
+      // Critical failure: army rolls morale check (notification only - GM handles the roll)
+      if (outcome === 'criticalFailure') {
+        const armyMoraleCheck = ctx.metadata?._armyMoraleCheck;
+        if (armyMoraleCheck?.armyName) {
+          ChatMessage.create({
+            content: `<p><strong>Morale Check Required:</strong> ${armyMoraleCheck.armyName} must roll a morale check due to severe food shortage.</p>`,
+            speaker: ChatMessage.getSpeaker()
+          });
+        }
+      }
+    } else if (approach === 'prioritize-elite') {
       if (outcome === 'criticalSuccess') {
         const imprisonCommand = ctx.metadata?._preparedImprison;
         if (imprisonCommand?.commit) {
@@ -342,9 +399,6 @@ export const foodShortagePipeline: CheckPipeline = {
         }
       }
     }
-
-    // TODO: Track personality choice (Phase 4)
-    // await personalityTracker.recordChoice(approach, personality);
 
     return { success: true };
   },

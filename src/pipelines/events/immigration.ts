@@ -34,6 +34,12 @@ export const immigrationPipeline: CheckPipeline = {
         icon: 'fas fa-door-open',
         skills: ['diplomacy', 'society'],
         personality: { virtuous: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Generous welcome inspires skilled workers. Farmsteads established, reputation strengthened.',
+          success: 'Open-door policy integrates settlers smoothly. New farmsteads spring up.',
+          failure: 'Integration programs drain treasury. Tensions rise as resources stretch thin.',
+          criticalFailure: 'Overwhelming influx depletes gold reserves. Resentment builds between natives and newcomers.'
+        },
         outcomeBadges: {
           criticalSuccess: [
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
@@ -57,12 +63,18 @@ export const immigrationPipeline: CheckPipeline = {
         }
       },
       {
-        id: 'controlled',
+        id: 'practical',
         label: 'Controlled Integration',
         description: 'Systematic vetting and settlement program',
         icon: 'fas fa-clipboard-check',
         skills: ['society', 'survival'],
         personality: { practical: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Vetting identifies skilled immigrants. Settlement generates revenue, prevents overcrowding.',
+          success: 'Systematic integration works well. Newcomers generate modest tax revenue.',
+          failure: 'Bureaucratic gridlock frustrates everyone. Few settlers make it through.',
+          criticalFailure: 'Screening collapses under volume. Corruption and favoritism breed chaos.'
+        },
         outcomeBadges: {
           criticalSuccess: [
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
@@ -81,12 +93,18 @@ export const immigrationPipeline: CheckPipeline = {
         }
       },
       {
-        id: 'exploit',
+        id: 'ruthless',
         label: 'Exploit as Labor',
         description: 'Relocate and use as cheap workforce',
         icon: 'fas fa-hammer',
-        skills: ['intimidation', 'warfare'],
+        skills: ['intimidation'],
         personality: { ruthless: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Forced labor yields immediate profits. Multiple worksites established despite resentment.',
+          success: 'Labor assignments extract value. Gold flows in while discontent simmers.',
+          failure: 'Harsh treatment sparks resistance. Reputation suffers from cruelty stories.',
+          criticalFailure: 'Brutal approach triggers outrage. Neighboring kingdoms condemn forced labor.'
+        },
         outcomeBadges: {
           criticalSuccess: [
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive'),
@@ -119,30 +137,29 @@ export const immigrationPipeline: CheckPipeline = {
     { skill: 'society', description: 'integrate settlers' },
     { skill: 'survival', description: 'find them land' },
     { skill: 'intimidation', description: 'enforce labor assignments' },
-    { skill: 'warfare', description: 'relocate population' },
   ],
 
   outcomes: {
     criticalSuccess: {
-      description: 'Immigration brings prosperity to your kingdom.',
+      description: 'Your immigration policy succeeds brilliantly.',
       endsEvent: true,
       modifiers: [],
       outcomeBadges: []
     },
     success: {
-      description: 'New settlers integrate smoothly.',
+      description: 'The newcomers are integrated successfully.',
       endsEvent: true,
       modifiers: [],
       outcomeBadges: []
     },
     failure: {
-      description: 'Integration proves difficult and costly.',
+      description: 'Your approach encounters challenges.',
       endsEvent: true,
       modifiers: [],
       outcomeBadges: []
     },
     criticalFailure: {
-      description: 'The immigration wave creates significant problems.',
+      description: 'Your policy creates serious problems.',
       endsEvent: true,
       modifiers: [],
       outcomeBadges: []
@@ -175,33 +192,46 @@ export const immigrationPipeline: CheckPipeline = {
       };
 
       if (approach === 'welcome-all') {
-        // Welcome All Freely (Virtuous)
+        // Welcome All Freely (Virtuous) - all outcomes grant 1 new worksite
+        // Find a valid hex for farmstead
+        const validHexes = (kingdom.hexes || []).filter((hex: any) =>
+          hex.claimed && !hex.settlement && !hex.worksite
+        );
+        // Prefer plains/hills/grassland terrain for farmsteads
+        const preferredTerrains = ['plains', 'hills', 'grassland'];
+        const sortedHexes = validHexes.sort((a: any, b: any) => {
+          const aPreferred = preferredTerrains.includes(a.terrain?.toLowerCase());
+          const bPreferred = preferredTerrains.includes(b.terrain?.toLowerCase());
+          if (aPreferred && !bPreferred) return -1;
+          if (!aPreferred && bPreferred) return 1;
+          return 0;
+        });
+        if (sortedHexes.length > 0) {
+          ctx.metadata._worksiteHexId = sortedHexes[0].id;
+          ctx.metadata._worksiteType = 'farmstead';
+        }
+
         if (outcome === 'criticalSuccess') {
           modifiers = [
             { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
             { type: 'dice', resource: 'unrest', formula: '1d3', negative: true, duration: 'immediate' }
           ];
-          // Gain 1 new worksite - would require a CreateWorksiteHandler
-          ctx.metadata._newWorksites = 1;
         } else if (outcome === 'success') {
           modifiers = [
             { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
           ];
-          ctx.metadata._newWorksites = 1;
         } else if (outcome === 'failure') {
           modifiers = [
             { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
             { type: 'dice', resource: 'gold', formula: '1d3', negative: true, duration: 'immediate' }
           ];
-          ctx.metadata._newWorksites = 1;
         } else if (outcome === 'criticalFailure') {
           modifiers = [
             { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
             { type: 'dice', resource: 'gold', formula: '2d3', negative: true, duration: 'immediate' }
           ];
-          ctx.metadata._newWorksites = 1;
         }
-      } else if (approach === 'controlled') {
+      } else if (approach === 'practical') {
         // Controlled Integration (Practical)
         if (outcome === 'criticalSuccess') {
           modifiers = [
@@ -222,7 +252,7 @@ export const immigrationPipeline: CheckPipeline = {
             { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' }
           ];
         }
-      } else if (approach === 'exploit') {
+      } else if (approach === 'ruthless') {
         // Exploit as Labor (Ruthless)
         if (outcome === 'criticalSuccess') {
           modifiers = [
@@ -248,19 +278,33 @@ export const immigrationPipeline: CheckPipeline = {
             { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
           ];
           ctx.metadata._newWorksites = 1;
-          // Adjust faction -1
-          const { AdjustFactionHandler } = await import('../../services/gameCommands/handlers/AdjustFactionHandler');
-          const factionHandler = new AdjustFactionHandler();
-          const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFaction', adjustment: -1, count: 1 },
-            commandContext
+          // Adjust 1 random faction -1
+          const { adjustAttitudeBySteps } = await import('../../utils/faction-attitude-adjuster');
+          const eligibleFactions = (kingdom.factions || []).filter((f: any) =>
+            f.attitude && f.attitude !== 'Hostile'
           );
-          if (factionCommand) {
-            ctx.metadata._preparedAdjustFaction = factionCommand;
-            if (factionCommand.outcomeBadges) {
-              outcomeBadges.push(...factionCommand.outcomeBadges);
-            } else if (factionCommand.outcomeBadge) {
-              outcomeBadges.push(factionCommand.outcomeBadge);
+          if (eligibleFactions.length > 0) {
+            const randomFaction = eligibleFactions[Math.floor(Math.random() * eligibleFactions.length)];
+            const newAttitude = adjustAttitudeBySteps(randomFaction.attitude, -1);
+            ctx.metadata._factionAdjustment = {
+              factionId: randomFaction.id,
+              factionName: randomFaction.name,
+              oldAttitude: randomFaction.attitude,
+              newAttitude: newAttitude,
+              steps: -1
+            };
+            if (newAttitude) {
+              const specificBadge = {
+                icon: 'fas fa-handshake-slash',
+                template: `Relations with ${randomFaction.name} worsen: ${randomFaction.attitude} → ${newAttitude}`,
+                variant: 'negative'
+              };
+              
+              // Replace generic badge with specific one
+              const { replaceGenericFactionBadge } = await import('../../utils/badge-helpers');
+              const updatedBadges = replaceGenericFactionBadge(outcomeBadges, specificBadge);
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...updatedBadges);
             }
           }
         }
@@ -285,19 +329,26 @@ export const immigrationPipeline: CheckPipeline = {
     const outcome = ctx.outcome;
 
     // Execute faction adjustment for ruthless critical failure
-    if (approach === 'exploit' && outcome === 'criticalFailure') {
-      const factionCommand = ctx.metadata?._preparedAdjustFaction;
-      if (factionCommand?.commit) {
-        await factionCommand.commit();
+    if (approach === 'ruthless' && outcome === 'criticalFailure') {
+      const factionAdjustment = ctx.metadata?._factionAdjustment;
+      if (factionAdjustment?.factionId && factionAdjustment?.newAttitude) {
+        const { factionService } = await import('../../services/factions');
+        await factionService.adjustAttitude(
+          factionAdjustment.factionId,
+          factionAdjustment.steps
+        );
       }
     }
 
-    // TODO: Implement worksite creation
-    // The _newWorksites metadata indicates how many worksites should be created
-    // This would require a CreateWorksiteHandler or similar system
-
-    // TODO: Track personality choice (Phase 4)
-    // await personalityTracker.recordChoice(approach, personality);
+    // Execute worksite creation for welcome-all approach
+    if (approach === 'welcome-all') {
+      const hexId = ctx.metadata?._worksiteHexId;
+      const worksiteType = ctx.metadata?._worksiteType;
+      if (hexId && worksiteType) {
+        const { createWorksiteExecution } = await import('../../execution/territory/createWorksite');
+        await createWorksiteExecution(hexId, worksiteType);
+      }
+    }
 
     return { success: true };
   },

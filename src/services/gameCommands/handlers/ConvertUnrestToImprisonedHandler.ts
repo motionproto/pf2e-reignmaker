@@ -12,6 +12,8 @@ import type { PreparedCommand } from '../../../types/game-commands';
 import { updateKingdom, getKingdomData } from '../../../stores/KingdomStore';
 import { structuresService } from '../../structures';
 import { logger } from '../../../utils/Logger';
+import { createTargetedDiceBadge, createTargetedStaticBadge } from '../../../utils/badge-helpers';
+import type { ActionTarget } from '../../../utils/badge-helpers';
 
 export class ConvertUnrestToImprisonedHandler extends BaseGameCommandHandler {
   canHandle(command: any): boolean {
@@ -20,6 +22,7 @@ export class ConvertUnrestToImprisonedHandler extends BaseGameCommandHandler {
 
   async prepare(command: any, ctx: GameCommandContext): Promise<PreparedCommand | null> {
     const requestedAmount = command.amount || 0;
+    const diceFormula = command.diceFormula || null;  // Optional: dice formula like "1d3"
     const bonusUnrestReduction = command.bonusUnrestReduction || 0;
 
     // If neither conversion nor bonus reduction, skip
@@ -36,108 +39,145 @@ export class ConvertUnrestToImprisonedHandler extends BaseGameCommandHandler {
 
     const currentUnrest = kingdom.unrest || 0;
 
-    // Calculate available prison capacity
-    let totalCapacity = 0;
-    const settlementCapacities: { id: string; name: string; available: number }[] = [];
+    // Build targets array with available capacity
+    const targets: ActionTarget[] = (kingdom.settlements || []).map(settlement => ({
+      id: settlement.id,
+      name: settlement.name,
+      capacity: structuresService.calculateImprisonedUnrestCapacity(settlement) - (settlement.imprisonedUnrest || 0)
+    }));
 
-    for (const settlement of kingdom.settlements || []) {
-      const capacity = structuresService.calculateImprisonedUnrestCapacity(settlement);
-      const currentImprisoned = settlement.imprisonedUnrest || 0;
-      const available = capacity - currentImprisoned;
+    // Check for no unrest case first
+    if (currentUnrest === 0) {
+      const badge = {
+        icon: 'fas fa-handcuffs',
+        template: 'No unrest to imprison',
+        variant: 'info' as const
+      };
+      
+      const metadata: {
+        targetSettlement: { id: string; name: string; available: number } | null;
+        bonusUnrestReduction: number;
+      } = {
+        targetSettlement: null,
+        bonusUnrestReduction
+      };
 
-      if (available > 0) {
-        totalCapacity += available;
-        settlementCapacities.push({
-          id: settlement.id,
-          name: settlement.name,
-          available
-        });
+      if (bonusUnrestReduction > 0) {
+        badge.template += `, -${bonusUnrestReduction} unrest`;
       }
+
+      return {
+        outcomeBadges: [badge],
+        metadata,
+        commit: async () => {
+          // Only apply bonus unrest reduction
+          if (metadata.bonusUnrestReduction > 0) {
+            await updateKingdom(k => {
+              k.unrest = Math.max(0, (k.unrest || 0) - metadata.bonusUnrestReduction);
+            });
+          }
+        }
+      };
     }
 
-    // Calculate how much we can actually convert
-    const amountToConvert = Math.min(requestedAmount, currentUnrest, totalCapacity);
+    // Create badge using helper utility
+    let badge: any;
+    let targetId: string | null;
+    let targetName: string | null;
+    let maxCapacity: number;
 
-    // Pre-calculate allocations for preview message
-    const plannedAllocations: { name: string; amount: number }[] = [];
-    let remainingForPreview = amountToConvert;
-    for (const { name, available } of settlementCapacities) {
-      if (remainingForPreview <= 0) break;
-      const toAllocate = Math.min(remainingForPreview, available);
-      plannedAllocations.push({ name, amount: toAllocate });
-      remainingForPreview -= toAllocate;
+    if (diceFormula) {
+      const result = createTargetedDiceBadge({
+        formula: diceFormula,
+        action: 'Imprison',
+        targets,
+        icon: 'fas fa-handcuffs',
+        variant: 'info',
+        noTargetMessage: 'No prisons available'
+      });
+      badge = result.badge;
+      targetId = result.targetId;
+      targetName = result.targetName;
+      maxCapacity = result.maxCapacity;
+    } else {
+      const result = createTargetedStaticBadge({
+        amount: Math.min(requestedAmount, currentUnrest),
+        action: 'Imprison',
+        targets,
+        icon: 'fas fa-handcuffs',
+        variant: 'info',
+        noTargetMessage: 'No prisons available'
+      });
+      badge = result.badge;
+      targetId = result.targetId;
+      targetName = result.targetName;
+      maxCapacity = result.maxCapacity;
     }
-
-    // Build preview message
-    const messageParts: string[] = [];
     
-    if (totalCapacity === 0) {
-      messageParts.push('No prisons available');
-    } else if (currentUnrest === 0) {
-      messageParts.push('No unrest to imprison');
-    } else if (amountToConvert > 0) {
-      // Format: "Imprison 2 unrest in Anvilgate" or "Imprison 2 unrest in Anvilgate, 1 in Oakhold"
-      const allocationStrings = plannedAllocations.map(a => `${a.amount} in ${a.name}`);
-      messageParts.push(`Imprison ${allocationStrings.join(', ')}`);
-    }
-    
-    // Bonus unrest reduction always applies (regardless of conversion)
+    // Add bonus unrest reduction to badge template if present
     if (bonusUnrestReduction > 0) {
-      messageParts.push(`-${bonusUnrestReduction} unrest`);
+      badge.template += `, -${bonusUnrestReduction} unrest`;
     }
-    
-    const message = messageParts.join(', ') || 'No effect';
-    const hasPositiveEffect = amountToConvert > 0 || bonusUnrestReduction > 0;
 
-    logger.info(`[ConvertUnrestToImprisoned] Preview: ${message}`);
+    // Store target settlement for commit
+    const metadata: {
+      targetSettlement: { id: string; name: string; available: number } | null;
+      bonusUnrestReduction: number;
+    } = {
+      targetSettlement: targetId ? { id: targetId, name: targetName!, available: maxCapacity } : null,
+      bonusUnrestReduction
+    };
+
+    logger.info(`[ConvertUnrestToImprisoned] Preview: ${badge.template}`);
 
     return {
-      outcomeBadges: [{
-        icon: '',
-        template: message,
-        variant: hasPositiveEffect ? 'positive' : 'neutral'
-      }],
+      outcomeBadges: [badge],
+      metadata,
       commit: async () => {
         logger.info(`[ConvertUnrestToImprisoned] Executing command`);
 
-        let remaining = amountToConvert;
         const chatMessageParts: string[] = [];
-        const actualAllocations: { name: string; amount: number }[] = [];
 
         await updateKingdom(k => {
-          // Convert unrest to imprisoned (if capacity available)
-          if (amountToConvert > 0) {
-            // Reduce kingdom unrest by amount being converted
-            k.unrest = Math.max(0, (k.unrest || 0) - amountToConvert);
-
-            // Allocate to settlements with capacity
-            for (const { id, name, available } of settlementCapacities) {
-              if (remaining <= 0) break;
-
-              const settlement = k.settlements.find(s => s.id === id);
-              if (!settlement) continue;
-
-              const toAllocate = Math.min(remaining, available);
-              const currentImprisoned = settlement.imprisonedUnrest || 0;
-              settlement.imprisonedUnrest = currentImprisoned + toAllocate;
-
-              logger.info(`[ConvertUnrestToImprisoned] Imprisoned ${toAllocate} in ${name}`);
-              actualAllocations.push({ name, amount: toAllocate });
-              remaining -= toAllocate;
+          const currentUnrest = k.unrest || 0;
+          
+          // Convert unrest to imprisoned (if target settlement available)
+          if (metadata.targetSettlement && currentUnrest > 0) {
+            const targetId = metadata.targetSettlement.id;
+            const settlement = k.settlements.find(s => s.id === targetId);
+            if (!settlement) {
+              logger.warn(`[ConvertUnrestToImprisoned] Target settlement ${targetId} not found`);
+              return;
             }
+
+            // Calculate how much to actually imprison (min of requested, unrest, and capacity)
+            const currentCapacity = structuresService.calculateImprisonedUnrestCapacity(settlement);
+            const currentImprisoned = settlement.imprisonedUnrest || 0;
+            const availableCapacity = currentCapacity - currentImprisoned;
             
-            // Build chat message with settlement details
-            const allocationDetails = actualAllocations.map(a => `<li>${a.amount} in ${a.name}</li>`).join('');
-            chatMessageParts.push(`<p><strong>Unrest Imprisoned:</strong></p><ul>${allocationDetails}</ul>`);
-          } else if (totalCapacity === 0) {
+            const amountToImprison = Math.min(requestedAmount, currentUnrest, availableCapacity);
+            
+            if (amountToImprison > 0) {
+              // Reduce kingdom unrest
+              k.unrest = Math.max(0, currentUnrest - amountToImprison);
+              
+              // Add to settlement imprisoned
+              settlement.imprisonedUnrest = currentImprisoned + amountToImprison;
+              
+              logger.info(`[ConvertUnrestToImprisoned] Imprisoned ${amountToImprison} in ${settlement.name}`);
+              chatMessageParts.push(`<p><strong>Imprisoned:</strong> ${amountToImprison} in ${settlement.name}</p>`);
+            }
+          } else if (!metadata.targetSettlement) {
             chatMessageParts.push(`<p><em>No prisons available - unrest not imprisoned</em></p>`);
+          } else if (currentUnrest === 0) {
+            chatMessageParts.push(`<p><em>No unrest to imprison</em></p>`);
           }
 
           // Bonus unrest reduction ALWAYS applies (even if no conversion)
-          if (bonusUnrestReduction > 0) {
-            k.unrest = Math.max(0, (k.unrest || 0) - bonusUnrestReduction);
-            logger.info(`[ConvertUnrestToImprisoned] Applied bonus unrest reduction: -${bonusUnrestReduction}`);
-            chatMessageParts.push(`<p><strong>Unrest Reduced:</strong> -${bonusUnrestReduction}</p>`);
+          if (metadata.bonusUnrestReduction > 0) {
+            k.unrest = Math.max(0, (k.unrest || 0) - metadata.bonusUnrestReduction);
+            logger.info(`[ConvertUnrestToImprisoned] Applied bonus unrest reduction: -${metadata.bonusUnrestReduction}`);
+            chatMessageParts.push(`<p><strong>Unrest Reduced:</strong> -${metadata.bonusUnrestReduction}</p>`);
           }
         });
 

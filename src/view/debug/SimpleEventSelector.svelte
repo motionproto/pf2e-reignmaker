@@ -36,19 +36,22 @@
    
    async function triggerSelectedEvent() {
       if (!selectedEventId) return;
-      
+
       isTriggering = true;
-      
+
       try {
+         // First, reset the event phase to clear any existing state
+         await doResetEventPhase();
+
          // Use EventPhaseController to properly trigger the event
          const { createEventPhaseController } = await import('../../controllers/EventPhaseController');
          const controller = await createEventPhaseController();
-         
+
          // Trigger the specific event by ID
          await controller.triggerSpecificEvent(selectedEventId);
-         
+
          console.log('[SimpleEventSelector] Event triggered:', selectedEventId);
-         
+
       } catch (error) {
          console.error('[SimpleEventSelector] Failed to trigger event:', error);
          ui?.notifications?.error(`Failed to trigger event: ${error}`);
@@ -58,63 +61,70 @@
    }
    
    let isResetting = false;
-   
-   async function resetEventPhase() {
+
+   // Core reset logic - can be called directly or via button
+   async function doResetEventPhase() {
       console.log('[SimpleEventSelector] Starting reset...');
-      isResetting = true;
-      
-      try {
-         console.log('[SimpleEventSelector] Step 1: Clearing kingdom data...');
-         // Clear event phase data from turnState and pendingOutcomes
-         await updateKingdom(kingdom => {
-            // Clear event phase data (including selectedApproach for voting)
-            if (kingdom.turnState?.eventsPhase) {
-               kingdom.turnState.eventsPhase = {
-                  completed: false,
-                  eventRolled: false,
-                  eventResolved: false,
-                  eventRoll: undefined,
-                  eventTriggered: false,
-                  eventId: null,
-                  eventInstanceId: null,
-                  activeAids: [],
-                  appliedOutcomes: [],
-                  selectedApproach: null  // Clear voting selection
-               };
-            }
-            
-            // Clear all event instances from pendingOutcomes
-            if (kingdom.pendingOutcomes) {
-               const beforeCount = kingdom.pendingOutcomes.length;
-               kingdom.pendingOutcomes = kingdom.pendingOutcomes.filter(
-                  (instance: any) => instance.checkType !== 'event'
-               );
-               const afterCount = kingdom.pendingOutcomes.length;
-               const removedCount = beforeCount - afterCount;
-               
-               console.log(`[SimpleEventSelector] Cleared ${removedCount} event instances`);
-            }
-            
-            // Reset phase steps
-            if (kingdom.currentPhaseSteps) {
-               kingdom.currentPhaseSteps = [];
-            }
-         });
-         
-         console.log('[SimpleEventSelector] Step 2: Clearing votes...');
-         // Clear ALL votes for current turn (not just old ones)
-         const { getKingdomActor } = await import('../../stores/KingdomStore');
-         const actor = getKingdomActor();
-         if (actor) {
-            await actor.setFlag('pf2e-reignmaker', 'eventVotes', []);
-            console.log('[SimpleEventSelector] Cleared all votes');
-         } else {
-            console.warn('[SimpleEventSelector] No kingdom actor found, skipping vote cleanup');
+
+      console.log('[SimpleEventSelector] Step 1: Clearing kingdom data...');
+      // Clear event phase data from turnState and pendingOutcomes
+      await updateKingdom(kingdom => {
+         // Clear event phase data (including selectedApproach for voting)
+         if (kingdom.turnState?.eventsPhase) {
+            kingdom.turnState.eventsPhase = {
+               completed: false,
+               eventRolled: false,
+               eventResolved: false,
+               eventRoll: undefined,
+               eventTriggered: false,
+               eventId: null,
+               eventInstanceId: null,
+               activeAids: [],
+               appliedOutcomes: [],
+               selectedApproach: null  // Clear voting selection
+            };
          }
-         
-         console.log('[SimpleEventSelector] Reset complete!');
+
+         // Clear all event instances from pendingOutcomes
+         if (kingdom.pendingOutcomes) {
+            const beforeCount = kingdom.pendingOutcomes.length;
+            kingdom.pendingOutcomes = kingdom.pendingOutcomes.filter(
+               (instance: any) => instance.checkType !== 'event'
+            );
+            const afterCount = kingdom.pendingOutcomes.length;
+            const removedCount = beforeCount - afterCount;
+
+            console.log(`[SimpleEventSelector] Cleared ${removedCount} event instances`);
+         }
+
+         // Reset phase steps
+         if (kingdom.currentPhaseSteps) {
+            kingdom.currentPhaseSteps = [];
+         }
+      });
+
+      console.log('[SimpleEventSelector] Step 2: Clearing votes...');
+      // Clear ALL votes for current turn (not just old ones)
+      const { getKingdomActor } = await import('../../stores/KingdomStore');
+      const actor = getKingdomActor();
+      if (actor) {
+         await actor.setFlag('pf2e-reignmaker', 'eventVotes', []);
+         console.log('[SimpleEventSelector] Cleared all votes');
+      } else {
+         console.warn('[SimpleEventSelector] No kingdom actor found, skipping vote cleanup');
+      }
+
+      console.log('[SimpleEventSelector] Reset complete!');
+   }
+
+   // Button handler with loading state and notifications
+   async function resetEventPhase() {
+      isResetting = true;
+
+      try {
+         await doResetEventPhase();
          ui?.notifications?.info('Event phase reset successfully');
-         
+
       } catch (error) {
          console.error('[SimpleEventSelector] Failed to reset event phase:', error);
          ui?.notifications?.error(`Failed to reset event phase: ${error}`);

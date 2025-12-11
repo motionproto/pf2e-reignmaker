@@ -1036,19 +1036,21 @@ execute: async (ctx) => {
    diceBadge('Reduce Unrest by {{value}}', ..., '1d3', 'positive')
    ```
 
-### Available Game Command Handlers
+### Shared Functions Reference
 
-Located in `src/services/gameCommands/handlers/`:
+**Before implementing any game effect, check these locations to avoid duplication:**
 
-| Handler | Command Type | Purpose |
-|---------|--------------|---------|
-| `ConvertUnrestToImprisonedHandler` | `convertUnrestToImprisoned` | Convert unrest → imprisoned (auto-distributes) |
-| `AdjustFactionHandler` | `adjustFaction` | Change faction relations |
-| `DamageStructureHandler` | `damageStructure` | Damage structure(s) |
-| `DestroyStructureHandler` | `destroyStructure` | Destroy structure(s) |
-| `DestroyWorksiteHandler` | `destroyWorksite` | Destroy worksite(s) |
-| `ReduceImprisonedHandler` | `reduceImprisoned` | Reduce imprisoned (requires settlementId) |
-| `SpendPlayerActionHandler` | `spendPlayerAction` | Consume leader action |
-| `SpawnEnemyArmyHandler` | `spawnEnemyArmy` | Create hostile army |
+1. **Game Command Handlers** (`src/services/gameCommands/handlers/`)
+   - For complex operations with prepare/commit pattern
+   - Examples: `DamageStructureHandler`, `AdjustFactionHandler`, `ConvertUnrestToImprisonedHandler`
 
-See `src/services/gameCommands/README.md` for complete documentation.
+2. **Execution Functions** (`src/execution/`)
+   - For simpler one-shot operations
+   - Examples: `applyArmyConditionExecution`, `createWorksiteExecution`, `tendWoundedExecution`
+
+3. **Ongoing Modifiers** (`kingdom.activeModifiers[]`)
+   - For multi-turn recurring effects
+   - Processed automatically by `CustomModifierService`
+   - UI available in Modifiers Tab (`ModifiersTab.svelte`)
+
+**See `src/services/gameCommands/README.md` for complete documentation, examples, and decision guide.**

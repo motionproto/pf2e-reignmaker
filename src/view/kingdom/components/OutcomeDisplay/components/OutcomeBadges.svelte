@@ -36,10 +36,13 @@
   }
   
   // Filter out null/undefined badges before processing
-  $: safeBadges = (outcomeBadges || []).filter(b => b !== null && b !== undefined);
-  
-  $: unifiedBadges = safeBadges.map(badge => 
-    isLegacyBadge(badge) ? convertLegacyBadge(badge) : badge
+  // Annotate with original index for proper tracking after filtering
+  $: safeBadges = (outcomeBadges || [])
+    .map((b, idx) => b !== null && b !== undefined ? { ...b, _originalIndex: idx } : null)
+    .filter(b => b !== null);
+
+  $: unifiedBadges = safeBadges.map(badge =>
+    isLegacyBadge(badge) ? { ...convertLegacyBadge(badge), _originalIndex: (badge as any)._originalIndex } : badge
   );
   
   // Track which badges need dice rolls
@@ -119,22 +122,19 @@
     const result = rollDiceFormula(formula);
     // Create new Map for proper Svelte reactivity
     rolledBadges = new Map(rolledBadges).set(badgeIndex, result);
-    
-    if (badge._modifierIndex !== undefined) {
-      dispatch('roll', {
-        modifierIndex: badge._modifierIndex,
-        formula,
-        result,
-        resource: badge.suffix?.toLowerCase() || 'unknown'
-      });
-    } else {
-      // Use badgeIndex as modifierIndex for auto-conversion
-      dispatch('roll', {
-        modifierIndex: badgeIndex,
-        formula,
-        result
-      });
-    }
+
+    // Determine the correct index to dispatch:
+    // 1. _modifierIndex: explicitly set by pipeline for correlation with modifiers array
+    // 2. _originalIndex: original position in outcomeBadges before filtering (for OutcomeDisplay.allDiceRolled)
+    // 3. badgeIndex: fallback to current position in allBadges array
+    const dispatchIndex = badge._modifierIndex ?? badge._originalIndex ?? badgeIndex;
+
+    dispatch('roll', {
+      modifierIndex: dispatchIndex,
+      formula,
+      result,
+      resource: badge.suffix?.toLowerCase() || 'unknown'
+    });
   }
   
   function getBadgeVariant(badge: UnifiedOutcomeBadge): string {

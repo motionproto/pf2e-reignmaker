@@ -220,3 +220,83 @@ interface GameCommandContext {
 | TransferSettlementHandler | `transferSettlement` | Change settlement ownership |
 | DefectArmiesHandler | `defectArmies` | Armies switch factions |
 
+## Execution Functions (Direct Use)
+
+For simpler operations that don't need the prepare/commit pattern, use execution functions directly.
+These are located in `src/execution/`:
+
+| Function | File | Purpose |
+|----------|------|---------|
+| `applyArmyConditionExecution` | `armies/applyArmyCondition.ts` | Apply condition to army (sickened, enfeebled, frightened, clumsy, fatigued) |
+| `createWorksiteExecution` | `territory/createWorksite.ts` | Create worksite on a hex |
+| `tendWoundedExecution` | `armies/tendWounded.ts` | Heal army or remove conditions |
+| `trainArmyExecution` | `armies/trainArmy.ts` | Train army to party level |
+
+**Example usage in an event pipeline:**
+```typescript
+execute: async (ctx) => {
+  // Apply condition to army
+  const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
+  await applyArmyConditionExecution(actorId, 'sickened', 1);
+
+  // Create worksite
+  const { createWorksiteExecution } = await import('../../execution/territory/createWorksite');
+  await createWorksiteExecution(hexId, 'farmstead');
+}
+```
+
+## Adding Ongoing Modifiers
+
+For multi-turn effects (e.g., plague that lasts 2 turns), add modifiers directly to `kingdom.activeModifiers[]`.
+The `CustomModifierService` automatically applies these each turn and decrements duration.
+
+**Example:**
+```typescript
+import { updateKingdom } from '../../stores/KingdomStore';
+
+await updateKingdom(k => {
+  if (!k.activeModifiers) k.activeModifiers = [];
+  k.activeModifiers.push({
+    id: `ongoing-effect-${Date.now()}`,
+    name: 'Plague Spreads',
+    description: 'The plague continues to ravage your kingdom.',
+    icon: 'fas fa-biohazard',
+    tier: 1,
+    sourceType: 'custom',  // Required for CustomModifierService to process
+    sourceId: ctx.instanceId || 'event-id',
+    sourceName: 'Plague Event',
+    startTurn: kingdom.turn || 1,
+    modifiers: [
+      { type: 'static', resource: 'food', value: -2, duration: 2 }  // -2 food for 2 turns
+    ]
+  });
+});
+```
+
+**Key points:**
+- `sourceType: 'custom'` is required for the modifier to be processed by `CustomModifierService`
+- `duration` on each modifier effect controls how many turns it lasts
+- Effects are applied at the start of each phase via `applyCustomModifiers()`
+- Expired modifiers (duration reaches 0) are automatically removed
+
+**UI Reference:** Players can also create/edit custom modifiers via the Modifiers Tab (`ModifiersTab.svelte`)
+
+## When to Use What
+
+| Scenario | Approach |
+|----------|----------|
+| Complex state changes with preview | Game Command Handler (prepare/commit) |
+| User needs to select target (settlement, faction, etc.) | Game Command Handler |
+| Simple one-shot effect (apply condition, create worksite) | Execution Function |
+| Multi-turn recurring effect | Direct `activeModifiers[]` addition |
+| Automatic outcome processing | `pipeline.outcomes.gameCommands` |
+
+## Avoiding Duplication
+
+Before creating a new handler or function:
+
+1. **Check existing handlers** in `src/services/gameCommands/handlers/`
+2. **Check existing execution functions** in `src/execution/`
+3. **Check if `activeModifiers[]` can handle it** for recurring effects
+4. **Check the Actions** in `src/pipelines/actions/` for patterns
+

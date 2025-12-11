@@ -429,7 +429,38 @@ export async function createActionOutcomePreview(context: {
     (globalThis as any).ui?.notifications?.error(error);
     effectMessage = 'ERROR: Missing outcome description';
   } else {
-    effectMessage = outcomeData.description;
+    // ✅ NEW: Check for choice-specific outcome descriptions (for events with strategic choices)
+    // If a strategic choice was made and has outcomeDescriptions, use that instead of generic description
+    let choiceSpecificDescription: string | undefined;
+    
+    // For events, selectedApproach is stored in kingdom.turnState.eventsPhase.selectedApproach
+    // We need to get the current kingdom data to read this
+    let selectedApproach = metadata?.selectedApproach;
+    
+    if (!selectedApproach && checkType === 'event' && action.strategicChoice?.options) {
+      // Read from kingdom store
+      const { getKingdomActor } = await import('../stores/KingdomStore');
+      const actor = getKingdomActor();
+      if (actor) {
+        const kingdom = actor.getKingdomData();
+        selectedApproach = kingdom.turnState?.eventsPhase?.selectedApproach;
+        console.log(`🔍 [OutcomePreviewService] Read selectedApproach from kingdom.turnState: ${selectedApproach}`);
+      }
+    }
+    
+    if (selectedApproach && action.strategicChoice?.options) {
+      const selectedOption = action.strategicChoice.options.find(
+        (opt: any) => opt.id === selectedApproach
+      );
+      
+      if (selectedOption?.outcomeDescriptions?.[outcomeType]) {
+        choiceSpecificDescription = selectedOption.outcomeDescriptions[outcomeType];
+        console.log(`✅ [OutcomePreviewService] Using choice-specific description for ${selectedApproach} - ${outcomeType}`);
+      }
+    }
+    
+    // Use choice-specific description if available, otherwise fall back to generic description
+    effectMessage = choiceSpecificDescription || outcomeData.description;
   }
   
   // Get basic modifiers (raw, unprocessed - preview calculation happens in Step 5)

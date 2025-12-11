@@ -10,7 +10,7 @@
  */
 export type BadgeValue = 
   | { type: 'static'; amount: number }
-  | { type: 'dice'; formula: string; result?: number };
+  | { type: 'dice'; formula: string; result?: number; resolvedText?: string };
 
 /**
  * Unified outcome badge with template string support
@@ -90,7 +90,12 @@ export function renderBadgeTemplate(badge: UnifiedOutcomeBadge): TemplateSegment
     }
     // Add value segment between parts (not after last)
     if (i < parts.length - 1 && badge.value) {
-      segments.push({ type: 'value', value: badge.value });
+      // If dice badge has resolvedText, render as plain text instead of value segment
+      if (badge.value.type === 'dice' && badge.value.resolvedText !== undefined) {
+        segments.push({ type: 'text', content: badge.value.resolvedText });
+      } else {
+        segments.push({ type: 'value', value: badge.value });
+      }
     }
   }
   
@@ -114,9 +119,11 @@ export function renderBadgeToString(badge: UnifiedOutcomeBadge): string {
   if (badge.value) {
     const valueStr = badge.value.type === 'static'
       ? badge.value.amount.toString()
-      : badge.value.result !== undefined
-        ? badge.value.result.toString()
-        : badge.value.formula;
+      : badge.value.resolvedText !== undefined
+        ? badge.value.resolvedText
+        : badge.value.result !== undefined
+          ? badge.value.result.toString()
+          : badge.value.formula;
     result = result.replace(/\{\{value\}\}/g, valueStr);
   }
   

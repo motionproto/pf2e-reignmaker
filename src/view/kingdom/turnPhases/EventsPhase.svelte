@@ -164,8 +164,18 @@
          event,
          outcomes,
          possibleOutcomes: (() => {
-            const outcomes = buildPossibleOutcomes(event.outcomes, true);
             const selectedApproach = $kingdomData.turnState?.eventsPhase?.selectedApproach;
+
+            // Get choice-specific descriptions if available
+            let choiceDescriptions: any = undefined;
+            if (event.strategicChoice && selectedApproach) {
+               const selectedOption = event.strategicChoice.options.find(opt => opt.id === selectedApproach);
+               if (selectedOption?.outcomeDescriptions) {
+                  choiceDescriptions = selectedOption.outcomeDescriptions;
+               }
+            }
+
+            const outcomes = buildPossibleOutcomes(event.outcomes, true, choiceDescriptions);
 
             // If event has strategic choice and approach is selected, inject approach-specific badges from pipeline
             if (event.strategicChoice && selectedApproach) {
@@ -280,11 +290,21 @@
    }
    
    // Build possible outcomes for the event (synchronous - must be available for render)
-   // Inject approach-specific badges if an approach has been selected
+   // Inject approach-specific badges and descriptions if an approach has been selected
    $: possibleOutcomes = currentEvent ? (() => {
       const event = currentEvent; // Capture for closure
-      const outcomes = buildPossibleOutcomes(event.outcomes, true);
       const selectedApproach = $kingdomData.turnState?.eventsPhase?.selectedApproach;
+
+      // Get choice-specific descriptions if available
+      let choiceDescriptions: any = undefined;
+      if (event.strategicChoice && selectedApproach) {
+         const selectedOption = event.strategicChoice.options.find(opt => opt.id === selectedApproach);
+         if (selectedOption?.outcomeDescriptions) {
+            choiceDescriptions = selectedOption.outcomeDescriptions;
+         }
+      }
+
+      const outcomes = buildPossibleOutcomes(event.outcomes, true, choiceDescriptions);
 
       // If event has strategic choice and approach is selected, inject approach-specific badges from pipeline
       if (event.strategicChoice && selectedApproach) {
