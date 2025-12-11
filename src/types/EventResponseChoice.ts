@@ -22,6 +22,18 @@ export interface EventResponseChoice {
     practical?: number; // Balanced, lawful, tries to please all parties (0-10)
     ruthless?: number;  // Acts at expense of others for self-profit (0-10)
   };
+  
+  /**
+   * Outcome badges for this strategic choice
+   * Maps outcome types to arrays of badges
+   * Used to show different effects based on chosen approach
+   */
+  outcomeBadges?: {
+    criticalSuccess?: any[];
+    success?: any[];
+    failure?: any[];
+    criticalFailure?: any[];
+  };
 }
 
 export interface EventResponseChoices {

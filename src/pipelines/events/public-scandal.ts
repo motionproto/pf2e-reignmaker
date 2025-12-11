@@ -11,7 +11,7 @@
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { textBadge } from '../../types/OutcomeBadge';
+import { valueBadge, textBadge } from '../../types/OutcomeBadge';
 
 export const publicScandalPipeline: CheckPipeline = {
   id: 'public-scandal',
@@ -64,92 +64,159 @@ export const publicScandalPipeline: CheckPipeline = {
     criticalSuccess: {
       description: 'Your handling of the scandal is exemplary.',
       endsEvent: true,
-      modifiers: [] // Modified by choice
+      modifiers: [], // Modified by choice
+      outcomeBadges: [] // Dynamically populated by EventsPhase
     },
     success: {
       description: 'The scandal is contained.',
       endsEvent: true,
-      modifiers: [] // Modified by choice
+      modifiers: [], // Modified by choice
+      outcomeBadges: [] // Dynamically populated by EventsPhase
     },
     failure: {
       description: 'The scandal damages your reputation.',
       endsEvent: true,
-      modifiers: [] // Modified by choice
+      modifiers: [], // Modified by choice
+      outcomeBadges: [] // Dynamically populated by EventsPhase
     },
     criticalFailure: {
       description: 'The scandal spirals out of control.',
       endsEvent: true,
-      modifiers: [] // Modified by choice
+      modifiers: [], // Modified by choice
+      outcomeBadges: [] // Dynamically populated by EventsPhase
     },
   },
 
   preview: {
     calculate: async (ctx) => {
-      const approach = ctx.metadata?.approach;
+      // Read approach from kingdom store (set by PreRollChoiceSelector voting)
+      const { get } = await import('svelte/store');
+      const { kingdomData } = await import('../../stores/KingdomStore');
+      const kingdom = get(kingdomData);
+      const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
       const outcome = ctx.outcome;
       let modifiers: any[] = [];
+      const outcomeBadges: any[] = [];
 
       if (approach === 'transparent') {
-        // Transparent Investigation approach
+        // Transparent Investigation approach - Honest and open
         if (outcome === 'criticalSuccess') {
           modifiers = [
             { type: 'static', resource: 'fame', value: 2, duration: 'immediate' },
             { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
           ];
+          outcomeBadges.push(
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 2, 'positive'),
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
+            textBadge('Transparency earns public trust', 'fas fa-search', 'info')
+          );
         } else if (outcome === 'success') {
           modifiers = [
             { type: 'static', resource: 'fame', value: 1, duration: 'immediate' }
           ];
+          outcomeBadges.push(
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
+            textBadge('Truth is revealed and accepted', 'fas fa-search', 'info')
+          );
         } else if (outcome === 'failure') {
           modifiers = [
             { type: 'static', resource: 'fame', value: -1, duration: 'immediate' },
             { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
           ];
+          outcomeBadges.push(
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
+            textBadge('Investigation reveals embarrassing details', 'fas fa-scroll', 'info')
+          );
         } else if (outcome === 'criticalFailure') {
           modifiers = [
             { type: 'static', resource: 'fame', value: -2, duration: 'immediate' },
             { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
           ];
+          outcomeBadges.push(
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 2, 'negative'),
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 2, 'negative'),
+            textBadge('Scandal spirals completely out of control', 'fas fa-fire', 'negative')
+          );
         }
       } else if (approach === 'coverup') {
-        // Cover It Up approach
-        if (outcome === 'success') {
-          // Successfully covered up - no penalties
+        // Cover It Up approach - Suppress quietly
+        if (outcome === 'criticalSuccess') {
           modifiers = [];
+          outcomeBadges.push(
+            textBadge('Scandal completely suppressed', 'fas fa-user-secret', 'info')
+          );
+        } else if (outcome === 'success') {
+          modifiers = [];
+          outcomeBadges.push(
+            textBadge('Cover-up succeeds with no consequences', 'fas fa-user-secret', 'info')
+          );
         } else if (outcome === 'failure') {
           modifiers = [
             { type: 'static', resource: 'fame', value: -2, duration: 'immediate' },
             { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
           ];
+          outcomeBadges.push(
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 2, 'negative'),
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 2, 'negative'),
+            textBadge('Cover-up exposed - worse than original scandal', 'fas fa-eye', 'negative')
+          );
         } else if (outcome === 'criticalFailure') {
           modifiers = [
             { type: 'static', resource: 'fame', value: -3, duration: 'immediate' },
             { type: 'static', resource: 'unrest', value: 3, duration: 'immediate' }
           ];
+          outcomeBadges.push(
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 3, 'negative'),
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 3, 'negative'),
+            textBadge('Massive cover-up scandal erupts', 'fas fa-fire', 'negative')
+          );
         }
       } else if (approach === 'scapegoat') {
-        // Scapegoat Official approach
-        if (outcome === 'success' || outcome === 'criticalSuccess') {
+        // Scapegoat Official approach - Blame subordinate
+        if (outcome === 'criticalSuccess') {
           modifiers = [
             { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
           ];
+          outcomeBadges.push(
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
+            textBadge('Scapegoat accepted, leader cleared', 'fas fa-user-slash', 'info')
+          );
+        } else if (outcome === 'success') {
+          modifiers = [
+            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
+          ];
+          outcomeBadges.push(
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
+            textBadge('Blame successfully shifted', 'fas fa-user-slash', 'info')
+          );
         } else if (outcome === 'failure') {
           modifiers = [
             { type: 'static', resource: 'fame', value: -1, duration: 'immediate' },
             { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
           ];
+          outcomeBadges.push(
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
+            textBadge('Scapegoating is transparent and cruel', 'fas fa-angry', 'info')
+          );
         } else if (outcome === 'criticalFailure') {
           modifiers = [
             { type: 'static', resource: 'fame', value: -2, duration: 'immediate' },
             { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
           ];
+          outcomeBadges.push(
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 2, 'negative'),
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 2, 'negative'),
+            textBadge('Scapegoat reveals the truth publicly', 'fas fa-bullhorn', 'negative')
+          );
         }
       }
 
       // Store modifiers in context for execute step
       ctx.metadata._outcomeModifiers = modifiers;
 
-      return { resources: [], outcomeBadges: [] };
+      return { resources: [], outcomeBadges };
     }
   },
 

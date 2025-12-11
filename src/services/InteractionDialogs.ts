@@ -270,7 +270,7 @@ export async function showTextInputDialog(
 }
 
 /**
- * Show choice dialog
+ * Show choice dialog (simple string options)
  *
  * @param label - Dialog label
  * @param options - Array of choice options
@@ -307,6 +307,91 @@ export async function showChoiceDialog(
             const select = html.find('#choice-select')[0] as HTMLSelectElement;
             const selectedValue = select.value;
             resolve(selectedValue || null);
+          }
+        },
+        cancel: {
+          icon: '<i class="fas fa-times"></i>',
+          label: 'Cancel',
+          callback: () => resolve(null)
+        }
+      },
+      default: 'confirm',
+      close: () => resolve(null)
+    }).render(true);
+  });
+}
+
+/**
+ * Show rich choice dialog (with icons, descriptions, skills)
+ * Used for strategic event choices
+ *
+ * @param label - Dialog label
+ * @param options - Array of rich choice options (with id, label, description, icon, skills)
+ * @returns Selected option ID or null if cancelled
+ */
+export async function showRichChoiceDialog(
+  label: string,
+  options: Array<{
+    id: string;
+    label: string;
+    description?: string;
+    icon?: string;
+    skills?: string[];
+  }>
+): Promise<string | null> {
+  const optionsHtml = options
+    .map(opt => `
+      <div class="rich-choice-option" data-id="${opt.id}" style="
+        padding: 12px;
+        margin: 8px 0;
+        border: 2px solid #444;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+      " onmouseover="this.style.borderColor='#888'; this.style.backgroundColor='rgba(255,255,255,0.05)';" 
+         onmouseout="this.style.borderColor='#444'; this.style.backgroundColor='transparent';"
+         onclick="
+           document.querySelectorAll('.rich-choice-option').forEach(el => {
+             el.style.borderColor = '#444';
+             el.style.backgroundColor = 'transparent';
+           });
+           this.style.borderColor = '#4a9eff';
+           this.style.backgroundColor = 'rgba(74, 158, 255, 0.1)';
+           document.getElementById('selected-choice').value = this.dataset.id;
+         ">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
+          ${opt.icon ? `<i class="${opt.icon}" style="font-size: 24px; color: #4a9eff;"></i>` : ''}
+          <strong style="font-size: 16px;">${opt.label}</strong>
+        </div>
+        ${opt.description ? `<p style="margin: 6px 0; color: #aaa; font-size: 14px;">${opt.description}</p>` : ''}
+        ${opt.skills ? `<div style="margin-top: 8px; font-size: 12px; color: #888;">
+          <strong>Skills:</strong> ${opt.skills.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ')}
+        </div>` : ''}
+      </div>
+    `)
+    .join('');
+
+  const content = `
+    <div style="max-height: 500px; overflow-y: auto;">
+      <p style="margin-bottom: 16px; font-size: 14px; color: #aaa;">${label}</p>
+      ${optionsHtml}
+      <input type="hidden" id="selected-choice" value="" />
+    </div>
+  `;
+
+  return new Promise((resolve) => {
+    const Dialog = (globalThis as any).Dialog;
+    new Dialog({
+      title: label,
+      content,
+      buttons: {
+        confirm: {
+          icon: '<i class="fas fa-check"></i>',
+          label: 'Confirm',
+          callback: (html: any) => {
+            const input = html.find('#selected-choice')[0] as HTMLInputElement;
+            const selectedId = input.value;
+            resolve(selectedId || null);
           }
         },
         cancel: {

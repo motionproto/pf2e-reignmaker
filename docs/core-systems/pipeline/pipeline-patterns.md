@@ -896,8 +896,23 @@ execute: async (ctx) => {
 
 ---
 
+## Event-Specific Patterns
+
+This guide focuses on **action pipelines**. For **event pipelines** (especially strategic choice events with voting systems), see:
+
+**→ [Event Pipeline Patterns](./event-patterns.md)**
+
+Event patterns differ from actions in several ways:
+- **Strategic choice events** use `strategicChoice` property (not `preRollInteractions`)
+- **Outcome badges** stored in `strategicChoice.options[]` (dynamic based on approach)
+- **Voting system** filters skills before player selection
+- **Personality tracking** influences future events and narrative
+
+---
+
 ## Related Documentation
 
+- **Event Patterns:** [event-patterns.md](./event-patterns.md) - Strategic choice events, voting, personality tracking
 - **Full Architecture:** [pipeline-coordinator.md](./pipeline-coordinator.md)
 - **Advanced Features:** [pipeline-advanced-features.md](./pipeline-advanced-features.md)
 - **Implementation Guide:** [pipeline-implementation-guide.md](./pipeline-implementation-guide.md)

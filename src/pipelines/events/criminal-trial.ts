@@ -10,6 +10,7 @@
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
+import { valueBadge, textBadge } from '../../types/OutcomeBadge';
 
 export const criminalTrialPipeline: CheckPipeline = {
   id: 'criminal-trial',
@@ -18,18 +19,58 @@ export const criminalTrialPipeline: CheckPipeline = {
   checkType: 'event',
   tier: 1,
 
-  // Event strategic choice: How will you administer justice?
+  // Strategic choice - triggers voting system
+  // Options ordered: Virtuous (left) → Practical (center) → Ruthless (right)
   strategicChoice: {
     label: 'How will you administer justice?',
     required: true,
     options: [
+      {
+        id: 'mercy',
+        label: 'Show Mercy',
+        description: 'Demonstrate compassion and forgiveness',
+        icon: 'fas fa-dove',
+        skills: ['religion', 'diplomacy'],
+        personality: { virtuous: 3 },
+        outcomeBadges: {
+          criticalSuccess: [
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 2, 'positive'),
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+          ],
+          success: [
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
+          ],
+          failure: [
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 2, 'negative')
+          ],
+          criticalFailure: [
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 3, 'negative')
+          ]
+        }
+      },
       {
         id: 'fair',
         label: 'Fair Trial',
         description: 'Ensure justice is served fairly and transparently',
         icon: 'fas fa-balance-scale',
         skills: ['society', 'diplomacy'],
-        personality: { practical: 3 }
+        personality: { practical: 3 },
+        outcomeBadges: {
+          criticalSuccess: [
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 2, 'positive'),
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+          ],
+          success: [
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+          ],
+          failure: [
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+          ],
+          criticalFailure: [
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 2, 'negative')
+          ]
+        }
       },
       {
         id: 'harsh',
@@ -37,15 +78,22 @@ export const criminalTrialPipeline: CheckPipeline = {
         description: 'Make an example to deter future crime',
         icon: 'fas fa-gavel',
         skills: ['intimidation', 'performance'],
-        personality: { ruthless: 3 }
-      },
-      {
-        id: 'mercy',
-        label: 'Show Mercy',
-        description: 'Demonstrate compassion and forgiveness',
-        icon: 'fas fa-dove',
-        skills: ['religion', 'diplomacy'],
-        personality: { virtuous: 3 }
+        personality: { ruthless: 3 },
+        outcomeBadges: {
+          criticalSuccess: [
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 3, 'positive')
+          ],
+          success: [
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 2, 'positive')
+          ],
+          failure: [
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+          ],
+          criticalFailure: [
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 2, 'negative'),
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+          ]
+        }
       }
     ]
   },
@@ -60,35 +108,51 @@ export const criminalTrialPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'Justice triumphs.',
+      description: 'Your handling of justice is exemplary.',
       endsEvent: true,
-      modifiers: [] // Modified by choice
+      modifiers: [], // Modified by choice
+      outcomeBadges: [] // Will be populated dynamically based on approach
     },
     success: {
-      description: 'Justice is served.',
+      description: 'Justice is served effectively.',
       endsEvent: true,
-      modifiers: [] // Modified by choice
+      modifiers: [], // Modified by choice
+      outcomeBadges: [] // Will be populated dynamically based on approach
     },
     failure: {
-      description: 'Complications arise from the trial.',
+      description: 'Complications arise from your approach.',
       endsEvent: true,
-      modifiers: [] // Modified by choice
+      modifiers: [], // Modified by choice
+      outcomeBadges: [] // Will be populated dynamically based on approach
     },
     criticalFailure: {
-      description: 'Justice is miscarried.',
+      description: 'Your approach backfires severely.',
       endsEvent: true,
-      modifiers: [] // Modified by choice
+      modifiers: [], // Modified by choice
+      outcomeBadges: [] // Will be populated dynamically based on approach
     },
   },
 
   preview: {
     calculate: async (ctx) => {
-      const approach = ctx.metadata?.approach;
+      // Read approach from kingdom store (set by PreRollChoiceSelector voting)
+      const { get } = await import('svelte/store');
+      const { kingdomData } = await import('../../stores/KingdomStore');
+      const kingdom = get(kingdomData);
+      const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
       const outcome = ctx.outcome;
-      let modifiers: any[] = [];
 
+      // Find the selected approach option
+      const selectedOption = criminalTrialPipeline.strategicChoice?.options.find(opt => opt.id === approach);
+      
+      // Get outcome badges from the selected approach
+      const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
+      const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] || [];
+
+      // Calculate modifiers based on approach
+      let modifiers: any[] = [];
+      
       if (approach === 'fair') {
-        // Fair Trial approach
         if (outcome === 'criticalSuccess') {
           modifiers = [
             { type: 'static', resource: 'fame', value: 2, duration: 'immediate' },
@@ -100,28 +164,17 @@ export const criminalTrialPipeline: CheckPipeline = {
             { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
           ];
         } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-          ];
+          modifiers = [{ type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }];
         } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
-          ];
+          modifiers = [{ type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }];
         }
       } else if (approach === 'harsh') {
-        // Harsh Punishment approach
         if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: -3, duration: 'immediate' }
-          ];
+          modifiers = [{ type: 'static', resource: 'unrest', value: -3, duration: 'immediate' }];
         } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: -2, duration: 'immediate' }
-          ];
+          modifiers = [{ type: 'static', resource: 'unrest', value: -2, duration: 'immediate' }];
         } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-          ];
+          modifiers = [{ type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }];
         } else if (outcome === 'criticalFailure') {
           modifiers = [
             { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' },
@@ -129,31 +182,24 @@ export const criminalTrialPipeline: CheckPipeline = {
           ];
         }
       } else if (approach === 'mercy') {
-        // Show Mercy approach
         if (outcome === 'criticalSuccess') {
           modifiers = [
             { type: 'static', resource: 'fame', value: 2, duration: 'immediate' },
             { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
           ];
         } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'fame', value: 1, duration: 'immediate' }
-          ];
+          modifiers = [{ type: 'static', resource: 'fame', value: 1, duration: 'immediate' }];
         } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
-          ];
+          modifiers = [{ type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }];
         } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 3, duration: 'immediate' }
-          ];
+          modifiers = [{ type: 'static', resource: 'unrest', value: 3, duration: 'immediate' }];
         }
       }
 
       // Store modifiers in context for execute step
       ctx.metadata._outcomeModifiers = modifiers;
 
-      return { resources: [], outcomeBadges: [] };
+      return { resources: [], outcomeBadges };
     }
   },
 

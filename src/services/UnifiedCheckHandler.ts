@@ -456,18 +456,41 @@ export class UnifiedCheckHandler {
   private async executeChoice(interaction: any): Promise<string | null> {
     console.log(`🎯 [UnifiedCheckHandler] Choice: ${interaction.label}`);
 
-    const choice = await showChoiceDialog(
-      interaction.label || 'Choose Option',
-      interaction.options || []
-    );
+    // Check if options are rich objects (with id, label, description)
+    // or simple strings (legacy format)
+    const hasRichOptions = interaction.options?.length > 0 && 
+                           typeof interaction.options[0] === 'object';
+    
+    if (hasRichOptions) {
+      // Use rich choice dialog (shows cards with icons/descriptions)
+      const { showRichChoiceDialog } = await import('./InteractionDialogs');
+      const choice = await showRichChoiceDialog(
+        interaction.label || 'Choose Option',
+        interaction.options
+      );
 
-    if (!choice) {
-      console.log(`⏭️ [UnifiedCheckHandler] Choice cancelled`);
-      return null;
+      if (!choice) {
+        console.log(`⏭️ [UnifiedCheckHandler] Choice cancelled`);
+        return null;
+      }
+
+      console.log(`✅ [UnifiedCheckHandler] Choice selected: ${choice}`);
+      return choice;
+    } else {
+      // Use simple choice dialog (legacy format)
+      const choice = await showChoiceDialog(
+        interaction.label || 'Choose Option',
+        interaction.options || []
+      );
+
+      if (!choice) {
+        console.log(`⏭️ [UnifiedCheckHandler] Choice cancelled`);
+        return null;
+      }
+
+      console.log(`✅ [UnifiedCheckHandler] Choice selected: ${choice}`);
+      return choice;
     }
-
-    console.log(`✅ [UnifiedCheckHandler] Choice selected: ${choice}`);
-    return choice;
   }
 
   /**
@@ -916,8 +939,8 @@ export class UnifiedCheckHandler {
         console.log(`💰 [UnifiedCheckHandler] Applying ${staticModifiers.length} static modifier(s) from JSON`);
         
         // Convert to numeric format and apply
-        const numericMods = staticModifiers.map((m: any) => ({
-          resource: m.resource as ResourceType,
+        const numericMods: Array<{ resource: ResourceType; value: number }> = staticModifiers.map((m: any) => ({
+          resource: m.resource,
           value: m.negative ? -(m.value || 0) : (m.value || 0)
         }));
         

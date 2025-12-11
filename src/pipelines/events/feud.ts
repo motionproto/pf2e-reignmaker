@@ -12,6 +12,7 @@
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
+import { valueBadge, textBadge } from '../../types/OutcomeBadge';
 
 export const feudPipeline: CheckPipeline = {
   id: 'feud',
@@ -69,29 +70,37 @@ export const feudPipeline: CheckPipeline = {
     criticalSuccess: {
       description: 'The families become allies.',
       endsEvent: true,
-      modifiers: [] // Modified by choice
+      modifiers: [], // Modified by choice
+      outcomeBadges: [] // Dynamically populated by EventsPhase
     },
     success: {
       description: 'The feud is resolved.',
       endsEvent: true,
-      modifiers: [] // Modified by choice
+      modifiers: [], // Modified by choice
+      outcomeBadges: [] // Dynamically populated by EventsPhase
     },
     failure: {
       description: 'The feud escalates.',
       endsEvent: false,
-      modifiers: [] // Modified by choice
+      modifiers: [], // Modified by choice
+      outcomeBadges: [] // Dynamically populated by EventsPhase
     },
     criticalFailure: {
       description: 'Violence erupts in the streets.',
       endsEvent: false,
       modifiers: [], // Modified by choice
-      gameCommands: [] // Modified by choice (force approach adds structure damage)
+      gameCommands: [], // Modified by choice (force approach adds structure damage)
+      outcomeBadges: [] // Dynamically populated by EventsPhase
     },
   },
 
   preview: {
     calculate: async (ctx) => {
-      const approach = ctx.metadata?.approach;
+      // Read approach from kingdom store (set by PreRollChoiceSelector voting)
+      const { get } = await import('svelte/store');
+      const { kingdomData } = await import('../../stores/KingdomStore');
+      const kingdom = get(kingdomData);
+      const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
       const outcome = ctx.outcome;
       const outcomeBadges: any[] = [];
 
@@ -99,31 +108,78 @@ export const feudPipeline: CheckPipeline = {
       let modifiers: any[] = [];
 
       if (approach === 'mediate') {
-        // Mediate Peacefully approach
-        if (outcome === 'criticalSuccess' || outcome === 'success') {
+        // Mediate Peacefully approach - Diplomatic resolution
+        if (outcome === 'criticalSuccess') {
           modifiers = [
             { type: 'static', resource: 'unrest', value: -2, duration: 'immediate' },
             { type: 'static', resource: 'fame', value: 1, duration: 'immediate' }
           ];
-        } else if (outcome === 'failure' || outcome === 'criticalFailure') {
+          outcomeBadges.push(
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 2, 'positive'),
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
+            textBadge('The families become allies', 'fas fa-handshake', 'info')
+          );
+        } else if (outcome === 'success') {
+          modifiers = [
+            { type: 'static', resource: 'unrest', value: -2, duration: 'immediate' },
+            { type: 'static', resource: 'fame', value: 1, duration: 'immediate' }
+          ];
+          outcomeBadges.push(
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 2, 'positive'),
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
+            textBadge('Peace is restored', 'fas fa-handshake', 'info')
+          );
+        } else if (outcome === 'failure') {
           modifiers = [
             { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
           ];
+          outcomeBadges.push(
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
+            textBadge('Negotiations break down', 'fas fa-comments-slash', 'info')
+          );
+        } else if (outcome === 'criticalFailure') {
+          modifiers = [
+            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
+          ];
+          outcomeBadges.push(
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
+            textBadge('The feud escalates further', 'fas fa-fire', 'negative')
+          );
         }
       } else if (approach === 'force') {
-        // Force Compliance approach
-        if (outcome === 'success' || outcome === 'criticalSuccess') {
+        // Force Compliance approach - Authoritarian resolution
+        if (outcome === 'criticalSuccess') {
           modifiers = [
             { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
           ];
+          outcomeBadges.push(
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
+            textBadge('Both families submit to authority', 'fas fa-fist-raised', 'info')
+          );
+        } else if (outcome === 'success') {
+          modifiers = [
+            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
+          ];
+          outcomeBadges.push(
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
+            textBadge('The families are forced to comply', 'fas fa-fist-raised', 'info')
+          );
         } else if (outcome === 'failure') {
           modifiers = [
             { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
           ];
+          outcomeBadges.push(
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 2, 'negative'),
+            textBadge('Intimidation backfires', 'fas fa-angry', 'info')
+          );
         } else if (outcome === 'criticalFailure') {
           modifiers = [
             { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
           ];
+          outcomeBadges.push(
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 2, 'negative'),
+            textBadge('Violence erupts in the streets', 'fas fa-fire', 'negative')
+          );
           
           // Add structure damage for force + critical failure
           const commandContext = {
@@ -150,21 +206,45 @@ export const feudPipeline: CheckPipeline = {
           }
         }
       } else if (approach === 'manipulate') {
-        // Manipulate Outcome approach
+        // Manipulate Outcome approach - Cunning resolution
         if (outcome === 'criticalSuccess') {
           modifiers = [
             { type: 'static', resource: 'unrest', value: -2, duration: 'immediate' },
             { type: 'static', resource: 'fame', value: 1, duration: 'immediate' }
           ];
+          outcomeBadges.push(
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 2, 'positive'),
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
+            textBadge('Masterful manipulation ends the feud', 'fas fa-mask', 'info')
+          );
         } else if (outcome === 'success') {
           modifiers = [
             { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
           ];
-        } else if (outcome === 'failure' || outcome === 'criticalFailure') {
+          outcomeBadges.push(
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
+            textBadge('Secret machinations succeed', 'fas fa-mask', 'info')
+          );
+        } else if (outcome === 'failure') {
           modifiers = [
             { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
             { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
           ];
+          outcomeBadges.push(
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
+            textBadge('Deception is discovered', 'fas fa-eye', 'info')
+          );
+        } else if (outcome === 'criticalFailure') {
+          modifiers = [
+            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
+            { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
+          ];
+          outcomeBadges.push(
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
+            textBadge('Manipulation exposed and condemned', 'fas fa-user-secret', 'negative')
+          );
         }
       }
 

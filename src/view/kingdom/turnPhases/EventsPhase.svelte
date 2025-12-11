@@ -34,6 +34,7 @@
    } from '../../../services/pf2e';
    import { buildPossibleOutcomes } from '../../../controllers/shared/PossibleOutcomeHelpers';
    import { buildEventOutcomes } from '../../../controllers/shared/EventOutcomeHelpers';
+   import { getApproachOutcomeBadges } from '../../../controllers/shared/ApproachOutcomeBadges';
 
    // Initialize controller and service
    let eventPhaseController: any;
@@ -141,7 +142,24 @@
          instance,
          event,
          outcomes,
-         possibleOutcomes: buildPossibleOutcomes(event.outcomes, true),
+         possibleOutcomes: (() => {
+            const outcomes = buildPossibleOutcomes(event.outcomes, true);
+            const selectedApproach = $kingdomData.turnState?.eventsPhase?.selectedApproach;
+            
+            // If event has strategic choice and approach is selected, inject approach-specific badges
+            if (event.strategicChoice && selectedApproach) {
+               outcomes.forEach(outcome => {
+                  const approachBadges = getApproachOutcomeBadges(
+                     event.id,
+                     selectedApproach,
+                     outcome.result
+                  );
+                  outcome.outcomeBadges = approachBadges;
+               });
+            }
+            
+            return outcomes;
+         })(),
          isBeingResolved,
          isResolvedByMe,
          isResolvedByOther,
@@ -246,7 +264,26 @@
    }
    
    // Build possible outcomes for the event (synchronous - must be available for render)
-   $: possibleOutcomes = currentEvent ? buildPossibleOutcomes(currentEvent.outcomes, true) : [];
+   // Inject approach-specific badges if an approach has been selected
+   $: possibleOutcomes = currentEvent ? (() => {
+      const event = currentEvent; // Capture for closure
+      const outcomes = buildPossibleOutcomes(event.outcomes, true);
+      const selectedApproach = $kingdomData.turnState?.eventsPhase?.selectedApproach;
+      
+      // If event has strategic choice and approach is selected, inject approach-specific badges
+      if (event.strategicChoice && selectedApproach) {
+         outcomes.forEach(outcome => {
+            const approachBadges = getApproachOutcomeBadges(
+               event.id,
+               selectedApproach,
+               outcome.result
+            );
+            outcome.outcomeBadges = approachBadges;
+         });
+      }
+      
+      return outcomes;
+   })() : [];
    
    // Build outcomes array for BaseCheckCard
    // Build outcomes for current event using shared helper
