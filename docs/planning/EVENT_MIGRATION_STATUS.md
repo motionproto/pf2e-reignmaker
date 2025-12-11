@@ -4,7 +4,7 @@
 
 ## Overview
 
-**Progress:** 4 / 34 events migrated to Strategic Choice Pattern (12%)
+**Progress:** 9 / 34 events migrated to Strategic Choice Pattern (26%)
 
 **Goal:** Migrate eligible events to use the strategic choice pattern with 2-3 meaningful choices that reflect different approaches and personality alignments.
 
@@ -100,6 +100,106 @@
   3. Cover It Up (R)
 - **Status:** Complete, needs rebalancing
 
+### 5. Plague ✅
+- **Dimension:** Public health vs. economy
+- **Choices:**
+  1. Provide Free Treatment (V)
+     - CS: +1 Fame, -1d3 Unrest
+     - S: -1 Unrest
+     - F: +1 Unrest, -1d3 Gold, -1d4 Food
+     - CF: +1d3 Unrest, -1d3 Gold, -2d4 Food, ongoing: plague (-1d4 Food/turn for 2 turns)
+  2. Quarantine Effectively (P)
+     - CS: -1d3 Unrest
+     - S: -1 Unrest
+     - F: +1 Unrest, -1d3 Gold
+     - CF: +1d3 Unrest, -2d3 Gold
+  3. Lock Down Hard (R)
+     - CS: -1d3 Unrest, +2d3 Gold (forfeited assets)
+     - S: -1 Unrest, +1d3 Gold
+     - F: +1 Unrest, damage 1 structure
+     - CF: +1d3 Unrest, -1 Fame, destroy 1 structure, adjust 1 faction -1
+- **Status:** Complete
+
+### 6. Food Shortage ✅
+- **Dimension:** Resource allocation during crisis
+- **Choices:**
+  1. Feed the People (V)
+     - CS: +1 Fame, -1d3 Unrest, -1d4 Food
+     - S: -1 Unrest, -1d4 Food
+     - F: +1 Unrest, -2d4 Food, 1 army gains sickened
+     - CF: +1d3 Unrest, -2d4 Food, 1 random army rolls morale check
+  2. Controlled Rationing (P)
+     - CS: -1d3 Unrest, -1d4 Food
+     - S: -1 Unrest, -1d4 Food
+     - F: +1 Unrest, -1d4 Food
+     - CF: +1d3 Unrest, -2d4 Food
+  3. Prioritize Elite (R)
+     - CS: -1d4 Food, imprison 1d4 rioters (convert unrest to imprisoned)
+     - S: -1d4 Food, +1 Unrest
+     - F: +1d3 Unrest, -1d4 Food, damage 1 structure
+     - CF: +1d3 Unrest, -1 Fame, -2d4 Food, damage 1 structure
+- **Status:** Complete
+
+### 7. Natural Disaster ✅
+- **Dimension:** Crisis priority (bad vs. worse choices)
+- **Choices:**
+  1. Prioritize Lives (V)
+     - CS: +1 Fame, -1d3 Unrest, damage 1 structure
+     - S: -1 Unrest, damage 1 structure
+     - F: +1 Unrest, damage 1 structure and destroy 1 worksite
+     - CF: +1d3 Unrest, destroy 1 structure and 1 worksite
+  2. Balanced Response (P)
+     - CS: -1d3 Unrest, damage 1 structure
+     - S: damage 1 structure
+     - F: +1 Unrest, damage 1 structure and destroy 1 worksite
+     - CF: +1d3 Unrest, damage 2 structures
+  3. Save Assets (R)
+     - CS: gain 2d4 choice of Lumber/Stone/Ore (salvaged), +1 Unrest
+     - S: damage 1 structure, +1 Unrest
+     - F: +1d3 Unrest, -1 Fame, 1 army gains enfeebled
+     - CF: +1d3 Unrest, -1 Fame, damage 1 structure, 1 army gains enfeebled
+- **Status:** Complete
+
+### 8. Immigration ✅
+- **Dimension:** How to handle population influx
+- **Choices:**
+  1. Welcome All Freely (V)
+     - CS: +1 Fame, -1d3 Unrest, gain 1 new worksite
+     - S: -1 Unrest, gain 1 new worksite
+     - F: +1 Unrest, -1d3 Gold, gain 1 new worksite
+     - CF: +1d3 Unrest, -2d3 Gold, gain 1 new worksite
+  2. Controlled Integration (P)
+     - CS: -1d3 Unrest, gain 2d4 new citizens, +1d3 Gold (skilled workers)
+     - S: -1 Unrest, gain 1d4 new citizens
+     - F: +1 Unrest, gain 1d4 new citizens
+     - CF: +1d3 Unrest
+  3. Exploit as Labor (R)
+     - CS: +2d3 Gold, +1 Unrest, gain 2 new worksites
+     - S: +1d3 Gold, +1 Unrest, gain 2 new worksites
+     - F: +1d3 Unrest, -1 Fame, gain 1 new worksite
+     - CF: +1d3 Unrest, -1 Fame, adjust 1 faction -1, gain 1 new worksite
+- **Status:** Complete
+
+### 9. Assassination Attempt ✅
+- **Dimension:** Security vs. civil liberties
+- **Choices:**
+  1. Open Governance (V)
+     - CS: +1 Fame, -1d3 Unrest
+     - S: -1 Unrest
+     - F: +1 Unrest, -1d3 Gold (medical)
+     - CF: +1d3 Unrest, -2d3 Gold, lose 1 leader action
+  2. Investigate Thoroughly (P)
+     - CS: +1 Fame, -1d3 Unrest, imprison 1d3 conspirators (convert unrest to imprisoned if available)
+     - S: -1 Unrest
+     - F: +1 Unrest, -1d3 Gold
+     - CF: +1d3 Unrest, -2d3 Gold
+  3. Purge Conspirators (R)
+     - CS: -1d3 Unrest, imprison 1d3 conspirators (convert unrest to imprisoned if available)
+     - S: -1 Unrest, imprison 1d2 conspirators (convert unrest to imprisoned if available)
+     - F: +1 Unrest, imprison 1d2 innocents (increase imprisoned but do not reduce unrest)
+     - CF: +1d3 Unrest, -1 Fame, imprison 1d3 innocents (increase imprisoned but do not reduce unrest)
+- **Status:** Complete
+
 ---
 
 ## Events Requiring Migration ❌
@@ -168,27 +268,7 @@
 
 ### Conflict & Violence
 
-#### 8. Assassination Attempt ❌
-- **Dimension:** Security vs. civil liberties
-- **Choices:**
-  1. Protect leader but maintain open governance (V)
-     - CS: +1 Fame, -1d3 Unrest
-     - S: -1 Unrest
-     - F: +1 Unrest, -1d3 Gold (medical)
-     - CF: +1d3 Unrest, -2d3 Gold, lose 1 leader action
-  2. Investigate thoroughly, increase security (P)
-     - CS: +1 Fame, -1d3 Unrest, imprison 1d3 conspirators (convert unrest to imprisoned if available)
-     - S: -1 Unrest
-     - F: +1 Unrest, -1d3 Gold
-     - CF: +1d3 Unrest, -2d3 Gold
-  3. Purge suspected conspirators (R)
-     - CS: -1d3 Unrest, imprison 1d3 conspirators (convert unrest to imprisoned if available)
-     - S: -1 Unrest, imprison 1d2 conspirators (convert unrest to imprisoned if available)
-     - F: +1 Unrest, imprison 1d2 innocents (increase imprisoned but do not reduce unrest)
-     - CF: +1d3 Unrest, -1 Fame, imprison 1d3 innocents (increase imprisoned but do not reduce unrest)
-- **Priority:** High
-
-#### 9. Bandit Activity ❌
+#### 8. Bandit Activity ❌
 - **Dimension:** Law enforcement approach
 - **Choices:**
   1. Negotiate safe passage and employment (V)
@@ -310,26 +390,6 @@
      - CF: +1d3 Unrest, -1 Fame, adjust 2 factions -1 (select 2 different factions)
 - **Priority:** Low
 
-#### 15. Plague ❌
-- **Dimension:** Public health vs. economy
-- **Choices:**
-  1. Provide free treatment for all (V)
-     - CS: +1 Fame, -1d3 Unrest
-     - S: -1 Unrest
-     - F: +1 Unrest, -1d3 Gold, -1d4 Food
-     - CF: +1d3 Unrest, -1d3 Gold, -2d4 Food, ongoing: plague (-1d4 Food/turn for 2 turns)
-  2. Quarantine effectively, compensate losses (P)
-     - CS: -1d3 Unrest
-     - S: -1 Unrest
-     - F: +1 Unrest, -1d3 Gold
-     - CF: +1d3 Unrest, -2d3 Gold
-  3. Lock down hard, burn infected areas (R)
-     - CS: -1d3 Unrest, +2d3 Gold (forfeited assets)
-     - S: -1 Unrest, +1d3 Gold
-     - F: +1 Unrest, damage 1 structure
-     - CF: +1d3 Unrest, -1 Fame, destroy 1 structure, adjust 1 faction -1
-- **Priority:** High
-
 ### Political & Diplomatic Events
 
 #### 16. Diplomatic Overture ❌
@@ -414,27 +474,7 @@
 
 ### Economic Events
 
-#### 20. Food Shortage ❌
-- **Dimension:** Resource allocation during crisis
-- **Choices:**
-  1. Feed the people, distribute aid freely draining military supplies (V)
-     - CS: +1 Fame, -1d3 Unrest, -1d4 Food
-     - S: -1 Unrest, -1d4 Food
-     - F: +1 Unrest, -2d4 Food, 1 army gains sickened
-     - CF: +1d3 Unrest, -2d4 Food, 1 random army rolls morale check
-  2. Controlled rationing, fair compensation (P)
-     - CS: -1d3 Unrest, -1d4 Food
-     - S: -1 Unrest, -1d4 Food
-     - F: +1 Unrest, -1d4 Food
-     - CF: +1d3 Unrest, -2d4 Food
-  3. Prioritize elite and military, let poor suffer (R)
-     - CS: -1d4 Food, imprison 1d4 rioters (convert unrest to imprisoned)
-     - S: -1d4 Food, +1 Unrest
-     - F: +1d3 Unrest, -1d4 Food, damage 1 structure
-     - CF: +1d3 Unrest, -1 Fame, -2d4 Food, damage 1 structure
-- **Priority:** High
-
-#### 21. Food Surplus ❌
+#### 20. Food Surplus ❌
 - **Dimension:** How to use abundance
 - **Choices:**
   1. Distribute freely to poor and needy (V)
@@ -696,48 +736,6 @@
      - CF: +1d3 Unrest, -2d3 Gold
 - **Priority:** Low
 
-### Disaster & Crisis Events
-
-#### 34. Natural Disaster ❌
-- **Dimension:** Crisis priority (bad vs. worse choices)
-- **Choices:**
-  1. Prioritize saving lives over property (V)
-     - CS: +1 Fame, -1d3 Unrest, damage 1 structure
-     - S: -1 Unrest, damage 1 structure
-     - F: +1 Unrest, damage 1 structure and destroy 1 worksite
-     - CF: +1d3 Unrest, destroy 1 structure and 1 worksite
-  2. Balanced evacuation and damage control (P)
-     - CS: -1d3 Unrest, damage 1 structure
-     - S: damage 1 structure
-     - F: +1 Unrest, damage 1 structure and destroy 1 worksite
-     - CF: +1d3 Unrest, damage 2 structures
-  3. Deploy troops to save valuable structures and assets (R)
-     - CS: gain 2d4 choice of Lumber/Stone/Ore (salvaged), +1 Unrest
-     - S: damage 1 structure, +1 Unrest
-     - F: +1d3 Unrest, -1 Fame, 1 army gains enfeebled
-     - CF: +1d3 Unrest, -1 Fame, damage 1 structure, 1 army gains enfeebled
-- **Priority:** High
-
-#### 35. Immigration ❌
-- **Dimension:** How to handle population influx
-- **Choices:**
-  1. Welcome all refugees freely (V)
-     - CS: +1 Fame, -1d3 Unrest, gain 1 new worksite
-     - S: -1 Unrest, gain 1 new worksite
-     - F: +1 Unrest, -1d3 Gold, gain 1 new worksite
-     - CF: +1d3 Unrest, -2d3 Gold, gain 1 new worksite
-  2. Controlled integration with vetting (P)
-     - CS: -1d3 Unrest, gain 2d4 new citizens, +1d3 Gold (skilled workers)
-     - S: -1 Unrest, gain 1d4 new citizens
-     - F: +1 Unrest, gain 1d4 new citizens
-     - CF: +1d3 Unrest
-  3. Relocate and exploit as cheap labor (R)
-     - CS: +2d3 Gold, +1 Unrest, gain 2 new worksites
-     - S: +1d3 Gold, +1 Unrest, gain 2 new worksites
-     - F: +1d3 Unrest, -1 Fame, gain 1 new worksite
-     - CF: +1d3 Unrest, -1 Fame, adjust 1 faction -1, gain 1 new worksite
-- **Priority:** High
-
 ### Military Events
 
 #### 36. Military Exercises ❌
@@ -767,12 +765,12 @@
 
 ## Migration Priority Order
 
-### Phase 1: High-Impact Moral Events (Priority: High)
-1. Plague
-2. Food Shortage
-3. Natural Disaster
-4. Immigration
-5. Assassination Attempt
+### Phase 1: High-Impact Moral Events ✅ COMPLETE
+1. ~~Plague~~ ✅
+2. ~~Food Shortage~~ ✅
+3. ~~Natural Disaster~~ ✅
+4. ~~Immigration~~ ✅
+5. ~~Assassination Attempt~~ ✅
 
 ### Phase 2: Common Conflict Events (Priority: High)
 6. Bandit Activity
