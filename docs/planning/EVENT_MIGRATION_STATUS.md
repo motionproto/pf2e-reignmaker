@@ -1,12 +1,14 @@
 # Event Migration Status - Strategic Choice Pattern
 
-**Last Updated:** December 10, 2025
+**Last Updated:** December 11, 2025
 
 ## Overview
 
-**Progress:** 4 / 37 events migrated to Strategic Choice Pattern (11%)
+**Progress:** 4 / 34 events migrated to Strategic Choice Pattern (12%)
 
-**Goal:** Migrate all events to use the strategic choice pattern with 2-3 meaningful choices that reflect different approaches and personality alignments.
+**Goal:** Migrate eligible events to use the strategic choice pattern with 2-3 meaningful choices that reflect different approaches and personality alignments.
+
+**Note:** 2 events (Demand Expansion, Demand Structure) are excluded from migration - they have sophisticated check-based mechanics that should be preserved.
 
 **Design Principles:**
 - Minimum 2 choices (differentiates events from incidents)
@@ -27,15 +29,16 @@
 **Balance Guidelines:**
 
 | Outcome Level | Fame | Unrest | Gold | Resources | Faction | Structures | Worksites |
-|--------------|------|--------|------|-----------|---------|------------|-----------|
-| **Critical** | ±1 | ±1d3 | ±2d3 | ±2d4 | ±2 | 1-2 destroy/award | 1-2 |
-| **Success/Failure** | rare | ±1 | ±1d3 | ±1d4 | ±1 | 1 damage | 1 |
+|--------------|------|--------|------|-----------|---------|------------|--------------|
+| **Critical** | ±1 | ±1d3 | ±2d3 | ±2d4 | ±2 factions (±1 each) | 1-2 destroy/award | 1-2 |
+| **Success/Failure** | rare | ±1 | ±1d3 | ±1d4 | ±1 faction | 1 damage | 1 |
 
 **Notes:**
 - Fame auto-awarded on Critical Success rolls - use sparingly in events
 - Keep outcomes moderate and predictable
 - Avoid extreme swings (no +4 Fame, no 1d12 Gold, etc.)
 - Multiple resources okay but keep totals in range
+- **Faction adjustments**: Never adjust single faction by ±2. Instead, adjust 2 different factions by ±1 each
 
 ---
 
@@ -45,8 +48,8 @@
 - **Dimension:** Justice philosophy
 - **Choices:**
   1. Show Mercy (V)
-     - CS: +1 Fame, -1d3 Unrest, remove 1d3 imprisoned
-     - S: -1 Unrest, remove 1 imprisoned
+     - CS: +1 Fame, -1d3 Unrest, remove 1d3 imprisoned (pardoned)
+     - S: -1 Unrest, remove 1 imprisoned (pardoned)
      - F: +1 Unrest
      - CF: +1d3 Unrest
   2. Fair Trial (P)
@@ -55,8 +58,8 @@
      - F: +1 Unrest
      - CF: +1d3 Unrest
   3. Harsh Punishment (R)
-     - CS: -1d3 Unrest, imprison 1d4 dissidents (convert unrest to imprisoned, if available) or build/upgrade a justice structure in a random settlement - (lowest tier possible)
-     - S: -1 Unrest, imprison 1d2 dissidents
+     - CS: -1d3 Unrest, imprison 1d3 dissidents (convert unrest to imprisoned if available, see Arrest Dissidents action) OR build/upgrade justice structure in random settlement (lowest tier possible)
+     - S: -1 Unrest, imprison 1d2 dissidents (convert unrest to imprisoned if available)
      - F: +1 Unrest
      - CF: +1d3 Unrest, -1 Fame
 - **Status:** Complete, needs rebalancing to new ranges
@@ -70,15 +73,15 @@
      - F: +1 Unrest
      - CF: +1d3 Unrest
   2. Force Compliance (R)
-     - CS: -1 Unrest, imprison 1d3 dissidents (convert unrest to imprisoned if available)
+     - CS: -1d3 Unrest, imprison 1d3 dissidents (convert unrest to imprisoned if available, see Arrest Dissidents action)
      - S: -1 Unrest
      - F: +1 Unrest
      - CF: +1d3 Unrest, damage 1 structure
   3. Manipulate Outcome (P)
-     - CS: -1d3 Unrest, +1 Fame, 1d3 gold, +1 attitude with random faction
-     - S: -1 Unrest, 1 gold
+     - CS: -1d3 Unrest, +1 Fame, +1d3 Gold, adjust 1 faction +1
+     - S: -1 Unrest, +1 Gold
      - F: +1 Unrest, -1 Fame
-     - CF: +1d3 Unrest, -1 Fame, -1 attitude with random faction
+     - CF: +1d3 Unrest, -1 Fame, adjust 1 faction -1
 - **Status:** Complete, needs rebalancing
 
 ### 3. Inquisition ✅
@@ -107,8 +110,8 @@
 - **Dimension:** Law enforcement priorities
 - **Choices:**
   1. Launch investigation and bring to justice (V)
-     - CS: "The criminals are caught and reformed through fair justice." +1 Fame, -1d3 Unrest, remove 1d3 imprisoned (reformed)
-     - S: "The investigation succeeds and the case is solved." -1 Unrest, convert 1d3 unrest to imprisoned
+     - CS: "The criminals are caught and reformed through fair justice." +1 Fame, -1d3 Unrest, remove 1d3 imprisoned (pardoned/reformed, see Execute Prisoners action)
+     - S: "The investigation succeeds and the case is solved." -1 Unrest, convert 1d3 unrest to imprisoned (see Arrest Dissidents action)
      - F: "The case goes cold despite your efforts." +1 Unrest
      - CF: "The investigation fails publicly, undermining confidence." +1d3 Unrest
   2. Increase patrols and security (P)
@@ -117,10 +120,10 @@
      - F: "Resources are wasted on ineffective patrols." +1 Unrest
      - CF: "Security measures fail spectacularly." +1d3 Unrest, -1d3 Gold
   3. Make example with harsh crackdown (R)
-     - CS: "Crime is eliminated through fear and mass arrests." -1d3 Unrest, imprison 1d4 dissidents(convert unrest to imprisoned if available)
-     - S: "Criminals flee in the face of harsh punishment." -1 Unrest, imprison 1 dissidents (convert unrest to imprisoned if available)
+     - CS: "Crime is eliminated through fear and mass arrests." -1d3 Unrest, imprison 1d3 dissidents (convert unrest to imprisoned if available)
+     - S: "Criminals flee in the face of harsh punishment." -1 Unrest, imprison 1d2 dissidents (convert unrest to imprisoned if available)
      - F: "Innocents are caught up in the brutal crackdown." +1 Unrest
-     - CF: "The brutal overreach sparks outrage." +1d3 Unrest, -1 Fame, imprison 1d3 innocents (increase umprisoned but do not reduce unrest)
+     - CF: "The brutal overreach sparks outrage." +1d3 Unrest, -1 Fame, imprison 1d3 innocents (increase imprisoned but do not reduce unrest)
 - **Priority:** High
 
 #### 6. Notorious Heist ❌
@@ -138,7 +141,7 @@
      - CF: +1d3 Unrest, -2d3 Gold
   3. Terrorize underworld with brutal response (R)
      - CS: -1d3 Unrest, imprison 1d3 criminals (convert unrest to imprisoned if available)
-     - S: -1 Unrest, imprison 1 criminals (convert unrest to imprisoned if available)
+     - S: -1 Unrest, imprison 1d2 criminals (convert unrest to imprisoned if available)
      - F: +1 Unrest
      - CF: +1d3 Unrest, -1 Fame, damage 1 structure (riot)
 - **Priority:** High
@@ -157,8 +160,8 @@
      - F: +1 Unrest
      - CF: +1d3 Unrest, -1 Fame
   3. Crush operation with force (R)
-     - CS: -1d3 Unrest, imprison 1d3 dealers(convert unrest to imprisoned if available)
-     - S: -1 Unrest, imprison 1 dealers (convert unrest to imprisoned if available)
+     - CS: -1d3 Unrest, imprison 1d3 dealers (convert unrest to imprisoned if available)
+     - S: -1 Unrest, imprison 1d2 dealers (convert unrest to imprisoned if available)
      - F: +1 Unrest
      - CF: +1d3 Unrest, damage 1 structure
 - **Priority:** Medium
@@ -174,15 +177,15 @@
      - F: +1 Unrest, -1d3 Gold (medical)
      - CF: +1d3 Unrest, -2d3 Gold, lose 1 leader action
   2. Investigate thoroughly, increase security (P)
-     - CS: +1 Fame, -1d3 Unrest, imprison 1d3 conspirators(convert unrest to imprisoned if available)
+     - CS: +1 Fame, -1d3 Unrest, imprison 1d3 conspirators (convert unrest to imprisoned if available)
      - S: -1 Unrest
      - F: +1 Unrest, -1d3 Gold
      - CF: +1d3 Unrest, -2d3 Gold
   3. Purge suspected conspirators (R)
-     - CS: -1d3 Unrest, imprison 2d3 conspirators (convert unrest to imprisoned if available)
-     - S: -1 Unrest, imprison 1d3 suspected (convert unrest to imprisoned if available)
-     - F: +1 Unrest, imprison 1d2 innocents
-     - CF: +1d3 Unrest, -1 Fame, imprison 1d4 innocents (increase imprisoned if available, do not reduce unrest)
+     - CS: -1d3 Unrest, imprison 1d3 conspirators (convert unrest to imprisoned if available)
+     - S: -1 Unrest, imprison 1d2 conspirators (convert unrest to imprisoned if available)
+     - F: +1 Unrest, imprison 1d2 innocents (increase imprisoned but do not reduce unrest)
+     - CF: +1d3 Unrest, -1 Fame, imprison 1d3 innocents (increase imprisoned but do not reduce unrest)
 - **Priority:** High
 
 #### 9. Bandit Activity ❌
@@ -197,12 +200,12 @@
      - CS: -1d3 Unrest, +2d3 Gold (recovered goods)
      - S: -1 Unrest, +1d3 Gold
      - F: +1 Unrest, -1d3 Gold
-     - CF: +1d3 Unrest, -1d3 Gold, worksite destroyed
+     - CF: +1d3 Unrest, -1d3 Gold, destroy 1 worksite
   3. Hunt them down without mercy (R)
-     - CS: -1d3 Unrest, +1d3 Gold (plunder), imprison 1d4 captives (convert unrest to imprisoned if available)
+     - CS: -1d3 Unrest, +1d3 Gold (plunder), imprison 1d3 captives (convert unrest to imprisoned if available)
      - S: -1 Unrest, imprison 1d2 captives (convert unrest to imprisoned if available)
      - F: +1 Unrest
-     - CF: +1d3 Unrest, -1 Fame, structure damaged
+     - CF: +1d3 Unrest, -1 Fame, damage 1 structure
 - **Priority:** High
 
 #### 10. Raiders ❌
@@ -216,13 +219,13 @@
   2. Fortify borders and prepare defenses (P)
      - CS: -1d3 Unrest, gain 2d4 Lumber
      - S: -1 Unrest, gain 1d4 Lumber
-     - F: +1 Unrest, -1d3 Gold, (damage one fortification or worksite if none available (fortification damage should be like a structure)
-     - CF: +1d3 Unrest, -1d3 Gold, (destroy one fortification or worksite if none available (fortification desctruction should be like a structure)
+     - F: +1 Unrest, -1d3 Gold, damage 1 fortification or worksite if no fortification available
+     - CF: +1d3 Unrest, -1d3 Gold, destroy 1 fortification or worksite if no fortification available
   3. Launch preemptive strike (R)
-     - CS: -1d3 Unrest, +2d3 Gold (plunder), one army gains welltrined
+     - CS: -1d3 Unrest, +2d3 Gold (plunder), 1 army gains welltrained (see Train Army action)
      - S: -1 Unrest, +1d3 Gold
      - F: +1 Unrest, -1d3 Gold
-     - CF: +1d3 Unrest, -2d3 Gold, -1 Fame, one army is fatigued
+     - CF: +1d3 Unrest, -2d3 Gold, -1 Fame, 1 army gains fatigued
 - **Priority:** High
 
 #### 11. Monster Attack ❌
@@ -239,10 +242,10 @@
      - F: +1 Unrest, -1d3 Gold
      - CF: +1d3 Unrest, -2d3 Gold, damage 1 structure
   3. Mobilize army to destroy it (R)
-     - CS: -1d3 Unrest, +2d3 Gold (trophy/parts), one army gains a random equipment upgrade (like outfit army)
+     - CS: -1d3 Unrest, +2d3 Gold (trophy/parts), 1 army gains random equipment upgrade (see Outfit Army action)
      - S: -1 Unrest, +1d3 Gold
-     - F: +1 Unrest, -1d3 Golddamage 1 structure
-     - CF: +1d3 Unrest, -2d3 Gold, one army is enfeebled
+     - F: +1 Unrest, -1d3 Gold, damage 1 structure
+     - CF: +1d3 Unrest, -2d3 Gold, 1 army gains enfeebled
 - **Priority:** Medium
 
 #### 12. Undead Uprising ❌
@@ -269,20 +272,20 @@
 - **Dimension:** Religious freedom vs. public safety
 - **Choices:**
   1. Investigate but respect religious freedom (V)
-     - CS: +1 Fame, -1d3 Unrest, adjust 2 factions attitide by +1 
-     - S: -1 Unrest, adjust faction +1
+     - CS: +1 Fame, -1d3 Unrest, adjust 2 factions +1 (select 2 different factions)
+     - S: -1 Unrest, adjust 1 faction +1
      - F: +1 Unrest
-     - CF: +1d3 Unrest, damage 1 structure, adjust faction -1
+     - CF: +1d3 Unrest, damage 1 structure, adjust 1 faction -1
   2. Monitor and contain their influence (P)
      - CS: -1d3 Unrest
      - S: -1 Unrest
      - F: +1 Unrest, -1d3 Gold
      - CF: +1d3 Unrest, ongoing: cult influence (+1 Unrest/turn for 2 turns)
   3. Suppress cult with force (R)
-     - CS: -1d3 Unrest, imprison 2d4 cultists
-     - S: -1 Unrest, imprison 1d4 cultists
-     - F: +1 Unrest, adjust 1 faction -1 attitude
-     - CF: +1d3 Unrest, -1 Fame, adjust 2 factions -1 attitude
+     - CS: -1d3 Unrest, imprison 1d3 cultists (convert unrest to imprisoned if available)
+     - S: -1 Unrest, imprison 1d2 cultists (convert unrest to imprisoned if available)
+     - F: +1 Unrest, adjust 1 faction -1
+     - CF: +1d3 Unrest, -1 Fame, adjust 2 factions -1 (select 2 different factions)
 - **Priority:** Medium
 
 ### Religious & Moral Events
@@ -291,7 +294,7 @@
 - **Dimension:** How to handle religious influx
 - **Choices:**
   1. Welcome all pilgrims freely (V)
-     - CS: +1 Fame, -1d3 Unrest, +2d3 Gold (donations), adjust 2 factions +1 attitide
+     - CS: +1 Fame, -1d3 Unrest, +2d3 Gold (donations), adjust 2 factions +1 (select 2 different factions)
      - S: -1 Unrest, +1d3 Gold, adjust 1 faction +1
      - F: +1 Unrest, -1d3 Gold
      - CF: +1d3 Unrest, -2d3 Gold
@@ -299,12 +302,12 @@
      - CS: -1d3 Unrest, +2d3 Gold
      - S: -1 Unrest, +1d3 Gold
      - F: +1 Unrest
-     - CF: +1d3 Unrest, adjust faction -1
+     - CF: +1d3 Unrest, adjust 1 faction -1
   3. Tax heavily or restrict access (R)
-     - CS: +2d3 Gold, adjust faction+1
+     - CS: +2d3 Gold, adjust 1 faction +1
      - S: +1d3 Gold
-     - F: +1 Unrest, adjust faction -1
-     - CF: +1d3 Unrest, -1 Fame, adjust 2 faction -1
+     - F: +1 Unrest, adjust 1 faction -1
+     - CF: +1d3 Unrest, -1 Fame, adjust 2 factions -1 (select 2 different factions)
 - **Priority:** Low
 
 #### 15. Plague ❌
@@ -313,18 +316,18 @@
   1. Provide free treatment for all (V)
      - CS: +1 Fame, -1d3 Unrest
      - S: -1 Unrest
-     - F: +1 Unrest, -1d3 Gold, -1d4 food
-     - CF: +1d3 Unrest, -1d3 Gold, -2d4 food, ongoing: plague (-1d4 food/turn for 2 turns)
+     - F: +1 Unrest, -1d3 Gold, -1d4 Food
+     - CF: +1d3 Unrest, -1d3 Gold, -2d4 Food, ongoing: plague (-1d4 Food/turn for 2 turns)
   2. Quarantine effectively, compensate losses (P)
      - CS: -1d3 Unrest
      - S: -1 Unrest
      - F: +1 Unrest, -1d3 Gold
      - CF: +1d3 Unrest, -2d3 Gold
   3. Lock down hard, burn infected areas (R)
-     - CS: -1d3 Unrest, +2d3 gold (forfeited assets)
-     - S: -1 Unrest, +1d3 gold
+     - CS: -1d3 Unrest, +2d3 Gold (forfeited assets)
+     - S: -1 Unrest, +1d3 Gold
      - F: +1 Unrest, damage 1 structure
-     - CF: +1d3 Unrest, -1 Fame, destroy 1 structure, 1 faction -1 attitude
+     - CF: +1d3 Unrest, -1 Fame, destroy 1 structure, adjust 1 faction -1
 - **Priority:** High
 
 ### Political & Diplomatic Events
@@ -333,38 +336,38 @@
 - **Dimension:** Foreign relations approach
 - **Choices:**
   1. Accept with generous terms (V)
-     - CS: +1 Fame, +1d3 Gold (trade), adjust 2 factions +1 attitide,  choose 1d3 resource to gain ongoing for 2 turns (shows as special modifier)
-     - S: +1Gold, adjust faction +1
-     - F: -1d3 Gold, adjust faction -1
-     - CF: -2d3 Gold, adjust 2 factions -1
+     - CS: +1 Fame, +1d3 Gold (trade), adjust 2 factions +1 (select 2 different factions), choose 1 resource type to gain 1d3 per turn for 2 turns (ongoing modifier)
+     - S: +1d3 Gold, adjust 1 faction +1
+     - F: -1d3 Gold, adjust 1 faction -1
+     - CF: -2d3 Gold, adjust 2 factions -1 (select 2 different factions)
   2. Negotiate balanced agreement (P)
-     - CS: +2d3 Gold, adjust 2 factions +1 attitide
-     - S: +1d3 Gold, adjust faction +1
-     - F: adjust faction +1
-     - CF: +1 Unrest, adjust faction -1
+     - CS: +2d3 Gold, adjust 2 factions +1 (select 2 different factions)
+     - S: +1d3 Gold, adjust 1 faction +1
+     - F: adjust 1 faction +1
+     - CF: +1 Unrest, adjust 1 faction -1
   3. Demand favorable terms or refuse (R)
-     - CS: +2d3 Gold, adjust faction -1, choose 1d3 resource to gain ongoing for 2 turns (shows as special modifier)
-     - S: +1d3 Gold, adjust faction -1 choose 1d3 resource to gain ongoing for 2 turns (shows as special modifier)
-     - F: -1 Fame, adjust faction -1
-     - CF: +1d3 Unrest, -1 Fame, adjust 2 factions -1
+     - CS: +2d3 Gold, adjust 1 faction -1, choose 1 resource type to gain 1d3 per turn for 2 turns (ongoing modifier)
+     - S: +1d3 Gold, adjust 1 faction -1, choose 1 resource type to gain 1d3 per turn for 2 turns (ongoing modifier)
+     - F: -1 Fame, adjust 1 faction -1
+     - CF: +1d3 Unrest, -1 Fame, adjust 2 factions -1 (select 2 different factions)
 - **Priority:** Medium
 
 #### 17. Festive Invitation ❌
 - **Dimension:** How to engage with celebration
 - **Choices:**
   1. Attend humbly and join festivities (V)
-     - CS: +1 Fame, -1d3 Unrest, adjust 2 factions +1
-     - S: -1 Unrest, adjust faction +1
-     - F: adjust faction -1
-     - CF: +1 Unrest, adjust faction -1
+     - CS: +1 Fame, -1d3 Unrest, adjust 2 factions +1 (select 2 different factions)
+     - S: -1 Unrest, adjust 1 faction +1
+     - F: adjust 1 faction -1
+     - CF: +1 Unrest, adjust 1 faction -1
   2. Attend with appropriate gifts and diplomacy (P)
-     - CS: -1d3 Unrest, +1d3 Gold (gifts received), adjust 2 factions +1
-     - S: adjust faction +1
-     - F: -1d3 Gold, adjust faction -1
-     - CF: -2d3 Gold, adjust faction -1
+     - CS: -1d3 Unrest, +1d3 Gold (gifts received), adjust 2 factions +1 (select 2 different factions)
+     - S: adjust 1 faction +1
+     - F: -1d3 Gold, adjust 1 faction -1
+     - CF: -2d3 Gold, adjust 1 faction -1
   3. Use event to display power and military might (R)
-     - CS: -1d3 Unrest, +2d3 Gold, adjust faction -1 (rivals), 2 armies gains random outfit bonus 
-     - S: 1d3 Gold, 1 army gains random outfit bonus, adjust faction -1 (rivals)
+     - CS: -1d3 Unrest, +2d3 Gold, adjust 1 faction -1 (rivals), 2 armies gain random equipment upgrade (see Outfit Army action)
+     - S: +1d3 Gold, 1 army gains random equipment upgrade, adjust 1 faction -1 (rivals)
      - F: +1 Unrest, -1d3 Gold
      - CF: +1d3 Unrest, -2d3 Gold, 1 army gains enfeebled
 - **Priority:** Low
@@ -376,7 +379,7 @@
      - CS: +1 Fame, -1d3 Unrest, +1d3 Gold (donation)
      - S: -1 Unrest
      - F: (no effect)
-     - CF: +1 Unrest, adjust faction -1 (celebrity's allies)
+     - CF: +1 Unrest, adjust 1 faction -1 (celebrity's allies)
   2. Appropriate ceremony and exchange (P)
      - CS: +2d3 Gold (trade/gifts)
      - S: +1d3 Gold
@@ -384,9 +387,9 @@
      - CF: -2d3 Gold
   3. Lavish display to impress and gain favor (R)
      - CS: +2d3 random resource (influence/deals), -1d3 Gold (costs)
-     - S: -1d3 Gold, +1 faction atitude
+     - S: -1d3 Gold, adjust 1 faction +1
      - F: +1 Unrest, -1d3 Gold
-     - CF: +1d3 Unrest, -2d3 Gold, -1 faction attitude
+     - CF: +1d3 Unrest, -2d3 Gold, adjust 1 faction -1
 - **Priority:** Low
 
 #### 19. Grand Tournament ❌
@@ -403,7 +406,7 @@
      - F: +1d3 Gold
      - CF: +1 Unrest
   3. Exclusive noble affair with high stakes (R)
-     - CS: +2d3 Gold, adjust faction +1 (nobles), gain 1 random structure
+     - CS: +2d3 Gold, adjust 1 faction +1 (nobles), gain 1 random structure
      - S: +1d3 Gold
      - F: +1 Unrest, +1d3 Gold
      - CF: +1d3 Unrest, damage 1 random structure (protests)
@@ -414,13 +417,13 @@
 #### 20. Food Shortage ❌
 - **Dimension:** Resource allocation during crisis
 - **Choices:**
-  1. Feed the people, distribute aid freely draining military supplies  (V)
+  1. Feed the people, distribute aid freely draining military supplies (V)
      - CS: +1 Fame, -1d3 Unrest, -1d4 Food
      - S: -1 Unrest, -1d4 Food
-     - F: +1 Unrest, -2d4 Food, one army becomes sickened
-     - CF: +1d3 Unrest, -2d4 Food, one random army rolls a morale check
+     - F: +1 Unrest, -2d4 Food, 1 army gains sickened
+     - CF: +1d3 Unrest, -2d4 Food, 1 random army rolls morale check
   2. Controlled rationing, fair compensation (P)
-     - CS: -1d3 Unrest, -1d4 Food, 
+     - CS: -1d3 Unrest, -1d4 Food
      - S: -1 Unrest, -1d4 Food
      - F: +1 Unrest, -1d4 Food
      - CF: +1d3 Unrest, -2d4 Food
@@ -435,7 +438,7 @@
 - **Dimension:** How to use abundance
 - **Choices:**
   1. Distribute freely to poor and needy (V)
-     - CS: +1 Fame, -1d3 Unrest, one settlement gains a structure
+     - CS: +1 Fame, -1d3 Unrest, 1 settlement gains a structure
      - S: -1d3 Unrest
      - F: -1 Unrest
      - CF: +1d3 Unrest
@@ -445,17 +448,17 @@
      - F: -1d3 Gold (storage costs)
      - CF: +1 Unrest, -1d3 Gold
   3. Export for maximum profit (R)
-     - CS: +2d3 Gold, +1 faction attitude
+     - CS: +2d3 Gold, adjust 1 faction +1
      - S: +1d3 Gold
      - F: +1 Unrest, +1d3 Gold
-     - CF: +1d3 Unrest, -1 Fame, -1 faction attitude
+     - CF: +1d3 Unrest, -1 Fame, adjust 1 faction -1
 - **Priority:** Medium
 
 #### 22. Economic Surge ❌
 - **Dimension:** How to capitalize on boom
 - **Choices:**
   1. Raise wages and improve worker conditions (V)
-     - CS: +1 Fame, -2d3 Unrest, +1d3 Gold, 
+     - CS: +1 Fame, -2d3 Unrest, +1d3 Gold
      - S: -1 Unrest, +1d3 Gold
      - F: -1d3 Gold
      - CF: +1 Unrest, -1d3 Gold
@@ -465,7 +468,7 @@
      - F: +1d3 Gold
      - CF: +1 Unrest, -1d3 Gold
   3. Maximize taxes and profit (R)
-     - CS: +2d3 Gold, -1d3 Unrest (intimidation), one settlement gains a structure
+     - CS: +2d3 Gold, -1d3 Unrest (intimidation), 1 settlement gains a structure
      - S: +2d3 Gold, +1 Unrest
      - F: +1d3 Gold, +1d3 Unrest
      - CF: +1d3 Unrest, -1 Fame, damage 1 structure (riot)
@@ -475,28 +478,28 @@
 - **Dimension:** Terms of trade
 - **Choices:**
   1. Generous terms to build friendship (V)
-     - CS: +1 Fame, +2d3 Gold (trade), adjust 2 factions +1,  choose 1d3 resource to gain ongoing for 2 turns (shows as special modifier)
-     - S: +1d3 Gold, adjust faction +1, choose 1d3 resource 
-     - F: +1d3 Gold, adjust faction +1
-     - CF: adjust faction -1
+     - CS: +1 Fame, +2d3 Gold (trade), adjust 2 factions +1 (select 2 different factions), choose 1 resource type to gain 1d3 per turn for 2 turns (ongoing modifier)
+     - S: +1d3 Gold, adjust 1 faction +1, choose 1 resource type to gain 1d3 per turn for 1 turn (ongoing modifier)
+     - F: +1d3 Gold, adjust 1 faction +1
+     - CF: adjust 1 faction -1
   2. Balanced mutual benefit (P)
-     - CS: +2d3 Gold, adjust faction +2,  choose 1d3 resource to gain ongoing for 2 turns (shows as special modifier)
-     - S: +1d3 Gold, adjust faction +1,  choose 1d3 resource 
+     - CS: +2d3 Gold, adjust 2 factions +1 (select 2 different factions), choose 1 resource type to gain 1d3 per turn for 2 turns (ongoing modifier)
+     - S: +1d3 Gold, adjust 1 faction +1, choose 1 resource type to gain 1d3 per turn for 1 turn (ongoing modifier)
      - F: +1d3 Gold
-     - CF: adjust faction -1
+     - CF: adjust 1 faction -1
   3. Extract maximum advantage (R)
-     - CS: +2d3 Gold, adjust faction -1, choose 2d3 resource to gain ongoing for 3 turns (shows as special modifier)
-     - S: +1d3 Gold, adjust faction -1, choose 1d3 resource to gain ongoing for 2 turns (shows as special modifier)
-     - F: +1d3 Gold, -1 Fame, adjust 2 faction -1, choose 1d3 resource
-     - CF: +1 Unrest, -1 Fame, adjust 2 faction -1
+     - CS: +2d3 Gold, adjust 1 faction -1, choose 1 resource type to gain 2d3 per turn for 3 turns (ongoing modifier)
+     - S: +1d3 Gold, adjust 1 faction -1, choose 1 resource type to gain 1d3 per turn for 2 turns (ongoing modifier)
+     - F: +1d3 Gold, -1 Fame, adjust 2 factions -1 (select 2 different factions), choose 1 resource type to gain 1d3 per turn for 1 turn
+     - CF: +1 Unrest, -1 Fame, adjust 2 factions -1 (select 2 different factions)
 - **Priority:** Medium
 
 #### 24. Land Rush ❌
 - **Dimension:** Expansion management
 - **Choices:**
   1. Free settlement and land grants (V)
-     - CS: +1 Fame, -1d3 Unrest, gain new worsksite and a new structure (lowest available tier)
-     - S: -1 Unrest, gain new worsksite
+     - CS: +1 Fame, -1d3 Unrest, gain new worksite and a new structure (lowest available tier)
+     - S: -1 Unrest, gain new worksite
      - F: -1d3 of a random resource
      - CF: +1 Unrest, -2d3 Gold, -1d3 of a random resource
   2. Controlled development with permits (P)
@@ -505,8 +508,8 @@
      - F: +1 Unrest
      - CF: +1d3 Unrest, -1d3 Gold (bribes)
   3. Auction to highest bidders (R)
-     - CS: +2d3 Gold, gain new worsksite
-     - S: +1d3 Gold, gain new worsksite
+     - CS: +2d3 Gold, gain new worksite
+     - S: +1d3 Gold, gain new worksite
      - F: +1d3 Gold, +1 Unrest
      - CF: +1d3 Unrest, -1 Fame
 - **Priority:** Medium
@@ -515,7 +518,7 @@
 - **Dimension:** Rapid growth management
 - **Choices:**
   1. Ensure fair housing and worker rights (V)
-     - CS: +1 Fame, -1d3 Unrest, gain anew structure
+     - CS: +1 Fame, -1d3 Unrest, gain a new structure
      - S: -1 Unrest, +1d3 Gold
      - F: -1d3 Gold
      - CF: +1d3 Unrest
@@ -525,51 +528,51 @@
      - F: +1 Unrest
      - CF: +1d3 Unrest
   3. Exploit boom for maximum revenue (R)
-     - CS: +2d3 Gold, and 1d3 gold for next 2 turns (as modifier)
+     - CS: +2d3 Gold, gain 1d3 Gold per turn for next 2 turns (ongoing modifier)
      - S: +2d3 Gold, +1 Unrest
      - F: +1d3 Gold, +1d3 Unrest
      - CF: +1d3 Unrest, -1 Fame
 - **Priority:** Medium
 
-#### 26. Demand Expansion ❌ -- demand HEX has special UI and Hex Display - end contitions for claiming the desired hex provide a fixed rewqard no matter what approach was taken. look at the existing implementation
-- **Dimension:** How to handle growth pressure
-- **Choices:**
-  1. Expand thoughtfully, preserve character (V)
-     - CS: +1 Fame, -1d3 Unrest,
-     - S: -1 Unrest,
-     - F: +1 Unrest, 
-     - CF: +1d3 Unrest,
-  2. Measured expansion with planning (P)
-     - CS: +1d3 Gold, gain 1d4 Lumber,
-     - S: +1d3 Gold,
-     - F: +1 Unrest, 
-     - CF: +1d3 Unrest
-  3. Rapid exploitation of demand (R)
-     - CS: +2d3 Gold
-     - S: +1d3 Gold, +1 Unrest
-     - F: +1d3 Gold, +1d3 Unrest
-     - CF: +1d3 Unrest, -1 Fame
-- **Priority:** Low
+#### 26. Demand Expansion ✅ (Keep Current Implementation)
 
-#### 27. Demand Structure ❌ -- demand Structure has special UI and Display,  end contitions for building the desired Structure provide a fixed rewqard no matter what approach was taken. look at the existing implementation
-- **Dimension:** Building priorities
-- **Choices:**
-  1. Build what citizens need most (V)
-     - CS: +1 Fame, -1d3 Unrest
-     - S: -1 Unrest
-     - F: -1d3 Gold,
-     - CF: +1 Unrest,
-  2. Build what benefits kingdom overall (P)
-     - CS: +1d3 Gold, gain 1d4 choice of Lumber/Stone
-     - S: +1d3 Gold,
-     - F: +1 Unrest, 
-     - CF: +1d3 Unrest, 
-  3. Build what generates most revenue (R)
-     - CS: +2d3 Gold, gain 1d4 choice resource
-     - S: +1d3 Gold
-     - F: +1 Unrest
-     - CF: +1d3 Unrest, -1 Fame
-- **Priority:** Low
+**⚠️ DO NOT MIGRATE - KEEP EXISTING IMPLEMENTATION**
+
+**Why:** This event has sophisticated mechanics that would be broken by strategic choice pattern:
+- Auto-selects target hex exactly 2 hexes from border (not adjacent)
+- Adds "demanded" feature to hex on map
+- Special hex validation (unclaimed OR enemy territory if empty)
+- Map interaction with special display color
+- Auto-resolution when hex is claimed (free worksite + rewards)
+- Ongoing mechanics (+1 unrest per turn until hex claimed OR convinced)
+
+**Current Implementation:** `src/pipelines/events/demand-expansion.ts`
+
+**Skills:** diplomacy, survival, intimidation (standard check pattern)
+
+**No changes needed** - event works correctly as check-based event with special mechanics.
+
+- **Priority:** N/A (not migrating)
+
+#### 27. Demand Structure ✅ (Keep Current Implementation)
+
+**⚠️ DO NOT MIGRATE - KEEP EXISTING IMPLEMENTATION**
+
+**Why:** This event has sophisticated mechanics that would be broken by strategic choice pattern:
+- Tier progression logic (demands ONLY next tier in category progression)
+- Settlement service integration (registers demands with settlement service)
+- Ongoing modifier creation ("+1 Unrest per turn until built")
+- Auto-resolution when structure is built (-1d4 unrest, modifier removed)
+- Settlement targeting (selects random settlement and structure combination)
+- Tier validation (won't demand tier 1 if you have tier 2, demands tier 3 if you have tier 2, etc.)
+
+**Current Implementation:** `src/pipelines/events/demand-structure.ts`
+
+**Skills:** diplomacy, intimidation, society (standard check pattern)
+
+**No changes needed** - event works correctly as check-based event with special mechanics.
+
+- **Priority:** N/A (not migrating)
 
 ### Discovery & Opportunity Events
 
@@ -597,7 +600,7 @@
 - **Dimension:** Magic regulation and access
 - **Choices:**
   1. Share knowledge freely (V)
-     - CS: +1 Fame, -1d3 Unrest, +1d3 Gold (innovations), + 1 faction attitude 
+     - CS: +1 Fame, -1d3 Unrest, +1d3 Gold (innovations), adjust 1 faction +1
      - S: -1 Unrest, +1d3 Gold
      - F: +1 Unrest
      - CF: +1d3 Unrest, damage 1 structure
@@ -610,14 +613,14 @@
      - CS: +2d3 Gold
      - S: +1d3 Gold
      - F: +1 Unrest, -1 Fame
-     - CF: +1d3 Unrest, -1 Fame, -1 faction attitude 
+     - CF: +1d3 Unrest, -1 Fame, adjust 1 faction -1
 - **Priority:** Medium
 
 #### 30. Remarkable Treasure ❌
 - **Dimension:** Wealth distribution
 - **Choices:**
   1. Share with all citizens (V)
-     - CS: +1 Fame, -1d3 Unrest, +1d3 Gold distributed, + 1 faction attitude 
+     - CS: +1 Fame, -1d3 Unrest, +1d3 Gold distributed, adjust 1 faction +1
      - S: -1 Unrest, +1d3 Gold distributed
      - F: (no effect)
      - CF: +1 Unrest
@@ -627,7 +630,7 @@
      - F: +1 Unrest
      - CF: +1 Unrest, +1d3 Gold
   3. Keep for leadership's benefit (R)
-     - CS: +2d3 Gold, every leader get the benefit of a claim stipend action.
+     - CS: +2d3 Gold, every leader gets the benefit of a Claim Stipend action (see action for reference)
      - S: +2d3 Gold, +1 Unrest
      - F: +1d3 Gold, +1d3 Unrest
      - CF: +1d3 Gold, +1d3 Unrest, -1 Fame, 1 leader loses action
@@ -637,7 +640,7 @@
 - **Dimension:** Knowledge and education policy
 - **Choices:**
   1. Open university for all (V)
-     - CS: +1 Fame, -1d3 Unrest, gain +1 attitide with 2 factions
+     - CS: +1 Fame, -1d3 Unrest, adjust 2 factions +1 (select 2 different factions)
      - S: -1 Unrest
      - F: -1d3 Gold
      - CF: +1 Unrest, -1d3 Gold
@@ -647,7 +650,7 @@
      - F: -1d3 Gold
      - CF: -2d3 Gold
   3. Exclusive academy for elite (R)
-     - CS: +2d3 Gold (tuition), adjust faction +1 (nobles)
+     - CS: +2d3 Gold (tuition), adjust 1 faction +1 (nobles)
      - S: +1d3 Gold
      - F: +1d3 Gold, +1 Unrest
      - CF: +1d3 Unrest, -1 Fame
@@ -687,8 +690,8 @@
      - F: +1 Unrest
      - CF: +1d3 Unrest, -1d3 Gold
   3. Marshal troops for military exercises (R)
-     - CS: +2d3 Gold (plunder), -1d3 Unrest, 2 armies gains welltrained	
-     - S: +1d3 Gold, 1 army gains welltrained	
+     - CS: +2d3 Gold (plunder), -1d3 Unrest, 2 armies gain welltrained (see Train Army action)
+     - S: +1d3 Gold, 1 army gains welltrained
      - F: +1 Unrest, -1d3 Gold
      - CF: +1d3 Unrest, -2d3 Gold
 - **Priority:** Low
@@ -699,43 +702,23 @@
 - **Dimension:** Crisis priority (bad vs. worse choices)
 - **Choices:**
   1. Prioritize saving lives over property (V)
-     - CS: +1 Fame, -1d3 Unrest, damage 1 structure 
+     - CS: +1 Fame, -1d3 Unrest, damage 1 structure
      - S: -1 Unrest, damage 1 structure
-     - F: +1 Unrest, damage 1 structure and destroy a worksite
-     - CF: +1d3 Unrest, destroy 1 structures and 1 worksite
+     - F: +1 Unrest, damage 1 structure and destroy 1 worksite
+     - CF: +1d3 Unrest, destroy 1 structure and 1 worksite
   2. Balanced evacuation and damage control (P)
      - CS: -1d3 Unrest, damage 1 structure
-     - S: damage 1 structure 
+     - S: damage 1 structure
      - F: +1 Unrest, damage 1 structure and destroy 1 worksite
      - CF: +1d3 Unrest, damage 2 structures
   3. Deploy troops to save valuable structures and assets (R)
      - CS: gain 2d4 choice of Lumber/Stone/Ore (salvaged), +1 Unrest
      - S: damage 1 structure, +1 Unrest
-     - F: +1d3 Unrest, -1 Fame, 1 army is enfeebled
-     - CF: +1d3 Unrest, -1 Fame, damage 1 structure, 1 army is enfeebled
+     - F: +1d3 Unrest, -1 Fame, 1 army gains enfeebled
+     - CF: +1d3 Unrest, -1 Fame, damage 1 structure, 1 army gains enfeebled
 - **Priority:** High
 
-#### 35. Local Disaster ❌ -- REMOVE duplicate of 34
-- **Dimension:** Disaster response priorities
-- **Choices:**
-  1. All resources to affected area (V)
-     - CS: +1 Fame, -1d3 Unrest, -2d3 Gold
-     - S: -1 Unrest, -1d3 Gold
-     - F: +1 Unrest, -2d3 Gold
-     - CF: +1d3 Unrest, -2d3 Gold
-  2. Measured aid while maintaining stability (P)
-     - CS: -1d3 Unrest, -1d3 Gold
-     - S: -1 Unrest, -1d3 Gold
-     - F: +1 Unrest, -1d3 Gold
-     - CF: +1d3 Unrest, -2d3 Gold
-  3. Minimal aid to preserve kingdom resources (R)
-     - CS: -1d3 Gold, gain 1d4 choice resources (withheld aid)
-     - S: -1d3 Gold, +1 Unrest
-     - F: +1d3 Unrest, -1 Fame
-     - CF: +1d3 Unrest, -1 Fame, damage 1 structure (affected area)
-- **Priority:** Medium
-
-#### 36. Immigration ❌
+#### 35. Immigration ❌
 - **Dimension:** How to handle population influx
 - **Choices:**
   1. Welcome all refugees freely (V)
@@ -757,7 +740,10 @@
 
 ### Military Events
 
-#### 37. Military Exercises ❌ -- look at the existing this should provide either outfit army, well trained bonus, poorly trained penalty, or enfeebled condition
+#### 36. Military Exercises ❌
+
+**Note:** See existing implementation - this event provides army conditions (welltrained, poorly trained, enfeebled) or equipment upgrades (see Train Army and Outfit Army actions).
+
 - **Dimension:** Military preparedness approach
 - **Choices:**
   1. Defensive training, minimize disruption (V)
@@ -771,40 +757,11 @@
      - F: -1d3 Gold
      - CF: +1 Unrest, -2d3 Gold
   3. Aggressive drills to intimidate neighbors (R)
-     - CS: -1d3 Unrest, adjust faction -2 (neighbors)
-     - S: -1 Unrest, adjust faction -1
-     - F: +1 Unrest, adjust faction -2
-     - CF: +1d3 Unrest, adjust faction -2, spawn enemy army
+     - CS: -1d3 Unrest, adjust 2 factions -1 (select 2 neighboring factions)
+     - S: -1 Unrest, adjust 1 faction -1
+     - F: +1 Unrest, adjust 2 factions -1 (select 2 neighboring factions)
+     - CF: +1d3 Unrest, adjust 2 factions -1 (select 2 neighboring factions), spawn enemy army
 - **Priority:** Low
-
----
-
-## Recommended Mergers
-
-These events share similar themes and could be combined to reduce total count and create richer, more varied events:
-
-1. **"Criminal Activity"** - merge: sensational-crime, notorious-heist, drug-den
-   - Creates a comprehensive crime event with varied illegal activities
-
-2. **"Raiders & Bandits"** - merge: bandit-activity, raiders
-   - Both are armed groups threatening territory
-
-3. **"Supernatural Threats"** - merge: monster-attack, undead-uprising, cult-activity
-   - All deal with supernatural/unusual threats
-
-4. **"Natural Bounty"** - merge: good-weather, natures-blessing, food-surplus
-   - All are beneficial natural events
-
-5. **"Economic Boom"** - merge: economic-surge, boomtown, land-rush
-   - All deal with rapid economic growth
-
-6. **"Discovery"** - merge: magical-discovery, scholarly-discovery
-   - Both are intellectual/magical discoveries
-
-7. **"Disaster"** - merge: natural-disaster, local-disaster
-   - Both are environmental crises
-
-**Potential reduction:** 37 → ~28 events after mergers
 
 ---
 
@@ -825,20 +782,22 @@ These events share similar themes and could be combined to reduce total count an
 
 ### Phase 3: Economic & Diplomatic (Priority: Medium)
 10. Trade Agreement
-11. Economic Surge / Boomtown / Land Rush (decide on merger)
+11. Economic Surge
 12. Diplomatic Overture
 13. Food Surplus
+14. Boomtown
+15. Land Rush
 
 ### Phase 4: Low-Priority / Beneficial Events (Priority: Low)
-14. Good Weather
-15. Archaeological Find
-16. Grand Tournament
-17. Festive Invitation
-18. Visiting Celebrity
-19. Nature's Blessing
+16. Good Weather
+17. Archaeological Find
+18. Grand Tournament
+19. Festive Invitation
+20. Visiting Celebrity
+21. Nature's Blessing
 
 ### Phase 5: Remaining Events (Priority: Medium-Low)
-20. All others
+22. All others
 
 ---
 
@@ -856,33 +815,42 @@ Events can use a wide variety of outcome mechanisms beyond basic resource change
 ### 2. Game Commands (Complex Effects)
 Available through the game command system:
 
-- **Damage Structure** - Damage random structure (e.g., fire, raid)
-- **Destroy Structure** - Completely destroy structure (e.g., plague, disaster)
-- **Adjust Faction** - Change faction relations
-- **Imprison/Release** - Arrest or free dissidents
+- **Damage Structure** - Damage random structure
+- **Destroy Structure** - Completely destroy structure
+- **Adjust Faction** - Change faction relations (never ±2 on single faction, adjust 2 factions ±1 instead)
+- **Imprison/Remove Imprisoned** - Arrest or free dissidents (see Arrest Dissidents and Execute Prisoners actions)
+  - "Convert unrest to imprisoned" = reduces unrest AND adds imprisoned if capacity available
+  - "Remove imprisoned" = reduces imprisoned count (parallel to Execute Prisoners action)
 - **Spawn Enemy Army** - Create hostile force
 - **New Citizens** - Population gains
 - **Worksites** - Create or destroy worksites
+- **Army Conditions** - welltrained, poorly trained, sickened, fatigued, enfeebled (see Train Army action)
+- **Army Equipment** - Random equipment upgrades (see Outfit Army action)
+- **Army Morale** - Morale checks
+- **Leader Actions** - Claim Stipend benefits (see Claim Stipend action)
+- **Structure Gains** - Random structure awards
 
 ### 3. Ongoing Effects
 - **Ongoing modifiers** - Penalties/bonuses lasting 1-2 turns
-- Keep duration short (1-2 turns max)
+- **Resource choice** - Player chooses 1 resource type, gains dice amount per turn (see Harvest Resources or Sell Resources for inline choice pattern)
+- Keep duration short (1-2 turns max, 3 turns for exceptional CS outcomes)
 
 ### 4. Balance Principles
 - **Fame:** Rare, only for reputation-focused events (+/-1)
 - **Unrest:** -1d3 to +1d3 (core stability mechanic)
 - **Gold:** 1d3 to 2d3 (moderate economy impact)
 - **Resources:** 1d4 to 2d4 (infrastructure gains)
-- **Faction:** +/-1 to +/-2 (relationship changes)
+- **Faction:** +/-1 per faction, adjust 1-2 different factions
 - **Structures:** Damage 1, destroy 1-2 on critical
-- **Imprisoned:** 1d2 to 2d4 (based on severity)
+- **Worksites:** Create/destroy 1-2
+- **Imprisoned:** 1d2 to 1d4 (based on severity)
 
 ### 5. Personality-Appropriate Outcomes
 Match outcome types to personality:
 
-- **Virtuous (V)**: Fame gains (rare), Unrest reduction, community benefits, releases imprisoned, attracts new citizens, faction improvements
+- **Virtuous (V)**: Fame gains (rare), Unrest reduction, community benefits, remove imprisoned (pardon/reform), new citizens, faction improvements
 - **Practical (P)**: Balanced resources, infrastructure gains (Lumber/Stone/Ore), sustainable effects, ongoing bonuses
-- **Ruthless (R)**: Gold gains, intimidation (Unrest reduction), imprison dissidents, faction penalties for enemies
+- **Ruthless (R)**: Gold gains, intimidation (Unrest reduction), imprison dissidents (convert unrest to imprisoned), faction penalties for enemies, army benefits
 
 ---
 
@@ -897,3 +865,4 @@ Match outcome types to personality:
 - **Use moderate, consistent ranges** - Avoid wild swings in outcomes
 - **Fame is rare** - Auto-awarded on CS, only add explicit Fame for reputation-focused events
 - **Keep totals balanced** - Multiple resources okay but stay within overall ranges
+- **Reference existing actions** - When using game commands, reference existing action implementations (Arrest Dissidents, Train Army, Outfit Army, Claim Stipend, Execute Prisoners, etc.)
