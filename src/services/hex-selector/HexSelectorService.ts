@@ -168,6 +168,13 @@ export class HexSelectorService {
    * Handle hex selection
    */
   private handleHexSelection(hexId: string): void {
+    // Check if 2-step workflow should block this selection
+    const shouldAllow = this.panelManager.handle2StepHexSelection(hexId);
+    if (!shouldAllow) {
+      logger.info('[HexSelector] Hex selection blocked by 2-step workflow');
+      return;
+    }
+    
     this.selectedHexes.push(hexId);
     
     // Get road connections for this hex (if road type)

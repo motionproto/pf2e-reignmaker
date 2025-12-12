@@ -77,6 +77,9 @@ export async function createStatusPhaseController() {
         // Apply ongoing modifiers (custom events like demand-structure)
         await this.applyOngoingModifiers();
         
+        // NOTE: Custom modifiers with turn-based durations are now applied in Resources Phase
+        // after income collection (so there are resources to modify)
+        
         // Apply automatic structure effects (Donjon converts unrest, etc.)
         await this.applyAutomaticStructureEffects();
         

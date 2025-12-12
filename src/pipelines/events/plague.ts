@@ -346,7 +346,7 @@ export const plaguePipeline: CheckPipeline = {
       if (outcome === 'criticalFailure' && ctx.metadata?._addOngoingPlague) {
         // Add ongoing plague modifier directly to kingdom
         const { updateKingdom } = await import('../../stores/KingdomStore');
-        const currentTurn = kingdom.turn || 1;
+        const currentTurn = kingdom.currentTurn || 1;
         const modifierId = `ongoing-plague-${Date.now()}`;
 
         await updateKingdom(k => {

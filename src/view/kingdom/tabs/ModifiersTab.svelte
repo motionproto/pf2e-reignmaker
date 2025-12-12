@@ -4,6 +4,7 @@
    import type { EventModifier, ResourceType } from '../../../types/events';
    import Button from '../components/baseComponents/Button.svelte';
    import InlineEditActions from '../components/baseComponents/InlineEditActions.svelte';
+   import { logger } from '../../../utils/Logger';
    
    // Filter state
    let filterSource = 'all'; // 'all', 'event', 'incident', 'structure', 'custom'
@@ -11,7 +12,6 @@
    // Create custom modifier state
    let isCreatingCustom = false;
    let newModifierName = '';
-   let newModifierDescription = '';
    let newModifierEffects: EventModifier[] = [];
    let isCreating = false;
    
@@ -21,8 +21,9 @@
    // Add effect state (for custom modifiers)
    let addingEffectToModifier: string | null = null;
    let newEffectResource: ResourceType = 'gold';
-   let newEffectValue: number = 0;
+   let newEffectValue: string = '0';
    let newEffectDuration: string = 'ongoing';
+   let customDurationTurns: number = 1;
    
    // Resource options for dropdown
    const resourceOptions: ResourceType[] = [
@@ -31,17 +32,31 @@
    
    const durationOptions = [
       { value: 'immediate', label: 'Immediate' },
-      { value: 'ongoing', label: 'Ongoing (Permanent)' },
-      { value: '1', label: '1 Turn' },
-      { value: '3', label: '3 Turns' },
-      { value: '5', label: '5 Turns' }
+      { value: 'ongoing', label: 'Ongoing' },
+      { value: 'custom', label: 'Custom...' }
    ];
    
-   // Format duration display
-   function formatDuration(duration: string | number | undefined): string {
+   // Calculate and format remaining duration
+   function formatDuration(duration: string | number | undefined, startTurn?: number): string {
       if (!duration || duration === 'ongoing') return 'Ongoing';
       if (duration === 'immediate') return 'Immediate';
       if (duration === 'permanent') return 'Permanent';
+      
+      // For numeric duration with startTurn, calculate remaining turns
+      if (typeof duration === 'number' && typeof startTurn === 'number') {
+         const expiryTurn = startTurn + duration;
+         const turnsRemaining = expiryTurn - currentTurn;
+         
+         if (turnsRemaining <= 0) {
+            return 'Expired';
+         } else if (turnsRemaining === 1) {
+            return '1 Turn';
+         } else {
+            return `${turnsRemaining} Turns`;
+         }
+      }
+      
+      // Fallback: show fixed duration
       return `${duration} Turns`;
    }
    
@@ -101,28 +116,59 @@
    function startCreating() {
       isCreatingCustom = true;
       newModifierName = '';
-      newModifierDescription = '';
       newModifierEffects = [];
    }
    
    
    function addEffectToNew() {
-      newModifierEffects = [
-         ...newModifierEffects,
-         {
-            type: 'static',
-            resource: newEffectResource,
-            value: newEffectValue,
-            duration: newEffectDuration === 'ongoing' ? 'ongoing' : 
-                     newEffectDuration === 'immediate' ? 'immediate' :
-                     parseInt(newEffectDuration)
-         }
-      ];
+      let duration: any;
+      if (newEffectDuration === 'ongoing') {
+         duration = 'ongoing';
+      } else if (newEffectDuration === 'immediate') {
+         duration = 'immediate';
+      } else if (newEffectDuration === 'custom') {
+         duration = customDurationTurns;
+      }
+      
+      // Check if value is a dice formula (e.g., "1d4", "2d8+5", "-1d6-2", "d20+10")
+      const dicePattern = /^-?\d*d\d+([+\-]\d+)?$/i;
+      const isDiceFormula = dicePattern.test(newEffectValue.trim());
+      
+      if (isDiceFormula) {
+         // Create a dice modifier
+         const formula = newEffectValue.trim();
+         const isNegative = formula.startsWith('-');
+         const cleanFormula = isNegative ? formula.substring(1) : formula;
+         
+         newModifierEffects = [
+            ...newModifierEffects,
+            {
+               type: 'dice',
+               resource: newEffectResource,
+               formula: cleanFormula,
+               negative: isNegative,
+               duration
+            }
+         ];
+      } else {
+         // Create a static modifier with numeric value
+         const numericValue = parseInt(newEffectValue, 10) || 0;
+         newModifierEffects = [
+            ...newModifierEffects,
+            {
+               type: 'static',
+               resource: newEffectResource,
+               value: numericValue,
+               duration
+            }
+         ];
+      }
       
       // Reset form
       newEffectResource = 'gold';
-      newEffectValue = 0;
+      newEffectValue = '0';
       newEffectDuration = 'ongoing';
+      customDurationTurns = 1;
    }
    
    function removeEffectFromNew(index: number) {
@@ -152,7 +198,7 @@
                const modifier = k.activeModifiers?.find(m => m.id === editingModifierId);
                if (modifier) {
                   modifier.name = newModifierName.trim();
-                  modifier.description = newModifierDescription.trim();
+                  modifier.description = '';
                   modifier.modifiers = newModifierEffects;
                }
             });
@@ -163,7 +209,7 @@
             const newModifier: ActiveModifier = {
                id: `custom-${Date.now()}`,
                name: newModifierName.trim(),
-               description: newModifierDescription.trim(),
+               description: '',
                icon: 'fas fa-edit',
                tier: 1,
                sourceType: 'custom',
@@ -197,7 +243,6 @@
       isCreatingCustom = true;
       editingModifierId = modifier.id;
       newModifierName = modifier.name;
-      newModifierDescription = modifier.description;
       newModifierEffects = [...modifier.modifiers];
       
       // Scroll to top to show the create form
@@ -211,7 +256,6 @@
       isCreatingCustom = false;
       editingModifierId = null;
       newModifierName = '';
-      newModifierDescription = '';
       newModifierEffects = [];
    }
    
@@ -252,8 +296,9 @@
    function startAddingEffect(modifierId: string) {
       addingEffectToModifier = modifierId;
       newEffectResource = 'gold';
-      newEffectValue = 0;
+      newEffectValue = '0';
       newEffectDuration = 'ongoing';
+      customDurationTurns = 1;
    }
    
    function cancelAddingEffect() {
@@ -264,18 +309,45 @@
       try {
          const { updateKingdom } = await import('../../../stores/KingdomStore');
          
+         let duration: any;
+         if (newEffectDuration === 'ongoing') {
+            duration = 'ongoing';
+         } else if (newEffectDuration === 'immediate') {
+            duration = 'immediate';
+         } else if (newEffectDuration === 'custom') {
+            duration = customDurationTurns;
+         }
+         
+         // Check if value is a dice formula (supports modifiers like +5 or -2)
+         const dicePattern = /^-?\d*d\d+([+\-]\d+)?$/i;
+         const isDiceFormula = dicePattern.test(newEffectValue.trim());
+         
          await updateKingdom(k => {
             const modifier = k.activeModifiers?.find(m => m.id === modifierId);
             if (modifier) {
                if (!modifier.modifiers) modifier.modifiers = [];
-               modifier.modifiers.push({
-                  type: 'static',
-                  resource: newEffectResource,
-                  value: newEffectValue,
-                  duration: newEffectDuration === 'ongoing' ? 'ongoing' : 
-                           newEffectDuration === 'immediate' ? 'immediate' :
-                           parseInt(newEffectDuration)
-               });
+               
+               if (isDiceFormula) {
+                  const formula = newEffectValue.trim();
+                  const isNegative = formula.startsWith('-');
+                  const cleanFormula = isNegative ? formula.substring(1) : formula;
+                  
+                  modifier.modifiers.push({
+                     type: 'dice',
+                     resource: newEffectResource,
+                     formula: cleanFormula,
+                     negative: isNegative,
+                     duration
+                  });
+               } else {
+                  const numericValue = parseInt(newEffectValue, 10) || 0;
+                  modifier.modifiers.push({
+                     type: 'static',
+                     resource: newEffectResource,
+                     value: numericValue,
+                     duration
+                  });
+               }
             }
          });
          
@@ -391,41 +463,36 @@
                   <tr class="create-row">
                      <td colspan="4">
                         <div class="create-modifier-form">
-                           <div class="form-row">
-                              <div class="form-field">
-                                 <label>Name</label>
-                                 <input 
-                                    type="text" 
-                                    bind:value={newModifierName}
-                                    placeholder="Modifier name"
-                                    class="inline-input"
-                                    disabled={isCreating}
-                                 />
-                              </div>
-                              <div class="form-field">
-                                 <label>Description</label>
-                                 <input 
-                                    type="text" 
-                                    bind:value={newModifierDescription}
-                                    placeholder="Brief description"
-                                    class="inline-input"
-                                    disabled={isCreating}
-                                 />
-                              </div>
+                           <div class="form-field">
+                              <label>Name</label>
+                              <input 
+                                 type="text" 
+                                 bind:value={newModifierName}
+                                 placeholder="Modifier name"
+                                 class="inline-input full-width"
+                                 disabled={isCreating}
+                              />
                            </div>
                            
                            <div class="effects-section">
                               <div class="effects-header">
                                  <label>Effects</label>
+                                 <span class="hint-text">(Must have at least one effect)</span>
                               </div>
                               
-                              <div class="effects-row-builder">
-                                 {#if newModifierEffects.length > 0}
+                              {#if newModifierEffects.length > 0}
+                                 <div class="effects-badges-container">
                                     {#each newModifierEffects as effect, index}
                                        <div class="effect-item">
-                                          <span class="effect-resource">{effect.resource}:</span>
-                                          <span class="effect-value">{typeof effect.value === 'number' && effect.value > 0 ? '+' : ''}{effect.value}</span>
-                                          <span class="effect-duration">({formatDuration(effect.duration)})</span>
+                                          {#if effect.type === 'dice'}
+                                             <span class="effect-resource">{effect.resource}:</span>
+                                             <span class="effect-value">{effect.negative ? '-' : ''}{effect.formula}</span>
+                                             <span class="effect-duration">({formatDuration(effect.duration)})</span>
+                                          {:else if effect.type === 'static'}
+                                             <span class="effect-resource">{effect.resource}:</span>
+                                             <span class="effect-value">{effect.value > 0 ? '+' : ''}{effect.value}</span>
+                                             <span class="effect-duration">({formatDuration(effect.duration)})</span>
+                                          {/if}
                                           <button 
                                              class="remove-effect-btn"
                                              on:click={() => removeEffectFromNew(index)}
@@ -436,26 +503,49 @@
                                           </button>
                                        </div>
                                     {/each}
-                                 {/if}
-                                 
-                                 <div class="add-effect-inline-builder">
-                                    <select bind:value={newEffectResource} class="effect-select" disabled={isCreating}>
-                                       {#each resourceOptions as resource}
-                                          <option value={resource}>{resource}</option>
-                                       {/each}
-                                    </select>
-                                    <input 
-                                       type="number" 
-                                       bind:value={newEffectValue}
-                                       placeholder="Value"
-                                       class="effect-input"
-                                       disabled={isCreating}
-                                    />
-                                    <select bind:value={newEffectDuration} class="effect-select" disabled={isCreating}>
-                                       {#each durationOptions as option}
-                                          <option value={option.value}>{option.label}</option>
-                                       {/each}
-                                    </select>
+                                 </div>
+                              {/if}
+                              
+                              <div class="add-effect-inline-builder">
+                                    <div class="effect-input-group">
+                                       <label class="input-label">Resource</label>
+                                       <select bind:value={newEffectResource} class="effect-select" disabled={isCreating}>
+                                          {#each resourceOptions as resource}
+                                             <option value={resource}>{resource}</option>
+                                          {/each}
+                                       </select>
+                                    </div>
+                                    <div class="effect-input-group">
+                                       <label class="input-label">Value</label>
+                                       <input 
+                                          type="text" 
+                                          bind:value={newEffectValue}
+                                          placeholder="5 or 1d4+2"
+                                          class="effect-input"
+                                          disabled={isCreating}
+                                       />
+                                    </div>
+                                    <div class="effect-input-group">
+                                       <label class="input-label">Duration</label>
+                                       <select bind:value={newEffectDuration} class="effect-select" disabled={isCreating}>
+                                          {#each durationOptions as option}
+                                             <option value={option.value}>{option.label}</option>
+                                          {/each}
+                                       </select>
+                                    </div>
+                                    {#if newEffectDuration === 'custom'}
+                                       <div class="effect-input-group">
+                                          <label class="input-label">Turns</label>
+                                          <input 
+                                             type="number" 
+                                             bind:value={customDurationTurns}
+                                             min="1"
+                                             placeholder="Turns"
+                                             class="effect-input"
+                                             disabled={isCreating}
+                                          />
+                                       </div>
+                                    {/if}
                                     <button 
                                        class="add-effect-btn" 
                                        on:click={addEffectToNew}
@@ -464,7 +554,6 @@
                                     >
                                        <i class="fas fa-plus"></i>
                                     </button>
-                                 </div>
                               </div>
                            </div>
                            
@@ -503,7 +592,15 @@
                               {#if modifier.modifiers && modifier.modifiers.length > 0}
                                  {#each modifier.modifiers as effect}
                                     <span class="effect-tag">
-                                       {effect.resource}: {typeof effect.value === 'number' && effect.value > 0 ? '+' : ''}{effect.value}
+                                       {#if effect.type === 'dice'}
+                                          {effect.resource}: {effect.negative ? '-' : ''}{effect.formula}
+                                       {:else if effect.type === 'static'}
+                                          {effect.resource}: {effect.value > 0 ? '+' : ''}{effect.value}
+                                       {:else if effect.type === 'choice' || effect.type === 'computed'}
+                                          {effect.type}
+                                       {:else}
+                                          Unknown
+                                       {/if}
                                     </span>
                                  {/each}
                               {:else}
@@ -515,7 +612,7 @@
                         <!-- Duration Column -->
                         <td>
                            {#if modifier.modifiers && modifier.modifiers[0]?.duration}
-                              <span class="modifier-duration">{formatDuration(modifier.modifiers[0].duration)}</span>
+                              <span class="modifier-duration">{formatDuration(modifier.modifiers[0].duration, modifier.startTurn)}</span>
                            {:else}
                               <span class="no-effects">—</span>
                            {/if}
@@ -588,7 +685,15 @@
                               {#if modifier.modifiers && modifier.modifiers.length > 0}
                                  {#each modifier.modifiers as effect}
                                     <span class="effect-tag">
-                                       {effect.resource}: {typeof effect.value === 'number' && effect.value > 0 ? '+' : ''}{effect.value}
+                                       {#if effect.type === 'dice'}
+                                          {effect.resource}: {effect.negative ? '-' : ''}{effect.formula}
+                                       {:else if effect.type === 'static'}
+                                          {effect.resource}: {effect.value > 0 ? '+' : ''}{effect.value}
+                                       {:else if effect.type === 'choice' || effect.type === 'computed'}
+                                          {effect.type}
+                                       {:else}
+                                          Unknown
+                                       {/if}
                                     </span>
                                  {/each}
                               {:else}
@@ -598,7 +703,7 @@
                         </td>
                         <td>
                            {#if modifier.modifiers && modifier.modifiers[0]?.duration}
-                              <span class="modifier-duration">{formatDuration(modifier.modifiers[0].duration)}</span>
+                              <span class="modifier-duration">{formatDuration(modifier.modifiers[0].duration, modifier.startTurn)}</span>
                            {:else}
                               <span class="no-effects">—</span>
                            {/if}
@@ -883,14 +988,14 @@
       }
    }
    
-   .effects-row-builder {
+   .effects-badges-container {
       display: flex;
-      align-items: center;
-      gap: var(--space-12);
+      gap: var(--space-8);
       flex-wrap: wrap;
       padding: var(--space-8);
       background: var(--overlay-low);
       border-radius: var(--radius-md);
+      margin-bottom: var(--space-8);
    }
    
    .effect-item {
@@ -946,8 +1051,25 @@
    
    .add-effect-inline-builder {
       display: flex;
-      align-items: center;
-      gap: var(--space-8);
+      align-items: flex-end;
+      gap: var(--space-12);
+      background: var(--overlay);
+      padding: var(--space-12);
+      border-radius: var(--radius-md);
+      flex-wrap: wrap;
+      justify-content: flex-start;
+   }
+   
+   .effect-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      
+      .input-label {
+         font-size: var(--font-sm);
+         font-weight: var(--font-weight-medium);
+         color: var(--text-secondary);
+      }
    }
    
    .no-effects {
@@ -990,16 +1112,19 @@
    }
    
    .inline-input {
-      padding: var(--space-4) var(--space-8);
-      background: var(--overlay);
-      border: 1px solid var(--color-primary, #5e0000);
+      padding: var(--space-8) var(--space-12);
+      min-height: 2.5rem;
+      background: var(--surface-raised);
+      border: 1px solid var(--border-default);
       border-radius: var(--radius-md);
-      color: var(--color-text-dark-primary, #b5b3a4);
+      color: var(--text-primary);
+      font-size: var(--font-md);
       min-width: 9.375rem;
+      box-sizing: border-box;
       
       &:focus {
          outline: none;
-         background: var(--overlay-high);
+         border-color: var(--border-focus);
       }
    }
    
@@ -1061,9 +1186,17 @@
       
       label {
          font-size: var(--font-sm);
-         font-weight: var(--font-weight-semibold);
-         color: var(--color-text-dark-primary, #b5b3a4);
+         font-weight: var(--font-weight-medium);
+         color: var(--text-secondary);
       }
+      
+      &.full-width {
+         width: 100%;
+      }
+   }
+   
+   .full-width {
+      width: 100%;
    }
    
    .effects-section {
@@ -1075,29 +1208,36 @@
    .effects-header {
       display: flex;
       flex-direction: column;
-      gap: var(--space-8);
+      gap: var(--space-4);
       
       label {
          font-size: var(--font-sm);
-         font-weight: var(--font-weight-semibold);
-         color: var(--color-text-dark-primary, #b5b3a4);
+         font-weight: var(--font-weight-medium);
+         color: var(--text-secondary);
+      }
+      
+      .hint-text {
+         font-size: var(--font-xs);
+         color: var(--text-tertiary);
+         font-style: italic;
       }
    }
    
-   .effect-select {
+   .effect-select,
+   .effect-input {
       padding: var(--space-8) var(--space-12);
       min-height: 2.5rem;
-      background: var(--overlay);
+      background: var(--surface-raised);
       border: 1px solid var(--border-default);
       border-radius: var(--radius-md);
-      color: var(--color-text-dark-primary, #b5b3a4);
+      color: var(--text-primary);
+      font-size: var(--font-md);
       line-height: 1.5;
-      vertical-align: middle;
       box-sizing: border-box;
       
       &:focus {
          outline: none;
-         border-color: var(--color-primary, #5e0000);
+         border-color: var(--border-focus);
       }
       
       &:disabled {
@@ -1106,37 +1246,26 @@
    }
    
    .effect-input {
-      padding: var(--space-4) var(--space-8);
-      background: var(--overlay);
-      border: 1px solid var(--border-default);
-      border-radius: var(--radius-md);
-      color: var(--color-text-dark-primary, #b5b3a4);
       width: 6.25rem;
-      
-      &:focus {
-         outline: none;
-         border-color: var(--color-primary, #5e0000);
-      }
-      
-      &:disabled {
-         opacity: 0.5;
-      }
    }
    
    .add-effect-btn {
-      padding: var(--space-4) var(--space-12);
-      background: rgba(94, 0, 0, 0.2);
-      border: 1px solid rgba(94, 0, 0, 0.3);
+      padding: var(--space-8) var(--space-12);
+      min-height: 2.5rem;
+      background: var(--surface-raised);
+      border: 1px solid var(--border-default);
       border-radius: var(--radius-md);
-      color: var(--color-text-dark-primary, #b5b3a4);
+      color: var(--text-primary);
       cursor: pointer;
       transition: all 0.2s;
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: var(--space-8);
       
       &:hover:not(:disabled) {
-         background: rgba(94, 0, 0, 0.3);
+         background: var(--surface-hover);
+         border-color: var(--border-focus);
       }
       
       &:disabled {

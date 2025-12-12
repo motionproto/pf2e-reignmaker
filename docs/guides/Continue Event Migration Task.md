@@ -90,7 +90,7 @@ Outcome descriptions must be **narratively distinct** across TWO dimensions:
 This is a hard limit for UI display purposes. Keep descriptions punchy and focused:
 
 - Remove filler words ("your", "the kingdom", "widespread")
-- Use sentence fragments when appropriate
+- Write complete sentences with proper grammar
 - Focus on key consequences, not exhaustive details
 - Maximum 2 short sentences per description
 - Badges show mechanical effects - descriptions show narrative flavor

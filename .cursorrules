@@ -145,3 +145,5 @@ All actions follow this standardized pipeline through `PipelineCoordinator`.
 **For complete architecture details:** [`.clinerules/CORE_PRINCIPLES.md`](.clinerules/CORE_PRINCIPLES.md)  
 **For development constraints:** [`.clinerules/DEV_CONSTRAINTS.md`](.clinerules/DEV_CONSTRAINTS.md)  
 **For implementation guides:** [`docs/README.md`](docs/README.md)
+
+

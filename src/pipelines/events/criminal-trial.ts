@@ -98,7 +98,7 @@ export const criminalTrialPipeline: CheckPipeline = {
         skills: ['intimidation', 'performance'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Your brutal display of justice crushes all criminal activity, as dissidents are imprisoned and fear grips the underworld.',
+          criticalSuccess: 'Your brutal justice crushes crime. Dissidents are imprisoned and the underworld is terrified.',
           success: 'Your harsh punishment deters future crime through intimidation and imprisonment.',
           failure: 'Your excessive punishment breeds resentment among the populace.',
           criticalFailure: 'Your draconian measures are seen as tyrannical, damaging your reputation and authority.'

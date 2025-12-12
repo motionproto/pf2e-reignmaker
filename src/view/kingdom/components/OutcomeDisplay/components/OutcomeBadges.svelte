@@ -105,12 +105,52 @@
     _isFame: true
   } as UnifiedOutcomeBadge)] : [];
   
+  /**
+   * Remove generic structure/worksite badges when specific badges are present
+   * This prevents duplication when handlers add detailed badges like:
+   * "The Blacksmith in Tuskwater is damaged" vs generic "1 structure damaged"
+   */
+  function deduplicateBadges(badges: any[]): any[] {
+    // Check if we have specific structure badges
+    const hasSpecificStructure = badges.some(b => 
+      b?.template?.match(/The .+ in .+ (is damaged|will be|was)/i) ||
+      b?.template?.match(/\w+ in \w+ (is damaged|will be|downgraded|removed)/i)
+    );
+    
+    // Check if we have specific worksite badges
+    const hasSpecificWorksite = badges.some(b =>
+      b?.template?.match(/(Worksite|Farmstead|Mine|Quarry|Lumber Camp) .+ (destroyed|damaged)/i) ||
+      b?.template?.match(/on hex \d+ (destroyed|damaged)/i)
+    );
+    
+    let filtered = badges;
+    
+    // Remove generic structure badges if we have specific ones
+    if (hasSpecificStructure) {
+      filtered = filtered.filter(b => 
+        !b?.template?.match(/^\d+ structures? (damaged|destroyed|will be)$/i)
+      );
+    }
+    
+    // Remove generic worksite badges if we have specific ones
+    if (hasSpecificWorksite) {
+      filtered = filtered.filter(b =>
+        !b?.template?.match(/^\d+ worksites? (damaged|destroyed)$/i)
+      );
+    }
+    
+    return filtered;
+  }
+  
   // Filter out existing fame badges if we're combining them
   $: filteredBadges = outcome === 'criticalSuccess' && existingFameBadge
     ? unifiedBadges.filter(b => b && b !== existingFameBadge)
     : unifiedBadges.filter(b => b);
   
-  $: allBadges = [...filteredBadges, ...fameBadge].filter(b => b);
+  // Apply deduplication before final badge list
+  $: deduplicatedBadges = deduplicateBadges(filteredBadges);
+  
+  $: allBadges = [...deduplicatedBadges, ...fameBadge].filter(b => b);
   $: hasAllBadges = allBadges.length > 0;
   
   let rolledBadges = new Map<number, number>();

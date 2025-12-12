@@ -185,13 +185,43 @@ export class PipelineCoordinator {
    * @param instanceId - Pipeline instance ID
    */
   async rerollFromStep3(instanceId: string): Promise<void> {
-    const context = this.pendingContexts.get(instanceId);
+    let context = this.pendingContexts.get(instanceId);
     
     if (!context) {
-      throw new Error(`[PipelineCoordinator] No pipeline context found for instance: ${instanceId}`);
+      // Context lost - try to restore from persisted instance
+      console.log(`🔄 [PipelineCoordinator] Context lost for ${instanceId}, restoring from persisted data`);
+      
+      const actor = getKingdomActor();
+      if (!actor) {
+        throw new Error(`[PipelineCoordinator] No kingdom actor found`);
+      }
+      
+      const kingdom = actor.getKingdomData();
+      const instance = kingdom.pendingOutcomes?.find((i: any) => i.previewId === instanceId);
+      
+      if (!instance) {
+        throw new Error(`[PipelineCoordinator] No pipeline context or instance found for: ${instanceId}`);
+      }
+      
+      // Restore resolution data from instance metadata if it exists
+      if (instance.metadata?._resolutionData) {
+        console.log(`💾 [PipelineCoordinator] Restored resolution data from instance:`, instance.metadata._resolutionData);
+        
+        // Find context in pending map (should exist after Step 6)
+        const existingContext = this.pendingContexts.get(instanceId);
+        if (existingContext) {
+          existingContext.resolutionData = instance.metadata._resolutionData;
+          context = existingContext;
+        }
+      }
+      
+      if (!context) {
+        throw new Error(`[PipelineCoordinator] Failed to restore context for reroll: ${instanceId}`);
+      }
     }
     
     console.log(`🔄 [PipelineCoordinator] Rerolling from Step 3 (same pipeline context)`);
+    console.log(`📦 [PipelineCoordinator] Context has resolutionData:`, !!context.resolutionData);
     log(context, 3, 'reroll', 'Rerolling from Step 3 with existing context');
     
     // ✅ EXPLICIT: Mark context as reroll (used by Step 3 to load modifiers)
@@ -202,7 +232,7 @@ export class PipelineCoordinator {
     // before the new roll completes. Instead, step4_createCheckInstance will update
     // the existing instance in-place via createActionOutcomePreview().
     
-    // Re-execute Step 3 with SAME context (modifiers already stored)
+    // Re-execute Step 3 with SAME context (modifiers AND resolutionData preserved)
     await this.step3_executeRoll(context);
     // Callback will resume at Step 4 with new roll data
   }
@@ -241,6 +271,25 @@ export class PipelineCoordinator {
       };
       
       console.log(`📦 [PipelineCoordinator] Stored resolution data in context:`, context.resolutionData);
+    }
+    
+    // ✅ FIX: Persist resolution data to instance metadata for reroll preservation
+    // This ensures reroll can access the same resolution data (like hex selection)
+    if (context.instanceId && resolutionData) {
+      const actor = getKingdomActor();
+      if (actor) {
+        await actor.updateKingdomData((kingdom: any) => {
+          const instance = kingdom.pendingOutcomes?.find((i: any) => i.previewId === context.instanceId);
+          if (instance) {
+            // Store resolution data in instance metadata
+            instance.metadata = {
+              ...instance.metadata,
+              _resolutionData: context.resolutionData
+            };
+            console.log(`💾 [PipelineCoordinator] Persisted resolution data to instance for reroll:`, context.resolutionData);
+          }
+        });
+      }
     }
     
     // Resolve the callback (continues execution to Step 7)

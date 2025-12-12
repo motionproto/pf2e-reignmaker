@@ -36,10 +36,10 @@ export const foodShortagePipeline: CheckPipeline = {
         skills: ['diplomacy', 'society'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Generous distribution inspires donations and sharing. Unity strengthens despite depleted supplies.',
+          criticalSuccess: 'Generous distribution inspires donations. Unity strengthens despite depleted supplies.',
           success: 'Compassion eases suffering. Communities rally together in gratitude.',
           failure: 'Generosity strains resources dangerously. One army unit falls ill from inadequate provisions.',
-          criticalFailure: 'Supplies exhausted helping everyone. Troops demoralized, civilians starving.'
+          criticalFailure: 'Supplies are exhausted. Troops demoralize and civilians starve.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -71,10 +71,10 @@ export const foodShortagePipeline: CheckPipeline = {
         skills: ['society', 'nature'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Efficient rationing prevents hoarding and waste. Crisis passes with minimal suffering.',
+          criticalSuccess: 'Efficient rationing prevents hoarding. The crisis passes with minimal suffering.',
           success: 'Systematic distribution maintains stability. Citizens accept temporary hardships.',
           failure: 'Bureaucratic delays spoil food. Frustrated citizens grow discontent.',
-          criticalFailure: 'Rationing collapses into chaos. Corrupt officials hoard, black markets flourish.'
+          criticalFailure: 'Rationing collapses into chaos. Officials hoard as black markets flourish.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -103,10 +103,10 @@ export const foodShortagePipeline: CheckPipeline = {
         skills: ['intimidation'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Swift enforcement crushes dissent. Elite well-fed, masses submit to discipline.',
-          success: 'Military strong while commoners starve. Resentment simmers beneath order.',
+          criticalSuccess: 'Swift enforcement crushes dissent. The elite are fed while masses submit.',
+          success: 'The military stays strong while commoners starve. Resentment simmers.',
           failure: 'Starving commoners riot. Mobs damage buildings seeking food.',
-          criticalFailure: 'Mass starvation triggers rebellion. Buildings destroyed, reputation ruined.'
+          criticalFailure: 'Mass starvation triggers rebellion. Buildings are destroyed, reputation ruined.'
         },
         outcomeBadges: {
           criticalSuccess: [

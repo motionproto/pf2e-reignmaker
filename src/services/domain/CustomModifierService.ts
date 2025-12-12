@@ -80,7 +80,38 @@ export async function applyCustomModifiers(config?: CustomModifierServiceConfig)
         if (typeof mod.duration === 'number') {
           modifiersToDecrement.push({ modifierId: modifier.id, modifierIndex: i });
         }
-      } else {
+      } 
+      // Apply dice modifiers with numeric duration (e.g., plague event)
+      else if (isDiceModifier(mod) && typeof mod.duration === 'number') {
+        logger.debug(`[CustomModifierService]   Rolling dice modifier: ${mod.formula} for ${mod.resource}`);
+        
+        // Roll the dice
+        const roll = new Roll(mod.formula);
+        await roll.evaluate();
+        let rolledValue = roll.total || 0;
+        
+        // Apply negative flag if set
+        if (mod.negative) {
+          rolledValue = -rolledValue;
+        }
+        
+        // Accumulate with other modifiers for this resource
+        const current = modifiersByResource.get(mod.resource) || 0;
+        const newValue = current + rolledValue;
+        modifiersByResource.set(mod.resource, newValue);
+        
+        logger.debug(`[CustomModifierService]   Rolled ${mod.formula} = ${rolledValue} for ${mod.resource} (new total: ${newValue})`);
+        
+        // Show dice roll in chat
+        await roll.toMessage({
+          flavor: `<strong>${modifier.name}</strong><br>${mod.resource}: ${mod.formula}`,
+          speaker: ChatMessage.getSpeaker()
+        });
+        
+        // Track numeric durations for decrementing
+        modifiersToDecrement.push({ modifierId: modifier.id, modifierIndex: i });
+      }
+      else {
         logger.debug(`[CustomModifierService]   Skipping (not applicable for application)`);
       }
     }
@@ -103,42 +134,8 @@ export async function applyCustomModifiers(config?: CustomModifierServiceConfig)
     logger.debug(`[CustomModifierService] No modifiers to apply (all skipped)`);
   }
   
-  // Decrement turn-based durations and remove expired modifiers
-  if (modifiersToDecrement.length > 0) {
-    logger.debug(`[CustomModifierService] Decrementing ${modifiersToDecrement.length} turn-based modifiers`);
-    await updateKingdom(kingdom => {
-      const modifiersToRemove: string[] = [];
-      
-      for (const { modifierId, modifierIndex } of modifiersToDecrement) {
-        const modifier = kingdom.activeModifiers?.find(m => m.id === modifierId);
-        if (modifier && modifier.modifiers[modifierIndex]) {
-          const mod = modifier.modifiers[modifierIndex];
-          if (typeof mod.duration === 'number') {
-            mod.duration -= 1;
-            logger.debug(`[CustomModifierService]   ${modifier.name}: ${mod.duration + 1} → ${mod.duration} turns remaining`);
-
-            // Mark modifier for removal if all its modifiers are expired
-            if (mod.duration <= 0) {
-              const allExpired = modifier.modifiers.every(m => 
-                typeof m.duration === 'number' && m.duration <= 0
-              );
-              if (allExpired && !modifiersToRemove.includes(modifierId)) {
-                modifiersToRemove.push(modifierId);
-              }
-            }
-          }
-        }
-      }
-      
-      // Remove expired modifiers
-      if (modifiersToRemove.length > 0) {
-        logger.debug(`[CustomModifierService] Removing ${modifiersToRemove.length} expired modifiers`);
-        kingdom.activeModifiers = kingdom.activeModifiers?.filter(m => 
-          !modifiersToRemove.includes(m.id)
-        ) || [];
-      }
-    });
-  }
+  // NOTE: Duration decrement is now handled by TurnManager.endOfTurnCleanup()
+  // This ensures modifiers last for their full duration (e.g., a 2-turn modifier applies on turns 1 and 2, then expires)
 }
 
 /**

@@ -36,10 +36,10 @@ export const assassinationAttemptPipeline: CheckPipeline = {
         skills: ['diplomacy', 'society'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Your transparency during the crisis strengthens trust, and the assassin is caught through public cooperation.',
+          criticalSuccess: 'Your transparency strengthens trust. The assassin is caught via public cooperation.',
           success: 'Your open approach reassures citizens while the threat is neutralized.',
           failure: 'Your transparency is exploited, and the leader is injured before security arrives.',
-          criticalFailure: 'Your refusal to increase security results in a serious injury that incapacitates one of your leaders.'
+          criticalFailure: 'Refusing security results in serious injury to a leader.'
         },
         outcomeBadges: {
           criticalSuccess: [

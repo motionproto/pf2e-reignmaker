@@ -113,7 +113,7 @@ export const createWorksitePipeline: CheckPipeline = {
         const selectedHexData = ctx.resolutionData?.compoundData?.selectedHex;
         
         if (!selectedHexData) {
-          return { success: true };
+          return { success: false, error: 'No hex selected for worksite' };
         }
         
         let hexId: string | undefined;
@@ -124,7 +124,10 @@ export const createWorksitePipeline: CheckPipeline = {
           return { success: false, error: 'Worksite type not selected' };
         } else if (selectedHexData?.hexIds) {
           hexId = selectedHexData.hexIds[0];
-          worksiteType = selectedHexData.metadata?.worksiteType;
+          // Get worksite type from metadata map
+          if (hexId && selectedHexData.metadata) {
+            worksiteType = selectedHexData.metadata[hexId]?.worksiteType;
+          }
         }
 
         if (!hexId || !worksiteType) {

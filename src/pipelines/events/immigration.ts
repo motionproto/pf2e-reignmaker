@@ -13,6 +13,14 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { valueBadge, textBadge, diceBadge } from '../../types/OutcomeBadge';
+import WorksiteTypeSelector from '../../services/hex-selector/WorksiteTypeSelector.svelte';
+import {
+  validateClaimed,
+  validateNoSettlement,
+  safeValidation,
+  getFreshKingdomData,
+  type ValidationResult
+} from '../shared/hexValidators';
 
 export const immigrationPipeline: CheckPipeline = {
   id: 'immigration',
@@ -35,10 +43,10 @@ export const immigrationPipeline: CheckPipeline = {
         skills: ['diplomacy', 'society'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Generous welcome inspires skilled workers. Farmsteads established, reputation strengthened.',
+          criticalSuccess: 'Your generous welcome inspires skilled workers to establish farmsteads.',
           success: 'Open-door policy integrates settlers smoothly. New farmsteads spring up.',
           failure: 'Integration programs drain treasury. Tensions rise as resources stretch thin.',
-          criticalFailure: 'Overwhelming influx depletes gold reserves. Resentment builds between natives and newcomers.'
+          criticalFailure: 'The overwhelming influx depletes gold. Resentment builds between groups.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -70,10 +78,10 @@ export const immigrationPipeline: CheckPipeline = {
         skills: ['society', 'survival'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Vetting identifies skilled immigrants. Settlement generates revenue, prevents overcrowding.',
+          criticalSuccess: 'Your vetting identifies skilled immigrants who generate revenue.',
           success: 'Systematic integration works well. Newcomers generate modest tax revenue.',
           failure: 'Bureaucratic gridlock frustrates everyone. Few settlers make it through.',
-          criticalFailure: 'Screening collapses under volume. Corruption and favoritism breed chaos.'
+          criticalFailure: 'Screening collapses under volume. Corruption breeds chaos.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -100,10 +108,10 @@ export const immigrationPipeline: CheckPipeline = {
         skills: ['intimidation'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Forced labor yields immediate profits. Multiple worksites established despite resentment.',
+          criticalSuccess: 'Forced labor yields immediate profits despite growing resentment.',
           success: 'Labor assignments extract value. Gold flows in while discontent simmers.',
-          failure: 'Harsh treatment sparks resistance. Reputation suffers from cruelty stories.',
-          criticalFailure: 'Brutal approach triggers outrage. Neighboring kingdoms condemn forced labor.'
+          failure: 'Harsh treatment sparks resistance. Stories of cruelty damage reputation.',
+          criticalFailure: 'Your brutal approach triggers outrage. Neighboring kingdoms condemn you.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -317,6 +325,64 @@ export const immigrationPipeline: CheckPipeline = {
     }
   },
 
+  postApplyInteractions: [
+    {
+      id: 'selectedHex',
+      type: 'map-selection',
+      mode: 'hex-selection',
+      count: (ctx: any) => {
+        const approach = ctx.kingdom?.turnState?.eventsPhase?.selectedApproach;
+        
+        // Return number of worksites to create based on approach and outcome
+        if (approach === 'welcome-all') {
+          return 1; // All outcomes grant 1 worksite
+        } else if (approach === 'ruthless') {
+          const outcome = ctx.outcome;
+          if (outcome === 'criticalSuccess' || outcome === 'success') {
+            return 2; // 2 worksites
+          } else {
+            return 1; // 1 worksite for failure/criticalFailure
+          }
+        }
+        return 0;
+      },
+      title: 'Select hex(es) for new worksite(s)',
+      colorType: 'worksite',
+      required: true,
+      condition: (ctx: any) => {
+        const approach = ctx.kingdom?.turnState?.eventsPhase?.selectedApproach;
+        
+        // All outcomes for welcome-all and ruthless approaches grant worksites
+        return approach === 'welcome-all' || approach === 'ruthless';
+      },
+      validateHex: (hexId: string): ValidationResult => {
+        return safeValidation(() => {
+          const kingdom = getFreshKingdomData();
+          const hex = kingdom.hexes?.find((h: any) => h.id === hexId);
+          
+          if (!hex) {
+            return { valid: false, message: 'Hex not found' };
+          }
+          
+          const claimedResult = validateClaimed(hexId, kingdom);
+          if (!claimedResult.valid) return claimedResult;
+          
+          const settlementResult = validateNoSettlement(hexId, kingdom);
+          if (!settlementResult.valid) return settlementResult;
+          
+          if (hex.worksite) {
+            return { valid: false, message: `Hex already has a ${hex.worksite.type}` };
+          }
+          
+          return { valid: true, message: 'Valid location for worksite' };
+        }, hexId, 'immigration worksite validation');
+      },
+      customSelector: {
+        component: WorksiteTypeSelector
+      }
+    }
+  ],
+
   execute: async (ctx) => {
     // NOTE: Standard modifiers (unrest, gold, fame) are applied automatically by
     // ResolutionDataBuilder + GameCommandsService via outcomeBadges.
@@ -340,13 +406,33 @@ export const immigrationPipeline: CheckPipeline = {
       }
     }
 
-    // Execute worksite creation for welcome-all approach
-    if (approach === 'welcome-all') {
-      const hexId = ctx.metadata?._worksiteHexId;
-      const worksiteType = ctx.metadata?._worksiteType;
-      if (hexId && worksiteType) {
-        const { createWorksiteExecution } = await import('../../execution/territory/createWorksite');
-        await createWorksiteExecution(hexId, worksiteType);
+    // Execute worksite creation from selected hex(es)
+    const selectedHexData = ctx.resolutionData?.compoundData?.selectedHex;
+    
+    if (selectedHexData) {
+      const { createWorksiteExecution } = await import('../../execution/territory/createWorksite');
+      
+      // Check if we have per-hex metadata (from WorksiteTypeSelector)
+      if (selectedHexData?.hexIds && Array.isArray(selectedHexData.hexIds)) {
+        const hexIds = selectedHexData.hexIds;
+        const perHexMetadata = selectedHexData.metadata || {}; // FIX: Changed from perHexMetadata to metadata
+        
+        // Create each worksite with its specific type
+        for (const hexId of hexIds) {
+          const hexMetadata = perHexMetadata[hexId];
+          const worksiteType = hexMetadata?.worksiteType || (approach === 'welcome-all' ? 'farmstead' : undefined);
+          
+          await createWorksiteExecution(hexId, worksiteType);
+          
+          ui.notifications?.info(`New settlers established a ${worksiteType || 'worksite'} on hex ${hexId}`);
+        }
+      } else if (Array.isArray(selectedHexData)) {
+        // Fallback: Simple array of hex IDs (no custom selector data)
+        for (const hexId of selectedHexData) {
+          const worksiteType = approach === 'welcome-all' ? 'farmstead' : undefined;
+          await createWorksiteExecution(hexId, worksiteType);
+          ui.notifications?.info(`New settlers established a ${worksiteType || 'worksite'} on hex ${hexId}`);
+        }
       }
     }
 

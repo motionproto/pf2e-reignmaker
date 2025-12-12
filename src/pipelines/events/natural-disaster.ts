@@ -36,10 +36,10 @@ export const naturalDisasterPipeline: CheckPipeline = {
         skills: ['survival', 'medicine'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Heroic evacuation saves countless lives. Gratitude and unity compensate for damage.',
+          criticalSuccess: 'Your heroic evacuation saves countless lives. Unity compensates for damage.',
           success: 'Rescue operations save many lives. Swift evacuation prevents casualties.',
           failure: 'Rescue efforts lag behind disaster. Buildings and worksites collapse.',
-          criticalFailure: 'Chaotic evacuation proves insufficient. Infrastructure destroyed, people displaced.'
+          criticalFailure: 'The chaotic evacuation proves insufficient. Infrastructure is destroyed.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -71,10 +71,10 @@ export const naturalDisasterPipeline: CheckPipeline = {
         skills: ['society', 'crafting'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Organized response achieves balance. Lives saved, property damage minimized.',
-          success: 'Balanced approach manages both priorities adequately. Casualties prevented.',
-          failure: 'Resources spread too thin. Buildings and worksites lost.',
-          criticalFailure: 'Confusion leads to delayed decisions. Multiple buildings damaged.'
+          criticalSuccess: 'Your organized response achieves balance. Lives are saved.',
+          success: 'Your balanced approach manages both priorities. Casualties are prevented.',
+          failure: 'Resources spread too thin. Buildings and worksites are lost.',
+          criticalFailure: 'Confusion leads to delayed decisions. Multiple buildings are damaged.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -103,10 +103,10 @@ export const naturalDisasterPipeline: CheckPipeline = {
         skills: ['intimidation'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Ruthless salvage yields building materials. Citizens resent being abandoned.',
+          criticalSuccess: 'Your ruthless salvage yields materials. Citizens resent being abandoned.',
           success: 'Property protection saves some buildings. Inadequate rescue efforts anger citizens.',
-          failure: 'Soldiers injured saving buildings that collapse anyway. Reputation suffers.',
-          criticalFailure: 'Exhausted troops fail. People die while soldiers protect empty structures.'
+          failure: 'Soldiers are injured saving buildings that collapse anyway. Reputation suffers.',
+          criticalFailure: 'Exhausted troops fail. People die while soldiers protect empty buildings.'
         },
         outcomeBadges: {
           criticalSuccess: [

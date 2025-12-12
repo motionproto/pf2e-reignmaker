@@ -27,7 +27,12 @@ export class SelectionPanelManager {
   private panelComponent: any = null;  // Svelte component instance (for custom selectors in Selection Panel)
   private panelState: 'selection' | 'revealing' | 'completed' = 'selection';
   private completionHexInfo: string | null = null;
-  private selectedMetadata: any = null;  // Custom selector data (e.g., worksite type)
+  private perHexMetadata: Map<string, any> = new Map();  // Per-hex metadata (e.g., worksite type for each hex)
+  
+  // 2-Step Workflow State
+  private currentStep: 'select-hex' | 'select-type' = 'select-hex';
+  private pendingHex: string | null = null;
+  private completedSelections: Array<{ hexId: string; metadata: any }> = [];
   
   // Callbacks
   private onCancel: (() => void) | null = null;
@@ -49,17 +54,68 @@ export class SelectionPanelManager {
   }
 
   /**
-   * Set selected metadata (for custom selectors)
+   * Get selected metadata (returns per-hex metadata map as object)
    */
-  setSelectedMetadata(metadata: any): void {
-    this.selectedMetadata = metadata;
+  getSelectedMetadata(): any {
+    if (this.perHexMetadata.size === 0) return null;
+    
+    // Convert Map to plain object for JSON serialization
+    const metadata: Record<string, any> = {};
+    this.perHexMetadata.forEach((value, key) => {
+      metadata[key] = value;
+    });
+    
+    return metadata;
   }
 
   /**
-   * Get selected metadata
+   * Check if 2-step workflow is active
    */
-  getSelectedMetadata(): any {
-    return this.selectedMetadata;
+  is2StepWorkflow(): boolean {
+    return Boolean(this.config?.customSelector && this.config.colorType === 'worksite');
+  }
+
+  /**
+   * Get current workflow step
+   */
+  getCurrentStep(): 'select-hex' | 'select-type' {
+    return this.currentStep;
+  }
+
+  /**
+   * Handle hex selection in 2-step workflow
+   * Returns true if hex should be added to selection, false if it should be blocked
+   */
+  handle2StepHexSelection(hexId: string): boolean {
+    if (!this.is2StepWorkflow()) {
+      return true; // Not in 2-step workflow, allow normal selection
+    }
+
+    // In 2-step workflow
+    if (this.currentStep === 'select-hex') {
+      // Step 1: User clicked a hex
+      // Check if already completed or pending
+      const alreadyCompleted = this.completedSelections.some(s => s.hexId === hexId);
+      if (alreadyCompleted) {
+        return false; // Don't allow selecting same hex twice
+      }
+
+      // Set as pending and transition to step 2
+      this.pendingHex = hexId;
+      this.currentStep = 'select-type';
+      this.updatePanel();
+      return true; // Allow hex to be added to selectedHexes
+    } else {
+      // Step 2: User is choosing type, block hex clicks
+      return false;
+    }
+  }
+
+  /**
+   * Check if hex selection should be blocked in 2-step workflow
+   */
+  shouldBlockHexSelection(): boolean {
+    return this.is2StepWorkflow() && this.currentStep === 'select-type';
   }
 
   /**
@@ -276,6 +332,242 @@ export class SelectionPanelManager {
     
     if (!slotsContainer) return;
     
+    // Check if we should use 2-step workflow (only for custom selectors)
+    const use2StepWorkflow = this.config.customSelector && this.config.colorType === 'worksite';
+    
+    if (use2StepWorkflow) {
+      this.render2StepWorkflow(slotsContainer, btnDone);
+    } else {
+      this.renderTraditionalWorkflow(slotsContainer, btnDone);
+    }
+  }
+
+  /**
+   * Render 2-step workflow (for custom selector configs like worksite creation)
+   */
+  private render2StepWorkflow(slotsContainer: Element, btnDone: HTMLButtonElement | null): void {
+    if (!this.config) return;
+    
+    slotsContainer.innerHTML = '';
+    
+    // Render completed selections as tokens
+    if (this.completedSelections.length > 0) {
+      const tokensContainer = document.createElement('div');
+      tokensContainer.style.cssText = `
+        margin-bottom: 12px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #D2691E;
+      `;
+      
+      const tokensHeader = document.createElement('div');
+      tokensHeader.style.cssText = 'font-size: 12px; color: #999; margin-bottom: 8px;';
+      tokensHeader.textContent = 'Completed Selections:';
+      tokensContainer.appendChild(tokensHeader);
+      
+      this.completedSelections.forEach(({ hexId, metadata }) => {
+        const token = document.createElement('div');
+        const terrain = this.getHexTerrain(hexId);
+        const worksiteType = metadata.worksiteType || 'Worksite';
+        
+        token.style.cssText = `
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 8px 12px;
+          background: rgba(76, 175, 80, 0.2);
+          border: 1px solid #4CAF50;
+          border-radius: 4px;
+          margin-bottom: 4px;
+          font-size: 14px;
+        `;
+        
+        token.innerHTML = `
+          <span style="flex: 1; color: #4CAF50;">
+            <i class="fas fa-industry"></i> ${worksiteType} at ${hexId} <span style="font-size: 12px; color: #999;">[${terrain}]</span>
+          </span>
+          <i class="fas fa-times-circle" data-hex-id="${hexId}" style="color: #999; cursor: pointer; font-size: 16px;" title="Remove"></i>
+        `;
+        
+        // Wire up dismiss button
+        const dismissBtn = token.querySelector('.fa-times-circle');
+        dismissBtn?.addEventListener('click', () => {
+          this.removeCompletedSelection(hexId);
+        });
+        
+        tokensContainer.appendChild(token);
+      });
+      
+      slotsContainer.appendChild(tokensContainer);
+    }
+    
+    // Render step indicators
+    const stepsContainer = document.createElement('div');
+    stepsContainer.style.cssText = 'margin-bottom: 12px;';
+    
+    // Step 1: Select a Hex
+    const step1 = document.createElement('div');
+    const step1Active = this.currentStep === 'select-hex';
+    step1.style.cssText = `
+      padding: 12px;
+      margin-bottom: 8px;
+      border-radius: 4px;
+      ${step1Active 
+        ? 'background: rgba(210, 105, 30, 0.2); border: 2px solid #D2691E;' 
+        : 'background: rgba(255, 255, 255, 0.05); border: 1px solid #666; opacity: 0.6;'}
+    `;
+    
+    const step1Icon = step1Active ? '<i class="fas fa-hand-pointer"></i>' : '<i class="fas fa-check"></i>';
+    const step1Text = this.pendingHex 
+      ? `Step 1: Select a Hex ✓<br><span style="font-size: 12px; color: #999;">Hex ${this.pendingHex} [${this.getHexTerrain(this.pendingHex)}] selected</span>`
+      : `Step 1: Select a Hex<br><span style="font-size: 12px; color: #999;">${step1Active ? 'Click a hex on the map...' : ''}</span>`;
+    
+    step1.innerHTML = `
+      <div style="font-weight: bold; font-size: 14px; color: ${step1Active ? '#D2691E' : '#999'};">
+        ${step1Icon} ${step1Text}
+      </div>
+    `;
+    stepsContainer.appendChild(step1);
+    
+    // Step 2: Choose Worksite Type
+    const step2 = document.createElement('div');
+    const step2Active = this.currentStep === 'select-type';
+    step2.style.cssText = `
+      padding: 12px;
+      margin-bottom: 8px;
+      border-radius: 4px;
+      ${step2Active 
+        ? 'background: rgba(210, 105, 30, 0.2); border: 2px solid #D2691E;' 
+        : 'background: rgba(255, 255, 255, 0.05); border: 1px solid #666; opacity: 0.6;'}
+    `;
+    
+    step2.innerHTML = `
+      <div style="font-weight: bold; font-size: 14px; color: ${step2Active ? '#D2691E' : '#999'};">
+        <i class="fas fa-industry"></i> Step 2: Choose Worksite Type<br>
+        <span style="font-size: 12px; color: #999;">${step2Active ? '' : '(Select a hex first)'}</span>
+      </div>
+    `;
+    stepsContainer.appendChild(step2);
+    
+    slotsContainer.appendChild(stepsContainer);
+    
+    // Progress indicator
+    const progressDiv = document.createElement('div');
+    progressDiv.style.cssText = `
+      text-align: center;
+      padding: 8px;
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: #999;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+    `;
+    
+    const completed = this.completedSelections.length;
+    const total = this.config.count;
+    const allComplete = completed === total;
+    
+    progressDiv.innerHTML = allComplete
+      ? `<i class="fas fa-check-circle" style="color: #4CAF50;"></i> All selections complete! (${completed} of ${total})`
+      : `Progress: ${completed} of ${total} completed`;
+    
+    slotsContainer.appendChild(progressDiv);
+    
+    // Mount custom selector if in step 2
+    if (step2Active && this.pendingHex) {
+      const customMount = document.createElement('div');
+      customMount.id = 'custom-selector-mount';
+      slotsContainer.appendChild(customMount);
+      
+      this.mountCustomSelectorFor2Step(customMount, this.pendingHex);
+    }
+    
+    // Update Done button
+    if (btnDone) {
+      btnDone.disabled = !allComplete;
+      btnDone.style.opacity = allComplete ? '1' : '0.5';
+    }
+  }
+
+  /**
+   * Remove a completed selection
+   */
+  private removeCompletedSelection(hexId: string): void {
+    logger.info(`[SelectionPanelManager] Removing completed selection: ${hexId}`);
+    
+    // Remove from completed selections
+    this.completedSelections = this.completedSelections.filter(s => s.hexId !== hexId);
+    
+    // Remove from metadata map
+    this.perHexMetadata.delete(hexId);
+    
+    // Remove from selected hexes array
+    const index = this.selectedHexes.indexOf(hexId);
+    if (index > -1) {
+      this.selectedHexes.splice(index, 1);
+      logger.info(`[SelectionPanelManager] Removed ${hexId} from selectedHexes. Remaining:`, this.selectedHexes);
+    }
+    
+    // If we're currently in step 2 with this hex, reset to step 1
+    if (this.pendingHex === hexId) {
+      this.pendingHex = null;
+      this.currentStep = 'select-hex';
+    }
+    
+    // Dispatch event to deselect from map (this should trigger handleHexDeselection in HexSelectorService)
+    const event = new CustomEvent('hex-deselected', { 
+      detail: { hexId },
+      bubbles: true 
+    });
+    this.panelMountPoint?.dispatchEvent(event);
+    
+    // Update panel display
+    this.updatePanel();
+  }
+
+  /**
+   * Mount custom selector for 2-step workflow
+   */
+  private mountCustomSelectorFor2Step(container: Element, hexId: string): void {
+    if (!this.config?.customSelector) return;
+    
+    // Unmount previous instance if exists
+    if (this.panelComponent) {
+      this.panelComponent.$destroy();
+      this.panelComponent = null;
+    }
+    
+    // Import and mount the component
+    const ComponentConstructor = this.config.customSelector.component;
+    
+    this.panelComponent = new ComponentConstructor({
+      target: container,
+      props: {
+        selectedHex: hexId,
+        onSelect: (metadata: any) => {
+          // Store metadata for the pending hex
+          logger.info(`[SelectionPanelManager] 2-step: Storing metadata for hex ${hexId}:`, metadata);
+          
+          // Add to completed selections
+          this.completedSelections.push({ hexId, metadata });
+          this.perHexMetadata.set(hexId, metadata);
+          
+          // Reset to step 1 for next selection
+          this.pendingHex = null;
+          this.currentStep = 'select-hex';
+          
+          // Update panel
+          this.updatePanel();
+        },
+        ...this.config.customSelector.props
+      }
+    });
+  }
+
+  /**
+   * Render traditional workflow (for non-custom-selector configs)
+   */
+  private renderTraditionalWorkflow(slotsContainer: Element, btnDone: HTMLButtonElement | null): void {
+    if (!this.config) return;
     // 🔧 FIX: Preserve custom selector mount point if component is already mounted
     let customSelectorMount: HTMLElement | null = null;
     if (this.panelComponent) {
@@ -345,8 +637,19 @@ export class SelectionPanelManager {
     // Update Done button
     // For settlement type, metadata is optional (has fallback), so don't require it
     const metadataRequired = this.config.customSelector && this.config.colorType !== 'settlement';
-    const isComplete = this.selectedHexes.length === this.config.count && 
-                       (!metadataRequired || this.selectedMetadata !== null);
+    
+    // Check if all selected hexes have metadata (if required)
+    let allHexesHaveMetadata = true;
+    if (metadataRequired) {
+      for (const hexId of this.selectedHexes) {
+        if (!this.perHexMetadata.has(hexId)) {
+          allHexesHaveMetadata = false;
+          break;
+        }
+      }
+    }
+    
+    const isComplete = this.selectedHexes.length === this.config.count && allHexesHaveMetadata;
     if (btnDone) {
       btnDone.disabled = !isComplete;
       btnDone.style.opacity = isComplete ? '1' : '0.5';
@@ -372,15 +675,19 @@ export class SelectionPanelManager {
     
     // Import and mount the component
     const ComponentConstructor = this.config.customSelector.component;
-    const selectedHex = this.selectedHexes[0];
+    const selectedHex = this.selectedHexes[this.selectedHexes.length - 1];  // Most recently selected hex
     
     this.panelComponent = new ComponentConstructor({
       target: customMount,
       props: {
         selectedHex,
         onSelect: (metadata: any) => {
-          this.selectedMetadata = metadata;
-          this.updatePanel();
+          // Store metadata for the current hex
+          if (selectedHex) {
+            logger.info(`[SelectionPanelManager] Storing metadata for hex ${selectedHex}:`, metadata);
+            this.perHexMetadata.set(selectedHex, metadata);
+            this.updatePanel();
+          }
         },
         ...this.config.customSelector.props
       }
@@ -424,23 +731,21 @@ export class SelectionPanelManager {
       icon = this.config.colorType === 'scout' ? 'fa-map-marked-alt' : 'fa-check-circle';
     }
     
-    // Generate metadata display HTML if custom selector data exists
+    // Generate metadata display HTML if per-hex data exists
     let metadataHTML = '';
-    if (this.selectedMetadata && this.selectedMetadata.worksiteType) {
-      // Get production info from completionHexInfo if available
-      const productionMatch = this.completionHexInfo?.match(/\+\d+\s+\w+/);
-      const production = productionMatch ? productionMatch[0] : '';
+    if (this.perHexMetadata.size > 0) {
+      const metadataEntries = Array.from(this.perHexMetadata.entries());
+      const displayEntries = metadataEntries.map(([hexId, data]) => {
+        const worksiteType = data.worksiteType || 'Worksite';
+        return `<div style="font-size: var(--font-lg); color: var(--text-secondary);">${worksiteType} on ${hexId}</div>`;
+      }).join('');
       
       metadataHTML = `
         <div style="margin-bottom: 16px;">
           <div style="font-size: var(--font-2xl); font-weight: var(--font-weight-bold); color: var(--text-primary); margin-bottom: 4px;">
-            ${this.selectedMetadata.worksiteType}
+            Worksites Created
           </div>
-          ${production ? `
-            <div style="font-size: var(--font-lg); color: var(--text-secondary);">
-              ${production}
-            </div>
-          ` : ''}
+          ${displayEntries}
         </div>
       `;
     }
@@ -495,10 +800,13 @@ export class SelectionPanelManager {
     
     // Wire up OK button (handled by parent through event)
     const btnOk = panel.querySelector('#btn-ok') as HTMLButtonElement;
-    btnOk?.addEventListener('click', () => {
-      const event = new CustomEvent('completed-ok');
-      this.panelMountPoint?.dispatchEvent(event);
-    });
+    const panelMount = this.panelMountPoint;
+    if (btnOk && panelMount) {
+      btnOk.addEventListener('click', () => {
+        const event = new CustomEvent('completed-ok');
+        panelMount.dispatchEvent(event);
+      });
+    }
     
     // Make panel draggable
     this.makePanelDraggable(panel);
@@ -521,7 +829,10 @@ export class SelectionPanelManager {
     // Reset all state for next use
     this.panelState = 'selection';
     this.completionHexInfo = null;
-    this.selectedMetadata = null;
+    this.perHexMetadata.clear();
+    this.completedSelections = [];
+    this.currentStep = 'select-hex';
+    this.pendingHex = null;
     this.config = null;
     this.selectedHexes = [];
     this.onCancel = null;

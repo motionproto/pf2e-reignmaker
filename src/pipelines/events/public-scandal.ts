@@ -37,10 +37,10 @@ export const publicScandalPipeline: CheckPipeline = {
         skills: ['society', 'diplomacy'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Your transparent investigation vindicates the accused or reveals accountability. Public hearings demonstrate your commitment to justice and rule of law. Citizens praise your integrity, and the scandal becomes a testament to good governance.',
-          success: 'Your honest investigation contains the scandal. Fair proceedings reveal the truth, and your willingness to face facts earns respect. The kingdom maintains trust in leadership despite the embarrassment.',
-          failure: 'Your investigation drags on messily. Prolonged hearings keep the scandal in public view while legal costs mount. Though honest, the process proves expensive and the extended attention increases unrest.',
-          criticalFailure: 'Your investigation backfires spectacularly. Revelations uncover deeper corruption, and your apparent naiveté damages credibility. The scandal spirals as citizens lose faith in leadership that seems incompetent.'
+          criticalSuccess: 'The investigation reveals truth. Your integrity becomes a testament to justice.',
+          success: 'The investigation contains the scandal. Respect is earned.',
+          failure: 'The investigation drags on. Costs mount and unrest increases.',
+          criticalFailure: 'The investigation backfires. Deeper corruption is revealed.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -68,10 +68,10 @@ export const publicScandalPipeline: CheckPipeline = {
         skills: ['deception', 'stealth'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Your cover-up succeeds flawlessly. Evidence disappears, witnesses are persuaded to forget, and the story dies quietly. The scandal vanishes as if it never happened, and the kingdom moves on undisturbed.',
-          success: 'Your suppression contains the damage. Strategic silence and careful management keep the story from spreading. The scandal fades from public attention with minimal disruption.',
-          failure: 'Your cover-up is exposed. Attempts at suppression become their own scandal, and the deception damages your reputation more than the original incident. Citizens resent the dishonesty.',
-          criticalFailure: 'Your cover-up collapses catastrophically. The attempted deception becomes a major scandal itself, destroying credibility. Expensive bribes fail as the story breaks wider than ever, combining corruption with incompetence.'
+          criticalSuccess: 'The cover-up succeeds. Evidence disappears and the story dies.',
+          success: 'Your suppression contains the damage. The story fades.',
+          failure: 'The cover-up is exposed. Deception damages reputation.',
+          criticalFailure: 'The cover-up collapses. Bribes fail and the story breaks wider.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -99,10 +99,10 @@ export const publicScandalPipeline: CheckPipeline = {
         skills: ['intimidation', 'deception'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Your scapegoating succeeds completely. Subordinates are publicly blamed and imprisoned while leadership remains untainted. The swift, decisive action satisfies the public demand for accountability without touching the crown.',
-          success: 'Your sacrifice of a subordinate contains the scandal. One official takes the fall, is imprisoned, and the matter is declared closed. The ruthless pragmatism works, though some suspect the truth.',
-          failure: 'Your scapegoating attempt is transparent. The obvious sacrifice of an innocent subordinate outrages citizens who see through the ploy. Both reputation and trust suffer as the cynical maneuver backfires.',
-          criticalFailure: 'Your scapegoating triggers outrage. The blatant injustice horrifies allied factions and domestic critics alike. Diplomatic relations suffer as neighboring kingdoms condemn the corrupt sacrifice of innocents to protect the guilty.'
+          criticalSuccess: 'The scapegoating succeeds. Subordinates are imprisoned.',
+          success: 'A subordinate takes the fall. An official is imprisoned, matter closed.',
+          failure: 'The scapegoating is transparent. The maneuver backfires.',
+          criticalFailure: 'The scapegoating triggers outrage. Factions are horrified.'
         },
         outcomeBadges: {
           criticalSuccess: [

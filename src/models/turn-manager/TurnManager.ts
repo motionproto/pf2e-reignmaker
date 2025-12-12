@@ -269,6 +269,51 @@ export class TurnManager {
         await VoteService.cleanupOldVotes();
         logger.info('🗳️ [TurnManager] Cleaned up old votes');
         
+        // 4. Remove expired turn-based custom modifiers
+        // Modifiers with numeric duration calculate their expiry turn when created
+        await updateKingdom(k => {
+            if (!k.activeModifiers || k.activeModifiers.length === 0) return;
+            
+            const customModifiers = k.activeModifiers.filter(m => m.sourceType === 'custom');
+            if (customModifiers.length === 0) return;
+            
+            const modifiersToRemove: string[] = [];
+            const currentTurn = k.currentTurn || 1;
+            
+            for (const modifier of customModifiers) {
+                let shouldRemove = true;
+                
+                for (const mod of modifier.modifiers) {
+                    if (typeof mod.duration === 'number') {
+                        // Calculate expiry turn: startTurn + duration
+                        // Example: Added on turn 5 with duration 2 → expires after turn 6 (5+2-1)
+                        const expiryTurn = modifier.startTurn + mod.duration;
+                        
+                        if (currentTurn < expiryTurn) {
+                            shouldRemove = false;
+                            const turnsRemaining = expiryTurn - currentTurn;
+                            logger.info(`⏰ [TurnManager] ${modifier.name}: ${turnsRemaining} turn(s) remaining (expires after turn ${expiryTurn})`);
+                        } else {
+                            logger.info(`⏰ [TurnManager] ${modifier.name}: Expired (was active turns ${modifier.startTurn}-${expiryTurn})`);
+                        }
+                    } else {
+                        shouldRemove = false; // ongoing/permanent modifiers never expire
+                    }
+                }
+                
+                // Mark modifier for removal if all its effects are expired
+                if (shouldRemove) {
+                    modifiersToRemove.push(modifier.id);
+                }
+            }
+            
+            // Remove expired modifiers
+            if (modifiersToRemove.length > 0) {
+                logger.info(`🗑️ [TurnManager] Removing ${modifiersToRemove.length} expired custom modifier(s)`);
+                k.activeModifiers = k.activeModifiers.filter(m => !modifiersToRemove.includes(m.id));
+            }
+        });
+        
         logger.info('✅ [TurnManager] End-of-turn cleanup complete');
     }
 

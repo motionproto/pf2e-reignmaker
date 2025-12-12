@@ -39,7 +39,7 @@ export const inquisitionPipeline: CheckPipeline = {
         skills: ['diplomacy', 'society'],
         personality: { virtuous: 4 },
         outcomeDescriptions: {
-          criticalSuccess: 'Your stand against persecution inspires the kingdom. The accused are vindicated and your moral leadership earns respect.',
+          criticalSuccess: 'Your stand against persecution inspires the kingdom. The accused are vindicated.',
           success: 'Your protection prevents violence. Fair hearings replace witch hunts.',
           failure: 'Zealots denounce you as heretic-sympathizer. Division and unrest grow.',
           criticalFailure: 'Your intervention backfires. Zealots spark riots and persecution intensifies.'
@@ -99,7 +99,7 @@ export const inquisitionPipeline: CheckPipeline = {
         skills: ['religion', 'intimidation'],
         personality: { ruthless: 4 },
         outcomeDescriptions: {
-          criticalSuccess: 'Your theocratic enforcement crushes dissent. The accused are imprisoned and religious authorities praise your piety.',
+          criticalSuccess: 'Your theocratic enforcement crushes dissent. The accused are imprisoned.',
           success: 'Your support empowers decisive action. Swift arrests silence criticism and establish order.',
           failure: 'Your persecution sparks outrage. Neighboring kingdoms condemn the brutality.',
           criticalFailure: 'Your zealous support triggers international condemnation. Allied nations are horrified.'

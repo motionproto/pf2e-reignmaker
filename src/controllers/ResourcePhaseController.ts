@@ -96,7 +96,7 @@ export async function createResourcePhaseController() {
         });
         
         // Apply collected resources to kingdom using the new separated structure
-        await actor.updateKingdomData((kingdom) => {
+        await actor.updateKingdomData((kingdom: any) => {
           // Apply territory resources (food, lumber, stone, ore)
           result.resourceCollection.territoryResources.forEach((amount, resource) => {
             if (amount > 0) {
@@ -137,6 +137,11 @@ export async function createResourcePhaseController() {
 
           }
         });
+        
+        // Apply custom modifiers with turn-based durations (e.g., plague event)
+        // This is done AFTER resource collection so there are resources to modify
+        const { applyCustomModifiers } = await import('../services/domain/CustomModifierService');
+        await applyCustomModifiers({ phase: 'Resources' });
         
         // Mark collect resources step as completed (using type-safe constant)
         await completePhaseStepByIndex(ResourcesPhaseSteps.COLLECT_RESOURCES);

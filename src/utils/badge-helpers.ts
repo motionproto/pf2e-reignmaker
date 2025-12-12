@@ -51,6 +51,36 @@ export function replaceGenericFactionBadge(
 }
 
 /**
+ * Remove generic structure/worksite badges when specific badges are provided
+ * 
+ * Use this after calling DamageStructureHandler.prepare() or DestroyStructureHandler.prepare()
+ * which add specific badges with structure names. This removes the generic badge to avoid duplication.
+ * 
+ * @param badges - Array of outcome badges
+ * @returns Modified badges array with generic structure/worksite badges removed
+ * 
+ * @example
+ * ```typescript
+ * const cmd = await handler.prepare({ type: 'damageStructure', count: 1 }, ctx);
+ * if (cmd) {
+ *   if (cmd.outcomeBadges) outcomeBadges.push(...cmd.outcomeBadges);
+ *   outcomeBadges = removeGenericStructureBadges(outcomeBadges);
+ * }
+ * ```
+ */
+export function removeGenericStructureBadges(badges: any[]): any[] {
+  // Remove generic structure/worksite badges
+  // Matches: "1 structure damaged", "2 structures damaged", "1 structure destroyed", etc.
+  return badges.filter(badge => {
+    const template = badge.template || '';
+    return !(
+      template.match(/^\d+ structures? (damaged|destroyed)$/) ||
+      template.match(/^\d+ worksites? (damaged|destroyed)$/)
+    );
+  });
+}
+
+/**
  * Create a targeted dice badge with auto-selected settlement
  * 
  * @param options - Badge creation options
