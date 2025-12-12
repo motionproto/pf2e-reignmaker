@@ -1,124 +1,206 @@
 /**
- * Monster Attack Event Pipeline
+ * Monster Attack Event Pipeline (CHOICE-BASED)
  *
- * A dangerous creature attacks a settlement.
- * Success drives it off, failure causes property damage.
+ * A dangerous creature threatens the kingdom's territory.
+ *
+ * Approaches:
+ * - Relocate Peacefully (Virtuous) - Try to resolve without violence
+ * - Hire Hunters (Practical) - Professional solution
+ * - Mobilize Army (Ruthless) - Use overwhelming force
+ *
+ * Based on EVENT_MIGRATION_STATUS.md specifications
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
+import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
-import { DestroyStructureHandler } from '../../services/gameCommands/handlers/DestroyStructureHandler';
+import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
+import { updateKingdom } from '../../stores/KingdomStore';
 
 export const monsterAttackPipeline: CheckPipeline = {
   id: 'monster-attack',
   name: 'Monster Attack',
-  description: 'A dangerous creature attacks a settlement or travellers.',
+  description: 'A dangerous creature threatens the kingdom\'s territory.',
   checkType: 'event',
   tier: 1,
 
+  // Base skills (filtered by choice)
   skills: [
-      { skill: 'intimidation', description: 'drive it off' },
-      { skill: 'nature', description: 'understand and redirect' },
-      { skill: 'stealth', description: 'track and ambush' },
-    ],
+    { skill: 'nature', description: 'understand creature behavior' },
+    { skill: 'diplomacy', description: 'negotiate peacefully' },
+    { skill: 'intrigue', description: 'coordinate with hunters' },
+    { skill: 'warfare', description: 'mobilize military forces' }
+  ],
 
-  outcomes: {
-    criticalSuccess: {
-      description: 'The monster is slain! Valuable remains are collected and the people celebrate.',
-      endsEvent: true,
-      modifiers: [
-        { type: 'dice', resource: 'gold', formula: '2d3', duration: 'immediate' },
-        { type: 'static', resource: 'unrest', value: -2, duration: 'immediate' },
-      ]
-    },
-    success: {
-      description: 'The monster is driven away before causing serious harm.',
-      endsEvent: true,
-      modifiers: [
-        { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
-      ]
-    },
-    failure: {
-      description: 'The monster causes significant damage before retreating.',
-      endsEvent: true,
-      modifiers: [
-        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-      ],
-      gameCommands: [
-        { type: 'damageStructure', count: 1 }
-      ]
-    },
-    criticalFailure: {
-      description: 'The monster rampages through the settlement, destroying property.',
-      endsEvent: true,
-      modifiers: [
-        { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }
-      ],
-      gameCommands: [
-        { type: 'destroyStructure', count: 1 }
-      ]
-    },
+  // Strategic choice - triggers voting system
+  // Options ordered: Virtuous (left) → Practical (center) → Ruthless (right)
+  strategicChoice: {
+    label: 'How will you deal with the monster threat?',
+    required: true,
+    options: [
+      {
+        id: 'virtuous',
+        label: 'Relocate Peacefully',
+        description: 'Try to relocate the creature without violence',
+        icon: 'fas fa-dove',
+        skills: ['nature', 'diplomacy'],
+        personality: { virtuous: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'The creature peacefully moves away, nature thrives.',
+          success: 'The creature is relocated without incident.',
+          failure: 'Relocation attempts fail, the creature remains.',
+          criticalFailure: 'The creature attacks during relocation attempts.'
+        },
+        outcomeBadges: {
+          criticalSuccess: [
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
+            diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d4', 'positive')
+          ],
+          success: [
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1', 'positive')
+          ],
+          failure: [
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1', 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+          ],
+          criticalFailure: [] // Damage structure + unrest handled by preview.calculate
+        }
+      },
+      {
+        id: 'practical',
+        label: 'Hire Hunters',
+        description: 'Hire professional hunters to deal with the threat',
+        icon: 'fas fa-crosshairs',
+        skills: ['intrigue', 'warfare'],
+        personality: { practical: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Hunters defeat the beast, its parts bring profit.',
+          success: 'The monster is slain and its parts sold.',
+          failure: 'Hunters fail, costs mount.',
+          criticalFailure: 'Hunters fail catastrophically, beast damages property.'
+        },
+        outcomeBadges: {
+          criticalSuccess: [
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+          ],
+          success: [
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+          ],
+          failure: [
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1', 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+          ],
+          criticalFailure: [] // Damage structure + gold/unrest handled by preview.calculate
+        }
+      },
+      {
+        id: 'ruthless',
+        label: 'Mobilize Army',
+        description: 'Use military force to destroy the creature',
+        icon: 'fas fa-shield-alt',
+        skills: ['warfare', 'intrigue'],
+        personality: { ruthless: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Army destroys the beast, soldiers gain experience.',
+          success: 'Military force eliminates the threat efficiently.',
+          failure: 'Army struggles, beast damages infrastructure.',
+          criticalFailure: 'Military operation fails, army suffers casualties.'
+        },
+        outcomeBadges: {
+          criticalSuccess: [
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+          ],
+          success: [
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+          ],
+          failure: [
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1', 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+          ],
+          criticalFailure: [] // Army enfeebled + gold/unrest handled by execute
+        }
+      }
+    ]
   },
 
   preview: {
     calculate: async (ctx) => {
-      // NOTE: Gold/unrest badges are AUTO-GENERATED from JSON modifiers
-      // Only add ADDITIONAL badges here (like structure damage/destroy)
-      const outcomeBadges: any[] = [];
+      const { get } = await import('svelte/store');
+      const { kingdomData } = await import('../../stores/KingdomStore');
+      const kingdom = get(kingdomData);
+      const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
+      const outcome = ctx.outcome;
 
-      // Success outcomes: No additional badges needed (modifiers handle display)
-      if (ctx.outcome === 'criticalSuccess' || ctx.outcome === 'success') {
-        return { resources: [], outcomeBadges: [] };
-      }
+      const outcomeBadges = [];
+      const commandContext: GameCommandContext = { currentKingdom: kingdom };
 
-      // Failure: Add structure damage badge
-      if (ctx.outcome === 'failure') {
-        const commandContext = {
-          actionId: 'monster-attack',
-          outcome: ctx.outcome,
-          kingdom: ctx.kingdom,
-          metadata: ctx.metadata || {}
-        };
+      // Handle structure damage for failure outcomes
+      if (approach === 'virtuous' && outcome === 'criticalFailure') {
+        // +1d3 Unrest, damage 1 structure
+        outcomeBadges.push(diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'));
+        
         const damageHandler = new DamageStructureHandler();
         const damageCommand = await damageHandler.prepare(
           { type: 'damageStructure', count: 1 },
           commandContext
         );
-
         if (damageCommand) {
-          ctx.metadata._preparedDamageStructure = damageCommand;
+          ctx.metadata._preparedDamage = damageCommand;
           if (damageCommand.outcomeBadges) {
             outcomeBadges.push(...damageCommand.outcomeBadges);
           } else if (damageCommand.outcomeBadge) {
             outcomeBadges.push(damageCommand.outcomeBadge);
           }
         }
-        return { resources: [], outcomeBadges };
-      }
-      
-      // Critical Failure: Add structure destroy badge
-      if (ctx.outcome === 'criticalFailure') {
-        const commandContext = {
-          actionId: 'monster-attack',
-          outcome: ctx.outcome,
-          kingdom: ctx.kingdom,
-          metadata: ctx.metadata || {}
-        };
-        const destroyHandler = new DestroyStructureHandler();
-        const destroyCommand = await destroyHandler.prepare(
-          { type: 'destroyStructure', count: 1 },
+      } else if (approach === 'practical' && outcome === 'criticalFailure') {
+        // +1d3 Unrest, -2d3 Gold, damage 1 structure
+        outcomeBadges.push(
+          diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
+          diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+        );
+        
+        const damageHandler = new DamageStructureHandler();
+        const damageCommand = await damageHandler.prepare(
+          { type: 'damageStructure', count: 1 },
           commandContext
         );
-
-        if (destroyCommand) {
-          ctx.metadata._preparedDestroyStructure = destroyCommand;
-          if (destroyCommand.outcomeBadges) {
-            outcomeBadges.push(...destroyCommand.outcomeBadges);
-          } else if (destroyCommand.outcomeBadge) {
-            outcomeBadges.push(destroyCommand.outcomeBadge);
+        if (damageCommand) {
+          ctx.metadata._preparedDamage = damageCommand;
+          if (damageCommand.outcomeBadges) {
+            outcomeBadges.push(...damageCommand.outcomeBadges);
+          } else if (damageCommand.outcomeBadge) {
+            outcomeBadges.push(damageCommand.outcomeBadge);
           }
         }
-        return { resources: [], outcomeBadges };
+      } else if (approach === 'ruthless' && outcome === 'failure') {
+        // +1 Unrest, -1d3 Gold, damage 1 structure
+        const damageHandler = new DamageStructureHandler();
+        const damageCommand = await damageHandler.prepare(
+          { type: 'damageStructure', count: 1 },
+          commandContext
+        );
+        if (damageCommand) {
+          ctx.metadata._preparedDamage = damageCommand;
+          if (damageCommand.outcomeBadges) {
+            outcomeBadges.push(...damageCommand.outcomeBadges);
+          } else if (damageCommand.outcomeBadge) {
+            outcomeBadges.push(damageCommand.outcomeBadge);
+          }
+        }
+      } else if (approach === 'ruthless' && outcome === 'criticalFailure') {
+        // +1d3 Unrest, -2d3 Gold, 1 army gains enfeebled
+        outcomeBadges.push(
+          diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
+          diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+        );
+        // Army condition handled in execute
+      } else if (approach === 'ruthless' && outcome === 'criticalSuccess') {
+        // Army equipment upgrade handled in execute (text badge only)
       }
 
       return { resources: [], outcomeBadges };
@@ -126,17 +208,48 @@ export const monsterAttackPipeline: CheckPipeline = {
   },
 
   execute: async (ctx) => {
-    if (ctx.outcome === 'failure') {
-      const damageCommand = ctx.metadata?._preparedDamageStructure;
-      if (damageCommand?.commit) {
-        await damageCommand.commit();
-      }
-    } else if (ctx.outcome === 'criticalFailure') {
-      const destroyCommand = ctx.metadata?._preparedDestroyStructure;
-      if (destroyCommand?.commit) {
-        await destroyCommand.commit();
+    // NOTE: Standard modifiers (unrest, gold, fame, food) are applied automatically by
+    // ResolutionDataBuilder + GameCommandsService via outcomeBadges.
+    // This execute() only handles special game commands.
+
+    const { get } = await import('svelte/store');
+    const { kingdomData } = await import('../../stores/KingdomStore');
+    const kingdom = get(kingdomData);
+    const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
+    const outcome = ctx.outcome;
+
+    // Execute structure damage
+    const damageCommand = ctx.metadata?._preparedDamage;
+    if (damageCommand?.commit) {
+      await damageCommand.commit();
+    }
+
+    // Handle army effects for ruthless approach
+    if (approach === 'ruthless') {
+      if (outcome === 'criticalSuccess') {
+        // 1 army gains random equipment upgrade
+        await updateKingdom(k => {
+          if (!k.armies || k.armies.length === 0) return;
+          
+          const randomArmy = k.armies[Math.floor(Math.random() * k.armies.length)];
+          if (randomArmy) {
+            // Note: Equipment upgrade would be handled by separate equipment system
+            // For now, just log it (in actual game, would trigger Outfit Army flow)
+            console.log(`Army ${randomArmy.name} should receive random equipment upgrade`);
+          }
+        });
+      } else if (outcome === 'criticalFailure') {
+        // 1 army gains enfeebled
+        if (kingdom.armies && kingdom.armies.length > 0) {
+          const randomArmy = kingdom.armies[Math.floor(Math.random() * kingdom.armies.length)];
+          if (randomArmy?.actorId) {
+            const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
+            await applyArmyConditionExecution(randomArmy.actorId, 'enfeebled', 1);
+          }
+        }
       }
     }
+
     return { success: true };
   },
 

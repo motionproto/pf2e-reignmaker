@@ -1,9 +1,20 @@
 /**
- * Remarkable Treasure Event Pipeline
+ * Remarkable Treasure Event Pipeline (CHOICE-BASED)
  *
+ * Explorers discover valuable resources or ancient treasure.
+ *
+ * Approaches:
+ * - Share with All (Virtuous) - Distribute wealth to citizens
+ * - Add to Treasury (Practical) - Use for kingdom projects
+ * - Keep for Leadership (Ruthless) - Leadership benefits
+ *
+ * Based on EVENT_MIGRATION_STATUS.md specifications
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
+import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
+import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
+import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
 
 export const remarkableTreasurePipeline: CheckPipeline = {
   id: 'remarkable-treasure',
@@ -11,6 +22,105 @@ export const remarkableTreasurePipeline: CheckPipeline = {
   description: 'Explorers discover valuable resources or ancient treasure.',
   checkType: 'event',
   tier: 1,
+
+  strategicChoice: {
+    label: 'How will you use this treasure?',
+    required: true,
+    options: [
+      {
+        id: 'virtuous',
+        label: 'Share with All',
+        description: 'Distribute wealth to all citizens',
+        icon: 'fas fa-hand-holding-heart',
+        skills: ['diplomacy', 'society'],
+        personality: { virtuous: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Generosity inspires hope and improves faction relations.',
+          success: 'Distribution reduces unrest and gains appreciation.',
+          failure: 'Modest distribution with no major impact.',
+          criticalFailure: 'Poor distribution breeds resentment.'
+        },
+        outcomeBadges: {
+          criticalSuccess: [
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+          ],
+          success: [
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+          ],
+          failure: [],
+          criticalFailure: [
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+          ]
+        }
+      },
+      {
+        id: 'practical',
+        label: 'Add to Treasury',
+        description: 'Invest in kingdom infrastructure and projects',
+        icon: 'fas fa-coins',
+        skills: ['society', 'thievery'],
+        personality: { practical: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Treasury gains and materials for projects.',
+          success: 'Wealth added to kingdom coffers.',
+          failure: 'Minor treasury gains breed unrest.',
+          criticalFailure: 'Hoarding creates resentment and gains modest gold.'
+        },
+        outcomeBadges: {
+          criticalSuccess: [
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive'),
+            diceBadge('Gain {{value}} Lumber/Stone/Ore', 'fas fa-cube', '2d4', 'positive')
+          ],
+          success: [
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+          ],
+          failure: [
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+          ],
+          criticalFailure: [
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+          ]
+        }
+      },
+      {
+        id: 'ruthless',
+        label: 'Keep for Leadership',
+        description: 'Reserve benefits for kingdom leaders',
+        icon: 'fas fa-crown',
+        skills: ['thievery', 'diplomacy'],
+        personality: { ruthless: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Leaders claim stipend benefits. Gold secured.',
+          success: 'Gold secured despite growing unrest.',
+          failure: 'Gold gained but significant resentment.',
+          criticalFailure: 'Greed costs action and damages reputation badly.'
+        },
+        outcomeBadges: {
+          criticalSuccess: [
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+          ],
+          success: [
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive'),
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+          ],
+          failure: [
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+          ],
+          criticalFailure: [
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+          ]
+        }
+      }
+    ]
+  },
 
   skills: [
       { skill: 'society', description: 'appraise value' },
@@ -20,33 +130,95 @@ export const remarkableTreasurePipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'A legendary treasure is discovered.',
-      modifiers: [
-        { type: 'dice', resource: 'gold', formula: '2d3', duration: 'immediate' },
-        { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' },
-      ]
+      description: 'Treasure maximizes benefits.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
     },
     success: {
-      description: 'A valuable treasure is found.',
-      modifiers: [
-        { type: 'dice', resource: 'gold', formula: '1d3', duration: 'immediate' }
-      ]
+      description: 'Treasure provides wealth.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
     },
     failure: {
-      description: 'The treasure is of modest value.',
-      modifiers: [
-        { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
-      ]
+      description: 'Treasure causes complications.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
     },
     criticalFailure: {
-      description: 'The treasure is cursed.',
-      modifiers: [
-        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-      ]
+      description: 'Treasure causes problems.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
     },
   },
 
   preview: {
+    calculate: async (ctx) => {
+      const { get } = await import('svelte/store');
+      const { kingdomData } = await import('../../stores/KingdomStore');
+      const kingdom = get(kingdomData);
+      const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
+      const outcome = ctx.outcome;
+
+      const selectedOption = remarkableTreasurePipeline.strategicChoice?.options.find(opt => opt.id === approach);
+      const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
+      const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
+
+      const commandContext: GameCommandContext = {
+        actionId: 'remarkable-treasure',
+        outcome: ctx.outcome,
+        kingdom: ctx.kingdom,
+        metadata: ctx.metadata || {}
+      };
+
+      if (approach === 'virtuous') {
+        if (outcome === 'criticalSuccess') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', amount: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionAdjust = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        }
+      } else if (approach === 'ruthless') {
+        if (outcome === 'criticalSuccess') {
+          ctx.metadata._claimStipend = true;
+        } else if (outcome === 'criticalFailure') {
+          ctx.metadata._loseAction = true;
+        }
+      }
+
+      return { resources: [], outcomeBadges };
+    }
+  },
+
+  execute: async (ctx) => {
+    const factionCommand = ctx.metadata?._preparedFactionAdjust;
+    if (factionCommand?.commit) {
+      await factionCommand.commit();
+    }
+
+    if (ctx.metadata?._claimStipend) {
+      // TODO: Implement claim stipend for all leaders
+      console.log('Remarkable Treasure: Claim Stipend needs implementation');
+    }
+
+    if (ctx.metadata?._loseAction) {
+      // TODO: Implement lose leader action
+      console.log('Remarkable Treasure: Lose leader action needs implementation');
+    }
+
+    return { success: true };
   },
 
   traits: ["beneficial"],

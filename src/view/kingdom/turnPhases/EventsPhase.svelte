@@ -322,6 +322,91 @@
       ? buildEventOutcomes(currentEvent) 
       : [];
    
+   // DEBUG: Handle forced outcome from clicking on outcome cards
+   async function handleForceOutcome(event: CustomEvent) {
+      const { outcome, checkId, checkType } = event.detail;
+      console.log('[EventsPhase] Force outcome requested:', outcome);
+      
+      if (!currentEvent) {
+         logger.error('[EventsPhase] No current event for force outcome');
+         return;
+      }
+      
+      // Get the first available skill from the event or selected approach
+      const selectedApproach = $kingdomData.turnState?.eventsPhase?.selectedApproach;
+      let defaultSkill: string | null = null;
+      
+      if (currentEvent.strategicChoice && selectedApproach) {
+         const option = currentEvent.strategicChoice.options?.find((o: any) => o.id === selectedApproach);
+         defaultSkill = option?.skills?.[0] || null;
+      }
+      
+      if (!defaultSkill && currentEvent.skills?.length > 0) {
+         defaultSkill = currentEvent.skills[0].skill || currentEvent.skills[0];
+      }
+      
+      if (!defaultSkill) {
+         logger.error('[EventsPhase] No skill available for force outcome');
+         return;
+      }
+      
+      console.log('[EventsPhase] Forcing outcome with skill:', defaultSkill, 'outcome:', outcome);
+      
+      // Execute the skill check with forced outcome
+      await executeSkillCheckWithForcedOutcome(defaultSkill, outcome);
+   }
+   
+   // Execute skill check with a forced outcome (bypasses random roll)
+   async function executeSkillCheckWithForcedOutcome(
+      skill: string, 
+      forcedOutcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure'
+   ) {
+      if (!currentEvent) return;
+
+      const targetEvent = currentEvent;
+
+      try {
+         isRolling = true;
+
+         const { getPipelineCoordinator } = await import('../../../services/PipelineCoordinator');
+         const { getCurrentUserCharacter } = await import('../../../services/pf2e');
+
+         const pipelineCoordinator = await getPipelineCoordinator();
+         const actingCharacter = getCurrentUserCharacter();
+         if (!actingCharacter) {
+            throw new Error('No character selected');
+         }
+
+         // Pass forcedOutcome in metadata - PipelineCoordinator will use this
+         await pipelineCoordinator.executePipeline(targetEvent.id, {
+            checkType: 'event',
+            actor: {
+               selectedSkill: skill,
+               fullActor: actingCharacter,
+               actorName: actingCharacter.name,
+               actorId: actingCharacter.id,
+               level: actingCharacter.level || 1,
+               proficiencyRank: 0
+            },
+            metadata: {
+               forcedOutcome  // <-- Key addition for forced outcomes
+            }
+         });
+
+         console.log('[EventsPhase] Forced outcome executed:', forcedOutcome);
+
+      } catch (error) {
+         if ((error as Error).message === 'Action cancelled by user') {
+            logger.info('[EventsPhase] User cancelled forced event check');
+         } else {
+            logger.error(`❌ [EventsPhase] Error in forced event check:`, error);
+            ui?.notifications?.error(`Failed to perform forced event check: ${(error as Error).message}`);
+         }
+      } finally {
+         isRolling = false;
+      }
+   }
+   
    // Event handler - execute skill check
    async function handleExecuteSkill(event: CustomEvent) {
       if (!eventPhaseController) return;
@@ -890,6 +975,7 @@
             skillSectionTitle="Choose Your Response:"
             {hideUntrainedSkills}
             on:executeSkill={handleExecuteSkill}
+            on:forceOutcome={handleForceOutcome}
             on:primary={handleApplyResult}
             on:cancel={handleCancel}
             on:ignore={handleIgnore}
@@ -930,6 +1016,7 @@
                   resolved={item.isResolved}
                   resolution={item.instance.appliedOutcome || null}
                   on:executeSkill={handleExecuteSkill}
+                  on:forceOutcome={handleForceOutcome}
                   on:primary={handleApplyResult}
                   on:cancel={handleCancel}
                   on:ignore={handleIgnore}

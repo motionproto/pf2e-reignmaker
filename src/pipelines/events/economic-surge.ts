@@ -1,11 +1,20 @@
 /**
- * Economic Surge Event Pipeline
+ * Economic Surge Event Pipeline (CHOICE-BASED)
  *
  * Trade and productivity boom throughout your kingdom.
- * Uses ChoiceModifier for simple resource selection.
+ *
+ * Approaches:
+ * - Raise Wages (Virtuous) - Improve worker conditions
+ * - Invest in Infrastructure (Practical) - Growth and resources
+ * - Maximize Taxes (Ruthless) - Extract maximum profit
+ *
+ * Based on EVENT_MIGRATION_STATUS.md specifications
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
+import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
+import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
+import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
 
 export const economicSurgePipeline: CheckPipeline = {
   id: 'economic-surge',
@@ -14,49 +23,232 @@ export const economicSurgePipeline: CheckPipeline = {
   checkType: 'event',
   tier: 1,
 
+  // Strategic choice - triggers voting system
+  // Options ordered: Virtuous (left) → Practical (center) → Ruthless (right)
+  strategicChoice: {
+    label: 'How will you capitalize on the economic boom?',
+    required: true,
+    options: [
+      {
+        id: 'virtuous',
+        label: 'Raise Wages',
+        description: 'Improve worker conditions and share prosperity',
+        icon: 'fas fa-heart',
+        skills: ['diplomacy', 'society'],
+        personality: { virtuous: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Workers thrive and productivity soars even higher.',
+          success: 'Better conditions reduce unrest and boost economy.',
+          failure: 'Costs exceed benefits.',
+          criticalFailure: 'Excessive spending strains finances without improving conditions.'
+        },
+        outcomeBadges: {
+          criticalSuccess: [
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '2d3', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+          ],
+          success: [
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+          ],
+          failure: [
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+          ],
+          criticalFailure: [
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+          ]
+        }
+      },
+      {
+        id: 'practical',
+        label: 'Invest in Infrastructure',
+        description: 'Use prosperity for sustainable growth',
+        icon: 'fas fa-industry',
+        skills: ['society', 'crafting'],
+        personality: { practical: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Infrastructure investments yield massive returns.',
+          success: 'Balanced growth provides gold and materials.',
+          failure: 'Modest gains from the boom.',
+          criticalFailure: 'Poor planning wastes opportunity.'
+        },
+        outcomeBadges: {
+          criticalSuccess: [
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive'),
+            diceBadge('Gain {{value}} Lumber/Stone/Ore', 'fas fa-cube', '2d4', 'positive')
+          ],
+          success: [
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
+            diceBadge('Gain {{value}} Lumber/Stone/Ore', 'fas fa-cube', '1d4', 'positive')
+          ],
+          failure: [
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+          ],
+          criticalFailure: [
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+          ]
+        }
+      },
+      {
+        id: 'ruthless',
+        label: 'Maximize Taxes',
+        description: 'Extract maximum profit from the boom',
+        icon: 'fas fa-coins',
+        skills: ['intimidation', 'society'],
+        personality: { ruthless: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Aggressive taxation crushes resistance and fills coffers.',
+          success: 'Heavy taxes extract wealth despite grumbling.',
+          failure: 'Taxation breeds significant resentment.',
+          criticalFailure: 'Excessive taxation sparks riots and property damage.'
+        },
+        outcomeBadges: {
+          criticalSuccess: [
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive'),
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+            // Note: Structure gain handled in execute()
+          ],
+          success: [
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive'),
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+          ],
+          failure: [
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+          ],
+          criticalFailure: [
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+            // Note: Structure damage badge generated by handler
+          ]
+        }
+      }
+    ]
+  },
+
   skills: [
     { skill: 'society', description: 'manage growth' },
     { skill: 'diplomacy', description: 'attract traders' },
     { skill: 'crafting', description: 'increase production' },
+    { skill: 'intimidation', description: 'enforce taxes' },
   ],
 
   outcomes: {
     criticalSuccess: {
-      description: 'Trade flourishes - choose how to invest the windfall.',
-      endsEvent: false,
-      modifiers: [
-        { type: 'choice', resources: ['gold', 'fame'], value: 4, duration: 'immediate' }
-      ]
+      description: 'Your approach maximizes the economic boom.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
     },
     success: {
-      description: 'The economy grows steadily - choose the benefit.',
-      endsEvent: false,
-      modifiers: [
-        { type: 'choice', resources: ['gold', 'fame'], value: 3, duration: 'immediate' }
-      ]
+      description: 'Your approach succeeds.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
     },
     failure: {
-      description: 'The economic surge slows.',
+      description: 'The boom benefits your kingdom modestly.',
       endsEvent: true,
-      modifiers: [
-        { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
-      ]
+      modifiers: [],
+      outcomeBadges: []
     },
     criticalFailure: {
-      description: 'The economic bubble bursts.',
+      description: 'The economic opportunity is squandered.',
       endsEvent: true,
-      modifiers: [
-        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-      ]
+      modifiers: [],
+      outcomeBadges: []
     },
   },
 
   preview: {
     calculate: async (ctx) => {
-      // ChoiceModifier is handled automatically by the system
-      return { resources: [], outcomeBadges: [] };
+      // Read approach from kingdom store (set by PreRollChoiceSelector voting)
+      const { get } = await import('svelte/store');
+      const { kingdomData } = await import('../../stores/KingdomStore');
+      const kingdom = get(kingdomData);
+      const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
+      const outcome = ctx.outcome;
+
+      // Find the selected approach option
+      const selectedOption = economicSurgePipeline.strategicChoice?.options.find(opt => opt.id === approach);
+
+      // Get outcome badges from the selected approach
+      const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
+      const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
+
+      const commandContext: GameCommandContext = {
+        actionId: 'economic-surge',
+        outcome: ctx.outcome,
+        kingdom: ctx.kingdom,
+        metadata: ctx.metadata || {}
+      };
+
+      if (approach === 'virtuous') {
+        // Raise Wages (Virtuous)
+        // All outcomes handled by standard badges
+      } else if (approach === 'practical') {
+        // Invest in Infrastructure (Practical)
+        // All outcomes handled by standard badges
+        // NOTE: Resource choice will need UI implementation - for now defaulting to Lumber
+        if (outcome === 'criticalSuccess' || outcome === 'success') {
+          ctx.metadata._choiceResource = true;
+        }
+      } else if (approach === 'ruthless') {
+        // Maximize Taxes (Ruthless)
+        if (outcome === 'criticalSuccess') {
+          // +2d3 Gold, -1d3 Unrest (intimidation), 1 settlement gains a structure
+          // Structure gain handled in execute()
+          ctx.metadata._gainStructure = true;
+        } else if (outcome === 'criticalFailure') {
+          // +1d3 Unrest, -1 Fame, damage 1 structure (riot)
+          const damageHandler = new DamageStructureHandler();
+          const damageCommand = await damageHandler.prepare(
+            { type: 'damageStructure', count: 1 },
+            commandContext
+          );
+          if (damageCommand) {
+            ctx.metadata._preparedDamage = damageCommand;
+            if (damageCommand.outcomeBadges) {
+              outcomeBadges.push(...damageCommand.outcomeBadges);
+            } else if (damageCommand.outcomeBadge) {
+              outcomeBadges.push(damageCommand.outcomeBadge);
+            }
+          }
+        }
+      }
+
+      return { resources: [], outcomeBadges };
     }
   },
 
-  traits: ['beneficial', 'ongoing'],
+  execute: async (ctx) => {
+    // NOTE: Standard modifiers (unrest, gold, fame) are applied automatically by
+    // ResolutionDataBuilder + GameCommandsService via outcomeBadges.
+    // This execute() only handles special game commands.
+
+    const { get } = await import('svelte/store');
+    const { kingdomData } = await import('../../stores/KingdomStore');
+    const kingdom = get(kingdomData);
+    const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
+
+    // Execute structure damage (ruthless CF)
+    const damageCommand = ctx.metadata?._preparedDamage;
+    if (damageCommand?.commit) {
+      await damageCommand.commit();
+    }
+
+    // Gain random structure (ruthless CS)
+    if (ctx.metadata?._gainStructure && approach === 'ruthless') {
+      // TODO: Implement structure gain logic
+      // For now, log that this needs implementation
+      console.log('Economic Surge: Structure gain needs implementation');
+    }
+
+    return { success: true };
+  },
+
+  traits: ['beneficial'],
 };

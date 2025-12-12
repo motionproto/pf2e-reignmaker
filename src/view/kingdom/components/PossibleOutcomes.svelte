@@ -6,6 +6,7 @@
 </script>
 
 <script lang="ts">
+  import { onMount, createEventDispatcher } from 'svelte';
   import AdjustmentBadges from './AdjustmentBadges.svelte';
   import GameCommandBadges from './GameCommandBadges.svelte';
   import SimpleOutcomeBadges from './SimpleOutcomeBadges.svelte';
@@ -13,6 +14,24 @@
   export let outcomes: PossibleOutcome[];
   export let skill: string | undefined = undefined;
   export let showTitle: boolean = true;
+  
+  const dispatch = createEventDispatcher();
+  
+  // Debug mode: when enabled, outcome cards become clickable
+  let isDebugMode = false;
+  
+  onMount(async () => {
+    // Check for debug force outcome flag
+    const { getKingdomActor } = await import('../../../stores/KingdomStore');
+    const actor = getKingdomActor();
+    isDebugMode = actor?.getFlag('pf2e-reignmaker', 'debugForceOutcome') || false;
+  });
+  
+  function handleOutcomeClick(outcomeType: string) {
+    if (!isDebugMode) return;
+    console.log('[PossibleOutcomes] Force outcome clicked:', outcomeType);
+    dispatch('forceOutcome', { outcome: outcomeType });
+  }
   
   const resultStyles = {
     criticalSuccess: {
@@ -67,7 +86,13 @@
   <div class="outcomes-list">
     {#each outcomes as outcome}
       {@const style = resultStyles[outcome.result]}
-      <div class="outcome-item outcome-{outcome.result}">
+      <!-- svelte-ignore a11y-click-events-have-key-events -->
+      <!-- svelte-ignore a11y-no-static-element-interactions -->
+      <div 
+        class="outcome-item outcome-{outcome.result}"
+        class:debug-clickable={isDebugMode}
+        on:click={() => handleOutcomeClick(outcome.result)}
+      >
         <div class="outcome-content-wrapper">
           <!-- Icon -->
           <div class="outcome-icon">
@@ -166,6 +191,37 @@
     border-radius: var(--radius-md);
     border-left: 4px solid;
     background: var(--overlay-low);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    
+    // Debug mode - make clickable
+    &.debug-clickable {
+      cursor: pointer;
+      position: relative;
+      
+      &::after {
+        content: '⚡ Click to force';
+        position: absolute;
+        top: var(--space-4);
+        right: var(--space-8);
+        font-size: var(--font-xs);
+        color: rgba(168, 85, 247, 0.7);
+        opacity: 0;
+        transition: opacity 0.15s ease;
+      }
+      
+      &:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 12px rgba(168, 85, 247, 0.2);
+        
+        &::after {
+          opacity: 1;
+        }
+      }
+      
+      &:active {
+        transform: scale(0.98);
+      }
+    }
     
     &.outcome-criticalSuccess {
       background: var(--surface-success-lower);

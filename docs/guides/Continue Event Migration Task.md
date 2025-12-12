@@ -133,7 +133,7 @@ const targets: ActionTarget[] = settlements.map(s => ({
 
 const { badge, targetId, maxCapacity } = createTargetedDiceBadge({
   formula: '1d3',
-  action: 'Imprison',
+  action: 'Imprison conspirators',
   targets,
   icon: 'fas fa-handcuffs',
   variant: 'info'

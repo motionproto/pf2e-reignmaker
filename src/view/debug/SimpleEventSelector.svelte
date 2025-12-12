@@ -3,10 +3,6 @@
    import { updateKingdom } from '../../stores/KingdomStore';
    import Button from '../kingdom/components/baseComponents/Button.svelte';
    
-   // Load all events sorted by name
-   let allEvents = pipelineRegistry.getPipelinesByType('event')
-      .sort((a, b) => a.name.localeCompare(b.name));
-
    // Map of migrated event IDs to their migration order number
    // These events use the strategic choice pattern with voting
    const MIGRATED_EVENTS: Record<string, number> = {
@@ -18,8 +14,51 @@
       'food-shortage': 6,
       'natural-disaster': 7,
       'immigration': 8,
-      'assassination-attempt': 9
+      'assassination-attempt': 9,
+      'sensational-crime': 10,
+      'notorious-heist': 11,
+      'bandit-activity': 12,
+      'raiders': 13,
+      'trade-agreement': 14,
+      'economic-surge': 15,
+      'food-surplus': 16,
+      'boomtown': 17,
+      'land-rush': 18,
+      'pilgrimage': 19,
+      'diplomatic-overture': 20,
+      'festive-invitation': 21,
+      'visiting-celebrity': 22,
+      'grand-tournament': 23,
+      'archaeological-find': 24,
+      'magical-discovery': 25,
+      'remarkable-treasure': 26,
+      'scholarly-discovery': 27,
+      'natures-blessing': 28,
+      'good-weather': 29,
+      'military-exercises': 30,
+      'drug-den': 31,
+      'monster-attack': 32,
+      'undead-uprising': 33,
+      'cult-activity': 34
    };
+
+   // Load all events sorted by migration number (migrated first, then alphabetically)
+   let allEvents = pipelineRegistry.getPipelinesByType('event')
+      .sort((a, b) => {
+         const aNum = MIGRATED_EVENTS[a.id];
+         const bNum = MIGRATED_EVENTS[b.id];
+         
+         // Both migrated: sort by migration number
+         if (aNum !== undefined && bNum !== undefined) {
+            return aNum - bNum;
+         }
+         // Only a is migrated: a comes first
+         if (aNum !== undefined) return -1;
+         // Only b is migrated: b comes first
+         if (bNum !== undefined) return 1;
+         // Neither migrated: sort alphabetically
+         return a.name.localeCompare(b.name);
+      });
 
    // Helper to check if event has been migrated to strategic choice pattern
    function isMigrated(eventId: string): boolean {
@@ -33,6 +72,24 @@
    
    let selectedEventId = '';
    let isTriggering = false;
+   
+   // Debug mode: Force specific outcomes by clicking on them
+   let forceOutcomeMode = false;
+   
+   // Sync forceOutcomeMode to actor flags so other components can read it
+   async function updateForceOutcomeFlag(enabled: boolean) {
+      const { getKingdomActor } = await import('../../stores/KingdomStore');
+      const actor = getKingdomActor();
+      if (actor) {
+         await actor.setFlag('pf2e-reignmaker', 'debugForceOutcome', enabled);
+         console.log('[SimpleEventSelector] Force outcome mode:', enabled ? 'enabled' : 'disabled');
+      }
+   }
+   
+   // Reactive: update flag when checkbox changes
+   $: {
+      updateForceOutcomeFlag(forceOutcomeMode);
+   }
    
    async function triggerSelectedEvent() {
       if (!selectedEventId) return;
@@ -178,9 +235,23 @@
       </Button>
    </div>
    
+   <div class="selector-options">
+      <label class="debug-checkbox">
+         <input type="checkbox" bind:checked={forceOutcomeMode} />
+         <span>Force Outcome Mode</span>
+         <i class="fas fa-flask" title="Click on outcome cards to force that result"></i>
+      </label>
+   </div>
+   
    <div class="selector-info">
       <i class="fas fa-info-circle"></i>
-      <span>Bypasses stability check and triggers selected event immediately</span>
+      <span>
+         {#if forceOutcomeMode}
+            Click on any outcome card to force that result (skips roll)
+         {:else}
+            Bypasses stability check and triggers selected event immediately
+         {/if}
+      </span>
    </div>
 </div>
 
@@ -238,6 +309,47 @@
          outline: none;
          border-color: rgba(96, 165, 250, 0.6);
          box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+      }
+   }
+   
+   .selector-options {
+      display: flex;
+      align-items: center;
+      gap: var(--space-16);
+   }
+   
+   .debug-checkbox {
+      display: flex;
+      align-items: center;
+      gap: var(--space-8);
+      cursor: pointer;
+      font-size: var(--font-md);
+      color: var(--text-secondary);
+      
+      input[type="checkbox"] {
+         width: 1rem;
+         height: 1rem;
+         cursor: pointer;
+         accent-color: rgba(168, 85, 247, 1);
+      }
+      
+      span {
+         color: var(--text-primary);
+      }
+      
+      i {
+         font-size: var(--font-sm);
+         color: rgba(168, 85, 247, 0.7);
+      }
+      
+      &:hover {
+         span {
+            color: rgba(168, 85, 247, 1);
+         }
+         
+         i {
+            color: rgba(168, 85, 247, 1);
+         }
       }
    }
    

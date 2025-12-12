@@ -89,7 +89,7 @@ export class ConvertUnrestToImprisonedHandler extends BaseGameCommandHandler {
     if (diceFormula) {
       const result = createTargetedDiceBadge({
         formula: diceFormula,
-        action: 'Imprison',
+        action: 'Imprison conspirators',
         targets,
         icon: 'fas fa-handcuffs',
         variant: 'info',
@@ -102,7 +102,7 @@ export class ConvertUnrestToImprisonedHandler extends BaseGameCommandHandler {
     } else {
       const result = createTargetedStaticBadge({
         amount: Math.min(requestedAmount, currentUnrest),
-        action: 'Imprison',
+        action: 'Imprison conspirators',
         targets,
         icon: 'fas fa-handcuffs',
         variant: 'info',

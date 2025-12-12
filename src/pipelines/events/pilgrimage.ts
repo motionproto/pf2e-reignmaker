@@ -1,14 +1,20 @@
 /**
- * Pilgrimage Event Pipeline
+ * Pilgrimage Event Pipeline (CHOICE-BASED)
  *
- * Critical Success: +1 Fame, +1 faction attitude, +1d3 gold
- * Success: +1d3 gold (donations)
- * Failure: Nothing
- * Critical Failure: -1 faction attitude
+ * Religious pilgrims seek passage or sanctuary in your kingdom.
+ *
+ * Approaches:
+ * - Welcome All Freely (Virtuous) - Open hospitality for all pilgrims
+ * - Organize and Profit (Practical) - Organized event with entry fees
+ * - Tax Heavily (Ruthless) - Restrict access and extract maximum profit
+ *
+ * Based on EVENT_MIGRATION_STATUS.md specifications
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { textBadge } from '../../types/OutcomeBadge';
+import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
+import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
+import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
 
 export const pilgrimagePipeline: CheckPipeline = {
   id: 'pilgrimage',
@@ -17,142 +23,258 @@ export const pilgrimagePipeline: CheckPipeline = {
   checkType: 'event',
   tier: 1,
 
+  strategicChoice: {
+    label: 'How will you handle the pilgrimage?',
+    required: true,
+    options: [
+      {
+        id: 'virtuous',
+        label: 'Welcome All Freely',
+        description: 'Open hospitality for all pilgrims',
+        icon: 'fas fa-praying-hands',
+        skills: ['religion', 'diplomacy'],
+        personality: { virtuous: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Generosity wins hearts. Donations and goodwill flow.',
+          success: 'Pilgrims leave grateful and generous donations.',
+          failure: 'Hospitality costs outweigh modest gifts.',
+          criticalFailure: 'Overcrowding strains resources and angers citizens.'
+        },
+        outcomeBadges: {
+          criticalSuccess: [
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+          ],
+          success: [
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+          ],
+          failure: [
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+          ],
+          criticalFailure: [
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+          ]
+        }
+      },
+      {
+        id: 'practical',
+        label: 'Organize and Profit',
+        description: 'Organized pilgrimage with fees and services',
+        icon: 'fas fa-landmark',
+        skills: ['society', 'religion'],
+        personality: { practical: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Perfect balance of faith and profit.',
+          success: 'Organized events generate revenue.',
+          failure: 'Fees discourage some pilgrims.',
+          criticalFailure: 'Commercialization offends the faithful.'
+        },
+        outcomeBadges: {
+          criticalSuccess: [
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+          ],
+          success: [
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+          ],
+          failure: [
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+          ],
+          criticalFailure: [
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+          ]
+        }
+      },
+      {
+        id: 'ruthless',
+        label: 'Tax Heavily',
+        description: 'Restrict access and extract maximum profit',
+        icon: 'fas fa-coins',
+        skills: ['intimidation', 'society'],
+        personality: { ruthless: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Wealthy pilgrims pay handsomely. Faith leaders approve.',
+          success: 'Heavy taxes generate substantial revenue.',
+          failure: 'Excessive fees alienate religious groups.',
+          criticalFailure: 'Greed offends multiple faiths and damages reputation.'
+        },
+        outcomeBadges: {
+          criticalSuccess: [
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+          ],
+          success: [
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+          ],
+          failure: [
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+          ],
+          criticalFailure: [
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+          ]
+        }
+      }
+    ]
+  },
+
   skills: [
-      { skill: 'religion', description: 'provide sanctuary' },
-      { skill: 'diplomacy', description: 'welcome pilgrims' },
-      { skill: 'society', description: 'organize accommodations' },
-    ],
+    { skill: 'religion', description: 'provide sanctuary' },
+    { skill: 'diplomacy', description: 'welcome pilgrims' },
+    { skill: 'society', description: 'organize accommodations' },
+    { skill: 'intimidation', description: 'enforce strict rules' },
+  ],
 
   outcomes: {
     criticalSuccess: {
-      description: 'Word spreads of your hospitality, and donations flow.',
-      modifiers: [
-        { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
-        { type: 'dice', resource: 'gold', formula: '1d3', duration: 'immediate' },
-      ],
-      outcomeBadges: [
-        textBadge('+1 attitude for 1 random faction', 'fa-handshake', 'positive')
-      ]
+      description: 'Your approach proves highly effective.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
     },
     success: {
-      description: 'Pilgrims leave generous offerings.',
-      modifiers: [
-        { type: 'dice', resource: 'gold', formula: '1d3', duration: 'immediate' }
-      ]
+      description: 'Pilgrimage concludes successfully.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
     },
     failure: {
-      description: 'The pilgrims pass quietly.',
-      modifiers: []
+      description: 'Pilgrimage creates minor complications.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
     },
     criticalFailure: {
-      description: 'You offend the pilgrims\' faith.',
+      description: 'Your handling damages relations.',
+      endsEvent: true,
       modifiers: [],
-      outcomeBadges: [
-        textBadge('-1 attitude for 1 random faction', 'fa-handshake-slash', 'negative')
-      ]
+      outcomeBadges: []
     },
   },
 
   preview: {
     calculate: async (ctx) => {
-      const outcomeBadges: any[] = [];
-      const warnings: string[] = [];
-      
-      // Only show faction preview for criticalSuccess and criticalFailure
-      if (ctx.outcome !== 'criticalSuccess' && ctx.outcome !== 'criticalFailure') {
-        return { resources: [], outcomeBadges: [], warnings: [] };
-      }
-      
-      // Import faction service and utilities
-      const { factionService } = await import('../../services/factions/index');
-      const { adjustAttitudeBySteps } = await import('../../utils/faction-attitude-adjuster');
-      
-      // Get all available factions
-      const allFactions = factionService.getAllFactions();
-      if (allFactions.length === 0) {
-        warnings.push('No factions available');
-        return { resources: [], outcomeBadges: [], warnings };
-      }
-      
-      // Determine steps based on outcome
-      const steps = ctx.outcome === 'criticalSuccess' ? 1 : -1;
-      
-      // Filter out factions already at max/min attitude
-      let availableFactions = [...allFactions];
-      if (steps > 0) {
-        availableFactions = availableFactions.filter(f => f.attitude !== 'Helpful');
-      } else {
-        availableFactions = availableFactions.filter(f => f.attitude !== 'Hostile');
-      }
-      
-      if (availableFactions.length === 0) {
-        const reason = steps > 0 ? 'All factions already at maximum attitude' : 'All factions already at minimum attitude';
-        warnings.push(reason);
-        return { resources: [], outcomeBadges: [], warnings };
-      }
-      
-      // Randomly select 1 faction
-      const randomIndex = Math.floor(Math.random() * availableFactions.length);
-      const selectedFaction = availableFactions[randomIndex];
-      
-      // Store selected faction ID in metadata for execute step
-      if (!ctx.metadata) {
-        ctx.metadata = {};
-      }
-      ctx.metadata.selectedFactionId = selectedFaction.id;
-      ctx.metadata.attitudeSteps = steps;
-      
-      // Create badge showing the change
-      const oldAttitude = selectedFaction.attitude;
-      const newAttitude = adjustAttitudeBySteps(oldAttitude, steps);
-      
-      if (newAttitude) {
-        const icon = steps > 0 ? 'fa-handshake' : 'fa-handshake-slash';
-        const variant = steps > 0 ? 'positive' : 'negative';
-        outcomeBadges.push(
-          textBadge(`${selectedFaction.name}: ${oldAttitude} → ${newAttitude}`, icon, variant)
-        );
-      }
-      
-      return {
-        resources: [],
-        outcomeBadges,
-        warnings
+      const { get } = await import('svelte/store');
+      const { kingdomData } = await import('../../stores/KingdomStore');
+      const kingdom = get(kingdomData);
+      const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
+      const outcome = ctx.outcome;
+
+      const selectedOption = pilgrimagePipeline.strategicChoice?.options.find(opt => opt.id === approach);
+      const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
+      const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
+
+      const commandContext: GameCommandContext = {
+        actionId: 'pilgrimage',
+        outcome: ctx.outcome,
+        kingdom: ctx.kingdom,
+        metadata: ctx.metadata || {}
       };
+
+      if (approach === 'virtuous') {
+        if (outcome === 'criticalSuccess') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', amount: 1, count: 2 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionAdjust = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'success') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', amount: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionAdjust = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        }
+      } else if (approach === 'practical') {
+        if (outcome === 'criticalFailure') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', amount: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionAdjust = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        }
+      } else if (approach === 'ruthless') {
+        if (outcome === 'criticalSuccess') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', amount: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionAdjust = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'failure') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', amount: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionAdjust = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'criticalFailure') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', amount: -1, count: 2 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionAdjust = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        }
+      }
+
+      return { resources: [], outcomeBadges };
     }
   },
 
   execute: async (ctx) => {
-    // Only execute faction changes for criticalSuccess/criticalFailure
-    if (ctx.outcome !== 'criticalSuccess' && ctx.outcome !== 'criticalFailure') {
-      return { success: true };
-    }
-
-    const { getGameCommandRegistry } = await import('../../services/gameCommands/GameCommandHandlerRegistry');
-    const registry = getGameCommandRegistry();
-    
-    // Get the pre-selected faction ID and steps from preview.calculate
-    const factionId = ctx.metadata?.selectedFactionId;
-    const steps = ctx.metadata?.attitudeSteps;
-    
-    if (!factionId) {
-      console.warn('[Pilgrimage] No faction was selected in preview - skipping attitude adjustment');
-      return { success: true, message: 'No faction selected' };
-    }
-
-    // Apply attitude change to the pre-selected faction
-    try {
-      const prepared = await registry.process(
-        { type: 'adjustFactionAttitude', factionId, steps },
-        { kingdom: ctx.kingdom, outcome: ctx.outcome, metadata: ctx.metadata }
-      );
-      
-      if (prepared?.commit) {
-        await prepared.commit();
-        console.log(`[Pilgrimage] Adjusted attitude for faction: ${factionId} by ${steps}`);
-      }
-    } catch (error) {
-      console.error('[Pilgrimage] Failed to adjust faction attitude:', error);
+    const factionCommand = ctx.metadata?._preparedFactionAdjust;
+    if (factionCommand?.commit) {
+      await factionCommand.commit();
     }
 
     return { success: true };

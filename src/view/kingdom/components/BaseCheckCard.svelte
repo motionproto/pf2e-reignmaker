@@ -412,6 +412,20 @@
     dispatch('approachSelected', { approach: optionId });
   }
   
+  // DEBUG: Handle forced outcome from PossibleOutcomes click (when debug mode enabled)
+  function handleForceOutcome(event: CustomEvent) {
+    const { outcome } = event.detail;
+    console.log('[BaseCheckCard] Force outcome requested:', outcome);
+    
+    // Dispatch to parent with forced outcome info
+    // Parent will handle injecting the appropriate roll
+    dispatch('forceOutcome', { 
+      outcome,
+      checkId: id,
+      checkType
+    });
+  }
+  
   // Format possible outcomes for OutcomesSection (actions only)
   $: formattedOutcomes = (outcomes || []).map(o => ({
     result: o.type,
@@ -576,7 +590,11 @@
               <OutcomesSection possibleOutcomes={formattedOutcomes} />
             {:else}
               <!-- Events/Incidents use PossibleOutcomes -->
-              <PossibleOutcomes outcomes={possibleOutcomes} showTitle={false} />
+              <PossibleOutcomes 
+                outcomes={possibleOutcomes} 
+                showTitle={false} 
+                on:forceOutcome={handleForceOutcome}
+              />
             {/if}
           {/if}
         {/if}

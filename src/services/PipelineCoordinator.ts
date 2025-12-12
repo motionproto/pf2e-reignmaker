@@ -694,6 +694,37 @@ export class PipelineCoordinator {
     };
     
     // ========================================
+    // CHECK FOR FORCED OUTCOME (DEBUG MODE)
+    // ========================================
+    
+    const forcedOutcome = (ctx.metadata as any)?.forcedOutcome;
+    if (forcedOutcome) {
+      console.log('⚡ [PipelineCoordinator] Using forced outcome:', forcedOutcome);
+      
+      // Calculate a fake roll that would produce this outcome
+      let fakeRollTotal: number;
+      switch (forcedOutcome) {
+        case 'criticalSuccess': fakeRollTotal = dc + 10; break;
+        case 'success': fakeRollTotal = dc + 5; break;
+        case 'failure': fakeRollTotal = dc - 5; break;
+        case 'criticalFailure': fakeRollTotal = dc - 10; break;
+        default: fakeRollTotal = dc;
+      }
+      
+      // Create a fake roll object
+      const fakeRoll = {
+        total: fakeRollTotal,
+        dice: [{ results: [{ result: 10 }] }]  // Neutral d20 (no nat 1/20)
+      };
+      
+      // Call the callback directly with the forced outcome
+      await callback(fakeRoll as any, forcedOutcome, null as any, null as any);
+      
+      log(ctx, 3, 'executeRoll', `Forced outcome applied: ${forcedOutcome} (fake roll: ${fakeRollTotal})`);
+      return;  // Skip actual roll
+    }
+    
+    // ========================================
     // EXECUTE ROLL VIA PF2eSkillService
     // ========================================
     

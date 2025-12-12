@@ -1,14 +1,21 @@
 /**
- * Scholarly Discovery Event Pipeline
+ * Scholarly Discovery Event Pipeline (CHOICE-BASED)
  *
- * Critical Success: +1 Fame, +1 faction attitude, +1d3 gold
- * Success: +1d3 gold (research grants)
- * Failure: Nothing
- * Critical Failure: -1 faction attitude
+ * Researchers in your kingdom make an important academic breakthrough.
+ *
+ * Approaches:
+ * - Open University (Virtuous) - Free education for all
+ * - Funded Research (Practical) - Institutional research investment
+ * - Exclusive Academy (Ruthless) - Elite-only education
+ *
+ * Based on EVENT_MIGRATION_STATUS.md specifications
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { textBadge } from '../../types/OutcomeBadge';
+import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
+import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
+import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
+import { updateKingdom } from '../../stores/KingdomStore';
 
 export const scholarlyDiscoveryPipeline: CheckPipeline = {
   id: 'scholarly-discovery',
@@ -17,142 +24,227 @@ export const scholarlyDiscoveryPipeline: CheckPipeline = {
   checkType: 'event',
   tier: 1,
 
+  strategicChoice: {
+    label: 'How will you leverage this knowledge?',
+    required: true,
+    options: [
+      {
+        id: 'virtuous',
+        label: 'Open University',
+        description: 'Free education for all citizens',
+        icon: 'fas fa-university',
+        skills: ['lore', 'diplomacy'],
+        personality: { virtuous: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Universal education earns prestige and alliances.',
+          success: 'Open access reduces tensions.',
+          failure: 'Free education costs exceed benefits.',
+          criticalFailure: 'Poor management wastes resources.'
+        },
+        outcomeBadges: {
+          criticalSuccess: [
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+          ],
+          success: [
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+          ],
+          failure: [
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+          ],
+          criticalFailure: [
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+          ]
+        }
+      },
+      {
+        id: 'practical',
+        label: 'Funded Research',
+        description: 'Invest in institutional research',
+        icon: 'fas fa-flask',
+        skills: ['lore', 'society'],
+        personality: { practical: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Research yields ongoing innovations and revenue.',
+          success: 'Investment generates profit.',
+          failure: 'Research costs exceed returns.',
+          criticalFailure: 'Failed projects waste significant resources.'
+        },
+        outcomeBadges: {
+          criticalSuccess: [
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+          ],
+          success: [
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+          ],
+          failure: [
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+          ],
+          criticalFailure: [
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+          ]
+        }
+      },
+      {
+        id: 'ruthless',
+        label: 'Exclusive Academy',
+        description: 'Elite-only education with high tuition',
+        icon: 'fas fa-crown',
+        skills: ['society', 'diplomacy'],
+        personality: { ruthless: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Elite education generates revenue and noble support.',
+          success: 'Tuition provides profit.',
+          failure: 'Elitism breeds resentment despite revenue.',
+          criticalFailure: 'Exclusion angers citizens and damages reputation.'
+        },
+        outcomeBadges: {
+          criticalSuccess: [
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+          ],
+          success: [
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+          ],
+          failure: [
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+          ],
+          criticalFailure: [
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+          ]
+        }
+      }
+    ]
+  },
+
   skills: [
-      { skill: 'lore', description: 'historical research' },
-      { skill: 'arcana', description: 'theoretical magic' },
-      { skill: 'society', description: 'social sciences' },
-    ],
+    { skill: 'lore', description: 'historical research' },
+    { skill: 'arcana', description: 'theoretical magic' },
+    { skill: 'society', description: 'social sciences' },
+    { skill: 'diplomacy', description: 'academic relations' },
+  ],
 
   outcomes: {
     criticalSuccess: {
-      description: 'A revolutionary discovery earns prestige and sponsorship.',
-      modifiers: [
-        { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
-        { type: 'dice', resource: 'gold', formula: '1d3', duration: 'immediate' },
-      ],
-      outcomeBadges: [
-        textBadge('+1 attitude for 1 random faction', 'fa-handshake', 'positive')
-      ]
+      description: 'Your approach proves highly effective.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
     },
     success: {
-      description: 'Findings attract research patrons.',
-      modifiers: [
-        { type: 'dice', resource: 'gold', formula: '1d3', duration: 'immediate' }
-      ]
+      description: 'Discovery handled well.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
     },
     failure: {
-      description: 'The research is inconclusive.',
-      modifiers: []
+      description: 'Research has mixed results.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
     },
     criticalFailure: {
-      description: 'An embarrassing retraction damages your reputation.',
+      description: 'Handling causes problems.',
+      endsEvent: true,
       modifiers: [],
-      outcomeBadges: [
-        textBadge('-1 attitude for 1 random faction', 'fa-handshake-slash', 'negative')
-      ]
+      outcomeBadges: []
     },
   },
 
   preview: {
     calculate: async (ctx) => {
-      const outcomeBadges: any[] = [];
-      const warnings: string[] = [];
-      
-      // Only show faction preview for criticalSuccess and criticalFailure
-      if (ctx.outcome !== 'criticalSuccess' && ctx.outcome !== 'criticalFailure') {
-        return { resources: [], outcomeBadges: [], warnings: [] };
-      }
-      
-      // Import faction service and utilities
-      const { factionService } = await import('../../services/factions/index');
-      const { adjustAttitudeBySteps } = await import('../../utils/faction-attitude-adjuster');
-      
-      // Get all available factions
-      const allFactions = factionService.getAllFactions();
-      if (allFactions.length === 0) {
-        warnings.push('No factions available');
-        return { resources: [], outcomeBadges: [], warnings };
-      }
-      
-      // Determine steps based on outcome
-      const steps = ctx.outcome === 'criticalSuccess' ? 1 : -1;
-      
-      // Filter out factions already at max/min attitude
-      let availableFactions = [...allFactions];
-      if (steps > 0) {
-        availableFactions = availableFactions.filter(f => f.attitude !== 'Helpful');
-      } else {
-        availableFactions = availableFactions.filter(f => f.attitude !== 'Hostile');
-      }
-      
-      if (availableFactions.length === 0) {
-        const reason = steps > 0 ? 'All factions already at maximum attitude' : 'All factions already at minimum attitude';
-        warnings.push(reason);
-        return { resources: [], outcomeBadges: [], warnings };
-      }
-      
-      // Randomly select 1 faction
-      const randomIndex = Math.floor(Math.random() * availableFactions.length);
-      const selectedFaction = availableFactions[randomIndex];
-      
-      // Store selected faction ID in metadata for execute step
-      if (!ctx.metadata) {
-        ctx.metadata = {};
-      }
-      ctx.metadata.selectedFactionId = selectedFaction.id;
-      ctx.metadata.attitudeSteps = steps;
-      
-      // Create badge showing the change
-      const oldAttitude = selectedFaction.attitude;
-      const newAttitude = adjustAttitudeBySteps(oldAttitude, steps);
-      
-      if (newAttitude) {
-        const icon = steps > 0 ? 'fa-handshake' : 'fa-handshake-slash';
-        const variant = steps > 0 ? 'positive' : 'negative';
-        outcomeBadges.push(
-          textBadge(`${selectedFaction.name}: ${oldAttitude} → ${newAttitude}`, icon, variant)
-        );
-      }
-      
-      return {
-        resources: [],
-        outcomeBadges,
-        warnings
+      const { get } = await import('svelte/store');
+      const { kingdomData } = await import('../../stores/KingdomStore');
+      const kingdom = get(kingdomData);
+      const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
+      const outcome = ctx.outcome;
+
+      const selectedOption = scholarlyDiscoveryPipeline.strategicChoice?.options.find(opt => opt.id === approach);
+      const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
+      const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
+
+      const commandContext: GameCommandContext = {
+        actionId: 'scholarly-discovery',
+        outcome: ctx.outcome,
+        kingdom: ctx.kingdom,
+        metadata: ctx.metadata || {}
       };
+
+      if (approach === 'virtuous') {
+        if (outcome === 'criticalSuccess') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', amount: 1, count: 2 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionAdjust = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        }
+      } else if (approach === 'practical') {
+        if (outcome === 'criticalSuccess') {
+          ctx.metadata._ongoingInnovations = { formula: '2d3', duration: 2 };
+        }
+      } else if (approach === 'ruthless') {
+        if (outcome === 'criticalSuccess') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', amount: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionAdjust = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        }
+      }
+
+      return { resources: [], outcomeBadges };
     }
   },
 
   execute: async (ctx) => {
-    // Only execute faction changes for criticalSuccess/criticalFailure
-    if (ctx.outcome !== 'criticalSuccess' && ctx.outcome !== 'criticalFailure') {
-      return { success: true };
+    const { get } = await import('svelte/store');
+    const { kingdomData } = await import('../../stores/KingdomStore');
+    const kingdom = get(kingdomData);
+    const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
+
+    const factionCommand = ctx.metadata?._preparedFactionAdjust;
+    if (factionCommand?.commit) {
+      await factionCommand.commit();
     }
 
-    const { getGameCommandRegistry } = await import('../../services/gameCommands/GameCommandHandlerRegistry');
-    const registry = getGameCommandRegistry();
-    
-    // Get the pre-selected faction ID and steps from preview.calculate
-    const factionId = ctx.metadata?.selectedFactionId;
-    const steps = ctx.metadata?.attitudeSteps;
-    
-    if (!factionId) {
-      console.warn('[Scholarly Discovery] No faction was selected in preview - skipping attitude adjustment');
-      return { success: true, message: 'No faction selected' };
-    }
-
-    // Apply attitude change to the pre-selected faction
-    try {
-      const prepared = await registry.process(
-        { type: 'adjustFactionAttitude', factionId, steps },
-        { kingdom: ctx.kingdom, outcome: ctx.outcome, metadata: ctx.metadata }
-      );
-      
-      if (prepared?.commit) {
-        await prepared.commit();
-        console.log(`[Scholarly Discovery] Adjusted attitude for faction: ${factionId} by ${steps}`);
-      }
-    } catch (error) {
-      console.error('[Scholarly Discovery] Failed to adjust faction attitude:', error);
+    // Add ongoing innovations modifier (practical CS)
+    if (ctx.metadata?._ongoingInnovations && approach === 'practical') {
+      const innovations = ctx.metadata._ongoingInnovations;
+      await updateKingdom(k => {
+        if (!k.activeModifiers) k.activeModifiers = [];
+        k.activeModifiers.push({
+          id: `scholarly-innovations-${Date.now()}`,
+          name: 'Research Innovations',
+          description: `Funded research yields ${innovations.formula} gold per turn from patents and grants.`,
+          icon: 'fas fa-flask',
+          tier: 1,
+          sourceType: 'custom',
+          sourceId: ctx.instanceId || 'scholarly-discovery',
+          sourceName: 'Scholarly Discovery',
+          startTurn: k.turn || 1,
+          modifiers: [
+            { type: 'dice', resource: 'gold', formula: innovations.formula, duration: innovations.duration }
+          ]
+        });
+      });
     }
 
     return { success: true };

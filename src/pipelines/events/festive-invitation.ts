@@ -1,13 +1,20 @@
 /**
- * Festive Invitation Event Pipeline
+ * Festive Invitation Event Pipeline (CHOICE-BASED)
  *
- * Critical Success: +1 faction attitude, -1 unrest
- * Success: +1d3 gold
- * Critical Failure: -1 faction attitude, +1 unrest
+ * Your leaders are invited to a grand festival.
+ *
+ * Approaches:
+ * - Attend Humbly (Virtuous) - Join festivities as equals
+ * - Attend with Diplomacy (Practical) - Appropriate gifts and networking
+ * - Display Power (Ruthless) - Show military might at event
+ *
+ * Based on EVENT_MIGRATION_STATUS.md specifications
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { textBadge } from '../../types/OutcomeBadge';
+import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
+import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
+import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 
 export const festiveInvitationPipeline: CheckPipeline = {
   id: 'festive-invitation',
@@ -16,156 +23,341 @@ export const festiveInvitationPipeline: CheckPipeline = {
   checkType: 'event',
   tier: 1,
 
+  strategicChoice: {
+    label: 'How will you engage with the celebration?',
+    required: true,
+    options: [
+      {
+        id: 'virtuous',
+        label: 'Attend Humbly',
+        description: 'Join festivities as equals, no pretense',
+        icon: 'fas fa-glass-cheers',
+        skills: ['diplomacy', 'performance'],
+        personality: { virtuous: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Humble presence wins hearts and forges alliances.',
+          success: 'Genuine participation earns goodwill.',
+          failure: 'Modesty goes unnoticed.',
+          criticalFailure: 'Seen as weakness by rivals.'
+        },
+        outcomeBadges: {
+          criticalSuccess: [
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+          ],
+          success: [
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+          ],
+          failure: [],
+          criticalFailure: [
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+          ]
+        }
+      },
+      {
+        id: 'practical',
+        label: 'Attend with Diplomacy',
+        description: 'Appropriate gifts and strategic networking',
+        icon: 'fas fa-gift',
+        skills: ['diplomacy', 'society'],
+        personality: { practical: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Perfect diplomacy. Gifts reciprocated generously.',
+          success: 'Diplomatic relations strengthened.',
+          failure: 'Gifts accepted but no reciprocation.',
+          criticalFailure: 'Gifts rejected. Relations damaged.'
+        },
+        outcomeBadges: {
+          criticalSuccess: [
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+          ],
+          success: [],
+          failure: [
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+          ],
+          criticalFailure: [
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+          ]
+        }
+      },
+      {
+        id: 'ruthless',
+        label: 'Display Power',
+        description: 'Show military might and intimidate rivals',
+        icon: 'fas fa-shield',
+        skills: ['intimidation', 'performance'],
+        personality: { ruthless: 3 },
+        outcomeDescriptions: {
+          criticalSuccess: 'Military display awes guests. Armies gain equipment.',
+          success: 'Power shown. Equipment upgrade, but rivals angered.',
+          failure: 'Display backfires. Resources lost.',
+          criticalFailure: 'Aggression exhausts troops and wastes resources.'
+        },
+        outcomeBadges: {
+          criticalSuccess: [
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+          ],
+          success: [
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
+            textBadge('1 army gains random equipment', 'fas fa-shield', 'positive')
+          ],
+          failure: [
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+          ],
+          criticalFailure: [
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative'),
+            textBadge('1 army gains enfeebled', 'fas fa-skull', 'negative')
+          ]
+        }
+      }
+    ]
+  },
+
   skills: [
-      { skill: 'diplomacy', description: 'formal attendance' },
-      { skill: 'performance', description: 'entertain hosts' },
-      { skill: 'society', description: 'navigate customs' },
-    ],
+    { skill: 'diplomacy', description: 'formal attendance' },
+    { skill: 'performance', description: 'entertain hosts' },
+    { skill: 'society', description: 'navigate customs' },
+    { skill: 'intimidation', description: 'display power' },
+  ],
 
   outcomes: {
     criticalSuccess: {
-      description: 'Your leaders are the toast of the festival, winning admirers and forging new alliances.',
-      modifiers: [
-        { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' },
-      ],
-      outcomeBadges: [
-        textBadge('+1 attitude for 1 random faction', 'fa-handshake', 'positive')
-      ]
+      description: 'Your approach proves highly effective.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
     },
     success: {
-      description: 'The festival is a delight, and your leaders return with gifts and trade contacts.',
-      modifiers: [
-        { type: 'dice', resource: 'gold', formula: '1d3', duration: 'immediate' }
-      ]
+      description: 'Festival concludes successfully.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
     },
     failure: {
-      description: 'The festival passes without incident.',
-      modifiers: []
+      description: 'Festival passes without major incident.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
     },
     criticalFailure: {
-      description: 'Your leaders cause a scene at the festival, offending dignitaries.',
-      modifiers: [
-        { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-      ],
-      outcomeBadges: [
-        textBadge('-1 attitude for 1 random faction', 'fa-handshake-slash', 'negative')
-      ]
+      description: 'Festival causes complications.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
     },
   },
 
-  // Preview shows exact faction names and attitudes (after roll, before apply)
   preview: {
     calculate: async (ctx) => {
-      const outcomeBadges: any[] = [];
-      const warnings: string[] = [];
-      
-      // Only show faction preview for criticalSuccess and criticalFailure
-      if (ctx.outcome !== 'criticalSuccess' && ctx.outcome !== 'criticalFailure') {
-        return { resources: [], outcomeBadges: [], warnings: [] };
-      }
-      
-      // Import faction service and utilities
-      const { factionService } = await import('../../services/factions/index');
-      const { adjustAttitudeBySteps } = await import('../../utils/faction-attitude-adjuster');
-      
-      // Get all available factions
-      const allFactions = factionService.getAllFactions();
-      if (allFactions.length === 0) {
-        warnings.push('No factions available - please add factions to your kingdom first');
-        return { 
-          resources: [], 
-          outcomeBadges: [], 
-          warnings 
-        };
-      }
-      
-      // Determine steps based on outcome
-      const steps = ctx.outcome === 'criticalSuccess' ? 1 : -1;
-      
-      // Filter out factions already at max/min attitude
-      let availableFactions = [...allFactions];
-      if (steps > 0) {
-        availableFactions = availableFactions.filter(f => f.attitude !== 'Helpful');
-      } else {
-        availableFactions = availableFactions.filter(f => f.attitude !== 'Hostile');
-      }
-      
-      if (availableFactions.length === 0) {
-        const reason = steps > 0 ? 'All factions already at maximum attitude' : 'All factions already at minimum attitude';
-        warnings.push(reason);
-        return { 
-          resources: [], 
-          outcomeBadges: [], 
-          warnings 
-        };
-      }
-      
-      // Randomly select 1 faction
-      const randomIndex = Math.floor(Math.random() * availableFactions.length);
-      const selectedFaction = availableFactions[randomIndex];
-      
-      // Store selected faction ID in metadata for execute step
-      if (!ctx.metadata) {
-        ctx.metadata = {};
-      }
-      ctx.metadata.selectedFactionId = selectedFaction.id;
-      ctx.metadata.attitudeSteps = steps;
-      
-      // Create badge showing the change
-      const oldAttitude = selectedFaction.attitude;
-      const newAttitude = adjustAttitudeBySteps(oldAttitude, steps);
-      
-      if (newAttitude) {
-        const icon = steps > 0 ? 'fa-handshake' : 'fa-handshake-slash';
-        const variant = steps > 0 ? 'positive' : 'negative';
-        outcomeBadges.push(
-          textBadge(`${selectedFaction.name}: ${oldAttitude} → ${newAttitude}`, icon, variant)
-        );
-      } else {
-        outcomeBadges.push(
-          textBadge(`${selectedFaction.name} remains ${oldAttitude}`, 'fa-handshake', 'info')
-        );
-      }
-      
-      return {
-        resources: [],
-        outcomeBadges,
-        warnings
+      const { get } = await import('svelte/store');
+      const { kingdomData } = await import('../../stores/KingdomStore');
+      const kingdom = get(kingdomData);
+      const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
+      const outcome = ctx.outcome;
+
+      const selectedOption = festiveInvitationPipeline.strategicChoice?.options.find(opt => opt.id === approach);
+      const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
+      const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
+
+      const commandContext: GameCommandContext = {
+        actionId: 'festive-invitation',
+        outcome: ctx.outcome,
+        kingdom: ctx.kingdom,
+        metadata: ctx.metadata || {}
       };
+
+      if (approach === 'virtuous') {
+        if (outcome === 'criticalSuccess') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', amount: 1, count: 2 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionAdjust = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'success') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', amount: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionAdjust = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'failure') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', amount: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionAdjust = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'criticalFailure') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', amount: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionAdjust = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        }
+      } else if (approach === 'practical') {
+        if (outcome === 'criticalSuccess') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', amount: 1, count: 2 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionAdjust = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'success') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', amount: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionAdjust = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'failure') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', amount: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionAdjust = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'criticalFailure') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', amount: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionAdjust = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        }
+      } else if (approach === 'ruthless') {
+        if (outcome === 'criticalSuccess') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', amount: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionAdjust = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+          ctx.metadata._equipArmies = 2;
+        } else if (outcome === 'success') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', amount: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionAdjust = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+          ctx.metadata._equipArmies = 1;
+        } else if (outcome === 'criticalFailure') {
+          ctx.metadata._enfeebleArmy = true;
+        }
+      }
+
+      return { resources: [], outcomeBadges };
     }
   },
 
   execute: async (ctx) => {
-    // Only execute faction changes for criticalSuccess/criticalFailure
-    if (ctx.outcome !== 'criticalSuccess' && ctx.outcome !== 'criticalFailure') {
-      return { success: true };
+    const { get } = await import('svelte/store');
+    const { kingdomData } = await import('../../stores/KingdomStore');
+    const kingdom = get(kingdomData);
+    const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
+
+    const factionCommand = ctx.metadata?._preparedFactionAdjust;
+    if (factionCommand?.commit) {
+      await factionCommand.commit();
     }
 
-    const { getGameCommandRegistry } = await import('../../services/gameCommands/GameCommandHandlerRegistry');
-    const registry = getGameCommandRegistry();
-    
-    // Get the pre-selected faction ID and steps from preview.calculate
-    const factionId = ctx.metadata?.selectedFactionId;
-    const steps = ctx.metadata?.attitudeSteps;
-    
-    if (!factionId) {
-      console.warn('[Festive Invitation] No faction was selected in preview - skipping attitude adjustment');
-      return { success: true, message: 'No faction selected' };
-    }
-
-    // Apply attitude change to the pre-selected faction
-    try {
-      const prepared = await registry.process(
-        { type: 'adjustFactionAttitude', factionId, steps },
-        { kingdom: ctx.kingdom, outcome: ctx.outcome, metadata: ctx.metadata }
-      );
-      
-      if (prepared?.commit) {
-        await prepared.commit();
-        console.log(`[Festive Invitation] Adjusted attitude for faction: ${factionId} by ${steps}`);
+    // Equip armies (ruthless CS/S)
+    if (ctx.metadata?._equipArmies && approach === 'ruthless') {
+      const armies = ctx.kingdom.armies || [];
+      const count = ctx.metadata._equipArmies;
+      if (armies.length > 0) {
+        for (let i = 0; i < Math.min(count, armies.length); i++) {
+          const randomArmy = armies[Math.floor(Math.random() * armies.length)];
+          // TODO: Implement random equipment upgrade
+          console.log(`Festive Invitation: Random equipment upgrade needed for army ${randomArmy.actorId}`);
+        }
       }
-    } catch (error) {
-      console.error('[Festive Invitation] Failed to adjust faction attitude:', error);
+    }
+
+    // Enfeeble army (ruthless CF)
+    if (ctx.metadata?._enfeebleArmy && approach === 'ruthless') {
+      const armies = ctx.kingdom.armies || [];
+      if (armies.length > 0) {
+        const randomArmy = armies[Math.floor(Math.random() * armies.length)];
+        const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
+        await applyArmyConditionExecution(randomArmy.actorId, 'enfeebled', 1);
+      }
     }
 
     return { success: true };

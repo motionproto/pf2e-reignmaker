@@ -120,10 +120,19 @@ export function createTargetedDiceBadge(options: {
     };
   }
   
+  // Extract verb and object from action string (e.g., "Imprison innocents" -> "Imprison" + "innocents")
+  const actionParts = action.split(' ');
+  const verb = actionParts[0];
+  const object = actionParts.slice(1).join(' ');
+  
+  const template = object 
+    ? `${verb} {{value}} ${object} in ${selectedTarget.name}`
+    : `${action} {{value}} in ${selectedTarget.name}`;
+  
   return {
     badge: {
       icon,
-      template: `${action} {{value}} in ${selectedTarget.name}`,
+      template,
       variant,
       diceFormula: formula
     },
@@ -175,10 +184,19 @@ export function createTargetedStaticBadge(options: {
   
   const actualAmount = Math.min(amount, selectedTarget.capacity);
   
+  // Extract verb and object from action string (e.g., "Imprison innocents" -> "Imprison" + "innocents")
+  const actionParts = action.split(' ');
+  const verb = actionParts[0];
+  const object = actionParts.slice(1).join(' ');
+  
+  const template = object 
+    ? `${verb} ${actualAmount} ${object} in ${selectedTarget.name}`
+    : `${action} ${actualAmount} in ${selectedTarget.name}`;
+  
   return {
     badge: {
       icon,
-      template: `${action} ${actualAmount} in ${selectedTarget.name}`,
+      template,
       variant
     },
     targetId: selectedTarget.id,

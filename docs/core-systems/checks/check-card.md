@@ -578,15 +578,15 @@ const targets: ActionTarget[] = settlements.map(settlement => ({
 // Create badge with automatic target selection
 const { badge, targetId, targetName, maxCapacity } = createTargetedDiceBadge({
   formula: '1d3',
-  action: 'Imprison',
+  action: 'Imprison conspirators',
   targets,
   icon: 'fas fa-handcuffs',
   variant: 'info',
   noTargetMessage: 'No prisons available'  // Optional
 });
 
-// Badge shows: "Imprison 1d3 in Hoofton"
-// After roll: "Imprison 2 in Hoofton"
+// Badge shows: "Imprison 1d3 conspirators in Hoofton"
+// After roll: "Imprison 2 conspirators in Hoofton"
 ```
 
 ### Usage: Static Amount
@@ -629,7 +629,7 @@ async prepare(command: any, ctx: GameCommandContext): Promise<PreparedCommand | 
   // Create badge
   const { badge, targetId, targetName, maxCapacity } = createTargetedDiceBadge({
     formula: diceFormula,
-    action: 'Imprison',
+    action: 'Imprison conspirators',
     targets,
     icon: 'fas fa-handcuffs',
     variant: 'info'
