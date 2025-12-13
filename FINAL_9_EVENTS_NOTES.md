@@ -55,3 +55,5 @@
 All follow the Virtuous/Practical/Ruthless pattern per specs.
 
 
+
+
