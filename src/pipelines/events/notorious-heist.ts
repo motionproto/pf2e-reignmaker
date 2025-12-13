@@ -14,6 +14,7 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
+import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
 import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
 
@@ -38,24 +39,25 @@ export const notoriousHeistPipeline: CheckPipeline = {
         skills: ['thievery', 'stealth'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Thieves caught and all stolen goods recovered!',
+          criticalSuccess: 'Thieves caught and stolen goods recovered! Fame spreads.',
           success: 'Most stolen goods recovered through diligent pursuit.',
-          failure: 'The trail goes cold despite your efforts.',
-          criticalFailure: 'Insurance costs and publicity damage your finances.'
+          failure: 'The trail goes cold. Investigation costs drain resources.',
+          criticalFailure: 'Failed pursuit sparks public outrage and drains treasury.'
         },
         outcomeBadges: {
           criticalSuccess: [
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
-          ],
-          success: [
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
+          success: [
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d2', 'positive')
+          ],
           failure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
           ],
           criticalFailure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ]
         }
       },
@@ -67,25 +69,25 @@ export const notoriousHeistPipeline: CheckPipeline = {
         skills: ['society', 'intimidation'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Enhanced security restores public confidence.',
-          success: 'The kingdom feels more secure with new measures.',
-          failure: 'Security improvements prove costly and ineffective.',
-          criticalFailure: 'Expensive security fails to prevent further losses.'
+          criticalSuccess: 'Enhanced security restores confidence. Recovered contraband.',
+          success: 'New security measures restore public confidence.',
+          failure: 'Security improvements prove costly.',
+          criticalFailure: 'Expensive security fails spectacularly.'
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d2', 'positive')
           ],
           success: [
             valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d2', 'negative')
           ]
         }
       },
@@ -97,22 +99,21 @@ export const notoriousHeistPipeline: CheckPipeline = {
         skills: ['intimidation', 'performance'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'The underworld is crushed through fear and mass arrests.',
-          success: 'Criminals flee in the face of your brutal crackdown.',
-          failure: 'Your heavy-handed tactics spark resentment.',
+          criticalSuccess: 'The underworld is crushed. Mass arrests fill the prisons.',
+          success: 'Criminals rounded up through aggressive tactics.',
+          failure: 'Innocents caught up in your heavy-handed tactics.',
           criticalFailure: 'Excessive violence causes riots and property damage.'
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
-            // Note: Imprisonment badge generated by handler
+            // Note: Aggressive arrest badge (converts 1d4 unrest to imprisoned) generated by handler
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
-            // Note: Imprisonment badge generated by handler
+            // Note: Arrest badge (converts 1d3 unrest to imprisoned) generated by handler
           ],
           failure: [
             valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+            // Note: Innocent imprisonment badge (adds 1d2 imprisoned) generated by handler
           ],
           criticalFailure: [
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
@@ -191,7 +192,22 @@ export const notoriousHeistPipeline: CheckPipeline = {
       } else if (approach === 'ruthless') {
         // Terrorize Underworld (Ruthless)
         if (outcome === 'criticalSuccess') {
-          // -1d3 Unrest, imprison 1d3 criminals
+          // Aggressive mass arrests - convert 1d4 unrest to imprisoned
+          const imprisonHandler = new ConvertUnrestToImprisonedHandler();
+          const imprisonCommand = await imprisonHandler.prepare(
+            { type: 'convertUnrestToImprisoned', amount: 4, diceFormula: '1d4' },
+            commandContext
+          );
+          if (imprisonCommand) {
+            ctx.metadata._preparedImprison = imprisonCommand;
+            if (imprisonCommand.outcomeBadges) {
+              outcomeBadges.push(...imprisonCommand.outcomeBadges);
+            } else if (imprisonCommand.outcomeBadge) {
+              outcomeBadges.push(imprisonCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'success') {
+          // Convert 1d3 unrest to imprisoned
           const imprisonHandler = new ConvertUnrestToImprisonedHandler();
           const imprisonCommand = await imprisonHandler.prepare(
             { type: 'convertUnrestToImprisoned', amount: 3, diceFormula: '1d3' },
@@ -205,15 +221,15 @@ export const notoriousHeistPipeline: CheckPipeline = {
               outcomeBadges.push(imprisonCommand.outcomeBadge);
             }
           }
-        } else if (outcome === 'success') {
-          // -1 Unrest, imprison 1d2 criminals
-          const imprisonHandler = new ConvertUnrestToImprisonedHandler();
-          const imprisonCommand = await imprisonHandler.prepare(
-            { type: 'convertUnrestToImprisoned', amount: 2, diceFormula: '1d2' },
+        } else if (outcome === 'failure') {
+          // +1 Unrest, imprison 1d2 innocents
+          const addImprisonedHandler = new AddImprisonedHandler();
+          const imprisonCommand = await addImprisonedHandler.prepare(
+            { type: 'addImprisoned', amount: 2, diceFormula: '1d2' },
             commandContext
           );
           if (imprisonCommand) {
-            ctx.metadata._preparedImprison = imprisonCommand;
+            ctx.metadata._preparedAddImprisoned = imprisonCommand;
             if (imprisonCommand.outcomeBadges) {
               outcomeBadges.push(...imprisonCommand.outcomeBadges);
             } else if (imprisonCommand.outcomeBadge) {
@@ -247,10 +263,16 @@ export const notoriousHeistPipeline: CheckPipeline = {
     // ResolutionDataBuilder + GameCommandsService via outcomeBadges.
     // This execute() only handles special game commands.
 
-    // Execute imprisonment (ruthless approach - success/critical success)
+    // Execute imprisonment (ruthless CS/S - converts unrest to imprisoned)
     const imprisonCommand = ctx.metadata?._preparedImprison;
     if (imprisonCommand?.commit) {
       await imprisonCommand.commit();
+    }
+
+    // Execute innocent imprisonment (ruthless F - adds imprisoned without reducing unrest)
+    const addImprisonedCommand = ctx.metadata?._preparedAddImprisoned;
+    if (addImprisonedCommand?.commit) {
+      await addImprisonedCommand.commit();
     }
 
     // Execute structure damage (ruthless CF)

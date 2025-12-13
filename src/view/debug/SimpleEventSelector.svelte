@@ -15,7 +15,7 @@
       'natural-disaster': 7,
       'immigration': 8,
       'assassination-attempt': 9,
-      'sensational-crime': 10,
+      'crime-wave': 10,
       'notorious-heist': 11,
       'bandit-activity': 12,
       'raiders': 13,
@@ -76,14 +76,14 @@
    // Debug mode: Force specific outcomes by clicking on them
    let forceOutcomeMode = false;
    
-   // Sync forceOutcomeMode to actor flags so other components can read it
+   // Sync forceOutcomeMode to kingdom turnState for reactivity
    async function updateForceOutcomeFlag(enabled: boolean) {
-      const { getKingdomActor } = await import('../../stores/KingdomStore');
-      const actor = getKingdomActor();
-      if (actor) {
-         await actor.setFlag('pf2e-reignmaker', 'debugForceOutcome', enabled);
-         console.log('[SimpleEventSelector] Force outcome mode:', enabled ? 'enabled' : 'disabled');
-      }
+      await updateKingdom(kingdom => {
+         if (kingdom.turnState?.eventsPhase) {
+            kingdom.turnState.eventsPhase.debugForceOutcome = enabled;
+         }
+      });
+      console.log('[SimpleEventSelector] Force outcome mode:', enabled ? 'enabled' : 'disabled');
    }
    
    // Reactive: update flag when checkbox changes

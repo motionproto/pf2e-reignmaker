@@ -125,6 +125,9 @@
   export let preRollChoice: any = null;  // Pre-roll choice configuration from pipeline (actions)
   export let strategicChoice: any = null;  // Strategic choice configuration from pipeline (events)
   
+  // Debug mode: force outcome by clicking on outcome cards
+  export let forceOutcomeMode: boolean = false;
+  
   // Check if current user is GM
   $: isGM = (globalThis as any).game?.user?.isGM || false;
   
@@ -592,7 +595,8 @@
               <!-- Events/Incidents use PossibleOutcomes -->
               <PossibleOutcomes 
                 outcomes={possibleOutcomes} 
-                showTitle={false} 
+                showTitle={false}
+                {forceOutcomeMode}
                 on:forceOutcome={handleForceOutcome}
               />
             {/if}

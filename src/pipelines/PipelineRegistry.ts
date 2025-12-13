@@ -86,7 +86,7 @@ import { publicScandalPipeline } from './events/public-scandal';
 import { raidersPipeline } from './events/raiders';
 import { remarkableTreasurePipeline } from './events/remarkable-treasure';
 import { scholarlyDiscoveryPipeline } from './events/scholarly-discovery';
-import { sensationalCrimePipeline } from './events/sensational-crime';
+import { crimeWavePipeline } from './events/crime-wave';
 import { tradeAgreementPipeline } from './events/trade-agreement';
 import { undeadUprisingPipeline } from './events/undead-uprising';
 import { visitingCelebrityPipeline } from './events/visiting-celebrity';
@@ -210,7 +210,7 @@ const EVENT_PIPELINES: CheckPipeline[] = [
   raidersPipeline,
   remarkableTreasurePipeline,
   scholarlyDiscoveryPipeline,
-  sensationalCrimePipeline,
+  crimeWavePipeline,
   tradeAgreementPipeline,
   undeadUprisingPipeline,
   visitingCelebrityPipeline

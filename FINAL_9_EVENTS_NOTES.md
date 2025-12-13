@@ -53,3 +53,5 @@
 - 2 events have complex mechanics that must be preserved
 
 All follow the Virtuous/Practical/Ruthless pattern per specs.
+
+

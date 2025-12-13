@@ -6,7 +6,7 @@
 </script>
 
 <script lang="ts">
-  import { onMount, createEventDispatcher } from 'svelte';
+  import { createEventDispatcher } from 'svelte';
   import AdjustmentBadges from './AdjustmentBadges.svelte';
   import GameCommandBadges from './GameCommandBadges.svelte';
   import SimpleOutcomeBadges from './SimpleOutcomeBadges.svelte';
@@ -14,21 +14,12 @@
   export let outcomes: PossibleOutcome[];
   export let skill: string | undefined = undefined;
   export let showTitle: boolean = true;
+  export let forceOutcomeMode: boolean = false;
   
   const dispatch = createEventDispatcher();
   
-  // Debug mode: when enabled, outcome cards become clickable
-  let isDebugMode = false;
-  
-  onMount(async () => {
-    // Check for debug force outcome flag
-    const { getKingdomActor } = await import('../../../stores/KingdomStore');
-    const actor = getKingdomActor();
-    isDebugMode = actor?.getFlag('pf2e-reignmaker', 'debugForceOutcome') || false;
-  });
-  
   function handleOutcomeClick(outcomeType: string) {
-    if (!isDebugMode) return;
+    if (!forceOutcomeMode) return;
     console.log('[PossibleOutcomes] Force outcome clicked:', outcomeType);
     dispatch('forceOutcome', { outcome: outcomeType });
   }
@@ -90,7 +81,7 @@
       <!-- svelte-ignore a11y-no-static-element-interactions -->
       <div 
         class="outcome-item outcome-{outcome.result}"
-        class:debug-clickable={isDebugMode}
+        class:debug-clickable={forceOutcomeMode}
         on:click={() => handleOutcomeClick(outcome.result)}
       >
         <div class="outcome-content-wrapper">

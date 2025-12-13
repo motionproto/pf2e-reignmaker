@@ -109,6 +109,10 @@
    // Check if current user is GM
    $: isGM = (globalThis as any).game?.user?.isGM || false;
    
+   // Debug mode: force outcome by clicking on outcome cards
+   // Read from kingdomData turnState for proper reactivity
+   $: forceOutcomeMode = $kingdomData.turnState?.eventsPhase?.debugForceOutcome || false;
+   
    // Computed UI state - use shared helper for step completion
    import { getStepCompletion } from '../../../controllers/shared/PhaseHelpers';
    $: currentSteps = $kingdomData.currentPhaseSteps || [];
@@ -974,6 +978,7 @@
             resolution={currentEventInstance.appliedOutcome || eventResolution}
             skillSectionTitle="Choose Your Response:"
             {hideUntrainedSkills}
+            {forceOutcomeMode}
             on:executeSkill={handleExecuteSkill}
             on:forceOutcome={handleForceOutcome}
             on:primary={handleApplyResult}
@@ -1010,6 +1015,7 @@
                   aidResult={getAidResultForEvent(item.event.id)}
                   skillSectionTitle="Choose Your Response:"
                   {hideUntrainedSkills}
+                  {forceOutcomeMode}
                   resolutionInProgress={item.isBeingResolved}
                   resolvingPlayerName={item.resolverName}
                   isBeingResolvedByOther={item.isResolvedByOther}
