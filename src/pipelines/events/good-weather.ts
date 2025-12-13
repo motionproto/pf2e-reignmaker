@@ -42,7 +42,7 @@ export const goodWeatherPipeline: CheckPipeline = {
           criticalSuccess: [
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Gain {{value}} new citizens', 'fas fa-users', '1d4', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           success: [
             valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
