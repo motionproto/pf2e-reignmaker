@@ -1150,8 +1150,18 @@
     };
     
     // Determine default sign based on outcome column
-    function getDefaultSign(outcome) {
-      return (outcome === 'cs' || outcome === 's') ? '+' : '-';
+    // For most effects: positive columns get +, negative columns get -
+    // For Unrest: inverted because -Unrest is good, +Unrest is bad
+    function getDefaultSign(outcome, effectType) {
+      const isPositiveColumn = (outcome === 'cs' || outcome === 's');
+      const isUnrest = effectType === 'Unrest';
+      
+      // For Unrest, invert the logic
+      if (isUnrest) {
+        return isPositiveColumn ? '-' : '+';
+      }
+      
+      return isPositiveColumn ? '+' : '-';
     }
     
     function showAddMenu(e, approachIdx, outcome) {
@@ -1177,7 +1187,7 @@
     function addEffect(approachIdx, outcome, effect) {
       // Apply default sign based on outcome column
       const parsed = parseEffect(effect);
-      const defaultSign = getDefaultSign(outcome);
+      const defaultSign = getDefaultSign(outcome, parsed.effectType);
       
       // Only adjust sign for effects that support it
       if (parsed.type === 'dice' || parsed.type === 'static' || parsed.type === 'ongoing') {
@@ -1301,6 +1311,8 @@
           const typeDef = EFFECT_TYPES[parsed.effectType];
           // Don't flip alwaysNegative effects
           if (!typeDef || !typeDef.alwaysNegative) {
+            // For Unrest, the sign logic is already inverted in the value calculation,
+            // so we still flip the sign when moving between column types
             parsed.sign = parsed.sign === '+' ? '-' : '+';
             const formula = parsed.type === 'dice' ? parsed.formula : 
                            parsed.type === 'static' ? String(parsed.num) : 
