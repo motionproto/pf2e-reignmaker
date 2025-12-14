@@ -233,3 +233,4 @@ export function selectRandomIncident(kingdom: KingdomData): string | null {
 
 
 
+

@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event Balance Editor</title>
+  <style>
+    /* Inlined design tokens from variables.css */
+    :root {
+      /* Colors */
+      --color-gray-50: hsla(0, 0%, 98%, 1);
+      --color-gray-300: hsla(216, 12%, 78%, 1);
+      --color-gray-400: hsla(240, 5%, 68%, 1);
+      --color-gray-500: hsla(240, 5%, 56%, 1);
+      --color-gray-800: hsla(240, 10%, 22%, 1);
+      --color-gray-850: hsla(229, 20%, 16%, 1);
+      --color-gray-900: hsla(240, 30%, 6%, 1);
+      --color-gray-950: hsla(229, 34%, 3%, 1);
+      
+      --color-crimson: hsla(0, 58%, 50%, 1);
+      --color-crimson-light: hsla(0, 78%, 57%, 1);
+      
+      /* Surfaces */
+      --empty: var(--color-gray-950);
+      --surface-lowest: color-mix(in oklch, var(--color-gray-900) 86%, var(--color-gray-850) 14%);
+      --surface-low: color-mix(in oklch, var(--color-gray-900) 57%, var(--color-gray-850) 43%);
+      --surface: color-mix(in oklch, var(--color-gray-900) 43%, var(--color-gray-850) 57%);
+      --surface-high: color-mix(in oklch, var(--color-gray-900) 29%, var(--color-gray-850) 71%);
+      
+      /* Text */
+      --text-primary: var(--color-gray-50);
+      --text-secondary: var(--color-gray-300);
+      --text-muted: var(--color-gray-500);
+      --text-brand: hsla(0, 82%, 65%, 1);
+      --text-success: hsla(142, 90%, 70%, 1);
+      --text-danger: hsla(350, 100%, 78%, 1);
+      --text-warning: hsla(25, 95%, 55%, 1);
+      --text-info: hsla(217, 100%, 78%, 1);
+      --text-special: hsla(258, 95%, 74%, 1);
+      
+      /* Colored Surfaces */
+      --surface-success-low: hsla(142, 58%, 20%, 1);
+      --surface-danger-low: hsla(350, 62%, 20%, 1);
+      --surface-warning-low: hsla(25, 60%, 20%, 1);
+      --surface-info-low: hsla(217, 58%, 20%, 1);
+      --surface-special-low: hsla(267, 24%, 15%, 1);
+      
+      /* Borders */
+      --border-faint: hsla(240, 5%, 22%, 1);
+      --border-subtle: hsla(240, 5%, 28%, 1);
+      --border-default: hsla(240, 5%, 32%, 1);
+      --border-success-subtle: hsla(142, 32%, 21%, 1);
+      --border-danger-subtle: hsla(350, 55%, 32%, 1);
+      --border-info-subtle: hsla(217, 55%, 48%, 1);
+      --border-special-subtle: hsla(258, 38%, 31%, 1);
+      --border-primary: var(--color-crimson);
+      
+      /* Buttons */
+      --btn-primary-bg: hsla(0, 63%, 31%, 1);
+      --btn-primary-hover: hsla(0, 70%, 35%, 1);
+      --btn-secondary-bg: hsla(215, 19%, 27%, 1);
+      --btn-secondary-hover: hsla(215, 14%, 34%, 1);
+      
+      /* Overlays */
+      --overlay-higher: rgba(0, 0, 0, 0.7);
+      --hover: rgba(255, 255, 255, 0.1);
+      
+      /* Border Radius */
+      --radius-md: 0.25rem;
+      --radius-lg: 0.375rem;
+      --radius-xl: 0.5rem;
+      --radius-3xl: 0.75rem;
+      
+      /* Spacing */
+      --space-2: 0.125rem;
+      --space-4: 0.25rem;
+      --space-6: 0.375rem;
+      --space-8: 0.5rem;
+      --space-10: 0.625rem;
+      --space-12: 0.75rem;
+      --space-16: 1rem;
+      --space-20: 1.25rem;
+      
+      /* Fonts */
+      --font-sans-rm: "Signika", "Montserrat", 'Segoe UI', sans-serif;
+      --font-xs: 0.75rem;
+      --font-sm: 0.875rem;
+      --font-md: 1rem;
+      --font-lg: 1.125rem;
+      --font-xl: 1.25rem;
+      --font-3xl: 1.625rem;
+      
+      /* Font Weights */
+      --font-weight-semibold: 500;
+      --font-weight-bold: 800;
+      
+      /* Shadows */
+      --shadow-overlay: 0 10px 40px hsla(0, 0%, 0%, 0.5);
+      --shadow-focus: 0 0 0 3px hsla(0, 78%, 60%, 0.1);
+      
+      /* Transitions */
+      --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      
+      /* Z-Index */
+      --z-dropdown: 100;
+      --z-modal: 1100;
+      
+      /* Opacity */
+      --opacity-muted: 0.5;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: var(--font-sans-rm);
+      background: var(--empty);
+      color: var(--text-primary);
+      padding: var(--space-20);
+      min-height: 100vh;
+    }
+    
+    h1 {
+      color: var(--text-brand);
+      margin-bottom: var(--space-10);
+      font-size: var(--font-3xl);
+      font-weight: var(--font-weight-semibold);
+    }
+    
+    .toolbar {
+      display: flex;
+      gap: var(--space-10);
+      margin-bottom: var(--space-20);
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    button {
+      background: var(--btn-primary-bg);
+      color: var(--text-primary);
+      border: none;
+      padding: var(--space-8) var(--space-16);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      font-size: var(--font-sm);
+      font-family: var(--font-sans-rm);
+      transition: var(--transition-fast);
+    }
+    
+    button:hover { 
+      background: var(--btn-primary-hover);
+    }
+    
+    button.secondary { 
+      background: var(--btn-secondary-bg);
+    }
+    
+    button.secondary:hover { 
+      background: var(--btn-secondary-hover);
+    }
+    
+    .event-selector {
+      background: var(--surface);
+      border: 1px solid var(--border-default);
+      color: var(--text-primary);
+      padding: var(--space-8) var(--space-12);
+      border-radius: var(--radius-lg);
+      font-size: var(--font-sm);
+      font-family: var(--font-sans-rm);
+      min-width: 200px;
+    }
+    
+    .targets {
+      display: flex;
+      gap: var(--space-20);
+      margin-bottom: var(--space-20);
+      background: var(--surface);
+      padding: var(--space-10) var(--space-16);
+      border-radius: var(--radius-xl);
+      font-size: var(--font-sm);
+    }
+    
+    .targets span { color: var(--text-muted); }
+    .targets strong { color: var(--text-success); }
+    
+    .event-card {
+      background: var(--surface);
+      border-radius: var(--radius-3xl);
+      padding: var(--space-20);
+      margin-bottom: var(--space-20);
+      border: 1px solid var(--border-faint);
+    }
+    
+    .event-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-16);
+      border-bottom: 1px solid var(--border-faint);
+      padding-bottom: var(--space-10);
+    }
+    
+    .event-name {
+      font-size: var(--font-xl);
+      color: var(--text-brand);
+      font-weight: var(--font-weight-semibold);
+    }
+    
+    .event-desc {
+      color: var(--text-muted);
+      font-size: var(--font-sm);
+      font-style: italic;
+    }
+    
+    .outcome-grid {
+      display: grid;
+      grid-template-columns: 200px repeat(4, 1fr);
+      gap: var(--space-8);
+    }
+    
+    .outcome-header {
+      font-weight: var(--font-weight-semibold);
+      padding: var(--space-8);
+      text-align: center;
+      color: var(--text-muted);
+      font-size: var(--font-xs);
+    }
+    
+    .approach-label {
+      padding: var(--space-8);
+      font-size: var(--font-sm);
+      display: flex;
+      flex-direction: column;
+      color: var(--text-secondary);
+    }
+    
+    
+    .outcome-cell {
+      background: var(--surface-lowest);
+      border-radius: var(--radius-xl);
+      padding: var(--space-10);
+      min-height: 80px;
+      position: relative;
+      border: 1px solid var(--border-faint);
+    }
+    
+    .cell-value {
+      position: absolute;
+      top: var(--space-4);
+      right: var(--space-8);
+      font-size: var(--font-xs);
+      font-weight: var(--font-weight-bold);
+      padding: var(--space-2) var(--space-6);
+      border-radius: var(--radius-md);
+    }
+    
+    .cell-value.good { 
+      background: var(--surface-success-low); 
+      color: var(--text-success); 
+    }
+    .cell-value.ok { 
+      background: var(--surface-warning-low); 
+      color: var(--text-warning); 
+    }
+    .cell-value.bad { 
+      background: var(--surface-danger-low); 
+      color: var(--text-danger); 
+    }
+    
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-4);
+      margin-top: var(--space-20);
+    }
+    
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-4);
+      padding: var(--space-4) var(--space-8);
+      border-radius: var(--radius-md);
+      font-size: var(--font-xs);
+      cursor: grab;
+      transition: var(--transition-fast);
+    }
+    
+    .badge.dragging {
+      opacity: 0.5;
+      cursor: grabbing;
+    }
+    
+    .outcome-cell.drag-over {
+      background: var(--surface-high);
+      border: 2px dashed var(--border-primary);
+    }
+    
+    .badge:hover { filter: brightness(1.2); }
+    
+    .badge.positive { 
+      background: var(--surface-success-low); 
+      color: var(--text-success); 
+      border: 1px solid var(--border-success-subtle);
+    }
+    .badge.negative { 
+      background: var(--surface-danger-low); 
+      color: var(--text-danger); 
+      border: 1px solid var(--border-danger-subtle);
+    }
+    .badge.neutral { 
+      background: var(--surface-info-low); 
+      color: var(--text-info); 
+      border: 1px solid var(--border-info-subtle);
+    }
+    .badge.special { 
+      background: var(--surface-special-low); 
+      color: var(--text-special); 
+      border: 1px solid var(--border-special-subtle);
+    }
+    
+    .badge .effect-text { cursor: pointer; }
+    .badge .effect-text:hover { text-decoration: underline; }
+    
+    .badge .remove {
+      margin-left: var(--space-2);
+      opacity: var(--opacity-muted);
+      font-size: var(--font-sm);
+    }
+    
+    .badge .remove:hover { opacity: 1; }
+    
+    .add-btn {
+      background: var(--surface-low);
+      color: var(--text-muted);
+      border: 1px dashed var(--border-subtle);
+      padding: var(--space-4) var(--space-10);
+      border-radius: var(--radius-md);
+      font-size: var(--font-xs);
+      cursor: pointer;
+      font-family: var(--font-sans-rm);
+      transition: var(--transition-fast);
+    }
+    
+    .add-btn:hover { 
+      background: var(--surface-high); 
+      color: var(--text-primary);
+      border-color: var(--border-default);
+    }
+    
+    /* Dropdown menu */
+    .dropdown {
+      position: absolute;
+      background: var(--surface-high);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-xl);
+      padding: var(--space-8) 0;
+      z-index: var(--z-dropdown);
+      min-width: 220px;
+      max-height: 300px;
+      overflow-y: auto;
+      box-shadow: var(--shadow-overlay);
+    }
+    
+    .dropdown-item {
+      padding: var(--space-8) var(--space-12);
+      cursor: pointer;
+      font-size: var(--font-sm);
+      transition: var(--transition-fast);
+    }
+    
+    .dropdown-item:hover { 
+      background: var(--hover);
+    }
+    
+    .dropdown-category {
+      padding: var(--space-6) var(--space-12);
+      font-size: var(--font-xs);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: var(--font-weight-semibold);
+      letter-spacing: 0.05em;
+    }
+    
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--overlay-higher);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: var(--z-modal);
+    }
+    
+    .modal {
+      background: var(--surface-high);
+      border-radius: var(--radius-3xl);
+      padding: var(--space-20);
+      min-width: 350px;
+      border: 1px solid var(--border-default);
+      box-shadow: var(--shadow-overlay);
+    }
+    
+    .modal h3 { 
+      margin-bottom: var(--space-16); 
+      color: var(--text-brand);
+      font-size: var(--font-lg);
+      font-weight: var(--font-weight-semibold);
+    }
+    
+    .modal label {
+      display: block;
+      margin-bottom: var(--space-4);
+      color: var(--text-muted);
+      font-size: var(--font-sm);
+    }
+    
+    .modal input, .modal select {
+      width: 100%;
+      padding: var(--space-10);
+      margin-bottom: var(--space-10);
+      background: var(--surface-lowest);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      color: var(--text-primary);
+      font-size: var(--font-md);
+      font-family: var(--font-sans-rm);
+    }
+    
+    .modal input:focus, .modal select:focus {
+      outline: none;
+      border-color: var(--border-primary);
+      box-shadow: var(--shadow-focus);
+    }
+    
+    .modal-buttons {
+      display: flex;
+      gap: var(--space-10);
+      justify-content: flex-end;
+      margin-top: var(--space-16);
+    }
+    
+    .formula-preview {
+      background: var(--surface-lowest);
+      padding: var(--space-10);
+      border-radius: var(--radius-lg);
+      margin-bottom: var(--space-10);
+      font-size: var(--font-sm);
+      border: 1px solid var(--border-faint);
+    }
+    
+    .formula-preview .value {
+      color: var(--text-success);
+      font-weight: var(--font-weight-bold);
+    }
+    
+    .formula-examples {
+      font-size: var(--font-xs);
+      color: var(--text-muted);
+      margin-bottom: var(--space-10);
+    }
+    
+    .sign-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-8);
+      margin-bottom: var(--space-10);
+    }
+    
+    .sign-toggle button {
+      padding: var(--space-6) var(--space-12);
+      background: var(--surface-lowest);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      cursor: pointer;
+      font-family: var(--font-sans-rm);
+      font-size: var(--font-sm);
+      transition: var(--transition-fast);
+    }
+    
+    .sign-toggle button.active {
+      background: var(--btn-primary-bg);
+      border-color: var(--border-primary);
+      color: var(--text-primary);
+    }
+    
+    .sign-toggle button:hover {
+      background: var(--surface-high);
+    }
+    
+    .hidden { display: none !important; }
+    
+    /* Toggle Switch */
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      gap: var(--space-8);
+    }
+    
+    .toggle-label {
+      font-size: var(--font-sm);
+      color: var(--text-muted);
+    }
+    
+    .toggle-label.active {
+      color: var(--text-success);
+    }
+    
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      background: var(--surface-lowest);
+      border: 1px solid var(--border-default);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: var(--transition-fast);
+    }
+    
+    .toggle-switch.on {
+      background: var(--surface-success-low);
+      border-color: var(--border-success-subtle);
+    }
+    
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      transition: var(--transition-fast);
+    }
+    
+    .toggle-switch.on::after {
+      left: 22px;
+      background: var(--text-success);
+    }
+  </style>
+</head>
+<body>
+  <h1>⚖️ Event Balance Editor</h1>
+  
+  <div class="targets">
+    <span>Targets → </span>
+    <span>CS: <strong>+10</strong></span>
+    <span>S: <strong>+3</strong></span>
+    <span>F: <strong>-3</strong></span>
+    <span>CF: <strong>-10</strong></span>
+  </div>
+  
+  <div class="toolbar">
+    <select class="event-selector" id="eventSelector">
+      <option value="">-- Select Event --</option>
+    </select>
+    <button onclick="prevEvent()">← Prev</button>
+    <button onclick="nextEvent()">Next →</button>
+    <button class="secondary" onclick="saveCSV()">💾 Save</button>
+    <button class="secondary" onclick="exportCSV()">📥 Export CSV</button>
+    <button class="secondary" onclick="importCSVWithPicker()">📤 Import CSV</button>
+    <input type="file" id="importInput" accept=".csv" style="display:none" onchange="importCSV(event)">
+  </div>
+  
+  <div id="eventContainer"></div>
+  
+  <div id="dropdown" class="dropdown hidden"></div>
+  
+  <!-- Edit Formula Modal -->
+  <div id="modalOverlay" class="modal-overlay hidden">
+    <div class="modal">
+      <h3>Edit Effect</h3>
+      <div id="modalContent"></div>
+      <div class="modal-buttons">
+        <button class="secondary" onclick="closeModal()">Cancel</button>
+        <button onclick="saveModal()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Effect type definitions (base effects without dice)
+    // invertSign: true means +X in effect string = negative value (like Unrest: +Unrest is bad)
+    const EFFECT_TYPES = {
+      'Unrest': { baseValue: 2, invertSign: true },
+      'Gold': { baseValue: 1 },
+      'Food': { baseValue: 1 },
+      'Lumber': { baseValue: 1 },
+      'Ore': { baseValue: 1 },
+      'Stone': { baseValue: 1 },
+      'Resource': { baseValue: 1 },
+      'Faction': { baseValue: 3 },
+      'Fame': { baseValue: 5 },
+      'Convert': { baseValue: 1 },
+      'Pardon': { baseValue: 1 },
+      'innocents': { baseValue: 2, alwaysNegative: true },
+      'Action': { baseValue: 8 },
+    };
+    
+    // Fixed effects (no formula editing)
+    const FIXED_EFFECTS = {
+      '+1 Structure': 5,
+      'Damage 1 structure': -5,
+      'Damage 2 structures': -10,
+      '+1 Worksite': 5,
+      'Lose Worksite': -5,
+      'Settlement +1 Level': 5,
+      'Settlement -1 Level': -5,
+      'Claim 1 hex': 5,
+      'Lose 1 hex': -5,
+      'Army Well Trained': 5,
+      'Army equip': 5,
+      'Army fatigued': -3,
+      'Army enfeebled': -5,
+      'No effect': 0,
+      'Gain Action': 8,
+      'Lose Action': -8,
+      'Fortify Hex': 6,
+      'Hex Seized by Faction': -8,
+      'Lose Border Hexes': -5,
+      'Recruit Allied Army': 12,
+      'Armies Defect': -15,
+      'Spawn Enemy Army': -10,
+      'Heal Army': 3,
+    };
+    
+    // Calculate average value of a dice formula
+    function calculateDiceAverage(formula) {
+      if (!formula) return 0;
+      formula = formula.toLowerCase().trim();
+      
+      // Handle integer
+      if (/^-?\d+$/.test(formula)) {
+        return parseInt(formula);
+      }
+      
+      // Handle dice like 1d4, 2d6, etc.
+      const diceMatch = formula.match(/^(\d*)d(\d+)$/);
+      if (diceMatch) {
+        const count = parseInt(diceMatch[1] || '1');
+        const sides = parseInt(diceMatch[2]);
+        return count * (sides + 1) / 2;
+      }
+      
+      // Handle dice + modifier like 1d4+2, 2d6-1
+      const diceModMatch = formula.match(/^(\d*)d(\d+)\s*([+-])\s*(\d+)$/);
+      if (diceModMatch) {
+        const count = parseInt(diceModMatch[1] || '1');
+        const sides = parseInt(diceModMatch[2]);
+        const op = diceModMatch[3];
+        const mod = parseInt(diceModMatch[4]);
+        const diceAvg = count * (sides + 1) / 2;
+        return op === '+' ? diceAvg + mod : diceAvg - mod;
+      }
+      
+      return 0;
+    }
+    
+    // Parse an effect string into components
+    function parseEffect(effectStr) {
+      // Check if it's a fixed effect
+      if (FIXED_EFFECTS.hasOwnProperty(effectStr)) {
+        return { type: 'fixed', effect: effectStr, value: FIXED_EFFECTS[effectStr] };
+      }
+
+      // Pattern: +/-Ongoing Type (e.g., +Ongoing Gold, +Ongoing Unrest (1d3 for 3))
+      const ongoingPattern = /^([+-]?)(?:Ongoing)\s+(.+?)(?:\s+\((.+)\))?$/i;
+      let match = effectStr.match(ongoingPattern);
+      if (match) {
+        const sign = match[1] || '+';
+        const type = match[2];
+        const raw = (match[3] || '').trim();
+
+        let formula = '1';
+        let duration = 3;
+        if (raw) {
+          const forMatch = raw.match(/^(.+?)\s+for\s+(\d+)$/i);
+          if (forMatch) {
+            formula = forMatch[1].trim();
+            duration = parseInt(forMatch[2], 10);
+          } else {
+            const parts = raw.split(/[,;]/).map(s => s.trim()).filter(Boolean);
+            if (parts[0]) formula = parts[0];
+            if (parts[1] && /^\d+$/.test(parts[1])) duration = parseInt(parts[1], 10);
+          }
+        }
+
+        const avg = calculateDiceAverage(formula);
+        const typeDef = EFFECT_TYPES[type];
+        const baseValue = typeDef ? typeDef.baseValue : 1;
+        let valueSign = sign === '+' ? 1 : -1;
+        if (typeDef && typeDef.invertSign) valueSign *= -1;
+        if (typeDef && typeDef.alwaysNegative) valueSign = -1;
+        const value = avg * baseValue * valueSign * duration;
+
+        return { type: 'ongoing', sign, effectType: type, formula, duration, value, avg };
+      }
+      
+      // Match patterns like "+1d4 Unrest", "-2d3 Gold", "Convert 1d4", "Faction +1"
+      
+      // Pattern: +/-XdY Type (e.g., +1d4 Unrest, -2d3 Gold)
+      const dicePattern = /^([+-]?)(\d*d\d+(?:[+-]\d+)?)\s+(.+)$/i;
+      match = effectStr.match(dicePattern);
+      if (match) {
+        const sign = match[1] || '+';
+        const formula = match[2];
+        const type = match[3];
+        const avg = calculateDiceAverage(formula);
+        const typeDef = EFFECT_TYPES[type];
+        const baseValue = typeDef ? typeDef.baseValue : 1;
+        // For inverted types (like Unrest), + means negative value and - means positive
+        // For alwaysNegative (like innocents), value is always negative
+        let valueSign = sign === '+' ? 1 : -1;
+        if (typeDef && typeDef.invertSign) valueSign *= -1;
+        if (typeDef && typeDef.alwaysNegative) valueSign = -1;
+        const value = avg * baseValue * valueSign;
+        return { type: 'dice', sign, formula, effectType: type, value, avg };
+      }
+      
+      // Pattern: Type +/-X (e.g., Faction +1, Faction -2)
+      const typeFirstPattern = /^(.+?)\s+([+-])(\d+)$/;
+      match = effectStr.match(typeFirstPattern);
+      if (match) {
+        const type = match[1];
+        const sign = match[2];
+        const num = parseInt(match[3]);
+        const typeDef = EFFECT_TYPES[type];
+        const baseValue = typeDef ? typeDef.baseValue : 1;
+        let valueSign = sign === '+' ? 1 : -1;
+        if (typeDef && typeDef.invertSign) valueSign *= -1;
+        const value = num * baseValue * valueSign;
+        return { type: 'static', effectType: type, sign, num, value };
+      }
+      
+      // Pattern: Type XdY (e.g., Convert 1d4, Pardon 1d3)
+      const typeDicePattern = /^(.+?)\s+(\d*d\d+(?:[+-]\d+)?)(?:\s+\((.+)\))?$/i;
+      match = effectStr.match(typeDicePattern);
+      if (match) {
+        const type = match[1];
+        const formula = match[2];
+        const suffix = match[3] || '';
+        const avg = calculateDiceAverage(formula);
+        const typeDef = EFFECT_TYPES[type];
+        const baseValue = typeDef ? typeDef.baseValue : 1;
+        const isNegative = typeDef && typeDef.alwaysNegative;
+        const value = avg * baseValue * (isNegative ? -1 : 1);
+        return { type: 'typeDice', effectType: type, formula, suffix, value, avg };
+      }
+      
+      // Pattern: +/-X Type (e.g., +1 Fame, -1 Fame)
+      const staticPattern = /^([+-])(\d+)\s+(.+)$/;
+      match = effectStr.match(staticPattern);
+      if (match) {
+        const sign = match[1];
+        const num = parseInt(match[2]);
+        const type = match[3];
+        const typeDef = EFFECT_TYPES[type];
+        const baseValue = typeDef ? typeDef.baseValue : 1;
+        let valueSign = sign === '+' ? 1 : -1;
+        if (typeDef && typeDef.invertSign) valueSign *= -1;
+        if (typeDef && typeDef.alwaysNegative) valueSign = -1;
+        const value = num * baseValue * valueSign;
+        return { type: 'static', sign, num, effectType: type, value };
+      }
+      
+      return { type: 'unknown', effect: effectStr, value: 0 };
+    }
+    
+    // Build effect string from components
+    function buildEffectString(parsed, newFormula) {
+      if (parsed.type === 'fixed') return parsed.effect;
+
+      if (parsed.type === 'ongoing') {
+        const sign = parsed.sign === '-' || (EFFECT_TYPES[parsed.effectType] && EFFECT_TYPES[parsed.effectType].alwaysNegative) ? '-' : '+';
+        const duration = typeof parsed.duration === 'number' ? parsed.duration : 3;
+        return `${sign}Ongoing ${parsed.effectType} (${newFormula} for ${duration})`;
+      }
+      
+      if (parsed.type === 'dice') {
+        const sign = parsed.sign === '-' || (EFFECT_TYPES[parsed.effectType] && EFFECT_TYPES[parsed.effectType].alwaysNegative) ? '-' : '+';
+        return `${sign}${newFormula} ${parsed.effectType}`;
+      }
+      
+      if (parsed.type === 'static') {
+        if (parsed.effectType === 'Faction' || parsed.effectType === 'Fame') {
+          const coerced = parsed.effectType === 'Faction' ? (String(newFormula).trim() === '1' ? '1' : '1') : newFormula;
+          return `${parsed.effectType} ${parsed.sign}${coerced}`;
+        }
+        return `${parsed.sign}${newFormula} ${parsed.effectType}`;
+      }
+      
+      if (parsed.type === 'typeDice') {
+        const suffix = parsed.suffix ? ` (${parsed.suffix})` : '';
+        return `${parsed.effectType} ${newFormula}${suffix}`;
+      }
+      
+      return parsed.effect;
+    }
+    
+    // Calculate value from effect string
+    function getEffectValue(effectStr) {
+      const parsed = parseEffect(effectStr);
+      return parsed.value;
+    }
+    
+    // Get effect type (for badge color)
+    function getEffectType(effectStr) {
+      const parsed = parseEffect(effectStr);
+      if (parsed.value > 0) return 'positive';
+      if (parsed.value < 0) return 'negative';
+      if (effectStr.includes('Convert') || effectStr.includes('Pardon')) return 'neutral';
+      if (effectStr.includes('Army') || effectStr.includes('Fame')) return 'special';
+      return 'neutral';
+    }
+    
+    let events = [];
+    let currentEventIndex = 0;
+    let currentEditContext = null;
+    let lastFileHandle = null;
+    
+    // Parse CSV - supports both legacy (11 columns) and new format (12 columns with Approach Description)
+    function parseCSV(csv) {
+      const lines = csv.trim().split('\n');
+      const result = [];
+      let currentEvent = null;
+      
+      // Detect format by checking header
+      const header = parseCSVLine(lines[0]);
+      const hasApproachDescription = header.length >= 12 && (header[2] === 'Approach Description' || header[2] === 'Approach Descriptor');
+      
+      for (let i = 1; i < lines.length; i++) {
+        const values = parseCSVLine(lines[i]);
+        if (!values[0] && !values[1]) continue; // Skip empty lines
+        
+        if (values[0]) {
+          if (hasApproachDescription) {
+            // New format: Name,Approach,Approach Description,CS,CS Val,S,S Val,F,F Val,CF,CF Val,Description,Status
+            currentEvent = {
+              name: values[0],
+              description: values[11] || '',
+              reviewed: values[12] === 'Reviewed' || values[12] === 'Tested',
+              approaches: []
+            };
+          } else {
+            // Legacy format: Name,Approach,CS,CS Val,S,S Val,F,F Val,CF,CF Val,Description,Status
+            currentEvent = {
+              name: values[0],
+              description: values[10] || '',
+              reviewed: values[11] === 'Reviewed' || values[11] === 'Tested',
+              approaches: []
+            };
+          }
+          result.push(currentEvent);
+        }
+        
+        if (currentEvent) {
+          if (hasApproachDescription) {
+            // New format with approach descriptor in column 2
+            const approachName = values[1];
+            currentEvent.approaches.push({
+              name: approachName,
+              descriptor: values[2] || '',
+              description: '',
+              cs: parseEffects(values[3]),
+              s: parseEffects(values[5]),
+              f: parseEffects(values[7]),
+              cf: parseEffects(values[9])
+            });
+          } else {
+            // Legacy format - parse approach name to extract base and descriptor from parentheses
+            const approachName = values[1];
+            const match = approachName.match(/^(\w+)\s*\(([^)]+)\)$/);
+            const baseName = match ? match[1] : approachName;
+            const descriptor = match ? match[2] : '';
+            currentEvent.approaches.push({
+              name: baseName,
+              descriptor: descriptor,
+              description: currentEvent.description || '',
+              cs: parseEffects(values[2]),
+              s: parseEffects(values[4]),
+              f: parseEffects(values[6]),
+              cf: parseEffects(values[8])
+            });
+          }
+        }
+      }
+      return result;
+    }
+    
+    function parseCSVLine(line) {
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          result.push(current.trim());
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      result.push(current.trim());
+      return result;
+    }
+    
+    function parseEffects(str) {
+      if (!str || str === 'No effect') return [];
+      return str.split(',').map(s => s.trim()).filter(s => s);
+    }
+    
+    function calculateValue(effects) {
+      return effects.reduce((sum, effect) => sum + getEffectValue(effect), 0);
+    }
+    
+    function getValueClass(value, target) {
+      const diff = Math.abs(value - target);
+      if (diff <= 1) return 'good';
+      if (diff <= 3) return 'ok';
+      return 'bad';
+    }
+    
+    function renderEvent(event) {
+      const container = document.getElementById('eventContainer');
+      const outcomes = ['cs', 's', 'f', 'cf'];
+      const outcomeLabels = ['Critical Success', 'Success', 'Failure', 'Critical Failure'];
+      const targets = { cs: 10, s: 3, f: -3, cf: -10 };
+      
+      let html = `
+        <div class="event-card">
+          <div class="event-header">
+            <div>
+              <div class="event-name">${event.name}</div>
+              <div class="event-desc">${event.description}</div>
+            </div>
+            <div class="toggle-container">
+              <span class="toggle-label ${event.reviewed ? 'active' : ''}">Reviewed</span>
+              <div class="toggle-switch ${event.reviewed ? 'on' : ''}" onclick="toggleReviewed()"></div>
+            </div>
+          </div>
+          <div class="outcome-grid">
+            <div class="outcome-header"></div>
+            ${outcomeLabels.map(l => `<div class="outcome-header">${l}</div>`).join('')}
+      `;
+      
+      event.approaches.forEach((approach, approachIdx) => {
+        html += `
+          <div class="approach-label">
+            <div style="font-weight: var(--font-weight-semibold); margin-bottom: var(--space-4);">${approach.name}</div>
+            <input 
+              type="text"
+              class="approach-descriptor" 
+              placeholder="e.g., Show Mercy, Fair Trial..."
+              value="${approach.descriptor || ''}"
+              onblur="updateApproachDescriptor(${approachIdx}, this.value)"
+              style="width: 100%; background: var(--surface-lowest); border: 1px solid var(--border-faint); border-radius: var(--radius-md); padding: var(--space-6); color: var(--text-primary); font-size: var(--font-sm); font-family: var(--font-sans-rm);"
+            />
+          </div>`;
+        
+        outcomes.forEach(outcome => {
+          const effects = approach[outcome];
+          const value = calculateValue(effects);
+          const target = targets[outcome];
+          const valueClass = getValueClass(value, target);
+          
+          html += `
+            <div class="outcome-cell" 
+              data-approach="${approachIdx}" 
+              data-outcome="${outcome}"
+              ondragover="handleDragOver(event)"
+              ondragleave="handleDragLeave(event)"
+              ondrop="handleDrop(event)">
+              <div class="cell-value ${valueClass}">${value >= 0 ? '+' : ''}${value}</div>
+              <div class="badges">
+                ${effects.map((effect, effectIdx) => {
+                  const effectType = getEffectType(effect);
+                  const parsed = parseEffect(effect);
+                  const isEditable = parsed.type !== 'fixed' && parsed.type !== 'unknown';
+                  return `<span class="badge ${effectType}" 
+                    draggable="true" 
+                    data-effect="${effectIdx}"
+                    data-approach="${approachIdx}"
+                    data-outcome="${outcome}"
+                    ondragstart="handleDragStart(event)"
+                    ondragend="handleDragEnd(event)">
+                    <span class="effect-text" ${isEditable ? `onclick="editEffect(${approachIdx}, '${outcome}', ${effectIdx})"` : ''}>${effect}</span>
+                    <span class="remove" onclick="removeEffect(${approachIdx}, '${outcome}', ${effectIdx})" onmousedown="event.stopPropagation()" ondragstart="event.preventDefault()">×</span>
+                  </span>`;
+                }).join('')}
+                <button class="add-btn" onclick="showAddMenu(event, ${approachIdx}, '${outcome}')">+ Add</button>
+              </div>
+            </div>
+          `;
+        });
+      });
+      
+      html += '</div></div>';
+      container.innerHTML = html;
+    }
+    
+    function editEffect(approachIdx, outcome, effectIdx) {
+      const effect = events[currentEventIndex].approaches[approachIdx][outcome][effectIdx];
+      const parsed = parseEffect(effect);
+      
+      if (parsed.type === 'fixed' || parsed.type === 'unknown') return;
+      
+      currentEditContext = { approachIdx, outcome, effectIdx, effect, parsed };
+      
+      let currentFormula = '';
+      let currentDuration = 3;
+      if (parsed.type === 'dice') currentFormula = parsed.formula;
+      else if (parsed.type === 'static') currentFormula = String(parsed.num);
+      else if (parsed.type === 'typeDice') currentFormula = parsed.formula;
+      else if (parsed.type === 'ongoing') {
+        currentFormula = parsed.formula;
+        currentDuration = parsed.duration;
+      }
+      
+      const modalContent = document.getElementById('modalContent');
+      const supportsSign = parsed.type === 'dice' || parsed.type === 'static' || parsed.type === 'ongoing';
+      const currentSign = parsed.sign || '+';
+      
+      // Check if this is a Resource type effect that can be changed to specific resources
+      const isResourceType = parsed.effectType === 'Resource';
+      const resourceTypes = ['Resource', 'Gold', 'Food', 'Lumber', 'Ore', 'Stone'];
+      
+      modalContent.innerHTML = `
+        <div class="formula-examples">
+          Examples: 1d4, 2d6, 1d4+2, 3, 1d3-1
+        </div>
+        ${isResourceType ? `
+          <label for="resourceTypeSelect">Resource Type:</label>
+          <select id="resourceTypeSelect" onchange="updateResourceType()">
+            ${resourceTypes.map(rt => `<option value="${rt}" ${rt === parsed.effectType ? 'selected' : ''}>${rt === 'Resource' ? 'Random Resource' : rt}</option>`).join('')}
+          </select>
+        ` : `<label>Effect Type: <strong>${parsed.effectType || effect}</strong></label>`}
+        ${supportsSign ? `
+          <label>Sign:</label>
+          <div class="sign-toggle">
+            <button type="button" id="signPositive" class="${currentSign === '+' ? 'active' : ''}" onclick="toggleSign('+')">+</button>
+            <button type="button" id="signNegative" class="${currentSign === '-' ? 'active' : ''}" onclick="toggleSign('-')">−</button>
+          </div>
+        ` : ''}
+        <label for="formulaInput">Formula:</label>
+        <input type="text" id="formulaInput" value="${currentFormula}" placeholder="e.g., 1d4, 2d6, 3" autofocus>
+        ${parsed.type === 'ongoing' ? `
+          <label for="durationInput">Duration:</label>
+          <input type="number" id="durationInput" value="${currentDuration}" min="1" step="1">
+        ` : ''}
+        <div class="formula-preview">
+          New Effect: <span id="previewEffect">${effect}</span><br>
+          Value: <span class="value" id="previewValue">${parsed.value}</span>
+        </div>
+      `;
+      
+      document.getElementById('modalOverlay').classList.remove('hidden');
+      
+      const input = document.getElementById('formulaInput');
+      input.focus();
+      input.select();
+      input.addEventListener('input', updateFormulaPreview);
+
+      const durationInput = document.getElementById('durationInput');
+      if (durationInput) {
+        durationInput.addEventListener('input', updateFormulaPreview);
+      }
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') saveModal();
+        if (e.key === 'Escape') closeModal();
+      });
+    }
+    
+    function toggleSign(sign) {
+      if (!currentEditContext) return;
+      
+      currentEditContext.parsed.sign = sign;
+      
+      // Update button states
+      document.getElementById('signPositive').classList.toggle('active', sign === '+');
+      document.getElementById('signNegative').classList.toggle('active', sign === '-');
+      
+      updateFormulaPreview();
+    }
+    
+    function updateResourceType() {
+      if (!currentEditContext) return;
+      
+      const select = document.getElementById('resourceTypeSelect');
+      if (!select) return;
+      
+      currentEditContext.parsed.effectType = select.value;
+      updateFormulaPreview();
+    }
+    
+    function updateFormulaPreview() {
+      const input = document.getElementById('formulaInput');
+      const newFormula = input.value.trim();
+      const parsed = currentEditContext.parsed;
+
+      if (parsed.type === 'ongoing') {
+        const durationInput = document.getElementById('durationInput');
+        const duration = durationInput ? parseInt(durationInput.value, 10) : 3;
+        parsed.duration = Number.isFinite(duration) && duration > 0 ? duration : 3;
+      }
+      
+      const newEffect = buildEffectString(parsed, newFormula);
+      const newValue = getEffectValue(newEffect);
+      
+      document.getElementById('previewEffect').textContent = newEffect;
+      document.getElementById('previewValue').textContent = newValue >= 0 ? '+' + newValue : newValue;
+    }
+    
+    function saveModal() {
+      if (!currentEditContext) return;
+      
+      const input = document.getElementById('formulaInput');
+      const newFormula = input.value.trim();
+      const parsed = currentEditContext.parsed;
+      
+      const newEffect = buildEffectString(parsed, newFormula);
+      
+      events[currentEventIndex].approaches[currentEditContext.approachIdx][currentEditContext.outcome][currentEditContext.effectIdx] = newEffect;
+      
+      renderEvent(events[currentEventIndex]);
+      saveToStorage();
+      closeModal();
+    }
+    
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.add('hidden');
+      currentEditContext = null;
+    }
+    
+    // Effect categories for add menu
+    const EFFECT_CATEGORIES = {
+      'Resources': ['+1d3 Gold', '+1d3 Food', '+1d3 Lumber', '+1d3 Stone', '+1d3 Ore', '+1d3 Resource', '+Ongoing Gold', '+Ongoing Food', '+Ongoing Lumber', '+Ongoing Stone', '+Ongoing Ore'],
+      'Unrest': ['+1d3 Unrest', '+Ongoing Unrest'],
+      'Faction': ['No effect', 'Faction +1'],
+      'Fame': ['+1 Fame', '+2 Fame'],
+      'Prison': ['Convert 1d3', 'Pardon 1d3', '+1d3 innocents'],
+      'Structures': ['+1 Structure', 'Damage 1 structure', 'Damage 2 structures', '+1 Worksite', 'Lose Worksite', 'Settlement +1 Level', 'Settlement -1 Level'],
+      'Territory': ['Claim 1 hex', 'Lose 1 hex', 'Fortify Hex', 'Hex Seized by Faction', 'Lose Border Hexes'],
+      'Army': ['Army Well Trained', 'Army equip', 'Army fatigued', 'Army enfeebled', 'Heal Army', 'Recruit Allied Army', 'Armies Defect', 'Spawn Enemy Army'],
+      'Actions': ['Gain Action', 'Lose Action'],
+    };
+    
+    // Determine default sign based on outcome column
+    function getDefaultSign(outcome) {
+      return (outcome === 'cs' || outcome === 's') ? '+' : '-';
+    }
+    
+    function showAddMenu(e, approachIdx, outcome) {
+      e.stopPropagation();
+      const dropdown = document.getElementById('dropdown');
+      
+      let html = '';
+      for (const [category, effects] of Object.entries(EFFECT_CATEGORIES)) {
+        html += `<div class="dropdown-category">${category}</div>`;
+        effects.forEach(effect => {
+          const value = getEffectValue(effect);
+          const valueStr = value >= 0 ? `+${value}` : value;
+          html += `<div class="dropdown-item" onclick="addEffect(${approachIdx}, '${outcome}', '${effect}')">${effect} <span style="color:var(--text-muted)">(${valueStr})</span></div>`;
+        });
+      }
+      
+      dropdown.innerHTML = html;
+      dropdown.style.left = e.pageX + 'px';
+      dropdown.style.top = e.pageY + 'px';
+      dropdown.classList.remove('hidden');
+    }
+    
+    function addEffect(approachIdx, outcome, effect) {
+      // Apply default sign based on outcome column
+      const parsed = parseEffect(effect);
+      const defaultSign = getDefaultSign(outcome);
+      
+      // Only adjust sign for effects that support it
+      if (parsed.type === 'dice' || parsed.type === 'static' || parsed.type === 'ongoing') {
+        const typeDef = EFFECT_TYPES[parsed.effectType];
+        // Don't override alwaysNegative effects
+        if (!typeDef || !typeDef.alwaysNegative) {
+          parsed.sign = defaultSign;
+          const formula = parsed.type === 'dice' ? parsed.formula : 
+                         parsed.type === 'static' ? String(parsed.num) : 
+                         parsed.type === 'ongoing' ? parsed.formula : '1';
+          effect = buildEffectString(parsed, formula);
+        }
+      }
+      
+      events[currentEventIndex].approaches[approachIdx][outcome].push(effect);
+      renderEvent(events[currentEventIndex]);
+      hideDropdown();
+      saveToStorage();
+    }
+    
+    function removeEffect(approachIdx, outcome, effectIdx) {
+      events[currentEventIndex].approaches[approachIdx][outcome].splice(effectIdx, 1);
+      renderEvent(events[currentEventIndex]);
+      saveToStorage();
+    }
+    
+    function toggleReviewed() {
+      events[currentEventIndex].reviewed = !events[currentEventIndex].reviewed;
+      renderEvent(events[currentEventIndex]);
+      saveToStorage();
+    }
+    
+    function updateApproachDescriptor(approachIdx, descriptor) {
+      events[currentEventIndex].approaches[approachIdx].descriptor = descriptor;
+      saveToStorage();
+    }
+    
+    function hideDropdown() {
+      document.getElementById('dropdown').classList.add('hidden');
+    }
+    
+    // Drag and drop functionality
+    let draggedData = null;
+    
+    function handleDragStart(e) {
+      const badge = e.target.closest('.badge');
+      if (!badge) return;
+      
+      badge.classList.add('dragging');
+      
+      draggedData = {
+        approachIdx: parseInt(badge.dataset.approach),
+        outcome: badge.dataset.outcome,
+        effectIdx: parseInt(badge.dataset.effect),
+        effect: events[currentEventIndex].approaches[parseInt(badge.dataset.approach)][badge.dataset.outcome][parseInt(badge.dataset.effect)],
+        isCopy: !e.shiftKey  // Default is copy, shift+drag to move
+      };
+      
+      e.dataTransfer.effectAllowed = e.shiftKey ? 'move' : 'copy';
+      e.dataTransfer.setData('text/plain', ''); // Required for Firefox
+    }
+    
+    function handleDragEnd(e) {
+      const badge = e.target.closest('.badge');
+      if (badge) {
+        badge.classList.remove('dragging');
+      }
+      
+      // Remove drag-over class from all cells
+      document.querySelectorAll('.outcome-cell').forEach(cell => {
+        cell.classList.remove('drag-over');
+      });
+    }
+    
+    function handleDragOver(e) {
+      e.preventDefault();
+      const cell = e.target.closest('.outcome-cell');
+      if (!cell || !draggedData) return;
+      
+      e.dataTransfer.dropEffect = draggedData.isCopy ? 'copy' : 'move';
+      cell.classList.add('drag-over');
+    }
+    
+    function handleDragLeave(e) {
+      const cell = e.target.closest('.outcome-cell');
+      if (!cell) return;
+      
+      // Only remove if we're actually leaving the cell (not entering a child)
+      if (!cell.contains(e.relatedTarget)) {
+        cell.classList.remove('drag-over');
+      }
+    }
+    
+    function handleDrop(e) {
+      e.preventDefault();
+      const cell = e.target.closest('.outcome-cell');
+      if (!cell || !draggedData) return;
+      
+      cell.classList.remove('drag-over');
+      
+      const targetApproachIdx = parseInt(cell.dataset.approach);
+      const targetOutcome = cell.dataset.outcome;
+      
+      // Don't do anything if dropping in the same location
+      if (!draggedData.isCopy && 
+          targetApproachIdx === draggedData.approachIdx && 
+          targetOutcome === draggedData.outcome) {
+        return;
+      }
+      
+      let effectToAdd = draggedData.effect;
+      
+      // Check if we're moving between positive and negative columns
+      const sourceIsPositive = draggedData.outcome === 'cs' || draggedData.outcome === 's';
+      const targetIsPositive = targetOutcome === 'cs' || targetOutcome === 's';
+      
+      // If moving from positive to negative or vice versa, flip the sign
+      if (sourceIsPositive !== targetIsPositive) {
+        const parsed = parseEffect(effectToAdd);
+        if (parsed.type === 'dice' || parsed.type === 'static' || parsed.type === 'ongoing') {
+          const typeDef = EFFECT_TYPES[parsed.effectType];
+          // Don't flip alwaysNegative effects
+          if (!typeDef || !typeDef.alwaysNegative) {
+            parsed.sign = parsed.sign === '+' ? '-' : '+';
+            const formula = parsed.type === 'dice' ? parsed.formula : 
+                           parsed.type === 'static' ? String(parsed.num) : 
+                           parsed.type === 'ongoing' ? parsed.formula : '1';
+            effectToAdd = buildEffectString(parsed, formula);
+          }
+        }
+      }
+      
+      // Add effect to target
+      events[currentEventIndex].approaches[targetApproachIdx][targetOutcome].push(effectToAdd);
+      
+      // Remove from source if moving (not copying)
+      if (!draggedData.isCopy) {
+        events[currentEventIndex].approaches[draggedData.approachIdx][draggedData.outcome].splice(draggedData.effectIdx, 1);
+      }
+      
+      renderEvent(events[currentEventIndex]);
+      saveToStorage();
+      draggedData = null;
+    }
+    
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.dropdown') && !e.target.closest('.add-btn')) {
+        hideDropdown();
+      }
+    });
+    
+    function updateEventSelector() {
+      const selector = document.getElementById('eventSelector');
+      selector.innerHTML = events.map((e, i) => 
+        `<option value="${i}" ${i === currentEventIndex ? 'selected' : ''}>${e.reviewed ? '✅ ' : ''}${e.name}</option>`
+      ).join('');
+    }
+    
+    document.getElementById('eventSelector').addEventListener('change', (e) => {
+      currentEventIndex = parseInt(e.target.value);
+      renderEvent(events[currentEventIndex]);
+    });
+    
+    function prevEvent() {
+      if (currentEventIndex > 0) {
+        currentEventIndex--;
+        updateEventSelector();
+        renderEvent(events[currentEventIndex]);
+      }
+    }
+    
+    function nextEvent() {
+      if (currentEventIndex < events.length - 1) {
+        currentEventIndex++;
+        updateEventSelector();
+        renderEvent(events[currentEventIndex]);
+      }
+    }
+    
+    function saveToStorage() {
+      localStorage.setItem('eventBalanceData', JSON.stringify(events));
+    }
+    
+    function loadFromStorage() {
+      const saved = localStorage.getItem('eventBalanceData');
+      if (saved) {
+        events = JSON.parse(saved);
+        return true;
+      }
+      return false;
+    }
+    
+    function generateCSV() {
+      const outcomes = ['cs', 's', 'f', 'cf'];
+      let csv = 'Name,Approach,Approach Descriptor,Critical Success,CS Val,Success,S Val,Failure,F Val,Critical Failure,CF Val,Description,Status\n';
+      
+      events.forEach(event => {
+        event.approaches.forEach((approach, idx) => {
+          const name = idx === 0 ? event.name : '';
+          const desc = idx === 0 ? event.description : '';
+          const reviewed = idx === 0 ? (event.reviewed ? 'Reviewed' : '') : '';
+          const approachDescriptor = approach.descriptor || '';
+          
+          const csVal = calculateValue(approach.cs);
+          const sVal = calculateValue(approach.s);
+          const fVal = calculateValue(approach.f);
+          const cfVal = calculateValue(approach.cf);
+          
+          const csStr = approach.cs.join(', ') || 'No effect';
+          const sStr = approach.s.join(', ') || 'No effect';
+          const fStr = approach.f.join(', ') || 'No effect';
+          const cfStr = approach.cf.join(', ') || 'No effect';
+          
+          csv += `${name},"${approach.name}","${approachDescriptor}","${csStr}",${csVal},"${sStr}",${sVal},"${fStr}",${fVal},"${cfStr}",${cfVal},"${desc}",${reviewed}\n`;
+        });
+      });
+      
+      return csv;
+    }
+    
+    async function saveCSV() {
+      const csv = generateCSV();
+      const blob = new Blob([csv], { type: 'text/csv' });
+      
+      // Try to save to the last-used file handle
+      if (lastFileHandle) {
+        try {
+          const writable = await lastFileHandle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          alert('File saved successfully!');
+          return;
+        } catch (e) {
+          console.error('Failed to save to last file:', e);
+          // Fall through to save-as dialog
+        }
+      }
+      
+      // No last file or save failed, prompt for new location
+      await exportCSV();
+    }
+    
+    async function exportCSV() {
+      const csv = generateCSV();
+      const blob = new Blob([csv], { type: 'text/csv' });
+      
+      // Try to use File System Access API for save dialog
+      if ('showSaveFilePicker' in window) {
+        try {
+          const handle = await window.showSaveFilePicker({
+            suggestedName: 'EVENT_BALANCE_TABLE.csv',
+            types: [{
+              description: 'CSV Files',
+              accept: { 'text/csv': ['.csv'] }
+            }]
+          });
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          lastFileHandle = handle;
+          alert('File exported successfully!');
+          return;
+        } catch (e) {
+          // User cancelled or API failed, fall through to download
+          if (e.name === 'AbortError') return;
+        }
+      }
+      
+      // Fallback: trigger download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'EVENT_BALANCE_TABLE.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    
+    async function importCSVWithPicker() {
+      // Try to use File System Access API for open dialog
+      if ('showOpenFilePicker' in window) {
+        try {
+          const [handle] = await window.showOpenFilePicker({
+            types: [{
+              description: 'CSV Files',
+              accept: { 'text/csv': ['.csv'] }
+            }],
+            multiple: false
+          });
+          const file = await handle.getFile();
+          const text = await file.text();
+          events = parseCSV(text);
+          currentEventIndex = 0;
+          lastFileHandle = handle;
+          updateEventSelector();
+          renderEvent(events[currentEventIndex]);
+          saveToStorage();
+          return;
+        } catch (e) {
+          // User cancelled or API failed
+          console.error('File picker error:', e);
+          if (e.name === 'AbortError') return;
+          // Fall through to fallback
+        }
+      }
+      
+      // Fallback: use hidden file input
+      document.getElementById('importInput').click();
+    }
+    
+    function importCSV(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          events = parseCSV(e.target.result);
+          currentEventIndex = 0;
+          updateEventSelector();
+          renderEvent(events[currentEventIndex]);
+          saveToStorage();
+        };
+        reader.readAsText(file);
+      }
+    }
+    
+    // Initialize
+    if (!loadFromStorage()) {
+      fetch('EVENT_BALANCE_TABLE.csv')
+        .then(r => r.text())
+        .then(csv => {
+          events = parseCSV(csv);
+          updateEventSelector();
+          renderEvent(events[currentEventIndex]);
+        })
+        .catch(() => {
+          alert('Please import the CSV file using the Import button.');
+        });
+    } else {
+      updateEventSelector();
+      renderEvent(events[currentEventIndex]);
+    }
+  </script>
+</body>
+</html>

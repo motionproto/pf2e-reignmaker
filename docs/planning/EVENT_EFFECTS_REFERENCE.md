@@ -72,9 +72,11 @@ A complete list of all possible effects that can be applied by events.
 | Effect | Format | Handler | Notes |
 |--------|--------|---------|-------|
 | **Found Settlement** | `Found settlement` | `FoundSettlementHandler` | Creates new settlement |
-| **Increase Settlement Level** | `+1 Level` | `IncreaseSettlementLevelHandler` | Upgrades settlement |
-| **Reduce Settlement Level** | `-1 Level` | `ReduceSettlementLevelHandler` | Downgrades settlement |
-| **Transfer Settlement** | `Transfer to enemy` | `TransferSettlementHandler` | Enemy takes control |
+| **Increase Settlement Level** | `+1 Level` | `IncreaseSettlementLevelHandler` | Random settlement levels up |
+| **Reduce Settlement Level** | `-1 Level` | `ReduceSettlementLevelHandler` | Random settlement levels down (min 1) |
+| **Transfer Settlement** | `Transfer to enemy` | `TransferSettlementHandler` | Enemy takes control (incidents only) |
+
+**Note**: Settlement level changes pick a random settlement if none specified. Good for events representing growth/decline.
 
 ---
 
@@ -83,11 +85,17 @@ A complete list of all possible effects that can be applied by events.
 | Effect | Format | Handler | Notes |
 |--------|--------|---------|-------|
 | **Claim Hex** | `Claim 1 hex` | `claimHexesExecution` | Add hex to kingdom |
-| **Lose Border Hexes** | `Lose X border hexes` | `RemoveBorderHexesHandler` | Removes border hexes |
-| **Enemy Seizes Hexes** | `Enemy seizes X hexes` | `SeizeHexesHandler` | Enemy faction takes hexes |
+| **Lose Border Hexes** | `Lose X border hexes` | `RemoveBorderHexesHandler` | Removes border hexes (player selects) |
+| **Hex Seized by Faction** | `Faction seizes X hexes` | `SeizeHexesHandler` | Enemy faction takes hexes (contiguous) |
 | **Create Worksite** | `Create worksite` | `createWorksiteExecution` | Adds lumber/mine/quarry |
 | **Destroy Worksite** | `Destroy worksite` | `DestroyWorksiteHandler` | Removes worksite |
-| **Lose Worksite** | `Lose Worksite` | `DestroyWorksiteHandler` | Same as destroy |
+| **Fortify Hex** | `Fortify hex` | `fortifyHexExecution` | Adds/upgrades fortification |
+
+**SeizeHexesHandler Details:**
+- Can specify faction (default: "rebels")
+- Uses BFS to select contiguous hexes (realistic territory seizure)
+- Creates faction if doesn't exist
+- Can use dice formula for count (e.g., `1d3`)
 
 ---
 
@@ -108,25 +116,29 @@ A complete list of all possible effects that can be applied by events.
 
 | Effect | Format | Handler/Function | Notes |
 |--------|--------|------------------|-------|
-| **Recruit Army** | `Recruit army` | `RecruitArmyHandler` | Creates new army |
+| **Recruit Army** | `Recruit army` | `RecruitArmyHandler` | Creates new army (shows dialog) |
+| **Recruit Allied Army** | `Recruit allied army` | `RequestMilitaryAidHandler` | Free army from ally faction |
 | **Disband Army** | `Disband army` | `disbandArmyExecution` | Removes army |
 | **Train Army** | `Army trained` | `trainArmyExecution` | Levels up army |
 | **Deploy Army** | `Deploy army` | `DeployArmyHandler` | Move army on map |
 | **Equip Army** | `Army receives equipment` | `OutfitArmyHandler` | Adds armor/weapons/etc |
-| **Defect Armies** | `Armies defect` | `DefectArmiesHandler` | Armies switch sides |
+| **Heal Army** | `Heal army` | `tendWoundedExecution` | Restore HP, remove conditions |
+| **Armies Defect** | `Armies defect to faction` | `DefectArmiesHandler` | Player armies join enemy |
 | **Spawn Enemy Army** | `Enemy army spawns` | `SpawnEnemyArmyHandler` | Creates hostile army |
 
 ### Army Conditions
 
 | Condition | Effect | Notes |
 |-----------|--------|-------|
-| **Enfeebled X** | Weakened | Physical penalties |
+| **Enfeebled X** | Weakened | Physical penalties, stackable |
 | **Fatigued** | Tired | Reduced effectiveness |
-| **Frightened X** | Fear | Mental penalties |
-| **Sickened X** | Ill | Various penalties |
-| **Clumsy X** | Impaired | Dexterity penalties |
+| **Frightened X** | Fear | Mental penalties, stackable |
+| **Sickened X** | Ill | Various penalties, stackable |
+| **Clumsy X** | Impaired | Dexterity penalties, stackable |
 | **Well Trained** | Bonus | +1 to saving throws |
 | **Poorly Trained** | Penalty | -1 to saving throws |
+
+**Condition Application**: Use `applyArmyConditionExecution(actorId, condition, value)`
 
 ---
 
@@ -134,7 +146,18 @@ A complete list of all possible effects that can be applied by events.
 
 | Effect | Format | Handler | Notes |
 |--------|--------|---------|-------|
-| **Spend Action** | `Costs 1 action` | `SpendPlayerActionHandler` | Consumes player action |
+| **Gain Action** | `Gain Action` | Not yet implemented | Grants bonus action to random leader |
+| **Lose Action** | `Lose Action` | `SpendPlayerActionHandler` | Random leader loses their action |
+
+**Action Economy:**
+- Each leader gets 1 action per turn
+- Actions are the fundamental currency of kingdom management
+- **Gain Action** = +8 value (rare, CS rewards only)
+- **Lose Action** = -8 value (CF penalties, incidents)
+
+**Current Usage:**
+- Lose Action: Remarkable Treasure (Ruthless CF), Assassination Attempt (Ruthless CF), Assassin Attack incident, Noble Conspiracy incident
+- Gain Action: Not yet used in any events (opportunity for expansion)
 
 ---
 
@@ -209,4 +232,44 @@ kingdom.activeModifiers.push({
 - Creates prison management burden
 - Fame loss risk on failures
 - Harshest critical failures (innocent imprisonment, structure damage)
+
+---
+
+## Underutilized Effects (Expand Event Variety)
+
+These effects exist in the codebase but are rarely used in events:
+
+### Territory Effects
+| Effect | Current Usage | Potential Events |
+|--------|---------------|------------------|
+| **Hex Seized by Faction** | Incidents only | Ruthless CF on border events, cult expansion |
+| **Lose Border Hexes** | Incidents only | Raider CF, diplomatic failure |
+| **Fortify Hex** | Actions only | Military exercises CS, defensive events |
+
+### Settlement Effects
+| Effect | Current Usage | Potential Events |
+|--------|---------------|------------------|
+| **+1 Settlement Level** | Rarely used | Boomtown CS, immigration CS |
+| **-1 Settlement Level** | Incidents only | Plague CF, disaster CF, raid CF |
+
+### Army Effects
+| Effect | Current Usage | Potential Events |
+|--------|---------------|------------------|
+| **Recruit Allied Army** | Request Military Aid only | Diplomatic CS, allied events |
+| **Armies Defect** | Incidents only | Ruthless CF on army events |
+| **Heal Army** | Tend Wounded only | Medical/recovery events |
+| **Spawn Enemy Army** | Incidents only | Raider CF, monster CF |
+
+### Faction Effects
+| Effect | Current Usage | Potential Events |
+|--------|---------------|------------------|
+| **Faction +1/-1** | Some events | More diplomatic/social events |
+| **Create Faction** | Incidents only | Political events, cult activity |
+
+### Suggested New Event Mechanics
+
+1. **Hex Seizure on Ruthless CF**: "Your brutal response drives border communities to rebel"
+2. **Settlement Level +1 on Immigration CS**: "The influx of skilled refugees accelerates settlement growth"
+3. **Allied Army Recruitment**: "Your generous terms attract a mercenary company to your banner"
+4. **Fortification Boost**: "Military exercises reveal defensive weaknesses - fortifications improved"
 
