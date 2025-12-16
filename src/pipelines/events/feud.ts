@@ -180,6 +180,7 @@ export const feudPipeline: CheckPipeline = {
       const kingdom = get(kingdomData);
       const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
       const outcome = ctx.outcome;
+      const PLAYER_KINGDOM = 'player';
 
       // Find the selected approach option
       const selectedOption = feudPipeline.strategicChoice?.options.find(opt => opt.id === approach);
@@ -256,6 +257,26 @@ export const feudPipeline: CheckPipeline = {
             { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
             { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
           ];
+          
+          // Army becomes fatigued
+          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
+          if (playerArmies.length > 0) {
+            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
+            
+            // Store in metadata for execute
+            ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'fatigued', value: 1 };
+            
+            // Update badge with army name
+            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Fatigued'));
+            if (armyBadgeIndex >= 0) {
+              outcomeBadges[armyBadgeIndex] = textBadge(
+                `${randomArmy.name} becomes Fatigued`, 
+                'fas fa-tired', 
+                'negative'
+              );
+            }
+          }
+          
           // Adjust 1 random faction -1
           const eligibleFactions = (kingdom.factions || []).filter((f: any) =>
             f.attitude && f.attitude !== 'Hostile'
@@ -357,6 +378,13 @@ export const feudPipeline: CheckPipeline = {
     // NOTE: Standard modifiers (unrest, gold, fame) are applied automatically by
     // ResolutionDataBuilder + GameCommandsService via outcomeBadges.
     // This execute() only handles special game commands.
+
+    // Apply army condition (practical CF)
+    const armyCondition = ctx.metadata?._armyCondition;
+    if (armyCondition?.actorId) {
+      const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
+      await applyArmyConditionExecution(armyCondition.actorId, armyCondition.condition, armyCondition.value);
+    }
 
     // Execute faction adjustment (manipulate approach)
     const factionAdjustment = ctx.metadata?._factionAdjustment;

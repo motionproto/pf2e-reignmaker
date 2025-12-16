@@ -167,6 +167,7 @@ export const crimeWavePipeline: CheckPipeline = {
       const kingdom = get(kingdomData);
       const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
       const outcome = ctx.outcome;
+      const PLAYER_KINGDOM = 'player';
 
       // Find the selected approach option
       const selectedOption = crimeWavePipeline.strategicChoice?.options.find(opt => opt.id === approach);
@@ -188,7 +189,26 @@ export const crimeWavePipeline: CheckPipeline = {
         // Fair justice reduces unrest without creating prison issues
       } else if (approach === 'practical') {
         // Increase Patrols (Practical)
-        // All outcomes handled by standard badges (unrest, gold)
+        if (outcome === 'criticalFailure') {
+          // Army becomes enfeebled
+          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
+          if (playerArmies.length > 0) {
+            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
+            
+            // Store in metadata for execute
+            ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'enfeebled', value: 1 };
+            
+            // Update badge with army name
+            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Enfeebled'));
+            if (armyBadgeIndex >= 0) {
+              outcomeBadges[armyBadgeIndex] = textBadge(
+                `${randomArmy.name} becomes Enfeebled`, 
+                'fas fa-exclamation-triangle', 
+                'negative'
+              );
+            }
+          }
+        }
       } else if (approach === 'ruthless') {
         // Harsh Crackdown (Ruthless)
         if (outcome === 'criticalSuccess') {
@@ -262,6 +282,13 @@ export const crimeWavePipeline: CheckPipeline = {
     // NOTE: Standard modifiers (unrest, gold, fame) are applied automatically by
     // ResolutionDataBuilder + GameCommandsService via outcomeBadges.
     // This execute() only handles special game commands.
+
+    // Apply army condition (practical CF)
+    const armyCondition = ctx.metadata?._armyCondition;
+    if (armyCondition?.actorId) {
+      const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
+      await applyArmyConditionExecution(armyCondition.actorId, armyCondition.condition, armyCondition.value);
+    }
 
     // Execute imprisonment (ruthless CS/S - converts unrest to imprisoned)
     const imprisonCommand = ctx.metadata?._preparedImprison;

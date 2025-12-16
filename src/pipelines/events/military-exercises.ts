@@ -217,6 +217,59 @@ export const militaryExercisesPipeline: CheckPipeline = {
         return { resources: [], outcomeBadges: [], warnings };
       }
 
+      // Select random army for conditions and update badges
+      if (playerArmies.length > 0) {
+        const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
+        
+        // Store army for execute step
+        if ((approach === 'virtuous' && (outcome === 'failure' || outcome === 'criticalFailure')) ||
+            (approach === 'practical' && (outcome === 'failure' || outcome === 'criticalFailure')) ||
+            (approach === 'ruthless')) {
+          
+          // Determine condition type
+          let condition = '';
+          if (outcome === 'criticalSuccess' || outcome === 'success') {
+            if (approach === 'ruthless') {
+              condition = 'well-trained';
+              ctx.metadata._selectedArmy = { actorId: randomArmy.actorId, name: randomArmy.name };
+              
+              const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Well Trained'));
+              if (armyBadgeIndex >= 0) {
+                outcomeBadges[armyBadgeIndex] = textBadge(
+                  `${randomArmy.name} becomes Well Trained (+1 saves)`,
+                  'fas fa-star',
+                  'positive'
+                );
+              }
+            }
+          } else if (outcome === 'failure') {
+            condition = 'fatigued';
+            ctx.metadata._selectedArmy = { actorId: randomArmy.actorId, name: randomArmy.name };
+            
+            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Fatigued'));
+            if (armyBadgeIndex >= 0) {
+              outcomeBadges[armyBadgeIndex] = textBadge(
+                `${randomArmy.name} becomes Fatigued`,
+                'fas fa-tired',
+                'negative'
+              );
+            }
+          } else if (outcome === 'criticalFailure') {
+            condition = 'enfeebled';
+            ctx.metadata._selectedArmy = { actorId: randomArmy.actorId, name: randomArmy.name };
+            
+            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Enfeebled'));
+            if (armyBadgeIndex >= 0) {
+              outcomeBadges[armyBadgeIndex] = textBadge(
+                `${randomArmy.name} becomes Enfeebled`,
+                'fas fa-exclamation-triangle',
+                'negative'
+              );
+            }
+          }
+        }
+      }
+
       // Calculate modifiers based on approach and outcome
       if (approach === 'virtuous') {
         // Defensive Drills
@@ -305,10 +358,12 @@ export const militaryExercisesPipeline: CheckPipeline = {
       return { success: true, message: 'No armies available for military effects' };
     }
 
-    // Helper: Select random army
-    const selectRandomArmy = () => {
-      const randomIndex = Math.floor(Math.random() * playerArmies.length);
-      return playerArmies[randomIndex];
+    // Get pre-selected army from preview (or select randomly if not available)
+    const getSelectedArmy = () => {
+      if (ctx.metadata?._selectedArmy?.actorId) {
+        return playerArmies.find((a: any) => a.actorId === ctx.metadata._selectedArmy.actorId) || playerArmies[0];
+      }
+      return playerArmies[Math.floor(Math.random() * playerArmies.length)];
     };
 
     // Helper: Apply Well Trained
@@ -418,7 +473,7 @@ export const militaryExercisesPipeline: CheckPipeline = {
         // TODO: Fortify hex - requires hex selection UI
         logger.info('[Military Exercises] Fortify hex effect (not yet implemented)');
       } else if (outcome === 'failure') {
-        const army = selectRandomArmy();
+        const army = getSelectedArmy();
         await applyFatigued(army);
         // Adjust 1 faction -1
         const factions = factionService.getAllFactions();
@@ -432,7 +487,7 @@ export const militaryExercisesPipeline: CheckPipeline = {
           }
         }
       } else if (outcome === 'criticalFailure') {
-        const army = selectRandomArmy();
+        const army = getSelectedArmy();
         await applyEnfeebled(army);
       }
     } else if (approach === 'practical') {
@@ -442,19 +497,19 @@ export const militaryExercisesPipeline: CheckPipeline = {
       } else if (outcome === 'success') {
         await outfitRandomArmy(1);
       } else if (outcome === 'failure') {
-        const army = selectRandomArmy();
+        const army = getSelectedArmy();
         await applyFatigued(army);
       } else if (outcome === 'criticalFailure') {
-        const army = selectRandomArmy();
+        const army = getSelectedArmy();
         await applyEnfeebled(army);
       }
     } else if (approach === 'ruthless') {
       // Aggressive Training
       if (outcome === 'criticalSuccess' || outcome === 'success') {
-        const army = selectRandomArmy();
+        const army = getSelectedArmy();
         await applyWellTrained(army);
       } else if (outcome === 'failure') {
-        const army = selectRandomArmy();
+        const army = getSelectedArmy();
         await applyFatigued(army);
         // Adjust 1 faction -1
         const factions = factionService.getAllFactions();
@@ -468,7 +523,7 @@ export const militaryExercisesPipeline: CheckPipeline = {
           }
         }
       } else if (outcome === 'criticalFailure') {
-        const army = selectRandomArmy();
+        const army = getSelectedArmy();
         await applyEnfeebled(army);
       }
     }

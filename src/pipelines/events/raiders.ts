@@ -187,6 +187,8 @@ export const raidersPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
+      const PLAYER_KINGDOM = 'player';
+
       if (approach === 'virtuous') {
         // Negotiate Peace Treaty (Virtuous)
         // All outcomes handled by standard badges
@@ -229,13 +231,36 @@ export const raidersPipeline: CheckPipeline = {
         }
       } else if (approach === 'ruthless') {
         // Preemptive Strike (Ruthless)
-        if (outcome === 'criticalSuccess') {
-          // -1d3 Unrest, +2d3 Gold, 1 army gains welltrained
-          // Army training handled in execute()
-          ctx.metadata._trainArmy = true;
-        } else if (outcome === 'criticalFailure') {
-          // +1d3 Unrest, -2d3 Gold, -1 Fame, 1 army gains fatigued
-          ctx.metadata._fatigueArmy = true;
+        // Handle army conditions - select specific army and update badge
+        if (outcome === 'failure' || outcome === 'criticalFailure') {
+          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
+          if (playerArmies.length > 0) {
+            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
+            
+            if (outcome === 'failure') {
+              // Fatigued
+              ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'fatigued', value: 1 };
+              const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Fatigued'));
+              if (armyBadgeIndex >= 0) {
+                outcomeBadges[armyBadgeIndex] = textBadge(
+                  `${randomArmy.name} becomes Fatigued`,
+                  'fas fa-tired',
+                  'negative'
+                );
+              }
+            } else {
+              // Critical Failure - Enfeebled
+              ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'enfeebled', value: 1 };
+              const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Enfeebled'));
+              if (armyBadgeIndex >= 0) {
+                outcomeBadges[armyBadgeIndex] = textBadge(
+                  `${randomArmy.name} becomes Enfeebled`,
+                  'fas fa-exclamation-triangle',
+                  'negative'
+                );
+              }
+            }
+          }
         }
       }
 
@@ -259,26 +284,11 @@ export const raidersPipeline: CheckPipeline = {
       await destroyCommand.commit();
     }
 
-    // Train army (ruthless CS)
-    if (ctx.metadata?._trainArmy && approach === 'ruthless') {
-      const armies = ctx.kingdom.armies || [];
-      if (armies.length > 0) {
-        // Pick a random army
-        const randomArmy = armies[Math.floor(Math.random() * armies.length)];
-        const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
-        await applyArmyConditionExecution(randomArmy.actorId, 'welltrained', 1);
-      }
-    }
-
-    // Fatigue army (ruthless CF)
-    if (ctx.metadata?._fatigueArmy && approach === 'ruthless') {
-      const armies = ctx.kingdom.armies || [];
-      if (armies.length > 0) {
-        // Pick a random army
-        const randomArmy = armies[Math.floor(Math.random() * armies.length)];
-        const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
-        await applyArmyConditionExecution(randomArmy.actorId, 'fatigued', 1);
-      }
+    // Apply army condition (selected in preview.calculate)
+    const armyCondition = ctx.metadata?._armyCondition;
+    if (armyCondition?.actorId) {
+      const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
+      await applyArmyConditionExecution(armyCondition.actorId, armyCondition.condition, armyCondition.value);
     }
 
     return { success: true };

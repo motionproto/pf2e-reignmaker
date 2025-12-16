@@ -179,6 +179,8 @@ export const pilgrimagePipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
+      const PLAYER_KINGDOM = 'player';
+
       if (approach === 'virtuous') {
         if (outcome === 'criticalSuccess') {
           const factionHandler = new AdjustFactionHandler();
@@ -210,7 +212,39 @@ export const pilgrimagePipeline: CheckPipeline = {
           }
         }
       } else if (approach === 'practical') {
-        if (outcome === 'criticalFailure') {
+        if (outcome === 'criticalSuccess') {
+          // Well Trained bonus
+          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
+          if (playerArmies.length > 0) {
+            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
+            ctx.metadata._armyWellTrained = { actorId: randomArmy.actorId };
+            
+            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Well Trained'));
+            if (armyBadgeIndex >= 0) {
+              outcomeBadges[armyBadgeIndex] = textBadge(
+                `${randomArmy.name} becomes Well Trained (+1 saves)`,
+                'fas fa-star',
+                'positive'
+              );
+            }
+          }
+        } else if (outcome === 'criticalFailure') {
+          // Fatigued condition
+          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
+          if (playerArmies.length > 0) {
+            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
+            ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'fatigued', value: 1 };
+            
+            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Fatigued'));
+            if (armyBadgeIndex >= 0) {
+              outcomeBadges[armyBadgeIndex] = textBadge(
+                `${randomArmy.name} becomes Fatigued`,
+                'fas fa-tired',
+                'negative'
+              );
+            }
+          }
+
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
             { type: 'adjustFactionAttitude', amount: -1, count: 1 },
@@ -279,6 +313,24 @@ export const pilgrimagePipeline: CheckPipeline = {
     const factionCommand = ctx.metadata?._preparedFactionAdjust;
     if (factionCommand?.commit) {
       await factionCommand.commit();
+    }
+
+    // Apply army condition (Fatigued)
+    const armyCondition = ctx.metadata?._armyCondition;
+    if (armyCondition?.actorId) {
+      const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
+      await applyArmyConditionExecution(armyCondition.actorId, armyCondition.condition, armyCondition.value);
+    }
+
+    // Apply Well Trained bonus
+    const wellTrained = ctx.metadata?._armyWellTrained;
+    if (wellTrained?.actorId) {
+      const actor = game.actors?.get(wellTrained.actorId);
+      if (actor) {
+        const currentBonus = (actor.getFlag('pf2e-reignmaker', 'wellTrainedBonus') as number) || 0;
+        await actor.setFlag('pf2e-reignmaker', 'wellTrainedBonus', currentBonus + 1);
+        ui.notifications?.info(`${actor.name} gains +1 to saves (Well Trained bonus)`);
+      }
     }
 
     return { success: true };

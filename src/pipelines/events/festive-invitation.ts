@@ -182,6 +182,8 @@ export const festiveInvitationPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
+      const PLAYER_KINGDOM = 'player';
+
       if (approach === 'virtuous') {
         if (outcome === 'criticalSuccess') {
           const factionHandler = new AdjustFactionHandler();
@@ -299,6 +301,58 @@ export const festiveInvitationPipeline: CheckPipeline = {
           }
         }
       } else if (approach === 'ruthless') {
+        // Handle army conditions first
+        if (outcome === 'success') {
+          // Well Trained bonus
+          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
+          if (playerArmies.length > 0) {
+            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
+            ctx.metadata._armyWellTrained = { actorId: randomArmy.actorId };
+            
+            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Well Trained'));
+            if (armyBadgeIndex >= 0) {
+              outcomeBadges[armyBadgeIndex] = textBadge(
+                `${randomArmy.name} becomes Well Trained (+1 saves)`,
+                'fas fa-star',
+                'positive'
+              );
+            }
+          }
+        } else if (outcome === 'failure') {
+          // Fatigued condition
+          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
+          if (playerArmies.length > 0) {
+            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
+            ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'fatigued', value: 1 };
+            
+            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Fatigued'));
+            if (armyBadgeIndex >= 0) {
+              outcomeBadges[armyBadgeIndex] = textBadge(
+                `${randomArmy.name} becomes Fatigued`,
+                'fas fa-tired',
+                'negative'
+              );
+            }
+          }
+        } else if (outcome === 'criticalFailure') {
+          // Enfeebled condition
+          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
+          if (playerArmies.length > 0) {
+            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
+            ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'enfeebled', value: 1 };
+            
+            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Enfeebled'));
+            if (armyBadgeIndex >= 0) {
+              outcomeBadges[armyBadgeIndex] = textBadge(
+                `${randomArmy.name} becomes Enfeebled`,
+                'fas fa-exclamation-triangle',
+                'negative'
+              );
+            }
+          }
+        }
+
+        // Handle faction adjustments
         if (outcome === 'criticalSuccess') {
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
@@ -329,8 +383,6 @@ export const festiveInvitationPipeline: CheckPipeline = {
             }
           }
           ctx.metadata._equipArmies = 1;
-        } else if (outcome === 'criticalFailure') {
-          ctx.metadata._enfeebleArmy = true;
         }
       }
 
@@ -362,13 +414,21 @@ export const festiveInvitationPipeline: CheckPipeline = {
       }
     }
 
-    // Enfeeble army (ruthless CF)
-    if (ctx.metadata?._enfeebleArmy && approach === 'ruthless') {
-      const armies = ctx.kingdom.armies || [];
-      if (armies.length > 0) {
-        const randomArmy = armies[Math.floor(Math.random() * armies.length)];
-        const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
-        await applyArmyConditionExecution(randomArmy.actorId, 'enfeebled', 1);
+    // Apply army condition (selected in preview.calculate)
+    const armyCondition = ctx.metadata?._armyCondition;
+    if (armyCondition?.actorId) {
+      const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
+      await applyArmyConditionExecution(armyCondition.actorId, armyCondition.condition, armyCondition.value);
+    }
+
+    // Apply Well Trained bonus
+    const wellTrained = ctx.metadata?._armyWellTrained;
+    if (wellTrained?.actorId) {
+      const actor = game.actors?.get(wellTrained.actorId);
+      if (actor) {
+        const currentBonus = (actor.getFlag('pf2e-reignmaker', 'wellTrainedBonus') as number) || 0;
+        await actor.setFlag('pf2e-reignmaker', 'wellTrainedBonus', currentBonus + 1);
+        ui.notifications?.info(`${actor.name} gains +1 to saves (Well Trained bonus)`);
       }
     }
 

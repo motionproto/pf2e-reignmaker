@@ -155,13 +155,39 @@ export const goodWeatherPipeline: CheckPipeline = {
       const kingdom = get(kingdomData);
       const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
       const outcome = ctx.outcome;
+      const PLAYER_KINGDOM = 'player';
 
       const selectedOption = goodWeatherPipeline.strategicChoice?.options.find(opt => opt.id === approach);
       const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
       const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
 
-      if (approach === 'ruthless' && (outcome === 'criticalSuccess' || outcome === 'success')) {
-        ctx.metadata._trainArmy = outcome === 'criticalSuccess' ? 2 : 1;
+      if (approach === 'ruthless') {
+        if (outcome === 'criticalSuccess' || outcome === 'success') {
+          ctx.metadata._trainArmy = outcome === 'criticalSuccess' ? 2 : 1;
+        } else if (outcome === 'failure' || outcome === 'criticalFailure') {
+          // Select random army and apply condition
+          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
+          if (playerArmies.length > 0) {
+            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
+            const condition = outcome === 'failure' ? 'fatigued' : 'enfeebled';
+            
+            // Store in metadata for execute
+            ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition, value: 1 };
+            
+            // Update badge with army name
+            const armyBadgeIndex = outcomeBadges.findIndex(b => 
+              b.template?.includes('army becomes Fatigued') || b.template?.includes('army becomes Enfeebled')
+            );
+            if (armyBadgeIndex >= 0) {
+              const conditionName = condition === 'fatigued' ? 'Fatigued' : 'Enfeebled';
+              outcomeBadges[armyBadgeIndex] = textBadge(
+                `${randomArmy.name} becomes ${conditionName}`, 
+                condition === 'fatigued' ? 'fas fa-tired' : 'fas fa-exclamation-triangle', 
+                'negative'
+              );
+            }
+          }
+        }
       }
 
       return { resources: [], outcomeBadges };
@@ -184,6 +210,13 @@ export const goodWeatherPipeline: CheckPipeline = {
           await applyArmyConditionExecution(randomArmy.actorId, 'welltrained', 1);
         }
       }
+    }
+
+    // Apply army condition (failure/critical failure)
+    const armyCondition = ctx.metadata?._armyCondition;
+    if (armyCondition?.actorId) {
+      const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
+      await applyArmyConditionExecution(armyCondition.actorId, armyCondition.condition, armyCondition.value);
     }
 
     return { success: true };

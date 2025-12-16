@@ -184,6 +184,7 @@ export const banditActivityPipeline: CheckPipeline = {
       const kingdom = get(kingdomData);
       const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
       const outcome = ctx.outcome;
+      const PLAYER_KINGDOM = 'player';
 
       // Find the selected approach option
       const selectedOption = banditActivityPipeline.strategicChoice?.options.find(opt => opt.id === approach);
@@ -210,7 +211,7 @@ export const banditActivityPipeline: CheckPipeline = {
       } else if (approach === 'practical') {
         // Drive Them Off (Practical)
         if (outcome === 'criticalFailure') {
-          // +1d3 Unrest, -1d3 Gold, destroy 1 worksite
+          // +1d3 Unrest, -1d3 Gold, destroy 1 worksite, army becomes fatigued
           const destroyHandler = new DestroyWorksiteHandler();
           const destroyCommand = await destroyHandler.prepare(
             { type: 'destroyWorksite', count: 1 },
@@ -225,6 +226,25 @@ export const banditActivityPipeline: CheckPipeline = {
               outcomeBadges.push(...destroyCommand.outcomeBadges);
             } else if (destroyCommand.outcomeBadge) {
               outcomeBadges.push(destroyCommand.outcomeBadge);
+            }
+          }
+          
+          // Army becomes fatigued
+          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
+          if (playerArmies.length > 0) {
+            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
+            
+            // Store in metadata for execute
+            ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'fatigued', value: 1 };
+            
+            // Update badge with army name
+            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Fatigued'));
+            if (armyBadgeIndex >= 0) {
+              outcomeBadges[armyBadgeIndex] = textBadge(
+                `${randomArmy.name} becomes Fatigued`, 
+                'fas fa-tired', 
+                'negative'
+              );
             }
           }
         }
@@ -262,7 +282,7 @@ export const banditActivityPipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'criticalFailure') {
-          // +1d3 Unrest, -1 Fame, damage 1 structure
+          // +1d3 Unrest, -1 Fame, damage 1 structure, army becomes fatigued
           const damageHandler = new DamageStructureHandler();
           const damageCommand = await damageHandler.prepare(
             { type: 'damageStructure', count: 1 },
@@ -274,6 +294,25 @@ export const banditActivityPipeline: CheckPipeline = {
               outcomeBadges.push(...damageCommand.outcomeBadges);
             } else if (damageCommand.outcomeBadge) {
               outcomeBadges.push(damageCommand.outcomeBadge);
+            }
+          }
+          
+          // Army becomes fatigued
+          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
+          if (playerArmies.length > 0) {
+            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
+            
+            // Store in metadata for execute
+            ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'fatigued', value: 1 };
+            
+            // Update badge with army name
+            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Fatigued'));
+            if (armyBadgeIndex >= 0) {
+              outcomeBadges[armyBadgeIndex] = textBadge(
+                `${randomArmy.name} becomes Fatigued`, 
+                'fas fa-tired', 
+                'negative'
+              );
             }
           }
         }
@@ -328,6 +367,13 @@ export const banditActivityPipeline: CheckPipeline = {
     // NOTE: Standard modifiers (unrest, gold, fame) are applied automatically by
     // ResolutionDataBuilder + GameCommandsService via outcomeBadges.
     // This execute() only handles special game commands.
+
+    // Apply army condition (practical CF / ruthless CF)
+    const armyCondition = ctx.metadata?._armyCondition;
+    if (armyCondition?.actorId) {
+      const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
+      await applyArmyConditionExecution(armyCondition.actorId, armyCondition.condition, armyCondition.value);
+    }
 
     // Create worksite (virtuous CS)
     if (ctx.metadata?._createWorksite) {

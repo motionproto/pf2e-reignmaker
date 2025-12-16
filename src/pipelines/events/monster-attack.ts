@@ -168,8 +168,12 @@ export const monsterAttackPipeline: CheckPipeline = {
       const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
       const outcome = ctx.outcome;
 
-      const outcomeBadges = [];
+      const selectedOption = monsterAttackPipeline.strategicChoice?.options.find(opt => opt.id === approach);
+      const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
+      const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
       const commandContext: GameCommandContext = { kingdom, outcome: outcome || 'success' };
+
+      const PLAYER_KINGDOM = 'player';
 
       // Handle structure damage for failure outcomes
       if (approach === 'virtuous' && outcome === 'criticalFailure') {
@@ -224,15 +228,59 @@ export const monsterAttackPipeline: CheckPipeline = {
             outcomeBadges.push(damageCommand.outcomeBadge);
           }
         }
-      } else if (approach === 'ruthless' && outcome === 'criticalFailure') {
-        // +1d3 Unrest, -2d3 Gold, 1 army gains enfeebled
-        outcomeBadges.push(
-          diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-          diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
-        );
-        // Army condition handled in execute
-      } else if (approach === 'ruthless' && outcome === 'criticalSuccess') {
-        // Army equipment upgrade handled in execute (text badge only)
+      }
+
+      // Handle army effects for ruthless approach
+      if (approach === 'ruthless') {
+        if (outcome === 'criticalSuccess' || outcome === 'success') {
+          // Well Trained bonus
+          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
+          if (playerArmies.length > 0) {
+            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
+            ctx.metadata._armyWellTrained = { actorId: randomArmy.actorId };
+            
+            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Well Trained'));
+            if (armyBadgeIndex >= 0) {
+              outcomeBadges[armyBadgeIndex] = textBadge(
+                `${randomArmy.name} becomes Well Trained (+1 saves)`,
+                'fas fa-star',
+                'positive'
+              );
+            }
+          }
+        } else if (outcome === 'failure') {
+          // Fatigued condition
+          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
+          if (playerArmies.length > 0) {
+            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
+            ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'fatigued', value: 1 };
+            
+            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Fatigued'));
+            if (armyBadgeIndex >= 0) {
+              outcomeBadges[armyBadgeIndex] = textBadge(
+                `${randomArmy.name} becomes Fatigued`,
+                'fas fa-tired',
+                'negative'
+              );
+            }
+          }
+        } else if (outcome === 'criticalFailure') {
+          // Enfeebled condition
+          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
+          if (playerArmies.length > 0) {
+            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
+            ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'enfeebled', value: 1 };
+            
+            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Enfeebled'));
+            if (armyBadgeIndex >= 0) {
+              outcomeBadges[armyBadgeIndex] = textBadge(
+                `${randomArmy.name} becomes Enfeebled`,
+                'fas fa-exclamation-triangle',
+                'negative'
+              );
+            }
+          }
+        }
       }
 
       return { resources: [], outcomeBadges };
@@ -256,29 +304,21 @@ export const monsterAttackPipeline: CheckPipeline = {
       await damageCommand.commit();
     }
 
-    // Handle army effects for ruthless approach
-    if (approach === 'ruthless') {
-      if (outcome === 'criticalSuccess') {
-        // 1 army gains random equipment upgrade
-        await updateKingdom(k => {
-          if (!k.armies || k.armies.length === 0) return;
-          
-          const randomArmy = k.armies[Math.floor(Math.random() * k.armies.length)];
-          if (randomArmy) {
-            // Note: Equipment upgrade would be handled by separate equipment system
-            // For now, just log it (in actual game, would trigger Outfit Army flow)
-            console.log(`Army ${randomArmy.name} should receive random equipment upgrade`);
-          }
-        });
-      } else if (outcome === 'criticalFailure') {
-        // 1 army gains enfeebled
-        if (kingdom.armies && kingdom.armies.length > 0) {
-          const randomArmy = kingdom.armies[Math.floor(Math.random() * kingdom.armies.length)];
-          if (randomArmy?.actorId) {
-            const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
-            await applyArmyConditionExecution(randomArmy.actorId, 'enfeebled', 1);
-          }
-        }
+    // Apply army condition (selected in preview.calculate)
+    const armyCondition = ctx.metadata?._armyCondition;
+    if (armyCondition?.actorId) {
+      const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
+      await applyArmyConditionExecution(armyCondition.actorId, armyCondition.condition, armyCondition.value);
+    }
+
+    // Apply Well Trained bonus
+    const wellTrained = ctx.metadata?._armyWellTrained;
+    if (wellTrained?.actorId) {
+      const actor = game.actors?.get(wellTrained.actorId);
+      if (actor) {
+        const currentBonus = (actor.getFlag('pf2e-reignmaker', 'wellTrainedBonus') as number) || 0;
+        await actor.setFlag('pf2e-reignmaker', 'wellTrainedBonus', currentBonus + 1);
+        ui.notifications?.info(`${actor.name} gains +1 to saves (Well Trained bonus)`);
       }
     }
 

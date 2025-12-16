@@ -183,13 +183,51 @@ export const grandTournamentPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
+      const PLAYER_KINGDOM = 'player';
+
       // All approaches CS: Gain 1 random structure
       if (outcome === 'criticalSuccess') {
         ctx.metadata._awardStructure = true;
       }
 
-      // Ruthless approach: faction adjustments
+      // Ruthless approach: army effects and faction adjustments
       if (approach === 'ruthless') {
+        // Well Trained bonus for CS and Success
+        if (outcome === 'criticalSuccess' || outcome === 'success') {
+          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
+          if (playerArmies.length > 0) {
+            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
+            ctx.metadata._armyWellTrained = { actorId: randomArmy.actorId };
+            
+            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Well Trained'));
+            if (armyBadgeIndex >= 0) {
+              outcomeBadges[armyBadgeIndex] = textBadge(
+                `${randomArmy.name} becomes Well Trained (+1 saves)`,
+                'fas fa-star',
+                'positive'
+              );
+            }
+          }
+        }
+
+        // Fatigued condition for Failure and CF
+        if (outcome === 'failure' || outcome === 'criticalFailure') {
+          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
+          if (playerArmies.length > 0) {
+            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
+            ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'fatigued', value: 1 };
+            
+            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Fatigued'));
+            if (armyBadgeIndex >= 0) {
+              outcomeBadges[armyBadgeIndex] = textBadge(
+                `${randomArmy.name} becomes Fatigued`,
+                'fas fa-tired',
+                'negative'
+              );
+            }
+          }
+        }
+
         if (outcome === 'criticalSuccess') {
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
@@ -234,6 +272,24 @@ export const grandTournamentPipeline: CheckPipeline = {
     const damageCommand = ctx.metadata?._preparedDamage;
     if (damageCommand?.commit) {
       await damageCommand.commit();
+    }
+
+    // Apply army condition (Fatigued)
+    const armyCondition = ctx.metadata?._armyCondition;
+    if (armyCondition?.actorId) {
+      const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
+      await applyArmyConditionExecution(armyCondition.actorId, armyCondition.condition, armyCondition.value);
+    }
+
+    // Apply Well Trained bonus
+    const wellTrained = ctx.metadata?._armyWellTrained;
+    if (wellTrained?.actorId) {
+      const actor = game.actors?.get(wellTrained.actorId);
+      if (actor) {
+        const currentBonus = (actor.getFlag('pf2e-reignmaker', 'wellTrainedBonus') as number) || 0;
+        await actor.setFlag('pf2e-reignmaker', 'wellTrainedBonus', currentBonus + 1);
+        ui.notifications?.info(`${actor.name} gains +1 to saves (Well Trained bonus)`);
+      }
     }
 
     // Award structure (CS for all approaches)
