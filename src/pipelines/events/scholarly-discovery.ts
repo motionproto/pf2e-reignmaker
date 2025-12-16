@@ -36,10 +36,10 @@ export const scholarlyDiscoveryPipeline: CheckPipeline = {
         skills: ['lore', 'diplomacy', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Universal education earns prestige and alliances.',
-          success: 'Open access reduces tensions.',
-          failure: 'Free education costs exceed benefits.',
-          criticalFailure: 'Poor management wastes resources.'
+          criticalSuccess: 'Free knowledge uplifts all; grateful scholars forge powerful alliances.',
+          success: 'Open universities nurture minds; educated citizens embrace shared wisdom.',
+          failure: 'Noble ideals strain budgets; expensive programs yield modest returns.',
+          criticalFailure: 'Chaotic classrooms waste fortune; mismanaged education breeds frustration.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -66,10 +66,10 @@ export const scholarlyDiscoveryPipeline: CheckPipeline = {
         skills: ['lore', 'society', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Research yields ongoing innovations and revenue.',
-          success: 'Investment generates profit.',
-          failure: 'Research costs exceed returns.',
-          criticalFailure: 'Failed projects waste significant resources.'
+          criticalSuccess: 'Strategic funding sparks breakthrough innovations; patents fill coffers annually.',
+          success: 'Measured investment pays dividends; practical research yields tangible gains.',
+          failure: 'Cautious funding limits breakthroughs; modest expenses disappoint investors.',
+          criticalFailure: 'Misallocated grants chase dead ends; failed experiments drain treasury.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -95,10 +95,10 @@ export const scholarlyDiscoveryPipeline: CheckPipeline = {
         skills: ['society', 'diplomacy', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Elite education generates revenue and noble support.',
-          success: 'Tuition provides profit.',
-          failure: 'Elitism breeds resentment despite revenue.',
-          criticalFailure: 'Exclusion angers citizens and damages reputation.'
+          criticalSuccess: 'Ruthless exclusivity attracts wealthy elite; aristocratic fees enrich kingdom.',
+          success: 'Premium tuition fills coffers; only privileged few access knowledge.',
+          failure: 'Blatant elitism outrages common folk; gold cannot silence angry masses.',
+          criticalFailure: 'Shameful gatekeeping sparks riots; burned ivory towers punish greed.'
         },
         outcomeBadges: {
           criticalSuccess: [

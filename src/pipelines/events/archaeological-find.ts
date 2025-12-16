@@ -38,10 +38,10 @@ export const archaeologicalFindPipeline: CheckPipeline = {
         skills: ['society', 'religion', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Heritage site draws tourists and earns fame.',
-          success: 'Citizens celebrate cultural preservation.',
-          failure: 'Maintenance costs exceed benefits.',
-          criticalFailure: 'Site costs drain resources.'
+          criticalSuccess: 'Citizens flock to the heritage site; the settlement thrives.',
+          success: 'Cultural pride strengthens community bonds.',
+          failure: 'Poorly managed site becomes burden on the settlement.',
+          criticalFailure: 'Neglected ruins anger historians and locals alike.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -68,10 +68,10 @@ export const archaeologicalFindPipeline: CheckPipeline = {
         skills: ['society', 'occultism', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Research yields ongoing tourism revenue.',
-          success: 'Museum generates profit.',
-          failure: 'Research costs exceed revenue.',
-          criticalFailure: 'Failed project wastes resources.'
+          criticalSuccess: 'Museum draws scholars and tourists from distant lands.',
+          success: 'Academic interest brings modest revenue.',
+          failure: 'Research costs spiral beyond initial estimates.',
+          criticalFailure: 'Failed exhibition embarrasses royal patrons.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -100,10 +100,10 @@ export const archaeologicalFindPipeline: CheckPipeline = {
         skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Artifacts fetch premium prices.',
-          success: 'Private sales generate profit.',
-          failure: 'Sales damage reputation despite profit.',
-          criticalFailure: 'Greed angers historians and citizens.'
+          criticalSuccess: 'Wealthy collectors compete for prized relics.',
+          success: 'Private auctions yield substantial profit.',
+          failure: 'Rushed sales fumble valuable artifacts.',
+          criticalFailure: 'Greed angers scholars; treasures sold for pittance.'
         },
         outcomeBadges: {
           criticalSuccess: [

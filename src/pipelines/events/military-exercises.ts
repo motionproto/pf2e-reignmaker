@@ -41,10 +41,10 @@ export const militaryExercisesPipeline: CheckPipeline = {
         skills: ['athletics', 'survival', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Your defensive training fortifies the realm and earns widespread acclaim.',
-          success: 'The exercises strengthen defensive positions effectively.',
-          failure: 'Training fatigue affects morale and diplomatic relations.',
-          criticalFailure: 'Accidents during training weaken troops and damage your reputation.'
+          criticalSuccess: 'Inspired defenders fortify borders; citizens praise your vigilance.',
+          success: 'Methodical drills secure strategic positions without incident.',
+          failure: 'Overworked soldiers grumble; allies question your judgment.',
+          criticalFailure: 'Training accidents cripple troops and humiliate commanders.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -72,10 +72,10 @@ export const militaryExercisesPipeline: CheckPipeline = {
         skills: ['crafting', 'society', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Expert smiths provide multiple equipment upgrades and funding.',
-          success: 'The exercises result in improved equipment and modest funding.',
-          failure: 'Training costs outweigh benefits as troops grow fatigued.',
-          criticalFailure: 'Poor planning exhausts troops and damages your reputation.'
+          criticalSuccess: 'Master craftsmen forge superior gear; sponsors fund more.',
+          success: 'Efficient logistics upgrade armaments and save resources.',
+          failure: 'Budget overruns yield exhausted troops and empty coffers.',
+          criticalFailure: 'Mismanagement depletes funds and crushes troop morale.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -104,10 +104,10 @@ export const militaryExercisesPipeline: CheckPipeline = {
         skills: ['intimidation', 'lore', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Your military prowess intimidates rivals while elite training produces exceptional troops.',
-          success: 'Aggressive drills create well-trained forces and generate revenue.',
-          failure: 'The harsh training exhausts troops and angers neighboring factions.',
-          criticalFailure: 'Brutal exercises weaken your army and damage your reputation.'
+          criticalSuccess: 'Fierce spectacle terrifies rivals; hardened warriors emerge victorious.',
+          success: 'Grueling regimen forges elite soldiers and attracts mercenary coin.',
+          failure: 'Ruthless drills shatter bodies and provoke neighboring outrage.',
+          criticalFailure: 'Savage methods break soldiers and invite universal condemnation.'
         },
         outcomeBadges: {
           criticalSuccess: [

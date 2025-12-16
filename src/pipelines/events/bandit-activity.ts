@@ -47,10 +47,10 @@ export const banditActivityPipeline: CheckPipeline = {
         skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Bandits accept jobs and integrate. Your compassion creates new opportunities.',
-          success: 'The bandits agree to leave peacefully.',
-          failure: 'Bandits demand payment to leave.',
-          criticalFailure: 'Negotiations fail and bandits extort the kingdom.'
+          criticalSuccess: 'Reformed outlaws become loyal workers; compassion builds prosperity.',
+          success: 'Diplomatic resolution spares bloodshed; bandits depart peacefully.',
+          failure: 'Failed talks force costly bribes to avoid violence.',
+          criticalFailure: 'Bandits mock weakness and ransack worksites for tribute.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -79,10 +79,10 @@ export const banditActivityPipeline: CheckPipeline = {
         skills: ['intimidation', 'stealth', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Militia triumphs, recovering plunder and restoring security.',
-          success: 'Bandits are repelled and some goods recovered.',
-          failure: 'Bandits strike before you can respond.',
-          criticalFailure: 'Bandits raid a worksite and destroy it.'
+          criticalSuccess: 'Stalwart militia routs thieves and recovers stolen wealth.',
+          success: 'Efficient defense reclaims plunder and restores order.',
+          failure: 'Bandits strike swiftly; guards arrive to find empty coffers.',
+          criticalFailure: 'Raiders torch worksite before fleeing into wilderness.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -113,10 +113,10 @@ export const banditActivityPipeline: CheckPipeline = {
         skills: ['intimidation', 'stealth', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Bandits eliminated. Plunder seized and survivors imprisoned.',
-          success: 'Bandits hunted down and survivors captured.',
-          failure: 'Your brutal tactics spark resentment.',
-          criticalFailure: 'Excessive violence causes collateral damage to a structure.'
+          criticalSuccess: 'Ruthless hunt annihilates bandits; plunder and prisoners seized.',
+          success: 'Merciless pursuit captures survivors and reclaims stolen goods.',
+          failure: 'Savage tactics turn locals against you; innocents caught in crossfire.',
+          criticalFailure: 'Brutal carnage destroys property and horrifies witnesses.'
         },
         outcomeBadges: {
           criticalSuccess: [

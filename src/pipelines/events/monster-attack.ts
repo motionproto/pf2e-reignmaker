@@ -38,10 +38,10 @@ export const monsterAttackPipeline: CheckPipeline = {
         skills: ['nature', 'diplomacy', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'The creature peacefully moves away, nature thrives.',
-          success: 'The creature is relocated without incident.',
-          failure: 'Relocation attempts fail, the creature remains.',
-          criticalFailure: 'The creature attacks during relocation attempts.'
+          criticalSuccess: 'Harmony restored; the grateful beast becomes a local guardian.',
+          success: 'Peaceful relocation succeeds; creature departs safely.',
+          failure: 'Stubborn beast refuses; diplomatic efforts exhausted.',
+          criticalFailure: 'Enraged creature rampages through nearby structures.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -68,10 +68,10 @@ export const monsterAttackPipeline: CheckPipeline = {
         skills: ['stealth', 'intimidation', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Hunters defeat the beast, its parts bring profit.',
-          success: 'The monster is slain and its parts sold.',
-          failure: 'Hunters fail, costs mount.',
-          criticalFailure: 'Hunters fail catastrophically, beast damages property.'
+          criticalSuccess: 'Expert hunters claim trophy parts worth a fortune.',
+          success: 'Professional kill yields valuable materials for sale.',
+          failure: 'Costly hunt ends in failure; gold wasted on fruitless pursuit.',
+          criticalFailure: 'Fleeing hunters leave carnage and broken buildings behind.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -100,10 +100,10 @@ export const monsterAttackPipeline: CheckPipeline = {
         skills: ['intimidation', 'stealth', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Army destroys the beast, soldiers gain experience.',
-          success: 'Military force eliminates the threat efficiently.',
-          failure: 'Army struggles, beast damages infrastructure.',
-          criticalFailure: 'Military operation fails, army suffers casualties.'
+          criticalSuccess: 'Decisive victory forges battle-hardened veterans from raw troops.',
+          success: 'Coordinated assault trains soldiers in live combat.',
+          failure: 'Beast outmaneuvers weary troops; collateral damage spreads.',
+          criticalFailure: 'Humiliating rout leaves soldiers wounded and demoralized.'
         },
         outcomeBadges: {
           criticalSuccess: [

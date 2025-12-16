@@ -35,10 +35,10 @@ export const plaguePipeline: CheckPipeline = {
         skills: ['medicine', 'religion', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Your selfless care saves countless lives and earns deep gratitude from your people.',
-          success: 'Free treatment contains the plague while maintaining public trust.',
-          failure: 'The cost of treating everyone strains resources as the plague spreads.',
-          criticalFailure: 'Your treatment efforts are overwhelmed, draining resources as the plague spreads uncontrollably.'
+          criticalSuccess: 'Your selfless devotion inspires hope; people rally together.',
+          success: 'Compassionate care earns gratitude and donations.',
+          failure: 'Treatment costs drain treasuries faster than plague spreads.',
+          criticalFailure: 'Overwhelmed healers watch helplessly as settlements wither.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -68,10 +68,10 @@ export const plaguePipeline: CheckPipeline = {
         skills: ['society', 'medicine', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Your systematic quarantine stops the plague with minimal disruption.',
-          success: 'Effective containment measures limit the spread and calm fears.',
-          failure: 'Quarantine measures prove insufficient as the plague continues spreading.',
-          criticalFailure: 'Your quarantine fails catastrophically, draining resources while the plague rages on.'
+          criticalSuccess: 'Methodical isolation halts the spread; order restored.',
+          success: 'Disciplined measures contain outbreak before it spreads.',
+          failure: 'Quarantine breaches allow disease to claim more victims.',
+          criticalFailure: 'Chaos erupts as containment fails spectacularly.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -99,10 +99,10 @@ export const plaguePipeline: CheckPipeline = {
         skills: ['intimidation', 'survival', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Your brutal lockdown eradicates the plague completely, and salvaged assets fill your treasury.',
-          success: 'Harsh measures stop the spread, though some assets are seized in the process.',
-          failure: 'Your brutal approach damages infrastructure while failing to stop the plague.',
-          criticalFailure: 'Your draconian measures destroy property, damage relationships, and fail to contain the outbreak.'
+          criticalSuccess: 'Ruthless purge eradicates plague; seized assets fill coffers.',
+          success: 'Fear-driven compliance stops the spread cold.',
+          failure: 'Heavy-handed tactics create more problems than they solve.',
+          criticalFailure: 'Fires meant to cleanse instead destroy livelihoods.'
         },
         outcomeBadges: {
           criticalSuccess: [

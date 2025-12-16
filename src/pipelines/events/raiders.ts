@@ -38,10 +38,10 @@ export const raidersPipeline: CheckPipeline = {
         skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Peace treaty establishes profitable trade.',
-          success: 'Raiders agree to peace and offer modest trade goods.',
-          failure: 'Failed negotiations cost gifts and goodwill.',
-          criticalFailure: 'Raiders demand tribute to leave peacefully.'
+          criticalSuccess: 'Former enemies become trading partners; mutual prosperity blooms.',
+          success: 'Diplomacy wins fragile peace; raiders depart with dignity.',
+          failure: 'Empty promises waste resources; tension simmers unresolved.',
+          criticalFailure: 'Scornful raiders extort tribute and mock your weakness.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -68,10 +68,10 @@ export const raidersPipeline: CheckPipeline = {
         skills: ['intimidation', 'stealth', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Defenses repel raiders. Salvaged materials bolster fortifications.',
-          success: 'Fortifications hold and raiders retreat.',
-          failure: 'Raiders damage a fortification or worksite.',
-          criticalFailure: 'Raiders destroy a fortification or worksite.'
+          criticalSuccess: 'Ironclad defenses repel marauders; salvaged gear enriches coffers.',
+          success: 'Prepared positions turn raiders away without losses.',
+          failure: 'Weakened defenses crumble under relentless assault.',
+          criticalFailure: 'Raiders breach walls and raze vital infrastructure.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -102,10 +102,10 @@ export const raidersPipeline: CheckPipeline = {
         skills: ['intimidation', 'stealth', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Devastating victory. Plunder seized and army gains battle experience.',
-          success: 'Raiders defeated and plunder recovered.',
-          failure: 'Costly assault drains resources.',
-          criticalFailure: 'Failed assault exhausts army and damages reputation.'
+          criticalSuccess: 'Annihilation complete; plundered wealth and captured prisoners secured.',
+          success: 'Swift victory reclaims stolen goods and captures survivors.',
+          failure: 'Drawn-out battle depletes supplies and exhausts troops.',
+          criticalFailure: 'Ambush shatters forces; survivors limp home in shame.'
         },
         outcomeBadges: {
           criticalSuccess: [

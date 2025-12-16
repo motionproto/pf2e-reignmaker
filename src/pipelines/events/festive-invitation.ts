@@ -35,10 +35,10 @@ export const festiveInvitationPipeline: CheckPipeline = {
         skills: ['diplomacy', 'performance', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Humble presence wins hearts and forges alliances.',
-          success: 'Genuine participation earns goodwill.',
-          failure: 'Modesty goes unnoticed.',
-          criticalFailure: 'Seen as weakness by rivals.'
+          criticalSuccess: 'Your down-to-earth warmth inspires joy and lasting friendships.',
+          success: 'Sincere camaraderie earns respect among common folk.',
+          failure: 'Your quiet presence fades into the crowded festivities.',
+          criticalFailure: 'Enemies mistake humility for fear; insults fly openly.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -69,10 +69,10 @@ export const festiveInvitationPipeline: CheckPipeline = {
         skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Perfect diplomacy. Gifts reciprocated generously.',
-          success: 'Diplomatic relations strengthened.',
-          failure: 'Gifts accepted but no reciprocation.',
-          criticalFailure: 'Gifts rejected. Relations damaged.'
+          criticalSuccess: 'Lavish gifts spark bidding war; nobles shower you with riches.',
+          success: 'Thoughtful offerings open doors to new trade partners.',
+          failure: 'Guests accept gifts politely but offer nothing in return.',
+          criticalFailure: 'Offended host publicly refuses; allies distance themselves.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -103,10 +103,10 @@ export const festiveInvitationPipeline: CheckPipeline = {
         skills: ['intimidation', 'performance', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Military display awes guests. Armies gain equipment.',
-          success: 'Power shown. Equipment upgrade, but rivals angered.',
-          failure: 'Display backfires. Resources lost.',
-          criticalFailure: 'Aggression exhausts troops and wastes resources.'
+          criticalSuccess: 'Stunning martial parade earns fear and plundered war trophies.',
+          success: 'Intimidating show of force trains soldiers but alienates guests.',
+          failure: 'Aggressive posturing exhausts troops without impressing anyone.',
+          criticalFailure: 'Brutal display horrifies all; tired soldiers slump in disgrace.'
         },
         outcomeBadges: {
           criticalSuccess: [

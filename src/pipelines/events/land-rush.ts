@@ -45,10 +45,10 @@ export const landRushPipeline: CheckPipeline = {
         skills: ['diplomacy', 'survival', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Free land inspires prosperity. Settlement and infrastructure flourish.',
-          success: 'Free settlement reduces unrest and creates new worksite.',
-          failure: 'Chaotic settlement wastes some resources.',
-          criticalFailure: 'Disorganized rush depletes kingdom resources.'
+          criticalSuccess: 'Generous grants unite pioneers; thriving settlements spring forth.',
+          success: 'Fair distribution earns loyalty; grateful settlers claim their plots.',
+          failure: 'Noble ideals meet harsh reality; chaos drains coffers.',
+          criticalFailure: 'Naive charity empowers land-grabbers; disorder reigns unchecked.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -76,10 +76,10 @@ export const landRushPipeline: CheckPipeline = {
         skills: ['society', 'survival', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Orderly expansion generates revenue and infrastructure.',
-          success: 'Permit fees provide steady income and reduce unrest.',
-          failure: 'Bureaucracy frustrates settlers.',
-          criticalFailure: 'Red tape breeds corruption and unrest.'
+          criticalSuccess: 'Methodical planning yields prosperous settlements and steady revenue.',
+          success: 'Efficient permits channel settlers wisely; order prevails.',
+          failure: 'Rigid bureaucracy stifles pioneer spirit; delays frustrate all.',
+          criticalFailure: 'Tangled regulations spawn corruption; chaos erupts anyway.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -108,10 +108,10 @@ export const landRushPipeline: CheckPipeline = {
         skills: ['intimidation', 'society', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Land auctions generate massive profits and new worksites.',
-          success: 'Auctions bring wealth and create new worksites.',
-          failure: 'Profits breed resentment among common settlers.',
-          criticalFailure: 'Excessive profiteering damages reputation.'
+          criticalSuccess: 'Ruthless auctions enrich allies; favored settlers build lucrative ventures.',
+          success: 'Shrewd bidding fills coffers; well-connected pioneers claim prime land.',
+          failure: 'Blatant favoritism breeds anger; common folk denounce corruption.',
+          criticalFailure: 'Greedy schemes backfire; outraged settlers abandon kingdom entirely.'
         },
         outcomeBadges: {
           criticalSuccess: [

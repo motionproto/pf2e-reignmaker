@@ -41,10 +41,10 @@ export const cultActivityPipeline: CheckPipeline = {
         skills: ['society', 'diplomacy', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Investigation reveals truth, relations improve.',
-          success: 'Respectful inquiry resolves concerns.',
-          failure: 'Investigation fails to uncover truth.',
-          criticalFailure: 'Cult retaliates, damages property and relations.'
+          criticalSuccess: 'Respectful inquiry reveals benign practices; relations bloom.',
+          success: 'Understanding dispels fear and mistrust.',
+          failure: 'Half-hearted investigation satisfies no one.',
+          criticalFailure: 'Offended cultists vandalize property in retaliation.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -72,10 +72,10 @@ export const cultActivityPipeline: CheckPipeline = {
         skills: ['stealth', 'society', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Surveillance prevents any cult expansion.',
-          success: 'Cult influence is successfully contained.',
-          failure: 'Monitoring efforts fail, resources wasted.',
-          criticalFailure: 'Cult spreads, ongoing unrest follows.'
+          criticalSuccess: 'Surveillance exposes schemes; trained agents prevent spread.',
+          success: 'Vigilant watch contains cult influence.',
+          failure: 'Wasted resources buy no useful intelligence.',
+          criticalFailure: 'Cult slips past watchers; influence festers.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -104,10 +104,10 @@ export const cultActivityPipeline: CheckPipeline = {
         skills: ['intimidation', 'stealth', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Cult is disbanded, leaders imprisoned.',
-          success: 'Forceful suppression eliminates the threat.',
-          failure: 'Brutal tactics anger sympathizers.',
-          criticalFailure: 'Crackdown backfires, damaging reputation and relations.'
+          criticalSuccess: 'Ruthless purge crushes cult; seized treasures enrich coffers.',
+          success: 'Swift arrests dismantle the organization.',
+          failure: 'Brutal tactics sweep up innocents with cultists.',
+          criticalFailure: 'Violent suppression sparks riots; buildings burn.'
         },
         outcomeBadges: {
           criticalSuccess: [

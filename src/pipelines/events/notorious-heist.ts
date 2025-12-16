@@ -39,10 +39,10 @@ export const notoriousHeistPipeline: CheckPipeline = {
         skills: ['thievery', 'stealth', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Thieves caught and stolen goods recovered! Fame spreads.',
-          success: 'Most stolen goods recovered through diligent pursuit.',
-          failure: 'The trail goes cold. Investigation costs drain resources.',
-          criticalFailure: 'Failed pursuit sparks public outrage and drains treasury.'
+          criticalSuccess: 'Brilliant detective work captures thieves red-handed; recovered treasures shine.',
+          success: 'Determined pursuit recovers most stolen goods; justice triumphs over greed.',
+          failure: 'Noble intentions meet cold trails; expensive investigation yields little.',
+          criticalFailure: 'Bungled chase embarrasses guards; empty coffers mock failed justice.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -71,10 +71,10 @@ export const notoriousHeistPipeline: CheckPipeline = {
         skills: ['society', 'intimidation', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Enhanced security restores confidence. Recovered contraband.',
-          success: 'New security measures restore public confidence.',
-          failure: 'Security improvements prove costly.',
-          criticalFailure: 'Expensive security fails spectacularly.'
+          criticalSuccess: 'Methodical security upgrades deter future crime; seized contraband fills vaults.',
+          success: 'Pragmatic reforms strengthen defenses; measured response restores order.',
+          failure: 'Costly precautions stretch budget thin; modest gains disappoint.',
+          criticalFailure: 'Elaborate security theater wastes fortune; thieves mock expensive failure.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -105,10 +105,10 @@ export const notoriousHeistPipeline: CheckPipeline = {
         skills: ['intimidation', 'performance', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'The underworld is crushed. Mass arrests fill the prisons.',
-          success: 'Criminals rounded up through aggressive tactics.',
-          failure: 'Innocents caught up in your heavy-handed tactics.',
-          criticalFailure: 'Excessive violence causes riots and property damage.'
+          criticalSuccess: 'Brutal crackdown shatters criminal networks; terror fills prison cells.',
+          success: 'Ruthless raids crush resistance; fear silences the underworld.',
+          failure: 'Indiscriminate violence sweeps up innocents; paranoia breeds injustice.',
+          criticalFailure: 'Savage overreaction ignites riots; burning buildings punish tyranny.'
         },
         outcomeBadges: {
           criticalSuccess: [

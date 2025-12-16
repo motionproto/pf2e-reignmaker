@@ -40,10 +40,10 @@ export const inquisitionPipeline: CheckPipeline = {
         skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { virtuous: 4 },
         outcomeDescriptions: {
-          criticalSuccess: 'Your stand against persecution inspires the kingdom. The accused are vindicated.',
-          success: 'Your protection prevents violence. Fair hearings replace witch hunts.',
-          failure: 'Zealots denounce you as heretic-sympathizer. Division and unrest grow.',
-          criticalFailure: 'Your intervention backfires. Zealots spark riots and persecution intensifies.'
+          criticalSuccess: 'Brave defiance vindicates innocents; grateful refugees enrich the realm.',
+          success: 'Principled protection ends hysteria; justice prevails over fear.',
+          failure: 'Zealots brand you heretic-lover; angry mobs gather strength.',
+          criticalFailure: 'Furious inquisitors incite riots; persecution escalates wildly.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -72,10 +72,10 @@ export const inquisitionPipeline: CheckPipeline = {
         skills: ['society', 'deception', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Your calculated neutrality proves masterful. Both sides offer gifts and the inquisition fizzles out.',
-          success: 'Your neutral stance lets cooler heads prevail. Grateful moderates offer tribute.',
-          failure: 'Your neutrality breeds contempt from both sides. Resentment and unrest grow.',
-          criticalFailure: 'Your cowardly neutrality satisfies no one. Violence spirals and your reputation suffers.'
+          criticalSuccess: 'Diplomatic balance satisfies all; grateful factions offer tribute.',
+          success: 'Careful mediation quells hysteria; thankful moderates pay tribute.',
+          failure: 'Fence-sitting earns scorn from zealots and victims alike.',
+          criticalFailure: 'Craven inaction enrages both sides; chaos consumes all.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -104,10 +104,10 @@ export const inquisitionPipeline: CheckPipeline = {
         skills: ['religion', 'intimidation', 'applicable lore'],
         personality: { ruthless: 4 },
         outcomeDescriptions: {
-          criticalSuccess: 'Your theocratic enforcement crushes dissent. The accused are imprisoned.',
-          success: 'Your support empowers decisive action. Swift arrests silence criticism and establish order.',
-          failure: 'Your persecution sparks outrage. Neighboring kingdoms condemn the brutality.',
-          criticalFailure: 'Your zealous support triggers international condemnation. Allied nations are horrified.'
+          criticalSuccess: 'Merciless purge seizes assets and eliminates troublemakers.',
+          success: 'Brutal efficiency imprisons dissidents and secures order.',
+          failure: 'Savage persecution horrifies neighbors; innocents suffer needlessly.',
+          criticalFailure: 'Atrocities shock the civilized world; allies turn away in disgust.'
         },
         outcomeBadges: {
           criticalSuccess: [

@@ -33,10 +33,10 @@ export const goodWeatherPipeline: CheckPipeline = {
         skills: ['performance', 'diplomacy', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Joyful celebration attracts new citizens.',
-          success: 'Holiday reduces unrest and boosts morale.',
-          failure: 'Celebration breeds resentment among workers.',
-          criticalFailure: 'Excessive leisure causes unrest.'
+          criticalSuccess: 'Joyous festivals unite hearts; tales of revelry spread far and wide.',
+          success: 'Grateful citizens rest beneath blue skies; harmony fills the realm.',
+          failure: 'Idle hands while others toil; workers grumble at unfairness.',
+          criticalFailure: 'Prolonged revelry empties coffers; indulgence breeds contempt.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -61,10 +61,10 @@ export const goodWeatherPipeline: CheckPipeline = {
         skills: ['nature', 'society', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Exceptional productivity yields abundant resources.',
-          success: 'Hard work provides food, gold, and materials.',
-          failure: 'Overwork breeds resentment.',
-          criticalFailure: 'Excessive demands cause unrest and costs.'
+          criticalSuccess: 'Tireless labor under perfect skies fills barns and coffers alike.',
+          success: 'Steady hands gather bounty; pragmatic planning yields prosperity.',
+          failure: 'Relentless demands exhaust willing workers; discontent simmers.',
+          criticalFailure: 'Brutal schedules break spirits; exhausted laborers rebel.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -90,10 +90,10 @@ export const goodWeatherPipeline: CheckPipeline = {
         skills: ['intimidation', 'performance', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Troops gain elite training and plunder.',
-          success: 'One army gains valuable training.',
-          failure: 'Costly exercises drain resources.',
-          criticalFailure: 'Failed exercises waste resources.'
+          criticalSuccess: 'Brutal drills forge elite warriors; ruthless discipline inspires fear.',
+          success: 'Merciless training hardens soldiers; armies grow battle-ready.',
+          failure: 'Harsh exercises push troops too far; weary soldiers stumble.',
+          criticalFailure: 'Ruthless demands break bodies and morale; training backfires.'
         },
         outcomeBadges: {
           criticalSuccess: [

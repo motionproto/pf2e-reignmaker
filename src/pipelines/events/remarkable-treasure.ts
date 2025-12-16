@@ -35,10 +35,10 @@ export const remarkableTreasurePipeline: CheckPipeline = {
         skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Generosity inspires hope and improves faction relations.',
-          success: 'Distribution reduces unrest and gains appreciation.',
-          failure: 'Modest distribution with no major impact.',
-          criticalFailure: 'Poor distribution breeds resentment.'
+          criticalSuccess: 'Selfless sharing unites hearts; grateful factions celebrate generous leaders.',
+          success: 'Fair distribution eases burdens; grateful citizens praise compassion.',
+          failure: 'Noble gestures squander wealth inefficiently; waste overshadows kindness.',
+          criticalFailure: 'Chaotic handouts spark riots over unfair shares; good intentions burn.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -66,10 +66,10 @@ export const remarkableTreasurePipeline: CheckPipeline = {
         skills: ['society', 'thievery', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Treasury gains and materials for projects.',
-          success: 'Wealth added to kingdom coffers.',
-          failure: 'Minor treasury gains breed unrest.',
-          criticalFailure: 'Hoarding creates resentment and gains modest gold.'
+          criticalSuccess: 'Methodical investment multiplies treasure; wise planning yields lasting prosperity.',
+          success: 'Pragmatic allocation strengthens coffers; measured approach builds reserves.',
+          failure: 'Bureaucratic hoarding frustrates citizens watching wealth locked away.',
+          criticalFailure: 'Greedy stockpiling breeds anger; resentment costs more than treasure gains.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -97,10 +97,10 @@ export const remarkableTreasurePipeline: CheckPipeline = {
         skills: ['thievery', 'diplomacy', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Leaders claim stipend benefits. Gold secured.',
-          success: 'Gold secured despite growing unrest.',
-          failure: 'Gold gained but significant resentment.',
-          criticalFailure: 'Greed costs action and damages reputation badly.'
+          criticalSuccess: 'Ruthless elite claim spoils; enriched leaders ignore public grumbling.',
+          success: 'Greedy leaders pocket treasure; simmering anger shadows ill-gotten gains.',
+          failure: 'Blatant theft outrages citizens; stolen wealth cannot buy lost trust.',
+          criticalFailure: 'Shameless plunder sparks rebellion; paralyzed leadership faces consequences.'
         },
         outcomeBadges: {
           criticalSuccess: [

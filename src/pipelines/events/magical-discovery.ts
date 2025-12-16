@@ -38,10 +38,10 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
         skills: ['arcana', 'diplomacy', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Openness sparks innovation and improves relations.',
-          success: 'Shared knowledge reduces tensions and gains gold.',
-          failure: 'Open access causes unrest.',
-          criticalFailure: 'Chaos damages property and angers citizens.'
+          criticalSuccess: 'Selfless sharing sparks wondrous breakthroughs; nations praise generosity.',
+          success: 'Open hearts share arcane secrets; grateful scholars spread your fame.',
+          failure: 'Naive idealism invites reckless experimentation; accidents tarnish reputation.',
+          criticalFailure: 'Unchecked access unleashes magical chaos; explosions shatter buildings and trust.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -70,10 +70,10 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
         skills: ['arcana', 'society', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Research yields lasting revenue.',
-          success: 'Controlled research generates profit.',
-          failure: 'Research creates unrest.',
-          criticalFailure: 'Failed study wastes resources.'
+          criticalSuccess: 'Methodical study unlocks sustainable arcane innovations; steady profits flow.',
+          success: 'Regulated research channels power safely; controlled gains satisfy all.',
+          failure: 'Bureaucratic restrictions frustrate ambitious mages; resentment builds.',
+          criticalFailure: 'Tangled regulations stifle discovery; wasted potential breeds anger.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -104,10 +104,10 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
         skills: ['intimidation', 'arcana', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Monopoly secures wealth.',
-          success: 'Exclusive control generates gold.',
-          failure: 'Secrecy damages reputation despite profit.',
-          criticalFailure: 'Hoarding angers citizens and harms reputation.'
+          criticalSuccess: 'Ruthless secrecy exploits arcane power; vast wealth flows from monopoly.',
+          success: 'Guarded knowledge enriches only kingdom coffers; profits soar unchallenged.',
+          failure: 'Jealous hoarding breeds whispers of corruption; gold cannot buy trust.',
+          criticalFailure: 'Paranoid control sparks magical sabotage; explosions punish greed.'
         },
         outcomeBadges: {
           criticalSuccess: [

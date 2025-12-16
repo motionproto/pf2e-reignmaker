@@ -24,19 +24,19 @@ export const localDisasterPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'The disaster is contained with no damage.',
+      description: 'Swift action halts disaster; heroic response inspires community pride.',
       endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
       ]
     },
     success: {
-      description: 'Damage is limited to minor repairs.',
+      description: 'Quick repairs contain damage; capable response prevents major losses.',
       endsEvent: true,
       modifiers: []
     },
     failure: {
-      description: 'Major damage occurs to a building.',
+      description: 'Flames consume timber; collapsing walls crush hope and morale.',
       endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
@@ -46,7 +46,7 @@ export const localDisasterPipeline: CheckPipeline = {
       ]
     },
     criticalFailure: {
-      description: 'The disaster is catastrophic, destroying a building.',
+      description: 'Catastrophic failure leaves rubble and despair; a building is lost.',
       endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 2, duration: 'immediate' }

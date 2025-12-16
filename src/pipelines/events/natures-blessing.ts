@@ -33,10 +33,10 @@ export const naturesBlessingPipeline: CheckPipeline = {
         skills: ['nature', 'diplomacy', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Protection earns fame and bountiful harvest.',
-          success: 'Preservation reduces unrest and provides some bounty.',
-          failure: 'Wonder provides modest food before fading.',
-          criticalFailure: 'Wonder fades before celebration.'
+          criticalSuccess: 'Reverent stewardship multiplies nature\'s gifts; wonder endures for generations.',
+          success: 'Gentle care preserves beauty; grateful hearts harvest sustainable bounty.',
+          failure: 'Overcautious protection prevents use; wonder fades untouched and wasted.',
+          criticalFailure: 'Timid inaction squanders opportunity; ephemeral beauty vanishes unremarked.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -66,10 +66,10 @@ export const naturesBlessingPipeline: CheckPipeline = {
         skills: ['nature', 'society', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Sustainable harvest provides abundant resources.',
-          success: 'Balanced approach yields food, gold, and lumber.',
-          failure: 'Modest food harvest.',
-          criticalFailure: 'Poor planning breeds unrest.'
+          criticalSuccess: 'Wise planning balances harvest and preservation; abundance fills storehouses.',
+          success: 'Measured gathering respects nature while providing steady resources.',
+          failure: 'Hesitant management yields meager results; neither preserved nor harvested well.',
+          criticalFailure: 'Confused directives waste opportunity; botched harvest angers everyone.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -98,10 +98,10 @@ export const naturesBlessingPipeline: CheckPipeline = {
         skills: ['nature', 'intimidation', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Full exploitation yields massive resources.',
-          success: 'Heavy harvesting provides abundant food, gold, and lumber.',
-          failure: 'Overexploitation causes unrest despite gains.',
-          criticalFailure: 'Destruction damages reputation.'
+          criticalSuccess: 'Ruthless extraction strips nature bare; mountains of wealth mask moral cost.',
+          success: 'Greedy harvesting fills coffers; devastated landscape testifies to ambition.',
+          failure: 'Brutal exploitation destroys beauty for fleeting gains; outrage follows waste.',
+          criticalFailure: 'Reckless devastation leaves barren scars; destroyed wonder breeds bitter regret.'
         },
         outcomeBadges: {
           criticalSuccess: [

@@ -44,10 +44,10 @@ export const immigrationPipeline: CheckPipeline = {
         skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Your generous welcome inspires skilled workers to establish farmsteads.',
-          success: 'Open-door policy integrates settlers smoothly. New farmsteads spring up.',
-          failure: 'Integration programs drain treasury. Tensions rise as resources stretch thin.',
-          criticalFailure: 'The overwhelming influx depletes gold. Resentment builds between groups.'
+          criticalSuccess: 'Newcomers thrive; their success inspires others to join.',
+          success: 'Grateful settlers share their skills and resources.',
+          failure: 'Overwhelmed infrastructure breeds resentment.',
+          criticalFailure: 'Desperate migrants strain resources; tensions erupt.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -78,10 +78,10 @@ export const immigrationPipeline: CheckPipeline = {
         skills: ['society', 'survival', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Your vetting identifies skilled immigrants who generate revenue.',
-          success: 'Systematic integration works well. Newcomers generate modest tax revenue.',
-          failure: 'Bureaucratic gridlock frustrates everyone. Few settlers make it through.',
-          criticalFailure: 'Screening collapses under volume. Corruption breeds chaos.'
+          criticalSuccess: 'Skilled workers establish productive settlements.',
+          success: 'Orderly arrival eases transition for all.',
+          failure: 'Bureaucratic delays frustrate everyone involved.',
+          criticalFailure: 'Mismanagement wastes opportunities and resources.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -110,10 +110,10 @@ export const immigrationPipeline: CheckPipeline = {
         skills: ['intimidation', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Forced labor yields immediate profits despite growing resentment.',
-          success: 'Labor assignments extract value. Gold flows in while discontent simmers.',
-          failure: 'Harsh treatment sparks resistance. Stories of cruelty damage reputation.',
-          criticalFailure: 'Your brutal approach triggers outrage. Neighboring kingdoms condemn you.'
+          criticalSuccess: 'Forced labor rapidly expands your holdings.',
+          success: 'Exploitation yields swift construction.',
+          failure: 'Cruelty sparks whispered rebellion.',
+          criticalFailure: 'Brutal conditions horrify neighboring kingdoms.'
         },
         outcomeBadges: {
           criticalSuccess: [

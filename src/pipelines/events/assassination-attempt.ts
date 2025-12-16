@@ -36,10 +36,10 @@ export const assassinationAttemptPipeline: CheckPipeline = {
         skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Your transparency strengthens trust. The assassin is caught via public cooperation.',
-          success: 'Your open approach reassures citizens while the threat is neutralized.',
-          failure: 'Your transparency is exploited, and the leader is injured before security arrives.',
-          criticalFailure: 'Refusing security results in serious injury to a leader.'
+          criticalSuccess: 'Public vigilance captures assassin; transparency forges unbreakable trust.',
+          success: 'Open governance reassures citizens; calm resolve foils plot.',
+          failure: 'Exploited openness allows injury; guards arrive too late.',
+          criticalFailure: 'Stubborn refusal of protection leaves leader gravely wounded.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -68,10 +68,10 @@ export const assassinationAttemptPipeline: CheckPipeline = {
         skills: ['stealth', 'survival', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Your investigation uncovers the entire conspiracy, and all conspirators are imprisoned.',
-          success: 'Increased security thwarts the attempt and restores confidence.',
-          failure: 'Your investigation proves costly but yields few results.',
-          criticalFailure: 'The investigation drains resources while the conspiracy remains active.'
+          criticalSuccess: 'Brilliant sleuthing unravels entire conspiracy; all traitors seized.',
+          success: 'Methodical security upgrades quietly neutralize the threat.',
+          failure: 'Expensive investigation yields little; innocents wrongly accused.',
+          criticalFailure: 'Wasteful inquiry bleeds coffers while assassins still lurk.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -99,10 +99,10 @@ export const assassinationAttemptPipeline: CheckPipeline = {
         skills: ['intimidation', 'warfare', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Your brutal purge eliminates all threats through mass arrests and intimidation.',
-          success: 'Your harsh crackdown imprisons suspects and crushes the conspiracy.',
-          failure: 'Your excessive force imprisons innocents, breeding resentment.',
-          criticalFailure: 'Your brutal overreach creates martyrs, damages your reputation, and imprisons many innocents.'
+          criticalSuccess: 'Merciless purge crushes conspiracy; seized assets fill dungeons.',
+          success: 'Brutal crackdown imprisons suspects and terrifies plotters.',
+          failure: 'Savage overreach jails innocents; resentment festers in shadows.',
+          criticalFailure: 'Tyrannical purge creates martyrs and outrages the realm.'
         },
         outcomeBadges: {
           criticalSuccess: [

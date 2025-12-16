@@ -36,10 +36,10 @@ export const boomtownPipeline: CheckPipeline = {
         skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Fair policies inspire hope and attract new infrastructure.',
-          success: 'Worker protections reduce unrest and provide modest income.',
-          failure: 'Costs of fair housing exceed revenue.',
-          criticalFailure: 'Mismanagement creates chaos and unrest.'
+          criticalSuccess: 'Equitable growth inspires loyalty; grateful workers build freely.',
+          success: 'Fair housing stabilizes boom; settlement expands peacefully.',
+          failure: 'Generous promises drain coffers faster than revenue arrives.',
+          criticalFailure: 'Chaotic planning collapses infrastructure and breeds chaos.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -66,10 +66,10 @@ export const boomtownPipeline: CheckPipeline = {
         skills: ['society', 'crafting', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Orderly growth brings wealth, resources, and infrastructure.',
-          success: 'Regulated expansion provides steady income.',
-          failure: 'Bureaucracy slows growth and frustrates citizens.',
-          criticalFailure: 'Red tape causes chaos and unrest.'
+          criticalSuccess: 'Perfect regulations channel boom into wealth and infrastructure.',
+          success: 'Measured permits guide sustainable expansion without waste.',
+          failure: 'Endless paperwork strangles growth; frustrated builders flee.',
+          criticalFailure: 'Suffocating bureaucracy kills momentum and enrages citizens.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -99,10 +99,10 @@ export const boomtownPipeline: CheckPipeline = {
         skills: ['intimidation', 'society', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Aggressive extraction yields massive ongoing profits.',
-          success: 'Heavy fees extract wealth despite grumbling.',
-          failure: 'Profit comes at the cost of significant unrest.',
-          criticalFailure: 'Excessive exploitation damages reputation.'
+          criticalSuccess: 'Ruthless fees bleed boom dry; gold flows endlessly into vaults.',
+          success: 'Extortionate rents extract wealth from resentful newcomers.',
+          failure: 'Greedy fees spark anger; profit drowns in rising unrest.',
+          criticalFailure: 'Naked exploitation outrages all; reputation crumbles.'
         },
         outcomeBadges: {
           criticalSuccess: [

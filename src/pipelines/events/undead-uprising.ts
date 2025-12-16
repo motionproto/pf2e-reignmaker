@@ -38,10 +38,10 @@ export const undeadUprisingPipeline: CheckPipeline = {
         skills: ['occultism', 'diplomacy', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Spirits rest peacefully, blessed harvest follows.',
-          success: 'The land is consecrated and spirits laid to rest.',
-          failure: 'Consecration fails, rituals cost resources.',
-          criticalFailure: 'Rituals backfire, undead damage property.'
+          criticalSuccess: 'Sacred rituals grant eternal peace; blessed ground yields abundant harvest.',
+          success: 'Compassionate rites lay troubled spirits to rest; gratitude fills the air.',
+          failure: 'Gentle ceremonies prove insufficient; restless dead resist prayers.',
+          criticalFailure: 'Naive faith falters; enraged spirits shatter sanctuaries in fury.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -68,10 +68,10 @@ export const undeadUprisingPipeline: CheckPipeline = {
         skills: ['occultism', 'stealth', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Clerics seal the threat, boundary markers provided.',
-          success: 'The area is sealed by professional clerics.',
-          failure: 'Clerics struggle, resources depleted.',
-          criticalFailure: 'Clerics fail, undead spread further.'
+          criticalSuccess: 'Disciplined troops contain outbreak; methodical response trains elite defenders.',
+          success: 'Professional forces quarantine threat; systematic purge succeeds.',
+          failure: 'Cautious tactics drain coffers; indecisive leadership loses ground.',
+          criticalFailure: 'Hesitant response allows spread; overwhelmed forces flee in terror.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -100,10 +100,10 @@ export const undeadUprisingPipeline: CheckPipeline = {
         skills: ['intimidation', 'stealth', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Fire purges the threat, necromancers captured.',
-          success: 'The scorched earth tactic eliminates the undead.',
-          failure: 'Fire spreads uncontrollably, damaging structures.',
-          criticalFailure: 'Catastrophic destruction, widespread damage.'
+          criticalSuccess: 'Ruthless flames purge corruption; captured necromancers face brutal justice.',
+          success: 'Merciless inferno consumes undead; scorched earth marks grim victory.',
+          failure: 'Reckless burning spreads chaos; indiscriminate flames devour innocent lands.',
+          criticalFailure: 'Catastrophic firestorm razes everything; ashes mark shameful defeat.'
         },
         outcomeBadges: {
           criticalSuccess: [

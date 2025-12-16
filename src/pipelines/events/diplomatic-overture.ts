@@ -36,10 +36,10 @@ export const diplomaticOverturePipeline: CheckPipeline = {
         skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Generosity wins lasting friendship and trade.',
-          success: 'Fair deal strengthens alliance.',
-          failure: 'Overgenerosity strains your resources.',
-          criticalFailure: 'Perceived weakness damages multiple relations.'
+          criticalSuccess: 'Magnanimous generosity forges unbreakable alliance and thriving trade.',
+          success: 'Generous treaty strengthens bonds; neighbors become trusted friends.',
+          failure: 'Excessive charity drains coffers while gaining little diplomatic ground.',
+          criticalFailure: 'Weakness displayed; rivals scorn your naive generosity.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -68,10 +68,10 @@ export const diplomaticOverturePipeline: CheckPipeline = {
         skills: ['diplomacy', 'deception', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Perfect balance of profit and goodwill.',
-          success: 'Balanced trade benefits both kingdoms.',
-          failure: 'Small diplomatic gain, no trade.',
-          criticalFailure: 'Stalled negotiations breed resentment.'
+          criticalSuccess: 'Masterful negotiation secures profit while earning genuine respect.',
+          success: 'Fair bargain satisfies both realms; mutual prosperity begins.',
+          failure: 'Cautious haggling yields meager goodwill but no tangible trade.',
+          criticalFailure: 'Calculating tone offends neighbors; talks collapse in bitterness.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -102,10 +102,10 @@ export const diplomaticOverturePipeline: CheckPipeline = {
         skills: ['intimidation', 'deception', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Aggressive terms accepted. Long-term trade secured.',
-          success: 'Favorable deal secured despite tensions.',
-          failure: 'Heavy demands damage reputation.',
-          criticalFailure: 'Greed offends multiple factions and damages reputation.'
+          criticalSuccess: 'Intimidating demands accepted; cowed neighbors provide lucrative tribute.',
+          success: 'Strong-arm tactics extract concessions; neighbors comply reluctantly.',
+          failure: 'Excessive greed offends; negotiations collapse in mutual distrust.',
+          criticalFailure: 'Brazen demands spark outrage across multiple neighboring kingdoms.'
         },
         outcomeBadges: {
           criticalSuccess: [

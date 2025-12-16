@@ -37,10 +37,10 @@ export const tradeAgreementPipeline: CheckPipeline = {
         skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Generous terms establish profitable long-term trade partnership.',
-          success: 'Fair trade builds goodwill with trading partners.',
-          failure: 'Partners appreciate gesture but trade is modest.',
-          criticalFailure: 'Trading partners see generosity as opportunity to exploit.'
+          criticalSuccess: 'Selfless terms forge unbreakable bonds; grateful merchants pledge lasting loyalty.',
+          success: 'Fair dealing earns respect; honest trade builds enduring partnerships.',
+          failure: 'Noble generosity yields meager returns; goodwill outweighs profit.',
+          criticalFailure: 'Naive charity invites exploitation; ruthless merchants drain coffers.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -71,10 +71,10 @@ export const tradeAgreementPipeline: CheckPipeline = {
         skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Perfect agreement creates prosperity for all.',
-          success: 'Fair terms satisfy both parties.',
-          failure: 'Agreement reached but without major benefits.',
-          criticalFailure: 'Negotiations sour relationship despite efforts.'
+          criticalSuccess: 'Masterful negotiation balances interests; mutual prosperity flows endlessly.',
+          success: 'Pragmatic compromise satisfies both sides; steady trade enriches all.',
+          failure: 'Cautious bargaining yields modest gains; neither side thrills at outcome.',
+          criticalFailure: 'Inflexible demands offend partners; squandered opportunity breeds resentment.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -106,10 +106,10 @@ export const tradeAgreementPipeline: CheckPipeline = {
         skills: ['intimidation', 'deception', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'You extract highly favorable terms through leverage.',
-          success: 'Trading partners accept your demands reluctantly.',
-          failure: 'Your hardball tactics damage reputation without gaining much.',
-          criticalFailure: 'Excessive demands alienate multiple trading partners.'
+          criticalSuccess: 'Ruthless leverage extracts maximum profit; cowed merchants accept exploitation.',
+          success: 'Aggressive demands secure advantage; reluctant partners submit to greed.',
+          failure: 'Brutal tactics alienate merchants; ill-gotten gains cannot restore trust.',
+          criticalFailure: 'Shameless extortion destroys relationships; word spreads of your treachery.'
         },
         outcomeBadges: {
           criticalSuccess: [

@@ -48,24 +48,24 @@ export const demandStructurePipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'Your leadership inspires the citizens to patience.',
+      description: 'Inspiring vision of prosperity convinces citizens to trust your building plans.',
       endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
       ]
     },
     success: {
-      description: 'The citizens accept your promises of future construction.',
+      description: 'Reassuring promises of future development satisfy civic expectations.',
       endsEvent: true,
       modifiers: []
     },
     failure: {
-      description: 'The citizens point to a specific structure and demand it be built.',
+      description: 'Vocal citizens rally support, demanding a specific building immediately.',
       endsEvent: false,
       modifiers: []  // No immediate penalty on failure - the ongoing modifier handles it
     },
     criticalFailure: {
-      description: 'The citizens grow angry and demand a specific structure be built immediately.',
+      description: 'Angry protests erupt as citizens demand construction begin at once.',
       endsEvent: false,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }

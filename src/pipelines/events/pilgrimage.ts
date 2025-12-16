@@ -36,10 +36,10 @@ export const pilgrimagePipeline: CheckPipeline = {
         skills: ['religion', 'diplomacy', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Generosity wins hearts. Donations and goodwill flow.',
-          success: 'Pilgrims leave grateful and generous donations.',
-          failure: 'Hospitality costs outweigh modest gifts.',
-          criticalFailure: 'Overcrowding strains resources and angers citizens.'
+          criticalSuccess: 'Divine blessings rain upon generous hosts.',
+          success: 'Grateful pilgrims leave offerings and prayers.',
+          failure: 'Overwhelmed towns struggle with endless visitors.',
+          criticalFailure: 'Chaos breeds resentment; sacred journey sours.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -68,10 +68,10 @@ export const pilgrimagePipeline: CheckPipeline = {
         skills: ['society', 'religion', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Perfect balance of faith and profit.',
-          success: 'Organized events generate revenue.',
-          failure: 'Fees discourage some pilgrims.',
-          criticalFailure: 'Commercialization offends the faithful.'
+          criticalSuccess: 'Perfect organization earns praise and trains guards.',
+          success: 'Fees fund smooth passage for all.',
+          failure: 'Bureaucracy frustrates faithful travelers.',
+          criticalFailure: 'Greed offends pilgrims; guards overwhelmed.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -101,10 +101,10 @@ export const pilgrimagePipeline: CheckPipeline = {
         skills: ['intimidation', 'society', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Wealthy pilgrims pay handsomely. Faith leaders approve.',
-          success: 'Heavy taxes generate substantial revenue.',
-          failure: 'Excessive fees alienate religious groups.',
-          criticalFailure: 'Greed offends multiple faiths and damages reputation.'
+          criticalSuccess: 'Wealthy devotees pay lavishly for sacred access.',
+          success: 'Heavy tolls extract maximum profit.',
+          failure: 'Cruel fees turn away the faithful.',
+          criticalFailure: 'Multiple faiths condemn your naked avarice.'
         },
         outcomeBadges: {
           criticalSuccess: [

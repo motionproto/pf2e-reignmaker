@@ -36,10 +36,10 @@ export const foodShortagePipeline: CheckPipeline = {
         skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Generous distribution inspires donations. Unity strengthens despite depleted supplies.',
-          success: 'Compassion eases suffering. Communities rally together in gratitude.',
-          failure: 'Generosity strains resources dangerously. One army unit falls ill from inadequate provisions.',
-          criticalFailure: 'Supplies are exhausted. Troops demoralize and civilians starve.'
+          criticalSuccess: 'Selfless generosity inspires miraculous donations; unity thrives amid scarcity.',
+          success: 'Compassionate aid heals hearts; grateful communities endure together.',
+          failure: 'Noble intentions drain reserves; weakened troops fall ill from hunger.',
+          criticalFailure: 'Reckless charity empties storehouses; starving soldiers lose morale.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -68,10 +68,10 @@ export const foodShortagePipeline: CheckPipeline = {
         skills: ['society', 'nature', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Efficient rationing prevents hoarding. The crisis passes with minimal suffering.',
-          success: 'Systematic distribution maintains stability. Citizens accept temporary hardships.',
-          failure: 'Bureaucratic delays spoil food. Frustrated citizens grow discontent.',
-          criticalFailure: 'Rationing collapses into chaos. Officials hoard as black markets flourish.'
+          criticalSuccess: 'Masterful logistics prevent waste; crisis resolved with minimal suffering.',
+          success: 'Fair distribution maintains order; citizens accept rationed hardships.',
+          failure: 'Bureaucratic tangles spoil food; frustration breeds discontent.',
+          criticalFailure: 'Rationing system collapses; corruption and black markets flourish.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -100,10 +100,10 @@ export const foodShortagePipeline: CheckPipeline = {
         skills: ['intimidation', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Swift enforcement crushes dissent. The elite are fed while masses submit.',
-          success: 'The military stays strong while commoners starve. Resentment simmers.',
-          failure: 'Starving commoners riot. Mobs damage buildings seeking food.',
-          criticalFailure: 'Mass starvation triggers rebellion. Buildings are destroyed, reputation ruined.'
+          criticalSuccess: 'Iron rule crushes dissent; elite feast while cowed masses submit.',
+          success: 'Military strength preserved; starving commoners simmer with resentment.',
+          failure: 'Desperate hunger ignites riots; mobs ransack buildings seeking food.',
+          criticalFailure: 'Mass starvation triggers revolt; burning buildings mark your cruelty.'
         },
         outcomeBadges: {
           criticalSuccess: [

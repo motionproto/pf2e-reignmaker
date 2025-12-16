@@ -37,10 +37,10 @@ export const grandTournamentPipeline: CheckPipeline = {
         skills: ['performance', 'athletics', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Free event creates legendary community spirit and structure.',
-          success: 'Citizens celebrate together. Unity achieved.',
-          failure: 'Free event costs exceed benefits.',
-          criticalFailure: 'Poor organization wastes resources.'
+          criticalSuccess: 'Free games unite the realm; joy echoes in every heart.',
+          success: 'Open celebration inspires pride and loyalty.',
+          failure: 'Crowds overwhelm facilities; property damaged.',
+          criticalFailure: 'Chaos and vandalism mar the festivities.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -68,10 +68,10 @@ export const grandTournamentPipeline: CheckPipeline = {
         skills: ['athletics', 'society', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Perfect balance of profit and spectacle. Structure awarded.',
-          success: 'Well-run event generates profit.',
-          failure: 'Break-even event with modest revenue.',
-          criticalFailure: 'Accidents create unrest.'
+          criticalSuccess: 'Perfect event attracts permanent arena construction.',
+          success: 'Entry fees and wagers generate healthy profit.',
+          failure: 'Costs exceed revenues; organizers disappointed.',
+          criticalFailure: 'Accidents tarnish reputation and damage grounds.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -102,10 +102,10 @@ export const grandTournamentPipeline: CheckPipeline = {
         skills: ['diplomacy', 'performance', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Nobles shower gold. Exquisite structure built.',
-          success: 'Exclusive event generates revenue.',
-          failure: 'Revenue offset by angry commons.',
-          criticalFailure: 'Elitism sparks protests and property damage.'
+          criticalSuccess: 'Elite nobles compete; winning troops gain prestige.',
+          success: 'Exclusive bouts sharpen military skills.',
+          failure: 'Commons resent exclusion; troops exhausted.',
+          criticalFailure: 'Riots erupt outside locked gates; casualties mount.'
         },
         outcomeBadges: {
           criticalSuccess: [

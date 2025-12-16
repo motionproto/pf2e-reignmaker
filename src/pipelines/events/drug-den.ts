@@ -37,10 +37,10 @@ export const drugDenPipeline: CheckPipeline = {
         skills: ['medicine', 'diplomacy', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Rehabilitation transforms lives and inspires hope.',
-          success: 'Treatment programs reduce suffering and unrest.',
-          failure: 'Treatment costs exceed immediate benefits.',
-          criticalFailure: 'Programs drain resources without solving crisis.'
+          criticalSuccess: 'Compassionate care redeems addicts; community celebrates recovery stories.',
+          success: 'Treatment programs heal suffering souls and restore shattered families.',
+          failure: 'Expensive programs deplete treasury with limited recovery success.',
+          criticalFailure: 'Naive idealism drains coffers while trade flourishes unchecked.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -67,10 +67,10 @@ export const drugDenPipeline: CheckPipeline = {
         skills: ['society', 'medicine', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Regulation generates sustained revenue.',
-          success: 'Taxes provide income while maintaining control.',
-          failure: 'Black market persists despite regulation.',
-          criticalFailure: 'Failed regulation damages reputation.'
+          criticalSuccess: 'Pragmatic licensing transforms vice into sustainable revenue stream.',
+          success: 'Controlled trade fills coffers while maintaining public order.',
+          failure: 'Underground dealers evade taxes; regulation proves toothless.',
+          criticalFailure: 'Profiteering from suffering outrages citizens and damages legitimacy.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -98,10 +98,10 @@ export const drugDenPipeline: CheckPipeline = {
         skills: ['intimidation', 'stealth', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Trade crushed through fear and mass arrests.',
-          success: 'Dealers imprisoned and trade disrupted.',
-          failure: 'Heavy-handed tactics breed resentment.',
-          criticalFailure: 'Excessive force causes riots and property damage.'
+          criticalSuccess: 'Brutal raids terrorize dealers into submission; imprisoned criminals rot in cells.',
+          success: 'Savage crackdown disrupts supply; fear silences the trade.',
+          failure: 'Brutal tactics spark outrage; innocents suffer alongside dealers.',
+          criticalFailure: 'Violent raids ignite riots; burning buildings mark your tyranny.'
         },
         outcomeBadges: {
           criticalSuccess: [

@@ -38,10 +38,10 @@ export const crimeWavePipeline: CheckPipeline = {
         skills: ['society', 'diplomacy', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Criminals caught through fair investigation. Justice restores public trust.',
-          success: 'Investigation succeeds. The real culprits are brought to justice.',
-          failure: 'The case goes cold. Investigation costs drain resources.',
-          criticalFailure: 'Investigation fails publicly. Wasted resources and public outrage.'
+          criticalSuccess: 'Brilliant detective work captures criminals and vindicates innocents.',
+          success: 'Methodical investigation brings real culprits to fair trial.',
+          failure: 'Cold case drains coffers while criminals walk free.',
+          criticalFailure: 'Botched inquiry wastes gold and sparks public fury.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -69,10 +69,10 @@ export const crimeWavePipeline: CheckPipeline = {
         skills: ['intimidation', 'society', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Crime prevented through vigilant patrols. Confiscated goods fill the treasury.',
-          success: 'Increased patrols restore public confidence.',
-          failure: 'Resources wasted on ineffective patrols.',
-          criticalFailure: 'Security measures fail and drain resources.'
+          criticalSuccess: 'Tireless guards catch thieves red-handed; trained soldiers emerge.',
+          success: 'Visible patrols deter crime and reassure frightened citizens.',
+          failure: 'Exhausted guards miss clues; criminals mock futile efforts.',
+          criticalFailure: 'Failed patrols exhaust troops and embolden criminals.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -99,10 +99,10 @@ export const crimeWavePipeline: CheckPipeline = {
         skills: ['intimidation', 'performance', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Crime eliminated through fear. Mass arrests fill the prisons.',
-          success: 'Criminals rounded up through aggressive tactics.',
-          failure: 'Innocents are caught up in the brutal crackdown.',
-          criticalFailure: 'Brutal overreach sparks outrage and ruins your reputation.'
+          criticalSuccess: 'Terror reigns supreme; dungeons overflow with arrested suspects.',
+          success: 'Ruthless sweeps imprison criminals and intimidate survivors.',
+          failure: 'Brutal raids seize innocents; wrongful arrests breed resentment.',
+          criticalFailure: 'Savage purge destroys property and outrages the innocent.'
         },
         outcomeBadges: {
           criticalSuccess: [

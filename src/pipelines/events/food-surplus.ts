@@ -37,10 +37,10 @@ export const foodSurplusPipeline: CheckPipeline = {
         skills: ['nature', 'diplomacy', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Generosity inspires hope and a settlement gains new infrastructure.',
-          success: 'Free distribution reduces unrest significantly.',
-          failure: 'Distribution reduces some unrest.',
-          criticalFailure: 'Poor distribution causes confusion and unrest.'
+          criticalSuccess: 'Selfless sharing inspires hope; grateful communities build new structures.',
+          success: 'Generous hearts feed hungry mouths; loyalty blooms amid plenty.',
+          failure: 'Well-meaning charity attracts opportunists; resentment brews.',
+          criticalFailure: 'Naive generosity creates chaos; spoiled food breeds discontent.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -69,10 +69,10 @@ export const foodSurplusPipeline: CheckPipeline = {
         skills: ['society', 'crafting', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Excellent storage maximizes reserves and calms fears.',
-          success: 'Food is safely stored for lean times.',
-          failure: 'Storage costs eat into surplus.',
-          criticalFailure: 'Poor storage wastes food and money.'
+          criticalSuccess: 'Expert preservation secures future; markets stabilize as prices drop.',
+          success: 'Methodical storage fills granaries; fears of scarcity vanish.',
+          failure: 'Bureaucratic delays spoil perishables; profits shrink.',
+          criticalFailure: 'Mismanaged warehouses rot; wasted bounty mocks planning.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -101,10 +101,10 @@ export const foodSurplusPipeline: CheckPipeline = {
         skills: ['society', 'diplomacy', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Exports bring wealth and strengthen trade relations.',
-          success: 'Export profits fill the treasury.',
-          failure: 'Profitable but breeds resentment among hungry citizens.',
-          criticalFailure: 'Exports during scarcity damage reputation and faction relations.'
+          criticalSuccess: 'Ruthless trade secures foreign wealth; new markets open eagerly.',
+          success: 'Shrewd merchants exploit demand; coffers overflow with gold.',
+          failure: 'Greed blinds leaders; hungry citizens watch exports sail away.',
+          criticalFailure: 'Callous profiteering sparks outrage; people remember this betrayal.'
         },
         outcomeBadges: {
           criticalSuccess: [

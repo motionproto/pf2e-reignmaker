@@ -35,10 +35,10 @@ export const visitingCelebrityPipeline: CheckPipeline = {
         skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Genuine hospitality earns fame and generous donation.',
-          success: 'Personal connection reduces unrest.',
-          failure: 'Modest reception with no impact.',
-          criticalFailure: 'Celebrity\'s allies are offended.'
+          criticalSuccess: 'Heartfelt welcome touches hearts; moved celebrity spreads glowing tales.',
+          success: 'Humble kindness forms genuine bond; grateful guest honors friendship.',
+          failure: 'Simple gestures feel inadequate; disappointed entourage departs quietly.',
+          criticalFailure: 'Naive hospitality insults prestigious guests; offended allies spread scorn.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -67,10 +67,10 @@ export const visitingCelebrityPipeline: CheckPipeline = {
         skills: ['performance', 'society', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Perfect ceremony yields trade and gifts.',
-          success: 'Appropriate exchange brings gold.',
-          failure: 'Ceremony costs exceed benefits.',
-          criticalFailure: 'Expensive failure.'
+          criticalSuccess: 'Flawless ceremony impresses all; diplomatic exchanges yield lasting prosperity.',
+          success: 'Measured pomp satisfies protocols; respectful balance earns reputation.',
+          failure: 'Stiff formality rings hollow; expensive pageantry yields little warmth.',
+          criticalFailure: 'Botched protocols embarrass all; wasted grandeur breeds mockery.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -97,10 +97,10 @@ export const visitingCelebrityPipeline: CheckPipeline = {
         skills: ['performance', 'diplomacy', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Lavish display yields resources through influence.',
-          success: 'Extravagance costs but improves faction relations.',
-          failure: 'Expensive display breeds resentment.',
-          criticalFailure: 'Excessive spending angers citizens and harms relations.'
+          criticalSuccess: 'Ruthless opulence dazzles celebrity; awed guests shower kingdom with riches.',
+          success: 'Shameless spectacle impresses elite; extravagant display purchases favor.',
+          failure: 'Wasteful excess outrages citizens; gilded theater cannot mask greed.',
+          criticalFailure: 'Grotesque indulgence sparks riots; burning wealth mocks starving masses.'
         },
         outcomeBadges: {
           criticalSuccess: [

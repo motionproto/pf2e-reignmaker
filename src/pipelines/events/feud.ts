@@ -59,10 +59,10 @@ export const feudPipeline: CheckPipeline = {
           ]
         },
         outcomeDescriptions: {
-          criticalSuccess: 'Through patient diplomacy, the families reconcile and become allies.',
-          success: 'Your mediation brings the families together peacefully.',
-          failure: 'The families reject your peaceful overtures.',
-          criticalFailure: 'Your attempts at mediation only inflame tensions further.'
+          criticalSuccess: 'Patient wisdom heals old wounds; former enemies embrace as allies.',
+          success: 'Compassionate mediation bridges the divide; peace is restored.',
+          failure: 'Stubborn pride rejects reconciliation; tensions remain.',
+          criticalFailure: 'Naive diplomacy insults both families; violence escalates.'
         }
       },
       {
@@ -92,10 +92,10 @@ export const feudPipeline: CheckPipeline = {
           ]
         },
         outcomeDescriptions: {
-          criticalSuccess: 'Your cunning manipulation turns the feuding families into unwitting allies.',
-          success: 'Through careful deception, the feud quietly dissolves.',
-          failure: 'Your schemes are exposed, worsening the situation.',
-          criticalFailure: 'Your manipulation backfires spectacularly, inflaming both families against you.'
+          criticalSuccess: 'Brilliant schemes unite families without them realizing they were manipulated.',
+          success: 'Subtle machinations dissolve tensions while preserving appearances.',
+          failure: 'Exposed deception damages trust; both families turn hostile.',
+          criticalFailure: 'Catastrophic failure reveals your schemes; united in fury against you.'
         }
       },
       {
@@ -123,10 +123,10 @@ export const feudPipeline: CheckPipeline = {
           ]
         },
         outcomeDescriptions: {
-          criticalSuccess: 'Your show of force crushes all resistance. Both families submit completely.',
-          success: 'Through intimidation and authority, you force the families to end their conflict.',
-          failure: 'Your authoritarian approach breeds resentment and defiance.',
-          criticalFailure: 'Your brutal crackdown sparks violence and property destruction.'
+          criticalSuccess: 'Overwhelming force crushes resistance; terrified families submit utterly.',
+          success: 'Brutal intimidation silences the feud; fear enforces compliance.',
+          failure: 'Heavy-handed tactics ignite greater resentment and defiance.',
+          criticalFailure: 'Violent crackdown sparks riots; buildings burn as families unite against tyranny.'
         }
       }
     ]

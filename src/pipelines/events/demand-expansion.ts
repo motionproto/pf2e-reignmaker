@@ -47,24 +47,24 @@ export const demandExpansionPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'The people are inspired by your vision of growth.',
+      description: 'Visionary promises of prosperity inspire confidence in your expansion plans.',
       endsEvent: true,
       modifiers: [
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
       ]
     },
     success: {
-      description: 'The people accept your promises.',
+      description: 'Reassuring words calm expansionist fervor; citizens agree to wait patiently.',
       endsEvent: true,
       modifiers: []
     },
     failure: {
-      description: 'The people point to a specific unclaimed hex and demand it be claimed.',
+      description: 'Restless citizens rally around a specific hex, demanding immediate action.',
       endsEvent: false,
       modifiers: []  // No immediate penalty on failure
     },
     criticalFailure: {
-      description: 'The people grow angry and demand a specific hex be claimed immediately.',
+      description: 'Angry mobs point to distant lands, threatening unrest until they are claimed.',
       endsEvent: false,
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }

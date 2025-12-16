@@ -37,10 +37,10 @@ export const economicSurgePipeline: CheckPipeline = {
         skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Workers thrive and productivity soars even higher.',
-          success: 'Better conditions reduce unrest and boost economy.',
-          failure: 'Costs exceed benefits.',
-          criticalFailure: 'Excessive spending strains finances without improving conditions.'
+          criticalSuccess: 'Generous wages inspire loyalty; thriving workers fuel even greater prosperity.',
+          success: 'Fair compensation eases tensions and sustains economic momentum.',
+          failure: 'Well-intentioned spending outpaces economic gains.',
+          criticalFailure: 'Lavish promises bankrupt treasury while achieving nothing lasting.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -70,10 +70,10 @@ export const economicSurgePipeline: CheckPipeline = {
         skills: ['society', 'crafting', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Infrastructure investments yield massive returns.',
-          success: 'Balanced growth provides gold and materials.',
-          failure: 'Modest gains from the boom.',
-          criticalFailure: 'Poor planning wastes opportunity.'
+          criticalSuccess: 'Strategic investments multiply wealth; warehouses overflow with bounty.',
+          success: 'Prudent planning stockpiles resources for future needs.',
+          failure: 'Conservative approach captures only meager surplus.',
+          criticalFailure: 'Mismanaged investments squander the windfall entirely.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -104,10 +104,10 @@ export const economicSurgePipeline: CheckPipeline = {
         skills: ['intimidation', 'society', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Aggressive taxation crushes resistance and fills coffers.',
-          success: 'Heavy taxes extract wealth despite grumbling.',
-          failure: 'Taxation breeds significant resentment.',
-          criticalFailure: 'Excessive taxation sparks riots and property damage.'
+          criticalSuccess: 'Ruthless extraction drains every coin; intimidation silences dissent.',
+          success: 'Heavy-handed taxes seize wealth while citizens grumble bitterly.',
+          failure: 'Greedy demands alienate merchants and drain goodwill.',
+          criticalFailure: 'Crushing taxation ignites violent riots; buildings burn in protest.'
         },
         outcomeBadges: {
           criticalSuccess: [

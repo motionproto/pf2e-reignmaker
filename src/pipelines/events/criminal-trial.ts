@@ -38,10 +38,10 @@ export const criminalTrialPipeline: CheckPipeline = {
         skills: ['religion', 'diplomacy', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Your compassion transforms the guilty into reformed citizens, inspiring hope throughout the kingdom.',
-          success: 'Justice tempered with mercy resolves the situation, and prisoners are pardoned.',
-          failure: 'Your leniency is seen as weakness, emboldening other criminals.',
-          criticalFailure: 'Your mercy emboldens criminals and angers victims, creating chaos.'
+          criticalSuccess: 'Redemptive justice inspires reformation; pardoned criminals become model citizens.',
+          success: 'Merciful sentences restore balance; pardoned souls embrace second chances.',
+          failure: 'Unearned leniency emboldens the criminal underworld.',
+          criticalFailure: 'Misplaced mercy ignites fury among victims and lawful folk alike.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -69,10 +69,10 @@ export const criminalTrialPipeline: CheckPipeline = {
         skills: ['society', 'diplomacy', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Your transparent judicial process becomes a model of fairness, earning widespread acclaim.',
-          success: 'Justice is served through proper legal procedures, satisfying all parties.',
-          failure: 'The trial encounters procedural complications that delay justice.',
-          criticalFailure: 'Your attempt at fairness is exploited by criminals and their sympathizers.'
+          criticalSuccess: 'Impeccable legal proceedings set precedent; justice system earns renown.',
+          success: 'Balanced verdict satisfies law and conscience; order is maintained.',
+          failure: 'Legal technicalities delay justice; public confidence wavers.',
+          criticalFailure: 'Procedural chaos allows criminals to exploit loopholes and escape.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -99,10 +99,10 @@ export const criminalTrialPipeline: CheckPipeline = {
         skills: ['intimidation', 'performance', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'Your brutal justice crushes crime. Dissidents are imprisoned and the underworld is terrified.',
-          success: 'Your harsh punishment deters future crime through intimidation and imprisonment.',
-          failure: 'Your excessive punishment breeds resentment among the populace.',
-          criticalFailure: 'Your draconian measures are seen as tyrannical, damaging your reputation and authority.'
+          criticalSuccess: 'Brutal spectacle terrifies criminals into submission; dissidents vanish into cells.',
+          success: 'Savage sentences send clear warning; fear silences the underworld.',
+          failure: 'Excessive cruelty breeds resentment; innocents suffer collateral harm.',
+          criticalFailure: 'Tyrannical verdict outrages citizens; innocent blood stains your justice.'
         },
         outcomeBadges: {
           criticalSuccess: [

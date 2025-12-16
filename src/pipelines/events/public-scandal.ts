@@ -38,10 +38,10 @@ export const publicScandalPipeline: CheckPipeline = {
         skills: ['society', 'diplomacy', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'The investigation reveals truth. Your integrity becomes a testament to justice.',
-          success: 'The investigation contains the scandal. Respect is earned.',
-          failure: 'The investigation drags on. Costs mount and unrest increases.',
-          criticalFailure: 'The investigation backfires. Deeper corruption is revealed.'
+          criticalSuccess: 'Honesty transforms scandal into triumph; extra action granted.',
+          success: 'Truth earns respect and unexpected donations.',
+          failure: 'Investigation drags on; costs and tensions mount.',
+          criticalFailure: 'Revelations expose deeper corruption.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -69,10 +69,10 @@ export const publicScandalPipeline: CheckPipeline = {
         skills: ['deception', 'stealth', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'The cover-up succeeds. Evidence disappears and the story dies.',
-          success: 'Your suppression contains the damage. The story fades.',
-          failure: 'The cover-up is exposed. Deception damages reputation.',
-          criticalFailure: 'The cover-up collapses. Bribes fail and the story breaks wider.'
+          criticalSuccess: 'Evidence vanishes without trace; silence purchased.',
+          success: 'Whispers fade as bribes work their magic.',
+          failure: 'Cover-up unravels; the truth emerges anyway.',
+          criticalFailure: 'Failed bribes enrage multiple factions.'
         },
         outcomeBadges: {
           criticalSuccess: [
@@ -100,10 +100,10 @@ export const publicScandalPipeline: CheckPipeline = {
         skills: ['intimidation', 'deception', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
-          criticalSuccess: 'The scapegoating succeeds. Subordinates are imprisoned.',
-          success: 'A subordinate takes the fall. An official is imprisoned, matter closed.',
-          failure: 'The scapegoating is transparent. The maneuver backfires.',
-          criticalFailure: 'The scapegoating triggers outrage. Factions are horrified.'
+          criticalSuccess: 'Scapegoat succeeds; military uses scandal as training.',
+          success: 'Subordinate takes fall; matter quietly closed.',
+          failure: 'Obvious framing fools no one.',
+          criticalFailure: 'Cruel injustice outrages all who witness it.'
         },
         outcomeBadges: {
           criticalSuccess: [
