@@ -111,6 +111,7 @@ export class AddImprisonedHandler extends BaseGameCommandHandler {
             const availableCapacity = currentCapacity - currentImprisoned;
             
             const amountToImprison = Math.min(requestedAmount, availableCapacity);
+            const overflow = requestedAmount - amountToImprison;
             
             if (amountToImprison > 0) {
               // Add to settlement imprisoned (NO unrest reduction)
@@ -119,8 +120,20 @@ export class AddImprisonedHandler extends BaseGameCommandHandler {
               logger.info(`[AddImprisoned] Imprisoned ${amountToImprison} innocents in ${settlement.name}`);
               chatMessageParts.push(`<p><strong>Innocents Imprisoned:</strong> ${amountToImprison} in ${settlement.name}</p><p><em>These wrongful arrests do not reduce unrest.</em></p>`);
             }
+            
+            if (overflow > 0) {
+              // Add overflow to normal unrest (no prison capacity)
+              k.unrest = (k.unrest || 0) + overflow;
+              
+              logger.info(`[AddImprisoned] Added ${overflow} overflow to normal unrest (no capacity)`);
+              chatMessageParts.push(`<p><strong>Unrest Increases:</strong> +${overflow} (no prison capacity for all innocents)</p>`);
+            }
           } else {
-            chatMessageParts.push(`<p><em>No prison capacity - innocents could not be imprisoned</em></p>`);
+            // No prison capacity at all - add all to normal unrest
+            k.unrest = (k.unrest || 0) + requestedAmount;
+            
+            logger.info(`[AddImprisoned] No prison capacity - added ${requestedAmount} to normal unrest`);
+            chatMessageParts.push(`<p><strong>Unrest Increases:</strong> +${requestedAmount} (no prison capacity)</p>`);
           }
         });
 

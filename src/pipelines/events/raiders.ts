@@ -14,6 +14,7 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { DestroyWorksiteHandler } from '../../services/gameCommands/handlers/DestroyWorksiteHandler';
+import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
 import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 
 export const raidersPipeline: CheckPipeline = {
@@ -231,6 +232,24 @@ export const raidersPipeline: CheckPipeline = {
         }
       } else if (approach === 'ruthless') {
         // Preemptive Strike (Ruthless)
+        // Handle imprisonment (CS/S)
+        if (outcome === 'criticalSuccess' || outcome === 'success') {
+          // Convert 1d3 unrest to imprisoned (captured raiders)
+          const imprisonHandler = new ConvertUnrestToImprisonedHandler();
+          const imprisonCommand = await imprisonHandler.prepare(
+            { type: 'convertUnrestToImprisoned', diceFormula: '1d3' },
+            commandContext
+          );
+          if (imprisonCommand) {
+            ctx.metadata._preparedImprison = imprisonCommand;
+            if (imprisonCommand.outcomeBadges) {
+              outcomeBadges.push(...imprisonCommand.outcomeBadges);
+            } else if (imprisonCommand.outcomeBadge) {
+              outcomeBadges.push(imprisonCommand.outcomeBadge);
+            }
+          }
+        }
+        
         // Handle army conditions - select specific army and update badge
         if (outcome === 'failure' || outcome === 'criticalFailure') {
           const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
@@ -282,6 +301,12 @@ export const raidersPipeline: CheckPipeline = {
     const destroyCommand = ctx.metadata?._preparedDestroyWorksite;
     if (destroyCommand?.commit) {
       await destroyCommand.commit();
+    }
+
+    // Execute imprisonment (ruthless CS/S - converts unrest to imprisoned)
+    const imprisonCommand = ctx.metadata?._preparedImprison;
+    if (imprisonCommand?.commit) {
+      await imprisonCommand.commit();
     }
 
     // Apply army condition (selected in preview.calculate)

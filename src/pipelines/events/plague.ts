@@ -11,6 +11,7 @@
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
+import { ReduceSettlementLevelHandler } from '../../services/gameCommands/handlers/ReduceSettlementLevelHandler';
 import { valueBadge, textBadge, diceBadge } from '../../types/OutcomeBadge';
 
 export const plaguePipeline: CheckPipeline = {
@@ -202,6 +203,27 @@ export const plaguePipeline: CheckPipeline = {
           ];
           // Mark that ongoing plague effect should be added (-1d4 Food/turn for 2 turns)
           ctx.metadata._addOngoingPlague = true;
+          
+          // Settlement level reduction
+          const reduceHandler = new ReduceSettlementLevelHandler();
+          const commandContext: GameCommandContext = {
+            actionId: 'plague',
+            outcome: ctx.outcome,
+            kingdom: ctx.kingdom,
+            metadata: ctx.metadata || {}
+          };
+          const reduceCommand = await reduceHandler.prepare(
+            { type: 'reduceSettlementLevel', reduction: 1 },
+            commandContext
+          );
+          if (reduceCommand) {
+            ctx.metadata._preparedSettlementReduce = reduceCommand;
+            if (reduceCommand.outcomeBadges) {
+              outcomeBadges.push(...reduceCommand.outcomeBadges);
+            } else if (reduceCommand.outcomeBadge) {
+              outcomeBadges.push(reduceCommand.outcomeBadge);
+            }
+          }
         }
       } else if (approach === 'practical') {
         // Quarantine Effectively (Practical)
@@ -336,6 +358,12 @@ export const plaguePipeline: CheckPipeline = {
     const kingdom = get(kingdomData);
     const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
     const outcome = ctx.outcome;
+
+    // Execute settlement level reduction (virtuous CF)
+    const reduceCommand = ctx.metadata?._preparedSettlementReduce;
+    if (reduceCommand?.commit) {
+      await reduceCommand.commit();
+    }
 
     // Execute game commands for treatment approach
     if (approach === 'virtuous') {

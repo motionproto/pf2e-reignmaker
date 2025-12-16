@@ -12,6 +12,7 @@
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
+import { IncreaseSettlementLevelHandler } from '../../services/gameCommands/handlers/IncreaseSettlementLevelHandler';
 import { valueBadge, textBadge, diceBadge } from '../../types/OutcomeBadge';
 import WorksiteTypeSelector from '../../services/hex-selector/WorksiteTypeSelector.svelte';
 import {
@@ -262,6 +263,21 @@ export const immigrationPipeline: CheckPipeline = {
             { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
           ];
           ctx.metadata._newWorksites = 2;
+          
+          // Settlement level increase
+          const increaseHandler = new IncreaseSettlementLevelHandler();
+          const increaseCommand = await increaseHandler.prepare(
+            { type: 'increaseSettlementLevel', increase: 1 },
+            commandContext
+          );
+          if (increaseCommand) {
+            ctx.metadata._preparedSettlementIncrease = increaseCommand;
+            if (increaseCommand.outcomeBadges) {
+              outcomeBadges.push(...increaseCommand.outcomeBadges);
+            } else if (increaseCommand.outcomeBadge) {
+              outcomeBadges.push(increaseCommand.outcomeBadge);
+            }
+          }
         } else if (outcome === 'success') {
           modifiers = [
             { type: 'dice', resource: 'gold', formula: '1d3', duration: 'immediate' },
@@ -387,6 +403,12 @@ export const immigrationPipeline: CheckPipeline = {
     const kingdom = get(kingdomData);
     const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
     const outcome = ctx.outcome;
+
+    // Execute settlement level increase (ruthless CS)
+    const increaseCommand = ctx.metadata?._preparedSettlementIncrease;
+    if (increaseCommand?.commit) {
+      await increaseCommand.commit();
+    }
 
     // Execute faction adjustment for ruthless critical failure
     if (approach === 'ruthless' && outcome === 'criticalFailure') {

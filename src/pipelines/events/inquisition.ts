@@ -14,6 +14,7 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
+import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
 import { valueBadge, textBadge, diceBadge } from '../../types/OutcomeBadge';
 import { factionService } from '../../services/factions';
 import { adjustAttitudeBySteps } from '../../utils/faction-attitude-adjuster';
@@ -281,11 +282,39 @@ export const inquisitionPipeline: CheckPipeline = {
             { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
             { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
           ];
+          // Innocents harmed (add imprisoned without reducing unrest)
+          const addImprisonedHandler = new AddImprisonedHandler();
+          const imprisonCommand = await addImprisonedHandler.prepare(
+            { type: 'addImprisoned', diceFormula: '1d3' },
+            commandContext
+          );
+          if (imprisonCommand) {
+            ctx.metadata._preparedAddImprisoned = imprisonCommand;
+            if (imprisonCommand.outcomeBadges) {
+              outcomeBadges.push(...imprisonCommand.outcomeBadges);
+            } else if (imprisonCommand.outcomeBadge) {
+              outcomeBadges.push(imprisonCommand.outcomeBadge);
+            }
+          }
         } else if (outcome === 'criticalFailure') {
           modifiers = [
             { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
             { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
           ];
+          // Innocents harmed (add imprisoned without reducing unrest)
+          const addImprisonedHandler = new AddImprisonedHandler();
+          const imprisonCommand = await addImprisonedHandler.prepare(
+            { type: 'addImprisoned', diceFormula: '1d3' },
+            commandContext
+          );
+          if (imprisonCommand) {
+            ctx.metadata._preparedAddImprisoned = imprisonCommand;
+            if (imprisonCommand.outcomeBadges) {
+              outcomeBadges.push(...imprisonCommand.outcomeBadges);
+            } else if (imprisonCommand.outcomeBadge) {
+              outcomeBadges.push(imprisonCommand.outcomeBadge);
+            }
+          }
           // Adjust 1 random faction -1
           const eligibleFactions = (kingdom.factions || []).filter((f: any) =>
             f.attitude && f.attitude !== 'Hostile'
@@ -333,6 +362,12 @@ export const inquisitionPipeline: CheckPipeline = {
     const imprisonCommand = ctx.metadata?._preparedImprison;
     if (imprisonCommand?.commit) {
       await imprisonCommand.commit();
+    }
+
+    // Execute innocent imprisonment (ruthless F/CF - adds imprisoned without reducing unrest)
+    const addImprisonedCommand = ctx.metadata?._preparedAddImprisoned;
+    if (addImprisonedCommand?.commit) {
+      await addImprisonedCommand.commit();
     }
 
     // Execute faction adjustment (support approach - critical failure)

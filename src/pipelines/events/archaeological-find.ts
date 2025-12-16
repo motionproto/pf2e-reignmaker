@@ -12,6 +12,10 @@
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
+import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
+import { IncreaseSettlementLevelHandler } from '../../services/gameCommands/handlers/IncreaseSettlementLevelHandler';
+import { ReduceSettlementLevelHandler } from '../../services/gameCommands/handlers/ReduceSettlementLevelHandler';
+import { BuildKnowledgeStructureHandler } from '../../services/gameCommands/handlers/BuildKnowledgeStructureHandler';
 import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 import { updateKingdom } from '../../stores/KingdomStore';
 
@@ -167,9 +171,67 @@ export const archaeologicalFindPipeline: CheckPipeline = {
       const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
       const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
 
-      // Practical CS: Ongoing tourism gold
-      if (approach === 'practical' && outcome === 'criticalSuccess') {
-        ctx.metadata._ongoingTourism = { formula: '2d3', duration: 2 };
+      const commandContext: GameCommandContext = {
+        actionId: 'archaeological-find',
+        outcome: ctx.outcome,
+        kingdom: ctx.kingdom,
+        metadata: ctx.metadata || {}
+      };
+
+      // Virtuous approach: Settlement level changes
+      if (approach === 'virtuous') {
+        if (outcome === 'criticalSuccess' || outcome === 'success') {
+          const increaseHandler = new IncreaseSettlementLevelHandler();
+          const increaseCommand = await increaseHandler.prepare(
+            { type: 'increaseSettlementLevel', increase: 1 },
+            commandContext
+          );
+          if (increaseCommand) {
+            ctx.metadata._preparedSettlementIncrease = increaseCommand;
+            if (increaseCommand.outcomeBadges) {
+              outcomeBadges.push(...increaseCommand.outcomeBadges);
+            } else if (increaseCommand.outcomeBadge) {
+              outcomeBadges.push(increaseCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'failure' || outcome === 'criticalFailure') {
+          const reduceHandler = new ReduceSettlementLevelHandler();
+          const reduceCommand = await reduceHandler.prepare(
+            { type: 'reduceSettlementLevel', reduction: 1 },
+            commandContext
+          );
+          if (reduceCommand) {
+            ctx.metadata._preparedSettlementReduce = reduceCommand;
+            if (reduceCommand.outcomeBadges) {
+              outcomeBadges.push(...reduceCommand.outcomeBadges);
+            } else if (reduceCommand.outcomeBadge) {
+              outcomeBadges.push(reduceCommand.outcomeBadge);
+            }
+          }
+        }
+      }
+
+      // Practical approach: Build Knowledge structure and ongoing tourism
+      if (approach === 'practical') {
+        if (outcome === 'criticalSuccess') {
+          // Build Knowledge & Magic structure
+          const buildHandler = new BuildKnowledgeStructureHandler();
+          const buildCommand = await buildHandler.prepare(
+            { type: 'buildKnowledgeStructure' },
+            commandContext
+          );
+          if (buildCommand) {
+            ctx.metadata._preparedBuildStructure = buildCommand;
+            if (buildCommand.outcomeBadges) {
+              outcomeBadges.push(...buildCommand.outcomeBadges);
+            } else if (buildCommand.outcomeBadge) {
+              outcomeBadges.push(buildCommand.outcomeBadge);
+            }
+          }
+          
+          // Ongoing tourism gold
+          ctx.metadata._ongoingTourism = { formula: '2d3', duration: 2 };
+        }
       }
 
       return { resources: [], outcomeBadges };
@@ -181,6 +243,24 @@ export const archaeologicalFindPipeline: CheckPipeline = {
     const { kingdomData } = await import('../../stores/KingdomStore');
     const kingdom = get(kingdomData);
     const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
+
+    // Execute settlement level increase (virtuous CS/S)
+    const increaseCommand = ctx.metadata?._preparedSettlementIncrease;
+    if (increaseCommand?.commit) {
+      await increaseCommand.commit();
+    }
+
+    // Execute settlement level reduction (virtuous F/CF)
+    const reduceCommand = ctx.metadata?._preparedSettlementReduce;
+    if (reduceCommand?.commit) {
+      await reduceCommand.commit();
+    }
+
+    // Execute build structure (practical CS)
+    const buildCommand = ctx.metadata?._preparedBuildStructure;
+    if (buildCommand?.commit) {
+      await buildCommand.commit();
+    }
 
     // Add ongoing tourism modifier (practical CS)
     if (ctx.metadata?._ongoingTourism && approach === 'practical') {

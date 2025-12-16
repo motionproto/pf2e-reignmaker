@@ -16,6 +16,7 @@ import type { GameCommandContext } from '../../services/gameCommands/GameCommand
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
+import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
 import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 import { updateKingdom } from '../../stores/KingdomStore';
 
@@ -275,18 +276,18 @@ export const cultActivityPipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'failure') {
-          // Adjust 1 faction -1
-          const factionHandler = new AdjustFactionHandler();
-          const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFaction', adjustment: -1, count: 1 },
+          // Innocents harmed - add imprisoned without reducing unrest
+          const imprisonHandler = new AddImprisonedHandler();
+          const imprisonCommand = await imprisonHandler.prepare(
+            { type: 'addImprisoned', amount: 3, diceFormula: '1d3' },
             commandContext
           );
-          if (factionCommand) {
-            ctx.metadata._preparedFaction = factionCommand;
-            if (factionCommand.outcomeBadges) {
-              outcomeBadges.push(...factionCommand.outcomeBadges);
-            } else if (factionCommand.outcomeBadge) {
-              outcomeBadges.push(factionCommand.outcomeBadge);
+          if (imprisonCommand) {
+            ctx.metadata._preparedInnocentsHarmed = imprisonCommand;
+            if (imprisonCommand.outcomeBadges) {
+              outcomeBadges.push(...imprisonCommand.outcomeBadges);
+            } else if (imprisonCommand.outcomeBadge) {
+              outcomeBadges.push(imprisonCommand.outcomeBadge);
             }
           }
         } else if (outcome === 'criticalFailure') {
@@ -339,10 +340,16 @@ export const cultActivityPipeline: CheckPipeline = {
       await factionCommand.commit();
     }
 
-    // Execute imprisonment
+    // Execute imprisonment (cultists - CS/S)
     const imprisonCommand = ctx.metadata?._preparedImprison;
     if (imprisonCommand?.commit) {
       await imprisonCommand.commit();
+    }
+
+    // Execute innocents harmed (failure)
+    const innocentsHarmedCommand = ctx.metadata?._preparedInnocentsHarmed;
+    if (innocentsHarmedCommand?.commit) {
+      await innocentsHarmedCommand.commit();
     }
 
     // Handle ongoing cult influence (practical CF)

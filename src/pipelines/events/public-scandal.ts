@@ -13,6 +13,7 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
+import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
 import { valueBadge, textBadge, diceBadge } from '../../types/OutcomeBadge';
 import { factionService } from '../../services/factions';
 import { adjustAttitudeBySteps } from '../../utils/faction-attitude-adjuster';
@@ -203,6 +204,13 @@ export const publicScandalPipeline: CheckPipeline = {
         }
       } else if (approach === 'practical') {
         // Cover It Up approach - Suppress quietly (Practical)
+        const commandContext: GameCommandContext = {
+          actionId: 'public-scandal',
+          outcome: ctx.outcome,
+          kingdom: ctx.kingdom,
+          metadata: ctx.metadata || {}
+        };
+
         if (outcome === 'criticalSuccess') {
           modifiers = [
             { type: 'dice', resource: 'unrest', formula: '-1d3', negative: true, duration: 'immediate' }
@@ -216,6 +224,21 @@ export const publicScandalPipeline: CheckPipeline = {
             { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
             { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
           ];
+          
+          // Innocents harmed - add imprisoned without reducing unrest
+          const imprisonHandler = new AddImprisonedHandler();
+          const imprisonCommand = await imprisonHandler.prepare(
+            { type: 'addImprisoned', amount: 3, diceFormula: '1d3' },
+            commandContext
+          );
+          if (imprisonCommand) {
+            ctx.metadata._preparedInnocentsHarmed = imprisonCommand;
+            if (imprisonCommand.outcomeBadges) {
+              outcomeBadges.push(...imprisonCommand.outcomeBadges);
+            } else if (imprisonCommand.outcomeBadge) {
+              outcomeBadges.push(imprisonCommand.outcomeBadge);
+            }
+          }
         } else if (outcome === 'criticalFailure') {
           modifiers = [
             { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
@@ -281,6 +304,22 @@ export const publicScandalPipeline: CheckPipeline = {
             { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
             { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
           ];
+          
+          // Innocents harmed - add imprisoned without reducing unrest
+          const imprisonHandler = new AddImprisonedHandler();
+          const imprisonCommand = await imprisonHandler.prepare(
+            { type: 'addImprisoned', amount: 4, diceFormula: '1d4' },
+            commandContext
+          );
+          if (imprisonCommand) {
+            ctx.metadata._preparedInnocentsHarmed = imprisonCommand;
+            if (imprisonCommand.outcomeBadges) {
+              outcomeBadges.push(...imprisonCommand.outcomeBadges);
+            } else if (imprisonCommand.outcomeBadge) {
+              outcomeBadges.push(imprisonCommand.outcomeBadge);
+            }
+          }
+          
           // Adjust 1 random faction -1
           const eligibleFactions = (kingdom.factions || []).filter((f: any) =>
             f.attitude && f.attitude !== 'Hostile'
@@ -328,6 +367,12 @@ export const publicScandalPipeline: CheckPipeline = {
     const imprisonCommand = ctx.metadata?._preparedImprison;
     if (imprisonCommand?.commit) {
       await imprisonCommand.commit();
+    }
+
+    // Execute innocents harmed (failure/critical failure)
+    const innocentsHarmedCommand = ctx.metadata?._preparedInnocentsHarmed;
+    if (innocentsHarmedCommand?.commit) {
+      await innocentsHarmedCommand.commit();
     }
 
     // Execute faction adjustment (scapegoat approach - critical failure)

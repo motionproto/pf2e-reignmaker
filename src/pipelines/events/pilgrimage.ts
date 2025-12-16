@@ -14,6 +14,7 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
+import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
 import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 
 export const pilgrimagePipeline: CheckPipeline = {
@@ -275,17 +276,18 @@ export const pilgrimagePipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'failure') {
-          const factionHandler = new AdjustFactionHandler();
-          const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: -1, count: 1 },
+          // Innocents harmed (add imprisoned without reducing unrest)
+          const addImprisonedHandler = new AddImprisonedHandler();
+          const imprisonCommand = await addImprisonedHandler.prepare(
+            { type: 'addImprisoned', diceFormula: '1d3' },
             commandContext
           );
-          if (factionCommand) {
-            ctx.metadata._preparedFactionAdjust = factionCommand;
-            if (factionCommand.outcomeBadges) {
-              outcomeBadges.push(...factionCommand.outcomeBadges);
-            } else if (factionCommand.outcomeBadge) {
-              outcomeBadges.push(factionCommand.outcomeBadge);
+          if (imprisonCommand) {
+            ctx.metadata._preparedAddImprisoned = imprisonCommand;
+            if (imprisonCommand.outcomeBadges) {
+              outcomeBadges.push(...imprisonCommand.outcomeBadges);
+            } else if (imprisonCommand.outcomeBadge) {
+              outcomeBadges.push(imprisonCommand.outcomeBadge);
             }
           }
         } else if (outcome === 'criticalFailure') {
@@ -313,6 +315,12 @@ export const pilgrimagePipeline: CheckPipeline = {
     const factionCommand = ctx.metadata?._preparedFactionAdjust;
     if (factionCommand?.commit) {
       await factionCommand.commit();
+    }
+
+    // Execute innocent imprisonment (ruthless F - adds imprisoned without reducing unrest)
+    const addImprisonedCommand = ctx.metadata?._preparedAddImprisoned;
+    if (addImprisonedCommand?.commit) {
+      await addImprisonedCommand.commit();
     }
 
     // Apply army condition (Fatigued)

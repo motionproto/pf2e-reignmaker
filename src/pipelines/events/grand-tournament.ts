@@ -15,6 +15,7 @@ import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
+import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
 import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 
 export const grandTournamentPipeline: CheckPipeline = {
@@ -256,6 +257,21 @@ export const grandTournamentPipeline: CheckPipeline = {
               outcomeBadges.push(damageCommand.outcomeBadge);
             }
           }
+
+          // Innocents harmed - add imprisoned without reducing unrest
+          const imprisonHandler = new AddImprisonedHandler();
+          const imprisonCommand = await imprisonHandler.prepare(
+            { type: 'addImprisoned', amount: 1 },
+            commandContext
+          );
+          if (imprisonCommand) {
+            ctx.metadata._preparedImprison = imprisonCommand;
+            if (imprisonCommand.outcomeBadges) {
+              outcomeBadges.push(...imprisonCommand.outcomeBadges);
+            } else if (imprisonCommand.outcomeBadge) {
+              outcomeBadges.push(imprisonCommand.outcomeBadge);
+            }
+          }
         }
       }
 
@@ -272,6 +288,11 @@ export const grandTournamentPipeline: CheckPipeline = {
     const damageCommand = ctx.metadata?._preparedDamage;
     if (damageCommand?.commit) {
       await damageCommand.commit();
+    }
+
+    const imprisonCommand = ctx.metadata?._preparedImprison;
+    if (imprisonCommand?.commit) {
+      await imprisonCommand.commit();
     }
 
     // Apply army condition (Fatigued)
