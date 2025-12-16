@@ -15,7 +15,7 @@ import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
 import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
-import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 
 export const crimeWavePipeline: CheckPipeline = {
   id: 'crime-wave',
@@ -32,10 +32,10 @@ export const crimeWavePipeline: CheckPipeline = {
     options: [
       {
         id: 'virtuous',
-        label: 'Launch Investigation',
+        label: 'Community outreach',
         description: 'Bring criminals to justice through fair investigation',
         icon: 'fas fa-search',
-        skills: ['society', 'diplomacy'],
+        skills: ['society', 'diplomacy', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Criminals caught through fair investigation. Justice restores public trust.',
@@ -45,26 +45,28 @@ export const crimeWavePipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive'),
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
           ],
           success: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
           ],
           failure: [
-            valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')
           ]
         }
       },
       {
         id: 'practical',
-        label: 'Increase Patrols',
+        label: 'Patrols',
         description: 'Prevent crime through vigilant security measures',
         icon: 'fas fa-eye',
-        skills: ['intimidation', 'society'],
+        skills: ['intimidation', 'society', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Crime prevented through vigilant patrols. Confiscated goods fill the treasury.',
@@ -75,26 +77,26 @@ export const crimeWavePipeline: CheckPipeline = {
         outcomeBadges: {
           criticalSuccess: [
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d2', 'positive')
+            textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d2', 'negative')
+            textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
           ]
         }
       },
       {
         id: 'ruthless',
-        label: 'Harsh Crackdown',
+        label: 'Crackdown',
         description: 'Make an example with brutal mass arrests',
         icon: 'fas fa-gavel',
-        skills: ['intimidation', 'performance'],
+        skills: ['intimidation', 'performance', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Crime eliminated through fear. Mass arrests fill the prisons.',
@@ -104,19 +106,19 @@ export const crimeWavePipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            // Note: Aggressive arrest badge (converts 1d4 unrest to imprisoned) generated by handler
+            diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '2d4', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3+1', 'positive')
           ],
           success: [
-            // Note: Arrest badge (converts 1d3 unrest to imprisoned) generated by handler
+            diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
-            // Note: Innocent imprisonment badge (adds 1d2 imprisoned) generated by handler
+            diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
-            // Note: Innocent imprisonment badge (adds 1d3 imprisoned) generated by handler
+            diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d4', 'negative'),
+            textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
           ]
         }
       }

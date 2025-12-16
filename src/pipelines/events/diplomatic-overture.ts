@@ -14,7 +14,7 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
-import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 import { updateKingdom } from '../../stores/KingdomStore';
 
 export const diplomaticOverturePipeline: CheckPipeline = {
@@ -30,10 +30,10 @@ export const diplomaticOverturePipeline: CheckPipeline = {
     options: [
       {
         id: 'virtuous',
-        label: 'Accept with Generous Terms',
+        label: 'Generous Terms',
         description: 'Build friendship through generous agreement',
         icon: 'fas fa-handshake',
-        skills: ['diplomacy', 'society'],
+        skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Generosity wins lasting friendship and trade.',
@@ -44,25 +44,28 @@ export const diplomaticOverturePipeline: CheckPipeline = {
         outcomeBadges: {
           criticalSuccess: [
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
           ],
           failure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ],
           criticalFailure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
           ]
         }
       },
       {
         id: 'practical',
-        label: 'Negotiate Balanced Agreement',
+        label: 'Balanced Agreement',
         description: 'Mutual benefit through careful negotiation',
         icon: 'fas fa-balance-scale',
-        skills: ['diplomacy', 'deception'],
+        skills: ['diplomacy', 'deception', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Perfect balance of profit and goodwill.',
@@ -72,23 +75,31 @@ export const diplomaticOverturePipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d4', 'positive'),
+            diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d4', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')
           ],
-          failure: [],
+          failure: [
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
+            diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')
+          ],
           criticalFailure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
+            diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d4', 'negative'),
+            diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d4', 'negative')
           ]
         }
       },
       {
         id: 'ruthless',
-        label: 'Demand Favorable Terms',
+        label: 'Exploit Relationship',
         description: 'Extract maximum advantage or refuse',
         icon: 'fas fa-gavel',
-        skills: ['intimidation', 'deception'],
+        skills: ['intimidation', 'deception', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Aggressive terms accepted. Long-term trade secured.',
@@ -98,17 +109,20 @@ export const diplomaticOverturePipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive'),
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
           ],
           failure: [
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
           ]
         }
       }
@@ -378,9 +392,9 @@ export const diplomaticOverturePipeline: CheckPipeline = {
           sourceType: 'custom',
           sourceId: ctx.instanceId || 'diplomatic-overture',
           sourceName: 'Diplomatic Overture',
-          startTurn: k.turn || 1,
+          startTurn: k.currentTurn || 1,
           modifiers: [
-            { type: 'choice', resource: trade.resource, formula: trade.formula, duration: trade.duration }
+            { type: 'choice', resources: [trade.resource], value: { formula: trade.formula }, duration: trade.duration }
           ]
         });
       });

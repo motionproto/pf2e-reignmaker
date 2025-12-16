@@ -30,10 +30,10 @@ export const foodShortagePipeline: CheckPipeline = {
     options: [
       {
         id: 'feed-people',
-        label: 'Feed the People',
+        label: 'Share Reserves',
         description: 'Distribute aid freely, drain military supplies if needed',
         icon: 'fas fa-hand-holding-heart',
-        skills: ['diplomacy', 'society'],
+        skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Generous distribution inspires donations. Unity strengthens despite depleted supplies.',
@@ -43,32 +43,29 @@ export const foodShortagePipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Lose {{value}} Food', 'fas fa-wheat-awn', '1d4', 'negative')
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
-            diceBadge('Lose {{value}} Food', 'fas fa-wheat-awn', '1d4', 'negative')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
           ],
           failure: [
             valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            diceBadge('Lose {{value}} Food', 'fas fa-wheat-awn', '2d4', 'negative'),
-            textBadge('1 army gains sickened', 'fas fa-skull', 'negative')
+            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')
           ],
           criticalFailure: [
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            diceBadge('Lose {{value}} Food', 'fas fa-wheat-awn', '2d4', 'negative'),
-            textBadge('1 army rolls morale check', 'fas fa-person-falling-burst', 'negative')
+            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '2d4+1', 'negative')
           ]
         }
       },
       {
         id: 'rationing',
-        label: 'Controlled Rationing',
+        label: 'Ration & Import',
         description: 'Fair compensation and systematic allocation',
         icon: 'fas fa-scale-balanced',
-        skills: ['society', 'nature'],
+        skills: ['society', 'nature', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Efficient rationing prevents hoarding. The crisis passes with minimal suffering.',
@@ -78,29 +75,29 @@ export const foodShortagePipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Lose {{value}} Food', 'fas fa-wheat-awn', '1d4', 'negative')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive'),
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
-            diceBadge('Lose {{value}} Food', 'fas fa-wheat-awn', '1d4', 'negative')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            diceBadge('Lose {{value}} Food', 'fas fa-wheat-awn', '1d4', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ],
           criticalFailure: [
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            diceBadge('Lose {{value}} Food', 'fas fa-wheat-awn', '2d4', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
+            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '2d3', 'negative')
           ]
         }
       },
       {
         id: 'prioritize-elite',
-        label: 'Prioritize Elite',
+        label: 'Feed Nobility',
         description: 'Military and leadership first, let the poor suffer',
         icon: 'fas fa-crown',
-        skills: ['intimidation'],
+        skills: ['intimidation', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Swift enforcement crushes dissent. The elite are fed while masses submit.',
@@ -110,23 +107,20 @@ export const foodShortagePipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Lose {{value}} Food', 'fas fa-wheat-awn', '1d4', 'negative'),
-            diceBadge('Imprison {{value}} rioters', 'fas fa-handcuffs', '1d4', 'info')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
           ],
           success: [
-            diceBadge('Lose {{value}} Food', 'fas fa-wheat-awn', '1d4', 'negative'),
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
           ],
           failure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            diceBadge('Lose {{value}} Food', 'fas fa-wheat-awn', '1d4', 'negative'),
-            textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative'),
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
-            diceBadge('Lose {{value}} Food', 'fas fa-wheat-awn', '2d4', 'negative'),
-            textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative'),
+            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative'),
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
           ]
         }
       }

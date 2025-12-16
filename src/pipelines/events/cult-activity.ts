@@ -16,7 +16,7 @@ import type { GameCommandContext } from '../../services/gameCommands/GameCommand
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
-import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 import { updateKingdom } from '../../stores/KingdomStore';
 
 export const cultActivityPipeline: CheckPipeline = {
@@ -25,14 +25,6 @@ export const cultActivityPipeline: CheckPipeline = {
   description: 'A mysterious cult operates within the kingdom\'s borders.',
   checkType: 'event',
   tier: 1,
-
-  // Base skills (filtered by choice)
-  skills: [
-    { skill: 'society', description: 'understand cult motivations' },
-    { skill: 'diplomacy', description: 'respectful engagement' },
-    { skill: 'intrigue', description: 'surveillance operations' },
-    { skill: 'warfare', description: 'forceful suppression' }
-  ],
 
   // Strategic choice - triggers voting system
   // Options ordered: Virtuous (left) → Practical (center) → Ruthless (right)
@@ -45,7 +37,7 @@ export const cultActivityPipeline: CheckPipeline = {
         label: 'Investigate Respectfully',
         description: 'Investigate while respecting religious freedom',
         icon: 'fas fa-balance-scale',
-        skills: ['society', 'diplomacy'],
+        skills: ['society', 'diplomacy', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Investigation reveals truth, relations improve.',
@@ -55,16 +47,20 @@ export const cultActivityPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
           ],
           success: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1', 'positive')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
           ],
           failure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1', 'negative')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
           ],
-          criticalFailure: [] // Damage structure + unrest + faction handled by preview.calculate
+          criticalFailure: [
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+          ]
         }
       },
       {
@@ -72,7 +68,7 @@ export const cultActivityPipeline: CheckPipeline = {
         label: 'Monitor and Contain',
         description: 'Surveillance to prevent spread of influence',
         icon: 'fas fa-eye',
-        skills: ['intrigue', 'society'],
+        skills: ['stealth', 'society', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Surveillance prevents any cult expansion.',
@@ -82,24 +78,29 @@ export const cultActivityPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
           ],
           success: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1', 'positive')
+            valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive'),
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
           ],
           failure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1', 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
+            valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
           ],
-          criticalFailure: [] // Ongoing cult influence handled by execute
+          criticalFailure: [
+            textBadge('+1 Unrest per turn (ongoing)', 'fas fa-exclamation-triangle', 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+          ]
         }
       },
       {
         id: 'ruthless',
-        label: 'Suppress with Force',
+        label: 'Heretics Burn',
         description: 'Eliminate the cult through force',
         icon: 'fas fa-fist-raised',
-        skills: ['warfare', 'intrigue'],
+        skills: ['intimidation', 'stealth', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Cult is disbanded, leaders imprisoned.',
@@ -109,18 +110,58 @@ export const cultActivityPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+            textBadge('Convert {{value}} Unrest to Imprisoned (cultists)', 'fas fa-lock', 'positive'),
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           success: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1', 'positive')
+            textBadge('Convert {{value}} Unrest to Imprisoned', 'fas fa-lock', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           failure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1', 'negative')
+            diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')
           ],
-          criticalFailure: [] // +1d3 Unrest, -1 Fame, adjust 2 factions handled by preview.calculate
+          criticalFailure: [
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
+            textBadge('Damage 1 structure', 'fas fa-house-crack', 'negative')
+          ]
         }
       }
     ]
+  },
+
+  skills: [
+    { skill: 'society', description: 'understand cult motivations' },
+    { skill: 'diplomacy', description: 'respectful engagement' },
+    { skill: 'stealth', description: 'surveillance operations' },
+    { skill: 'intimidation', description: 'forceful suppression' }
+  ],
+
+  outcomes: {
+    criticalSuccess: {
+      description: 'Your approach manages the cult effectively.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
+    },
+    success: {
+      description: 'The cult activity is handled appropriately.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
+    },
+    failure: {
+      description: 'The cult situation worsens.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
+    },
+    criticalFailure: {
+      description: 'Your approach backfires dramatically.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
+    },
   },
 
   preview: {
@@ -132,7 +173,7 @@ export const cultActivityPipeline: CheckPipeline = {
       const outcome = ctx.outcome;
 
       const outcomeBadges = [];
-      const commandContext: GameCommandContext = { currentKingdom: kingdom };
+      const commandContext: GameCommandContext = { kingdom, outcome: outcome || 'success' };
 
       // Handle faction adjustments and special effects
       if (approach === 'virtuous') {
@@ -311,14 +352,17 @@ export const cultActivityPipeline: CheckPipeline = {
         
         k.activeModifiers.push({
           id: `cult-influence-${Date.now()}`,
+          name: 'Cult Influence',
           sourceType: 'custom',
-          sourceName: 'Cult Influence',
+          sourceId: 'cult-activity',
+          sourceName: 'Cult Activity Event',
           modifiers: [
             { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
           ],
-          duration: { type: 'turns', count: 2 },
+          startTurn: k.currentTurn || 0,
+          tier: 1,
           icon: 'fas fa-moon',
-          description: 'Cult influence spreads unrest'
+          description: 'Cult influence spreads unrest (2 turns)'
         });
       });
     }

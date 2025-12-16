@@ -14,7 +14,7 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
-import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 import { updateKingdom } from '../../stores/KingdomStore';
 
 export const monsterAttackPipeline: CheckPipeline = {
@@ -23,14 +23,6 @@ export const monsterAttackPipeline: CheckPipeline = {
   description: 'A dangerous creature threatens the kingdom\'s territory.',
   checkType: 'event',
   tier: 1,
-
-  // Base skills (filtered by choice)
-  skills: [
-    { skill: 'nature', description: 'understand creature behavior' },
-    { skill: 'diplomacy', description: 'negotiate peacefully' },
-    { skill: 'intrigue', description: 'coordinate with hunters' },
-    { skill: 'warfare', description: 'mobilize military forces' }
-  ],
 
   // Strategic choice - triggers voting system
   // Options ordered: Virtuous (left) → Practical (center) → Ruthless (right)
@@ -43,7 +35,7 @@ export const monsterAttackPipeline: CheckPipeline = {
         label: 'Relocate Peacefully',
         description: 'Try to relocate the creature without violence',
         icon: 'fas fa-dove',
-        skills: ['nature', 'diplomacy'],
+        skills: ['nature', 'diplomacy', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'The creature peacefully moves away, nature thrives.',
@@ -54,17 +46,18 @@ export const monsterAttackPipeline: CheckPipeline = {
         outcomeBadges: {
           criticalSuccess: [
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d4', 'positive')
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
           ],
           success: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1', 'positive')
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
           ],
           failure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1', 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
           ],
-          criticalFailure: [] // Damage structure + unrest handled by preview.calculate
+          criticalFailure: [
+            textBadge('Damage 1 structure', 'fas fa-house-crack', 'negative'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+          ]
         }
       },
       {
@@ -72,7 +65,7 @@ export const monsterAttackPipeline: CheckPipeline = {
         label: 'Hire Hunters',
         description: 'Hire professional hunters to deal with the threat',
         icon: 'fas fa-crosshairs',
-        skills: ['intrigue', 'warfare'],
+        skills: ['stealth', 'intimidation', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Hunters defeat the beast, its parts bring profit.',
@@ -82,18 +75,21 @@ export const monsterAttackPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive'),
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
           ],
           success: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3+1', 'positive'),
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
           ],
           failure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1', 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3+1', 'negative')
           ],
-          criticalFailure: [] // Damage structure + gold/unrest handled by preview.calculate
+          criticalFailure: [
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+          ]
         }
       },
       {
@@ -101,7 +97,7 @@ export const monsterAttackPipeline: CheckPipeline = {
         label: 'Mobilize Army',
         description: 'Use military force to destroy the creature',
         icon: 'fas fa-shield-alt',
-        skills: ['warfare', 'intrigue'],
+        skills: ['intimidation', 'stealth', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Army destroys the beast, soldiers gain experience.',
@@ -111,21 +107,57 @@ export const monsterAttackPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+            textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3+1', 'positive')
           ],
           success: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
           ],
           failure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1', 'negative'),
+            textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative'),
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ],
-          criticalFailure: [] // Army enfeebled + gold/unrest handled by execute
+          criticalFailure: [
+            textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative'),
+            textBadge('Damage 1 structure', 'fas fa-house-crack', 'negative')
+          ]
         }
       }
     ]
+  },
+
+  skills: [
+    { skill: 'nature', description: 'understand creature behavior' },
+    { skill: 'diplomacy', description: 'negotiate peacefully' },
+    { skill: 'stealth', description: 'coordinate with hunters' },
+    { skill: 'intimidation', description: 'mobilize military forces' }
+  ],
+
+  outcomes: {
+    criticalSuccess: {
+      description: 'Your approach handles the monster threat effectively.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
+    },
+    success: {
+      description: 'The monster threat is resolved.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
+    },
+    failure: {
+      description: 'The monster causes damage.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
+    },
+    criticalFailure: {
+      description: 'The monster attack has devastating consequences.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
+    },
   },
 
   preview: {
@@ -137,7 +169,7 @@ export const monsterAttackPipeline: CheckPipeline = {
       const outcome = ctx.outcome;
 
       const outcomeBadges = [];
-      const commandContext: GameCommandContext = { currentKingdom: kingdom };
+      const commandContext: GameCommandContext = { kingdom, outcome: outcome || 'success' };
 
       // Handle structure damage for failure outcomes
       if (approach === 'virtuous' && outcome === 'criticalFailure') {

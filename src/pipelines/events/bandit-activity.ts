@@ -17,6 +17,14 @@ import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/ha
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
 import { DestroyWorksiteHandler } from '../../services/gameCommands/handlers/DestroyWorksiteHandler';
 import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
+import WorksiteTypeSelector from '../../services/hex-selector/WorksiteTypeSelector.svelte';
+import {
+  validateClaimed,
+  validateNoSettlement,
+  safeValidation,
+  getFreshKingdomData,
+  type ValidationResult
+} from '../shared/hexValidators';
 
 export const banditActivityPipeline: CheckPipeline = {
   id: 'bandit-activity',
@@ -33,10 +41,10 @@ export const banditActivityPipeline: CheckPipeline = {
     options: [
       {
         id: 'virtuous',
-        label: 'Negotiate Safe Passage',
+        label: 'Negotiate',
         description: 'Offer bandits employment and peaceful resolution',
         icon: 'fas fa-handshake',
-        skills: ['diplomacy', 'society'],
+        skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Bandits accept jobs and integrate. Your compassion creates new opportunities.',
@@ -46,19 +54,20 @@ export const banditActivityPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            textBadge('Gain 1 new worksite', 'fas fa-hammer', 'positive')
+            textBadge('Gain 1 worksite', 'fas fa-industry', 'positive'),
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
           ],
           failure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ],
           criticalFailure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative'),
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+            valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative'),
+            textBadge('Lose 1 worksite', 'fas fa-industry', 'negative'),
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ]
         }
       },
@@ -67,7 +76,7 @@ export const banditActivityPipeline: CheckPipeline = {
         label: 'Drive Them Off',
         description: 'Use militia to defend and recover stolen goods',
         icon: 'fas fa-shield',
-        skills: ['intimidation', 'stealth'],
+        skills: ['intimidation', 'stealth', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Militia triumphs, recovering plunder and restoring security.',
@@ -77,30 +86,31 @@ export const banditActivityPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+            valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive'),
+            textBadge('Gain 1 worksite', 'fas fa-industry', 'positive'),
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative'),
+            textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative'),
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
-            // Note: Worksite destruction badge generated by handler
           ]
         }
       },
       {
         id: 'ruthless',
-        label: 'Hunt Without Mercy',
+        label: 'Hunt Mercilessly',
         description: 'Eliminate bandits brutally and take their plunder',
         icon: 'fas fa-crosshairs',
-        skills: ['intimidation', 'stealth'],
+        skills: ['intimidation', 'stealth', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Bandits eliminated. Plunder seized and survivors imprisoned.',
@@ -110,21 +120,22 @@ export const banditActivityPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
-            // Note: Imprisonment badge generated by handler
+            diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '2d3', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
+            diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
-            // Note: Imprisonment badge generated by handler
+            diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           failure: [
+            valueBadge('{{value}} innocents harmed', 'fas fa-user-injured', 1, 'negative'),
             valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
-            // Note: Structure damage badge generated by handler
+            diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d2', 'negative'),
+            textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative'),
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ]
         }
       }
@@ -272,6 +283,47 @@ export const banditActivityPipeline: CheckPipeline = {
     }
   },
 
+  postApplyInteractions: [
+    {
+      id: 'selectedHex',
+      type: 'map-selection',
+      mode: 'hex-selection',
+      count: 1,
+      title: 'Select a hex for the new worksite',
+      colorType: 'worksite',
+      required: true,
+      condition: (ctx) => {
+        return ctx.metadata?._createWorksite === true;
+      },
+      validateHex: (hexId: string): ValidationResult => {
+        return safeValidation(() => {
+          const kingdom = getFreshKingdomData();
+          const hex = kingdom.hexes?.find((h: any) => h.id === hexId);
+          
+          if (!hex) {
+            return { valid: false, message: 'Hex not found' };
+          }
+          
+          const claimedResult = validateClaimed(hexId, kingdom);
+          if (!claimedResult.valid) return claimedResult;
+          
+          const settlementResult = validateNoSettlement(hexId, kingdom);
+          if (!settlementResult.valid) return settlementResult;
+          
+          if (hex.worksite) {
+            return { valid: false, message: `Hex already has a ${hex.worksite.type}` };
+          }
+          
+          return { valid: true, message: 'Valid location for worksite' };
+        }, hexId, 'bandit-activity worksite validation');
+      },
+      customSelector: {
+        component: WorksiteTypeSelector
+      }
+    },
+    DestroyWorksiteHandler.getMapDisplayInteraction('Worksite Destroyed by Bandits')
+  ],
+
   execute: async (ctx) => {
     // NOTE: Standard modifiers (unrest, gold, fame) are applied automatically by
     // ResolutionDataBuilder + GameCommandsService via outcomeBadges.
@@ -279,8 +331,29 @@ export const banditActivityPipeline: CheckPipeline = {
 
     // Create worksite (virtuous CS)
     if (ctx.metadata?._createWorksite) {
+      const selectedHexData = ctx.resolutionData?.compoundData?.selectedHex;
+      
+      if (!selectedHexData) {
+        return { success: false, error: 'No hex selected for worksite' };
+      }
+      
+      let hexId: string | undefined;
+      let worksiteType: string | undefined;
+      
+      if (selectedHexData?.hexIds) {
+        hexId = selectedHexData.hexIds[0];
+        if (hexId && selectedHexData.metadata) {
+          worksiteType = selectedHexData.metadata[hexId]?.worksiteType;
+        }
+      }
+
+      if (!hexId || !worksiteType) {
+        return { success: false, error: 'Worksite selection incomplete' };
+      }
+
       const { createWorksiteExecution } = await import('../../execution/territory/createWorksite');
-      await createWorksiteExecution();
+      await createWorksiteExecution(hexId, worksiteType);
+      ui.notifications?.info(`Bandits integrated as workers - ${worksiteType} created on hex ${hexId}`);
     }
 
     // Execute worksite destruction (practical CF)
@@ -304,10 +377,5 @@ export const banditActivityPipeline: CheckPipeline = {
     return { success: true };
   },
 
-  // Post-apply interaction to show destroyed worksites on map
-  postApplyInteractions: [
-    DestroyWorksiteHandler.getMapDisplayInteraction('Worksite Destroyed by Bandits')
-  ],
-
-  traits: ["dangerous", "ongoing"],
+  traits: ["dangerous"]
 };

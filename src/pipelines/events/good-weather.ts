@@ -12,7 +12,7 @@
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 
 export const goodWeatherPipeline: CheckPipeline = {
   id: 'good-weather',
@@ -27,10 +27,10 @@ export const goodWeatherPipeline: CheckPipeline = {
     options: [
       {
         id: 'virtuous',
-        label: 'Declare Holidays',
+        label: 'Celebrate',
         description: 'Celebrate and let people rest',
         icon: 'fas fa-sun',
-        skills: ['performance', 'diplomacy'],
+        skills: ['performance', 'diplomacy', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Joyful celebration attracts new citizens.',
@@ -40,18 +40,16 @@ export const goodWeatherPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3+1', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')
           ]
         }
       },
@@ -60,7 +58,7 @@ export const goodWeatherPipeline: CheckPipeline = {
         label: 'Work Hard',
         description: 'Gather extra resources while weather holds',
         icon: 'fas fa-hammer',
-        skills: ['nature', 'society'],
+        skills: ['nature', 'society', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Exceptional productivity yields abundant resources.',
@@ -70,21 +68,17 @@ export const goodWeatherPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Food', 'fas fa-bread-slice', '2d4', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive'),
-            diceBadge('Gain {{value}} Lumber/Stone', 'fas fa-cube', '2d4', 'positive')
+            diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d4', 'positive'),
+            diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d4', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Food', 'fas fa-bread-slice', '1d4', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Lumber/Stone', 'fas fa-cube', '1d4', 'positive')
+            diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d3+1', 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
           ]
         }
       },
@@ -93,7 +87,7 @@ export const goodWeatherPipeline: CheckPipeline = {
         label: 'Military Exercises',
         description: 'Train troops for combat readiness',
         icon: 'fas fa-shield',
-        skills: ['intimidation', 'performance'],
+        skills: ['intimidation', 'performance', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Troops gain elite training and plunder.',
@@ -103,19 +97,16 @@ export const goodWeatherPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive'),
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+            textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            textBadge('Heal 1 random army', 'fas fa-heart', 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+            textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')
           ]
         }
       }

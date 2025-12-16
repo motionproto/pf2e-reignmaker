@@ -14,7 +14,7 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
-import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 
 export const visitingCelebrityPipeline: CheckPipeline = {
   id: 'visiting-celebrity',
@@ -32,7 +32,7 @@ export const visitingCelebrityPipeline: CheckPipeline = {
         label: 'Simple Hospitality',
         description: 'Focus on the person, not spectacle',
         icon: 'fas fa-handshake',
-        skills: ['diplomacy', 'society'],
+        skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Genuine hospitality earns fame and generous donation.',
@@ -43,15 +43,19 @@ export const visitingCelebrityPipeline: CheckPipeline = {
         outcomeBadges: {
           criticalSuccess: [
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
-          failure: [],
+          failure: [
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+          ],
           criticalFailure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
           ]
         }
       },
@@ -60,7 +64,7 @@ export const visitingCelebrityPipeline: CheckPipeline = {
         label: 'Appropriate Ceremony',
         description: 'Balanced exchange of gifts and honor',
         icon: 'fas fa-balance-scale',
-        skills: ['performance', 'society'],
+        skills: ['performance', 'society', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Perfect ceremony yields trade and gifts.',
@@ -70,16 +74,18 @@ export const visitingCelebrityPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3+1', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
           ],
           failure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
           ],
           criticalFailure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')
           ]
         }
       },
@@ -88,7 +94,7 @@ export const visitingCelebrityPipeline: CheckPipeline = {
         label: 'Lavish Display',
         description: 'Impress with extravagance to gain favor',
         icon: 'fas fa-crown',
-        skills: ['performance', 'diplomacy'],
+        skills: ['performance', 'diplomacy', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Lavish display yields resources through influence.',
@@ -98,19 +104,18 @@ export const visitingCelebrityPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} random resource', 'fas fa-cube', '2d3', 'positive'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '4d3', 'positive')
           ],
           success: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
+            valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative'),
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ]
         }
       }

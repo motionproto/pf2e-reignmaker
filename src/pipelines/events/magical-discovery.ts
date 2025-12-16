@@ -16,7 +16,7 @@ import type { GameCommandContext } from '../../services/gameCommands/GameCommand
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { DestroyWorksiteHandler } from '../../services/gameCommands/handlers/DestroyWorksiteHandler';
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
-import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 import { updateKingdom } from '../../stores/KingdomStore';
 
 export const magicalDiscoveryPipeline: CheckPipeline = {
@@ -35,7 +35,7 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
         label: 'Share Freely',
         description: 'Make knowledge available to all',
         icon: 'fas fa-book-open',
-        skills: ['arcana', 'diplomacy'],
+        skills: ['arcana', 'diplomacy', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Openness sparks innovation and improves relations.',
@@ -45,28 +45,29 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
           ]
         }
       },
       {
         id: 'practical',
-        label: 'Controlled Study',
+        label: 'Academic Study',
         description: 'Regulate and research systematically',
         icon: 'fas fa-flask',
-        skills: ['arcana', 'society'],
+        skills: ['arcana', 'society', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Research yields lasting revenue.',
@@ -76,25 +77,31 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3+1', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')
           ]
         }
       },
       {
         id: 'ruthless',
-        label: 'Monopolize',
+        label: 'Secret Knowledge',
         description: 'Exclusive kingdom advantage',
         icon: 'fas fa-lock',
-        skills: ['intimidation', 'arcana'],
+        skills: ['intimidation', 'arcana', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Monopoly secures wealth.',
@@ -104,18 +111,19 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '3d3', 'positive'),
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
           ],
           failure: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')
           ],
           criticalFailure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
+            textBadge('Damage 1 structure', 'fas fa-house-crack', 'negative'),
+            valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
           ]
         }
       }

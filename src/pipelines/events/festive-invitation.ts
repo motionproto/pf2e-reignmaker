@@ -32,7 +32,7 @@ export const festiveInvitationPipeline: CheckPipeline = {
         label: 'Attend Humbly',
         description: 'Join festivities as equals, no pretense',
         icon: 'fas fa-glass-cheers',
-        skills: ['diplomacy', 'performance'],
+        skills: ['diplomacy', 'performance', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Humble presence wins hearts and forges alliances.',
@@ -43,23 +43,30 @@ export const festiveInvitationPipeline: CheckPipeline = {
         outcomeBadges: {
           criticalSuccess: [
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
-          ],
-          success: [
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
           ],
-          failure: [],
+          success: [
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+          ],
+          failure: [
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+          ],
           criticalFailure: [
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
             valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ]
         }
       },
       {
         id: 'practical',
-        label: 'Attend with Diplomacy',
+        label: 'Diplomatic Gifts',
         description: 'Appropriate gifts and strategic networking',
         icon: 'fas fa-gift',
-        skills: ['diplomacy', 'society'],
+        skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Perfect diplomacy. Gifts reciprocated generously.',
@@ -69,15 +76,22 @@ export const festiveInvitationPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive'),
+            diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')
           ],
-          success: [],
+          success: [
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')
+          ],
           failure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative'),
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
           ]
         }
       },
@@ -86,7 +100,7 @@ export const festiveInvitationPipeline: CheckPipeline = {
         label: 'Display Power',
         description: 'Show military might and intimidate rivals',
         icon: 'fas fa-shield',
-        skills: ['intimidation', 'performance'],
+        skills: ['intimidation', 'performance', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Military display awes guests. Armies gain equipment.',
@@ -96,21 +110,19 @@ export const festiveInvitationPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+            textBadge('Random army gains equipment', 'fas fa-shield', 'positive'),
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
-            textBadge('1 army gains random equipment', 'fas fa-shield', 'positive')
+            textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative'),
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative'),
-            textBadge('1 army gains enfeebled', 'fas fa-skull', 'negative')
+            textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
           ]
         }
       }

@@ -14,7 +14,7 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
-import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 
 export const remarkableTreasurePipeline: CheckPipeline = {
   id: 'remarkable-treasure',
@@ -32,7 +32,7 @@ export const remarkableTreasurePipeline: CheckPipeline = {
         label: 'Share with All',
         description: 'Distribute wealth to all citizens',
         icon: 'fas fa-hand-holding-heart',
-        skills: ['diplomacy', 'society'],
+        skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Generosity inspires hope and improves faction relations.',
@@ -43,16 +43,18 @@ export const remarkableTreasurePipeline: CheckPipeline = {
         outcomeBadges: {
           criticalSuccess: [
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
           ],
-          failure: [],
+          failure: [
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
+            diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')
+          ],
           criticalFailure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
           ]
         }
       },
@@ -61,7 +63,7 @@ export const remarkableTreasurePipeline: CheckPipeline = {
         label: 'Add to Treasury',
         description: 'Invest in kingdom infrastructure and projects',
         icon: 'fas fa-coins',
-        skills: ['society', 'thievery'],
+        skills: ['society', 'thievery', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Treasury gains and materials for projects.',
@@ -71,19 +73,19 @@ export const remarkableTreasurePipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive'),
-            diceBadge('Gain {{value}} Lumber/Stone/Ore', 'fas fa-cube', '2d4', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive'),
+            diceBadge('Gain {{value}} random resource', 'fas fa-box', '2d3', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
+            diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
           ]
         }
       },
@@ -92,7 +94,7 @@ export const remarkableTreasurePipeline: CheckPipeline = {
         label: 'Keep for Leadership',
         description: 'Reserve benefits for kingdom leaders',
         icon: 'fas fa-crown',
-        skills: ['thievery', 'diplomacy'],
+        skills: ['thievery', 'diplomacy', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Leaders claim stipend benefits. Gold secured.',
@@ -102,18 +104,16 @@ export const remarkableTreasurePipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+            textBadge('Gain 1 action', 'fas fa-bolt', 'positive'),
+            valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive'),
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
           ],
           failure: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
             valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
           ]

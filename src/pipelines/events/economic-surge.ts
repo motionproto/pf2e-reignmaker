@@ -14,7 +14,7 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
-import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 
 export const economicSurgePipeline: CheckPipeline = {
   id: 'economic-surge',
@@ -31,10 +31,10 @@ export const economicSurgePipeline: CheckPipeline = {
     options: [
       {
         id: 'virtuous',
-        label: 'Raise Wages',
+        label: 'Share Prosperity',
         description: 'Improve worker conditions and share prosperity',
         icon: 'fas fa-heart',
-        skills: ['diplomacy', 'society'],
+        skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Workers thrive and productivity soars even higher.',
@@ -44,29 +44,30 @@ export const economicSurgePipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '2d3', 'positive'),
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
           ],
           failure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
+            valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
           ],
           criticalFailure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            diceBadge('Lose {{value}} random resource', 'fas fa-box', '2d3', 'negative'),
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
           ]
         }
       },
       {
         id: 'practical',
-        label: 'Invest in Infrastructure',
+        label: 'Stockpile Surplus',
         description: 'Use prosperity for sustainable growth',
         icon: 'fas fa-industry',
-        skills: ['society', 'crafting'],
+        skills: ['society', 'crafting', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Infrastructure investments yield massive returns.',
@@ -76,28 +77,31 @@ export const economicSurgePipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive'),
-            diceBadge('Gain {{value}} Lumber/Stone/Ore', 'fas fa-cube', '2d4', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d4', 'positive'),
+            diceBadge('Gain {{value}} random resource', 'fas fa-box', '2d3', 'positive'),
+            diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d4', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Lumber/Stone/Ore', 'fas fa-cube', '1d4', 'positive')
+            diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive'),
+            diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'positive')
           ],
           failure: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative'),
+            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')
           ],
           criticalFailure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative'),
+            diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d4', 'negative'),
+            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d4', 'negative')
           ]
         }
       },
       {
         id: 'ruthless',
-        label: 'Maximize Taxes',
+        label: 'Exploit for Profit',
         description: 'Extract maximum profit from the boom',
         icon: 'fas fa-coins',
-        skills: ['intimidation', 'society'],
+        skills: ['intimidation', 'society', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Aggressive taxation crushes resistance and fills coffers.',
@@ -107,22 +111,19 @@ export const economicSurgePipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive'),
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
-            // Note: Structure gain handled in execute()
+            diceBadge('Gain {{value}} random resource', 'fas fa-box', '2d3', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive'),
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
           ],
           failure: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
+            valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
           ],
           criticalFailure: [
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
             valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
-            // Note: Structure damage badge generated by handler
           ]
         }
       }

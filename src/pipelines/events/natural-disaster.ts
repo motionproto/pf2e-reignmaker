@@ -30,10 +30,10 @@ export const naturalDisasterPipeline: CheckPipeline = {
     options: [
       {
         id: 'prioritize-lives',
-        label: 'Prioritize Lives',
+        label: 'Rescue & Relief',
         description: 'Save people over property at any cost',
         icon: 'fas fa-people-roof',
-        skills: ['survival', 'medicine'],
+        skills: ['survival', 'medicine', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Your heroic evacuation saves countless lives. Unity compensates for damage.',
@@ -44,31 +44,27 @@ export const naturalDisasterPipeline: CheckPipeline = {
         outcomeBadges: {
           criticalSuccess: [
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
-            textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            textBadge('1 structure damaged', 'fas fa-house-crack', 'negative'),
-            textBadge('1 worksite destroyed', 'fas fa-industry', 'negative')
+            textBadge('Lose 1 worksite', 'fas fa-industry', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            textBadge('1 structure destroyed', 'fas fa-house-fire', 'negative'),
-            textBadge('1 worksite destroyed', 'fas fa-industry', 'negative')
+            textBadge('1 structure damaged', 'fas fa-house-crack', 'negative'),
+            textBadge('Lose 1 worksite', 'fas fa-industry', 'negative')
           ]
         }
       },
       {
         id: 'practical',
-        label: 'Balanced Response',
+        label: 'Protect Infrastructure',
         description: 'Balanced evacuation and damage control',
         icon: 'fas fa-scale-balanced',
-        skills: ['society', 'crafting'],
+        skills: ['society', 'crafting', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Your organized response achieves balance. Lives are saved.',
@@ -78,29 +74,32 @@ export const naturalDisasterPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive'),
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
           ],
           success: [
-            textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           failure: [
             valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            textBadge('1 structure damaged', 'fas fa-house-crack', 'negative'),
-            textBadge('1 worksite destroyed', 'fas fa-industry', 'negative')
+            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative'),
+            valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            textBadge('2 structures damaged', 'fas fa-house-crack', 'negative')
+            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative'),
+            diceBadge('Lose {{value}} Lumber', 'fas fa-tree', '1d3', 'negative'),
+            diceBadge('Lose {{value}} Ore', 'fas fa-gem', '1d3', 'negative'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
           ]
         }
       },
       {
         id: 'save-assets',
-        label: 'Save Assets',
+        label: 'Martial Law',
         description: 'Deploy troops to protect valuable structures',
         icon: 'fas fa-building-shield',
-        skills: ['intimidation'],
+        skills: ['intimidation', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Your ruthless salvage yields materials. Citizens resent being abandoned.',
@@ -110,23 +109,20 @@ export const naturalDisasterPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Lumber/Stone/Ore (salvaged)', 'fas fa-boxes-stacked', '2d4', 'positive'),
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
+            textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
           ],
           success: [
-            textBadge('1 structure damaged', 'fas fa-house-crack', 'negative'),
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive')
           ],
           failure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
-            textBadge('1 army gains enfeebled', 'fas fa-person-falling', 'negative')
+            textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
             textBadge('1 structure damaged', 'fas fa-house-crack', 'negative'),
-            textBadge('1 army gains enfeebled', 'fas fa-person-falling', 'negative')
+            textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')
           ]
         }
       }

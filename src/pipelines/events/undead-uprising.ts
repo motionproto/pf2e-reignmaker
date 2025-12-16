@@ -15,7 +15,7 @@ import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
-import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 
 export const undeadUprisingPipeline: CheckPipeline = {
   id: 'undead-uprising',
@@ -23,14 +23,6 @@ export const undeadUprisingPipeline: CheckPipeline = {
   description: 'The dead rise to threaten the living in the kingdom.',
   checkType: 'event',
   tier: 1,
-
-  // Base skills (filtered by choice)
-  skills: [
-    { skill: 'folklore', description: 'understand spiritual matters' },
-    { skill: 'diplomacy', description: 'negotiate with spirits' },
-    { skill: 'intrigue', description: 'coordinate with clerics' },
-    { skill: 'warfare', description: 'mobilize forces' }
-  ],
 
   // Strategic choice - triggers voting system
   // Options ordered: Virtuous (left) → Practical (center) → Ruthless (right)
@@ -43,7 +35,7 @@ export const undeadUprisingPipeline: CheckPipeline = {
         label: 'Consecrate Land',
         description: 'Lay spirits to rest through consecration rituals',
         icon: 'fas fa-hands-praying',
-        skills: ['folklore', 'diplomacy'],
+        skills: ['occultism', 'diplomacy', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Spirits rest peacefully, blessed harvest follows.',
@@ -53,26 +45,27 @@ export const undeadUprisingPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d4', 'positive')
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
           ],
           success: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1', 'positive')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
           ],
           failure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1', 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
           ],
-          criticalFailure: [] // Damage structure + unrest handled by preview.calculate
+          criticalFailure: [
+            textBadge('Damage 1 structure', 'fas fa-house-crack', 'negative'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+          ]
         }
       },
       {
         id: 'practical',
-        label: 'Hire Clerics',
+        label: 'Mobilize Troops',
         description: 'Professional clergy to seal the area',
         icon: 'fas fa-user-shield',
-        skills: ['folklore', 'intrigue'],
+        skills: ['occultism', 'stealth', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Clerics seal the threat, boundary markers provided.',
@@ -82,19 +75,20 @@ export const undeadUprisingPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Lumber', 'fas fa-tree', '1d4', 'positive')
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
           ],
           success: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1', 'positive')
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
           ],
           failure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1', 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+            textBadge('Damage 1 structure', 'fas fa-house-crack', 'negative'),
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
           ]
         }
       },
@@ -103,7 +97,7 @@ export const undeadUprisingPipeline: CheckPipeline = {
         label: 'Burn Everything',
         description: 'Destroy everything in the affected area',
         icon: 'fas fa-fire',
-        skills: ['warfare', 'intrigue'],
+        skills: ['intimidation', 'stealth', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Fire purges the threat, necromancers captured.',
@@ -113,18 +107,57 @@ export const undeadUprisingPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+            textBadge('Convert {{value}} Unrest to Imprisoned (necromancers)', 'fas fa-lock', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
           ],
           success: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1', 'positive')
+            textBadge('Convert {{value}} Unrest to Imprisoned', 'fas fa-lock', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           failure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1', 'negative')
+            textBadge('Lose 1 hex', 'fas fa-map', 'negative')
           ],
-          criticalFailure: [] // Multiple structures damaged + unrest/fame handled by preview.calculate
+          criticalFailure: [
+            textBadge('Damage 1 structure', 'fas fa-house-crack', 'negative'),
+            textBadge('Lose 1 hex', 'fas fa-map', 'negative')
+          ]
         }
       }
     ]
+  },
+
+  skills: [
+    { skill: 'occultism', description: 'understand spiritual matters' },
+    { skill: 'diplomacy', description: 'negotiate with spirits' },
+    { skill: 'stealth', description: 'coordinate with clerics' },
+    { skill: 'intimidation', description: 'mobilize forces' }
+  ],
+
+  outcomes: {
+    criticalSuccess: {
+      description: 'Your approach handles the undead uprising effectively.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
+    },
+    success: {
+      description: 'The undead threat is resolved.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
+    },
+    failure: {
+      description: 'The undead cause damage.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
+    },
+    criticalFailure: {
+      description: 'The undead uprising has devastating consequences.',
+      endsEvent: true,
+      modifiers: [],
+      outcomeBadges: []
+    },
   },
 
   preview: {
@@ -136,7 +169,7 @@ export const undeadUprisingPipeline: CheckPipeline = {
       const outcome = ctx.outcome;
 
       const outcomeBadges = [];
-      const commandContext: GameCommandContext = { currentKingdom: kingdom };
+      const commandContext: GameCommandContext = { kingdom, outcome: outcome || 'success' };
 
       // Handle special outcomes based on approach
       if (approach === 'virtuous' && outcome === 'criticalFailure') {

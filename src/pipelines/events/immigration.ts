@@ -37,10 +37,10 @@ export const immigrationPipeline: CheckPipeline = {
     options: [
       {
         id: 'welcome-all',
-        label: 'Welcome All Freely',
+        label: 'Welcome Citizens',
         description: 'Open borders and generous integration support',
         icon: 'fas fa-door-open',
-        skills: ['diplomacy', 'society'],
+        skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Your generous welcome inspires skilled workers to establish farmsteads.',
@@ -50,32 +50,31 @@ export const immigrationPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            textBadge('Gain 1 new worksite', 'fas fa-industry', 'positive')
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
-            textBadge('Gain 1 new worksite', 'fas fa-industry', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
           ],
           failure: [
             valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
-            textBadge('Gain 1 new worksite', 'fas fa-industry', 'positive')
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
           ],
           criticalFailure: [
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative'),
-            textBadge('Gain 1 new worksite', 'fas fa-industry', 'positive')
+            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3+1', 'negative')
           ]
         }
       },
       {
         id: 'practical',
-        label: 'Controlled Integration',
+        label: 'Selective Entry',
         description: 'Systematic vetting and settlement program',
         icon: 'fas fa-clipboard-check',
-        skills: ['society', 'survival'],
+        skills: ['society', 'survival', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Your vetting identifies skilled immigrants who generate revenue.',
@@ -85,27 +84,29 @@ export const immigrationPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Gold (skilled workers)', 'fas fa-coins', '1d3', 'positive')
+            textBadge('Gain 1 worksite', 'fas fa-industry', 'positive'),
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
-            valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3+1', 'negative'),
+            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative'),
+            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')
           ]
         }
       },
       {
         id: 'ruthless',
-        label: 'Exploit as Labor',
+        label: 'Forced Labour',
         description: 'Relocate and use as cheap workforce',
         icon: 'fas fa-hammer',
-        skills: ['intimidation'],
+        skills: ['intimidation', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Forced labor yields immediate profits despite growing resentment.',
@@ -115,25 +116,18 @@ export const immigrationPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive'),
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            textBadge('Gain 2 new worksites', 'fas fa-industry', 'positive')
+            textBadge('Gain 1 worksite', 'fas fa-industry', 'positive'),
+            textBadge('1 settlement gains level', 'fas fa-city', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            textBadge('Gain 2 new worksites', 'fas fa-industry', 'positive')
+            textBadge('Gain 1 worksite', 'fas fa-industry', 'positive')
           ],
           failure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
-            textBadge('Gain 1 new worksite', 'fas fa-industry', 'positive')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
-            textBadge('-1 faction relation', 'fas fa-users-slash', 'negative'),
-            textBadge('Gain 1 new worksite', 'fas fa-industry', 'positive')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative'),
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
           ]
         }
       }
@@ -429,9 +423,9 @@ export const immigrationPipeline: CheckPipeline = {
       } else if (Array.isArray(selectedHexData)) {
         // Fallback: Simple array of hex IDs (no custom selector data)
         for (const hexId of selectedHexData) {
-          const worksiteType = approach === 'welcome-all' ? 'farmstead' : undefined;
+          const worksiteType = approach === 'welcome-all' ? 'farmstead' : 'worksite';
           await createWorksiteExecution(hexId, worksiteType);
-          ui.notifications?.info(`New settlers established a ${worksiteType || 'worksite'} on hex ${hexId}`);
+          ui.notifications?.info(`New settlers established a ${worksiteType} on hex ${hexId}`);
         }
       }
     }

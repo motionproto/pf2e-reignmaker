@@ -31,10 +31,10 @@ export const publicScandalPipeline: CheckPipeline = {
     options: [
       {
         id: 'virtuous',
-        label: 'Transparent Investigation',
+        label: 'Transparent Response',
         description: 'Publicly investigate and reveal the truth',
         icon: 'fas fa-search',
-        skills: ['society', 'diplomacy'],
+        skills: ['society', 'diplomacy', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'The investigation reveals truth. Your integrity becomes a testament to justice.',
@@ -44,28 +44,28 @@ export const publicScandalPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+            textBadge('Gain 1 kingdom action', 'fas fa-plus-circle', 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           failure: [
             valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative'),
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
           ]
         }
       },
       {
         id: 'practical',
-        label: 'Cover It Up',
+        label: 'Manage Narrative',
         description: 'Suppress the scandal quietly',
         icon: 'fas fa-user-secret',
-        skills: ['deception', 'stealth'],
+        skills: ['deception', 'stealth', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'The cover-up succeeds. Evidence disappears and the story dies.',
@@ -75,28 +75,28 @@ export const publicScandalPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ]
         }
       },
       {
         id: 'ruthless',
-        label: 'Scapegoat Official',
+        label: 'Suppress Story',
         description: 'Blame a subordinate to protect the crown',
         icon: 'fas fa-user-slash',
-        skills: ['intimidation', 'deception'],
+        skills: ['intimidation', 'deception', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'The scapegoating succeeds. Subordinates are imprisoned.',
@@ -106,20 +106,18 @@ export const publicScandalPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Imprison {{value}} scapegoats', 'fas fa-handcuffs', '1d2', 'info')
+            textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive'),
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
-            valueBadge('Imprison {{value}} scapegoat', 'fas fa-handcuffs', 1, 'info')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+            diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
+            diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d4', 'negative'),
             textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
           ]
         }

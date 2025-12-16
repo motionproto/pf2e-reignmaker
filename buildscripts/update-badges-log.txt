@@ -1,0 +1,116 @@
+=== UPDATING EVENT PIPELINE FILES ===
+
+1. Criminal Trial
+  ✅ Updated 12 outcomes in criminal-trial.ts
+
+2. Feud
+  ✅ Updated 12 outcomes in feud.ts
+
+3. Inquisition
+  ✅ Updated 12 outcomes in inquisition.ts
+
+4. Public Scandal
+  ✅ Updated 12 outcomes in public-scandal.ts
+
+5. Plague
+  ✅ Updated 12 outcomes in plague.ts
+
+6. Food Shortage
+  ⚠️  Could not find Virtuous approach in food-shortage.ts
+  ⚠️  Could not find Practical approach in food-shortage.ts
+  ⚠️  Could not find Ruthless approach in food-shortage.ts
+  ℹ️  No changes needed for food-shortage.ts
+
+7. Natural Disaster
+  ⚠️  Could not find Virtuous approach in natural-disaster.ts
+  ⚠️  Could not find Ruthless approach in natural-disaster.ts
+  ✅ Updated 4 outcomes in natural-disaster.ts
+
+8. Immigration
+  ⚠️  Could not find Virtuous approach in immigration.ts
+  ✅ Updated 8 outcomes in immigration.ts
+
+9. Assassination Attempt
+  ⚠️  Could not find Virtuous approach in assassination-attempt.ts
+  ✅ Updated 8 outcomes in assassination-attempt.ts
+
+10. Crime Wave
+  ✅ Updated 12 outcomes in crime-wave.ts
+
+11. Notorious Heist
+  ✅ Updated 12 outcomes in notorious-heist.ts
+
+12. Bandit Activity
+  ✅ Updated 12 outcomes in bandit-activity.ts
+
+13. Raiders
+  ✅ Updated 12 outcomes in raiders.ts
+
+14. Trade Agreement
+  ✅ Updated 12 outcomes in trade-agreement.ts
+
+15. Economic Surge
+  ✅ Updated 12 outcomes in economic-surge.ts
+
+16. Food Surplus
+  ✅ Updated 12 outcomes in food-surplus.ts
+
+17. Boomtown
+  ✅ Updated 12 outcomes in boomtown.ts
+
+18. Land Rush
+  ✅ Updated 12 outcomes in land-rush.ts
+
+19. Pilgrimage
+  ✅ Updated 12 outcomes in pilgrimage.ts
+
+20. Diplomatic Overture
+  ✅ Updated 12 outcomes in diplomatic-overture.ts
+
+21. Festive Invitation
+  ✅ Updated 12 outcomes in festive-invitation.ts
+
+22. Visiting Celebrity
+  ✅ Updated 12 outcomes in visiting-celebrity.ts
+
+23. Grand Tournament
+  ✅ Updated 12 outcomes in grand-tournament.ts
+
+24. Archaeological Find
+  ✅ Updated 12 outcomes in archaeological-find.ts
+
+25. Magical Discovery
+  ✅ Updated 12 outcomes in magical-discovery.ts
+
+26. Remarkable Treasure
+  ✅ Updated 12 outcomes in remarkable-treasure.ts
+
+27. Scholarly Discovery - SKIPPED (removed)
+28. Nature's Blessing
+  ✅ Updated 12 outcomes in natures-blessing.ts
+
+29. Good Weather
+  ✅ Updated 12 outcomes in good-weather.ts
+
+30. Military Exercises
+  ⚠️  No strategicChoice found in military-exercises.ts
+
+31. Drug Den
+  ✅ Updated 12 outcomes in drug-den.ts
+
+32. Monster Attack
+  ✅ Updated 9 outcomes in monster-attack.ts
+
+33. Undead Uprising
+  ✅ Updated 10 outcomes in undead-uprising.ts
+
+34. Cult Activity
+  ✅ Updated 9 outcomes in cult-activity.ts
+
+================================================================================
+
+✅ Updated: 31
+ℹ️  Skipped: 3
+❌ Errors: 0
+
+Total events processed: 34

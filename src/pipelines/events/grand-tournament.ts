@@ -30,10 +30,10 @@ export const grandTournamentPipeline: CheckPipeline = {
     options: [
       {
         id: 'virtuous',
-        label: 'Free Celebration',
+        label: 'Free Celebrations',
         description: 'Open celebration for all citizens',
         icon: 'fas fa-users',
-        skills: ['performance', 'athletics'],
+        skills: ['performance', 'athletics', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Free event creates legendary community spirit and structure.',
@@ -43,21 +43,19 @@ export const grandTournamentPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
-            textBadge('Gain 1 random structure', 'fas fa-building', 'positive')
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
           ],
           failure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            textBadge('Damage 1 structure', 'fas fa-house-crack', 'negative')
           ],
           criticalFailure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative'),
+            textBadge('Damage 1 structure', 'fas fa-house-crack', 'negative')
           ]
         }
       },
@@ -66,7 +64,7 @@ export const grandTournamentPipeline: CheckPipeline = {
         label: 'Organized Event',
         description: 'Entry fees with prizes and organized competition',
         icon: 'fas fa-trophy',
-        skills: ['athletics', 'society'],
+        skills: ['athletics', 'society', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Perfect balance of profit and spectacle. Structure awarded.',
@@ -76,18 +74,22 @@ export const grandTournamentPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive'),
-            textBadge('Gain 1 random structure', 'fas fa-building', 'positive')
+            textBadge('Gain 1 structure', 'fas fa-building', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
           ],
           failure: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ],
           criticalFailure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
+            textBadge('Damage 1 structure', 'fas fa-house-crack', 'negative')
           ]
         }
       },
@@ -96,7 +98,7 @@ export const grandTournamentPipeline: CheckPipeline = {
         label: 'Exclusive Affair',
         description: 'Noble-only event with high stakes',
         icon: 'fas fa-crown',
-        skills: ['diplomacy', 'performance'],
+        skills: ['diplomacy', 'performance', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Nobles shower gold. Exquisite structure built.',
@@ -106,18 +108,21 @@ export const grandTournamentPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive'),
-            textBadge('Gain 1 random structure', 'fas fa-building', 'positive')
+            textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive'),
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
+            textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative'),
+            valueBadge('{{value}} innocents harmed', 'fas fa-user-injured', 1, 'negative')
           ]
         }
       }

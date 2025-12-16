@@ -28,10 +28,10 @@ export const plaguePipeline: CheckPipeline = {
     options: [
       {
         id: 'virtuous',
-        label: 'Provide Free Treatment',
+        label: 'Quarantine & Care',
         description: 'Care for all citizens regardless of cost',
         icon: 'fas fa-hand-holding-medical',
-        skills: ['medicine', 'religion'],
+        skills: ['medicine', 'religion', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Your selfless care saves countless lives and earns deep gratitude from your people.',
@@ -41,31 +41,30 @@ export const plaguePipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
-            diceBadge('Lose {{value}} Food', 'fas fa-wheat-awn', '1d4', 'negative')
+            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
-            diceBadge('Lose {{value}} Food', 'fas fa-wheat-awn', '2d4', 'negative'),
-            textBadge('Ongoing: Plague spreads (-1d4 Food/turn for 2 turns)', 'fas fa-biohazard', 'negative')
+            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '2d4', 'negative'),
+            textBadge('1 settlement loses level', 'fas fa-city', 'negative')
           ]
         }
       },
       {
         id: 'practical',
-        label: 'Quarantine Effectively',
+        label: 'Contain Spread',
         description: 'Contain the spread and compensate losses',
         icon: 'fas fa-house-medical-circle-check',
-        skills: ['society', 'medicine'],
+        skills: ['society', 'medicine', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Your systematic quarantine stops the plague with minimal disruption.',
@@ -75,27 +74,28 @@ export const plaguePipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive'),
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative'),
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative'),
+            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '2d4', 'negative')
           ]
         }
       },
       {
         id: 'ruthless',
-        label: 'Lock Down Hard',
+        label: 'Burn the Infected',
         description: 'Burn infected areas to stop the spread',
         icon: 'fas fa-fire',
-        skills: ['intimidation', 'survival'],
+        skills: ['intimidation', 'survival', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Your brutal lockdown eradicates the plague completely, and salvaged assets fill your treasury.',
@@ -105,22 +105,18 @@ export const plaguePipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Gold (forfeited assets)', 'fas fa-coins', '2d3', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive'),
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
-            diceBadge('Gain {{value}} Gold (forfeited assets)', 'fas fa-coins', '1d3', 'positive')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
-            textBadge('1 structure destroyed', 'fas fa-house-fire', 'negative'),
-            textBadge('-1 faction relation', 'fas fa-users-slash', 'negative')
+            textBadge('Lose 1 worksite', 'fas fa-industry', 'negative'),
+            textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
           ]
         }
       }

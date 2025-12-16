@@ -1,0 +1,1526 @@
+
+================================================================================
+EVENT: Criminal Trial
+================================================================================
+
+  Virtuous: Show Mercy
+    Critical Success:
+      diceBadge('Pardon {{value}} prisoners', 'fas fa-dove', '1d3', 'positive')
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
+    Success:
+      diceBadge('Pardon {{value}} prisoners', 'fas fa-dove', '1d3', 'positive')
+      valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+    Critical Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4+1', 'negative')
+
+  Practical: Fair Trial
+    Critical Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+    Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+    Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+    Critical Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+
+  Ruthless: Harsh Punishment
+    Critical Success:
+      diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '2d4', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+    Success:
+      diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+    Failure:
+      diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')
+    Critical Failure:
+      diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')
+
+================================================================================
+EVENT: Feud
+================================================================================
+
+  Virtuous: Mediate Peacefully
+    Critical Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+    Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+    Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+    Critical Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+
+  Practical: Manipulate Outcome
+    Critical Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive')
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+      valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+    Critical Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+      textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')
+
+  Ruthless: Force Compliance
+    Critical Success:
+      diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '2d3', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+    Success:
+      diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+    Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+    Critical Failure:
+      textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+      diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d2', 'negative')
+
+================================================================================
+EVENT: Inquisition
+================================================================================
+
+  Virtuous: Protect the Accused
+    Critical Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
+    Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
+    Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
+    Critical Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+
+  Practical: Formal Investigation
+    Critical Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+      valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+    Critical Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+
+  Ruthless: Support Inquisitors
+    Critical Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+    Success:
+      diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+    Failure:
+      diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')
+    Critical Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+      diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')
+
+================================================================================
+EVENT: Public Scandal
+================================================================================
+
+  Virtuous: Transparent Response
+    Critical Success:
+      textBadge('Gain 1 kingdom action', 'fas fa-plus-circle', 'positive')
+    Success:
+      valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+    Failure:
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+    Critical Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+
+  Practical: Manage Narrative
+    Critical Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+    Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+    Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+    Critical Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+
+  Ruthless: Suppress Story
+    Critical Success:
+      textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+      valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+    Failure:
+      diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')
+    Critical Failure:
+      diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d4', 'negative')
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+
+================================================================================
+EVENT: Plague
+================================================================================
+
+  Virtuous: Quarantine & Care
+    Critical Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+    Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+    Critical Failure:
+      diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '2d4', 'negative')
+      textBadge('1 settlement loses level', 'fas fa-city', 'negative')
+
+  Practical: Contain Spread
+    Critical Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
+      valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
+    Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+    Critical Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+      diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '2d4', 'negative')
+
+  Ruthless: Burn the Infected
+    Critical Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
+    Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+    Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+    Critical Failure:
+      textBadge('Lose 1 worksite', 'fas fa-industry', 'negative')
+      textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+
+================================================================================
+EVENT: Food Shortage
+================================================================================
+
+  Virtuous: Share Reserves
+    Critical Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+    Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+    Failure:
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+      diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')
+    Critical Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+      diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '2d4+1', 'negative')
+
+  Practical: Ration & Import
+    Critical Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
+      valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
+    Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+    Critical Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+      diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '2d3', 'negative')
+
+  Ruthless: Feed Nobility
+    Critical Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+    Critical Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+      diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+
+================================================================================
+EVENT: Natural Disaster
+================================================================================
+
+  Virtuous: Rescue & Relief
+    Critical Success:
+      valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+    Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
+    Failure:
+      textBadge('Lose 1 worksite', 'fas fa-industry', 'negative')
+    Critical Failure:
+      textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+      textBadge('Lose 1 worksite', 'fas fa-industry', 'negative')
+
+  Practical: Protect Infrastructure
+    Critical Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
+    Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+    Failure:
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+      diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')
+      valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
+    Critical Failure:
+      diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')
+      // TODO: Parse '-1d3 Lumber'
+      // TODO: Parse '-1d3 Ore'
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+
+  Ruthless: Martial Law
+    Critical Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+      textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive')
+    Failure:
+      textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')
+    Critical Failure:
+      textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+      textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')
+
+================================================================================
+EVENT: Immigration
+================================================================================
+
+  Virtuous: Welcome Citizens
+    Critical Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+      valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+    Failure:
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+    Critical Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+      diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3+1', 'negative')
+
+  Practical: Selective Entry
+    Critical Success:
+      textBadge('Gain 1 worksite', 'fas fa-industry', 'positive')
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
+    Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3+1', 'negative')
+      diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')
+    Critical Failure:
+      valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+      diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')
+
+  Ruthless: Forced Labour
+    Critical Success:
+      textBadge('Gain 1 worksite', 'fas fa-industry', 'positive')
+      textBadge('1 settlement gains level', 'fas fa-city', 'positive')
+    Success:
+      textBadge('Gain 1 worksite', 'fas fa-industry', 'positive')
+    Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+    Critical Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+      valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+
+================================================================================
+EVENT: Assassination Attempt
+================================================================================
+
+  Virtuous: Public Investigation
+    Critical Success:
+      valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
+    Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+    Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')
+      valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
+    Critical Failure:
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+      textBadge('Lose 1 kingdom action', 'fas fa-minus-circle', 'negative')
+
+  Practical: Secret Investigation
+    Critical Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+      valueBadge('{{value}} innocents harmed', 'fas fa-user-injured', 1, 'negative')
+    Critical Failure:
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+      textBadge('Lose 1 kingdom action', 'fas fa-minus-circle', 'negative')
+
+  Ruthless: Mass Arrests
+    Critical Success:
+      diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '2d4', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+    Success:
+      diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '2d3', 'positive')
+    Failure:
+      diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')
+    Critical Failure:
+      textBadge('Lose 1 kingdom action', 'fas fa-minus-circle', 'negative')
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+
+================================================================================
+EVENT: Crime Wave
+================================================================================
+
+  Virtuous: Community outreach
+    Critical Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+    Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+    Critical Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')
+
+  Practical: Patrols
+    Critical Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive')
+      textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
+    Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+    Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+    Critical Failure:
+      textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+
+  Ruthless: Crackdown
+    Critical Success:
+      diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '2d4', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3+1', 'positive')
+    Success:
+      diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+    Failure:
+      diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')
+    Critical Failure:
+      diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d4', 'negative')
+      textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+
+================================================================================
+EVENT: Notorious Heist
+================================================================================
+
+  Virtuous: Track & Recover
+    Critical Success:
+      valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+      valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+    Critical Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+
+  Practical: Increase Security
+    Critical Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+    Success:
+      valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive')
+    Failure:
+      valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')
+    Critical Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+
+  Ruthless: Terrorize
+    Critical Success:
+      diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '2d4', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
+    Success:
+      diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+    Failure:
+      diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')
+    Critical Failure:
+      textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+      valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+
+================================================================================
+EVENT: Bandit Activity
+================================================================================
+
+  Virtuous: Negotiate
+    Critical Success:
+      textBadge('Gain 1 worksite', 'fas fa-industry', 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+    Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+    Critical Failure:
+      valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
+      textBadge('Lose 1 worksite', 'fas fa-industry', 'negative')
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+
+  Practical: Drive Off
+    Critical Success:
+      valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
+      textBadge('Gain 1 worksite', 'fas fa-industry', 'positive')
+      valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+      valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+    Critical Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')
+      textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+
+  Ruthless: Hunt Mercilessly
+    Critical Success:
+      diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '2d3', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+      diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')
+    Success:
+      diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+    Failure:
+      valueBadge('{{value}} innocents harmed', 'fas fa-user-injured', 1, 'negative')
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+    Critical Failure:
+      diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d2', 'negative')
+      textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+
+================================================================================
+EVENT: Raiders
+================================================================================
+
+  Virtuous: Defend & Protect
+    Critical Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
+    Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+    Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+    Critical Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+
+  Practical: Strategic Defense
+    Critical Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+      diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+      valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+    Failure:
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+    Critical Failure:
+      textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+      valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+
+  Ruthless: Counter-raid
+    Critical Success:
+      textBadge('Claim 1 hex', 'fas fa-map', 'positive')
+      diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive')
+      valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+      diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive')
+    Failure:
+      textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')
+      valueBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', 1, 'negative')
+    Critical Failure:
+      textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+      valueBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', 1, 'negative')
+
+================================================================================
+EVENT: Trade Agreement
+================================================================================
+
+  Virtuous: Generous terms
+    Critical Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+    Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+      diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')
+    Critical Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+      diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')
+      diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')
+
+  Practical: Fair trade
+    Critical Success:
+      diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')
+      diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
+    Success:
+      diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')
+      diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')
+      diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')
+    Critical Failure:
+      diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')
+      diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+
+  Ruthless: Exploit Partner
+    Critical Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+      diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')
+      diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')
+    Success:
+      diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+    Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      valueBadge('Lose {{value}} random resource', 'fas fa-box', 1, 'negative')
+    Critical Failure:
+      valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+
+================================================================================
+EVENT: Economic Surge
+================================================================================
+
+  Virtuous: Share Prosperity
+    Critical Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+    Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
+    Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
+    Critical Failure:
+      diceBadge('Lose {{value}} random resource', 'fas fa-box', '2d3', 'negative')
+      valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+
+  Practical: Stockpile Surplus
+    Critical Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d4', 'positive')
+      diceBadge('Gain {{value}} random resource', 'fas fa-box', '2d3', 'positive')
+      diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d4', 'positive')
+    Success:
+      diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')
+      diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')
+      diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')
+    Critical Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+      diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d4', 'negative')
+      diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d4', 'negative')
+
+  Ruthless: Exploit for Profit
+    Critical Success:
+      diceBadge('Gain {{value}} random resource', 'fas fa-box', '2d3', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+    Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
+    Critical Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+      valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+
+================================================================================
+EVENT: Food Surplus
+================================================================================
+
+  Virtuous: Feed the Poor
+    Critical Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
+    Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      valueBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', 1, 'positive')
+    Failure:
+      valueBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', 1, 'negative')
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')
+    Critical Failure:
+      diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '2d4', 'negative')
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+
+  Practical: Store & Trade
+    Critical Success:
+      diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '2d3', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+    Success:
+      diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+    Critical Failure:
+      diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '2d3', 'negative')
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+
+  Ruthless: Tax the Farmers
+    Critical Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '3d3', 'positive')
+      diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'positive')
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+    Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+    Critical Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+
+================================================================================
+EVENT: Boomtown
+================================================================================
+
+  Virtuous: Community Planning
+    Critical Success:
+      textBadge('1 settlement gains level', 'fas fa-city', 'positive')
+      textBadge('Gain 1 structure', 'fas fa-building', 'positive')
+    Success:
+      textBadge('1 settlement gains level', 'fas fa-city', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+    Critical Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')
+      valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+
+  Practical: Managed Expansion
+    Critical Success:
+      textBadge('Gain 1 structure', 'fas fa-building', 'positive')
+      diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d4', 'positive')
+      diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d4', 'positive')
+    Success:
+      textBadge('Gain 1 structure', 'fas fa-building', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+      diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')
+    Critical Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d4', 'negative')
+      diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d4', 'negative')
+      valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+
+  Ruthless: Exploit Markets
+    Critical Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
+      textBadge('Gain 1 structure', 'fas fa-building', 'positive')
+    Success:
+      textBadge('Gain 1 structure', 'fas fa-building', 'positive')
+    Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')
+    Critical Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+      valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+
+================================================================================
+EVENT: Land Rush
+================================================================================
+
+  Virtuous: Fair Distribution
+    Critical Success:
+      textBadge('Claim 1 hex', 'fas fa-map', 'positive')
+      textBadge('Claim 1 hex', 'fas fa-map', 'positive')
+    Success:
+      textBadge('Claim 1 hex', 'fas fa-map', 'positive')
+    Failure:
+      valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+    Critical Failure:
+      valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+      textBadge('Lose 1 worksite', 'fas fa-industry', 'negative')
+
+  Practical: Auction
+    Critical Success:
+      textBadge('Claim 1 hex', 'fas fa-map', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
+    Success:
+      textBadge('Claim 1 hex', 'fas fa-map', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')
+    Critical Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+      diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')
+
+  Ruthless: Favor Allies
+    Critical Success:
+      textBadge('Claim 1 hex', 'fas fa-map', 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+    Success:
+      textBadge('Claim 1 hex', 'fas fa-map', 'positive')
+    Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+    Critical Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      // TODO: Parse 'Fame -1'
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+
+================================================================================
+EVENT: Pilgrimage
+================================================================================
+
+  Virtuous: Free Passage
+    Critical Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      // TODO: Parse 'Fame +1'
+      valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+    Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+    Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+    Critical Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      // TODO: Parse 'Fame -1'
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+
+  Practical: Protect the Pilgrims
+    Critical Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
+      textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+      valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+    Critical Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+      textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')
+
+  Ruthless: Pay or be Persecuted
+    Critical Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
+      diceBadge('Gain {{value}} random resource', 'fas fa-box', '2d4', 'positive')
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+    Failure:
+      diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')
+    Critical Failure:
+      // TODO: Parse 'Fame -1'
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+
+================================================================================
+EVENT: Diplomatic Overture
+================================================================================
+
+  Virtuous: Generous Terms
+    Critical Success:
+      valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+    Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+    Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+    Critical Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+
+  Practical: Balanced Agreement
+    Critical Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d4', 'positive')
+      diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d4', 'positive')
+    Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')
+    Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')
+    Critical Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d4', 'negative')
+      diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d4', 'negative')
+
+  Ruthless: Exploit Relationship
+    Critical Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+    Critical Failure:
+      valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+
+================================================================================
+EVENT: Festive Invitation
+================================================================================
+
+  Virtuous: Attend Humbly
+    Critical Success:
+      // TODO: Parse 'Fame +1'
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+    Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+    Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+    Critical Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      // TODO: Parse 'Fame -1'
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+
+  Practical: Diplomatic Gifts
+    Critical Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
+      diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')
+    Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+    Critical Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+
+  Ruthless: Display Power
+    Critical Success:
+      textBadge('1 army receives equipment', 'fas fa-shield', 'positive')
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
+    Success:
+      textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
+    Failure:
+      textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+    Critical Failure:
+      textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+
+================================================================================
+EVENT: Visiting Celebrity
+================================================================================
+
+  Virtuous: Simple Hospitality
+    Critical Success:
+      valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+    Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+    Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+    Critical Failure:
+      // TODO: Parse 'Fame -1'
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+
+  Practical: Appropriate Ceremony
+    Critical Success:
+      valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3+1', 'positive')
+    Success:
+      valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
+    Failure:
+      // TODO: Parse 'Fame -1'
+    Critical Failure:
+      valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')
+
+  Ruthless: Lavish Display
+    Critical Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '4d3', 'positive')
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')
+    Critical Failure:
+      valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+      valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+
+================================================================================
+EVENT: Grand Tournament
+================================================================================
+
+  Virtuous: Free Celebrations
+    Critical Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      // TODO: Parse 'Fame +1'
+      valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+    Success:
+      // TODO: Parse 'Fame +1'
+    Failure:
+      textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+    Critical Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')
+      textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+
+  Practical: Organized Event
+    Critical Success:
+      textBadge('Gain 1 structure', 'fas fa-building', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+    Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+    Critical Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+
+  Ruthless: Exclusive Affair
+    Critical Success:
+      textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+    Success:
+      textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
+    Failure:
+      textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+    Critical Failure:
+      valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+      textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')
+      valueBadge('{{value}} innocents harmed', 'fas fa-user-injured', 1, 'negative')
+
+================================================================================
+EVENT: Archaeological Find
+================================================================================
+
+  Virtuous: Preserve Heritage
+    Critical Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      textBadge('1 settlement gains level', 'fas fa-city', 'positive')
+    Success:
+      textBadge('1 settlement gains level', 'fas fa-city', 'positive')
+    Failure:
+      textBadge('1 settlement loses level', 'fas fa-city', 'negative')
+    Critical Failure:
+      textBadge('1 settlement loses level', 'fas fa-city', 'negative')
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+
+  Practical: Scholarly Study
+    Critical Success:
+      textBadge('Gain 1 structure', 'fas fa-building', 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+    Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+    Critical Failure:
+      // TODO: Parse 'Fame -1'
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+
+  Ruthless: Sell Artifacts
+    Critical Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')
+    Critical Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')
+
+================================================================================
+EVENT: Magical Discovery
+================================================================================
+
+  Virtuous: Share Freely
+    Critical Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      // TODO: Parse 'Fame +1'
+    Success:
+      // TODO: Parse 'Fame +1'
+    Failure:
+      // TODO: Parse 'Fame -1'
+    Critical Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      // TODO: Parse 'Fame -1'
+
+  Practical: Academic Study
+    Critical Success:
+      // TODO: Parse 'Fame +1'
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3+1', 'positive')
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+    Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+    Critical Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      // TODO: Parse 'Fame -1'
+      // TODO: Parse '+d2 Unrest'
+
+  Ruthless: Secret Knowledge
+    Critical Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '3d3', 'positive')
+      // TODO: Parse 'Fame +1'
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')
+    Critical Failure:
+      valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+      textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+      valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
+
+================================================================================
+EVENT: Remarkable Treasure
+================================================================================
+
+  Virtuous: Share with All
+    Critical Success:
+      // TODO: Parse 'Fame +1'
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+    Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+      diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')
+    Critical Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+      // TODO: Parse 'Fame -1'
+
+  Practical: Add to Treasury
+    Critical Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
+      diceBadge('Gain {{value}} random resource', 'fas fa-box', '2d3', 'positive')
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+      diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')
+    Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+    Critical Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+      // TODO: Parse 'Fame -1'
+
+  Ruthless: Keep for Leadership
+    Critical Success:
+      textBadge('Gain 1 kingdom action', 'fas fa-plus-circle', 'positive')
+      valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+    Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+    Critical Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+      valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+
+================================================================================
+EVENT: Scholarly Discovery
+================================================================================
+
+  Virtuous: Open University
+    Critical Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
+    Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d2', 'negative')
+    Critical Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d4', 'negative')
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+
+  Practical: Funded Research
+    Critical Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
+      // TODO: Parse '+1d4 Materials'
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d2', 'negative')
+    Critical Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d4', 'negative')
+
+  Ruthless: Exclusive Academy
+    Critical Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+    Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')
+    Critical Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+      valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+
+================================================================================
+EVENT: Nature's Blessing
+================================================================================
+
+  Virtuous: Preserve Carefully
+    Critical Success:
+      diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '2d3', 'positive')
+      diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+    Success:
+      diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'positive')
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')
+      diceBadge('Lose {{value}} random resource', 'fas fa-box', '2d3', 'negative')
+    Critical Failure:
+      diceBadge('Lose {{value}} random resource', 'fas fa-box', '2d3', 'negative')
+      diceBadge('Lose {{value}} random resource', 'fas fa-box', '2d3', 'negative')
+
+  Practical: Harvest Sustainably
+    Critical Success:
+      diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '2d4', 'positive')
+      diceBadge('Gain {{value}} random resource', 'fas fa-box', '2d4', 'positive')
+    Success:
+      diceBadge('Gain {{value}} random resource', 'fas fa-box', '2d3', 'positive')
+      diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')
+      diceBadge('Lose {{value}} random resource', 'fas fa-box', '2d3', 'negative')
+    Critical Failure:
+      diceBadge('Lose {{value}} random resource', 'fas fa-box', '2d3', 'negative')
+      diceBadge('Lose {{value}} random resource', 'fas fa-box', '2d3', 'negative')
+
+  Ruthless: Exploit Fully
+    Critical Success:
+      diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '2d4', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
+      valueBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', 1, 'positive')
+    Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+      diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')
+    Critical Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+      diceBadge('Lose {{value}} random resource', 'fas fa-box', '2d3', 'negative')
+
+================================================================================
+EVENT: Good Weather
+================================================================================
+
+  Virtuous: Celebrate
+    Critical Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
+    Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3+1', 'negative')
+    Critical Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')
+
+  Practical: Work Hard
+    Critical Success:
+      diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d4', 'positive')
+      diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d4', 'positive')
+    Success:
+      diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d3+1', 'positive')
+    Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')
+    Critical Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+
+  Ruthless: Military Exercises
+    Critical Success:
+      textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
+    Success:
+      // TODO: Parse 'Heal Army'
+    Failure:
+      textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')
+    Critical Failure:
+      textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')
+
+================================================================================
+EVENT: Military Exercises
+================================================================================
+
+  Virtuous: Defensive Drills
+    Critical Success:
+      textBadge('Fortify 1 hex', 'fas fa-fort-awesome', 'positive')
+      // TODO: Parse 'Fame +1'
+    Success:
+      textBadge('Fortify 1 hex', 'fas fa-fort-awesome', 'positive')
+    Failure:
+      textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+    Critical Failure:
+      textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')
+      valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+
+  Practical: Equipment Focus
+    Critical Success:
+      textBadge('1 army receives equipment', 'fas fa-shield', 'positive')
+      textBadge('1 army receives equipment', 'fas fa-shield', 'positive')
+      valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
+    Success:
+      textBadge('1 army receives equipment', 'fas fa-shield', 'positive')
+      valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
+    Failure:
+      textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3+1', 'negative')
+    Critical Failure:
+      textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')
+      valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+
+  Ruthless: Aggressive Training
+    Critical Success:
+      textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
+      // TODO: Parse 'Fame +1'
+      valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
+    Success:
+      textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
+      valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
+    Failure:
+      textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+    Critical Failure:
+      textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')
+      valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+
+================================================================================
+EVENT: Drug Den
+================================================================================
+
+  Virtuous: Rehabilitation
+    Critical Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
+    Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+    Critical Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+      textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+
+  Practical: Regulate & Tax
+    Critical Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
+      // TODO: Parse '+Ongoing Gold (1 for 3)'
+    Success:
+      valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
+      // TODO: Parse '+Ongoing Gold'
+    Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+    Critical Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+      // TODO: Parse 'Fame -1'
+
+  Ruthless: Crush with Force
+    Critical Success:
+      diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive')
+      // TODO: Parse 'Fame +1'
+    Success:
+      diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '2d3', 'positive')
+    Failure:
+      diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')
+    Critical Failure:
+      textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+      diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')
+
+================================================================================
+EVENT: Monster Attack
+================================================================================
+
+  Virtuous: Relocate Peacefully
+    Critical Success:
+      // TODO: Parse 'Fame +1'
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+    Success:
+      // TODO: Parse 'Fame +1'
+    Failure:
+      // TODO: Parse 'Fame -1'
+    Critical Failure:
+      textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+
+  Practical: Hire Hunters
+    Critical Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive')
+    Success:
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3+1', 'positive')
+      valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+    Failure:
+      valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3+1', 'negative')
+    Critical Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+
+  Ruthless: Mobilize Army
+    Critical Success:
+      textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3+1', 'positive')
+    Success:
+      textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
+    Failure:
+      textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+    Critical Failure:
+      textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')
+      textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+
+================================================================================
+EVENT: Undead Uprising
+================================================================================
+
+  Virtuous: Consecrate Land
+    Critical Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      // TODO: Parse 'Fame +1'
+    Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+    Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+    Critical Failure:
+      textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+
+  Practical: Mobilize Troops
+    Critical Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
+    Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
+    Failure:
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+    Critical Failure:
+      textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+      // TODO: Parse 'Fame -1'
+
+  Ruthless: Burn Everything
+    Critical Success:
+      diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '2d3', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+    Success:
+      diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+    Failure:
+      textBadge('Lose 1 hex', 'fas fa-map', 'negative')
+    Critical Failure:
+      textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+      textBadge('Lose 1 hex', 'fas fa-map', 'negative')
+
+================================================================================
+EVENT: Cult Activity
+================================================================================
+
+  Virtuous: Investigate Respectfully
+    Critical Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
+    Success:
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+    Failure:
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+    Critical Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+
+  Practical: Monitor & Contain
+    Critical Success:
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+      textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
+    Success:
+      valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
+      textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+    Failure:
+      textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+      valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
+    Critical Failure:
+      // TODO: Parse '+Ongoing Unrest'
+      diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+
+  Ruthless: Heretics Burn
+    Critical Success:
+      diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive')
+      diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+    Success:
+      diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive')
+      diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+    Failure:
+      diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')
+    Critical Failure:
+      // TODO: Parse 'Fame -1'
+      textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')

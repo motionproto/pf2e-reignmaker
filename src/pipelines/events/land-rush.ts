@@ -13,9 +13,16 @@
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { validateClaimHex } from '../shared/claimHexValidator';
-import { claimHexesExecution } from '../../execution/territory/claimHexes';
 import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
+import WorksiteTypeSelector from '../../services/hex-selector/WorksiteTypeSelector.svelte';
+import {
+  validateClaimed,
+  validateNoSettlement,
+  safeValidation,
+  getFreshKingdomData,
+  type ValidationResult
+} from '../shared/hexValidators';
+import { claimHexesExecution } from '../../execution/territory/claimHexes';
 
 export const landRushPipeline: CheckPipeline = {
   id: 'land-rush',
@@ -32,10 +39,10 @@ export const landRushPipeline: CheckPipeline = {
     options: [
       {
         id: 'virtuous',
-        label: 'Free Settlement',
+        label: 'Fair Distribution',
         description: 'Grant free land to all settlers',
         icon: 'fas fa-handshake',
-        skills: ['diplomacy', 'survival'],
+        skills: ['diplomacy', 'survival', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Free land inspires prosperity. Settlement and infrastructure flourish.',
@@ -45,31 +52,28 @@ export const landRushPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            textBadge('Gain 1 new worksite', 'fas fa-hammer', 'positive')
-            // Note: Structure gain handled in execute()
+            textBadge('Claim 1 hex', 'fas fa-map', 'positive'),
+            textBadge('Claim 1 hex', 'fas fa-map', 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
-            textBadge('Gain 1 new worksite', 'fas fa-hammer', 'positive')
+            textBadge('Claim 1 hex', 'fas fa-map', 'positive')
           ],
           failure: [
-            diceBadge('Lose {{value}} random resource', 'fas fa-cube', '1d3', 'negative')
+            valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
           ],
           criticalFailure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative'),
-            diceBadge('Lose {{value}} random resource', 'fas fa-cube', '1d3', 'negative')
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
+            textBadge('Lose 1 worksite', 'fas fa-industry', 'negative')
           ]
         }
       },
       {
         id: 'practical',
-        label: 'Controlled Development',
+        label: 'Auction',
         description: 'Manage expansion with permits and planning',
         icon: 'fas fa-clipboard-check',
-        skills: ['society', 'survival'],
+        skills: ['society', 'survival', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Orderly expansion generates revenue and infrastructure.',
@@ -79,29 +83,29 @@ export const landRushPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive'),
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
-            // Note: Structure gain handled in execute()
+            textBadge('Claim 1 hex', 'fas fa-map', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+            textBadge('Claim 1 hex', 'fas fa-map', 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')
           ],
           criticalFailure: [
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative'),
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')
           ]
         }
       },
       {
         id: 'ruthless',
-        label: 'Auction Land',
+        label: 'Favor Allies',
         description: 'Sell land to the highest bidders',
         icon: 'fas fa-gavel',
-        skills: ['intimidation', 'society'],
+        skills: ['intimidation', 'society', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Land auctions generate massive profits and new worksites.',
@@ -111,20 +115,21 @@ export const landRushPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive'),
-            textBadge('Gain 1 new worksite', 'fas fa-hammer', 'positive')
+            textBadge('Claim 1 hex', 'fas fa-map', 'positive'),
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
-            textBadge('Gain 1 new worksite', 'fas fa-hammer', 'positive')
+            textBadge('Claim 1 hex', 'fas fa-map', 'positive')
           ],
           failure: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ]
         }
       }
@@ -216,24 +221,45 @@ export const landRushPipeline: CheckPipeline = {
 
   traits: ["dangerous"],
 
-  // Use postApplyInteractions for hex selection (optional - only for claiming hexes)
-  // Note: This is commented out for now since the spec doesn't mention hex claiming
-  // postApplyInteractions: [
-  //   {
-  //     type: 'map-selection',
-  //     id: 'selectedHexes',
-  //     mode: 'hex-selection',
-  //     colorType: 'claim',
-  //     condition: (ctx) => ctx.outcome === 'success' || ctx.outcome === 'criticalSuccess',
-  //     validateHex: validateClaimHex,
-  //     outcomeAdjustment: {
-  //       criticalSuccess: { count: 1, title: 'Select 1 hex for new settlement' },
-  //       success: { count: 1, title: 'Select 1 hex for new settlement' },
-  //       failure: { count: 0 },
-  //       criticalFailure: { count: 0 }
-  //     }
-  //   }
-  // ],
+  postApplyInteractions: [
+    {
+      id: 'selectedHex',
+      type: 'map-selection',
+      mode: 'hex-selection',
+      count: 1,
+      title: 'Select a hex for the new worksite',
+      colorType: 'worksite',
+      required: true,
+      condition: (ctx) => {
+        return ctx.metadata?._gainWorksite === true;
+      },
+      validateHex: (hexId: string): ValidationResult => {
+        return safeValidation(() => {
+          const kingdom = getFreshKingdomData();
+          const hex = kingdom.hexes?.find((h: any) => h.id === hexId);
+          
+          if (!hex) {
+            return { valid: false, message: 'Hex not found' };
+          }
+          
+          const claimedResult = validateClaimed(hexId, kingdom);
+          if (!claimedResult.valid) return claimedResult;
+          
+          const settlementResult = validateNoSettlement(hexId, kingdom);
+          if (!settlementResult.valid) return settlementResult;
+          
+          if (hex.worksite) {
+            return { valid: false, message: `Hex already has a ${hex.worksite.type}` };
+          }
+          
+          return { valid: true, message: 'Valid location for worksite' };
+        }, hexId, 'land-rush worksite validation');
+      },
+      customSelector: {
+        component: WorksiteTypeSelector
+      }
+    }
+  ],
 
   execute: async (ctx) => {
     // NOTE: Standard modifiers (unrest, gold, fame) are applied automatically by
@@ -247,8 +273,29 @@ export const landRushPipeline: CheckPipeline = {
 
     // Create worksite (virtuous CS/S, ruthless CS/S)
     if (ctx.metadata?._gainWorksite) {
+      const selectedHexData = ctx.resolutionData?.compoundData?.selectedHex;
+      
+      if (!selectedHexData) {
+        return { success: false, error: 'No hex selected for worksite' };
+      }
+      
+      let hexId: string | undefined;
+      let worksiteType: string | undefined;
+      
+      if (selectedHexData?.hexIds) {
+        hexId = selectedHexData.hexIds[0];
+        if (hexId && selectedHexData.metadata) {
+          worksiteType = selectedHexData.metadata[hexId]?.worksiteType;
+        }
+      }
+
+      if (!hexId || !worksiteType) {
+        return { success: false, error: 'Worksite selection incomplete' };
+      }
+
       const { createWorksiteExecution } = await import('../../execution/territory/createWorksite');
-      await createWorksiteExecution();
+      await createWorksiteExecution(hexId, worksiteType);
+      ui.notifications?.info(`Land rush settlers established ${worksiteType} on hex ${hexId}`);
     }
 
     // Gain random structure (virtuous CS, practical CS)

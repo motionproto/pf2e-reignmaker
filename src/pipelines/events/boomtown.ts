@@ -12,7 +12,7 @@
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 import { updateKingdom } from '../../stores/KingdomStore';
 
 export const boomtownPipeline: CheckPipeline = {
@@ -30,10 +30,10 @@ export const boomtownPipeline: CheckPipeline = {
     options: [
       {
         id: 'virtuous',
-        label: 'Fair Housing',
+        label: 'Community Planning',
         description: 'Ensure fair housing and protect worker rights',
         icon: 'fas fa-home',
-        skills: ['diplomacy', 'society'],
+        skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Fair policies inspire hope and attract new infrastructure.',
@@ -43,28 +43,27 @@ export const boomtownPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
-            // Note: Structure gain handled in execute()
+            textBadge('1 settlement gains level', 'fas fa-city', 'positive'),
+            textBadge('Gain 1 structure', 'fas fa-building', 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            textBadge('1 settlement gains level', 'fas fa-city', 'positive')
           ],
           failure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative'),
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
           ]
         }
       },
       {
         id: 'practical',
-        label: 'Regulate Growth',
+        label: 'Managed Expansion',
         description: 'Manage growth sustainably with permits',
         icon: 'fas fa-clipboard-check',
-        skills: ['society', 'crafting'],
+        skills: ['society', 'crafting', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Orderly growth brings wealth, resources, and infrastructure.',
@@ -74,27 +73,30 @@ export const boomtownPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive'),
-            diceBadge('Gain {{value}} Lumber/Stone', 'fas fa-cube', '2d4', 'positive')
-            // Note: Structure gain handled in execute()
+            textBadge('Gain 1 structure', 'fas fa-building', 'positive'),
+            diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d4', 'positive'),
+            diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d4', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            textBadge('Gain 1 structure', 'fas fa-building', 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
+            diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d4', 'negative'),
+            diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d4', 'negative'),
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
           ]
         }
       },
       {
         id: 'ruthless',
-        label: 'Exploit Boom',
+        label: 'Exploit Markets',
         description: 'Extract maximum revenue while boom lasts',
         icon: 'fas fa-coins',
-        skills: ['intimidation', 'society'],
+        skills: ['intimidation', 'society', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Aggressive extraction yields massive ongoing profits.',
@@ -104,19 +106,17 @@ export const boomtownPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
-            // Note: Ongoing modifier added in execute()
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive'),
+            textBadge('Gain 1 structure', 'fas fa-building', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive'),
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+            textBadge('Gain 1 structure', 'fas fa-building', 'positive')
           ],
           failure: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative'),
             valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
           ]
         }
@@ -233,7 +233,7 @@ export const boomtownPipeline: CheckPipeline = {
           sourceType: 'custom',
           sourceId: ctx.instanceId || 'boomtown',
           sourceName: 'Boomtown',
-          startTurn: k.turn || 1,
+          startTurn: k.currentTurn || 1,
           modifiers: [
             { type: 'dice', resource: 'gold', formula: ongoing.formula, duration: ongoing.duration }
           ]

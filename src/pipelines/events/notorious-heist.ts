@@ -16,7 +16,7 @@ import type { GameCommandContext } from '../../services/gameCommands/GameCommand
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
 import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
-import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 
 export const notoriousHeistPipeline: CheckPipeline = {
   id: 'notorious-heist',
@@ -33,10 +33,10 @@ export const notoriousHeistPipeline: CheckPipeline = {
     options: [
       {
         id: 'virtuous',
-        label: 'Track Down and Recover',
+        label: 'Track & Recover',
         description: 'Pursue the thieves to recover stolen goods',
         icon: 'fas fa-search',
-        skills: ['thievery', 'stealth'],
+        skills: ['thievery', 'stealth', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Thieves caught and stolen goods recovered! Fame spreads.',
@@ -47,26 +47,28 @@ export const notoriousHeistPipeline: CheckPipeline = {
         outcomeBadges: {
           criticalSuccess: [
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d2', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
           ],
           failure: [
-            valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
-          ],
-          criticalFailure: [
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
             valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+          ],
+          criticalFailure: [
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
           ]
         }
       },
       {
         id: 'practical',
-        label: 'Increase Treasury Security',
+        label: 'Increase Security',
         description: 'Prevent future thefts with better security',
         icon: 'fas fa-shield-alt',
-        skills: ['society', 'intimidation'],
+        skills: ['society', 'intimidation', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Enhanced security restores confidence. Recovered contraband.',
@@ -76,27 +78,31 @@ export const notoriousHeistPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d2', 'positive')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive'),
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+            valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive'),
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+            valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d2', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative'),
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
           ]
         }
       },
       {
         id: 'ruthless',
-        label: 'Terrorize Underworld',
+        label: 'Terrorize',
         description: 'Brutal response to intimidate criminals',
         icon: 'fas fa-fire',
-        skills: ['intimidation', 'performance'],
+        skills: ['intimidation', 'performance', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'The underworld is crushed. Mass arrests fill the prisons.',
@@ -106,19 +112,19 @@ export const notoriousHeistPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            // Note: Aggressive arrest badge (converts 1d4 unrest to imprisoned) generated by handler
+            diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '2d4', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
           ],
           success: [
-            // Note: Arrest badge (converts 1d3 unrest to imprisoned) generated by handler
+            diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
-            // Note: Innocent imprisonment badge (adds 1d2 imprisoned) generated by handler
+            diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
+            textBadge('1 structure damaged', 'fas fa-house-crack', 'negative'),
             valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
-            // Note: Structure damage badge generated by handler
           ]
         }
       }

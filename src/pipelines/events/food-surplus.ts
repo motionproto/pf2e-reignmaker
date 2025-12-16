@@ -14,7 +14,7 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
-import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 
 export const foodSurplusPipeline: CheckPipeline = {
   id: 'food-surplus',
@@ -31,10 +31,10 @@ export const foodSurplusPipeline: CheckPipeline = {
     options: [
       {
         id: 'virtuous',
-        label: 'Distribute Freely',
+        label: 'Feed the Poor',
         description: 'Share abundance with the poor and needy',
         icon: 'fas fa-bread-slice',
-        skills: ['nature', 'diplomacy'],
+        skills: ['nature', 'diplomacy', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Generosity inspires hope and a settlement gains new infrastructure.',
@@ -44,27 +44,29 @@ export const foodSurplusPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
-            // Note: Structure gain handled in execute()
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
           ],
           success: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            valueBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', 1, 'positive')
           ],
           failure: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+            valueBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', 1, 'negative'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '2d4', 'negative'),
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
           ]
         }
       },
       {
         id: 'practical',
-        label: 'Store Reserves',
+        label: 'Store & Trade',
         description: 'Stabilize prices and preserve for future',
         icon: 'fas fa-warehouse',
-        skills: ['society', 'crafting'],
+        skills: ['society', 'crafting', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Excellent storage maximizes reserves and calms fears.',
@@ -74,27 +76,29 @@ export const foodSurplusPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Food', 'fas fa-bread-slice', '2d4', 'positive')
+            diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '2d3', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Food', 'fas fa-bread-slice', '1d4', 'positive')
+            diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           failure: [
+            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative'),
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ],
           criticalFailure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '2d3', 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
           ]
         }
       },
       {
         id: 'ruthless',
-        label: 'Export for Profit',
+        label: 'Tax the Farmers',
         description: 'Maximize profit by selling surplus abroad',
         icon: 'fas fa-coins',
-        skills: ['society', 'diplomacy'],
+        skills: ['society', 'diplomacy', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Exports bring wealth and strengthen trade relations.',
@@ -104,20 +108,18 @@ export const foodSurplusPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
-            // Note: Faction adjustment handled in preview
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '3d3', 'positive'),
+            diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
-            // Note: Faction adjustment handled in preview
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
           ]
         }
       }

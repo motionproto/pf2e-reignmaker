@@ -36,7 +36,7 @@ export const inquisitionPipeline: CheckPipeline = {
         label: 'Protect the Accused',
         description: 'Stand against persecution',
         icon: 'fas fa-shield-alt',
-        skills: ['diplomacy', 'society'],
+        skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { virtuous: 4 },
         outcomeDescriptions: {
           criticalSuccess: 'Your stand against persecution inspires the kingdom. The accused are vindicated.',
@@ -46,26 +46,29 @@ export const inquisitionPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
+            valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
           ]
         }
       },
       {
         id: 'practical',
-        label: 'Stay Neutral',
-        description: 'Let the church and people work it out',
+        label: 'Formal Investigation',
+        description: 'Conduct a proper investigation',
         icon: 'fas fa-balance-scale',
-        skills: ['society', 'deception'],
+        skills: ['society', 'deception', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Your calculated neutrality proves masterful. Both sides offer gifts and the inquisition fizzles out.',
@@ -76,18 +79,19 @@ export const inquisitionPipeline: CheckPipeline = {
         outcomeBadges: {
           criticalSuccess: [
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
-            valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
           ],
           failure: [
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
             valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ],
           criticalFailure: [
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
           ]
         }
       },
@@ -96,7 +100,7 @@ export const inquisitionPipeline: CheckPipeline = {
         label: 'Support Inquisitors',
         description: 'Endorse the hunt for heresy',
         icon: 'fas fa-fire',
-        skills: ['religion', 'intimidation'],
+        skills: ['religion', 'intimidation', 'applicable lore'],
         personality: { ruthless: 4 },
         outcomeDescriptions: {
           criticalSuccess: 'Your theocratic enforcement crushes dissent. The accused are imprisoned.',
@@ -106,21 +110,19 @@ export const inquisitionPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Imprison {{value}} heretics', 'fas fa-handcuffs', '1d3', 'info')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive'),
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
-            diceBadge('Imprison {{value}} heretics', 'fas fa-handcuffs', '1d2', 'info')
+            diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+            diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')
           ],
           criticalFailure: [
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+            diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')
           ]
         }
       }

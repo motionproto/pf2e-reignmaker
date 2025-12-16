@@ -12,7 +12,7 @@
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 import { updateKingdom } from '../../stores/KingdomStore';
 
 export const archaeologicalFindPipeline: CheckPipeline = {
@@ -28,10 +28,10 @@ export const archaeologicalFindPipeline: CheckPipeline = {
     options: [
       {
         id: 'virtuous',
-        label: 'Preserve as Heritage',
+        label: 'Preserve Heritage',
         description: 'Free public access to cultural treasure',
         icon: 'fas fa-monument',
-        skills: ['society', 'religion'],
+        skills: ['society', 'religion', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Heritage site draws tourists and earns fame.',
@@ -41,19 +41,18 @@ export const archaeologicalFindPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            textBadge('1 settlement gains level', 'fas fa-city', 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+            textBadge('1 settlement gains level', 'fas fa-city', 'positive')
           ],
           failure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            textBadge('1 settlement loses level', 'fas fa-city', 'negative')
           ],
           criticalFailure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            textBadge('1 settlement loses level', 'fas fa-city', 'negative'),
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
           ]
         }
       },
@@ -62,7 +61,7 @@ export const archaeologicalFindPipeline: CheckPipeline = {
         label: 'Scholarly Study',
         description: 'Museum and research institution',
         icon: 'fas fa-book',
-        skills: ['society', 'occultism'],
+        skills: ['society', 'occultism', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Research yields ongoing tourism revenue.',
@@ -72,16 +71,20 @@ export const archaeologicalFindPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+            textBadge('Gain 1 structure', 'fas fa-building', 'positive'),
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
           ],
           success: [
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           failure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
           ]
         }
       },
@@ -90,7 +93,7 @@ export const archaeologicalFindPipeline: CheckPipeline = {
         label: 'Sell Artifacts',
         description: 'Maximize profit through private sales',
         icon: 'fas fa-coins',
-        skills: ['diplomacy', 'society'],
+        skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Artifacts fetch premium prices.',
@@ -100,19 +103,18 @@ export const archaeologicalFindPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive'),
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
           ],
           failure: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')
           ],
           criticalFailure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')
           ]
         }
       }
@@ -194,7 +196,7 @@ export const archaeologicalFindPipeline: CheckPipeline = {
           sourceType: 'custom',
           sourceId: ctx.instanceId || 'archaeological-find',
           sourceName: 'Archaeological Find',
-          startTurn: k.turn || 1,
+          startTurn: k.currentTurn || 1,
           modifiers: [
             { type: 'dice', resource: 'gold', formula: tourism.formula, duration: tourism.duration }
           ]

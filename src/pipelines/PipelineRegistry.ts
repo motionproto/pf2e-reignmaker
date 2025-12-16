@@ -95,10 +95,11 @@ import { visitingCelebrityPipeline } from './events/visiting-celebrity';
 // INCIDENT PIPELINES (30)
 // ==================================================
 
-// Minor incidents (8)
+// Minor incidents (9)
 import { banditRaidsPipeline } from './incidents/minor/bandit-raids';
 import { corruptionScandalPipeline } from './incidents/minor/corruption-scandal';
-import { crimeWavePipeline } from './incidents/minor/crime-wave';
+import { criminalActivityPipeline } from './incidents/minor/criminal-activity';
+import { crimeWavePipeline as crimeWaveIncidentPipeline } from './incidents/minor/crime-wave';
 import { diplomaticIncidentPipeline } from './incidents/minor/diplomatic-incident';
 import { emigrationThreatPipeline } from './incidents/minor/emigration-threat';
 import { protestsPipeline } from './incidents/minor/protests';
@@ -217,13 +218,14 @@ const EVENT_PIPELINES: CheckPipeline[] = [
 ];
 
 /**
- * All registered incident pipelines (30 total)
+ * All registered incident pipelines (31 total)
  */
 const INCIDENT_PIPELINES: CheckPipeline[] = [
-  // Minor (8)
+  // Minor (9)
   banditRaidsPipeline,
   corruptionScandalPipeline,
-  crimeWavePipeline,
+  criminalActivityPipeline,
+  crimeWaveIncidentPipeline,
   diplomaticIncidentPipeline,
   emigrationThreatPipeline,
   protestsPipeline,
@@ -258,7 +260,7 @@ const INCIDENT_PIPELINES: CheckPipeline[] = [
 ];
 
 /**
- * All pipelines combined (93 total)
+ * All pipelines combined (94 total)
  */
 const ALL_PIPELINES: CheckPipeline[] = [
   ...ACTION_PIPELINES,

@@ -14,7 +14,7 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
-import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 
 export const tradeAgreementPipeline: CheckPipeline = {
   id: 'trade-agreement',
@@ -34,7 +34,7 @@ export const tradeAgreementPipeline: CheckPipeline = {
         label: 'Generous Terms',
         description: 'Build friendship with favorable trade terms',
         icon: 'fas fa-handshake',
-        skills: ['diplomacy', 'society'],
+        skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Generous terms establish profitable long-term trade partnership.',
@@ -44,29 +44,31 @@ export const tradeAgreementPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
-            // Note: Faction adjustment and ongoing resource badges generated in preview
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
-            // Note: Faction adjustment and ongoing resource badges generated in preview
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
           ],
           failure: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
-            // Note: Faction adjustment badge generated in preview
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
+            diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')
           ],
           criticalFailure: [
-            // Note: Faction adjustment badge generated in preview
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative'),
+            diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative'),
+            diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')
           ]
         }
       },
       {
         id: 'practical',
-        label: 'Balanced Agreement',
+        label: 'Fair trade',
         description: 'Negotiate mutual benefit for both parties',
         icon: 'fas fa-balance-scale',
-        skills: ['diplomacy', 'society'],
+        skills: ['diplomacy', 'society', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Perfect agreement creates prosperity for all.',
@@ -76,28 +78,32 @@ export const tradeAgreementPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
-            // Note: Faction adjustments and ongoing resource badges generated in preview
+            diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive'),
+            diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive'),
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
-            // Note: Faction adjustment and ongoing resource badges generated in preview
+            diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive'),
+            diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')
           ],
           failure: [
-            // Note: Faction adjustment badge generated in preview
+            diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative'),
+            diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')
           ],
           criticalFailure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
-            // Note: Faction adjustment badge generated in preview
+            diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative'),
+            diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative'),
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
           ]
         }
       },
       {
         id: 'ruthless',
-        label: 'Extract Maximum Advantage',
+        label: 'Exploit Partner',
         description: 'Demand favorable terms or refuse the deal',
         icon: 'fas fa-crown',
-        skills: ['deception', 'intimidation'],
+        skills: ['intimidation', 'deception', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'You extract highly favorable terms through leverage.',
@@ -107,22 +113,21 @@ export const tradeAgreementPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
-            // Note: Faction adjustment and ongoing resource badges generated in preview
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive'),
+            diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive'),
+            diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')
           ],
           success: [
+            diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive'),
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
-            // Note: Faction adjustment and ongoing resource badges generated in preview
           ],
           failure: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
-            // Note: Faction adjustments and ongoing resource badge generated in preview
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
+            valueBadge('Lose {{value}} random resource', 'fas fa-box', 1, 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
-            // Note: Faction adjustments badge generated in preview
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
+            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
           ]
         }
       }
@@ -423,7 +428,7 @@ export const tradeAgreementPipeline: CheckPipeline = {
           sourceType: 'custom',
           sourceId: ctx.instanceId || 'trade-agreement',
           sourceName: 'Trade Agreement',
-          startTurn: k.turn || 1,
+          startTurn: k.currentTurn || 1,
           modifiers: [
             { type: 'dice', resource: resourceType, formula: ongoing.formula, duration: ongoing.duration }
           ]

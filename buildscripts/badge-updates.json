@@ -1,0 +1,2378 @@
+{
+  "Criminal Trial": [
+    {
+      "name": "1. Criminal Trial",
+      "approach": "Virtuous",
+      "descriptor": "Show Mercy",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Pardon {{value}} prisoners', 'fas fa-dove', '1d3', 'positive')",
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Pardon {{value}} prisoners', 'fas fa-dove', '1d3', 'positive')",
+          "valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')",
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4+1', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Fair Trial",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Harsh Punishment",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '2d4', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')",
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')"
+        ]
+      }
+    }
+  ],
+  "Feud": [
+    {
+      "name": "2. Feud",
+      "approach": "Virtuous",
+      "descriptor": "Mediate Peacefully",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Manipulate Outcome",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')",
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')",
+          "valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')",
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')",
+          "textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')",
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Force Compliance",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '2d3', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')",
+          "diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d2', 'negative')"
+        ]
+      }
+    }
+  ],
+  "Inquisition": [
+    {
+      "name": "3. Inquisition",
+      "approach": "Virtuous",
+      "descriptor": "Protect the Accused",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')"
+        ],
+        "Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')"
+        ],
+        "Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Formal Investigation",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')",
+          "valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')",
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')",
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Support Inquisitors",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')",
+          "diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')"
+        ]
+      }
+    }
+  ],
+  "Public Scandal": [
+    {
+      "name": "4. Public Scandal",
+      "approach": "Virtuous",
+      "descriptor": "Transparent Response",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Gain 1 kingdom action', 'fas fa-plus-circle', 'positive')"
+        ],
+        "Success": [
+          "valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')",
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')",
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Manage Narrative",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Suppress Story",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')",
+          "valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d4', 'negative')",
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')"
+        ]
+      }
+    }
+  ],
+  "Plague": [
+    {
+      "name": "5. Plague",
+      "approach": "Virtuous",
+      "descriptor": "Quarantine & Care",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')"
+        ],
+        "Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')",
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '2d4', 'negative')",
+          "textBadge('1 settlement loses level', 'fas fa-city', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Contain Spread",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')",
+          "valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')",
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')",
+          "diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '2d4', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Burn the Infected",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')",
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('Lose 1 worksite', 'fas fa-industry', 'negative')",
+          "textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')"
+        ]
+      }
+    }
+  ],
+  "Food Shortage": [
+    {
+      "name": "6. Food Shortage",
+      "approach": "Virtuous",
+      "descriptor": "Share Reserves",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')",
+          "diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')",
+          "diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '2d4+1', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Ration & Import",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')",
+          "valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')",
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')",
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')",
+          "diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '2d3', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Feed Nobility",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')",
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')",
+          "diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')",
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')"
+        ]
+      }
+    }
+  ],
+  "Natural Disaster": [
+    {
+      "name": "7. Natural Disaster",
+      "approach": "Virtuous",
+      "descriptor": "Rescue & Relief",
+      "effects": {
+        "Critical Success": [
+          "valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')"
+        ],
+        "Failure": [
+          "textBadge('Lose 1 worksite', 'fas fa-industry', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')",
+          "textBadge('Lose 1 worksite', 'fas fa-industry', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Protect Infrastructure",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')",
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')",
+          "diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')",
+          "valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')",
+          "// TODO: Parse '-1d3 Lumber'",
+          "// TODO: Parse '-1d3 Ore'",
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Martial Law",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')",
+          "textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')",
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive')"
+        ],
+        "Failure": [
+          "textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')",
+          "textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')"
+        ]
+      }
+    }
+  ],
+  "Immigration": [
+    {
+      "name": "8. Immigration",
+      "approach": "Virtuous",
+      "descriptor": "Welcome Citizens",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')",
+          "valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')"
+        ],
+        "Failure": [
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')",
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')",
+          "diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3+1', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Selective Entry",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Gain 1 worksite', 'fas fa-industry', 'positive')",
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3+1', 'negative')",
+          "diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')",
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')",
+          "diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Forced Labour",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Gain 1 worksite', 'fas fa-industry', 'positive')",
+          "textBadge('1 settlement gains level', 'fas fa-city', 'positive')"
+        ],
+        "Success": [
+          "textBadge('Gain 1 worksite', 'fas fa-industry', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')",
+          "valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')"
+        ]
+      }
+    }
+  ],
+  "Assassination Attempt": [
+    {
+      "name": "9. Assassination Attempt",
+      "approach": "Virtuous",
+      "descriptor": "Public Investigation",
+      "effects": {
+        "Critical Success": [
+          "valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')",
+          "valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')"
+        ],
+        "Critical Failure": [
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')",
+          "textBadge('Lose 1 kingdom action', 'fas fa-minus-circle', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Secret Investigation",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')",
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')",
+          "valueBadge('{{value}} innocents harmed', 'fas fa-user-injured', 1, 'negative')"
+        ],
+        "Critical Failure": [
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')",
+          "textBadge('Lose 1 kingdom action', 'fas fa-minus-circle', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Mass Arrests",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '2d4', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '2d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('Lose 1 kingdom action', 'fas fa-minus-circle', 'negative')",
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')"
+        ]
+      }
+    }
+  ],
+  "Crime Wave": [
+    {
+      "name": "10. Crime Wave",
+      "approach": "Virtuous",
+      "descriptor": "Community outreach",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')",
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')",
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Patrols",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive')",
+          "textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')",
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Crackdown",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '2d4', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3+1', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d4', 'negative')",
+          "textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')"
+        ]
+      }
+    }
+  ],
+  "Notorious Heist": [
+    {
+      "name": "11. Notorious Heist",
+      "approach": "Virtuous",
+      "descriptor": "Track & Recover",
+      "effects": {
+        "Critical Success": [
+          "valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')",
+          "valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')",
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')",
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Increase Security",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')"
+        ],
+        "Success": [
+          "valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')",
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive')"
+        ],
+        "Failure": [
+          "valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')",
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')",
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')",
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Terrorize",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '2d4', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')",
+          "valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')"
+        ]
+      }
+    }
+  ],
+  "Bandit Activity": [
+    {
+      "name": "12. Bandit Activity",
+      "approach": "Virtuous",
+      "descriptor": "Negotiate",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Gain 1 worksite', 'fas fa-industry', 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')",
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')"
+        ],
+        "Critical Failure": [
+          "valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')",
+          "textBadge('Lose 1 worksite', 'fas fa-industry', 'negative')",
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Drive Off",
+      "effects": {
+        "Critical Success": [
+          "valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')",
+          "textBadge('Gain 1 worksite', 'fas fa-industry', 'positive')",
+          "valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')",
+          "valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')",
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')",
+          "textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')",
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Hunt Mercilessly",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '2d3', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')",
+          "diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "valueBadge('{{value}} innocents harmed', 'fas fa-user-injured', 1, 'negative')",
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d2', 'negative')",
+          "textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')",
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')"
+        ]
+      }
+    }
+  ],
+  "Raiders": [
+    {
+      "name": "13. Raiders",
+      "approach": "Virtuous",
+      "descriptor": "Defend & Protect",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Strategic Defense",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')",
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')",
+          "diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')",
+          "valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')"
+        ],
+        "Failure": [
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')",
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')",
+          "valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')",
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Counter-raid",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Claim 1 hex', 'fas fa-map', 'positive')",
+          "diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive')",
+          "valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')",
+          "diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')",
+          "valueBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', 1, 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')",
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')",
+          "valueBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', 1, 'negative')"
+        ]
+      }
+    }
+  ],
+  "Trade Agreement": [
+    {
+      "name": "14. Trade Agreement",
+      "approach": "Virtuous",
+      "descriptor": "Generous terms",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')"
+        ],
+        "Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')",
+          "diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')",
+          "diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')",
+          "diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Fair trade",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')",
+          "diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')",
+          "diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')",
+          "diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')",
+          "diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')",
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Exploit Partner",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')",
+          "diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')",
+          "diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "valueBadge('Lose {{value}} random resource', 'fas fa-box', 1, 'negative')"
+        ],
+        "Critical Failure": [
+          "valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')",
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')"
+        ]
+      }
+    }
+  ],
+  "Economic Surge": [
+    {
+      "name": "15. Economic Surge",
+      "approach": "Virtuous",
+      "descriptor": "Share Prosperity",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')"
+        ],
+        "Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')"
+        ],
+        "Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Lose {{value}} random resource', 'fas fa-box', '2d3', 'negative')",
+          "valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Stockpile Surplus",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d4', 'positive')",
+          "diceBadge('Gain {{value}} random resource', 'fas fa-box', '2d3', 'positive')",
+          "diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d4', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')",
+          "diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')",
+          "diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')",
+          "diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d4', 'negative')",
+          "diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d4', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Exploit for Profit",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} random resource', 'fas fa-box', '2d3', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')"
+        ],
+        "Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')",
+          "valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')"
+        ]
+      }
+    }
+  ],
+  "Food Surplus": [
+    {
+      "name": "16. Food Surplus",
+      "approach": "Virtuous",
+      "descriptor": "Feed the Poor",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')"
+        ],
+        "Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "valueBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', 1, 'positive')"
+        ],
+        "Failure": [
+          "valueBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', 1, 'negative')",
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '2d4', 'negative')",
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Store & Trade",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '2d3', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')",
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '2d3', 'negative')",
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Tax the Farmers",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '3d3', 'positive')",
+          "diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')"
+        ]
+      }
+    }
+  ],
+  "Boomtown": [
+    {
+      "name": "17. Boomtown",
+      "approach": "Virtuous",
+      "descriptor": "Community Planning",
+      "effects": {
+        "Critical Success": [
+          "textBadge('1 settlement gains level', 'fas fa-city', 'positive')",
+          "textBadge('Gain 1 structure', 'fas fa-building', 'positive')"
+        ],
+        "Success": [
+          "textBadge('1 settlement gains level', 'fas fa-city', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')",
+          "valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Managed Expansion",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Gain 1 structure', 'fas fa-building', 'positive')",
+          "diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d4', 'positive')",
+          "diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d4', 'positive')"
+        ],
+        "Success": [
+          "textBadge('Gain 1 structure', 'fas fa-building', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')",
+          "diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d4', 'negative')",
+          "diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d4', 'negative')",
+          "valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Exploit Markets",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')",
+          "textBadge('Gain 1 structure', 'fas fa-building', 'positive')"
+        ],
+        "Success": [
+          "textBadge('Gain 1 structure', 'fas fa-building', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')",
+          "valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')"
+        ]
+      }
+    }
+  ],
+  "Land Rush": [
+    {
+      "name": "18. Land Rush",
+      "approach": "Virtuous",
+      "descriptor": "Fair Distribution",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Claim 1 hex', 'fas fa-map', 'positive')",
+          "textBadge('Claim 1 hex', 'fas fa-map', 'positive')"
+        ],
+        "Success": [
+          "textBadge('Claim 1 hex', 'fas fa-map', 'positive')"
+        ],
+        "Failure": [
+          "valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')",
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')",
+          "textBadge('Lose 1 worksite', 'fas fa-industry', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Auction",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Claim 1 hex', 'fas fa-map', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')"
+        ],
+        "Success": [
+          "textBadge('Claim 1 hex', 'fas fa-map', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')",
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')",
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')",
+          "diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Favor Allies",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Claim 1 hex', 'fas fa-map', 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')"
+        ],
+        "Success": [
+          "textBadge('Claim 1 hex', 'fas fa-map', 'positive')"
+        ],
+        "Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "// TODO: Parse 'Fame -1'",
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')"
+        ]
+      }
+    }
+  ],
+  "Pilgrimage": [
+    {
+      "name": "19. Pilgrimage",
+      "approach": "Virtuous",
+      "descriptor": "Free Passage",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "// TODO: Parse 'Fame +1'",
+          "valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "// TODO: Parse 'Fame -1'",
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Protect the Pilgrims",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')",
+          "textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')",
+          "valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')",
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')",
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')",
+          "textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Pay or be Persecuted",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')",
+          "diceBadge('Gain {{value}} random resource', 'fas fa-box', '2d4', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "// TODO: Parse 'Fame -1'",
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')"
+        ]
+      }
+    }
+  ],
+  "Diplomatic Overture": [
+    {
+      "name": "20. Diplomatic Overture",
+      "approach": "Virtuous",
+      "descriptor": "Generous Terms",
+      "effects": {
+        "Critical Success": [
+          "valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')"
+        ],
+        "Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')"
+        ],
+        "Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Balanced Agreement",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d4', 'positive')",
+          "diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d4', 'positive')"
+        ],
+        "Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d4', 'negative')",
+          "diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d4', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Exploit Relationship",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')",
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')"
+        ],
+        "Critical Failure": [
+          "valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')",
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')"
+        ]
+      }
+    }
+  ],
+  "Festive Invitation": [
+    {
+      "name": "21. Festive Invitation",
+      "approach": "Virtuous",
+      "descriptor": "Attend Humbly",
+      "effects": {
+        "Critical Success": [
+          "// TODO: Parse 'Fame +1'",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')"
+        ],
+        "Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')"
+        ],
+        "Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "// TODO: Parse 'Fame -1'",
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Diplomatic Gifts",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')",
+          "diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')"
+        ],
+        "Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')",
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')",
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Display Power",
+      "effects": {
+        "Critical Success": [
+          "textBadge('1 army receives equipment', 'fas fa-shield', 'positive')",
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')"
+        ],
+        "Success": [
+          "textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')"
+        ],
+        "Failure": [
+          "textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')",
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')",
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')"
+        ]
+      }
+    }
+  ],
+  "Visiting Celebrity": [
+    {
+      "name": "22. Visiting Celebrity",
+      "approach": "Virtuous",
+      "descriptor": "Simple Hospitality",
+      "effects": {
+        "Critical Success": [
+          "valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')"
+        ],
+        "Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "// TODO: Parse 'Fame -1'",
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Appropriate Ceremony",
+      "effects": {
+        "Critical Success": [
+          "valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3+1', 'positive')"
+        ],
+        "Success": [
+          "valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')"
+        ],
+        "Failure": [
+          "// TODO: Parse 'Fame -1'"
+        ],
+        "Critical Failure": [
+          "valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')",
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Lavish Display",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '4d3', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')"
+        ],
+        "Critical Failure": [
+          "valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')",
+          "valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')",
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')"
+        ]
+      }
+    }
+  ],
+  "Grand Tournament": [
+    {
+      "name": "23. Grand Tournament",
+      "approach": "Virtuous",
+      "descriptor": "Free Celebrations",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "// TODO: Parse 'Fame +1'",
+          "valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')"
+        ],
+        "Success": [
+          "// TODO: Parse 'Fame +1'"
+        ],
+        "Failure": [
+          "textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')",
+          "textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Organized Event",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Gain 1 structure', 'fas fa-building', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')"
+        ],
+        "Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')",
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Exclusive Affair",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')"
+        ],
+        "Success": [
+          "textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')"
+        ],
+        "Failure": [
+          "textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')",
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')",
+          "textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')",
+          "valueBadge('{{value}} innocents harmed', 'fas fa-user-injured', 1, 'negative')"
+        ]
+      }
+    }
+  ],
+  "Archaeological Find": [
+    {
+      "name": "24. Archaeological Find",
+      "approach": "Virtuous",
+      "descriptor": "Preserve Heritage",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "textBadge('1 settlement gains level', 'fas fa-city', 'positive')"
+        ],
+        "Success": [
+          "textBadge('1 settlement gains level', 'fas fa-city', 'positive')"
+        ],
+        "Failure": [
+          "textBadge('1 settlement loses level', 'fas fa-city', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('1 settlement loses level', 'fas fa-city', 'negative')",
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Scholarly Study",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Gain 1 structure', 'fas fa-building', 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')"
+        ],
+        "Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')",
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')"
+        ],
+        "Critical Failure": [
+          "// TODO: Parse 'Fame -1'",
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Sell Artifacts",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')"
+        ]
+      }
+    }
+  ],
+  "Magical Discovery": [
+    {
+      "name": "25. Magical Discovery",
+      "approach": "Virtuous",
+      "descriptor": "Share Freely",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "// TODO: Parse 'Fame +1'"
+        ],
+        "Success": [
+          "// TODO: Parse 'Fame +1'"
+        ],
+        "Failure": [
+          "// TODO: Parse 'Fame -1'"
+        ],
+        "Critical Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "// TODO: Parse 'Fame -1'"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Academic Study",
+      "effects": {
+        "Critical Success": [
+          "// TODO: Parse 'Fame +1'",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3+1', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')"
+        ],
+        "Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "// TODO: Parse 'Fame -1'",
+          "// TODO: Parse '+d2 Unrest'"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Secret Knowledge",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '3d3', 'positive')",
+          "// TODO: Parse 'Fame +1'"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')"
+        ],
+        "Critical Failure": [
+          "valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')",
+          "textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')",
+          "valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')"
+        ]
+      }
+    }
+  ],
+  "Remarkable Treasure": [
+    {
+      "name": "26. Remarkable Treasure",
+      "approach": "Virtuous",
+      "descriptor": "Share with All",
+      "effects": {
+        "Critical Success": [
+          "// TODO: Parse 'Fame +1'",
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')",
+          "diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')",
+          "// TODO: Parse 'Fame -1'"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Add to Treasury",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')",
+          "diceBadge('Gain {{value}} random resource', 'fas fa-box', '2d3', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')",
+          "diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')",
+          "// TODO: Parse 'Fame -1'"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Keep for Leadership",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Gain 1 kingdom action', 'fas fa-plus-circle', 'positive')",
+          "valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')",
+          "valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')"
+        ]
+      }
+    }
+  ],
+  "Scholarly Discovery": [
+    {
+      "name": "27. Scholarly Discovery",
+      "approach": "Virtuous",
+      "descriptor": "Open University",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d2', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d4', 'negative')",
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Funded Research",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')",
+          "// TODO: Parse '+1d4 Materials'"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d2', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d4', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Exclusive Academy",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')",
+          "valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')"
+        ]
+      }
+    }
+  ],
+  "Nature's Blessing": [
+    {
+      "name": "28. Nature's Blessing",
+      "approach": "Virtuous",
+      "descriptor": "Preserve Carefully",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '2d3', 'positive')",
+          "diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')",
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'positive')",
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')",
+          "diceBadge('Lose {{value}} random resource', 'fas fa-box', '2d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Lose {{value}} random resource', 'fas fa-box', '2d3', 'negative')",
+          "diceBadge('Lose {{value}} random resource', 'fas fa-box', '2d3', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Harvest Sustainably",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '2d4', 'positive')",
+          "diceBadge('Gain {{value}} random resource', 'fas fa-box', '2d4', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} random resource', 'fas fa-box', '2d3', 'positive')",
+          "diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')",
+          "diceBadge('Lose {{value}} random resource', 'fas fa-box', '2d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Lose {{value}} random resource', 'fas fa-box', '2d3', 'negative')",
+          "diceBadge('Lose {{value}} random resource', 'fas fa-box', '2d3', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Exploit Fully",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '2d4', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')",
+          "valueBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', 1, 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')",
+          "diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')",
+          "diceBadge('Lose {{value}} random resource', 'fas fa-box', '2d3', 'negative')"
+        ]
+      }
+    }
+  ],
+  "Good Weather": [
+    {
+      "name": "29. Good Weather",
+      "approach": "Virtuous",
+      "descriptor": "Celebrate",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3+1', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Work Hard",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d4', 'positive')",
+          "diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d4', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d3+1', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Military Exercises",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')"
+        ],
+        "Success": [
+          "// TODO: Parse 'Heal Army'"
+        ],
+        "Failure": [
+          "textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')"
+        ]
+      }
+    }
+  ],
+  "Military Exercises": [
+    {
+      "name": "30. Military Exercises",
+      "approach": "Virtuous",
+      "descriptor": "Defensive Drills",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Fortify 1 hex', 'fas fa-fort-awesome', 'positive')",
+          "// TODO: Parse 'Fame +1'"
+        ],
+        "Success": [
+          "textBadge('Fortify 1 hex', 'fas fa-fort-awesome', 'positive')"
+        ],
+        "Failure": [
+          "textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')",
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')",
+          "valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Equipment Focus",
+      "effects": {
+        "Critical Success": [
+          "textBadge('1 army receives equipment', 'fas fa-shield', 'positive')",
+          "textBadge('1 army receives equipment', 'fas fa-shield', 'positive')",
+          "valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')"
+        ],
+        "Success": [
+          "textBadge('1 army receives equipment', 'fas fa-shield', 'positive')",
+          "valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')"
+        ],
+        "Failure": [
+          "textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')",
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3+1', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')",
+          "valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Aggressive Training",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')",
+          "// TODO: Parse 'Fame +1'",
+          "valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')"
+        ],
+        "Success": [
+          "textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')",
+          "valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')"
+        ],
+        "Failure": [
+          "textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')",
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')",
+          "valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')"
+        ]
+      }
+    }
+  ],
+  "Drug Den": [
+    {
+      "name": "31. Drug Den",
+      "approach": "Virtuous",
+      "descriptor": "Rehabilitation",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')",
+          "textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Regulate & Tax",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')",
+          "// TODO: Parse '+Ongoing Gold (1 for 3)'"
+        ],
+        "Success": [
+          "valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')",
+          "// TODO: Parse '+Ongoing Gold'"
+        ],
+        "Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')",
+          "// TODO: Parse 'Fame -1'"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Crush with Force",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive')",
+          "// TODO: Parse 'Fame +1'"
+        ],
+        "Success": [
+          "diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '2d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')",
+          "diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')"
+        ]
+      }
+    }
+  ],
+  "Monster Attack": [
+    {
+      "name": "32. Monster Attack",
+      "approach": "Virtuous",
+      "descriptor": "Relocate Peacefully",
+      "effects": {
+        "Critical Success": [
+          "// TODO: Parse 'Fame +1'",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')"
+        ],
+        "Success": [
+          "// TODO: Parse 'Fame +1'"
+        ],
+        "Failure": [
+          "// TODO: Parse 'Fame -1'"
+        ],
+        "Critical Failure": [
+          "textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')",
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Hire Hunters",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')",
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3+1', 'positive')",
+          "valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')"
+        ],
+        "Failure": [
+          "valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')",
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3+1', 'negative')"
+        ],
+        "Critical Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')",
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Mobilize Army",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3+1', 'positive')"
+        ],
+        "Success": [
+          "textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')"
+        ],
+        "Failure": [
+          "textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')",
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')",
+          "textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')"
+        ]
+      }
+    }
+  ],
+  "Undead Uprising": [
+    {
+      "name": "33. Undead Uprising",
+      "approach": "Virtuous",
+      "descriptor": "Consecrate Land",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "// TODO: Parse 'Fame +1'"
+        ],
+        "Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')",
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Mobilize Troops",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')"
+        ],
+        "Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')",
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')",
+          "// TODO: Parse 'Fame -1'"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Burn Everything",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '2d3', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "textBadge('Lose 1 hex', 'fas fa-map', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')",
+          "textBadge('Lose 1 hex', 'fas fa-map', 'negative')"
+        ]
+      }
+    }
+  ],
+  "Cult Activity": [
+    {
+      "name": "34. Cult Activity",
+      "approach": "Virtuous",
+      "descriptor": "Investigate Respectfully",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')",
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Practical",
+      "descriptor": "Monitor & Contain",
+      "effects": {
+        "Critical Success": [
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')",
+          "textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')"
+        ],
+        "Success": [
+          "valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')",
+          "textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')"
+        ],
+        "Failure": [
+          "textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')",
+          "valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')"
+        ],
+        "Critical Failure": [
+          "// TODO: Parse '+Ongoing Unrest'",
+          "diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')"
+        ]
+      }
+    },
+    {
+      "name": "",
+      "approach": "Ruthless",
+      "descriptor": "Heretics Burn",
+      "effects": {
+        "Critical Success": [
+          "diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive')",
+          "diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')"
+        ],
+        "Success": [
+          "diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive')",
+          "diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')"
+        ],
+        "Failure": [
+          "diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')"
+        ],
+        "Critical Failure": [
+          "// TODO: Parse 'Fame -1'",
+          "textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')"
+        ]
+      }
+    }
+  ]
+}

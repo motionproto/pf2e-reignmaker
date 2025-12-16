@@ -14,7 +14,7 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
-import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 import { updateKingdom } from '../../stores/KingdomStore';
 
 export const scholarlyDiscoveryPipeline: CheckPipeline = {
@@ -33,7 +33,7 @@ export const scholarlyDiscoveryPipeline: CheckPipeline = {
         label: 'Open University',
         description: 'Free education for all citizens',
         icon: 'fas fa-university',
-        skills: ['lore', 'diplomacy'],
+        skills: ['lore', 'diplomacy', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Universal education earns prestige and alliances.',
@@ -43,18 +43,18 @@ export const scholarlyDiscoveryPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
+            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
           ],
           failure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d2', 'negative')
           ],
           criticalFailure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d4', 'negative'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
           ]
         }
       },
@@ -63,7 +63,7 @@ export const scholarlyDiscoveryPipeline: CheckPipeline = {
         label: 'Funded Research',
         description: 'Invest in institutional research',
         icon: 'fas fa-flask',
-        skills: ['lore', 'society'],
+        skills: ['lore', 'society', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Research yields ongoing innovations and revenue.',
@@ -73,16 +73,17 @@ export const scholarlyDiscoveryPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive'),
+            diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d4', 'positive')
           ],
           success: [
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           failure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d2', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d4', 'negative')
           ]
         }
       },
@@ -91,7 +92,7 @@ export const scholarlyDiscoveryPipeline: CheckPipeline = {
         label: 'Exclusive Academy',
         description: 'Elite-only education with high tuition',
         icon: 'fas fa-crown',
-        skills: ['society', 'diplomacy'],
+        skills: ['society', 'diplomacy', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Elite education generates revenue and noble support.',
@@ -101,17 +102,16 @@ export const scholarlyDiscoveryPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
           ],
           success: [
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           failure: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative'),
             valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
           ]
         }
@@ -239,7 +239,7 @@ export const scholarlyDiscoveryPipeline: CheckPipeline = {
           sourceType: 'custom',
           sourceId: ctx.instanceId || 'scholarly-discovery',
           sourceName: 'Scholarly Discovery',
-          startTurn: k.turn || 1,
+          startTurn: k.currentTurn || 1,
           modifiers: [
             { type: 'dice', resource: 'gold', formula: innovations.formula, duration: innovations.duration }
           ]

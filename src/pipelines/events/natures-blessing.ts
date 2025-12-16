@@ -27,10 +27,10 @@ export const naturesBlessingPipeline: CheckPipeline = {
     options: [
       {
         id: 'virtuous',
-        label: 'Preserve',
+        label: 'Preserve Carefully',
         description: 'Protect and cherish the natural wonder',
         icon: 'fas fa-leaf',
-        skills: ['nature', 'diplomacy'],
+        skills: ['nature', 'diplomacy', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Protection earns fame and bountiful harvest.',
@@ -40,20 +40,21 @@ export const naturesBlessingPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Food', 'fas fa-bread-slice', '2d4', 'positive'),
-            diceBadge('Gain {{value}} Lumber', 'fas fa-tree', '1d4', 'positive')
+            diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '2d3', 'positive'),
+            diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive'),
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
           ],
           success: [
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
-            diceBadge('Gain {{value}} Food', 'fas fa-bread-slice', '1d4', 'positive')
+            diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'positive'),
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
           ],
           failure: [
-            diceBadge('Gain {{value}} Food', 'fas fa-bread-slice', '1d4', 'positive')
+            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative'),
+            diceBadge('Lose {{value}} random resource', 'fas fa-box', '2d3', 'negative')
           ],
           criticalFailure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+            diceBadge('Lose {{value}} random resource', 'fas fa-box', '2d3', 'negative'),
+            diceBadge('Lose {{value}} random resource', 'fas fa-box', '2d3', 'negative')
           ]
         }
       },
@@ -62,7 +63,7 @@ export const naturesBlessingPipeline: CheckPipeline = {
         label: 'Harvest Sustainably',
         description: 'Balance use with conservation',
         icon: 'fas fa-balance-scale',
-        skills: ['nature', 'society'],
+        skills: ['nature', 'society', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Sustainable harvest provides abundant resources.',
@@ -72,20 +73,20 @@ export const naturesBlessingPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Food', 'fas fa-bread-slice', '2d4', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive'),
-            diceBadge('Gain {{value}} Lumber', 'fas fa-tree', '2d4', 'positive')
+            diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '2d4', 'positive'),
+            diceBadge('Gain {{value}} random resource', 'fas fa-box', '2d4', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Food', 'fas fa-bread-slice', '1d4', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Lumber', 'fas fa-tree', '1d4', 'positive')
+            diceBadge('Gain {{value}} random resource', 'fas fa-box', '2d3', 'positive'),
+            diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'positive')
           ],
           failure: [
-            diceBadge('Gain {{value}} Food', 'fas fa-bread-slice', '1d4', 'positive')
+            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative'),
+            diceBadge('Lose {{value}} random resource', 'fas fa-box', '2d3', 'negative')
           ],
           criticalFailure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+            diceBadge('Lose {{value}} random resource', 'fas fa-box', '2d3', 'negative'),
+            diceBadge('Lose {{value}} random resource', 'fas fa-box', '2d3', 'negative')
           ]
         }
       },
@@ -94,7 +95,7 @@ export const naturesBlessingPipeline: CheckPipeline = {
         label: 'Exploit Fully',
         description: 'Extract maximum value while it lasts',
         icon: 'fas fa-industry',
-        skills: ['nature', 'intimidation'],
+        skills: ['nature', 'intimidation', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Full exploitation yields massive resources.',
@@ -104,22 +105,20 @@ export const naturesBlessingPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Food', 'fas fa-bread-slice', '2d4', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive'),
-            diceBadge('Gain {{value}} Lumber', 'fas fa-tree', '2d4', 'positive')
+            diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '2d4', 'positive'),
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Food', 'fas fa-bread-slice', '2d4', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
-            diceBadge('Gain {{value}} Lumber', 'fas fa-tree', '1d4', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive'),
+            valueBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', 1, 'positive')
           ],
           failure: [
-            diceBadge('Gain {{value}} Food', 'fas fa-bread-slice', '1d4', 'positive'),
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
+            diceBadge('Lose {{value}} random resource', 'fas fa-box', '1d3', 'negative')
           ],
           criticalFailure: [
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
+            diceBadge('Lose {{value}} random resource', 'fas fa-box', '2d3', 'negative')
           ]
         }
       }
