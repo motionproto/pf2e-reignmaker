@@ -35,7 +35,7 @@ export const undeadUprisingPipeline: CheckPipeline = {
         label: 'Consecrate Land',
         description: 'Lay spirits to rest through consecration rituals',
         icon: 'fas fa-hands-praying',
-        skills: ['occultism', 'diplomacy', 'applicable lore'],
+        skills: ['occultism', 'diplomacy', 'religion', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Sacred rituals grant eternal peace; blessed ground yields abundant harvest.',
@@ -65,7 +65,7 @@ export const undeadUprisingPipeline: CheckPipeline = {
         label: 'Mobilize Troops',
         description: 'Professional clergy to seal the area',
         icon: 'fas fa-user-shield',
-        skills: ['occultism', 'stealth', 'applicable lore'],
+        skills: ['occultism', 'athletics', 'intimidation', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Disciplined troops contain outbreak; methodical response trains elite defenders.',
@@ -97,7 +97,7 @@ export const undeadUprisingPipeline: CheckPipeline = {
         label: 'Burn Everything',
         description: 'Destroy everything in the affected area',
         icon: 'fas fa-fire',
-        skills: ['intimidation', 'stealth', 'applicable lore'],
+        skills: ['intimidation', 'stealth', 'thievery', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Ruthless flames purge corruption; captured necromancers face brutal justice.',

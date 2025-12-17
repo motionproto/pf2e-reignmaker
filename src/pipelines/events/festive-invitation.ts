@@ -32,7 +32,7 @@ export const festiveInvitationPipeline: CheckPipeline = {
         label: 'Attend Humbly',
         description: 'Join festivities as equals, no pretense',
         icon: 'fas fa-glass-cheers',
-        skills: ['diplomacy', 'performance', 'applicable lore'],
+        skills: ['diplomacy', 'performance', 'acrobatics', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Your down-to-earth warmth inspires joy and lasting friendships.',
@@ -66,7 +66,7 @@ export const festiveInvitationPipeline: CheckPipeline = {
         label: 'Diplomatic Gifts',
         description: 'Appropriate gifts and strategic networking',
         icon: 'fas fa-gift',
-        skills: ['diplomacy', 'society', 'applicable lore'],
+        skills: ['diplomacy', 'society', 'crafting', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Lavish gifts spark bidding war; nobles shower you with riches.',
@@ -100,7 +100,7 @@ export const festiveInvitationPipeline: CheckPipeline = {
         label: 'Display Power',
         description: 'Show military might and intimidate rivals',
         icon: 'fas fa-shield',
-        skills: ['intimidation', 'performance', 'applicable lore'],
+        skills: ['intimidation', 'performance', 'athletics', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Stunning martial parade earns fear and plundered war trophies.',
@@ -134,6 +134,9 @@ export const festiveInvitationPipeline: CheckPipeline = {
     { skill: 'performance', description: 'entertain hosts' },
     { skill: 'society', description: 'navigate customs' },
     { skill: 'intimidation', description: 'display power' },
+    { skill: 'acrobatics', description: 'festival performances' },
+    { skill: 'crafting', description: 'create artisan gifts' },
+    { skill: 'athletics', description: 'martial competitions' },
   ],
 
   outcomes: {

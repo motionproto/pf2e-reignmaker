@@ -33,7 +33,7 @@ export const pilgrimagePipeline: CheckPipeline = {
         label: 'Free Passage',
         description: 'Open hospitality for all pilgrims',
         icon: 'fas fa-praying-hands',
-        skills: ['religion', 'diplomacy', 'applicable lore'],
+        skills: ['religion', 'diplomacy', 'medicine', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Divine blessings rain upon generous hosts.',
@@ -65,7 +65,7 @@ export const pilgrimagePipeline: CheckPipeline = {
         label: 'Protect the Pilgrims',
         description: 'Organized pilgrimage with fees and services',
         icon: 'fas fa-landmark',
-        skills: ['society', 'religion', 'applicable lore'],
+        skills: ['society', 'religion', 'survival', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Perfect organization earns praise and trains guards.',
@@ -98,7 +98,7 @@ export const pilgrimagePipeline: CheckPipeline = {
         label: 'Pay or be Persecuted',
         description: 'Restrict access and extract maximum profit',
         icon: 'fas fa-coins',
-        skills: ['intimidation', 'society', 'applicable lore'],
+        skills: ['intimidation', 'society', 'thievery', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Wealthy devotees pay lavishly for sacred access.',

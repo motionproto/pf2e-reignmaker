@@ -30,7 +30,7 @@ export const goodWeatherPipeline: CheckPipeline = {
         label: 'Celebrate',
         description: 'Celebrate and let people rest',
         icon: 'fas fa-sun',
-        skills: ['performance', 'diplomacy', 'applicable lore'],
+        skills: ['performance', 'diplomacy', 'religion', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Joyous festivals unite hearts; tales of revelry spread far and wide.',
@@ -58,7 +58,7 @@ export const goodWeatherPipeline: CheckPipeline = {
         label: 'Work Hard',
         description: 'Gather extra resources while weather holds',
         icon: 'fas fa-hammer',
-        skills: ['nature', 'society', 'applicable lore'],
+        skills: ['nature', 'society', 'crafting', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Tireless labor under perfect skies fills barns and coffers alike.',
@@ -87,7 +87,7 @@ export const goodWeatherPipeline: CheckPipeline = {
         label: 'Military Exercises',
         description: 'Train troops for combat readiness',
         icon: 'fas fa-shield',
-        skills: ['intimidation', 'performance', 'applicable lore'],
+        skills: ['intimidation', 'performance', 'survival', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Brutal drills forge elite warriors; ruthless discipline inspires fear.',

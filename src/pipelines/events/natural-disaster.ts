@@ -29,11 +29,11 @@ export const naturalDisasterPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'prioritize-lives',
+        id: 'virtuous',
         label: 'Rescue & Relief',
         description: 'Save people over property at any cost',
         icon: 'fas fa-people-roof',
-        skills: ['survival', 'medicine', 'applicable lore'],
+        skills: ['survival', 'medicine', 'athletics', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Heroic rescues save every soul; grateful survivors rebuild together.',
@@ -64,7 +64,7 @@ export const naturalDisasterPipeline: CheckPipeline = {
         label: 'Protect Infrastructure',
         description: 'Balanced evacuation and damage control',
         icon: 'fas fa-scale-balanced',
-        skills: ['society', 'crafting', 'applicable lore'],
+        skills: ['society', 'crafting', 'survival', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Methodical coordination saves lives and salvages valuable resources.',
@@ -95,11 +95,11 @@ export const naturalDisasterPipeline: CheckPipeline = {
         }
       },
       {
-        id: 'save-assets',
+        id: 'ruthless',
         label: 'Martial Law',
         description: 'Deploy troops to protect valuable structures',
         icon: 'fas fa-building-shield',
-        skills: ['intimidation', 'applicable lore'],
+        skills: ['intimidation', 'survival', 'thievery', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Ruthless troops salvage materials from ruins; cold efficiency earns harsh discipline.',
@@ -131,6 +131,7 @@ export const naturalDisasterPipeline: CheckPipeline = {
 
   skills: [
     { skill: 'survival', description: 'evacuation and rescue' },
+    { skill: 'athletics', description: 'rescue operations' },
     { skill: 'crafting', description: 'emergency shelters' },
     { skill: 'society', description: 'coordinate relief' },
     { skill: 'medicine', description: 'treat the injured' },
@@ -189,7 +190,7 @@ export const naturalDisasterPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'prioritize-lives') {
+      if (approach === 'virtuous') {
         // Prioritize Lives (Virtuous)
         if (outcome === 'criticalSuccess') {
           modifiers = [
@@ -322,7 +323,7 @@ export const naturalDisasterPipeline: CheckPipeline = {
             else if (cmd.outcomeBadge) outcomeBadges.push(cmd.outcomeBadge);
           }
         }
-      } else if (approach === 'save-assets') {
+      } else if (approach === 'ruthless') {
         // Save Assets (Ruthless)
         if (outcome === 'criticalSuccess') {
           modifiers = [

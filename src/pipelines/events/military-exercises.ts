@@ -38,7 +38,7 @@ export const militaryExercisesPipeline: CheckPipeline = {
         label: 'Defensive Drills',
         description: 'Focus on defense and minimize disruption',
         icon: 'fas fa-shield-alt',
-        skills: ['athletics', 'survival', 'applicable lore'],
+        skills: ['athletics', 'survival', 'performance', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Inspired defenders fortify borders; citizens praise your vigilance.',
@@ -69,7 +69,7 @@ export const militaryExercisesPipeline: CheckPipeline = {
         label: 'Equipment Focus',
         description: 'Professional exercises with equipment upgrades',
         icon: 'fas fa-hammer',
-        skills: ['crafting', 'society', 'applicable lore'],
+        skills: ['crafting', 'society', 'intimidation', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Master craftsmen forge superior gear; sponsors fund more.',
@@ -101,7 +101,7 @@ export const militaryExercisesPipeline: CheckPipeline = {
         label: 'Aggressive Training',
         description: 'Intensive drills to intimidate neighbors',
         icon: 'fas fa-fist-raised',
-        skills: ['intimidation', 'lore', 'applicable lore'],
+        skills: ['intimidation', 'deception', 'athletics', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Fierce spectacle terrifies rivals; hardened warriors emerge victorious.',

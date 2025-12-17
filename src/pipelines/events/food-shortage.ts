@@ -29,11 +29,11 @@ export const foodShortagePipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'feed-people',
+        id: 'virtuous',
         label: 'Share Reserves',
         description: 'Distribute aid freely, drain military supplies if needed',
         icon: 'fas fa-hand-holding-heart',
-        skills: ['diplomacy', 'society', 'applicable lore'],
+        skills: ['diplomacy', 'society', 'medicine', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Selfless generosity inspires miraculous donations; unity thrives amid scarcity.',
@@ -61,11 +61,11 @@ export const foodShortagePipeline: CheckPipeline = {
         }
       },
       {
-        id: 'rationing',
+        id: 'practical',
         label: 'Ration & Import',
         description: 'Fair compensation and systematic allocation',
         icon: 'fas fa-scale-balanced',
-        skills: ['society', 'nature', 'applicable lore'],
+        skills: ['society', 'nature', 'crafting', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Masterful logistics prevent waste; crisis resolved with minimal suffering.',
@@ -93,11 +93,11 @@ export const foodShortagePipeline: CheckPipeline = {
         }
       },
       {
-        id: 'prioritize-elite',
+        id: 'ruthless',
         label: 'Feed Nobility',
         description: 'Military and leadership first, let the poor suffer',
         icon: 'fas fa-crown',
-        skills: ['intimidation', 'applicable lore'],
+        skills: ['intimidation', 'athletics', 'survival', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Iron rule crushes dissent; elite feast while cowed masses submit.',
@@ -133,6 +133,9 @@ export const foodShortagePipeline: CheckPipeline = {
     { skill: 'diplomacy', description: 'coordinate relief' },
     { skill: 'society', description: 'systematic rationing' },
     { skill: 'intimidation', description: 'enforce order' },
+    { skill: 'medicine', description: 'nutrition monitoring' },
+    { skill: 'crafting', description: 'food preservation' },
+    { skill: 'athletics', description: 'enforce confiscation' },
   ],
 
   outcomes: {
@@ -181,7 +184,7 @@ export const foodShortagePipeline: CheckPipeline = {
       // Calculate modifiers and prepare game commands based on approach
       let modifiers: any[] = [];
 
-      if (approach === 'feed-people') {
+      if (approach === 'virtuous') {
         // Feed the People (Virtuous)
         if (outcome === 'criticalSuccess') {
           modifiers = [
@@ -227,7 +230,7 @@ export const foodShortagePipeline: CheckPipeline = {
             }
           }
         }
-      } else if (approach === 'rationing') {
+      } else if (approach === 'practical') {
         // Controlled Rationing (Practical)
         if (outcome === 'criticalSuccess') {
           modifiers = [
@@ -250,7 +253,7 @@ export const foodShortagePipeline: CheckPipeline = {
             { type: 'dice', resource: 'food', formula: '2d4', negative: true, duration: 'immediate' }
           ];
         }
-      } else if (approach === 'prioritize-elite') {
+      } else if (approach === 'ruthless') {
         // Prioritize Elite (Ruthless)
         if (outcome === 'criticalSuccess') {
           modifiers = [
@@ -361,7 +364,7 @@ export const foodShortagePipeline: CheckPipeline = {
     const outcome = ctx.outcome;
 
     // Execute game commands based on approach and outcome
-    if (approach === 'feed-people') {
+    if (approach === 'virtuous') {
       // Feed the People: failure applies sickened to army
       if (outcome === 'failure') {
         const armyCondition = ctx.metadata?._armyCondition;
@@ -380,7 +383,7 @@ export const foodShortagePipeline: CheckPipeline = {
           });
         }
       }
-    } else if (approach === 'prioritize-elite') {
+    } else if (approach === 'ruthless') {
       if (outcome === 'criticalSuccess') {
         const imprisonCommand = ctx.metadata?._preparedImprison;
         if (imprisonCommand?.commit) {

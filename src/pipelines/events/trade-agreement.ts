@@ -34,7 +34,7 @@ export const tradeAgreementPipeline: CheckPipeline = {
         label: 'Generous Terms',
         description: 'Build friendship with favorable trade terms',
         icon: 'fas fa-handshake',
-        skills: ['diplomacy', 'society', 'applicable lore'],
+        skills: ['diplomacy', 'society', 'crafting', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Selfless terms forge unbreakable bonds; grateful merchants pledge lasting loyalty.',
@@ -68,7 +68,7 @@ export const tradeAgreementPipeline: CheckPipeline = {
         label: 'Fair trade',
         description: 'Negotiate mutual benefit for both parties',
         icon: 'fas fa-balance-scale',
-        skills: ['diplomacy', 'society', 'applicable lore'],
+        skills: ['diplomacy', 'society', 'performance', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Masterful negotiation balances interests; mutual prosperity flows endlessly.',
@@ -103,7 +103,7 @@ export const tradeAgreementPipeline: CheckPipeline = {
         label: 'Exploit Partner',
         description: 'Demand favorable terms or refuse the deal',
         icon: 'fas fa-crown',
-        skills: ['intimidation', 'deception', 'applicable lore'],
+        skills: ['intimidation', 'deception', 'thievery', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Ruthless leverage extracts maximum profit; cowed merchants accept exploitation.',

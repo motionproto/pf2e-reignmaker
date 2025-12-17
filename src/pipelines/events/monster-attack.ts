@@ -35,7 +35,7 @@ export const monsterAttackPipeline: CheckPipeline = {
         label: 'Relocate Peacefully',
         description: 'Try to relocate the creature without violence',
         icon: 'fas fa-dove',
-        skills: ['nature', 'diplomacy', 'applicable lore'],
+        skills: ['nature', 'diplomacy', 'medicine', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Harmony restored; the grateful beast becomes a local guardian.',
@@ -65,7 +65,7 @@ export const monsterAttackPipeline: CheckPipeline = {
         label: 'Hire Hunters',
         description: 'Hire professional hunters to deal with the threat',
         icon: 'fas fa-crosshairs',
-        skills: ['stealth', 'intimidation', 'applicable lore'],
+        skills: ['stealth', 'intimidation', 'survival', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Expert hunters claim trophy parts worth a fortune.',
@@ -97,7 +97,7 @@ export const monsterAttackPipeline: CheckPipeline = {
         label: 'Mobilize Army',
         description: 'Use military force to destroy the creature',
         icon: 'fas fa-shield-alt',
-        skills: ['intimidation', 'stealth', 'applicable lore'],
+        skills: ['intimidation', 'athletics', 'stealth', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Decisive victory forges battle-hardened veterans from raw troops.',
@@ -129,8 +129,10 @@ export const monsterAttackPipeline: CheckPipeline = {
   skills: [
     { skill: 'nature', description: 'understand creature behavior' },
     { skill: 'diplomacy', description: 'negotiate peacefully' },
+    { skill: 'medicine', description: 'treat injured creature' },
     { skill: 'stealth', description: 'coordinate with hunters' },
-    { skill: 'intimidation', description: 'mobilize military forces' }
+    { skill: 'intimidation', description: 'mobilize military forces' },
+    { skill: 'athletics', description: 'physical combat' }
   ],
 
   outcomes: {

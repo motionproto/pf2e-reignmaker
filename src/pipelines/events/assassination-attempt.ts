@@ -29,11 +29,11 @@ export const assassinationAttemptPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'open-governance',
+        id: 'virtuous',
         label: 'Public Investigation',
         description: 'Protect the leader but maintain transparent rule',
         icon: 'fas fa-landmark',
-        skills: ['diplomacy', 'society', 'applicable lore'],
+        skills: ['diplomacy', 'society', 'medicine', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Public vigilance captures assassin; transparency forges unbreakable trust.',
@@ -65,7 +65,7 @@ export const assassinationAttemptPipeline: CheckPipeline = {
         label: 'Secret Investigation',
         description: 'Increase security and hunt down conspirators',
         icon: 'fas fa-magnifying-glass',
-        skills: ['stealth', 'survival', 'applicable lore'],
+        skills: ['stealth', 'survival', 'arcana', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Brilliant sleuthing unravels entire conspiracy; all traitors seized.',
@@ -96,7 +96,7 @@ export const assassinationAttemptPipeline: CheckPipeline = {
         label: 'Mass Arrests',
         description: 'Launch a ruthless crackdown on all suspects',
         icon: 'fas fa-skull',
-        skills: ['intimidation', 'warfare', 'applicable lore'],
+        skills: ['intimidation', 'warfare', 'athletics', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Merciless purge crushes conspiracy; seized assets fill dungeons.',
@@ -131,6 +131,8 @@ export const assassinationAttemptPipeline: CheckPipeline = {
     { skill: 'diplomacy', description: 'maintain public trust' },
     { skill: 'society', description: 'investigate conspirators' },
     { skill: 'survival', description: 'escape danger' },
+    { skill: 'arcana', description: 'detect magical threats' },
+    { skill: 'athletics', description: 'subdue suspects' },
   ],
 
   outcomes: {
@@ -185,7 +187,7 @@ export const assassinationAttemptPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'open-governance') {
+      if (approach === 'virtuous') {
         // Open Governance (Virtuous)
         if (outcome === 'criticalSuccess') {
           modifiers = [
@@ -346,7 +348,7 @@ export const assassinationAttemptPipeline: CheckPipeline = {
     const outcome = ctx.outcome;
 
     // Execute game commands based on approach and outcome
-    if (approach === 'open-governance' && outcome === 'criticalFailure') {
+    if (approach === 'virtuous' && outcome === 'criticalFailure') {
       const actionCommand = ctx.metadata?._preparedSpendAction;
       if (actionCommand?.commit) {
         await actionCommand.commit();

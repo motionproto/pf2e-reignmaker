@@ -35,7 +35,7 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
         label: 'Share Freely',
         description: 'Make knowledge available to all',
         icon: 'fas fa-book-open',
-        skills: ['arcana', 'diplomacy', 'applicable lore'],
+        skills: ['arcana', 'diplomacy', 'occultism', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Selfless sharing sparks wondrous breakthroughs; nations praise generosity.',
@@ -67,7 +67,7 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
         label: 'Academic Study',
         description: 'Regulate and research systematically',
         icon: 'fas fa-flask',
-        skills: ['arcana', 'society', 'applicable lore'],
+        skills: ['arcana', 'society', 'crafting', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Methodical study unlocks sustainable arcane innovations; steady profits flow.',
@@ -101,7 +101,7 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
         label: 'Secret Knowledge',
         description: 'Exclusive kingdom advantage',
         icon: 'fas fa-lock',
-        skills: ['intimidation', 'arcana', 'applicable lore'],
+        skills: ['intimidation', 'arcana', 'thievery', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Ruthless secrecy exploits arcane power; vast wealth flows from monopoly.',

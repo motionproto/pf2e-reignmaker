@@ -34,7 +34,7 @@ export const grandTournamentPipeline: CheckPipeline = {
         label: 'Free Celebrations',
         description: 'Open celebration for all citizens',
         icon: 'fas fa-users',
-        skills: ['performance', 'athletics', 'applicable lore'],
+        skills: ['performance', 'athletics', 'religion', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Free games unite the realm; joy echoes in every heart.',
@@ -65,7 +65,7 @@ export const grandTournamentPipeline: CheckPipeline = {
         label: 'Organized Event',
         description: 'Entry fees with prizes and organized competition',
         icon: 'fas fa-trophy',
-        skills: ['athletics', 'society', 'applicable lore'],
+        skills: ['athletics', 'society', 'crafting', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Perfect event attracts permanent arena construction.',
@@ -99,7 +99,7 @@ export const grandTournamentPipeline: CheckPipeline = {
         label: 'Exclusive Affair',
         description: 'Noble-only event with high stakes',
         icon: 'fas fa-crown',
-        skills: ['diplomacy', 'performance', 'applicable lore'],
+        skills: ['diplomacy', 'performance', 'thievery', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Elite nobles compete; winning troops gain prestige.',

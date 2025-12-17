@@ -32,7 +32,7 @@ export const visitingCelebrityPipeline: CheckPipeline = {
         label: 'Simple Hospitality',
         description: 'Focus on the person, not spectacle',
         icon: 'fas fa-handshake',
-        skills: ['diplomacy', 'society', 'applicable lore'],
+        skills: ['diplomacy', 'society', 'crafting', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Heartfelt welcome touches hearts; moved celebrity spreads glowing tales.',
@@ -64,7 +64,7 @@ export const visitingCelebrityPipeline: CheckPipeline = {
         label: 'Appropriate Ceremony',
         description: 'Balanced exchange of gifts and honor',
         icon: 'fas fa-balance-scale',
-        skills: ['performance', 'society', 'applicable lore'],
+        skills: ['performance', 'society', 'diplomacy', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Flawless ceremony impresses all; diplomatic exchanges yield lasting prosperity.',
@@ -94,7 +94,7 @@ export const visitingCelebrityPipeline: CheckPipeline = {
         label: 'Lavish Display',
         description: 'Impress with extravagance to gain favor',
         icon: 'fas fa-crown',
-        skills: ['performance', 'diplomacy', 'applicable lore'],
+        skills: ['performance', 'diplomacy', 'thievery', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Ruthless opulence dazzles celebrity; awed guests shower kingdom with riches.',

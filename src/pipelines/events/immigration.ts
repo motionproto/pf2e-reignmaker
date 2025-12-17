@@ -37,11 +37,11 @@ export const immigrationPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'welcome-all',
+        id: 'virtuous',
         label: 'Welcome Citizens',
         description: 'Open borders and generous integration support',
         icon: 'fas fa-door-open',
-        skills: ['diplomacy', 'society', 'applicable lore'],
+        skills: ['diplomacy', 'society', 'medicine', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Newcomers thrive; their success inspires others to join.',
@@ -75,7 +75,7 @@ export const immigrationPipeline: CheckPipeline = {
         label: 'Selective Entry',
         description: 'Systematic vetting and settlement program',
         icon: 'fas fa-clipboard-check',
-        skills: ['society', 'survival', 'applicable lore'],
+        skills: ['society', 'survival', 'nature', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Skilled workers establish productive settlements.',
@@ -107,7 +107,7 @@ export const immigrationPipeline: CheckPipeline = {
         label: 'Forced Labour',
         description: 'Relocate and use as cheap workforce',
         icon: 'fas fa-hammer',
-        skills: ['intimidation', 'applicable lore'],
+        skills: ['intimidation', 'arcana', 'occultism', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Forced labor rapidly expands your holdings.',
@@ -194,7 +194,7 @@ export const immigrationPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'welcome-all') {
+      if (approach === 'virtuous') {
         // Welcome All Freely (Virtuous) - all outcomes grant 1 new worksite
         // Find a valid hex for farmstead
         const validHexes = (kingdom.hexes || []).filter((hex: any) =>
@@ -344,7 +344,7 @@ export const immigrationPipeline: CheckPipeline = {
         const approach = ctx.kingdom?.turnState?.eventsPhase?.selectedApproach;
         
         // Return number of worksites to create based on approach and outcome
-        if (approach === 'welcome-all') {
+        if (approach === 'virtuous') {
           return 1; // All outcomes grant 1 worksite
         } else if (approach === 'ruthless') {
           const outcome = ctx.outcome;
@@ -362,8 +362,8 @@ export const immigrationPipeline: CheckPipeline = {
       condition: (ctx: any) => {
         const approach = ctx.kingdom?.turnState?.eventsPhase?.selectedApproach;
         
-        // All outcomes for welcome-all and ruthless approaches grant worksites
-        return approach === 'welcome-all' || approach === 'ruthless';
+        // All outcomes for virtuous and ruthless approaches grant worksites
+        return approach === 'virtuous' || approach === 'ruthless';
       },
       validateHex: (hexId: string): ValidationResult => {
         return safeValidation(() => {
@@ -436,7 +436,7 @@ export const immigrationPipeline: CheckPipeline = {
         // Create each worksite with its specific type
         for (const hexId of hexIds) {
           const hexMetadata = perHexMetadata[hexId];
-          const worksiteType = hexMetadata?.worksiteType || (approach === 'welcome-all' ? 'farmstead' : undefined);
+          const worksiteType = hexMetadata?.worksiteType || (approach === 'virtuous' ? 'farmstead' : undefined);
           
           await createWorksiteExecution(hexId, worksiteType);
           
@@ -445,7 +445,7 @@ export const immigrationPipeline: CheckPipeline = {
       } else if (Array.isArray(selectedHexData)) {
         // Fallback: Simple array of hex IDs (no custom selector data)
         for (const hexId of selectedHexData) {
-          const worksiteType = approach === 'welcome-all' ? 'farmstead' : 'worksite';
+          const worksiteType = approach === 'virtuous' ? 'farmstead' : 'worksite';
           await createWorksiteExecution(hexId, worksiteType);
           ui.notifications?.info(`New settlers established a ${worksiteType} on hex ${hexId}`);
         }

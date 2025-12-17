@@ -33,7 +33,7 @@ export const scholarlyDiscoveryPipeline: CheckPipeline = {
         label: 'Open University',
         description: 'Free education for all citizens',
         icon: 'fas fa-university',
-        skills: ['lore', 'diplomacy', 'applicable lore'],
+        skills: ['lore', 'diplomacy', 'arcana', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Free knowledge uplifts all; grateful scholars forge powerful alliances.',
@@ -63,7 +63,7 @@ export const scholarlyDiscoveryPipeline: CheckPipeline = {
         label: 'Funded Research',
         description: 'Invest in institutional research',
         icon: 'fas fa-flask',
-        skills: ['lore', 'society', 'applicable lore'],
+        skills: ['lore', 'society', 'arcana', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Strategic funding sparks breakthrough innovations; patents fill coffers annually.',

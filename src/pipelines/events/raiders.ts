@@ -35,7 +35,7 @@ export const raidersPipeline: CheckPipeline = {
         label: 'Defend & Protect',
         description: 'Seek peaceful resolution through diplomacy',
         icon: 'fas fa-dove',
-        skills: ['diplomacy', 'society', 'applicable lore'],
+        skills: ['diplomacy', 'society', 'survival', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Former enemies become trading partners; mutual prosperity blooms.',
@@ -65,7 +65,7 @@ export const raidersPipeline: CheckPipeline = {
         label: 'Strategic Defense',
         description: 'Prepare defenses and protect territory',
         icon: 'fas fa-fort-awesome',
-        skills: ['intimidation', 'stealth', 'applicable lore'],
+        skills: ['nature', 'society', 'crafting', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Ironclad defenses repel marauders; salvaged gear enriches coffers.',
@@ -99,7 +99,7 @@ export const raidersPipeline: CheckPipeline = {
         label: 'Counter-raid',
         description: 'Launch military assault on raider camps',
         icon: 'fas fa-fire',
-        skills: ['intimidation', 'stealth', 'applicable lore'],
+        skills: ['intimidation', 'stealth', 'deception', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Annihilation complete; plundered wealth and captured prisoners secured.',

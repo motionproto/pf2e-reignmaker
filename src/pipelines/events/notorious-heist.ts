@@ -36,7 +36,7 @@ export const notoriousHeistPipeline: CheckPipeline = {
         label: 'Track & Recover',
         description: 'Pursue the thieves to recover stolen goods',
         icon: 'fas fa-search',
-        skills: ['thievery', 'stealth', 'applicable lore'],
+        skills: ['society', 'diplomacy', 'religion', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Brilliant detective work captures thieves red-handed; recovered treasures shine.',
@@ -68,7 +68,7 @@ export const notoriousHeistPipeline: CheckPipeline = {
         label: 'Increase Security',
         description: 'Prevent future thefts with better security',
         icon: 'fas fa-shield-alt',
-        skills: ['society', 'intimidation', 'applicable lore'],
+        skills: ['society', 'intimidation', 'crafting', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Methodical security upgrades deter future crime; seized contraband fills vaults.',
@@ -102,7 +102,7 @@ export const notoriousHeistPipeline: CheckPipeline = {
         label: 'Terrorize',
         description: 'Brutal response to intimidate criminals',
         icon: 'fas fa-fire',
-        skills: ['intimidation', 'performance', 'applicable lore'],
+        skills: ['intimidation', 'performance', 'thievery', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Brutal crackdown shatters criminal networks; terror fills prison cells.',

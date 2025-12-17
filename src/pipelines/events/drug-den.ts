@@ -34,7 +34,7 @@ export const drugDenPipeline: CheckPipeline = {
         label: 'Rehabilitation',
         description: 'Provide treatment and help addicts recover',
         icon: 'fas fa-hand-holding-medical',
-        skills: ['medicine', 'diplomacy', 'applicable lore'],
+        skills: ['medicine', 'diplomacy', 'religion', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Compassionate care redeems addicts; community celebrates recovery stories.',
@@ -64,7 +64,7 @@ export const drugDenPipeline: CheckPipeline = {
         label: 'Regulate and Tax',
         description: 'Control trade through regulation and taxation',
         icon: 'fas fa-balance-scale',
-        skills: ['society', 'medicine', 'applicable lore'],
+        skills: ['society', 'medicine', 'thievery', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Pragmatic licensing transforms vice into sustainable revenue stream.',
@@ -95,7 +95,7 @@ export const drugDenPipeline: CheckPipeline = {
         label: 'Crush with Force',
         description: 'Brutal crackdown and mass arrests',
         icon: 'fas fa-fist-raised',
-        skills: ['intimidation', 'stealth', 'applicable lore'],
+        skills: ['intimidation', 'athletics', 'stealth', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Brutal raids terrorize dealers into submission; imprisoned criminals rot in cells.',
@@ -127,6 +127,7 @@ export const drugDenPipeline: CheckPipeline = {
     { skill: 'stealth', description: 'undercover investigation' },
     { skill: 'medicine', description: 'treat addicts, trace source' },
     { skill: 'intimidation', description: 'crack down hard' },
+    { skill: 'athletics', description: 'physically raid den' },
     { skill: 'diplomacy', description: 'community outreach' },
     { skill: 'society', description: 'regulatory framework' },
   ],

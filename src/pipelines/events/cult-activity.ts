@@ -38,7 +38,7 @@ export const cultActivityPipeline: CheckPipeline = {
         label: 'Investigate Respectfully',
         description: 'Investigate while respecting religious freedom',
         icon: 'fas fa-balance-scale',
-        skills: ['society', 'diplomacy', 'applicable lore'],
+        skills: ['society', 'diplomacy', 'religion', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Respectful inquiry reveals benign practices; relations bloom.',
@@ -69,7 +69,7 @@ export const cultActivityPipeline: CheckPipeline = {
         label: 'Monitor and Contain',
         description: 'Surveillance to prevent spread of influence',
         icon: 'fas fa-eye',
-        skills: ['stealth', 'society', 'applicable lore'],
+        skills: ['stealth', 'society', 'occultism', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Surveillance exposes schemes; trained agents prevent spread.',
@@ -101,7 +101,7 @@ export const cultActivityPipeline: CheckPipeline = {
         label: 'Heretics Burn',
         description: 'Eliminate the cult through force',
         icon: 'fas fa-fist-raised',
-        skills: ['intimidation', 'stealth', 'applicable lore'],
+        skills: ['intimidation', 'athletics', 'stealth', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Ruthless purge crushes cult; seized treasures enrich coffers.',
@@ -135,7 +135,9 @@ export const cultActivityPipeline: CheckPipeline = {
     { skill: 'society', description: 'understand cult motivations' },
     { skill: 'diplomacy', description: 'respectful engagement' },
     { skill: 'stealth', description: 'surveillance operations' },
-    { skill: 'intimidation', description: 'forceful suppression' }
+    { skill: 'occultism', description: 'understand cult magic' },
+    { skill: 'intimidation', description: 'forceful suppression' },
+    { skill: 'athletics', description: 'physical enforcement' }
   ],
 
   outcomes: {

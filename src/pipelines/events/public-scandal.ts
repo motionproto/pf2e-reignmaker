@@ -35,7 +35,7 @@ export const publicScandalPipeline: CheckPipeline = {
         label: 'Transparent Response',
         description: 'Publicly investigate and reveal the truth',
         icon: 'fas fa-search',
-        skills: ['society', 'diplomacy', 'applicable lore'],
+        skills: ['society', 'diplomacy', 'religion', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Honesty transforms scandal into triumph; extra action granted.',
@@ -66,7 +66,7 @@ export const publicScandalPipeline: CheckPipeline = {
         label: 'Manage Narrative',
         description: 'Suppress the scandal quietly',
         icon: 'fas fa-user-secret',
-        skills: ['deception', 'stealth', 'applicable lore'],
+        skills: ['deception', 'stealth', 'performance', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Evidence vanishes without trace; silence purchased.',
@@ -97,7 +97,7 @@ export const publicScandalPipeline: CheckPipeline = {
         label: 'Suppress Story',
         description: 'Blame a subordinate to protect the crown',
         icon: 'fas fa-user-slash',
-        skills: ['intimidation', 'deception', 'applicable lore'],
+        skills: ['intimidation', 'deception', 'thievery', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Scapegoat succeeds; military uses scandal as training.',

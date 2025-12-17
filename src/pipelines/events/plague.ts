@@ -32,7 +32,7 @@ export const plaguePipeline: CheckPipeline = {
         label: 'Quarantine & Care',
         description: 'Care for all citizens regardless of cost',
         icon: 'fas fa-hand-holding-medical',
-        skills: ['medicine', 'religion', 'applicable lore'],
+        skills: ['medicine', 'religion', 'nature', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Your selfless devotion inspires hope; people rally together.',
@@ -65,7 +65,7 @@ export const plaguePipeline: CheckPipeline = {
         label: 'Contain Spread',
         description: 'Contain the spread and compensate losses',
         icon: 'fas fa-house-medical-circle-check',
-        skills: ['society', 'medicine', 'applicable lore'],
+        skills: ['society', 'medicine', 'crafting', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Methodical isolation halts the spread; order restored.',
@@ -96,7 +96,7 @@ export const plaguePipeline: CheckPipeline = {
         label: 'Burn the Infected',
         description: 'Burn infected areas to stop the spread',
         icon: 'fas fa-fire',
-        skills: ['intimidation', 'survival', 'applicable lore'],
+        skills: ['intimidation', 'survival', 'athletics', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Ruthless purge eradicates plague; seized assets fill coffers.',
@@ -130,6 +130,8 @@ export const plaguePipeline: CheckPipeline = {
     { skill: 'society', description: 'quarantine measures' },
     { skill: 'intimidation', description: 'enforce lockdown' },
     { skill: 'survival', description: 'emergency response' },
+    { skill: 'crafting', description: 'build quarantine facilities' },
+    { skill: 'athletics', description: 'enforce restrictions' },
   ],
 
   outcomes: {

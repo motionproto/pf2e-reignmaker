@@ -34,7 +34,7 @@ export const economicSurgePipeline: CheckPipeline = {
         label: 'Share Prosperity',
         description: 'Improve worker conditions and share prosperity',
         icon: 'fas fa-heart',
-        skills: ['diplomacy', 'society', 'applicable lore'],
+        skills: ['diplomacy', 'society', 'crafting', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Generous wages inspire loyalty; thriving workers fuel even greater prosperity.',
@@ -67,7 +67,7 @@ export const economicSurgePipeline: CheckPipeline = {
         label: 'Stockpile Surplus',
         description: 'Use prosperity for sustainable growth',
         icon: 'fas fa-industry',
-        skills: ['society', 'crafting', 'applicable lore'],
+        skills: ['society', 'crafting', 'medicine', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Strategic investments multiply wealth; warehouses overflow with bounty.',
@@ -101,7 +101,7 @@ export const economicSurgePipeline: CheckPipeline = {
         label: 'Exploit for Profit',
         description: 'Extract maximum profit from the boom',
         icon: 'fas fa-coins',
-        skills: ['intimidation', 'society', 'applicable lore'],
+        skills: ['intimidation', 'society', 'thievery', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Ruthless extraction drains every coin; intimidation silences dissent.',

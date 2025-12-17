@@ -33,7 +33,7 @@ export const diplomaticOverturePipeline: CheckPipeline = {
         label: 'Generous Terms',
         description: 'Build friendship through generous agreement',
         icon: 'fas fa-handshake',
-        skills: ['diplomacy', 'society', 'applicable lore'],
+        skills: ['diplomacy', 'society', 'religion', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Magnanimous generosity forges unbreakable alliance and thriving trade.',
@@ -65,7 +65,7 @@ export const diplomaticOverturePipeline: CheckPipeline = {
         label: 'Balanced Agreement',
         description: 'Mutual benefit through careful negotiation',
         icon: 'fas fa-balance-scale',
-        skills: ['diplomacy', 'deception', 'applicable lore'],
+        skills: ['diplomacy', 'society', 'performance', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Masterful negotiation secures profit while earning genuine respect.',
@@ -99,7 +99,7 @@ export const diplomaticOverturePipeline: CheckPipeline = {
         label: 'Exploit Relationship',
         description: 'Extract maximum advantage or refuse',
         icon: 'fas fa-gavel',
-        skills: ['intimidation', 'deception', 'applicable lore'],
+        skills: ['intimidation', 'deception', 'thievery', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Intimidating demands accepted; cowed neighbors provide lucrative tribute.',

@@ -35,7 +35,7 @@ export const crimeWavePipeline: CheckPipeline = {
         label: 'Community outreach',
         description: 'Bring criminals to justice through fair investigation',
         icon: 'fas fa-search',
-        skills: ['society', 'diplomacy', 'applicable lore'],
+        skills: ['society', 'diplomacy', 'religion', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Brilliant detective work captures criminals and vindicates innocents.',
@@ -66,7 +66,7 @@ export const crimeWavePipeline: CheckPipeline = {
         label: 'Patrols',
         description: 'Prevent crime through vigilant security measures',
         icon: 'fas fa-eye',
-        skills: ['intimidation', 'society', 'applicable lore'],
+        skills: ['intimidation', 'society', 'arcana', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Tireless guards catch thieves red-handed; trained soldiers emerge.',
@@ -96,7 +96,7 @@ export const crimeWavePipeline: CheckPipeline = {
         label: 'Crackdown',
         description: 'Make an example with brutal mass arrests',
         icon: 'fas fa-gavel',
-        skills: ['intimidation', 'performance', 'applicable lore'],
+        skills: ['intimidation', 'performance', 'stealth', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Terror reigns supreme; dungeons overflow with arrested suspects.',

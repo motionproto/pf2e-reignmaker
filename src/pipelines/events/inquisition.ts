@@ -37,7 +37,7 @@ export const inquisitionPipeline: CheckPipeline = {
         label: 'Protect the Accused',
         description: 'Stand against persecution',
         icon: 'fas fa-shield-alt',
-        skills: ['diplomacy', 'society', 'applicable lore'],
+        skills: ['diplomacy', 'society', 'medicine', 'applicable lore'],
         personality: { virtuous: 4 },
         outcomeDescriptions: {
           criticalSuccess: 'Brave defiance vindicates innocents; grateful refugees enrich the realm.',
@@ -69,7 +69,7 @@ export const inquisitionPipeline: CheckPipeline = {
         label: 'Formal Investigation',
         description: 'Conduct a proper investigation',
         icon: 'fas fa-balance-scale',
-        skills: ['society', 'deception', 'applicable lore'],
+        skills: ['society', 'deception', 'occultism', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Diplomatic balance satisfies all; grateful factions offer tribute.',
@@ -101,7 +101,7 @@ export const inquisitionPipeline: CheckPipeline = {
         label: 'Support Inquisitors',
         description: 'Endorse the hunt for heresy',
         icon: 'fas fa-fire',
-        skills: ['religion', 'intimidation', 'applicable lore'],
+        skills: ['religion', 'intimidation', 'athletics', 'applicable lore'],
         personality: { ruthless: 4 },
         outcomeDescriptions: {
           criticalSuccess: 'Merciless purge seizes assets and eliminates troublemakers.',
@@ -136,6 +136,9 @@ export const inquisitionPipeline: CheckPipeline = {
     { skill: 'diplomacy', description: 'protect victims' },
     { skill: 'society', description: 'mediate conflict' },
     { skill: 'deception', description: 'avoid commitment' },
+    { skill: 'medicine', description: 'treat persecuted victims' },
+    { skill: 'occultism', description: 'detect magical heresies' },
+    { skill: 'athletics', description: 'enforce inquisition' },
   ],
 
   outcomes: {

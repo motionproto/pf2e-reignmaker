@@ -34,7 +34,7 @@ export const foodSurplusPipeline: CheckPipeline = {
         label: 'Feed the Poor',
         description: 'Share abundance with the poor and needy',
         icon: 'fas fa-bread-slice',
-        skills: ['nature', 'diplomacy', 'applicable lore'],
+        skills: ['nature', 'diplomacy', 'medicine', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Selfless sharing inspires hope; grateful communities build new structures.',
@@ -66,7 +66,7 @@ export const foodSurplusPipeline: CheckPipeline = {
         label: 'Store & Trade',
         description: 'Stabilize prices and preserve for future',
         icon: 'fas fa-warehouse',
-        skills: ['society', 'crafting', 'applicable lore'],
+        skills: ['society', 'crafting', 'diplomacy', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Expert preservation secures future; markets stabilize as prices drop.',
@@ -98,7 +98,7 @@ export const foodSurplusPipeline: CheckPipeline = {
         label: 'Tax the Farmers',
         description: 'Maximize profit by selling surplus abroad',
         icon: 'fas fa-coins',
-        skills: ['society', 'diplomacy', 'applicable lore'],
+        skills: ['society', 'diplomacy', 'deception', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Ruthless trade secures foreign wealth; new markets open eagerly.',

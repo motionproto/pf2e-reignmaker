@@ -35,7 +35,7 @@ export const criminalTrialPipeline: CheckPipeline = {
         label: 'Show Mercy',
         description: 'Demonstrate compassion and forgiveness',
         icon: 'fas fa-dove',
-        skills: ['religion', 'diplomacy', 'applicable lore'],
+        skills: ['religion', 'diplomacy', 'performance', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Redemptive justice inspires reformation; pardoned criminals become model citizens.',
@@ -66,7 +66,7 @@ export const criminalTrialPipeline: CheckPipeline = {
         label: 'Fair Trial',
         description: 'Ensure justice is served fairly and transparently',
         icon: 'fas fa-balance-scale',
-        skills: ['society', 'diplomacy', 'applicable lore'],
+        skills: ['society', 'diplomacy', 'nature', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Impeccable legal proceedings set precedent; justice system earns renown.',
@@ -96,7 +96,7 @@ export const criminalTrialPipeline: CheckPipeline = {
         label: 'Harsh Punishment',
         description: 'Make an example to deter future crime',
         icon: 'fas fa-gavel',
-        skills: ['intimidation', 'performance', 'applicable lore'],
+        skills: ['intimidation', 'performance', 'deception', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Brutal spectacle terrifies criminals into submission; dissidents vanish into cells.',

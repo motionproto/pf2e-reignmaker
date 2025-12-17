@@ -30,7 +30,7 @@ export const naturesBlessingPipeline: CheckPipeline = {
         label: 'Preserve Carefully',
         description: 'Protect and cherish the natural wonder',
         icon: 'fas fa-leaf',
-        skills: ['nature', 'diplomacy', 'applicable lore'],
+        skills: ['nature', 'diplomacy', 'religion', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Reverent stewardship multiplies nature\'s gifts; wonder endures for generations.',
@@ -63,7 +63,7 @@ export const naturesBlessingPipeline: CheckPipeline = {
         label: 'Harvest Sustainably',
         description: 'Balance use with conservation',
         icon: 'fas fa-balance-scale',
-        skills: ['nature', 'society', 'applicable lore'],
+        skills: ['nature', 'society', 'crafting', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Wise planning balances harvest and preservation; abundance fills storehouses.',
@@ -95,7 +95,7 @@ export const naturesBlessingPipeline: CheckPipeline = {
         label: 'Exploit Fully',
         description: 'Extract maximum value while it lasts',
         icon: 'fas fa-industry',
-        skills: ['nature', 'intimidation', 'applicable lore'],
+        skills: ['nature', 'intimidation', 'thievery', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Ruthless extraction strips nature bare; mountains of wealth mask moral cost.',

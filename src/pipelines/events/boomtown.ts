@@ -33,7 +33,7 @@ export const boomtownPipeline: CheckPipeline = {
         label: 'Community Planning',
         description: 'Ensure fair housing and protect worker rights',
         icon: 'fas fa-home',
-        skills: ['diplomacy', 'society', 'applicable lore'],
+        skills: ['diplomacy', 'society', 'medicine', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Equitable growth inspires loyalty; grateful workers build freely.',
@@ -63,7 +63,7 @@ export const boomtownPipeline: CheckPipeline = {
         label: 'Managed Expansion',
         description: 'Manage growth sustainably with permits',
         icon: 'fas fa-clipboard-check',
-        skills: ['society', 'crafting', 'applicable lore'],
+        skills: ['society', 'crafting', 'nature', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Perfect regulations channel boom into wealth and infrastructure.',
@@ -96,7 +96,7 @@ export const boomtownPipeline: CheckPipeline = {
         label: 'Exploit Markets',
         description: 'Extract maximum revenue while boom lasts',
         icon: 'fas fa-coins',
-        skills: ['intimidation', 'society', 'applicable lore'],
+        skills: ['intimidation', 'society', 'athletics', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Ruthless fees bleed boom dry; gold flows endlessly into vaults.',
@@ -129,6 +129,7 @@ export const boomtownPipeline: CheckPipeline = {
     { skill: 'crafting', description: 'expand infrastructure' },
     { skill: 'diplomacy', description: 'maintain order' },
     { skill: 'intimidation', description: 'enforce fees' },
+    { skill: 'athletics', description: 'forced labor' },
   ],
 
   outcomes: {

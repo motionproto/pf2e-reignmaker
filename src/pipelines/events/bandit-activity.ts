@@ -44,7 +44,7 @@ export const banditActivityPipeline: CheckPipeline = {
         label: 'Negotiate',
         description: 'Offer bandits employment and peaceful resolution',
         icon: 'fas fa-handshake',
-        skills: ['diplomacy', 'society', 'applicable lore'],
+        skills: ['diplomacy', 'society', 'religion', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Reformed outlaws become loyal workers; compassion builds prosperity.',
@@ -76,7 +76,7 @@ export const banditActivityPipeline: CheckPipeline = {
         label: 'Drive Them Off',
         description: 'Use militia to defend and recover stolen goods',
         icon: 'fas fa-shield',
-        skills: ['intimidation', 'stealth', 'applicable lore'],
+        skills: ['nature', 'crafting', 'society', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Stalwart militia routs thieves and recovers stolen wealth.',
@@ -110,7 +110,7 @@ export const banditActivityPipeline: CheckPipeline = {
         label: 'Hunt Mercilessly',
         description: 'Eliminate bandits brutally and take their plunder',
         icon: 'fas fa-crosshairs',
-        skills: ['intimidation', 'stealth', 'applicable lore'],
+        skills: ['intimidation', 'stealth', 'survival', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Ruthless hunt annihilates bandits; plunder and prisoners seized.',

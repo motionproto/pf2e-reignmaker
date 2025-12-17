@@ -42,7 +42,7 @@ export const landRushPipeline: CheckPipeline = {
         label: 'Fair Distribution',
         description: 'Grant free land to all settlers',
         icon: 'fas fa-handshake',
-        skills: ['diplomacy', 'survival', 'applicable lore'],
+        skills: ['diplomacy', 'survival', 'society', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Generous grants unite pioneers; thriving settlements spring forth.',
@@ -73,7 +73,7 @@ export const landRushPipeline: CheckPipeline = {
         label: 'Auction',
         description: 'Manage expansion with permits and planning',
         icon: 'fas fa-clipboard-check',
-        skills: ['society', 'survival', 'applicable lore'],
+        skills: ['society', 'survival', 'performance', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Methodical planning yields prosperous settlements and steady revenue.',
@@ -105,7 +105,7 @@ export const landRushPipeline: CheckPipeline = {
         label: 'Favor Allies',
         description: 'Sell land to the highest bidders',
         icon: 'fas fa-gavel',
-        skills: ['intimidation', 'society', 'applicable lore'],
+        skills: ['intimidation', 'society', 'thievery', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Ruthless auctions enrich allies; favored settlers build lucrative ventures.',

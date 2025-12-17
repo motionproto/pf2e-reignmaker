@@ -611,6 +611,22 @@
       }
    }
    
+   // Event handler - approach selection (strategic choice)
+   async function handleApproachSelected(event: CustomEvent) {
+      const { approach } = event.detail;
+      
+      console.log('[EventsPhase] Approach selected:', approach);
+      
+      // Store selection in kingdom store
+      const actor = getKingdomActor();
+      if (actor) {
+         await actor.updateKingdomData((kingdom: any) => {
+            if (!kingdom.turnState?.eventsPhase) return;
+            kingdom.turnState.eventsPhase.selectedApproach = approach;
+         });
+      }
+   }
+   
    // Event handler - aid another
    function handleAid(event: CustomEvent) {
       const { checkId } = event.detail;
@@ -952,7 +968,56 @@
    
    <!-- Active Event Card - Show when an event needs to be resolved -->
    
-   {#if currentEventInstance && currentEventInstance.checkData}
+   <!-- Phase 1: Show strategic choice when event triggered but no approach selected -->
+   {#if currentEvent && currentEvent.strategicChoice && !$kingdomData.turnState?.eventsPhase?.selectedApproach && !currentEventInstance}
+      <div class="event-card">
+         <div class="event-header">
+            <h2 class="event-title">{currentEvent.name}</h2>
+            <div class="header-content">
+               <p class="event-description">{currentEvent.description}</p>
+               {#if currentEvent.traits && currentEvent.traits.length > 0}
+                  <div class="event-traits">
+                     {#each currentEvent.traits as trait}
+                        <span class="trait-badge">{trait}</span>
+                     {/each}
+                  </div>
+               {/if}
+            </div>
+         </div>
+         <div class="event-body">
+            <BaseCheckCard
+               id={currentEvent.id}
+               name={currentEvent.name}
+               description={currentEvent.description}
+               skills={currentEvent.skills}
+               outcomes={eventOutcomes}
+               traits={currentEvent.traits || []}
+               checkType="event"
+               strategicChoice={currentEvent.strategicChoice}
+               expandable={false}
+               showCompletions={false}
+               showAvailability={false}
+               showSpecial={false}
+               showIgnoreButton={true}
+               {isViewingCurrentPhase}
+               {possibleOutcomes}
+               showAidButton={false}
+               resolved={false}
+               skillSectionTitle="Choose Your Response:"
+               {hideUntrainedSkills}
+               {forceOutcomeMode}
+               on:approachSelected={handleApproachSelected}
+               on:executeSkill={handleExecuteSkill}
+               on:forceOutcome={handleForceOutcome}
+               on:primary={handleApplyResult}
+               on:cancel={handleCancel}
+               on:ignore={handleIgnore}
+               on:aid={handleAid}
+            />
+         </div>
+      </div>
+   {:else if currentEventInstance && currentEventInstance.checkData}
+      <!-- Phase 2: Show full check card after approach selected OR event without strategic choice -->
       {@const isEventResolved = currentEventInstance.status !== 'pending'}
       {#key `${currentEventInstance.checkId}-${activeAidsCount}`}
          <BaseCheckCard
@@ -987,6 +1052,36 @@
             on:aid={handleAid}
          />
       {/key}
+   {:else if currentEvent && !currentEvent.strategicChoice}
+      <!-- Phase 2 (alternative): Event without strategic choice - show immediately -->
+      <BaseCheckCard
+         id={currentEvent.id}
+         name={currentEvent.name}
+         description={currentEvent.description}
+         skills={currentEvent.skills}
+         outcomes={eventOutcomes}
+         traits={currentEvent.traits || []}
+         checkType="event"
+         strategicChoice={currentEvent.strategicChoice}
+         expandable={false}
+         showCompletions={false}
+         showAvailability={false}
+         showSpecial={false}
+         showIgnoreButton={true}
+         {isViewingCurrentPhase}
+         {possibleOutcomes}
+         showAidButton={true}
+         resolved={false}
+         skillSectionTitle="Choose Your Response:"
+         {hideUntrainedSkills}
+         {forceOutcomeMode}
+         on:executeSkill={handleExecuteSkill}
+         on:forceOutcome={handleForceOutcome}
+         on:primary={handleApplyResult}
+         on:cancel={handleCancel}
+         on:ignore={handleIgnore}
+         on:aid={handleAid}
+      />
    {/if}
    
    <!-- Ongoing Events - System-generated events that can be resolved -->

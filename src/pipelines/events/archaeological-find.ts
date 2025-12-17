@@ -35,7 +35,7 @@ export const archaeologicalFindPipeline: CheckPipeline = {
         label: 'Preserve Heritage',
         description: 'Free public access to cultural treasure',
         icon: 'fas fa-monument',
-        skills: ['society', 'religion', 'applicable lore'],
+        skills: ['society', 'religion', 'crafting', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Citizens flock to the heritage site; the settlement thrives.',
@@ -65,7 +65,7 @@ export const archaeologicalFindPipeline: CheckPipeline = {
         label: 'Scholarly Study',
         description: 'Museum and research institution',
         icon: 'fas fa-book',
-        skills: ['society', 'occultism', 'applicable lore'],
+        skills: ['society', 'occultism', 'arcana', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Museum draws scholars and tourists from distant lands.',
@@ -97,7 +97,7 @@ export const archaeologicalFindPipeline: CheckPipeline = {
         label: 'Sell Artifacts',
         description: 'Maximize profit through private sales',
         icon: 'fas fa-coins',
-        skills: ['diplomacy', 'society', 'applicable lore'],
+        skills: ['diplomacy', 'society', 'thievery', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Wealthy collectors compete for prized relics.',
@@ -130,6 +130,8 @@ export const archaeologicalFindPipeline: CheckPipeline = {
     { skill: 'religion', description: 'divine significance' },
     { skill: 'occultism', description: 'arcane investigation' },
     { skill: 'diplomacy', description: 'negotiate sales' },
+    { skill: 'crafting', description: 'artifact restoration' },
+    { skill: 'arcana', description: 'study magical artifacts' },
   ],
 
   outcomes: {

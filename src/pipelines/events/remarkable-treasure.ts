@@ -32,7 +32,7 @@ export const remarkableTreasurePipeline: CheckPipeline = {
         label: 'Share with All',
         description: 'Distribute wealth to all citizens',
         icon: 'fas fa-hand-holding-heart',
-        skills: ['diplomacy', 'society', 'applicable lore'],
+        skills: ['diplomacy', 'society', 'religion', 'applicable lore'],
         personality: { virtuous: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Selfless sharing unites hearts; grateful factions celebrate generous leaders.',
@@ -63,7 +63,7 @@ export const remarkableTreasurePipeline: CheckPipeline = {
         label: 'Add to Treasury',
         description: 'Invest in kingdom infrastructure and projects',
         icon: 'fas fa-coins',
-        skills: ['society', 'thievery', 'applicable lore'],
+        skills: ['society', 'crafting', 'thievery', 'applicable lore'],
         personality: { practical: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Methodical investment multiplies treasure; wise planning yields lasting prosperity.',
@@ -94,7 +94,7 @@ export const remarkableTreasurePipeline: CheckPipeline = {
         label: 'Keep for Leadership',
         description: 'Reserve benefits for kingdom leaders',
         icon: 'fas fa-crown',
-        skills: ['thievery', 'diplomacy', 'applicable lore'],
+        skills: ['thievery', 'diplomacy', 'deception', 'applicable lore'],
         personality: { ruthless: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Ruthless elite claim spoils; enriched leaders ignore public grumbling.',
