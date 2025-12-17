@@ -15,6 +15,7 @@ import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
 import { ReduceImprisonedHandler } from '../../services/gameCommands/handlers/ReduceImprisonedHandler';
+import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
 import { valueBadge, textBadge, diceBadge } from '../../types/OutcomeBadge';
 
 export const criminalTrialPipeline: CheckPipeline = {
@@ -300,14 +301,40 @@ export const criminalTrialPipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-          ];
+          // Imprison innocents (increase imprisoned WITHOUT reducing unrest)
+          const addImprisonedHandler = new AddImprisonedHandler();
+          const imprisonCommand = await addImprisonedHandler.prepare(
+            { type: 'addImprisoned', amount: 3, diceFormula: '1d3' },
+            commandContext
+          );
+          if (imprisonCommand) {
+            ctx.metadata._preparedAddImprisoned = imprisonCommand;
+            if (imprisonCommand.outcomeBadges) {
+              // Remove static "innocents harmed" badge
+              const filteredBadges = outcomeBadges.filter(b => !b.template?.includes('innocents harmed'));
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...filteredBadges, ...imprisonCommand.outcomeBadges);
+            }
+          }
         } else if (outcome === 'criticalFailure') {
           modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
-            { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
+            { type: 'dice', resource: 'unrest', formula: '1d2', duration: 'immediate' }
           ];
+          // Imprison innocents (increase imprisoned WITHOUT reducing unrest)
+          const addImprisonedHandler = new AddImprisonedHandler();
+          const imprisonCommand = await addImprisonedHandler.prepare(
+            { type: 'addImprisoned', amount: 3, diceFormula: '1d3' },
+            commandContext
+          );
+          if (imprisonCommand) {
+            ctx.metadata._preparedAddImprisoned = imprisonCommand;
+            if (imprisonCommand.outcomeBadges) {
+              // Remove static "innocents harmed" badge
+              const filteredBadges = outcomeBadges.filter(b => !b.template?.includes('innocents harmed'));
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...filteredBadges, ...imprisonCommand.outcomeBadges);
+            }
+          }
         }
       }
 
@@ -333,6 +360,12 @@ export const criminalTrialPipeline: CheckPipeline = {
     const reduceCommand = ctx.metadata?._preparedReduceImprisoned;
     if (reduceCommand?.commit) {
       await reduceCommand.commit();
+    }
+
+    // Execute innocent imprisonment (ruthless F/CF - adds imprisoned without reducing unrest)
+    const addImprisonedCommand = ctx.metadata?._preparedAddImprisoned;
+    if (addImprisonedCommand?.commit) {
+      await addImprisonedCommand.commit();
     }
 
     return { success: true };

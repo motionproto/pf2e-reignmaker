@@ -16,6 +16,7 @@ import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
+import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
 import { valueBadge, textBadge, diceBadge } from '../../types/OutcomeBadge';
 import { factionService } from '../../services/factions';
 import { adjustAttitudeBySteps } from '../../utils/faction-attitude-adjuster';
@@ -341,13 +342,6 @@ export const feudPipeline: CheckPipeline = {
           ];
 
           // Add structure damage for force + critical failure
-          const commandContext = {
-            actionId: 'feud',
-            outcome: ctx.outcome,
-            kingdom: ctx.kingdom,
-            metadata: ctx.metadata || {}
-          };
-
           const damageHandler = new DamageStructureHandler();
           const damageCommand = await damageHandler.prepare(
             { type: 'damageStructure', count: 1 },
@@ -361,6 +355,22 @@ export const feudPipeline: CheckPipeline = {
               outcomeBadges.push(...damageCommand.outcomeBadges);
             } else if (damageCommand.outcomeBadge) {
               outcomeBadges.push(damageCommand.outcomeBadge);
+            }
+          }
+
+          // Imprison innocents (increase imprisoned WITHOUT reducing unrest)
+          const addImprisonedHandler = new AddImprisonedHandler();
+          const imprisonCommand = await addImprisonedHandler.prepare(
+            { type: 'addImprisoned', amount: 2, diceFormula: '1d2' },
+            commandContext
+          );
+          if (imprisonCommand) {
+            ctx.metadata._preparedAddImprisoned = imprisonCommand;
+            if (imprisonCommand.outcomeBadges) {
+              // Remove static "innocents harmed" badge
+              const filteredBadges = outcomeBadges.filter(b => !b.template?.includes('innocents harmed'));
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...filteredBadges, ...imprisonCommand.outcomeBadges);
             }
           }
         }
@@ -405,6 +415,12 @@ export const feudPipeline: CheckPipeline = {
     const damageCommand = ctx.metadata?._preparedDamageStructure;
     if (damageCommand?.commit) {
       await damageCommand.commit();
+    }
+
+    // Execute innocent imprisonment (ruthless CF - adds imprisoned without reducing unrest)
+    const addImprisonedCommand = ctx.metadata?._preparedAddImprisoned;
+    if (addImprisonedCommand?.commit) {
+      await addImprisonedCommand.commit();
     }
 
     return { success: true };

@@ -1,1620 +1,563 @@
 {
-  "criminal-trial.ts": {
-    "virtuous": {
-      "existing": [
-        "religion",
-        "diplomacy"
-      ],
-      "add": [
-        "performance"
-      ],
-      "replace": false,
-      "final": [
-        "religion",
-        "diplomacy",
-        "performance",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "society",
-        "diplomacy"
-      ],
-      "add": [
-        "nature"
-      ],
-      "replace": false,
-      "final": [
-        "society",
-        "diplomacy",
-        "nature",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "intimidation",
-        "performance"
-      ],
-      "add": [
-        "deception"
-      ],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "performance",
-        "deception",
-        "applicable lore"
-      ]
-    }
+  "criminal-trial": {
+    "virtuous": [
+      "religion",
+      "diplomacy",
+      "performance"
+    ],
+    "practical": [
+      "society",
+      "diplomacy",
+      "nature"
+    ],
+    "ruthless": [
+      "intimidation",
+      "performance",
+      "deception"
+    ]
   },
-  "feud.ts": {
-    "virtuous": {
-      "existing": [
-        "diplomacy",
-        "society",
-        "religion"
-      ],
-      "add": [],
-      "replace": false,
-      "final": [
-        "diplomacy",
-        "society",
-        "religion",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "deception",
-        "stealth",
-        "thievery"
-      ],
-      "add": [],
-      "replace": false,
-      "final": [
-        "deception",
-        "stealth",
-        "thievery",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "intimidation",
-        "performance",
-        "athletics"
-      ],
-      "add": [],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "performance",
-        "athletics",
-        "applicable lore"
-      ]
-    }
+  "feud": {
+    "virtuous": [
+      "diplomacy",
+      "society",
+      "religion"
+    ],
+    "practical": [
+      "deception",
+      "stealth",
+      "thievery"
+    ],
+    "ruthless": [
+      "intimidation",
+      "performance",
+      "athletics"
+    ]
   },
-  "inquisition.ts": {
-    "virtuous": {
-      "existing": [
-        "diplomacy",
-        "society",
-        "medicine"
-      ],
-      "add": [],
-      "replace": false,
-      "final": [
-        "diplomacy",
-        "society",
-        "medicine",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "society",
-        "deception",
-        "occultism"
-      ],
-      "add": [],
-      "replace": false,
-      "final": [
-        "society",
-        "deception",
-        "occultism",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "religion",
-        "intimidation",
-        "athletics"
-      ],
-      "add": [],
-      "replace": false,
-      "final": [
-        "religion",
-        "intimidation",
-        "athletics",
-        "applicable lore"
-      ]
-    }
+  "inquisition": {
+    "virtuous": [
+      "diplomacy",
+      "society",
+      "medicine"
+    ],
+    "practical": [
+      "society",
+      "deception",
+      "occultism"
+    ],
+    "ruthless": [
+      "religion",
+      "intimidation",
+      "athletics"
+    ]
   },
-  "public-scandal.ts": {
-    "virtuous": {
-      "existing": [
-        "society",
-        "diplomacy"
-      ],
-      "add": [
-        "religion"
-      ],
-      "replace": false,
-      "final": [
-        "society",
-        "diplomacy",
-        "religion",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "deception",
-        "stealth"
-      ],
-      "add": [
-        "performance"
-      ],
-      "replace": false,
-      "final": [
-        "deception",
-        "stealth",
-        "performance",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "intimidation",
-        "deception"
-      ],
-      "add": [
-        "thievery"
-      ],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "deception",
-        "thievery",
-        "applicable lore"
-      ]
-    }
+  "public-scandal": {
+    "virtuous": [
+      "society",
+      "diplomacy",
+      "religion"
+    ],
+    "practical": [
+      "deception",
+      "stealth",
+      "performance"
+    ],
+    "ruthless": [
+      "intimidation",
+      "deception",
+      "thievery"
+    ]
   },
-  "plague.ts": {
-    "virtuous": {
-      "existing": [
-        "medicine",
-        "religion"
-      ],
-      "add": [
-        "nature"
-      ],
-      "replace": false,
-      "final": [
-        "medicine",
-        "religion",
-        "nature",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "society",
-        "medicine",
-        "crafting"
-      ],
-      "add": [],
-      "replace": false,
-      "final": [
-        "society",
-        "medicine",
-        "crafting",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "intimidation",
-        "survival",
-        "athletics"
-      ],
-      "add": [],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "survival",
-        "athletics",
-        "applicable lore"
-      ]
-    }
+  "plague": {
+    "virtuous": [
+      "medicine",
+      "religion",
+      "nature"
+    ],
+    "practical": [
+      "society",
+      "medicine",
+      "crafting"
+    ],
+    "ruthless": [
+      "intimidation",
+      "survival",
+      "athletics"
+    ]
   },
-  "food-shortage.ts": {
-    "virtuous": {
-      "existing": [
-        "diplomacy",
-        "society",
-        "medicine"
-      ],
-      "add": [],
-      "replace": false,
-      "final": [
-        "diplomacy",
-        "society",
-        "medicine",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "society",
-        "nature",
-        "crafting"
-      ],
-      "add": [],
-      "replace": false,
-      "final": [
-        "society",
-        "nature",
-        "crafting",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "intimidation",
-        "athletics"
-      ],
-      "add": [
-        "survival"
-      ],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "athletics",
-        "survival",
-        "applicable lore"
-      ]
-    }
+  "food-shortage": {
+    "virtuous": [
+      "diplomacy",
+      "society",
+      "medicine"
+    ],
+    "practical": [
+      "society",
+      "nature",
+      "crafting"
+    ],
+    "ruthless": [
+      "intimidation",
+      "athletics",
+      "survival"
+    ]
   },
-  "natural-disaster.ts": {
-    "virtuous": {
-      "existing": [
-        "survival",
-        "medicine",
-        "athletics"
-      ],
-      "add": [],
-      "replace": false,
-      "final": [
-        "survival",
-        "medicine",
-        "athletics",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "society",
-        "crafting"
-      ],
-      "add": [
-        "survival"
-      ],
-      "replace": false,
-      "final": [
-        "society",
-        "crafting",
-        "survival",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "intimidation"
-      ],
-      "add": [
-        "survival",
-        "theivery"
-      ],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "survival",
-        "theivery",
-        "applicable lore"
-      ]
-    }
+  "natural-disaster": {
+    "virtuous": [
+      "survival",
+      "medicine",
+      "athletics"
+    ],
+    "practical": [
+      "society",
+      "crafting",
+      "survival"
+    ],
+    "ruthless": [
+      "intimidation",
+      "survival",
+      "thievery"
+    ]
   },
-  "immigration.ts": {
-    "virtuous": {
-      "existing": [
-        "diplomacy",
-        "society"
-      ],
-      "add": [
-        "medicine"
-      ],
-      "replace": false,
-      "final": [
-        "diplomacy",
-        "society",
-        "medicine",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "society",
-        "survival"
-      ],
-      "add": [
-        "nature"
-      ],
-      "replace": false,
-      "final": [
-        "society",
-        "survival",
-        "nature",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "intimidation"
-      ],
-      "add": [
-        "arcana",
-        "occultism"
-      ],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "arcana",
-        "occultism",
-        "applicable lore"
-      ]
-    }
+  "immigration": {
+    "virtuous": [
+      "diplomacy",
+      "society",
+      "medicine"
+    ],
+    "practical": [
+      "society",
+      "survival",
+      "nature"
+    ],
+    "ruthless": [
+      "intimidation",
+      "arcana",
+      "occultism"
+    ]
   },
-  "assassination-attempt.ts": {
-    "virtuous": {
-      "existing": [
-        "diplomacy",
-        "society",
-        "medicine"
-      ],
-      "add": [],
-      "replace": false,
-      "final": [
-        "diplomacy",
-        "society",
-        "medicine",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "stealth",
-        "survival",
-        "arcana"
-      ],
-      "add": [],
-      "replace": false,
-      "final": [
-        "stealth",
-        "survival",
-        "arcana",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "intimidation",
-        "warfare",
-        "athletics"
-      ],
-      "add": [],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "warfare",
-        "athletics",
-        "applicable lore"
-      ]
-    }
+  "assassination-attempt": {
+    "virtuous": [
+      "diplomacy",
+      "society",
+      "medicine"
+    ],
+    "practical": [
+      "stealth",
+      "survival",
+      "arcana"
+    ],
+    "ruthless": [
+      "intimidation",
+      "warfare",
+      "athletics"
+    ]
   },
-  "crime-wave.ts": {
-    "virtuous": {
-      "existing": [
-        "society",
-        "diplomacy"
-      ],
-      "add": [
-        "religion"
-      ],
-      "replace": false,
-      "final": [
-        "society",
-        "diplomacy",
-        "religion",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "intimidation",
-        "society"
-      ],
-      "add": [
-        "arcana"
-      ],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "society",
-        "arcana",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "intimidation",
-        "performance"
-      ],
-      "add": [
-        "stealth"
-      ],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "performance",
-        "stealth",
-        "applicable lore"
-      ]
-    }
+  "crime-wave": {
+    "virtuous": [
+      "society",
+      "diplomacy",
+      "religion"
+    ],
+    "practical": [
+      "intimidation",
+      "society",
+      "arcana"
+    ],
+    "ruthless": [
+      "intimidation",
+      "performance",
+      "stealth"
+    ]
   },
-  "notorious-heist.ts": {
-    "virtuous": {
-      "existing": [],
-      "add": [
-        "society",
-        "diplomacy",
-        "religion"
-      ],
-      "replace": true,
-      "final": [
-        "society",
-        "diplomacy",
-        "religion",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "society",
-        "intimidation"
-      ],
-      "add": [
-        "crafting"
-      ],
-      "replace": false,
-      "final": [
-        "society",
-        "intimidation",
-        "crafting",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "intimidation",
-        "performance"
-      ],
-      "add": [
-        "thievery"
-      ],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "performance",
-        "thievery",
-        "applicable lore"
-      ]
-    }
+  "notorious-heist": {
+    "virtuous": [
+      "society",
+      "diplomacy",
+      "religion"
+    ],
+    "practical": [
+      "society",
+      "intimidation",
+      "crafting"
+    ],
+    "ruthless": [
+      "intimidation",
+      "performance",
+      "thievery"
+    ]
   },
-  "bandit-activity.ts": {
-    "virtuous": {
-      "existing": [
-        "diplomacy",
-        "society"
-      ],
-      "add": [
-        "religion"
-      ],
-      "replace": false,
-      "final": [
-        "diplomacy",
-        "society",
-        "religion",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [],
-      "add": [
-        "nature",
-        "crafting",
-        "society"
-      ],
-      "replace": true,
-      "final": [
-        "nature",
-        "crafting",
-        "society",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "intimidation",
-        "stealth"
-      ],
-      "add": [
-        "survival"
-      ],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "stealth",
-        "survival",
-        "applicable lore"
-      ]
-    }
+  "bandit-activity": {
+    "virtuous": [
+      "diplomacy",
+      "society",
+      "religion"
+    ],
+    "practical": [
+      "nature",
+      "crafting",
+      "society"
+    ],
+    "ruthless": [
+      "intimidation",
+      "stealth",
+      "survival"
+    ]
   },
-  "raiders.ts": {
-    "virtuous": {
-      "existing": [
-        "diplomacy",
-        "society"
-      ],
-      "add": [
-        "survival"
-      ],
-      "replace": false,
-      "final": [
-        "diplomacy",
-        "society",
-        "survival",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [],
-      "add": [
-        "nature",
-        "sociery",
-        "crafting"
-      ],
-      "replace": true,
-      "final": [
-        "nature",
-        "sociery",
-        "crafting",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "intimidation",
-        "stealth"
-      ],
-      "add": [
-        "deception"
-      ],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "stealth",
-        "deception",
-        "applicable lore"
-      ]
-    }
+  "raiders": {
+    "virtuous": [
+      "diplomacy",
+      "society",
+      "survival"
+    ],
+    "practical": [
+      "nature",
+      "society",
+      "crafting"
+    ],
+    "ruthless": [
+      "intimidation",
+      "stealth",
+      "deception"
+    ]
   },
-  "trade-agreement.ts": {
-    "virtuous": {
-      "existing": [
-        "diplomacy",
-        "society"
-      ],
-      "add": [
-        "crafting"
-      ],
-      "replace": false,
-      "final": [
-        "diplomacy",
-        "society",
-        "crafting",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "diplomacy",
-        "society"
-      ],
-      "add": [
-        "perfromance"
-      ],
-      "replace": false,
-      "final": [
-        "diplomacy",
-        "society",
-        "perfromance",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "intimidation",
-        "deception"
-      ],
-      "add": [
-        "thievery"
-      ],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "deception",
-        "thievery",
-        "applicable lore"
-      ]
-    }
+  "trade-agreement": {
+    "virtuous": [
+      "diplomacy",
+      "society",
+      "crafting"
+    ],
+    "practical": [
+      "diplomacy",
+      "society",
+      "performance"
+    ],
+    "ruthless": [
+      "intimidation",
+      "deception",
+      "thievery"
+    ]
   },
-  "economic-surge.ts": {
-    "virtuous": {
-      "existing": [
-        "diplomacy",
-        "society"
-      ],
-      "add": [
-        "crafting"
-      ],
-      "replace": false,
-      "final": [
-        "diplomacy",
-        "society",
-        "crafting",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "society",
-        "crafting"
-      ],
-      "add": [
-        "medicine"
-      ],
-      "replace": false,
-      "final": [
-        "society",
-        "crafting",
-        "medicine",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "intimidation",
-        "society"
-      ],
-      "add": [
-        "thievery"
-      ],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "society",
-        "thievery",
-        "applicable lore"
-      ]
-    }
+  "economic-surge": {
+    "virtuous": [
+      "diplomacy",
+      "society",
+      "crafting"
+    ],
+    "practical": [
+      "society",
+      "crafting",
+      "medicine"
+    ],
+    "ruthless": [
+      "intimidation",
+      "society",
+      "thievery"
+    ]
   },
-  "food-surplus.ts": {
-    "virtuous": {
-      "existing": [
-        "nature",
-        "diplomacy"
-      ],
-      "add": [
-        "medicine"
-      ],
-      "replace": false,
-      "final": [
-        "nature",
-        "diplomacy",
-        "medicine",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "society",
-        "crafting"
-      ],
-      "add": [
-        "diplomacy"
-      ],
-      "replace": false,
-      "final": [
-        "society",
-        "crafting",
-        "diplomacy",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "society",
-        "diplomacy"
-      ],
-      "add": [
-        "deception"
-      ],
-      "replace": false,
-      "final": [
-        "society",
-        "diplomacy",
-        "deception",
-        "applicable lore"
-      ]
-    }
+  "food-surplus": {
+    "virtuous": [
+      "nature",
+      "diplomacy",
+      "medicine"
+    ],
+    "practical": [
+      "society",
+      "crafting",
+      "diplomacy"
+    ],
+    "ruthless": [
+      "society",
+      "diplomacy",
+      "deception"
+    ]
   },
-  "boomtown.ts": {
-    "virtuous": {
-      "existing": [
-        "diplomacy",
-        "society"
-      ],
-      "add": [
-        "medicine"
-      ],
-      "replace": false,
-      "final": [
-        "diplomacy",
-        "society",
-        "medicine",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "society",
-        "crafting"
-      ],
-      "add": [
-        "nature"
-      ],
-      "replace": false,
-      "final": [
-        "society",
-        "crafting",
-        "nature",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "intimidation",
-        "society",
-        "athletics"
-      ],
-      "add": [],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "society",
-        "athletics",
-        "applicable lore"
-      ]
-    }
+  "boomtown": {
+    "virtuous": [
+      "diplomacy",
+      "society",
+      "medicine"
+    ],
+    "practical": [
+      "society",
+      "crafting",
+      "nature"
+    ],
+    "ruthless": [
+      "intimidation",
+      "society",
+      "athletics"
+    ]
   },
-  "land-rush.ts": {
-    "virtuous": {
-      "existing": [
-        "diplomacy",
-        "survival"
-      ],
-      "add": [
-        "society"
-      ],
-      "replace": false,
-      "final": [
-        "diplomacy",
-        "survival",
-        "society",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "society",
-        "survival"
-      ],
-      "add": [
-        "performance"
-      ],
-      "replace": false,
-      "final": [
-        "society",
-        "survival",
-        "performance",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "intimidation",
-        "society"
-      ],
-      "add": [
-        "thievery"
-      ],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "society",
-        "thievery",
-        "applicable lore"
-      ]
-    }
+  "land-rush": {
+    "virtuous": [
+      "diplomacy",
+      "survival",
+      "society"
+    ],
+    "practical": [
+      "society",
+      "survival",
+      "performance"
+    ],
+    "ruthless": [
+      "intimidation",
+      "society",
+      "thievery"
+    ]
   },
-  "pilgrimage.ts": {
-    "virtuous": {
-      "existing": [
-        "religion",
-        "diplomacy"
-      ],
-      "add": [
-        "medicine"
-      ],
-      "replace": false,
-      "final": [
-        "religion",
-        "diplomacy",
-        "medicine",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "society",
-        "religion"
-      ],
-      "add": [
-        "survival"
-      ],
-      "replace": false,
-      "final": [
-        "society",
-        "religion",
-        "survival",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "intimidation",
-        "society"
-      ],
-      "add": [
-        "thievery"
-      ],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "society",
-        "thievery",
-        "applicable lore"
-      ]
-    }
+  "pilgrimage": {
+    "virtuous": [
+      "religion",
+      "diplomacy",
+      "medicine"
+    ],
+    "practical": [
+      "society",
+      "religion",
+      "survival"
+    ],
+    "ruthless": [
+      "intimidation",
+      "society",
+      "thievery"
+    ]
   },
-  "diplomatic-overture.ts": {
-    "virtuous": {
-      "existing": [
-        "diplomacy",
-        "society"
-      ],
-      "add": [
-        "religion"
-      ],
-      "replace": false,
-      "final": [
-        "diplomacy",
-        "society",
-        "religion",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [],
-      "add": [
-        "diplomacy",
-        "society",
-        "performance"
-      ],
-      "replace": true,
-      "final": [
-        "diplomacy",
-        "society",
-        "performance",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "intimidation",
-        "deception"
-      ],
-      "add": [
-        "thievery"
-      ],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "deception",
-        "thievery",
-        "applicable lore"
-      ]
-    }
+  "diplomatic-overture": {
+    "virtuous": [
+      "diplomacy",
+      "society",
+      "religion"
+    ],
+    "practical": [
+      "diplomacy",
+      "society",
+      "performance"
+    ],
+    "ruthless": [
+      "intimidation",
+      "deception",
+      "thievery"
+    ]
   },
-  "festive-invitation.ts": {
-    "virtuous": {
-      "existing": [
-        "diplomacy",
-        "performance",
-        "acrobatics"
-      ],
-      "add": [],
-      "replace": false,
-      "final": [
-        "diplomacy",
-        "performance",
-        "acrobatics",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "diplomacy",
-        "society",
-        "crafting"
-      ],
-      "add": [],
-      "replace": false,
-      "final": [
-        "diplomacy",
-        "society",
-        "crafting",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "intimidation",
-        "performance",
-        "athletics"
-      ],
-      "add": [],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "performance",
-        "athletics",
-        "applicable lore"
-      ]
-    }
+  "festive-invitation": {
+    "virtuous": [
+      "diplomacy",
+      "performance",
+      "acrobatics"
+    ],
+    "practical": [
+      "diplomacy",
+      "society",
+      "crafting"
+    ],
+    "ruthless": [
+      "intimidation",
+      "performance",
+      "athletics"
+    ]
   },
-  "visiting-celebrity.ts": {
-    "virtuous": {
-      "existing": [
-        "diplomacy",
-        "society"
-      ],
-      "add": [
-        "crafting"
-      ],
-      "replace": false,
-      "final": [
-        "diplomacy",
-        "society",
-        "crafting",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "performance",
-        "society"
-      ],
-      "add": [
-        "diplomacy"
-      ],
-      "replace": false,
-      "final": [
-        "performance",
-        "society",
-        "diplomacy",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "performance",
-        "diplomacy"
-      ],
-      "add": [
-        "thievery"
-      ],
-      "replace": false,
-      "final": [
-        "performance",
-        "diplomacy",
-        "thievery",
-        "applicable lore"
-      ]
-    }
+  "visiting-celebrity": {
+    "virtuous": [
+      "diplomacy",
+      "society",
+      "crafting"
+    ],
+    "practical": [
+      "performance",
+      "society",
+      "diplomacy"
+    ],
+    "ruthless": [
+      "performance",
+      "diplomacy",
+      "thievery"
+    ]
   },
-  "grand-tournament.ts": {
-    "virtuous": {
-      "existing": [
-        "performance",
-        "athletics"
-      ],
-      "add": [
-        "religion"
-      ],
-      "replace": false,
-      "final": [
-        "performance",
-        "athletics",
-        "religion",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "athletics",
-        "society"
-      ],
-      "add": [
-        "crafting"
-      ],
-      "replace": false,
-      "final": [
-        "athletics",
-        "society",
-        "crafting",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "diplomacy",
-        "performance"
-      ],
-      "add": [
-        "thievery"
-      ],
-      "replace": false,
-      "final": [
-        "diplomacy",
-        "performance",
-        "thievery",
-        "applicable lore"
-      ]
-    }
+  "grand-tournament": {
+    "virtuous": [
+      "performance",
+      "athletics",
+      "religion"
+    ],
+    "practical": [
+      "athletics",
+      "society",
+      "crafting"
+    ],
+    "ruthless": [
+      "diplomacy",
+      "performance",
+      "thievery"
+    ]
   },
-  "archaeological-find.ts": {
-    "virtuous": {
-      "existing": [
-        "society",
-        "religion",
-        "crafting"
-      ],
-      "add": [],
-      "replace": false,
-      "final": [
-        "society",
-        "religion",
-        "crafting",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "society",
-        "occultism",
-        "arcana"
-      ],
-      "add": [],
-      "replace": false,
-      "final": [
-        "society",
-        "occultism",
-        "arcana",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "diplomacy",
-        "society"
-      ],
-      "add": [
-        "thievery"
-      ],
-      "replace": false,
-      "final": [
-        "diplomacy",
-        "society",
-        "thievery",
-        "applicable lore"
-      ]
-    }
+  "archaeological-find": {
+    "virtuous": [
+      "society",
+      "religion",
+      "crafting"
+    ],
+    "practical": [
+      "society",
+      "occultism",
+      "arcana"
+    ],
+    "ruthless": [
+      "diplomacy",
+      "society",
+      "thievery"
+    ]
   },
-  "magical-discovery.ts": {
-    "virtuous": {
-      "existing": [
-        "arcana",
-        "diplomacy"
-      ],
-      "add": [
-        "occultism"
-      ],
-      "replace": false,
-      "final": [
-        "arcana",
-        "diplomacy",
-        "occultism",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "arcana",
-        "society"
-      ],
-      "add": [
-        "crafting"
-      ],
-      "replace": false,
-      "final": [
-        "arcana",
-        "society",
-        "crafting",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "intimidation",
-        "arcana"
-      ],
-      "add": [
-        "thievery"
-      ],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "arcana",
-        "thievery",
-        "applicable lore"
-      ]
-    }
+  "magical-discovery": {
+    "virtuous": [
+      "arcana",
+      "diplomacy",
+      "occultism"
+    ],
+    "practical": [
+      "arcana",
+      "society",
+      "crafting"
+    ],
+    "ruthless": [
+      "intimidation",
+      "arcana",
+      "thievery"
+    ]
   },
-  "remarkable-treasure.ts": {
-    "virtuous": {
-      "existing": [
-        "diplomacy",
-        "society"
-      ],
-      "add": [
-        "religion"
-      ],
-      "replace": false,
-      "final": [
-        "diplomacy",
-        "society",
-        "religion",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [],
-      "add": [
-        "society",
-        "crafting",
-        "thievery"
-      ],
-      "replace": true,
-      "final": [
-        "society",
-        "crafting",
-        "thievery",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "thievery",
-        "diplomacy"
-      ],
-      "add": [
-        "deception"
-      ],
-      "replace": false,
-      "final": [
-        "thievery",
-        "diplomacy",
-        "deception",
-        "applicable lore"
-      ]
-    }
+  "remarkable-treasure": {
+    "virtuous": [
+      "diplomacy",
+      "society",
+      "religion"
+    ],
+    "practical": [
+      "society",
+      "crafting",
+      "thievery"
+    ],
+    "ruthless": [
+      "thievery",
+      "diplomacy",
+      "deception"
+    ]
   },
-  "natures-blessing.ts": {
-    "virtuous": {
-      "existing": [
-        "nature",
-        "diplomacy"
-      ],
-      "add": [
-        "religion"
-      ],
-      "replace": false,
-      "final": [
-        "nature",
-        "diplomacy",
-        "religion",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "nature",
-        "society"
-      ],
-      "add": [
-        "crafting"
-      ],
-      "replace": false,
-      "final": [
-        "nature",
-        "society",
-        "crafting",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "nature",
-        "intimidation"
-      ],
-      "add": [
-        "thievery"
-      ],
-      "replace": false,
-      "final": [
-        "nature",
-        "intimidation",
-        "thievery",
-        "applicable lore"
-      ]
-    }
+  "nature-s-blessing": {
+    "virtuous": [
+      "nature",
+      "diplomacy",
+      "religion"
+    ],
+    "practical": [
+      "nature",
+      "society",
+      "crafting"
+    ],
+    "ruthless": [
+      "nature",
+      "intimidation",
+      "thievery"
+    ]
   },
-  "good-weather.ts": {
-    "virtuous": {
-      "existing": [
-        "performance",
-        "diplomacy"
-      ],
-      "add": [
-        "religion"
-      ],
-      "replace": false,
-      "final": [
-        "performance",
-        "diplomacy",
-        "religion",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "nature",
-        "society"
-      ],
-      "add": [
-        "crafting"
-      ],
-      "replace": false,
-      "final": [
-        "nature",
-        "society",
-        "crafting",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "intimidation",
-        "performance"
-      ],
-      "add": [
-        "survival"
-      ],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "performance",
-        "survival",
-        "applicable lore"
-      ]
-    }
+  "good-weather": {
+    "virtuous": [
+      "performance",
+      "diplomacy",
+      "religion"
+    ],
+    "practical": [
+      "nature",
+      "society",
+      "crafting"
+    ],
+    "ruthless": [
+      "intimidation",
+      "performance",
+      "survival"
+    ]
   },
-  "military-exercises.ts": {
-    "virtuous": {
-      "existing": [
-        "athletics",
-        "survival"
-      ],
-      "add": [
-        "performance"
-      ],
-      "replace": false,
-      "final": [
-        "athletics",
-        "survival",
-        "performance",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "crafting",
-        "society"
-      ],
-      "add": [
-        "intimidation"
-      ],
-      "replace": false,
-      "final": [
-        "crafting",
-        "society",
-        "intimidation",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [],
-      "add": [
-        "intimidation",
-        "deception",
-        "athletics"
-      ],
-      "replace": true,
-      "final": [
-        "intimidation",
-        "deception",
-        "athletics",
-        "applicable lore"
-      ]
-    }
+  "military-exercises": {
+    "virtuous": [
+      "athletics",
+      "survival",
+      "performance"
+    ],
+    "practical": [
+      "crafting",
+      "society",
+      "intimidation"
+    ],
+    "ruthless": [
+      "intimidation",
+      "deception",
+      "athletics"
+    ]
   },
-  "drug-den.ts": {
-    "virtuous": {
-      "existing": [
-        "medicine",
-        "diplomacy"
-      ],
-      "add": [
-        "religion"
-      ],
-      "replace": false,
-      "final": [
-        "medicine",
-        "diplomacy",
-        "religion",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "society",
-        "medicine"
-      ],
-      "add": [
-        "thievery"
-      ],
-      "replace": false,
-      "final": [
-        "society",
-        "medicine",
-        "thievery",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "intimidation",
-        "athletics",
-        "stealth"
-      ],
-      "add": [],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "athletics",
-        "stealth",
-        "applicable lore"
-      ]
-    }
+  "drug-den": {
+    "virtuous": [
+      "medicine",
+      "diplomacy",
+      "religion"
+    ],
+    "practical": [
+      "society",
+      "medicine",
+      "thievery"
+    ],
+    "ruthless": [
+      "intimidation",
+      "athletics",
+      "stealth"
+    ]
   },
-  "monster-attack.ts": {
-    "virtuous": {
-      "existing": [
-        "nature",
-        "diplomacy",
-        "medicine"
-      ],
-      "add": [],
-      "replace": false,
-      "final": [
-        "nature",
-        "diplomacy",
-        "medicine",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "stealth",
-        "intimidation"
-      ],
-      "add": [
-        "survival"
-      ],
-      "replace": false,
-      "final": [
-        "stealth",
-        "intimidation",
-        "survival",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "intimidation",
-        "athletics",
-        "stealth"
-      ],
-      "add": [],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "athletics",
-        "stealth",
-        "applicable lore"
-      ]
-    }
+  "monster-attack": {
+    "virtuous": [
+      "nature",
+      "diplomacy",
+      "medicine"
+    ],
+    "practical": [
+      "stealth",
+      "intimidation",
+      "survival"
+    ],
+    "ruthless": [
+      "intimidation",
+      "athletics",
+      "stealth"
+    ]
   },
-  "undead-uprising.ts": {
-    "virtuous": {
-      "existing": [
-        "occultism",
-        "diplomacy"
-      ],
-      "add": [
-        "religion"
-      ],
-      "replace": false,
-      "final": [
-        "occultism",
-        "diplomacy",
-        "religion",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [],
-      "add": [
-        "occultism",
-        "athletics",
-        "intimidation"
-      ],
-      "replace": true,
-      "final": [
-        "occultism",
-        "athletics",
-        "intimidation",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "intimidation",
-        "stealth"
-      ],
-      "add": [
-        "thievery"
-      ],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "stealth",
-        "thievery",
-        "applicable lore"
-      ]
-    }
+  "undead-uprising": {
+    "virtuous": [
+      "occultism",
+      "diplomacy",
+      "religion"
+    ],
+    "practical": [
+      "occultism",
+      "athletics",
+      "intimidation"
+    ],
+    "ruthless": [
+      "intimidation",
+      "stealth",
+      "thievery"
+    ]
   },
-  "cult-activity.ts": {
-    "virtuous": {
-      "existing": [
-        "society",
-        "diplomacy"
-      ],
-      "add": [
-        "religion"
-      ],
-      "replace": false,
-      "final": [
-        "society",
-        "diplomacy",
-        "religion",
-        "applicable lore"
-      ]
-    },
-    "practical": {
-      "existing": [
-        "stealth",
-        "society",
-        "occultism"
-      ],
-      "add": [],
-      "replace": false,
-      "final": [
-        "stealth",
-        "society",
-        "occultism",
-        "applicable lore"
-      ]
-    },
-    "ruthless": {
-      "existing": [
-        "intimidation",
-        "athletics",
-        "stealth"
-      ],
-      "add": [],
-      "replace": false,
-      "final": [
-        "intimidation",
-        "athletics",
-        "stealth",
-        "applicable lore"
-      ]
-    }
+  "cult-activity": {
+    "virtuous": [
+      "society",
+      "diplomacy",
+      "religion"
+    ],
+    "practical": [
+      "stealth",
+      "society",
+      "occultism"
+    ],
+    "ruthless": [
+      "intimidation",
+      "athletics",
+      "stealth"
+    ]
   }
 }

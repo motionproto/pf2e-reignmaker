@@ -236,10 +236,26 @@
       })
     : skills;
   
+  // NEW: If approach is selected, use approach-specific skills instead of pipeline skills
+  // This ensures events show the correct 3-4 skills per approach, not just the pipeline skills
+  $: approachSkills = (() => {
+    if (selectedApproach && activeChoice?.options) {
+      const option = activeChoice.options.find((o: any) => o.id === selectedApproach);
+      if (option?.skills) {
+        // Convert approach skill strings to skill objects with descriptions
+        return option.skills.map((skill: string) => ({ skill, description: '' }));
+      }
+    }
+    return null;
+  })();
+  
+  // Use approach skills if available, otherwise use pipeline skills
+  $: baseSkillsForCheck = approachSkills || availableSkills;
+  
   // Inject "applicable-lore" as a global option for all checks, then filter untrained if needed
   let baseSkillsWithLore: Array<{ skill: string; description?: string }> = [];
   $: baseSkillsWithLore = [
-    ...availableSkills,
+    ...baseSkillsForCheck,
     { skill: 'applicable lore', description: 'relevant expertise' }
   ];
   
@@ -267,13 +283,8 @@
     });
   })();
   
-  // NEW: Filter skills based on selected approach (for choice-based events/actions)
-  $: effectiveSkills = selectedApproach && activeChoice?.options
-    ? skillsWithLore.filter(s => {
-        const option = activeChoice.options.find((o: any) => o.id === selectedApproach);
-        return option?.skills?.includes(s.skill);
-      })
-    : skillsWithLore;
+  // No additional filtering needed - skills are already approach-specific
+  $: effectiveSkills = skillsWithLore;
   
   // Get skill bonuses for all skills (including injected lore)
   $: skillBonuses = getSkillBonuses(skillsWithLore.map(s => s.skill));

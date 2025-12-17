@@ -1,128 +1,185 @@
 #!/usr/bin/env node
 
 /**
- * Apply skill updates from event-skills-mapping.json to event pipeline TypeScript files
+ * Apply Event Skills from CSV to TypeScript Pipeline Files
  * 
  * This script:
- * 1. Reads the mapping JSON
- * 2. For each event file, updates the skills array in each approach's strategicChoice options
- * 3. Corrects known typos (theivery -> thievery, sociery -> society, perfromance -> performance)
+ * 1. Reads EVENT_SKILLS_TABLE.csv
+ * 2. For each event, extracts the 3 skills per approach (excluding "applicable lore")
+ * 3. Updates the TypeScript pipeline files to include these skills + "applicable lore"
+ * 
+ * Usage:
+ *   node buildscripts/apply-event-skills.mjs
  */
 
-import { readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Fix known typos in the mapping
-const SKILL_CORRECTIONS = {
-  'theivery': 'thievery',
-  'sociery': 'society',
-  'perfromance': 'performance'
-};
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-function correctSkills(skills) {
-  return skills.map(skill => SKILL_CORRECTIONS[skill] || skill);
+// Paths
+const CSV_PATH = path.join(__dirname, '../docs/planning/EVENT_SKILLS_TABLE.csv');
+const EVENTS_DIR = path.join(__dirname, '../src/pipelines/events');
+const OUTPUT_JSON = path.join(__dirname, 'event-skills-mapping.json');
+
+// Parse CSV (simple parser for this specific format)
+function parseCSV(csvContent) {
+  const lines = csvContent.split('\n').filter(line => line.trim());
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i];
+    const values = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let j = 0; j < line.length; j++) {
+      const char = line[j];
+      
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        values.push(current.trim().replace(/^"|"$/g, ''));
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    values.push(current.trim().replace(/^"|"$/g, ''));
+    
+    const row = {};
+    headers.forEach((header, idx) => {
+      row[header] = values[idx] || '';
+    });
+    rows.push(row);
+  }
+  
+  return rows;
 }
 
-function updateEventFile(filePath, approachUpdates) {
-  console.log(`\nUpdating ${filePath}...`);
+// Convert event name to pipeline ID (kebab-case)
+function eventNameToId(name) {
+  // Remove number prefix (e.g., "1. Criminal Trial" -> "Criminal Trial")
+  const withoutNumber = name.replace(/^\d+\.\s*/, '');
   
-  let content = readFileSync(filePath, 'utf-8');
-  let updated = false;
+  // Convert to kebab-case
+  return withoutNumber
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+// Convert approach name to ID
+function approachToId(approach) {
+  const map = {
+    'Virtuous': 'virtuous',
+    'Practical': 'practical',
+    'Ruthless': 'ruthless'
+  };
+  return map[approach] || approach.toLowerCase();
+}
+
+// Main execution
+console.log('📖 Reading CSV...');
+const csvContent = fs.readFileSync(CSV_PATH, 'utf-8');
+const rows = parseCSV(csvContent);
+
+console.log(`✅ Parsed ${rows.length} rows from CSV`);
+
+// Build mapping: eventId -> { virtuous: [...], practical: [...], ruthless: [...] }
+const eventSkills = {};
+let lastEventName = null;
+
+for (const row of rows) {
+  let eventName = row['Name'];
+  const approach = row['Approach'];
+  const skillsStr = row['Skills'];
   
-  // For each approach that needs updating
-  for (const [approachId, skillData] of Object.entries(approachUpdates)) {
-    // Skip if no changes needed (empty add array and not a replacement)
-    if (!skillData.replace && skillData.add.length === 0) {
-      console.log(`  - ${approachId}: no changes needed`);
-      continue;
-    }
+  // Track last valid event name (for rows where Name is empty)
+  if (eventName) {
+    lastEventName = eventName;
+  } else if (lastEventName) {
+    eventName = lastEventName;
+  }
+  
+  if (!eventName || !approach || !skillsStr) continue;
+  
+  const eventId = eventNameToId(eventName);
+  const approachId = approachToId(approach);
+  
+  // Parse skills (remove quotes and split by comma)
+  const skills = skillsStr
+    .split(',')
+    .map(s => s.trim().replace(/^"|"$/g, ''))
+    .filter(s => s && s !== 'applicable lore');  // Exclude "applicable lore"
+  
+  if (!eventSkills[eventId]) {
+    eventSkills[eventId] = {};
+  }
+  
+  eventSkills[eventId][approachId] = skills;
+}
+
+console.log(`✅ Built skill mapping for ${Object.keys(eventSkills).length} events`);
+
+// Write mapping to JSON for reference
+fs.writeFileSync(OUTPUT_JSON, JSON.stringify(eventSkills, null, 2));
+console.log(`📝 Wrote mapping to ${OUTPUT_JSON}`);
+
+// Apply to TypeScript files
+console.log('\n🔧 Updating TypeScript pipeline files...');
+
+let updatedCount = 0;
+let errorCount = 0;
+
+for (const [eventId, approaches] of Object.entries(eventSkills)) {
+  const filePath = path.join(EVENTS_DIR, `${eventId}.ts`);
+  
+  if (!fs.existsSync(filePath)) {
+    console.warn(`⚠️  File not found: ${eventId}.ts`);
+    errorCount++;
+    continue;
+  }
+  
+  let content = fs.readFileSync(filePath, 'utf-8');
+  let modified = false;
+  
+  // Update each approach's skills array
+  for (const [approachId, skills] of Object.entries(approaches)) {
+    // Build new skills array with "applicable lore" added
+    const newSkills = [...skills, 'applicable lore'];
+    const newSkillsStr = newSkills.map(s => `'${s}'`).join(', ');
     
-    // Correct any typos in the final skills list
-    const finalSkills = correctSkills(skillData.final);
-    
-    // Build the skills array string
-    const skillsArrayStr = `['${finalSkills.join("', '")}']`;
-    
-    // Find the approach in the file
-    // Look for: id: 'virtuous', 'practical', or 'ruthless'
-    const approachPattern = new RegExp(
-      `(\\{[^}]*id:\\s*'${approachId}'[^}]*skills:\\s*)\\[[^\\]]*\\]`,
-      's'
+    // Pattern to match: id: 'approach', ... skills: [...]
+    const pattern = new RegExp(
+      `(id:\\s*'${approachId}'[^}]+skills:\\s*\\[)([^\\]]+)(\\])`,
+      'gs'
     );
     
-    const match = content.match(approachPattern);
-    if (match) {
-      const before = match[1];
-      const newContent = content.replace(
-        approachPattern,
-        `${before}${skillsArrayStr}`
-      );
-      
-      if (newContent !== content) {
-        content = newContent;
-        updated = true;
-        const action = skillData.replace ? 'REPLACED' : 'ADDED';
-        console.log(`  - ${approachId}: ${action} skills -> ${skillsArrayStr}`);
-      } else {
-        console.log(`  - ${approachId}: WARNING - pattern matched but no change made`);
-      }
-    } else {
-      console.log(`  - ${approachId}: WARNING - could not find approach in file`);
+    const newContent = content.replace(pattern, (match, before, oldSkills, after) => {
+      modified = true;
+      return `${before}${newSkillsStr}${after}`;
+    });
+    
+    if (newContent !== content) {
+      content = newContent;
     }
   }
   
-  if (updated) {
-    writeFileSync(filePath, content, 'utf-8');
-    console.log(`  ✓ File updated successfully`);
-    return true;
+  if (modified) {
+    fs.writeFileSync(filePath, content);
+    console.log(`✅ Updated: ${eventId}.ts`);
+    updatedCount++;
   } else {
-    console.log(`  - No changes made to file`);
-    return false;
+    console.log(`⏭️  No changes: ${eventId}.ts`);
   }
 }
 
-function main() {
-  // Read the mapping
-  const mappingPath = 'buildscripts/event-skills-mapping.json';
-  const mapping = JSON.parse(readFileSync(mappingPath, 'utf-8'));
-  
-  const eventsDir = 'src/pipelines/events';
-  
-  console.log('Applying skill updates to event pipeline files...\n');
-  
-  let filesUpdated = 0;
-  let totalChanges = 0;
-  
-  // Process each event file
-  for (const [filename, approachUpdates] of Object.entries(mapping)) {
-    const filePath = join(eventsDir, filename);
-    
-    // Count how many approaches have actual changes
-    const changesInFile = Object.values(approachUpdates).filter(
-      data => data.replace || data.add.length > 0
-    ).length;
-    
-    if (changesInFile === 0) {
-      console.log(`\nSkipping ${filename} (no changes needed)`);
-      continue;
-    }
-    
-    try {
-      const wasUpdated = updateEventFile(filePath, approachUpdates);
-      if (wasUpdated) {
-        filesUpdated++;
-        totalChanges += changesInFile;
-      }
-    } catch (error) {
-      console.error(`  ✗ Error updating ${filename}:`, error.message);
-    }
-  }
-  
-  console.log('\n' + '='.repeat(60));
-  console.log(`Summary:`);
-  console.log(`  Files updated: ${filesUpdated}`);
-  console.log(`  Total skill changes: ${totalChanges}`);
-  console.log('='.repeat(60));
+console.log(`\n✅ Updated ${updatedCount} files`);
+if (errorCount > 0) {
+  console.log(`⚠️  ${errorCount} files not found`);
 }
-
-main();
+console.log('✨ Done!');

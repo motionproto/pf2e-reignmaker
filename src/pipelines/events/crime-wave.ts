@@ -251,9 +251,10 @@ export const crimeWavePipeline: CheckPipeline = {
           if (imprisonCommand) {
             ctx.metadata._preparedAddImprisoned = imprisonCommand;
             if (imprisonCommand.outcomeBadges) {
-              outcomeBadges.push(...imprisonCommand.outcomeBadges);
-            } else if (imprisonCommand.outcomeBadge) {
-              outcomeBadges.push(imprisonCommand.outcomeBadge);
+              // Remove static "innocents harmed" badge
+              const filteredBadges = outcomeBadges.filter(b => !b.template?.includes('innocents harmed'));
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...filteredBadges, ...imprisonCommand.outcomeBadges);
             }
           }
         } else if (outcome === 'criticalFailure') {
@@ -266,9 +267,10 @@ export const crimeWavePipeline: CheckPipeline = {
           if (imprisonCommand) {
             ctx.metadata._preparedAddImprisoned = imprisonCommand;
             if (imprisonCommand.outcomeBadges) {
-              outcomeBadges.push(...imprisonCommand.outcomeBadges);
-            } else if (imprisonCommand.outcomeBadge) {
-              outcomeBadges.push(imprisonCommand.outcomeBadge);
+              // Remove static "innocents harmed" badge
+              const filteredBadges = outcomeBadges.filter(b => !b.template?.includes('innocents harmed'));
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...filteredBadges, ...imprisonCommand.outcomeBadges);
             }
           }
         }

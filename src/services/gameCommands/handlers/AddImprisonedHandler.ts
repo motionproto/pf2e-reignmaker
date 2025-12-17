@@ -49,11 +49,12 @@ export class AddImprisonedHandler extends BaseGameCommandHandler {
     let targetId: string | null;
     let targetName: string | null;
     let maxCapacity: number;
+    const outcomeBadges: any[] = [];
 
     if (diceFormula) {
       const result = createTargetedDiceBadge({
         formula: diceFormula,
-        action: 'Imprison innocents',
+        action: 'Innocents Imprisoned',
         targets,
         icon: 'fas fa-user-slash',
         variant: 'negative',
@@ -66,7 +67,7 @@ export class AddImprisonedHandler extends BaseGameCommandHandler {
     } else {
       const result = createTargetedStaticBadge({
         amount: requestedAmount,
-        action: 'Imprison innocents',
+        action: 'Innocents Imprisoned',
         targets,
         icon: 'fas fa-user-slash',
         variant: 'negative',
@@ -78,6 +79,27 @@ export class AddImprisonedHandler extends BaseGameCommandHandler {
       maxCapacity = result.maxCapacity;
     }
 
+    // Add main imprisonment badge
+    outcomeBadges.push(badge);
+
+    // Add overflow badge if capacity is insufficient
+    if (targetId && requestedAmount > maxCapacity) {
+      const overflow = requestedAmount - maxCapacity;
+      outcomeBadges.push({
+        icon: 'fas fa-exclamation-triangle',
+        template: `Innocents Persecuted: +${overflow} Unrest`,
+        variant: 'negative'
+      });
+    } else if (!targetId) {
+      // No capacity at all - replace with persecution badge
+      outcomeBadges.length = 0; // Clear the "no capacity" badge
+      outcomeBadges.push({
+        icon: 'fas fa-exclamation-triangle',
+        template: `Innocents Persecuted: +${requestedAmount} Unrest`,
+        variant: 'negative'
+      });
+    }
+
     // Store target settlement for commit
     const metadata: {
       targetSettlement: { id: string; name: string; available: number } | null;
@@ -85,10 +107,10 @@ export class AddImprisonedHandler extends BaseGameCommandHandler {
       targetSettlement: targetId ? { id: targetId, name: targetName!, available: maxCapacity } : null
     };
 
-    logger.info(`[AddImprisoned] Preview: ${badge.template}`);
+    logger.info(`[AddImprisoned] Preview badges: ${outcomeBadges.map(b => b.template).join(', ')}`);
 
     return {
-      outcomeBadges: [badge],
+      outcomeBadges,
       metadata,
       commit: async () => {
         logger.info(`[AddImprisoned] Executing command`);
@@ -125,15 +147,15 @@ export class AddImprisonedHandler extends BaseGameCommandHandler {
               // Add overflow to normal unrest (no prison capacity)
               k.unrest = (k.unrest || 0) + overflow;
               
-              logger.info(`[AddImprisoned] Added ${overflow} overflow to normal unrest (no capacity)`);
-              chatMessageParts.push(`<p><strong>Unrest Increases:</strong> +${overflow} (no prison capacity for all innocents)</p>`);
+              logger.info(`[AddImprisoned] Innocents persecuted: +${overflow} unrest (insufficient capacity)`);
+              chatMessageParts.push(`<p><strong>Innocents Persecuted:</strong> +${overflow} Unrest (insufficient prison capacity)</p>`);
             }
           } else {
             // No prison capacity at all - add all to normal unrest
             k.unrest = (k.unrest || 0) + requestedAmount;
             
-            logger.info(`[AddImprisoned] No prison capacity - added ${requestedAmount} to normal unrest`);
-            chatMessageParts.push(`<p><strong>Unrest Increases:</strong> +${requestedAmount} (no prison capacity)</p>`);
+            logger.info(`[AddImprisoned] Innocents persecuted: +${requestedAmount} unrest (no prison capacity)`);
+            chatMessageParts.push(`<p><strong>Innocents Persecuted:</strong> +${requestedAmount} Unrest (no prison capacity available)</p>`);
           }
         });
 

@@ -299,6 +299,22 @@ export const publicScandalPipeline: CheckPipeline = {
             { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
             { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
           ];
+          
+          // Innocents harmed - add imprisoned without reducing unrest
+          const imprisonHandler = new AddImprisonedHandler();
+          const imprisonCommand = await imprisonHandler.prepare(
+            { type: 'addImprisoned', amount: 3, diceFormula: '1d3' },
+            commandContext
+          );
+          if (imprisonCommand) {
+            ctx.metadata._preparedInnocentsHarmed = imprisonCommand;
+            if (imprisonCommand.outcomeBadges) {
+              // Remove static "innocents harmed" badge
+              const filteredBadges = outcomeBadges.filter(b => !b.template?.includes('innocents harmed'));
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...filteredBadges, ...imprisonCommand.outcomeBadges);
+            }
+          }
         } else if (outcome === 'criticalFailure') {
           modifiers = [
             { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
@@ -314,9 +330,10 @@ export const publicScandalPipeline: CheckPipeline = {
           if (imprisonCommand) {
             ctx.metadata._preparedInnocentsHarmed = imprisonCommand;
             if (imprisonCommand.outcomeBadges) {
-              outcomeBadges.push(...imprisonCommand.outcomeBadges);
-            } else if (imprisonCommand.outcomeBadge) {
-              outcomeBadges.push(imprisonCommand.outcomeBadge);
+              // Remove static "innocents harmed" badge
+              const filteredBadges = outcomeBadges.filter(b => !b.template?.includes('innocents harmed'));
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...filteredBadges, ...imprisonCommand.outcomeBadges);
             }
           }
           
