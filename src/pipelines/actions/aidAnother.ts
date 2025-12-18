@@ -31,27 +31,26 @@ export const aidAnotherPipeline: CheckPipeline = {
   id: 'aid-another',
   name: 'Aid Another',
   description: 'Use your skills to assist another character\'s kingdom check. If you succeed, you grant them a circumstance bonus based on your proficiency. A critical success grants +4 and allows them to keep the higher of two rolls.',
-  brief: 'Help another character with their check',
   category: 'support',
   checkType: 'action',
 
   skills: [
-    { skill: 'agriculture', description: 'farming expertise' },
-    { skill: 'arts', description: 'cultural knowledge' },
-    { skill: 'boating', description: 'maritime skills' },
-    { skill: 'defense', description: 'military tactics' },
-    { skill: 'engineering', description: 'construction knowledge' },
-    { skill: 'exploration', description: 'reconnaissance' },
-    { skill: 'folklore', description: 'local traditions' },
-    { skill: 'industry', description: 'production expertise' },
-    { skill: 'intrigue', description: 'political maneuvering' },
-    { skill: 'magic', description: 'arcane knowledge' },
-    { skill: 'politics', description: 'diplomatic insight' },
-    { skill: 'scholarship', description: 'academic research' },
-    { skill: 'statecraft', description: 'governance wisdom' },
-    { skill: 'trade', description: 'economic acumen' },
-    { skill: 'warfare', description: 'strategic planning' },
-    { skill: 'wilderness', description: 'survival expertise' }
+    { skill: 'acrobatics', description: 'agility and coordination' },
+    { skill: 'arcana', description: 'arcane knowledge' },
+    { skill: 'athletics', description: 'physical prowess' },
+    { skill: 'crafting', description: 'construction and creation' },
+    { skill: 'deception', description: 'subterfuge and misdirection' },
+    { skill: 'diplomacy', description: 'negotiation and persuasion' },
+    { skill: 'intimidation', description: 'threats and coercion' },
+    { skill: 'medicine', description: 'healing and health' },
+    { skill: 'nature', description: 'natural world knowledge' },
+    { skill: 'occultism', description: 'esoteric mysteries' },
+    { skill: 'performance', description: 'artistry and showmanship' },
+    { skill: 'religion', description: 'divine knowledge' },
+    { skill: 'society', description: 'culture and civilization' },
+    { skill: 'stealth', description: 'concealment and infiltration' },
+    { skill: 'survival', description: 'wilderness expertise' },
+    { skill: 'thievery', description: 'sleight of hand and lockpicking' }
   ],
 
   outcomes: {
@@ -91,7 +90,7 @@ export const aidAnotherPipeline: CheckPipeline = {
         const bonus = calculateAidBonus(ctx.outcome, proficiencyRank);
         outcomeBadges.push(textBadge(`+${bonus} circumstance bonus`, 'fa-hands-helping', 'positive'));
       } else if (ctx.outcome === 'failure') {
-        outcomeBadges.push(textBadge('No effect - can try with different skill', 'fa-redo', 'neutral'));
+        outcomeBadges.push(textBadge('No effect - can try with different skill', 'fa-redo', 'info'));
       } else if (ctx.outcome === 'criticalFailure') {
         outcomeBadges.push(textBadge('-1 circumstance penalty', 'fa-exclamation-triangle', 'negative'));
       }
