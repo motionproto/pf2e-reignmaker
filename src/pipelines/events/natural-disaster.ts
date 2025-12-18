@@ -13,8 +13,8 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
-import { valueBadge, textBadge, diceBadge } from '../../types/OutcomeBadge';
-import { PLAYER_KINGDOM } from '../../types/ownership';
+import { ApplyArmyConditionHandler } from '../../services/gameCommands/handlers/ApplyArmyConditionHandler';
+import { valueBadge, diceBadge, genericStructureDamaged, genericStructureDestroyed, genericWorksiteDestroyed, genericArmyConditionNegative } from '../../types/OutcomeBadge';
 
 export const naturalDisasterPipeline: CheckPipeline = {
   id: 'natural-disaster',
@@ -51,11 +51,12 @@ export const naturalDisasterPipeline: CheckPipeline = {
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
           ],
           failure: [
-            textBadge('Lose 1 worksite', 'fas fa-industry', 'negative')
+            genericStructureDamaged(1),
+            genericWorksiteDestroyed(1)
           ],
           criticalFailure: [
-            textBadge('1 structure damaged', 'fas fa-house-crack', 'negative'),
-            textBadge('Lose 1 worksite', 'fas fa-industry', 'negative')
+            genericStructureDestroyed(1),
+            genericWorksiteDestroyed(1)
           ]
         }
       },
@@ -110,19 +111,19 @@ export const naturalDisasterPipeline: CheckPipeline = {
         outcomeBadges: {
           criticalSuccess: [
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
-            textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           success: [
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive')
           ],
           failure: [
-            textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative'),
+            genericArmyConditionNegative('Enfeebled')
           ],
           criticalFailure: [
-            textBadge('1 structure damaged', 'fas fa-house-crack', 'negative'),
-            textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')
+            genericStructureDamaged(1),
+            genericArmyConditionNegative('Enfeebled')
           ]
         }
       }
@@ -181,8 +182,6 @@ export const naturalDisasterPipeline: CheckPipeline = {
       const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
       const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
 
-      // Calculate modifiers and prepare game commands based on approach
-      let modifiers: any[] = [];
       const commandContext: GameCommandContext = {
         actionId: 'natural-disaster',
         outcome: ctx.outcome,
@@ -193,10 +192,6 @@ export const naturalDisasterPipeline: CheckPipeline = {
       if (approach === 'virtuous') {
         // Prioritize Lives (Virtuous)
         if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
-            { type: 'dice', resource: 'unrest', formula: '1d3', negative: true, duration: 'immediate' }
-          ];
           // Faction adjustment
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
@@ -221,9 +216,6 @@ export const naturalDisasterPipeline: CheckPipeline = {
             else if (cmd.outcomeBadge) outcomeBadges.push(cmd.outcomeBadge);
           }
         } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
-          ];
           // Damage 1 structure
           const { DamageStructureHandler } = await import('../../services/gameCommands/handlers/DamageStructureHandler');
           const handler = new DamageStructureHandler();
@@ -234,9 +226,6 @@ export const naturalDisasterPipeline: CheckPipeline = {
             else if (cmd.outcomeBadge) outcomeBadges.push(cmd.outcomeBadge);
           }
         } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-          ];
           // Damage 1 structure and destroy 1 worksite
           const { DamageStructureHandler } = await import('../../services/gameCommands/handlers/DamageStructureHandler');
           const damageHandler = new DamageStructureHandler();
@@ -255,9 +244,6 @@ export const naturalDisasterPipeline: CheckPipeline = {
             else if (worksiteCmd.outcomeBadge) outcomeBadges.push(worksiteCmd.outcomeBadge);
           }
         } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' }
-          ];
           // Destroy 1 structure and 1 worksite
           const { DestroyStructureHandler } = await import('../../services/gameCommands/handlers/DestroyStructureHandler');
           const destroyHandler = new DestroyStructureHandler();
@@ -279,9 +265,6 @@ export const naturalDisasterPipeline: CheckPipeline = {
       } else if (approach === 'practical') {
         // Balanced Response (Practical)
         if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', negative: true, duration: 'immediate' }
-          ];
           // Damage 1 structure
           const { DamageStructureHandler } = await import('../../services/gameCommands/handlers/DamageStructureHandler');
           const handler = new DamageStructureHandler();
@@ -292,7 +275,6 @@ export const naturalDisasterPipeline: CheckPipeline = {
             else if (cmd.outcomeBadge) outcomeBadges.push(cmd.outcomeBadge);
           }
         } else if (outcome === 'success') {
-          modifiers = [];
           // Damage 1 structure
           const { DamageStructureHandler } = await import('../../services/gameCommands/handlers/DamageStructureHandler');
           const handler = new DamageStructureHandler();
@@ -303,9 +285,6 @@ export const naturalDisasterPipeline: CheckPipeline = {
             else if (cmd.outcomeBadge) outcomeBadges.push(cmd.outcomeBadge);
           }
         } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-          ];
           // Damage 1 structure and destroy 1 worksite
           const { DamageStructureHandler } = await import('../../services/gameCommands/handlers/DamageStructureHandler');
           const damageHandler = new DamageStructureHandler();
@@ -324,9 +303,6 @@ export const naturalDisasterPipeline: CheckPipeline = {
             else if (worksiteCmd.outcomeBadge) outcomeBadges.push(worksiteCmd.outcomeBadge);
           }
         } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' }
-          ];
           // Damage 2 structures
           const { DamageStructureHandler } = await import('../../services/gameCommands/handlers/DamageStructureHandler');
           const handler = new DamageStructureHandler();
@@ -340,16 +316,19 @@ export const naturalDisasterPipeline: CheckPipeline = {
       } else if (approach === 'ruthless') {
         // Save Assets (Ruthless)
         if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-          ];
-          // Gain 2d4 of choice resource (Lumber/Stone/Ore) - using choice modifier
-          // For now, we'll use a dice roll for lumber as default
-          modifiers.push({ type: 'dice', resource: 'lumber', formula: '2d4', duration: 'immediate' });
+          // Well Trained bonus
+          const armyHandler = new ApplyArmyConditionHandler();
+          const armyCmd = await armyHandler.prepare(
+            { type: 'applyArmyCondition', condition: 'well-trained', value: 1, armyId: 'random' },
+            commandContext
+          );
+          if (armyCmd) {
+            ctx.metadata._preparedArmyConditionWellTrained = armyCmd;
+            if (armyCmd.outcomeBadges) {
+              outcomeBadges.push(...armyCmd.outcomeBadges);
+            }
+          }
         } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-          ];
           // Damage 1 structure
           const { DamageStructureHandler } = await import('../../services/gameCommands/handlers/DamageStructureHandler');
           const handler = new DamageStructureHandler();
@@ -360,26 +339,20 @@ export const naturalDisasterPipeline: CheckPipeline = {
             else if (cmd.outcomeBadge) outcomeBadges.push(cmd.outcomeBadge);
           }
         } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
-            { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
-          ];
-          // 1 army gains enfeebled - select random player army
-          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
-          if (playerArmies.length > 0) {
-            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
-            ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'enfeebled', value: 1 };
-            // Update badge with army name
-            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army gains enfeebled'));
-            if (armyBadgeIndex >= 0) {
-              outcomeBadges[armyBadgeIndex] = textBadge(`${randomArmy.name} gains enfeebled`, 'fas fa-person-falling', 'negative');
-            }
+          // 1 army gains enfeebled
+          const armyHandler = new ApplyArmyConditionHandler();
+          const armyCmd = await armyHandler.prepare(
+            { type: 'applyArmyCondition', condition: 'enfeebled', value: 1, armyId: 'random' },
+            commandContext
+          );
+          if (armyCmd) {
+            ctx.metadata._preparedArmyCondition = armyCmd;
+            // Remove static badge and add dynamic one
+            const filtered = outcomeBadges.filter(b => !b.template?.includes('army gains enfeebled'));
+            outcomeBadges.length = 0;
+            outcomeBadges.push(...filtered, ...(armyCmd.outcomeBadges || []));
           }
         } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
-            { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
-          ];
           // Damage 1 structure
           const { DamageStructureHandler } = await import('../../services/gameCommands/handlers/DamageStructureHandler');
           const handler = new DamageStructureHandler();
@@ -389,22 +362,21 @@ export const naturalDisasterPipeline: CheckPipeline = {
             if (cmd.outcomeBadges) outcomeBadges.push(...cmd.outcomeBadges);
             else if (cmd.outcomeBadge) outcomeBadges.push(cmd.outcomeBadge);
           }
-          // 1 army gains enfeebled - select random player army
-          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
-          if (playerArmies.length > 0) {
-            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
-            ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'enfeebled', value: 1 };
-            // Update badge with army name
-            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army gains enfeebled'));
-            if (armyBadgeIndex >= 0) {
-              outcomeBadges[armyBadgeIndex] = textBadge(`${randomArmy.name} gains enfeebled`, 'fas fa-person-falling', 'negative');
-            }
+          // 1 army gains enfeebled
+          const armyHandler = new ApplyArmyConditionHandler();
+          const armyCmd = await armyHandler.prepare(
+            { type: 'applyArmyCondition', condition: 'enfeebled', value: 1, armyId: 'random' },
+            commandContext
+          );
+          if (armyCmd) {
+            ctx.metadata._preparedArmyCondition = armyCmd;
+            // Remove static badge and add dynamic one
+            const filtered = outcomeBadges.filter(b => !b.template?.includes('army gains enfeebled'));
+            outcomeBadges.length = 0;
+            outcomeBadges.push(...filtered, ...(armyCmd.outcomeBadges || []));
           }
         }
       }
-
-      // Store modifiers in context for execute step
-      ctx.metadata._outcomeModifiers = modifiers;
 
       return { resources: [], outcomeBadges };
     }
@@ -437,11 +409,16 @@ export const naturalDisasterPipeline: CheckPipeline = {
       await worksiteCommand.commit();
     }
 
-    // Execute army condition (Save Assets failure/critical failure)
-    const armyCondition = ctx.metadata?._armyCondition;
-    if (armyCondition?.actorId) {
-      const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
-      await applyArmyConditionExecution(armyCondition.actorId, armyCondition.condition, armyCondition.value);
+    // Execute army condition - Well Trained (ruthless CS)
+    const armyWellTrained = ctx.metadata?._preparedArmyConditionWellTrained;
+    if (armyWellTrained?.commit) {
+      await armyWellTrained.commit();
+    }
+
+    // Execute army condition - Enfeebled (ruthless failure/critical failure)
+    const armyCommand = ctx.metadata?._preparedArmyCondition;
+    if (armyCommand?.commit) {
+      await armyCommand.commit();
     }
 
     return { success: true };

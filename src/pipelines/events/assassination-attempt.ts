@@ -175,8 +175,6 @@ export const assassinationAttemptPipeline: CheckPipeline = {
       const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
       const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
 
-      // Calculate modifiers and prepare game commands based on approach
-      let modifiers: any[] = [];
       const commandContext: GameCommandContext = {
         actionId: 'assassination-attempt',
         outcome: ctx.outcome,
@@ -187,10 +185,6 @@ export const assassinationAttemptPipeline: CheckPipeline = {
       if (approach === 'virtuous') {
         // Open Governance (Virtuous)
         if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
-            { type: 'dice', resource: 'unrest', formula: '1d3', negative: true, duration: 'immediate' }
-          ];
           // Adjust 1 faction +1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
@@ -205,20 +199,7 @@ export const assassinationAttemptPipeline: CheckPipeline = {
               outcomeBadges.push(factionCommand.outcomeBadge);
             }
           }
-        } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
-          ];
-        } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
-            { type: 'dice', resource: 'gold', formula: '1d3', negative: true, duration: 'immediate' }
-          ];
         } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
-            { type: 'dice', resource: 'gold', formula: '2d3', negative: true, duration: 'immediate' }
-          ];
           // Leader loses action
           const { SpendPlayerActionHandler } = await import('../../services/gameCommands/handlers/SpendPlayerActionHandler');
           const actionHandler = new SpendPlayerActionHandler();
@@ -238,27 +219,10 @@ export const assassinationAttemptPipeline: CheckPipeline = {
       } else if (approach === 'practical') {
         // Investigate Thoroughly (Practical)
         if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
-            { type: 'dice', resource: 'unrest', formula: '1d3', negative: true, duration: 'immediate' }
-          ];
           // Imprison conspirators - handler will be called during execution
           ctx.metadata._imprisonAmount = 3;
           ctx.metadata._imprisonFormula = '1d3';
-        } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
-          ];
-        } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
-            { type: 'dice', resource: 'gold', formula: '1d3', negative: true, duration: 'immediate' }
-          ];
         } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
-            { type: 'dice', resource: 'gold', formula: '2d3', negative: true, duration: 'immediate' }
-          ];
           // Leader loses action
           const { SpendPlayerActionHandler } = await import('../../services/gameCommands/handlers/SpendPlayerActionHandler');
           const actionHandler = new SpendPlayerActionHandler();
@@ -278,9 +242,6 @@ export const assassinationAttemptPipeline: CheckPipeline = {
       } else if (approach === 'ruthless') {
         // Purge Conspirators (Ruthless)
         if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', negative: true, duration: 'immediate' }
-          ];
           // Imprison conspirators (convert unrest to imprisoned)
           const { ConvertUnrestToImprisonedHandler } = await import('../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler');
           const imprisonHandler = new ConvertUnrestToImprisonedHandler();
@@ -297,9 +258,6 @@ export const assassinationAttemptPipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
-          ];
           // Imprison conspirators (1d2)
           const { ConvertUnrestToImprisonedHandler } = await import('../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler');
           const imprisonHandler = new ConvertUnrestToImprisonedHandler();
@@ -316,9 +274,6 @@ export const assassinationAttemptPipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-          ];
           // Imprison innocents (increase imprisoned WITHOUT reducing unrest)
           const addImprisonedHandler = new AddImprisonedHandler();
           const imprisonCommand = await addImprisonedHandler.prepare(
@@ -335,10 +290,6 @@ export const assassinationAttemptPipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
-            { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
-          ];
           // Imprison innocents (increase imprisoned WITHOUT reducing unrest)
           const addImprisonedHandler = new AddImprisonedHandler();
           const imprisonCommand = await addImprisonedHandler.prepare(
@@ -371,9 +322,6 @@ export const assassinationAttemptPipeline: CheckPipeline = {
           }
         }
       }
-
-      // Store modifiers in context for execute step
-      ctx.metadata._outcomeModifiers = modifiers;
 
       return { resources: [], outcomeBadges };
     }

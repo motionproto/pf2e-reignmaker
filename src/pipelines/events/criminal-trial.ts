@@ -16,7 +16,8 @@ import type { GameCommandContext } from '../../services/gameCommands/GameCommand
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
 import { ReduceImprisonedHandler } from '../../services/gameCommands/handlers/ReduceImprisonedHandler';
 import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
-import { valueBadge, textBadge, diceBadge } from '../../types/OutcomeBadge';
+import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
+import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
 
 export const criminalTrialPipeline: CheckPipeline = {
   id: 'criminal-trial',
@@ -77,7 +78,6 @@ export const criminalTrialPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
           ],
           success: [
@@ -87,7 +87,6 @@ export const criminalTrialPipeline: CheckPipeline = {
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
           ],
           criticalFailure: [
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
           ]
         }
@@ -177,9 +176,6 @@ export const criminalTrialPipeline: CheckPipeline = {
       const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
       const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
 
-      // Calculate modifiers based on approach
-      let modifiers: any[] = [];
-
       if (approach === 'virtuous') {
         // Show Mercy (Virtuous)
         const commandContext: GameCommandContext = {
@@ -190,10 +186,6 @@ export const criminalTrialPipeline: CheckPipeline = {
         };
 
         if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
-            { type: 'dice', resource: 'unrest', formula: '-1d3', negative: true, duration: 'immediate' }
-          ];
           // Prepare reduce imprisoned command (pardoned) - executed on Apply
           const reduceHandler = new ReduceImprisonedHandler();
           const reduceCommand = await reduceHandler.prepare(
@@ -205,9 +197,6 @@ export const criminalTrialPipeline: CheckPipeline = {
             // Don't add badges - static badge already in outcomeBadges
           }
         } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
-          ];
           // Prepare reduce imprisoned command (pardoned) - executed on Apply
           const reduceHandler = new ReduceImprisonedHandler();
           const reduceCommand = await reduceHandler.prepare(
@@ -218,34 +207,46 @@ export const criminalTrialPipeline: CheckPipeline = {
             ctx.metadata._preparedReduceImprisoned = reduceCommand;
             // Don't add badges - static badge already in outcomeBadges
           }
-        } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-          ];
-        } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' }
-          ];
         }
       } else if (approach === 'practical') {
         // Fair Trial (Practical)
+        const practicalContext: GameCommandContext = {
+          actionId: 'criminal-trial',
+          outcome: ctx.outcome,
+          kingdom: ctx.kingdom,
+          metadata: ctx.metadata || {}
+        };
+
         if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
-            { type: 'dice', resource: 'unrest', formula: '-1d3', negative: true, duration: 'immediate' }
-          ];
-        } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
-          ];
-        } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-          ];
+          // Adjust 1 faction +1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+            practicalContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionPractical = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
         } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' }
-          ];
+          // Adjust 1 faction -1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
+            practicalContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionPractical = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
         }
       } else if (approach === 'ruthless') {
         // Harsh Punishment (Ruthless)
@@ -257,9 +258,6 @@ export const criminalTrialPipeline: CheckPipeline = {
         };
 
         if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '-1d3', negative: true, duration: 'immediate' }
-          ];
           // Imprison 1d3 dissidents (convert unrest to imprisoned)
           const imprisonHandler = new ConvertUnrestToImprisonedHandler();
           const imprisonCommand = await imprisonHandler.prepare(
@@ -275,9 +273,6 @@ export const criminalTrialPipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
-          ];
           // Imprison 1d2 dissidents
           const imprisonHandler = new ConvertUnrestToImprisonedHandler();
           const imprisonCommand = await imprisonHandler.prepare(
@@ -309,9 +304,6 @@ export const criminalTrialPipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d2', duration: 'immediate' }
-          ];
           // Imprison innocents (increase imprisoned WITHOUT reducing unrest)
           const addImprisonedHandler = new AddImprisonedHandler();
           const imprisonCommand = await addImprisonedHandler.prepare(
@@ -330,9 +322,6 @@ export const criminalTrialPipeline: CheckPipeline = {
         }
       }
 
-      // Store modifiers in context for execute step
-      ctx.metadata._outcomeModifiers = modifiers;
-
       return { resources: [], outcomeBadges };
     }
   },
@@ -341,6 +330,12 @@ export const criminalTrialPipeline: CheckPipeline = {
     // NOTE: Standard modifiers (unrest, gold, fame) are applied automatically by
     // ResolutionDataBuilder + GameCommandsService via outcomeBadges.
     // This execute() only handles special game commands.
+
+    // Execute faction adjustment (practical approach CS/CF)
+    const factionCommand = ctx.metadata?._preparedFactionPractical;
+    if (factionCommand?.commit) {
+      await factionCommand.commit();
+    }
 
     // Execute imprisonment (harsh approach - success/critical success)
     const imprisonCommand = ctx.metadata?._preparedImprison;

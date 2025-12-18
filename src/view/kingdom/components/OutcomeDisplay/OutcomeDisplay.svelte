@@ -223,33 +223,34 @@
   // ✨ NEW: Direct Validation from Data
   // ========================================
   // Detect all interaction requirements directly from outcome data
-  // This replaces ValidationContext with simpler, more reliable approach
-  
+  // Uses ValidationContext for badge dice (handles deduplication) and direct checks for others
+
   // 1. DICE ROLL REQUIREMENTS
-  // Check for dice in both badges and modifiers
-  $: hasDiceInBadges = outcomeBadges?.some(b => b && b.value?.type === 'dice') || false;
+  // Check for dice in modifiers (badges are checked via ValidationContext)
   $: hasDiceInModifiers = standaloneDiceModifiers.length > 0 || hasStateChangeDice;
-  $: requiresDiceRoll = hasDiceInBadges || hasDiceInModifiers;
-  
+
+  // Check if OutcomeBadges has unresolved dice (via validation context)
+  // OutcomeBadges registers as 'outcome-badges' and updates isResolved when all its dice are rolled
+  $: badgeDiceProvider = $validationContext.get('outcome-badges');
+  $: badgeDiceResolved = !badgeDiceProvider || !badgeDiceProvider.needsResolution || badgeDiceProvider.isResolved;
+
+  $: requiresDiceRoll = hasDiceInModifiers || (badgeDiceProvider?.needsResolution ?? false);
+
   // Check if all dice are rolled
   $: allDiceRolled = (() => {
-    if (!requiresDiceRoll) return true;
-    
+    if (!requiresDiceRoll && badgeDiceResolved) return true;
+
     // Check standalone dice modifiers
-    const standaloneDiceResolved = standaloneDiceModifiers.every((m: any) => 
+    const standaloneDiceResolved = standaloneDiceModifiers.every((m: any) =>
       resolvedDice.has(m.originalIndex)
     );
-    
+
     // Check state change dice
-    const stateChangeDiceResolved = stateChangeDice.every((dice: any) => 
+    const stateChangeDiceResolved = stateChangeDice.every((dice: any) =>
       resolvedDice.has(dice.key)
     );
-    
-    // Check dice badges
-    const badgeDiceResolved = !hasDiceInBadges || outcomeBadges.every((badge, idx) => 
-      !badge || badge.value?.type !== 'dice' || resolvedDice.has(idx)
-    );
-    
+
+    // Badge dice are checked via ValidationContext (handles deduplication correctly)
     return standaloneDiceResolved && stateChangeDiceResolved && badgeDiceResolved;
   })();
   
@@ -278,6 +279,8 @@
     console.log('🔒 [OutcomeDisplay] Interactions not resolved:', {
       requiresDiceRoll,
       allDiceRolled,
+      badgeDiceResolved,
+      badgeDiceProvider: badgeDiceProvider ? { needsResolution: badgeDiceProvider.needsResolution, isResolved: badgeDiceProvider.isResolved } : null,
       standaloneDiceModifiers: standaloneDiceModifiers.length,
       stateChangeDice: stateChangeDice.length,
       resolvedDiceCount: resolvedDice.size,
@@ -313,7 +316,7 @@
   $: showPrimaryButton = !applied;
   $: effectivePrimaryLabel = primaryButtonLabel;  // Always "Apply Result" (no "✓ Applied" state)
   
-  // ✨ DEPRECATED: Validation via context (keeping for backwards compatibility but not used)
+  // Validation via context - used for OutcomeBadges dice tracking (handles badge deduplication)
   $: unresolvedProviders = Array.from($validationContext.values()).filter(
     p => p.needsResolution && !p.isResolved
   );

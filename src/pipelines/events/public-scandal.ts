@@ -15,7 +15,8 @@ import type { GameCommandContext } from '../../services/gameCommands/GameCommand
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
 import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
-import { valueBadge, textBadge, diceBadge } from '../../types/OutcomeBadge';
+import { ApplyArmyConditionHandler } from '../../services/gameCommands/handlers/ApplyArmyConditionHandler';
+import { valueBadge, diceBadge, genericImprisonDissidents, genericInnocentsImprisoned, genericArmyConditionPositive } from '../../types/OutcomeBadge';
 
 export const publicScandalPipeline: CheckPipeline = {
   id: 'public-scandal',
@@ -44,7 +45,7 @@ export const publicScandalPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Gain 1 kingdom action', 'fas fa-plus-circle', 'positive')
+            valueBadge('Gain {{value}} kingdom action', 'fas fa-plus-circle', 1, 'positive')
           ],
           success: [
             valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
@@ -55,8 +56,7 @@ export const publicScandalPipeline: CheckPipeline = {
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative'),
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
           ]
         }
       },
@@ -85,8 +85,6 @@ export const publicScandalPipeline: CheckPipeline = {
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
           ],
           criticalFailure: [
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ]
         }
@@ -106,19 +104,19 @@ export const publicScandalPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+            genericImprisonDissidents(),
+            genericArmyConditionPositive('Well Trained')
           ],
           success: [
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
-            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
+            valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive'),
+            genericImprisonDissidents()
           ],
           failure: [
-            diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')
+            genericInnocentsImprisoned()
           ],
           criticalFailure: [
-            diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d4', 'negative'),
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+            genericInnocentsImprisoned()
           ]
         }
       }
@@ -176,9 +174,6 @@ export const publicScandalPipeline: CheckPipeline = {
       const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
       const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
 
-      // Calculate modifiers based on approach
-      let modifiers: any[] = [];
-      
       const commandContext: GameCommandContext = {
         actionId: 'public-scandal',
         outcome: ctx.outcome,
@@ -188,26 +183,7 @@ export const publicScandalPipeline: CheckPipeline = {
 
       if (approach === 'virtuous') {
         // Transparent Investigation approach - Honest and open (Virtuous)
-        if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
-            { type: 'dice', resource: 'unrest', formula: '-1d3', negative: true, duration: 'immediate' }
-          ];
-        } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
-          ];
-        } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
-            { type: 'dice', resource: 'gold', formula: '-1d3', negative: true, duration: 'immediate' }
-          ];
-        } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
-            { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
-          ];
-          
+        if (outcome === 'criticalFailure') {
           // Adjust 1 random faction -1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
@@ -229,20 +205,7 @@ export const publicScandalPipeline: CheckPipeline = {
         }
       } else if (approach === 'practical') {
         // Cover It Up approach - Suppress quietly (Practical)
-        if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '-1d3', negative: true, duration: 'immediate' }
-          ];
-        } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
-          ];
-        } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
-            { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
-          ];
-          
+        if (outcome === 'failure') {
           // Innocents harmed - add imprisoned without reducing unrest
           const imprisonHandler = new AddImprisonedHandler();
           const imprisonCommand = await imprisonHandler.prepare(
@@ -258,12 +221,6 @@ export const publicScandalPipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
-            { type: 'static', resource: 'fame', value: -1, duration: 'immediate' },
-            { type: 'dice', resource: 'gold', formula: '-1d3', negative: true, duration: 'immediate' }
-          ];
-          
           // Adjust 2 random factions -1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
@@ -286,9 +243,6 @@ export const publicScandalPipeline: CheckPipeline = {
       } else if (approach === 'ruthless') {
         // Scapegoat Official approach - Blame subordinate (Ruthless)
         if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '-1d3', negative: true, duration: 'immediate' }
-          ];
           // Imprison 1d2 scapegoats (convert unrest to imprisoned)
           const imprisonHandler = new ConvertUnrestToImprisonedHandler();
           const roll = new Roll('1d2');
@@ -321,10 +275,21 @@ export const publicScandalPipeline: CheckPipeline = {
               outcomeBadges.push(factionCommand.outcomeBadge);
             }
           }
+
+          // Well Trained army bonus
+          const armyHandler = new ApplyArmyConditionHandler();
+          const armyCmd = await armyHandler.prepare(
+            { type: 'applyArmyCondition', condition: 'well-trained', value: 1, armyId: 'random' },
+            commandContext
+          );
+          if (armyCmd) {
+            ctx.metadata._preparedArmyCondition = armyCmd;
+            // Remove static badge and add dynamic one
+            const filtered = outcomeBadges.filter(b => !b.template?.includes('army becomes Well Trained'));
+            outcomeBadges.length = 0;
+            outcomeBadges.push(...filtered, ...(armyCmd.outcomeBadges || []));
+          }
         } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
-          ];
           // Imprison 1 scapegoat
           const imprisonHandler = new ConvertUnrestToImprisonedHandler();
           const imprisonCommand = await imprisonHandler.prepare(
@@ -340,11 +305,6 @@ export const publicScandalPipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
-            { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
-          ];
-          
           // Innocents harmed - add imprisoned without reducing unrest
           const imprisonHandler = new AddImprisonedHandler();
           const imprisonCommand = await imprisonHandler.prepare(
@@ -361,11 +321,6 @@ export const publicScandalPipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
-            { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
-          ];
-          
           // Innocents harmed - add imprisoned without reducing unrest
           const imprisonHandler = new AddImprisonedHandler();
           const imprisonCommand = await imprisonHandler.prepare(
@@ -399,9 +354,6 @@ export const publicScandalPipeline: CheckPipeline = {
         }
       }
 
-      // Store modifiers in context for execute step
-      ctx.metadata._outcomeModifiers = modifiers;
-
       return { resources: [], outcomeBadges };
     }
   },
@@ -427,6 +379,12 @@ export const publicScandalPipeline: CheckPipeline = {
     const factionCommand = ctx.metadata?._preparedFaction;
     if (factionCommand?.commit) {
       await factionCommand.commit();
+    }
+
+    // Apply Well Trained effect (ruthless CS)
+    const armyCommand = ctx.metadata?._preparedArmyCondition;
+    if (armyCommand?.commit) {
+      await armyCommand.commit();
     }
 
     return { success: true };

@@ -182,8 +182,6 @@ export const immigrationPipeline: CheckPipeline = {
       const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
       const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
 
-      // Calculate modifiers and prepare game commands based on approach
-      let modifiers: any[] = [];
       const commandContext: GameCommandContext = {
         actionId: 'immigration',
         outcome: ctx.outcome,
@@ -212,11 +210,6 @@ export const immigrationPipeline: CheckPipeline = {
         }
 
         if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
-            { type: 'dice', resource: 'unrest', formula: '1d3', negative: true, duration: 'immediate' }
-          ];
-
           // Faction adjustment +1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
@@ -232,10 +225,6 @@ export const immigrationPipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
-          ];
-
           // Faction adjustment +1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
@@ -251,11 +240,6 @@ export const immigrationPipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
-            { type: 'dice', resource: 'gold', formula: '1d3', negative: true, duration: 'immediate' }
-          ];
-
           // Faction adjustment -1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
@@ -271,11 +255,6 @@ export const immigrationPipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
-            { type: 'dice', resource: 'gold', formula: '2d3', negative: true, duration: 'immediate' }
-          ];
-
           // Faction adjustment -1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
@@ -291,36 +270,11 @@ export const immigrationPipeline: CheckPipeline = {
             }
           }
         }
-      } else if (approach === 'practical') {
-        // Controlled Integration (Practical)
-        if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', negative: true, duration: 'immediate' },
-            { type: 'dice', resource: 'gold', formula: '1d3', duration: 'immediate' }
-          ];
-        } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' },
-            { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
-          ];
-        } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-          ];
-        } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' }
-          ];
-        }
       } else if (approach === 'ruthless') {
         // Exploit as Labor (Ruthless)
         if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'dice', resource: 'gold', formula: '2d3', duration: 'immediate' },
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-          ];
           ctx.metadata._newWorksites = 2;
-          
+
           // Settlement level increase
           const increaseHandler = new IncreaseSettlementLevelHandler();
           const increaseCommand = await increaseHandler.prepare(
@@ -336,28 +290,13 @@ export const immigrationPipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'dice', resource: 'gold', formula: '1d3', duration: 'immediate' },
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-          ];
           ctx.metadata._newWorksites = 2;
         } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
-            { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
-          ];
           ctx.metadata._newWorksites = 1;
         } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
-            { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
-          ];
           ctx.metadata._newWorksites = 1;
         }
       }
-
-      // Store modifiers in context for execute step
-      ctx.metadata._outcomeModifiers = modifiers;
 
       return { resources: [], outcomeBadges };
     }

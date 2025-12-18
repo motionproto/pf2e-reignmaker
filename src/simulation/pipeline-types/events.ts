@@ -97,7 +97,6 @@ const PURE_MODIFIER_EVENTS = [
   'public-scandal',
   'raiders',
   'remarkable-treasure',
-  'scholarly-discovery',
   'sensational-crime',
   'trade-agreement',
   'undead-uprising',
@@ -268,14 +267,3 @@ export function isPureModifierEvent(eventId: string): boolean {
   const requirement = EVENT_DATA_REQUIREMENTS[eventId];
   return requirement?.dataLocation === 'none';
 }
-
-
-
-
-
-
-
-
-
-
-

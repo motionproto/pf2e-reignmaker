@@ -15,7 +15,9 @@ import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { DestroyWorksiteHandler } from '../../services/gameCommands/handlers/DestroyWorksiteHandler';
+import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
+import { ApplyArmyConditionHandler } from '../../services/gameCommands/handlers/ApplyArmyConditionHandler';
 import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 
 export const raidersPipeline: CheckPipeline = {
@@ -87,7 +89,6 @@ export const raidersPipeline: CheckPipeline = {
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ],
           criticalFailure: [
-            textBadge('1 structure damaged', 'fas fa-house-crack', 'negative'),
             valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative'),
             valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ]
@@ -109,19 +110,15 @@ export const raidersPipeline: CheckPipeline = {
         outcomeBadges: {
           criticalSuccess: [
             textBadge('Claim 1 hex', 'fas fa-map', 'positive'),
-            diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive'),
             valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
-            diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           failure: [
-            textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative'),
             valueBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', 1, 'negative')
           ],
           criticalFailure: [
-            textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative'),
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
             valueBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', 1, 'negative')
           ]
@@ -187,8 +184,6 @@ export const raidersPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      const PLAYER_KINGDOM = 'player';
-
       if (approach === 'virtuous') {
         // Negotiate Peace Treaty (Virtuous)
         if (outcome === 'criticalSuccess') {
@@ -241,21 +236,18 @@ export const raidersPipeline: CheckPipeline = {
             // Actually, let's use DamageStructureHandler for proper fortifications
           }
         } else if (outcome === 'criticalFailure') {
-          // +1d3 Unrest, -1d3 Gold, destroy 1 fortification or worksite
-          const destroyHandler = new DestroyWorksiteHandler();
-          const destroyCommand = await destroyHandler.prepare(
-            { type: 'destroyWorksite', count: 1 },
+          // +1d3 Unrest, -1d3 Gold, damage 1 structure
+          const damageHandler = new DamageStructureHandler();
+          const damageCommand = await damageHandler.prepare(
+            { type: 'damageStructure', count: 1 },
             commandContext
           );
-          if (destroyCommand) {
-            ctx.metadata._preparedDestroyWorksite = destroyCommand;
-            if (destroyCommand.metadata) {
-              Object.assign(ctx.metadata, destroyCommand.metadata);
-            }
-            if (destroyCommand.outcomeBadges) {
-              outcomeBadges.push(...destroyCommand.outcomeBadges);
-            } else if (destroyCommand.outcomeBadge) {
-              outcomeBadges.push(destroyCommand.outcomeBadge);
+          if (damageCommand) {
+            ctx.metadata._preparedDamageStructure = damageCommand;
+            if (damageCommand.outcomeBadges) {
+              outcomeBadges.push(...damageCommand.outcomeBadges);
+            } else if (damageCommand.outcomeBadge) {
+              outcomeBadges.push(damageCommand.outcomeBadge);
             }
           }
         }
@@ -279,35 +271,21 @@ export const raidersPipeline: CheckPipeline = {
           }
         }
         
-        // Handle army conditions - select specific army and update badge
+        // Handle army conditions
         if (outcome === 'failure' || outcome === 'criticalFailure') {
-          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
-          if (playerArmies.length > 0) {
-            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
-            
-            if (outcome === 'failure') {
-              // Fatigued
-              ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'fatigued', value: 1 };
-              const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Fatigued'));
-              if (armyBadgeIndex >= 0) {
-                outcomeBadges[armyBadgeIndex] = textBadge(
-                  `${randomArmy.name} becomes Fatigued`,
-                  'fas fa-tired',
-                  'negative'
-                );
-              }
-            } else {
-              // Critical Failure - Enfeebled
-              ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'enfeebled', value: 1 };
-              const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Enfeebled'));
-              if (armyBadgeIndex >= 0) {
-                outcomeBadges[armyBadgeIndex] = textBadge(
-                  `${randomArmy.name} becomes Enfeebled`,
-                  'fas fa-exclamation-triangle',
-                  'negative'
-                );
-              }
-            }
+          const condition = outcome === 'failure' ? 'fatigued' : 'enfeebled';
+          const armyHandler = new ApplyArmyConditionHandler();
+          const armyCmd = await armyHandler.prepare(
+            { type: 'applyArmyCondition', condition, value: 1, armyId: 'random' },
+            commandContext
+          );
+          if (armyCmd) {
+            ctx.metadata._preparedArmyCondition = armyCmd;
+            // Remove static badge and add dynamic one
+            const badgeText = outcome === 'failure' ? 'army becomes Fatigued' : 'army becomes Enfeebled';
+            const filtered = outcomeBadges.filter(b => !b.template?.includes(badgeText));
+            outcomeBadges.length = 0;
+            outcomeBadges.push(...filtered, ...(armyCmd.outcomeBadges || []));
           }
         }
       }
@@ -337,10 +315,10 @@ export const raidersPipeline: CheckPipeline = {
       await factionVirtuousCF.commit();
     }
 
-    // Execute worksite destruction (practical CF)
-    const destroyCommand = ctx.metadata?._preparedDestroyWorksite;
-    if (destroyCommand?.commit) {
-      await destroyCommand.commit();
+    // Execute structure damage (practical CF)
+    const damageCommand = ctx.metadata?._preparedDamageStructure;
+    if (damageCommand?.commit) {
+      await damageCommand.commit();
     }
 
     // Execute imprisonment (ruthless CS/S - converts unrest to imprisoned)
@@ -350,10 +328,9 @@ export const raidersPipeline: CheckPipeline = {
     }
 
     // Apply army condition (selected in preview.calculate)
-    const armyCondition = ctx.metadata?._armyCondition;
-    if (armyCondition?.actorId) {
-      const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
-      await applyArmyConditionExecution(armyCondition.actorId, armyCondition.condition, armyCondition.value);
+    const armyCommand = ctx.metadata?._preparedArmyCondition;
+    if (armyCommand?.commit) {
+      await armyCommand.commit();
     }
 
     return { success: true };

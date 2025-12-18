@@ -16,7 +16,8 @@ import type { GameCommandContext } from '../../services/gameCommands/GameCommand
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
-import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
+import { ApplyArmyConditionHandler } from '../../services/gameCommands/handlers/ApplyArmyConditionHandler';
+import { valueBadge, diceBadge, genericArmyConditionPositive } from '../../types/OutcomeBadge';
 
 export const undeadUprisingPipeline: CheckPipeline = {
   id: 'undead-uprising',
@@ -55,7 +56,6 @@ export const undeadUprisingPipeline: CheckPipeline = {
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
           ],
           criticalFailure: [
-            textBadge('Damage 1 structure', 'fas fa-house-crack', 'negative'),
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
           ]
         }
@@ -75,7 +75,7 @@ export const undeadUprisingPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
+            genericArmyConditionPositive('Well Trained')
           ],
           success: [
             valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
@@ -84,7 +84,6 @@ export const undeadUprisingPipeline: CheckPipeline = {
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ],
           criticalFailure: [
-            textBadge('Damage 1 structure', 'fas fa-house-crack', 'negative'),
             valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
           ]
         }
@@ -104,19 +103,16 @@ export const undeadUprisingPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Convert {{value}} Unrest to Imprisoned (necromancers)', 'fas fa-lock', 'positive'),
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
           ],
           success: [
-            textBadge('Convert {{value}} Unrest to Imprisoned', 'fas fa-lock', 'positive'),
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           failure: [
-            textBadge('Lose 1 hex', 'fas fa-map', 'negative')
+            valueBadge('Lose {{value}} hex (border)', 'fas fa-map', 1, 'negative')
           ],
           criticalFailure: [
-            textBadge('Damage 1 structure', 'fas fa-house-crack', 'negative'),
-            textBadge('Lose 1 hex', 'fas fa-map', 'negative')
+            valueBadge('Lose {{value}} hex (border)', 'fas fa-map', 1, 'negative')
           ]
         }
       }
@@ -210,6 +206,20 @@ export const undeadUprisingPipeline: CheckPipeline = {
             outcomeBadges.push(factionCommand.outcomeBadge);
           }
         }
+
+        // Well Trained army bonus
+        const armyHandler = new ApplyArmyConditionHandler();
+        const armyCmd = await armyHandler.prepare(
+          { type: 'applyArmyCondition', condition: 'well-trained', value: 1, armyId: 'random' },
+          commandContext
+        );
+        if (armyCmd) {
+          ctx.metadata._preparedArmyCondition = armyCmd;
+          // Remove static badge and add dynamic one
+          const filtered = outcomeBadges.filter(b => !b.template?.includes('army becomes Well Trained'));
+          outcomeBadges.length = 0;
+          outcomeBadges.push(...filtered, ...(armyCmd.outcomeBadges || []));
+        }
       } else if (approach === 'practical' && outcome === 'success') {
         // adjust 1 faction +1, +1 Gold
         const factionHandler = new AdjustFactionHandler();
@@ -244,16 +254,29 @@ export const undeadUprisingPipeline: CheckPipeline = {
 
       // Handle special outcomes based on approach
       if (approach === 'virtuous' && outcome === 'criticalFailure') {
-        // +1d3 Unrest, damage 1 structure
-        outcomeBadges.push(diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'));
-        
+        // damage 1 structure (unrest already in outcomeBadges)
         const damageHandler = new DamageStructureHandler();
         const damageCommand = await damageHandler.prepare(
           { type: 'damageStructure', count: 1 },
           commandContext
         );
         if (damageCommand) {
-          ctx.metadata._preparedDamage = damageCommand;
+          ctx.metadata._preparedDamageVirtuous = damageCommand;
+          if (damageCommand.outcomeBadges) {
+            outcomeBadges.push(...damageCommand.outcomeBadges);
+          } else if (damageCommand.outcomeBadge) {
+            outcomeBadges.push(damageCommand.outcomeBadge);
+          }
+        }
+      } else if (approach === 'practical' && outcome === 'criticalFailure') {
+        // damage 1 structure (fame already in outcomeBadges)
+        const damageHandler = new DamageStructureHandler();
+        const damageCommand = await damageHandler.prepare(
+          { type: 'damageStructure', count: 1 },
+          commandContext
+        );
+        if (damageCommand) {
+          ctx.metadata._preparedDamagePractical = damageCommand;
           if (damageCommand.outcomeBadges) {
             outcomeBadges.push(...damageCommand.outcomeBadges);
           } else if (damageCommand.outcomeBadge) {
@@ -268,42 +291,37 @@ export const undeadUprisingPipeline: CheckPipeline = {
           commandContext
         );
         if (imprisonCommand) {
-          ctx.metadata._preparedImprison = imprisonCommand;
+          ctx.metadata._preparedImprisonCS = imprisonCommand;
           if (imprisonCommand.outcomeBadges) {
             outcomeBadges.push(...imprisonCommand.outcomeBadges);
           } else if (imprisonCommand.outcomeBadge) {
             outcomeBadges.push(imprisonCommand.outcomeBadge);
           }
         }
-      } else if (approach === 'ruthless' && outcome === 'failure') {
-        // +1 Unrest, damage 1 structure
+      } else if (approach === 'ruthless' && outcome === 'success') {
+        // Imprison 1d3 (convert unrest to imprisoned)
+        const imprisonHandler = new ConvertUnrestToImprisonedHandler();
+        const imprisonCommand = await imprisonHandler.prepare(
+          { type: 'convertUnrestToImprisoned', amount: 3, diceFormula: '1d3' },
+          commandContext
+        );
+        if (imprisonCommand) {
+          ctx.metadata._preparedImprisonS = imprisonCommand;
+          if (imprisonCommand.outcomeBadges) {
+            outcomeBadges.push(...imprisonCommand.outcomeBadges);
+          } else if (imprisonCommand.outcomeBadge) {
+            outcomeBadges.push(imprisonCommand.outcomeBadge);
+          }
+        }
+      } else if (approach === 'ruthless' && outcome === 'criticalFailure') {
+        // damage 1 structure (hex loss in outcomeBadges)
         const damageHandler = new DamageStructureHandler();
         const damageCommand = await damageHandler.prepare(
           { type: 'damageStructure', count: 1 },
           commandContext
         );
         if (damageCommand) {
-          ctx.metadata._preparedDamage = damageCommand;
-          if (damageCommand.outcomeBadges) {
-            outcomeBadges.push(...damageCommand.outcomeBadges);
-          } else if (damageCommand.outcomeBadge) {
-            outcomeBadges.push(damageCommand.outcomeBadge);
-          }
-        }
-      } else if (approach === 'ruthless' && outcome === 'criticalFailure') {
-        // +1d3 Unrest, damage 1d2 structures, -1 Fame
-        outcomeBadges.push(
-          diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
-          valueBadge('Lose {{value}} Fame', 'fas fa-star', -1, 'negative')
-        );
-        
-        const damageHandler = new DamageStructureHandler();
-        const damageCommand = await damageHandler.prepare(
-          { type: 'damageStructure', count: 2, diceFormula: '1d2' },
-          commandContext
-        );
-        if (damageCommand) {
-          ctx.metadata._preparedDamage = damageCommand;
+          ctx.metadata._preparedDamageRuthless = damageCommand;
           if (damageCommand.outcomeBadges) {
             outcomeBadges.push(...damageCommand.outcomeBadges);
           } else if (damageCommand.outcomeBadge) {
@@ -342,16 +360,40 @@ export const undeadUprisingPipeline: CheckPipeline = {
       await factionPracticalF.commit();
     }
 
-    // Execute structure damage
-    const damageCommand = ctx.metadata?._preparedDamage;
-    if (damageCommand?.commit) {
-      await damageCommand.commit();
+    // Execute structure damage (virtuous CF)
+    const damageVirtuous = ctx.metadata?._preparedDamageVirtuous;
+    if (damageVirtuous?.commit) {
+      await damageVirtuous.commit();
+    }
+
+    // Execute structure damage (practical CF)
+    const damagePractical = ctx.metadata?._preparedDamagePractical;
+    if (damagePractical?.commit) {
+      await damagePractical.commit();
+    }
+
+    // Execute structure damage (ruthless CF)
+    const damageRuthless = ctx.metadata?._preparedDamageRuthless;
+    if (damageRuthless?.commit) {
+      await damageRuthless.commit();
     }
 
     // Execute imprisonment (ruthless CS - necromancers)
-    const imprisonCommand = ctx.metadata?._preparedImprison;
-    if (imprisonCommand?.commit) {
-      await imprisonCommand.commit();
+    const imprisonCS = ctx.metadata?._preparedImprisonCS;
+    if (imprisonCS?.commit) {
+      await imprisonCS.commit();
+    }
+
+    // Execute imprisonment (ruthless S)
+    const imprisonS = ctx.metadata?._preparedImprisonS;
+    if (imprisonS?.commit) {
+      await imprisonS.commit();
+    }
+
+    // Apply Well Trained effect (practical CS)
+    const armyCommand = ctx.metadata?._preparedArmyCondition;
+    if (armyCommand?.commit) {
+      await armyCommand.commit();
     }
 
     return { success: true };

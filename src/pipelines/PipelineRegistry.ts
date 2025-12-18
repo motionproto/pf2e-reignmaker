@@ -85,7 +85,6 @@ import { plaguePipeline } from './events/plague';
 import { publicScandalPipeline } from './events/public-scandal';
 import { raidersPipeline } from './events/raiders';
 import { remarkableTreasurePipeline } from './events/remarkable-treasure';
-import { scholarlyDiscoveryPipeline } from './events/scholarly-discovery';
 import { crimeWavePipeline } from './events/crime-wave';
 import { tradeAgreementPipeline } from './events/trade-agreement';
 import { undeadUprisingPipeline } from './events/undead-uprising';
@@ -210,7 +209,6 @@ const EVENT_PIPELINES: CheckPipeline[] = [
   publicScandalPipeline,
   raidersPipeline,
   remarkableTreasurePipeline,
-  scholarlyDiscoveryPipeline,
   crimeWavePipeline,
   tradeAgreementPipeline,
   undeadUprisingPipeline,

@@ -14,7 +14,8 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
-import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
+import { GrantStructureHandler } from '../../services/gameCommands/handlers/GrantStructureHandler';
+import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 
 export const foodSurplusPipeline: CheckPipeline = {
   id: 'food-surplus',
@@ -183,7 +184,18 @@ export const foodSurplusPipeline: CheckPipeline = {
         // Distribute Freely (Virtuous)
         if (outcome === 'criticalSuccess') {
           // +1 Fame, adjust 1 faction +1, 1 settlement gains a structure
-          ctx.metadata._gainStructure = true;
+          const structureHandler = new GrantStructureHandler();
+          const structureCommand = await structureHandler.prepare(
+            { type: 'grantStructure' }, // Random structure to random settlement
+            commandContext
+          );
+          if (structureCommand) {
+            ctx.metadata._preparedStructure = structureCommand;
+            // Replace static badge with dynamic one
+            const filtered = outcomeBadges.filter(b => !b.template?.includes('Gain 1 structure'));
+            outcomeBadges.length = 0;
+            outcomeBadges.push(...filtered, ...(structureCommand.outcomeBadges || []));
+          }
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
             { type: 'adjustFactionAttitude', steps: 1, count: 1 },
@@ -292,11 +304,10 @@ export const foodSurplusPipeline: CheckPipeline = {
       await factionCommand.commit();
     }
 
-    // Gain random structure (virtuous CS)
-    if (ctx.metadata?._gainStructure && approach === 'virtuous') {
-      // TODO: Implement structure gain logic
-      // For now, log that this needs implementation
-      console.log('Food Surplus: Structure gain needs implementation');
+    // Commit structure grant (virtuous CS)
+    const structureCommand = ctx.metadata?._preparedStructure;
+    if (structureCommand?.commit) {
+      await structureCommand.commit();
     }
 
     return { success: true };

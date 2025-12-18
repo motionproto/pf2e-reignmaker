@@ -15,15 +15,16 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
+import { GrantStructureHandler } from '../../services/gameCommands/handlers/GrantStructureHandler';
 import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
-import WorksiteTypeSelector from '../../services/hex-selector/WorksiteTypeSelector.svelte';
 import {
-  validateClaimed,
-  validateNoSettlement,
+  validateExplored,
+  validateAdjacentToClaimed,
   safeValidation,
   getFreshKingdomData,
   type ValidationResult
 } from '../shared/hexValidators';
+import { PLAYER_KINGDOM } from '../../types/ownership';
 import { claimHexesExecution } from '../../execution/territory/claimHexes';
 
 export const landRushPipeline: CheckPipeline = {
@@ -193,30 +194,51 @@ export const landRushPipeline: CheckPipeline = {
       };
 
       if (approach === 'virtuous') {
-        // Free Settlement (Virtuous)
+        // Free Settlement (Virtuous) - Claim hexes on success
         if (outcome === 'criticalSuccess') {
-          // +1 Fame, -1d3 Unrest, gain new worksite and a new structure
-          ctx.metadata._gainStructure = true;
-          ctx.metadata._gainWorksite = true;
+          ctx.metadata._claimHexCount = 2; // Two "Claim 1 hex" badges
+          // Grant structure
+          const structureHandler = new GrantStructureHandler();
+          const structureCommand = await structureHandler.prepare(
+            { type: 'grantStructure' }, // Random structure to random settlement
+            commandContext
+          );
+          if (structureCommand) {
+            ctx.metadata._preparedStructure = structureCommand;
+            if (structureCommand.outcomeBadges) {
+              outcomeBadges.push(...structureCommand.outcomeBadges);
+            }
+          }
         } else if (outcome === 'success') {
-          // -1 Unrest, gain new worksite
-          ctx.metadata._gainWorksite = true;
+          ctx.metadata._claimHexCount = 1;
         } else if (outcome === 'failure' || outcome === 'criticalFailure') {
           // Lose random resource
           ctx.metadata._loseRandomResource = true;
         }
       } else if (approach === 'practical') {
-        // Controlled Development (Practical)
+        // Controlled Development (Practical) - Claim hexes on success
         if (outcome === 'criticalSuccess') {
-          // +2d3 Gold, -1d3 Unrest, gain a new structure
-          ctx.metadata._gainStructure = true;
+          ctx.metadata._claimHexCount = 1;
+          // Grant structure
+          const structureHandler = new GrantStructureHandler();
+          const structureCommand = await structureHandler.prepare(
+            { type: 'grantStructure' }, // Random structure to random settlement
+            commandContext
+          );
+          if (structureCommand) {
+            ctx.metadata._preparedStructure = structureCommand;
+            if (structureCommand.outcomeBadges) {
+              outcomeBadges.push(...structureCommand.outcomeBadges);
+            }
+          }
+        } else if (outcome === 'success') {
+          ctx.metadata._claimHexCount = 1;
         }
-        // Other outcomes handled by standard badges
+        // Failure/CF: no hex claiming
       } else if (approach === 'ruthless') {
-        // Auction Land (Ruthless)
+        // Auction Land (Ruthless) - Claim hexes on success
         if (outcome === 'criticalSuccess') {
-          // +Gold, gain new worksite, adjust 1 faction +1
-          ctx.metadata._gainWorksite = true;
+          ctx.metadata._claimHexCount = 1;
 
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
@@ -232,8 +254,7 @@ export const landRushPipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'success') {
-          // +Gold, gain new worksite
-          ctx.metadata._gainWorksite = true;
+          ctx.metadata._claimHexCount = 1;
         } else if (outcome === 'failure') {
           // Adjust 1 faction -1
           const factionHandler = new AdjustFactionHandler();
@@ -275,40 +296,50 @@ export const landRushPipeline: CheckPipeline = {
 
   postApplyInteractions: [
     {
-      id: 'selectedHex',
+      id: 'claimedHexes',
       type: 'map-selection',
       mode: 'hex-selection',
-      count: 1,
-      title: 'Select a hex for the new worksite',
-      colorType: 'worksite',
-      required: true,
-      condition: (ctx) => {
-        return ctx.metadata?._gainWorksite === true;
+      count: (ctx: any) => ctx.metadata?._claimHexCount || 0,
+      title: (ctx: any) => {
+        const count = ctx.metadata?._claimHexCount || 1;
+        return count > 1
+          ? `Select ${count} hexes to claim for settlers`
+          : 'Select a hex to claim for settlers';
       },
-      validateHex: (hexId: string): ValidationResult => {
+      colorType: 'claim',
+      required: true,
+      condition: (ctx: any) => {
+        return (ctx.metadata?._claimHexCount || 0) > 0;
+      },
+      validateHex: (hexId: string, pendingClaims: string[] = []): ValidationResult => {
         return safeValidation(() => {
           const kingdom = getFreshKingdomData();
           const hex = kingdom.hexes?.find((h: any) => h.id === hexId);
-          
+
           if (!hex) {
             return { valid: false, message: 'Hex not found' };
           }
-          
-          const claimedResult = validateClaimed(hexId, kingdom);
-          if (!claimedResult.valid) return claimedResult;
-          
-          const settlementResult = validateNoSettlement(hexId, kingdom);
-          if (!settlementResult.valid) return settlementResult;
-          
-          if (hex.worksite) {
-            return { valid: false, message: `Hex already has a ${hex.worksite.type}` };
+
+          // Already claimed by player?
+          if (hex.claimedBy === PLAYER_KINGDOM) {
+            return { valid: false, message: 'This hex is already claimed by your kingdom' };
           }
-          
-          return { valid: true, message: 'Valid location for worksite' };
-        }, hexId, 'land-rush worksite validation');
-      },
-      customSelector: {
-        component: WorksiteTypeSelector
+
+          // Already in pending claims?
+          if (pendingClaims.includes(hexId)) {
+            return { valid: false, message: 'This hex is already selected' };
+          }
+
+          // Must be explored
+          const exploredResult = validateExplored(hexId);
+          if (!exploredResult.valid) return exploredResult;
+
+          // Must be adjacent to claimed territory (or pending claims)
+          const adjacencyResult = validateAdjacentToClaimed(hexId, pendingClaims, kingdom);
+          if (!adjacencyResult.valid) return adjacencyResult;
+
+          return { valid: true, message: 'Valid hex for settlement' };
+        }, hexId, 'land-rush claim validation');
       }
     }
   ],
@@ -318,42 +349,32 @@ export const landRushPipeline: CheckPipeline = {
     // ResolutionDataBuilder + GameCommandsService via outcomeBadges.
     // This execute() only handles special game commands.
 
-    const { get } = await import('svelte/store');
-    const { kingdomData } = await import('../../stores/KingdomStore');
-    const kingdom = get(kingdomData);
-    const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
+    // Claim hexes (all success outcomes)
+    if (ctx.metadata?._claimHexCount > 0) {
+      const selectedHexData = ctx.resolutionData?.compoundData?.claimedHexes;
 
-    // Create worksite (virtuous CS/S, ruthless CS/S)
-    if (ctx.metadata?._gainWorksite) {
-      const selectedHexData = ctx.resolutionData?.compoundData?.selectedHex;
-      
-      if (!selectedHexData) {
-        return { success: false, error: 'No hex selected for worksite' };
-      }
-      
-      let hexId: string | undefined;
-      let worksiteType: string | undefined;
-      
-      if (selectedHexData?.hexIds) {
-        hexId = selectedHexData.hexIds[0];
-        if (hexId && selectedHexData.metadata) {
-          worksiteType = selectedHexData.metadata[hexId]?.worksiteType;
+      if (selectedHexData) {
+        let hexIds: string[] = [];
+
+        if (Array.isArray(selectedHexData)) {
+          hexIds = selectedHexData;
+        } else if (selectedHexData?.hexIds && Array.isArray(selectedHexData.hexIds)) {
+          hexIds = selectedHexData.hexIds;
+        }
+
+        if (hexIds.length > 0) {
+          await claimHexesExecution(hexIds);
+          const hexList = hexIds.join(', ');
+          const ui = (globalThis as any).ui;
+          ui?.notifications?.info(`Land rush settlers claimed hex${hexIds.length > 1 ? 'es' : ''}: ${hexList}`);
         }
       }
-
-      if (!hexId || !worksiteType) {
-        return { success: false, error: 'Worksite selection incomplete' };
-      }
-
-      const { createWorksiteExecution } = await import('../../execution/territory/createWorksite');
-      await createWorksiteExecution(hexId, worksiteType);
-      ui.notifications?.info(`Land rush settlers established ${worksiteType} on hex ${hexId}`);
     }
 
-    // Gain random structure (virtuous CS, practical CS)
-    if (ctx.metadata?._gainStructure) {
-      // TODO: Implement structure gain logic
-      console.log('Land Rush: Structure gain needs implementation');
+    // Commit structure grant (virtuous CS, practical CS)
+    const structureCommand = ctx.metadata?._preparedStructure;
+    if (structureCommand?.commit) {
+      await structureCommand.commit();
     }
 
     // Lose random resource (virtuous F/CF)

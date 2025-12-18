@@ -18,7 +18,8 @@ import { DamageStructureHandler } from '../../services/gameCommands/handlers/Dam
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
 import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
-import { valueBadge, textBadge, diceBadge } from '../../types/OutcomeBadge';
+import { ApplyArmyConditionHandler } from '../../services/gameCommands/handlers/ApplyArmyConditionHandler';
+import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 
 export const feudPipeline: CheckPipeline = {
   id: 'feud',
@@ -42,8 +43,6 @@ export const feudPipeline: CheckPipeline = {
         personality: { virtuous: 3 },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
           ],
           success: [
@@ -53,8 +52,6 @@ export const feudPipeline: CheckPipeline = {
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
           ],
           criticalFailure: [
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ]
         },
@@ -87,7 +84,6 @@ export const feudPipeline: CheckPipeline = {
           ],
           criticalFailure: [
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
-            textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative'),
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')
           ]
         },
@@ -118,8 +114,8 @@ export const feudPipeline: CheckPipeline = {
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
           ],
           criticalFailure: [
-            textBadge('1 structure damaged', 'fas fa-house-crack', 'negative'),
-            diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d2', 'negative')
+            textBadge('1 structure damaged', 'fa-house-crack', 'negative'),
+            diceBadge('{{value}} innocents imprisoned', 'fas fa-user-slash', '1d2', 'negative')
           ]
         },
         outcomeDescriptions: {
@@ -180,7 +176,6 @@ export const feudPipeline: CheckPipeline = {
       const kingdom = get(kingdomData);
       const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
       const outcome = ctx.outcome;
-      const PLAYER_KINGDOM = 'player';
 
       // Find the selected approach option
       const selectedOption = feudPipeline.strategicChoice?.options.find(opt => opt.id === approach);
@@ -189,9 +184,6 @@ export const feudPipeline: CheckPipeline = {
       const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
       const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
 
-      // Apply outcome-specific modifiers based on approach
-      let modifiers: any[] = [];
-      
       const commandContext: GameCommandContext = {
         actionId: 'feud',
         outcome: ctx.outcome,
@@ -202,11 +194,6 @@ export const feudPipeline: CheckPipeline = {
       if (approach === 'virtuous') {
         // Mediate Peacefully (Virtuous)
         if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '-1d3', negative: true, duration: 'immediate' },
-            { type: 'static', resource: 'fame', value: 1, duration: 'immediate' }
-          ];
-          
           // Adjust 2 random factions +1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
@@ -225,19 +212,7 @@ export const feudPipeline: CheckPipeline = {
               outcomeBadges.push(...filteredBadges, factionCommand.outcomeBadge);
             }
           }
-        } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
-          ];
-        } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-          ];
         } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' }
-          ];
-          
           // Adjust 2 random factions -1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
@@ -260,12 +235,6 @@ export const feudPipeline: CheckPipeline = {
       } else if (approach === 'practical') {
         // Manipulate Outcome (Practical)
         if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '-1d3', negative: true, duration: 'immediate' },
-            { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
-            { type: 'dice', resource: 'gold', formula: '1d3', duration: 'immediate' }
-          ];
-          
           // Adjust 1 random faction +1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
@@ -280,39 +249,18 @@ export const feudPipeline: CheckPipeline = {
               outcomeBadges.push(factionCommand.outcomeBadge);
             }
           }
-        } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' },
-            { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
-          ];
-        } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
-            { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
-          ];
         } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
-            { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
-          ];
-          
           // Army becomes fatigued
-          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
-          if (playerArmies.length > 0) {
-            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
-            
-            // Store in metadata for execute
-            ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'fatigued', value: 1 };
-            
-            // Update badge with army name
-            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Fatigued'));
-            if (armyBadgeIndex >= 0) {
-              outcomeBadges[armyBadgeIndex] = textBadge(
-                `${randomArmy.name} becomes Fatigued`, 
-                'fas fa-tired', 
-                'negative'
-              );
-            }
+          const armyHandler = new ApplyArmyConditionHandler();
+          const armyCmd = await armyHandler.prepare(
+            { type: 'applyArmyCondition', condition: 'fatigued', value: 1, armyId: 'random' },
+            commandContext
+          );
+          if (armyCmd) {
+            ctx.metadata._preparedArmyCondition = armyCmd;
+            const filtered = outcomeBadges.filter(b => !b.template?.includes('army becomes Fatigued'));
+            outcomeBadges.length = 0;
+            outcomeBadges.push(...filtered, ...(armyCmd.outcomeBadges || []));
           }
           
           // Adjust 1 random faction -1
@@ -333,9 +281,6 @@ export const feudPipeline: CheckPipeline = {
       } else if (approach === 'ruthless') {
         // Force Compliance (Ruthless)
         if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '-1d3', negative: true, duration: 'immediate' }
-          ];
           // Imprison 1d3 dissidents (convert unrest to imprisoned)
           const imprisonHandler = new ConvertUnrestToImprisonedHandler();
           const imprisonCommand = await imprisonHandler.prepare(
@@ -350,19 +295,7 @@ export const feudPipeline: CheckPipeline = {
               outcomeBadges.push(imprisonCommand.outcomeBadge);
             }
           }
-        } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
-          ];
-        } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-          ];
         } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' }
-          ];
-
           // Add structure damage for force + critical failure
           const damageHandler = new DamageStructureHandler();
           const damageCommand = await damageHandler.prepare(
@@ -389,17 +322,12 @@ export const feudPipeline: CheckPipeline = {
           if (imprisonCommand) {
             ctx.metadata._preparedAddImprisoned = imprisonCommand;
             if (imprisonCommand.outcomeBadges) {
-              // Remove static "innocents harmed" badge
-              const filteredBadges = outcomeBadges.filter(b => !b.template?.includes('innocents harmed'));
-              outcomeBadges.length = 0;
-              outcomeBadges.push(...filteredBadges, ...imprisonCommand.outcomeBadges);
+              // Preserve existing badges (like structure damage) and add imprisonment badges
+              outcomeBadges.push(...imprisonCommand.outcomeBadges);
             }
           }
         }
       }
-
-      // Store modifiers in context for execute step
-      ctx.metadata._outcomeModifiers = modifiers;
 
       return { resources: [], outcomeBadges };
     }
@@ -412,10 +340,9 @@ export const feudPipeline: CheckPipeline = {
     // This execute() only handles special game commands.
 
     // Apply army condition (practical CF)
-    const armyCondition = ctx.metadata?._armyCondition;
-    if (armyCondition?.actorId) {
-      const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
-      await applyArmyConditionExecution(armyCondition.actorId, armyCondition.condition, armyCondition.value);
+    const armyCommand = ctx.metadata?._preparedArmyCondition;
+    if (armyCommand?.commit) {
+      await armyCommand.commit();
     }
 
     // Execute faction adjustment (manipulate approach)

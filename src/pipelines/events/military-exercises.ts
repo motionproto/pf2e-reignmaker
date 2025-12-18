@@ -14,10 +14,18 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
+import { ApplyArmyConditionHandler } from '../../services/gameCommands/handlers/ApplyArmyConditionHandler';
+import { RandomArmyEquipmentHandler } from '../../services/gameCommands/handlers/RandomArmyEquipmentHandler';
 import { valueBadge, textBadge, diceBadge } from '../../types/OutcomeBadge';
 import { logger } from '../../utils/Logger';
-import { EQUIPMENT_ICONS, EQUIPMENT_NAMES } from '../../utils/presentation';
 import { PLAYER_KINGDOM } from '../../types/ownership';
+import {
+  validateClaimed,
+  validateNoSettlement,
+  safeValidation,
+  getFreshKingdomData,
+  type ValidationResult
+} from '../shared/hexValidators';
 
 export const militaryExercisesPipeline: CheckPipeline = {
   id: 'military-exercises',
@@ -202,7 +210,6 @@ export const militaryExercisesPipeline: CheckPipeline = {
       ) || [];
 
       const warnings: string[] = [];
-      let modifiers: any[] = [];
 
       // Check if we have armies for military effects
       const needsArmy = (approach === 'virtuous' && outcome !== 'criticalSuccess' && outcome !== 'success') ||
@@ -214,128 +221,7 @@ export const militaryExercisesPipeline: CheckPipeline = {
         return { resources: [], outcomeBadges: [], warnings };
       }
 
-      // Select random army for conditions and update badges
-      if (playerArmies.length > 0) {
-        const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
-        
-        // Store army for execute step
-        if ((approach === 'virtuous' && (outcome === 'failure' || outcome === 'criticalFailure')) ||
-            (approach === 'practical' && (outcome === 'failure' || outcome === 'criticalFailure')) ||
-            (approach === 'ruthless')) {
-          
-          // Determine condition type
-          let condition = '';
-          if (outcome === 'criticalSuccess' || outcome === 'success') {
-            if (approach === 'ruthless') {
-              condition = 'well-trained';
-              ctx.metadata._selectedArmy = { actorId: randomArmy.actorId, name: randomArmy.name };
-              
-              const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Well Trained'));
-              if (armyBadgeIndex >= 0) {
-                outcomeBadges[armyBadgeIndex] = textBadge(
-                  `${randomArmy.name} becomes Well Trained (+1 saves)`,
-                  'fas fa-star',
-                  'positive'
-                );
-              }
-            }
-          } else if (outcome === 'failure') {
-            condition = 'fatigued';
-            ctx.metadata._selectedArmy = { actorId: randomArmy.actorId, name: randomArmy.name };
-            
-            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Fatigued'));
-            if (armyBadgeIndex >= 0) {
-              outcomeBadges[armyBadgeIndex] = textBadge(
-                `${randomArmy.name} becomes Fatigued`,
-                'fas fa-tired',
-                'negative'
-              );
-            }
-          } else if (outcome === 'criticalFailure') {
-            condition = 'enfeebled';
-            ctx.metadata._selectedArmy = { actorId: randomArmy.actorId, name: randomArmy.name };
-            
-            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Enfeebled'));
-            if (armyBadgeIndex >= 0) {
-              outcomeBadges[armyBadgeIndex] = textBadge(
-                `${randomArmy.name} becomes Enfeebled`,
-                'fas fa-exclamation-triangle',
-                'negative'
-              );
-            }
-          }
-        }
-      }
-
-      // Calculate modifiers based on approach and outcome
-      if (approach === 'virtuous') {
-        // Defensive Drills
-        if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'static', resource: 'fame', value: 1, duration: 'immediate' }
-          ];
-          // Fortify hex handled in execute
-        } else if (outcome === 'success') {
-          // Fortify hex handled in execute
-        } else if (outcome === 'failure') {
-          // Army fatigued + faction -1 handled in execute
-        } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
-          ];
-          // Army enfeebled handled in execute
-        }
-      } else if (approach === 'practical') {
-        // Equipment Focus
-        if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
-          ];
-          // 2 armies equipment handled in execute
-        } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
-          ];
-          // 1 army equipment handled in execute
-        } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'dice', resource: 'gold', formula: '-1d3-1', negative: true, duration: 'immediate' }
-          ];
-          // Army fatigued handled in execute
-        } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
-          ];
-          // Army enfeebled handled in execute
-        }
-      } else if (approach === 'ruthless') {
-        // Aggressive Training
-        if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
-            { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
-          ];
-          // Army well trained handled in execute
-        } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
-          ];
-          // Army well trained handled in execute
-        } else if (outcome === 'failure') {
-          // Army fatigued + faction -1 handled in execute
-        } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
-          ];
-          // Army enfeebled handled in execute
-        }
-      }
-
-      // Store modifiers in context for execute step
-      ctx.metadata._outcomeModifiers = modifiers;
-      ctx.metadata._selectedApproach = approach;
-
-      // Prepare faction adjustments
+      // Command context for handlers
       const commandContext: GameCommandContext = {
         actionId: 'military-exercises',
         outcome: ctx.outcome,
@@ -343,6 +229,69 @@ export const militaryExercisesPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
+      // Prepare army condition handlers based on approach and outcome
+      const conditionMap: Record<string, Record<string, string>> = {
+        virtuous: { failure: 'fatigued', criticalFailure: 'enfeebled' },
+        practical: { failure: 'fatigued', criticalFailure: 'enfeebled' },
+        ruthless: { criticalSuccess: 'well-trained', success: 'well-trained', failure: 'fatigued', criticalFailure: 'enfeebled' }
+      };
+
+      const badgeTextMap: Record<string, string> = {
+        'well-trained': 'army becomes Well Trained',
+        'fatigued': 'army becomes Fatigued',
+        'enfeebled': 'army becomes Enfeebled'
+      };
+
+      if (approach && conditionMap[approach]?.[outcome]) {
+        const condition = conditionMap[approach][outcome];
+        const armyHandler = new ApplyArmyConditionHandler();
+        const armyCmd = await armyHandler.prepare(
+          { type: 'applyArmyCondition', condition, value: 1, armyId: 'random' },
+          commandContext
+        );
+        if (armyCmd) {
+          ctx.metadata._preparedArmyCondition = armyCmd;
+          // Remove static badge and add dynamic one
+          const filtered = outcomeBadges.filter(b => !b.template?.includes(badgeTextMap[condition]));
+          outcomeBadges.length = 0;
+          outcomeBadges.push(...filtered, ...(armyCmd.outcomeBadges || []));
+        }
+      }
+
+      // Prepare equipment handlers for practical CS/S
+      if (approach === 'practical') {
+        if (outcome === 'criticalSuccess') {
+          const equipHandler = new RandomArmyEquipmentHandler();
+          const equipCmd = await equipHandler.prepare(
+            { type: 'randomArmyEquipment', count: 2 },
+            commandContext
+          );
+          if (equipCmd) {
+            ctx.metadata._preparedEquipment = equipCmd;
+            // Remove static badge and add dynamic ones
+            const filtered = outcomeBadges.filter(b => !b.template?.includes('armies receive equipment'));
+            outcomeBadges.length = 0;
+            outcomeBadges.push(...filtered, ...(equipCmd.outcomeBadges || []));
+          }
+        } else if (outcome === 'success') {
+          const equipHandler = new RandomArmyEquipmentHandler();
+          const equipCmd = await equipHandler.prepare(
+            { type: 'randomArmyEquipment', count: 1 },
+            commandContext
+          );
+          if (equipCmd) {
+            ctx.metadata._preparedEquipment = equipCmd;
+            // Remove static badge and add dynamic one
+            const filtered = outcomeBadges.filter(b => !b.template?.includes('army receives equipment'));
+            outcomeBadges.length = 0;
+            outcomeBadges.push(...filtered, ...(equipCmd.outcomeBadges || []));
+          }
+        }
+      }
+
+      ctx.metadata._selectedApproach = approach;
+
+      // Prepare faction adjustments for failure outcomes
       if ((approach === 'virtuous' && outcome === 'failure') ||
           (approach === 'ruthless' && outcome === 'failure')) {
         const factionHandler = new AdjustFactionHandler();
@@ -364,129 +313,96 @@ export const militaryExercisesPipeline: CheckPipeline = {
     }
   },
 
+  postApplyInteractions: [
+    {
+      type: 'map-selection',
+      id: 'fortifyHex',
+      mode: 'hex-selection',
+      count: 1,
+      colorType: 'fortify',
+      title: 'Select hex to fortify (free Earthworks)',
+      required: true,
+      condition: (ctx: any) => {
+        const approach = ctx.kingdom?.turnState?.eventsPhase?.selectedApproach;
+        return approach === 'virtuous' &&
+               (ctx.outcome === 'criticalSuccess' || ctx.outcome === 'success');
+      },
+      validateHex: (hexId: string): ValidationResult => {
+        return safeValidation(() => {
+          const kingdom = getFreshKingdomData();
+          const hex = kingdom.hexes?.find((h: any) => h.id === hexId);
+
+          if (!hex) {
+            return { valid: false, message: 'Hex not found' };
+          }
+
+          const claimedResult = validateClaimed(hexId, kingdom);
+          if (!claimedResult.valid) return claimedResult;
+
+          const settlementResult = validateNoSettlement(hexId, kingdom);
+          if (!settlementResult.valid) return settlementResult;
+
+          // Check if already at max fortification
+          const currentTier = hex.fortification?.tier || 0;
+          if (currentTier >= 4) {
+            return { valid: false, message: 'Already at maximum fortification (Fortress)' };
+          }
+
+          // Event grants free fortification - show what will be built/upgraded
+          if (currentTier === 0) {
+            return { valid: true, message: 'Build free Earthworks' };
+          } else {
+            const tierNames = ['', 'Earthworks', 'Wooden Tower', 'Stone Tower', 'Fortress'];
+            const nextTier = Math.min(currentTier + 1, 4);
+            return { valid: true, message: `Upgrade to ${tierNames[nextTier]} (free)` };
+          }
+        }, hexId, 'military-exercises fortify validation');
+      },
+      getHexInfo: (hexId: string) => {
+        const kingdom = getFreshKingdomData();
+        const hex = kingdom.hexes?.find((h: any) => h.id === hexId);
+
+        if (!hex) return null;
+
+        const currentTier = hex.fortification?.tier || 0;
+        const tierNames = ['None', 'Earthworks', 'Wooden Tower', 'Stone Tower', 'Fortress'];
+        const tierDescriptions = [
+          '',
+          'Basic earthen defensive positions with ditches and berms.',
+          'Wooden watchtower with palisade defenses.',
+          'Stone tower with reinforced defensive walls.',
+          'Massive fortified keep with multiple defensive layers.'
+        ];
+
+        if (currentTier >= 4) {
+          return `<div style="color: var(--text-warning); text-align: center;">
+            <i class="fas fa-crown"></i> Maximum fortification (Fortress)
+          </div>`;
+        }
+
+        const nextTier = currentTier + 1;
+        const action = currentTier === 0 ? 'Build' : 'Upgrade to';
+
+        return `
+          <div style="line-height: 1.6;">
+            <div style="font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">
+              ${action}: ${tierNames[nextTier]}
+            </div>
+            <div style="color: var(--text-tertiary); margin-bottom: 4px;">
+              ${tierDescriptions[nextTier]}
+            </div>
+            <div style="color: var(--text-success); font-weight: bold;">
+              <i class="fas fa-gift"></i> FREE (event reward)
+            </div>
+          </div>
+        `;
+      }
+    }
+  ],
+
   execute: async (ctx) => {
-    const { armyService } = await import('../../services/army');
-    const { removeEffectFromActor } = await import('../../services/commands/combat/conditionHelpers');
-    const game = (globalThis as any).game;
-    
     const approach = ctx.metadata?._selectedApproach;
     const outcome = ctx.outcome;
-    
-    const playerArmies = ctx.kingdom.armies?.filter((a: any) => 
-      a.actorId && a.ledBy === PLAYER_KINGDOM
-    ) || [];
-
-    if (playerArmies.length === 0) {
-      return { success: true, message: 'No armies available for military effects' };
-    }
-
-    // Get pre-selected army from preview (or select randomly if not available)
-    const getSelectedArmy = () => {
-      if (ctx.metadata?._selectedArmy?.actorId) {
-        return playerArmies.find((a: any) => a.actorId === ctx.metadata._selectedArmy.actorId) || playerArmies[0];
-      }
-      return playerArmies[Math.floor(Math.random() * playerArmies.length)];
-    };
-
-    // Helper: Apply Well Trained
-    const applyWellTrained = async (army: any) => {
-      const armyActor = game?.actors?.get(army.actorId);
-      if (!armyActor) return;
-
-      await removeEffectFromActor(armyActor, 'poorly-trained');
-      await removeEffectFromActor(armyActor, 'well-trained');
-
-      const wellTrainedEffect = {
-        type: 'effect',
-        name: 'Well Trained',
-        img: 'icons/magic/life/cross-worn-green.webp',
-        system: {
-          slug: 'well-trained',
-          badge: { value: 1 },
-          description: { value: '<p>Exceptional training provides +1 to all saving throws.</p>' },
-          duration: { value: -1, unit: 'unlimited', sustained: false, expiry: null },
-          rules: [{ key: 'FlatModifier', selector: 'saving-throw', value: 1, type: 'circumstance' }]
-        }
-      };
-
-      await armyService.addItemToArmy(army.actorId, wellTrainedEffect);
-      logger.info(`✨ [Military Exercises] Applied Well Trained to ${army.name}`);
-    };
-
-    // Helper: Apply Fatigued
-    const applyFatigued = async (army: any) => {
-      const armyActor = game?.actors?.get(army.actorId);
-      if (!armyActor) return;
-
-      const fatiguedCondition = {
-        name: 'Fatigued',
-        type: 'condition',
-        img: 'systems/pf2e/icons/conditions/fatigued.webp',
-        system: {
-          slug: 'fatigued',
-          description: { value: '<p>Training exhaustion affects performance.</p>' },
-          duration: { value: -1, unit: 'unlimited', sustained: false, expiry: null }
-        }
-      };
-
-      await armyService.addItemToArmy(army.actorId, fatiguedCondition as any);
-      logger.info(`⚠️ [Military Exercises] Applied Fatigued to ${army.name}`);
-    };
-
-    // Helper: Apply Enfeebled
-    const applyEnfeebled = async (army: any) => {
-      const armyActor = game?.actors?.get(army.actorId);
-      if (!armyActor) return;
-
-      const items = Array.from(armyActor.items.values()) as any[];
-      const enfeebledEffect = items.find((i: any) => i.system?.slug === 'enfeebled');
-
-      if (enfeebledEffect) {
-        const currentValue = enfeebledEffect.system?.badge?.value || 1;
-        const newValue = currentValue + 1;
-        await armyService.updateItemOnArmy(army.actorId, enfeebledEffect.id, { 'system.badge.value': newValue });
-        logger.info(`⚠️ [Military Exercises] Increased ${army.name}'s enfeebled to ${newValue}`);
-      } else {
-        const enfeebledCondition = {
-          name: 'Enfeebled',
-          type: 'condition',
-          img: 'systems/pf2e/icons/conditions/enfeebled.webp',
-          system: {
-            slug: 'enfeebled',
-            badge: { value: 1 },
-            description: { value: '<p>Training accident has weakened the troops.</p>' },
-            duration: { value: -1, unit: 'unlimited', sustained: false, expiry: null }
-          }
-        };
-        await armyService.addItemToArmy(army.actorId, enfeebledCondition as any);
-        logger.info(`⚠️ [Military Exercises] Applied Enfeebled 1 to ${army.name}`);
-      }
-    };
-
-    // Helper: Outfit army with equipment
-    const outfitRandomArmy = async (count: number) => {
-      const { outfitArmy } = await import('../../services/commands/armies/outfitArmy');
-      
-      for (let i = 0; i < count; i++) {
-        const armiesWithSlots = playerArmies.filter((a: any) => {
-          const equipment = a.equipment || {};
-          return !equipment.armor || !equipment.weapons || !equipment.runes || !equipment.equipment;
-        });
-
-        if (armiesWithSlots.length === 0) break;
-
-        const army = armiesWithSlots[Math.floor(Math.random() * armiesWithSlots.length)];
-        const equipment = army.equipment || {};
-        const availableSlots = ['armor', 'weapons', 'runes', 'equipment'].filter(slot => !equipment[slot]);
-        const selectedSlot = availableSlots[Math.floor(Math.random() * availableSlots.length)];
-
-        const prepared = await outfitArmy(army.id, selectedSlot, 'success', false);
-        if (prepared?.commit) {
-          await prepared.commit();
-          logger.info(`✨ [Military Exercises] Equipped ${army.name} with ${selectedSlot}`);
-        }
-      }
-    };
 
     // Commit prepared faction adjustments
     const factionCommand = ctx.metadata?._preparedFactionAdjust;
@@ -494,43 +410,59 @@ export const militaryExercisesPipeline: CheckPipeline = {
       await factionCommand.commit();
     }
 
-    // Execute based on approach and outcome
-    if (approach === 'virtuous') {
-      // Defensive Drills
-      if (outcome === 'criticalSuccess' || outcome === 'success') {
-        // TODO: Fortify hex - requires hex selection UI
-        logger.info('[Military Exercises] Fortify hex effect (not yet implemented)');
-      } else if (outcome === 'failure') {
-        const army = getSelectedArmy();
-        await applyFatigued(army);
-      } else if (outcome === 'criticalFailure') {
-        const army = getSelectedArmy();
-        await applyEnfeebled(army);
-      }
-    } else if (approach === 'practical') {
-      // Equipment Focus
-      if (outcome === 'criticalSuccess') {
-        await outfitRandomArmy(2);
-      } else if (outcome === 'success') {
-        await outfitRandomArmy(1);
-      } else if (outcome === 'failure') {
-        const army = getSelectedArmy();
-        await applyFatigued(army);
-      } else if (outcome === 'criticalFailure') {
-        const army = getSelectedArmy();
-        await applyEnfeebled(army);
-      }
-    } else if (approach === 'ruthless') {
-      // Aggressive Training
-      if (outcome === 'criticalSuccess' || outcome === 'success') {
-        const army = getSelectedArmy();
-        await applyWellTrained(army);
-      } else if (outcome === 'failure') {
-        const army = getSelectedArmy();
-        await applyFatigued(army);
-      } else if (outcome === 'criticalFailure') {
-        const army = getSelectedArmy();
-        await applyEnfeebled(army);
+    // Commit prepared army condition (well-trained, fatigued, enfeebled)
+    const armyCommand = ctx.metadata?._preparedArmyCondition;
+    if (armyCommand?.commit) {
+      await armyCommand.commit();
+    }
+
+    // Commit prepared equipment upgrades (practical CS/S)
+    const equipmentCommand = ctx.metadata?._preparedEquipment;
+    if (equipmentCommand?.commit) {
+      await equipmentCommand.commit();
+    }
+
+    // Handle fortify hex for virtuous success outcomes
+    if (approach === 'virtuous' && (outcome === 'criticalSuccess' || outcome === 'success')) {
+      const selectedHexData = ctx.resolutionData?.compoundData?.fortifyHex;
+
+      if (selectedHexData) {
+        // Get the selected hex ID
+        let hexId: string | undefined;
+        if (selectedHexData?.hexIds && Array.isArray(selectedHexData.hexIds)) {
+          hexId = selectedHexData.hexIds[0];
+        } else if (Array.isArray(selectedHexData)) {
+          hexId = selectedHexData[0];
+        }
+
+        if (hexId) {
+          // Get current fortification tier to determine next tier
+          const { get } = await import('svelte/store');
+          const { kingdomData } = await import('../../stores/KingdomStore');
+          const kingdom = get(kingdomData);
+          const hex = kingdom.hexes?.find((h: any) => h.id === hexId);
+          const currentTier = hex?.fortification?.tier || 0;
+          const nextTier = Math.min(currentTier + 1, 4) as 1 | 2 | 3 | 4;
+
+          // Execute fortification (free - no cost deduction needed)
+          // Note: fortifyHexExecution deducts costs, so we need a modified version
+          // For now, use updateKingdom directly for free fortifications
+          const { updateKingdom } = await import('../../stores/KingdomStore');
+          await updateKingdom(k => {
+            const targetHex = k.hexes.find((h: any) => h.id === hexId);
+            if (targetHex) {
+              targetHex.fortification = {
+                tier: nextTier,
+                maintenancePaid: true,
+                turnBuilt: k.currentTurn
+              };
+              logger.info(`[Military Exercises] Built free fortification tier ${nextTier} on hex ${hexId}`);
+            }
+          });
+
+          const tierNames = ['', 'Earthworks', 'Wooden Tower', 'Stone Tower', 'Fortress'];
+          logger.info(`[Military Exercises] Free fortification: ${tierNames[nextTier]} on hex ${hexId}`);
+        }
       }
     }
 

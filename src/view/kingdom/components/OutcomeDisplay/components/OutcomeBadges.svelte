@@ -106,39 +106,75 @@
   } as UnifiedOutcomeBadge)] : [];
   
   /**
-   * Remove generic structure/worksite badges when specific badges are present
+   * Remove generic badges when specific handler-generated badges are present
    * This prevents duplication when handlers add detailed badges like:
-   * "The Blacksmith in Tuskwater is damaged" vs generic "1 structure damaged"
+   * - "The Blacksmith in Tuskwater is damaged" vs generic "1 structure damaged"
+   * - "Imprison 3 conspirators in Tuskwater" vs generic "Imprison 1d3 dissidents"
+   * - "Tuskwater gains Library" vs generic "Grant 1 structure"
    */
   function deduplicateBadges(badges: any[]): any[] {
-    // Check if we have specific structure badges
-    const hasSpecificStructure = badges.some(b => 
+    // Check if we have specific structure damage badges
+    const hasSpecificStructure = badges.some(b =>
       b?.template?.match(/The .+ in .+ (is damaged|will be|was)/i) ||
       b?.template?.match(/\w+ in \w+ (is damaged|will be|downgraded|removed)/i)
     );
-    
+
     // Check if we have specific worksite badges
     const hasSpecificWorksite = badges.some(b =>
       b?.template?.match(/(Worksite|Farmstead|Mine|Quarry|Lumber Camp) .+ (destroyed|damaged)/i) ||
       b?.template?.match(/on hex \d+ (destroyed|damaged)/i)
     );
-    
+
+    // Check if we have specific imprisonment badges (handler-generated with settlement names)
+    // Handler badges: "Imprison {{value}} conspirators in [Settlement]" or "Innocents {{value}} Imprisoned in [Settlement]"
+    const hasSpecificImprison = badges.some(b =>
+      b?.template?.match(/[Ii]mprison .+ in \w+/i) ||
+      b?.template?.match(/[Ii]nnocents .+ in \w+/i)
+    );
+
+    // Check if we have specific grant structure badges
+    // Handler badges: "[Settlement] gains [Structure]"
+    const hasSpecificGrantStructure = badges.some(b =>
+      b?.template?.match(/\w+ gains \w+/i)
+    );
+
     let filtered = badges;
-    
-    // Remove generic structure badges if we have specific ones
+
+    // Remove generic structure damage badges if we have specific ones
     if (hasSpecificStructure) {
-      filtered = filtered.filter(b => 
+      filtered = filtered.filter(b =>
         !b?.template?.match(/^\d+ structures? (damaged|destroyed|will be)$/i)
       );
     }
-    
+
     // Remove generic worksite badges if we have specific ones
     if (hasSpecificWorksite) {
       filtered = filtered.filter(b =>
         !b?.template?.match(/^\d+ worksites? (damaged|destroyed)$/i)
       );
     }
-    
+
+    // Remove generic imprisonment badges if we have specific ones
+    // Generic badges: "Imprison {{value}} dissidents", "{{value}} innocents harmed/imprisoned"
+    if (hasSpecificImprison) {
+      filtered = filtered.filter(b => {
+        const template = b?.template || '';
+        // Keep if it's NOT a generic imprison/innocents badge
+        // Generic patterns lack "in [Settlement]" suffix
+        const isGenericImprison = template.match(/^[Ii]mprison \{\{value\}\} dissidents$/i);
+        const isGenericInnocents = template.match(/^\{\{value\}\} innocents (harmed|imprisoned)$/i);
+        return !isGenericImprison && !isGenericInnocents;
+      });
+    }
+
+    // Remove generic grant structure badges if we have specific ones
+    // Generic badge: "Grant 1 structure" or "Grant 2 structures"
+    if (hasSpecificGrantStructure) {
+      filtered = filtered.filter(b =>
+        !b?.template?.match(/^Grant \d+ structures?$/i)
+      );
+    }
+
     return filtered;
   }
   

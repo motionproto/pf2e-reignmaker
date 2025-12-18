@@ -15,6 +15,7 @@ import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
+import { GrantStructureHandler } from '../../services/gameCommands/handlers/GrantStructureHandler';
 import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 
 export const economicSurgePipeline: CheckPipeline = {
@@ -243,8 +244,17 @@ export const economicSurgePipeline: CheckPipeline = {
           }
         } else if (outcome === 'criticalSuccess') {
           // +2d3 Gold, -1d3 Unrest (intimidation), 1 settlement gains a structure
-          // Structure gain handled in execute()
-          ctx.metadata._gainStructure = true;
+          const structureHandler = new GrantStructureHandler();
+          const structureCommand = await structureHandler.prepare(
+            { type: 'grantStructure' }, // Random structure to random settlement
+            commandContext
+          );
+          if (structureCommand) {
+            ctx.metadata._preparedStructure = structureCommand;
+            if (structureCommand.outcomeBadges) {
+              outcomeBadges.push(...structureCommand.outcomeBadges);
+            }
+          }
         } else if (outcome === 'criticalFailure') {
           // +1d3 Unrest, -1 Fame, damage 1 structure (riot)
           const damageHandler = new DamageStructureHandler();
@@ -306,11 +316,10 @@ export const economicSurgePipeline: CheckPipeline = {
       await damageCommand.commit();
     }
 
-    // Gain random structure (ruthless CS)
-    if (ctx.metadata?._gainStructure && approach === 'ruthless') {
-      // TODO: Implement structure gain logic
-      // For now, log that this needs implementation
-      console.log('Economic Surge: Structure gain needs implementation');
+    // Commit structure grant (ruthless CS)
+    const structureCommand = ctx.metadata?._preparedStructure;
+    if (structureCommand?.commit) {
+      await structureCommand.commit();
     }
 
     return { success: true };

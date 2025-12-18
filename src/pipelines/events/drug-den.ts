@@ -17,7 +17,7 @@ import { AdjustFactionHandler } from '../../services/gameCommands/handlers/Adjus
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
 import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
-import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge, genericImprisonDissidents, genericInnocentsImprisoned, genericStructureDamaged } from '../../types/OutcomeBadge';
 import { updateKingdom } from '../../stores/KingdomStore';
 
 export const drugDenPipeline: CheckPipeline = {
@@ -55,8 +55,7 @@ export const drugDenPipeline: CheckPipeline = {
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative'),
-            textBadge('Damage 1 structure', 'fas fa-house-crack', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
           ]
         }
       },
@@ -76,11 +75,11 @@ export const drugDenPipeline: CheckPipeline = {
         outcomeBadges: {
           criticalSuccess: [
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive'),
-            textBadge('+1 Gold per turn for 3 turns', 'fas fa-coins', 'positive')
+            valueBadge('+{{value}} Gold/turn (2 turns)', 'fas fa-clock', 1, 'positive')
           ],
           success: [
             valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive'),
-            textBadge('+1 Gold per turn (ongoing)', 'fas fa-coins', 'positive')
+            valueBadge('+{{value}} Gold/turn (ongoing)', 'fas fa-clock', 1, 'positive')
           ],
           failure: [
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
@@ -106,18 +105,18 @@ export const drugDenPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Convert {{value}} Unrest to Imprisoned', 'fas fa-lock', 'positive'),
-            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
+            genericImprisonDissidents()
           ],
           success: [
-            textBadge('Convert {{value}} Unrest to Imprisoned', 'fas fa-lock', 'positive')
+            genericImprisonDissidents()
           ],
           failure: [
-            diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')
+            genericInnocentsImprisoned()
           ],
           criticalFailure: [
-            textBadge('Damage 1 structure', 'fas fa-house-crack', 'negative'),
-            diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')
+            genericInnocentsImprisoned(),
+            genericStructureDamaged(1)
           ]
         }
       }
@@ -192,6 +191,21 @@ export const drugDenPipeline: CheckPipeline = {
               outcomeBadges.push(...factionCommand.outcomeBadges);
             } else if (factionCommand.outcomeBadge) {
               outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'criticalFailure') {
+          // Damage 1 structure
+          const damageHandler = new DamageStructureHandler();
+          const damageCommand = await damageHandler.prepare(
+            { type: 'damageStructure', count: 1 },
+            commandContext
+          );
+          if (damageCommand) {
+            ctx.metadata._preparedDamageVirtuous = damageCommand;
+            if (damageCommand.outcomeBadges) {
+              outcomeBadges.push(...damageCommand.outcomeBadges);
+            } else if (damageCommand.outcomeBadge) {
+              outcomeBadges.push(damageCommand.outcomeBadge);
             }
           }
         }
@@ -321,6 +335,12 @@ export const drugDenPipeline: CheckPipeline = {
     const imprisonCommand = ctx.metadata?._preparedImprison;
     if (imprisonCommand?.commit) {
       await imprisonCommand.commit();
+    }
+
+    // Execute structure damage (virtuous CF)
+    const damageVirtuous = ctx.metadata?._preparedDamageVirtuous;
+    if (damageVirtuous?.commit) {
+      await damageVirtuous.commit();
     }
 
     // Execute structure damage (ruthless CF)

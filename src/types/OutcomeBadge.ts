@@ -208,3 +208,51 @@ export function badge(options: {
     variant: options.variant ?? 'info'
   };
 }
+
+// ============================================
+// Generic Badge Templates for Runtime Effects
+// ============================================
+// Use these in static outcomeBadges for effects that will be
+// resolved to specific targets by handlers during preview.calculate()
+// The deduplication system in OutcomeBadges.svelte will automatically
+// replace these with handler-generated specific badges.
+
+/** Generic badge: structure will be damaged (replaced by specific structure name) */
+export const genericStructureDamaged = (count: number = 1) =>
+  textBadge(`${count} structure${count > 1 ? 's' : ''} damaged`, 'fa-house-crack', 'negative');
+
+/** Generic badge: structure will be destroyed (replaced by specific structure name) */
+export const genericStructureDestroyed = (count: number = 1) =>
+  textBadge(`${count} structure${count > 1 ? 's' : ''} destroyed`, 'fa-house-circle-xmark', 'negative');
+
+/** Generic badge: worksite will be destroyed (replaced by specific worksite) */
+export const genericWorksiteDestroyed = (count: number = 1) =>
+  textBadge(`${count} worksite${count > 1 ? 's' : ''} destroyed`, 'fa-industry', 'negative');
+
+/** Generic badge: innocents will be imprisoned (replaced by specific count/location) */
+export const genericInnocentsImprisoned = () =>
+  textBadge('Innocents may be imprisoned', 'fas fa-user-slash', 'negative');
+
+/** Generic badge: dissidents will be imprisoned (replaced by specific count/location) */
+export const genericImprisonDissidents = () =>
+  textBadge('Dissidents may be imprisoned', 'fas fa-user-lock', 'positive');
+
+/** Generic badge: army gains a positive condition */
+export const genericArmyConditionPositive = (condition: string) =>
+  textBadge(`Army becomes ${condition}`, 'fas fa-shield', 'positive');
+
+/** Generic badge: army gains a negative condition */
+export const genericArmyConditionNegative = (condition: string) =>
+  textBadge(`Army becomes ${condition}`, 'fas fa-shield-xmark', 'negative');
+
+/** Generic badge: settlement level increases */
+export const genericSettlementLevelUp = () =>
+  textBadge('Increase settlement level', 'fas fa-city', 'positive');
+
+/** Generic badge: settlement level decreases */
+export const genericSettlementLevelDown = () =>
+  textBadge('Reduce settlement level', 'fas fa-city', 'negative');
+
+/** Generic badge: grant a structure */
+export const genericGrantStructure = (count: number = 1) =>
+  textBadge(`Grant ${count} structure${count > 1 ? 's' : ''}`, 'fas fa-building', 'positive');

@@ -17,7 +17,8 @@ import { DamageStructureHandler } from '../../services/gameCommands/handlers/Dam
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
 import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
-import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
+import { ApplyArmyConditionHandler } from '../../services/gameCommands/handlers/ApplyArmyConditionHandler';
+import { valueBadge, diceBadge, genericArmyConditionPositive, genericInnocentsImprisoned, genericStructureDamaged } from '../../types/OutcomeBadge';
 import { updateKingdom } from '../../stores/KingdomStore';
 
 export const cultActivityPipeline: CheckPipeline = {
@@ -77,7 +78,7 @@ export const cultActivityPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
+            genericArmyConditionPositive('Well Trained')
           ],
           success: [
             valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
@@ -86,7 +87,7 @@ export const cultActivityPipeline: CheckPipeline = {
             valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
           ],
           criticalFailure: [
-            textBadge('+1 Unrest per turn (ongoing)', 'fas fa-exclamation-triangle', 'negative'),
+            valueBadge('+{{value}} Unrest per turn (ongoing)', 'fas fa-exclamation-triangle', 1, 'negative'),
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
           ]
         }
@@ -106,20 +107,19 @@ export const cultActivityPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Convert {{value}} Unrest to Imprisoned (cultists)', 'fas fa-lock', 'positive'),
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           success: [
-            textBadge('Convert {{value}} Unrest to Imprisoned', 'fas fa-lock', 'positive'),
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           failure: [
-            diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')
+            genericInnocentsImprisoned()
           ],
           criticalFailure: [
             valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
-            textBadge('Damage 1 structure', 'fas fa-house-crack', 'negative')
+            genericStructureDamaged(1),
+            genericInnocentsImprisoned()
           ]
         }
       }
@@ -240,6 +240,20 @@ export const cultActivityPipeline: CheckPipeline = {
               outcomeBadges.push(factionCommand.outcomeBadge);
             }
           }
+
+          // Well Trained army bonus
+          const armyHandler = new ApplyArmyConditionHandler();
+          const armyCmd = await armyHandler.prepare(
+            { type: 'applyArmyCondition', condition: 'well-trained', value: 1, armyId: 'random' },
+            commandContext
+          );
+          if (armyCmd) {
+            ctx.metadata._preparedArmyCondition = armyCmd;
+            // Remove static badge and add dynamic one
+            const filtered = outcomeBadges.filter(b => !b.template?.includes('army becomes Well Trained'));
+            outcomeBadges.length = 0;
+            outcomeBadges.push(...filtered, ...(armyCmd.outcomeBadges || []));
+          }
         } else if (outcome === 'success') {
           // Adjust 1 faction +1
           const factionHandler = new AdjustFactionHandler();
@@ -322,12 +336,27 @@ export const cultActivityPipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'criticalFailure') {
-          // +1d3 Unrest, -1 Fame, adjust 2 factions -1
+          // +1d3 Unrest, -1 Fame, damage 1 structure, adjust 2 factions -1
           outcomeBadges.push(
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
             valueBadge('Lose {{value}} Fame', 'fas fa-star', -1, 'negative')
           );
-          
+
+          // Damage 1 structure
+          const damageHandler = new DamageStructureHandler();
+          const damageCommand = await damageHandler.prepare(
+            { type: 'damageStructure', count: 1 },
+            commandContext
+          );
+          if (damageCommand) {
+            ctx.metadata._preparedDamageRuthless = damageCommand;
+            if (damageCommand.outcomeBadges) {
+              outcomeBadges.push(...damageCommand.outcomeBadges);
+            } else if (damageCommand.outcomeBadge) {
+              outcomeBadges.push(damageCommand.outcomeBadge);
+            }
+          }
+
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
             { type: 'adjustFactionAttitude', steps: -1, count: 2 },
@@ -359,10 +388,16 @@ export const cultActivityPipeline: CheckPipeline = {
     const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
     const outcome = ctx.outcome;
 
-    // Execute structure damage
+    // Execute structure damage (virtuous CF)
     const damageCommand = ctx.metadata?._preparedDamage;
     if (damageCommand?.commit) {
       await damageCommand.commit();
+    }
+
+    // Execute structure damage (ruthless CF)
+    const damageRuthless = ctx.metadata?._preparedDamageRuthless;
+    if (damageRuthless?.commit) {
+      await damageRuthless.commit();
     }
 
     // Execute faction adjustments (virtuous)
@@ -393,6 +428,12 @@ export const cultActivityPipeline: CheckPipeline = {
     const innocentsHarmedCommand = ctx.metadata?._preparedInnocentsHarmed;
     if (innocentsHarmedCommand?.commit) {
       await innocentsHarmedCommand.commit();
+    }
+
+    // Apply Well Trained effect (practical CS)
+    const armyCommand = ctx.metadata?._preparedArmyCondition;
+    if (armyCommand?.commit) {
+      await armyCommand.commit();
     }
 
     // Handle ongoing cult influence (practical CF)

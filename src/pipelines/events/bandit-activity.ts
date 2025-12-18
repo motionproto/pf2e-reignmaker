@@ -18,7 +18,8 @@ import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/ha
 import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
 import { DestroyWorksiteHandler } from '../../services/gameCommands/handlers/DestroyWorksiteHandler';
-import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
+import { ApplyArmyConditionHandler } from '../../services/gameCommands/handlers/ApplyArmyConditionHandler';
+import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
 import WorksiteTypeSelector from '../../services/hex-selector/WorksiteTypeSelector.svelte';
 import {
   validateClaimed,
@@ -56,7 +57,7 @@ export const banditActivityPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Gain 1 worksite', 'fas fa-industry', 'positive')
+            valueBadge('Gain {{value}} worksite', 'fas fa-industry', 1, 'positive')
           ],
           success: [
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
@@ -67,7 +68,6 @@ export const banditActivityPipeline: CheckPipeline = {
           ],
           criticalFailure: [
             valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative'),
-            textBadge('Lose 1 worksite', 'fas fa-industry', 'negative'),
             valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ]
         }
@@ -88,7 +88,7 @@ export const banditActivityPipeline: CheckPipeline = {
         outcomeBadges: {
           criticalSuccess: [
             valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive'),
-            textBadge('Gain 1 worksite', 'fas fa-industry', 'positive'),
+            valueBadge('Gain {{value}} worksite', 'fas fa-industry', 1, 'positive'),
             valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
           ],
           success: [
@@ -101,7 +101,6 @@ export const banditActivityPipeline: CheckPipeline = {
           ],
           criticalFailure: [
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative'),
-            textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative'),
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ]
         }
@@ -121,21 +120,16 @@ export const banditActivityPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '2d3', 'positive'),
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
             diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')
           ],
           success: [
-            diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive'),
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           failure: [
-            valueBadge('{{value}} innocents harmed', 'fas fa-user-injured', 1, 'negative'),
             valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ],
           criticalFailure: [
-            diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d2', 'negative'),
-            textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative'),
             valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ]
         }
@@ -185,7 +179,6 @@ export const banditActivityPipeline: CheckPipeline = {
       const kingdom = get(kingdomData);
       const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
       const outcome = ctx.outcome;
-      const PLAYER_KINGDOM = 'player';
 
       // Find the selected approach option
       const selectedOption = banditActivityPipeline.strategicChoice?.options.find(opt => opt.id === approach);
@@ -221,8 +214,25 @@ export const banditActivityPipeline: CheckPipeline = {
               outcomeBadges.push(factionCommand.outcomeBadge);
             }
           }
+        } else if (outcome === 'criticalFailure') {
+          // Lose 1 worksite
+          const destroyHandler = new DestroyWorksiteHandler();
+          const destroyCommand = await destroyHandler.prepare(
+            { type: 'destroyWorksite', count: 1 },
+            commandContext
+          );
+          if (destroyCommand) {
+            ctx.metadata._preparedDestroyWorksiteVirtuous = destroyCommand;
+            if (destroyCommand.metadata) {
+              Object.assign(ctx.metadata, destroyCommand.metadata);
+            }
+            if (destroyCommand.outcomeBadges) {
+              outcomeBadges.push(...destroyCommand.outcomeBadges);
+            } else if (destroyCommand.outcomeBadge) {
+              outcomeBadges.push(destroyCommand.outcomeBadge);
+            }
+          }
         }
-        // Other outcomes handled by standard badges
       } else if (approach === 'practical') {
         // Drive Them Off (Practical)
         if (outcome === 'criticalFailure') {
@@ -245,21 +255,18 @@ export const banditActivityPipeline: CheckPipeline = {
           }
           
           // Army becomes fatigued
-          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
-          if (playerArmies.length > 0) {
-            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
-            
-            // Store in metadata for execute
-            ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'fatigued', value: 1 };
-            
-            // Update badge with army name
-            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Fatigued'));
-            if (armyBadgeIndex >= 0) {
-              outcomeBadges[armyBadgeIndex] = textBadge(
-                `${randomArmy.name} becomes Fatigued`, 
-                'fas fa-tired', 
-                'negative'
-              );
+          const armyHandler = new ApplyArmyConditionHandler();
+          const armyCommand = await armyHandler.prepare(
+            { type: 'applyArmyCondition', condition: 'fatigued', value: 1, armyId: 'random' },
+            commandContext
+          );
+          if (armyCommand) {
+            ctx.metadata._preparedArmyCondition = armyCommand;
+            if (armyCommand.outcomeBadges) {
+              // Remove static army badge and add dynamic one
+              const filteredBadges = outcomeBadges.filter(b => !b.template?.includes('army becomes Fatigued'));
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...filteredBadges, ...armyCommand.outcomeBadges);
             }
           }
         }
@@ -345,21 +352,18 @@ export const banditActivityPipeline: CheckPipeline = {
           }
           
           // Army becomes fatigued
-          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
-          if (playerArmies.length > 0) {
-            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
-            
-            // Store in metadata for execute
-            ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'fatigued', value: 1 };
-            
-            // Update badge with army name
-            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Fatigued'));
-            if (armyBadgeIndex >= 0) {
-              outcomeBadges[armyBadgeIndex] = textBadge(
-                `${randomArmy.name} becomes Fatigued`, 
-                'fas fa-tired', 
-                'negative'
-              );
+          const armyHandler2 = new ApplyArmyConditionHandler();
+          const armyCommand2 = await armyHandler2.prepare(
+            { type: 'applyArmyCondition', condition: 'fatigued', value: 1, armyId: 'random' },
+            commandContext
+          );
+          if (armyCommand2) {
+            ctx.metadata._preparedArmyCondition = armyCommand2;
+            if (armyCommand2.outcomeBadges) {
+              // Remove static army badge and add dynamic one
+              const filteredBadges = outcomeBadges.filter(b => !b.template?.includes('army becomes Fatigued'));
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...filteredBadges, ...armyCommand2.outcomeBadges);
             }
           }
         }
@@ -416,10 +420,9 @@ export const banditActivityPipeline: CheckPipeline = {
     // This execute() only handles special game commands.
 
     // Apply army condition (practical CF / ruthless CF)
-    const armyCondition = ctx.metadata?._armyCondition;
-    if (armyCondition?.actorId) {
-      const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
-      await applyArmyConditionExecution(armyCondition.actorId, armyCondition.condition, armyCondition.value);
+    const armyCommand = ctx.metadata?._preparedArmyCondition;
+    if (armyCommand?.commit) {
+      await armyCommand.commit();
     }
 
     // Create worksite (virtuous CS)
@@ -453,6 +456,12 @@ export const banditActivityPipeline: CheckPipeline = {
     const factionCommand = ctx.metadata?._preparedFactionVirtuous;
     if (factionCommand?.commit) {
       await factionCommand.commit();
+    }
+
+    // Execute worksite destruction (virtuous CF)
+    const destroyVirtuous = ctx.metadata?._preparedDestroyWorksiteVirtuous;
+    if (destroyVirtuous?.commit) {
+      await destroyVirtuous.commit();
     }
 
     // Execute worksite destruction (practical CF)

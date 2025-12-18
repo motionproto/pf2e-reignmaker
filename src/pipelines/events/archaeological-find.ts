@@ -16,8 +16,8 @@ import type { GameCommandContext } from '../../services/gameCommands/GameCommand
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { IncreaseSettlementLevelHandler } from '../../services/gameCommands/handlers/IncreaseSettlementLevelHandler';
 import { ReduceSettlementLevelHandler } from '../../services/gameCommands/handlers/ReduceSettlementLevelHandler';
-import { BuildKnowledgeStructureHandler } from '../../services/gameCommands/handlers/BuildKnowledgeStructureHandler';
-import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
+import { GrantStructureHandler } from '../../services/gameCommands/handlers/GrantStructureHandler';
+import { valueBadge, diceBadge, genericSettlementLevelUp, genericSettlementLevelDown, genericGrantStructure } from '../../types/OutcomeBadge';
 import { updateKingdom } from '../../stores/KingdomStore';
 
 export const archaeologicalFindPipeline: CheckPipeline = {
@@ -45,10 +45,18 @@ export const archaeologicalFindPipeline: CheckPipeline = {
           criticalFailure: 'Neglected ruins anger historians and locals alike.'
         },
         outcomeBadges: {
-          criticalSuccess: [],
-          success: [],
-          failure: [],
-          criticalFailure: []
+          criticalSuccess: [
+            genericSettlementLevelUp()
+          ],
+          success: [
+            genericSettlementLevelUp()
+          ],
+          failure: [
+            genericSettlementLevelDown()
+          ],
+          criticalFailure: [
+            genericSettlementLevelDown()
+          ]
         }
       },
       {
@@ -65,7 +73,9 @@ export const archaeologicalFindPipeline: CheckPipeline = {
           criticalFailure: 'Failed exhibition embarrasses royal patrons.'
         },
         outcomeBadges: {
-          criticalSuccess: [],
+          criticalSuccess: [
+            genericGrantStructure(1)
+          ],
           success: [
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
@@ -258,17 +268,17 @@ export const archaeologicalFindPipeline: CheckPipeline = {
       if (approach === 'practical') {
         if (outcome === 'criticalSuccess') {
           // Build Knowledge & Magic structure + faction +1
-          const buildHandler = new BuildKnowledgeStructureHandler();
-          const buildCommand = await buildHandler.prepare(
-            { type: 'buildKnowledgeStructure' },
+          const structureHandler = new GrantStructureHandler();
+          const structureCommand = await structureHandler.prepare(
+            { type: 'grantStructure', category: 'knowledge', useProgression: true },
             commandContext
           );
-          if (buildCommand) {
-            ctx.metadata._preparedBuildStructure = buildCommand;
-            if (buildCommand.outcomeBadges) {
-              outcomeBadges.push(...buildCommand.outcomeBadges);
-            } else if (buildCommand.outcomeBadge) {
-              outcomeBadges.push(buildCommand.outcomeBadge);
+          if (structureCommand) {
+            ctx.metadata._preparedStructure = structureCommand;
+            if (structureCommand.outcomeBadges) {
+              outcomeBadges.push(...structureCommand.outcomeBadges);
+            } else if (structureCommand.outcomeBadge) {
+              outcomeBadges.push(structureCommand.outcomeBadge);
             }
           }
           const factionHandler = new AdjustFactionHandler();
@@ -392,9 +402,9 @@ export const archaeologicalFindPipeline: CheckPipeline = {
     }
 
     // Execute build structure (practical CS)
-    const buildCommand = ctx.metadata?._preparedBuildStructure;
-    if (buildCommand?.commit) {
-      await buildCommand.commit();
+    const structureCommand = ctx.metadata?._preparedStructure;
+    if (structureCommand?.commit) {
+      await structureCommand.commit();
     }
 
     // Execute faction adjustments (virtuous)

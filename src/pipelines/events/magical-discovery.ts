@@ -16,7 +16,7 @@ import type { GameCommandContext } from '../../services/gameCommands/GameCommand
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { DestroyWorksiteHandler } from '../../services/gameCommands/handlers/DestroyWorksiteHandler';
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
-import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
 import { updateKingdom } from '../../stores/KingdomStore';
 
 export const magicalDiscoveryPipeline: CheckPipeline = {
@@ -114,7 +114,6 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
           ],
           criticalFailure: [
             valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
-            textBadge('Damage 1 structure', 'fas fa-house-crack', 'negative'),
             valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
           ]
         }

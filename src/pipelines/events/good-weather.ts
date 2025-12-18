@@ -12,7 +12,9 @@
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
-import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
+import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
+import { ApplyArmyConditionHandler } from '../../services/gameCommands/handlers/ApplyArmyConditionHandler';
+import { diceBadge, genericArmyConditionPositive, genericArmyConditionNegative } from '../../types/OutcomeBadge';
 
 export const goodWeatherPipeline: CheckPipeline = {
   id: 'good-weather',
@@ -96,18 +98,10 @@ export const goodWeatherPipeline: CheckPipeline = {
           criticalFailure: 'Ruthless demands break bodies and morale; training backfires.'
         },
         outcomeBadges: {
-          criticalSuccess: [
-            textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
-          ],
-          success: [
-            textBadge('Heal 1 random army', 'fas fa-heart', 'positive')
-          ],
-          failure: [
-            textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')
-          ],
-          criticalFailure: [
-            textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative')
-          ]
+          criticalSuccess: [genericArmyConditionPositive('Well Trained')],
+          success: [genericArmyConditionPositive('Well Trained')],
+          failure: [genericArmyConditionNegative('Fatigued')],
+          criticalFailure: [genericArmyConditionNegative('Enfeebled')]
         }
       }
     ]
@@ -155,37 +149,47 @@ export const goodWeatherPipeline: CheckPipeline = {
       const kingdom = get(kingdomData);
       const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
       const outcome = ctx.outcome;
-      const PLAYER_KINGDOM = 'player';
 
       const selectedOption = goodWeatherPipeline.strategicChoice?.options.find(opt => opt.id === approach);
       const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
       const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
 
       if (approach === 'ruthless') {
+        const commandContext: GameCommandContext = {
+          actionId: 'good-weather',
+          outcome: ctx.outcome,
+          kingdom: ctx.kingdom,
+          metadata: ctx.metadata || {}
+        };
+
         if (outcome === 'criticalSuccess' || outcome === 'success') {
-          ctx.metadata._trainArmy = outcome === 'criticalSuccess' ? 2 : 1;
+          // Well trained army
+          const armyHandler = new ApplyArmyConditionHandler();
+          const armyCmd = await armyHandler.prepare(
+            { type: 'applyArmyCondition', condition: 'well-trained', value: 1, armyId: 'random' },
+            commandContext
+          );
+          if (armyCmd) {
+            ctx.metadata._preparedArmyCondition = armyCmd;
+            const filtered = outcomeBadges.filter(b => !b.template?.includes('army becomes Well Trained'));
+            outcomeBadges.length = 0;
+            outcomeBadges.push(...filtered, ...(armyCmd.outcomeBadges || []));
+          }
         } else if (outcome === 'failure' || outcome === 'criticalFailure') {
-          // Select random army and apply condition
-          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
-          if (playerArmies.length > 0) {
-            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
-            const condition = outcome === 'failure' ? 'fatigued' : 'enfeebled';
-            
-            // Store in metadata for execute
-            ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition, value: 1 };
-            
-            // Update badge with army name
-            const armyBadgeIndex = outcomeBadges.findIndex(b => 
-              b.template?.includes('army becomes Fatigued') || b.template?.includes('army becomes Enfeebled')
+          // Fatigued or enfeebled army
+          const condition = outcome === 'failure' ? 'fatigued' : 'enfeebled';
+          const armyHandler = new ApplyArmyConditionHandler();
+          const armyCmd = await armyHandler.prepare(
+            { type: 'applyArmyCondition', condition, value: 1, armyId: 'random' },
+            commandContext
+          );
+          if (armyCmd) {
+            ctx.metadata._preparedArmyCondition = armyCmd;
+            const filtered = outcomeBadges.filter(b =>
+              !b.template?.includes('army becomes Fatigued') && !b.template?.includes('army becomes Enfeebled')
             );
-            if (armyBadgeIndex >= 0) {
-              const conditionName = condition === 'fatigued' ? 'Fatigued' : 'Enfeebled';
-              outcomeBadges[armyBadgeIndex] = textBadge(
-                `${randomArmy.name} becomes ${conditionName}`, 
-                condition === 'fatigued' ? 'fas fa-tired' : 'fas fa-exclamation-triangle', 
-                'negative'
-              );
-            }
+            outcomeBadges.length = 0;
+            outcomeBadges.push(...filtered, ...(armyCmd.outcomeBadges || []));
           }
         }
       }
@@ -195,28 +199,10 @@ export const goodWeatherPipeline: CheckPipeline = {
   },
 
   execute: async (ctx) => {
-    const { get } = await import('svelte/store');
-    const { kingdomData } = await import('../../stores/KingdomStore');
-    const kingdom = get(kingdomData);
-    const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
-
-    if (ctx.metadata?._trainArmy && approach === 'ruthless') {
-      const armies = ctx.kingdom.armies || [];
-      const count = ctx.metadata._trainArmy;
-      if (armies.length > 0) {
-        const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
-        for (let i = 0; i < Math.min(count, armies.length); i++) {
-          const randomArmy = armies[Math.floor(Math.random() * armies.length)];
-          await applyArmyConditionExecution(randomArmy.actorId, 'welltrained', 1);
-        }
-      }
-    }
-
-    // Apply army condition (failure/critical failure)
-    const armyCondition = ctx.metadata?._armyCondition;
-    if (armyCondition?.actorId) {
-      const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
-      await applyArmyConditionExecution(armyCondition.actorId, armyCondition.condition, armyCondition.value);
+    // Apply army condition (well-trained, fatigued, or enfeebled based on outcome)
+    const armyCommand = ctx.metadata?._preparedArmyCondition;
+    if (armyCommand?.commit) {
+      await armyCommand.commit();
     }
 
     return { success: true };

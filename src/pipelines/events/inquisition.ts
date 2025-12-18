@@ -178,9 +178,6 @@ export const inquisitionPipeline: CheckPipeline = {
       const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
       const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
 
-      // Calculate modifiers based on approach
-      let modifiers: any[] = [];
-      
       const commandContext: GameCommandContext = {
         actionId: 'inquisition',
         outcome: ctx.outcome,
@@ -191,11 +188,6 @@ export const inquisitionPipeline: CheckPipeline = {
       if (approach === 'virtuous') {
         // Protect the Accused (Virtuous)
         if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
-            { type: 'dice', resource: 'unrest', formula: '-1d3', negative: true, duration: 'immediate' }
-          ];
-          
           // Adjust 1 random faction +1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
@@ -216,10 +208,6 @@ export const inquisitionPipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
-          ];
-          
           // Adjust 1 random faction +1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
@@ -239,10 +227,6 @@ export const inquisitionPipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-          ];
-          
           // Adjust 1 random faction -1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
@@ -262,10 +246,6 @@ export const inquisitionPipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' }
-          ];
-          
           // Adjust 1 random faction -1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
@@ -284,28 +264,6 @@ export const inquisitionPipeline: CheckPipeline = {
               outcomeBadges.push(...filteredBadges, factionCommand.outcomeBadge);
             }
           }
-        }
-      } else if (approach === 'practical') {
-        // Stay Neutral (Practical)
-        if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '-1d3', negative: true, duration: 'immediate' },
-            { type: 'dice', resource: 'gold', formula: '1d3', duration: 'immediate' }
-          ];
-        } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' },
-            { type: 'static', resource: 'gold', value: 1, duration: 'immediate' }
-          ];
-        } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-          ];
-        } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
-            { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
-          ];
         }
       } else if (approach === 'ruthless') {
         // Support Inquisitors (Ruthless)
@@ -317,9 +275,6 @@ export const inquisitionPipeline: CheckPipeline = {
         };
 
         if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '-1d3', negative: true, duration: 'immediate' }
-          ];
           // Imprison 1d3 heretics (convert unrest to imprisoned)
           const imprisonHandler = new ConvertUnrestToImprisonedHandler();
           const roll = new Roll('1d3');
@@ -357,9 +312,6 @@ export const inquisitionPipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
-          ];
           // Imprison 1d2 heretics
           const imprisonHandler = new ConvertUnrestToImprisonedHandler();
           const roll = new Roll('1d2');
@@ -378,10 +330,6 @@ export const inquisitionPipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
-            { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
-          ];
           // Innocents harmed (add imprisoned without reducing unrest)
           const addImprisonedHandler = new AddImprisonedHandler();
           const imprisonCommand = await addImprisonedHandler.prepare(
@@ -398,10 +346,6 @@ export const inquisitionPipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
-            { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
-          ];
           // Innocents harmed (add imprisoned without reducing unrest)
           const addImprisonedHandler = new AddImprisonedHandler();
           const imprisonCommand = await addImprisonedHandler.prepare(
@@ -438,9 +382,6 @@ export const inquisitionPipeline: CheckPipeline = {
           }
         }
       }
-
-      // Store modifiers in context for execute step
-      ctx.metadata._outcomeModifiers = modifiers;
 
       return { resources: [], outcomeBadges };
     }

@@ -15,8 +15,10 @@ import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
+import { GrantStructureHandler } from '../../services/gameCommands/handlers/GrantStructureHandler';
 import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
-import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
+import { ApplyArmyConditionHandler } from '../../services/gameCommands/handlers/ApplyArmyConditionHandler';
+import { valueBadge, diceBadge, genericStructureDamaged, genericArmyConditionPositive, genericGrantStructure } from '../../types/OutcomeBadge';
 
 export const grandTournamentPipeline: CheckPipeline = {
   id: 'grand-tournament',
@@ -51,11 +53,10 @@ export const grandTournamentPipeline: CheckPipeline = {
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
           ],
           failure: [
-            textBadge('Damage 1 structure', 'fas fa-house-crack', 'negative')
+            genericStructureDamaged(1)
           ],
           criticalFailure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative'),
-            textBadge('Damage 1 structure', 'fas fa-house-crack', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')
           ]
         }
       },
@@ -74,8 +75,8 @@ export const grandTournamentPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Gain 1 structure', 'fas fa-building', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
+            genericGrantStructure(1)
           ],
           success: [
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
@@ -84,8 +85,7 @@ export const grandTournamentPipeline: CheckPipeline = {
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
-            textBadge('Damage 1 structure', 'fas fa-house-crack', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ]
         }
       },
@@ -104,20 +104,17 @@ export const grandTournamentPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
+            genericArmyConditionPositive('Well Trained')
           ],
           success: [
-            textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
+            genericArmyConditionPositive('Well Trained')
           ],
           failure: [
-            textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative'),
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ],
           criticalFailure: [
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
-            textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative'),
-            valueBadge('{{value}} innocents harmed', 'fas fa-user-injured', 1, 'negative')
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
           ]
         }
       }
@@ -178,16 +175,22 @@ export const grandTournamentPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      const PLAYER_KINGDOM = 'player';
-
-      // All approaches CS: Gain 1 random structure
-      if (outcome === 'criticalSuccess') {
-        ctx.metadata._awardStructure = true;
-      }
-
-      // Virtuous approach: faction adjustments
+      // Virtuous approach: structure effects and faction adjustments
       if (approach === 'virtuous') {
         if (outcome === 'criticalSuccess') {
+          // Grant structure
+          const structureHandler = new GrantStructureHandler();
+          const structureCommand = await structureHandler.prepare(
+            { type: 'grantStructure' },
+            commandContext
+          );
+          if (structureCommand) {
+            ctx.metadata._preparedStructure = structureCommand;
+            if (structureCommand.outcomeBadges) {
+              outcomeBadges.push(...structureCommand.outcomeBadges);
+            }
+          }
+          // Faction +1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
             { type: 'adjustFactionAttitude', steps: 1, count: 1 },
@@ -201,12 +204,40 @@ export const grandTournamentPipeline: CheckPipeline = {
               outcomeBadges.push(factionCommand.outcomeBadge);
             }
           }
+        } else if (outcome === 'failure' || outcome === 'criticalFailure') {
+          // Damage 1 structure
+          const damageHandler = new DamageStructureHandler();
+          const damageCommand = await damageHandler.prepare(
+            { type: 'damageStructure', count: 1 },
+            commandContext
+          );
+          if (damageCommand) {
+            ctx.metadata._preparedDamageVirtuous = damageCommand;
+            if (damageCommand.outcomeBadges) {
+              outcomeBadges.push(...damageCommand.outcomeBadges);
+            } else if (damageCommand.outcomeBadge) {
+              outcomeBadges.push(damageCommand.outcomeBadge);
+            }
+          }
         }
       }
 
-      // Practical approach: faction adjustments
+      // Practical approach: structure effects and faction adjustments
       if (approach === 'practical') {
-        if (outcome === 'criticalSuccess' || outcome === 'success') {
+        if (outcome === 'criticalSuccess') {
+          // Grant structure
+          const structureHandler = new GrantStructureHandler();
+          const structureCommand = await structureHandler.prepare(
+            { type: 'grantStructure' },
+            commandContext
+          );
+          if (structureCommand) {
+            ctx.metadata._preparedStructure = structureCommand;
+            if (structureCommand.outcomeBadges) {
+              outcomeBadges.push(...structureCommand.outcomeBadges);
+            }
+          }
+          // Faction +1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
             { type: 'adjustFactionAttitude', steps: 1, count: 1 },
@@ -220,7 +251,50 @@ export const grandTournamentPipeline: CheckPipeline = {
               outcomeBadges.push(factionCommand.outcomeBadge);
             }
           }
-        } else if (outcome === 'failure' || outcome === 'criticalFailure') {
+        } else if (outcome === 'success') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionPractical = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'failure') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionPracticalNeg = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'criticalFailure') {
+          // Damage 1 structure
+          const damageHandler = new DamageStructureHandler();
+          const damageCommand = await damageHandler.prepare(
+            { type: 'damageStructure', count: 1 },
+            commandContext
+          );
+          if (damageCommand) {
+            ctx.metadata._preparedDamagePractical = damageCommand;
+            if (damageCommand.outcomeBadges) {
+              outcomeBadges.push(...damageCommand.outcomeBadges);
+            } else if (damageCommand.outcomeBadge) {
+              outcomeBadges.push(damageCommand.outcomeBadge);
+            }
+          }
+          // Faction -1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
             { type: 'adjustFactionAttitude', steps: -1, count: 1 },
@@ -239,39 +313,57 @@ export const grandTournamentPipeline: CheckPipeline = {
 
       // Ruthless approach: army effects and faction adjustments
       if (approach === 'ruthless') {
-        // Well Trained bonus for CS and Success
-        if (outcome === 'criticalSuccess' || outcome === 'success') {
-          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
-          if (playerArmies.length > 0) {
-            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
-            ctx.metadata._armyWellTrained = { actorId: randomArmy.actorId };
-            
-            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Well Trained'));
-            if (armyBadgeIndex >= 0) {
-              outcomeBadges[armyBadgeIndex] = textBadge(
-                `${randomArmy.name} becomes Well Trained (+1 saves)`,
-                'fas fa-star',
-                'positive'
-              );
+        // Army conditions based on outcome
+        if (outcome === 'criticalSuccess') {
+          // Grant structure
+          const structureHandler = new GrantStructureHandler();
+          const structureCommand = await structureHandler.prepare(
+            { type: 'grantStructure' },
+            commandContext
+          );
+          if (structureCommand) {
+            ctx.metadata._preparedStructure = structureCommand;
+            if (structureCommand.outcomeBadges) {
+              outcomeBadges.push(...structureCommand.outcomeBadges);
             }
           }
-        }
-
-        // Fatigued condition for Failure and CF
-        if (outcome === 'failure' || outcome === 'criticalFailure') {
-          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
-          if (playerArmies.length > 0) {
-            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
-            ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'fatigued', value: 1 };
-            
-            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Fatigued'));
-            if (armyBadgeIndex >= 0) {
-              outcomeBadges[armyBadgeIndex] = textBadge(
-                `${randomArmy.name} becomes Fatigued`,
-                'fas fa-tired',
-                'negative'
-              );
+          // Well Trained bonus
+          const armyHandler = new ApplyArmyConditionHandler();
+          const armyCmd = await armyHandler.prepare(
+            { type: 'applyArmyCondition', condition: 'well-trained', value: 1, armyId: 'random' },
+            commandContext
+          );
+          if (armyCmd) {
+            ctx.metadata._preparedArmyCondition = armyCmd;
+            if (armyCmd.outcomeBadges) {
+              outcomeBadges.push(...armyCmd.outcomeBadges);
             }
+          }
+        } else if (outcome === 'success') {
+          // Well Trained bonus
+          const armyHandler = new ApplyArmyConditionHandler();
+          const armyCmd = await armyHandler.prepare(
+            { type: 'applyArmyCondition', condition: 'well-trained', value: 1, armyId: 'random' },
+            commandContext
+          );
+          if (armyCmd) {
+            ctx.metadata._preparedArmyCondition = armyCmd;
+            if (armyCmd.outcomeBadges) {
+              outcomeBadges.push(...armyCmd.outcomeBadges);
+            }
+          }
+        } else if (outcome === 'failure' || outcome === 'criticalFailure') {
+          // Fatigued condition
+          const armyHandler = new ApplyArmyConditionHandler();
+          const armyCmd = await armyHandler.prepare(
+            { type: 'applyArmyCondition', condition: 'fatigued', value: 1, armyId: 'random' },
+            commandContext
+          );
+          if (armyCmd) {
+            ctx.metadata._preparedArmyCondition = armyCmd;
+            const filtered = outcomeBadges.filter(b => !b.template?.includes('army becomes Fatigued'));
+            outcomeBadges.length = 0;
+            outcomeBadges.push(...filtered, ...(armyCmd.outcomeBadges || []));
           }
         }
 
@@ -327,10 +419,22 @@ export const grandTournamentPipeline: CheckPipeline = {
   },
 
   execute: async (ctx) => {
+    // Grant structure (all approaches CS)
+    const structureCommand = ctx.metadata?._preparedStructure;
+    if (structureCommand?.commit) {
+      await structureCommand.commit();
+    }
+
     // Virtuous approach faction adjustments
     const factionVirtuousCS = ctx.metadata?._preparedFactionVirtuousCS;
     if (factionVirtuousCS?.commit) {
       await factionVirtuousCS.commit();
+    }
+
+    // Damage structure (virtuous F/CF)
+    const damageVirtuous = ctx.metadata?._preparedDamageVirtuous;
+    if (damageVirtuous?.commit) {
+      await damageVirtuous.commit();
     }
 
     // Practical approach faction adjustments
@@ -342,6 +446,12 @@ export const grandTournamentPipeline: CheckPipeline = {
     const factionPracticalNeg = ctx.metadata?._preparedFactionPracticalNeg;
     if (factionPracticalNeg?.commit) {
       await factionPracticalNeg.commit();
+    }
+
+    // Damage structure (practical CF)
+    const damagePractical = ctx.metadata?._preparedDamagePractical;
+    if (damagePractical?.commit) {
+      await damagePractical.commit();
     }
 
     // Ruthless approach faction adjustments
@@ -360,28 +470,10 @@ export const grandTournamentPipeline: CheckPipeline = {
       await imprisonCommand.commit();
     }
 
-    // Apply army condition (Fatigued)
-    const armyCondition = ctx.metadata?._armyCondition;
-    if (armyCondition?.actorId) {
-      const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
-      await applyArmyConditionExecution(armyCondition.actorId, armyCondition.condition, armyCondition.value);
-    }
-
-    // Apply Well Trained bonus
-    const wellTrained = ctx.metadata?._armyWellTrained;
-    if (wellTrained?.actorId) {
-      const actor = game.actors?.get(wellTrained.actorId);
-      if (actor) {
-        const currentBonus = (actor.getFlag('pf2e-reignmaker', 'wellTrainedBonus') as number) || 0;
-        await actor.setFlag('pf2e-reignmaker', 'wellTrainedBonus', currentBonus + 1);
-        ui.notifications?.info(`${actor.name} gains +1 to saves (Well Trained bonus)`);
-      }
-    }
-
-    // Award structure (CS for all approaches)
-    if (ctx.metadata?._awardStructure) {
-      // TODO: Implement random structure award
-      console.log('Grand Tournament: Random structure award needs implementation');
+    // Apply army condition (Well Trained or Fatigued)
+    const armyCommand = ctx.metadata?._preparedArmyCondition;
+    if (armyCommand?.commit) {
+      await armyCommand.commit();
     }
 
     return { success: true };

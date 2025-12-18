@@ -14,7 +14,8 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { IncreaseSettlementLevelHandler } from '../../services/gameCommands/handlers/IncreaseSettlementLevelHandler';
-import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
+import { GrantStructureHandler } from '../../services/gameCommands/handlers/GrantStructureHandler';
+import { valueBadge, diceBadge, genericGrantStructure, genericSettlementLevelUp } from '../../types/OutcomeBadge';
 import { updateKingdom } from '../../stores/KingdomStore';
 
 export const boomtownPipeline: CheckPipeline = {
@@ -45,9 +46,11 @@ export const boomtownPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Gain 1 structure', 'fas fa-building', 'positive')
+            genericGrantStructure(1),
+            genericSettlementLevelUp()
           ],
           success: [
+            genericSettlementLevelUp()
           ],
           failure: [
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
@@ -73,12 +76,12 @@ export const boomtownPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Gain 1 structure', 'fas fa-building', 'positive'),
             diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d4', 'positive'),
-            diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d4', 'positive')
+            diceBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', '1d4', 'positive'),
+            genericGrantStructure(1)
           ],
           success: [
-            textBadge('Gain 1 structure', 'fas fa-building', 'positive')
+            genericGrantStructure(1)
           ],
           failure: [
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
@@ -107,10 +110,10 @@ export const boomtownPipeline: CheckPipeline = {
         outcomeBadges: {
           criticalSuccess: [
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive'),
-            textBadge('Gain 1 structure', 'fas fa-building', 'positive')
+            genericGrantStructure(1)
           ],
           success: [
-            textBadge('Gain 1 structure', 'fas fa-building', 'positive')
+            genericGrantStructure(1)
           ],
           failure: [
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')
@@ -201,19 +204,58 @@ export const boomtownPipeline: CheckPipeline = {
         }
         if (outcome === 'criticalSuccess') {
           // +1 Fame, -1d3 Unrest, gain a new structure
-          ctx.metadata._gainStructure = true;
+          const structureHandler = new GrantStructureHandler();
+          const structureCommand = await structureHandler.prepare(
+            { type: 'grantStructure' }, // Random structure to random settlement
+            commandContext
+          );
+          if (structureCommand) {
+            ctx.metadata._preparedStructure = structureCommand;
+            // Replace static badge with dynamic one
+            const filtered = outcomeBadges.filter(b => !b.template?.includes('Gain 1 structure'));
+            outcomeBadges.length = 0;
+            outcomeBadges.push(...filtered, ...(structureCommand.outcomeBadges || []));
+          }
         }
         // Other outcomes handled by standard badges
       } else if (approach === 'practical') {
         // Regulate Growth (Practical)
+        if (outcome === 'criticalSuccess' || outcome === 'success') {
+          // Gain a new structure
+          const structureHandler = new GrantStructureHandler();
+          const structureCommand = await structureHandler.prepare(
+            { type: 'grantStructure' }, // Random structure to random settlement
+            commandContext
+          );
+          if (structureCommand) {
+            ctx.metadata._preparedStructure = structureCommand;
+            // Replace static badge with dynamic one
+            const filtered = outcomeBadges.filter(b => !b.template?.includes('Gain 1 structure'));
+            outcomeBadges.length = 0;
+            outcomeBadges.push(...filtered, ...(structureCommand.outcomeBadges || []));
+          }
+        }
         if (outcome === 'criticalSuccess') {
-          // +2d3 Gold, gain 2d4 choice of Lumber/Stone, gain a new structure
-          ctx.metadata._gainStructure = true;
           ctx.metadata._choiceResource = true;
         }
         // Other outcomes handled by standard badges
       } else if (approach === 'ruthless') {
         // Exploit Boom (Ruthless)
+        if (outcome === 'criticalSuccess' || outcome === 'success') {
+          // Gain a new structure
+          const structureHandler = new GrantStructureHandler();
+          const structureCommand = await structureHandler.prepare(
+            { type: 'grantStructure' }, // Random structure to random settlement
+            commandContext
+          );
+          if (structureCommand) {
+            ctx.metadata._preparedStructure = structureCommand;
+            // Replace static badge with dynamic one
+            const filtered = outcomeBadges.filter(b => !b.template?.includes('Gain 1 structure'));
+            outcomeBadges.length = 0;
+            outcomeBadges.push(...filtered, ...(structureCommand.outcomeBadges || []));
+          }
+        }
         if (outcome === 'criticalSuccess') {
           // +2d3 Gold, gain 1d3 Gold per turn for next 2 turns (ongoing modifier)
           ctx.metadata._ongoingGold = { duration: 2, formula: '1d3' };
@@ -241,10 +283,10 @@ export const boomtownPipeline: CheckPipeline = {
       await settlementCommand.commit();
     }
 
-    // Gain random structure (virtuous CS, practical CS)
-    if (ctx.metadata?._gainStructure) {
-      // TODO: Implement structure gain logic
-      console.log('Boomtown: Structure gain needs implementation');
+    // Commit structure grant (virtuous CS, practical CS/S, ruthless CS/S)
+    const structureCommand = ctx.metadata?._preparedStructure;
+    if (structureCommand?.commit) {
+      await structureCommand.commit();
     }
 
     // Add ongoing gold modifier (ruthless CS)

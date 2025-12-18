@@ -15,7 +15,8 @@ import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
-import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
+import { ApplyArmyConditionHandler } from '../../services/gameCommands/handlers/ApplyArmyConditionHandler';
+import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
 
 export const pilgrimagePipeline: CheckPipeline = {
   id: 'pilgrimage',
@@ -73,8 +74,7 @@ export const pilgrimagePipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive'),
-            textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
           ],
           success: [
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
@@ -86,8 +86,7 @@ export const pilgrimagePipeline: CheckPipeline = {
           ],
           criticalFailure: [
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative'),
-            textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
           ]
         }
       },
@@ -177,8 +176,6 @@ export const pilgrimagePipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      const PLAYER_KINGDOM = 'player';
-
       if (approach === 'virtuous') {
         if (outcome === 'criticalSuccess') {
           const factionHandler = new AdjustFactionHandler();
@@ -198,35 +195,31 @@ export const pilgrimagePipeline: CheckPipeline = {
       } else if (approach === 'practical') {
         if (outcome === 'criticalSuccess') {
           // Well Trained bonus
-          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
-          if (playerArmies.length > 0) {
-            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
-            ctx.metadata._armyWellTrained = { actorId: randomArmy.actorId };
-            
-            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Well Trained'));
-            if (armyBadgeIndex >= 0) {
-              outcomeBadges[armyBadgeIndex] = textBadge(
-                `${randomArmy.name} becomes Well Trained (+1 saves)`,
-                'fas fa-star',
-                'positive'
-              );
-            }
+          const armyHandler = new ApplyArmyConditionHandler();
+          const armyCmd = await armyHandler.prepare(
+            { type: 'applyArmyCondition', condition: 'well-trained', value: 1, armyId: 'random' },
+            commandContext
+          );
+          if (armyCmd) {
+            ctx.metadata._preparedArmyCondition = armyCmd;
+            // Remove static badge and add dynamic one
+            const filtered = outcomeBadges.filter(b => !b.template?.includes('army becomes Well Trained'));
+            outcomeBadges.length = 0;
+            outcomeBadges.push(...filtered, ...(armyCmd.outcomeBadges || []));
           }
         } else if (outcome === 'criticalFailure') {
           // Fatigued condition
-          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
-          if (playerArmies.length > 0) {
-            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
-            ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'fatigued', value: 1 };
-            
-            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Fatigued'));
-            if (armyBadgeIndex >= 0) {
-              outcomeBadges[armyBadgeIndex] = textBadge(
-                `${randomArmy.name} becomes Fatigued`,
-                'fas fa-tired',
-                'negative'
-              );
-            }
+          const armyHandler = new ApplyArmyConditionHandler();
+          const armyCmd = await armyHandler.prepare(
+            { type: 'applyArmyCondition', condition: 'fatigued', value: 1, armyId: 'random' },
+            commandContext
+          );
+          if (armyCmd) {
+            ctx.metadata._preparedArmyCondition = armyCmd;
+            // Remove static badge and add dynamic one
+            const filtered = outcomeBadges.filter(b => !b.template?.includes('army becomes Fatigued'));
+            outcomeBadges.length = 0;
+            outcomeBadges.push(...filtered, ...(armyCmd.outcomeBadges || []));
           }
 
           const factionHandler = new AdjustFactionHandler();
@@ -304,22 +297,10 @@ export const pilgrimagePipeline: CheckPipeline = {
       await addImprisonedCommand.commit();
     }
 
-    // Apply army condition (Fatigued)
-    const armyCondition = ctx.metadata?._armyCondition;
-    if (armyCondition?.actorId) {
-      const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
-      await applyArmyConditionExecution(armyCondition.actorId, armyCondition.condition, armyCondition.value);
-    }
-
-    // Apply Well Trained bonus
-    const wellTrained = ctx.metadata?._armyWellTrained;
-    if (wellTrained?.actorId) {
-      const actor = game.actors?.get(wellTrained.actorId);
-      if (actor) {
-        const currentBonus = (actor.getFlag('pf2e-reignmaker', 'wellTrainedBonus') as number) || 0;
-        await actor.setFlag('pf2e-reignmaker', 'wellTrainedBonus', currentBonus + 1);
-        ui.notifications?.info(`${actor.name} gains +1 to saves (Well Trained bonus)`);
-      }
+    // Apply army conditions/effects
+    const armyCommand = ctx.metadata?._preparedArmyCondition;
+    if (armyCommand?.commit) {
+      await armyCommand.commit();
     }
 
     return { success: true };

@@ -13,7 +13,7 @@ import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { ReduceSettlementLevelHandler } from '../../services/gameCommands/handlers/ReduceSettlementLevelHandler';
-import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge, genericSettlementLevelDown } from '../../types/OutcomeBadge';
 
 export const plaguePipeline: CheckPipeline = {
   id: 'plague',
@@ -113,8 +113,7 @@ export const plaguePipeline: CheckPipeline = {
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
           ],
           criticalFailure: [
-            textBadge('Lose 1 worksite', 'fas fa-industry', 'negative'),
-            textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+            genericSettlementLevelDown()
           ]
         }
       }
@@ -174,9 +173,6 @@ export const plaguePipeline: CheckPipeline = {
       const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
       const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
 
-      // Calculate modifiers and prepare game commands based on approach
-      let modifiers: any[] = [];
-
       const commandContext: GameCommandContext = {
         actionId: 'plague',
         outcome: ctx.outcome,
@@ -187,11 +183,6 @@ export const plaguePipeline: CheckPipeline = {
       if (approach === 'virtuous') {
         // Provide Free Treatment (Virtuous)
         if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
-            { type: 'dice', resource: 'unrest', formula: '1d3', negative: true, duration: 'immediate' }
-          ];
-
           // Adjust 2 random factions +1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
@@ -207,10 +198,6 @@ export const plaguePipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
-          ];
-
           // Adjust 1 random faction +1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
@@ -225,18 +212,7 @@ export const plaguePipeline: CheckPipeline = {
               outcomeBadges.push(factionCommand.outcomeBadge);
             }
           }
-        } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
-            { type: 'dice', resource: 'gold', formula: '1d3', negative: true, duration: 'immediate' },
-            { type: 'dice', resource: 'food', formula: '1d4', negative: true, duration: 'immediate' }
-          ];
         } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
-            { type: 'dice', resource: 'gold', formula: '1d3', negative: true, duration: 'immediate' },
-            { type: 'dice', resource: 'food', formula: '2d4', negative: true, duration: 'immediate' }
-          ];
           // Mark that ongoing plague effect should be added (-1d4 Food/turn for 2 turns)
           ctx.metadata._addOngoingPlague = true;
           
@@ -255,43 +231,9 @@ export const plaguePipeline: CheckPipeline = {
             }
           }
         }
-      } else if (approach === 'practical') {
-        // Quarantine Effectively (Practical)
-        if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', negative: true, duration: 'immediate' }
-          ];
-        } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
-          ];
-        } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
-            { type: 'dice', resource: 'gold', formula: '1d3', negative: true, duration: 'immediate' }
-          ];
-        } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
-            { type: 'dice', resource: 'gold', formula: '2d3', negative: true, duration: 'immediate' }
-          ];
-        }
       } else if (approach === 'ruthless') {
         // Lock Down Hard (Ruthless)
-        if (outcome === 'criticalSuccess') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', negative: true, duration: 'immediate' },
-            { type: 'dice', resource: 'gold', formula: '2d3', duration: 'immediate' }
-          ];
-        } else if (outcome === 'success') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' },
-            { type: 'dice', resource: 'gold', formula: '1d3', duration: 'immediate' }
-          ];
-        } else if (outcome === 'failure') {
-          modifiers = [
-            { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-          ];
+        if (outcome === 'failure') {
           // Damage 1 structure
           const { DamageStructureHandler } = await import('../../services/gameCommands/handlers/DamageStructureHandler');
           const damageHandler = new DamageStructureHandler();
@@ -308,23 +250,34 @@ export const plaguePipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'criticalFailure') {
-          modifiers = [
-            { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
-            { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
-          ];
-          // Destroy 1 structure
-          const { DestroyStructureHandler } = await import('../../services/gameCommands/handlers/DestroyStructureHandler');
-          const destroyHandler = new DestroyStructureHandler();
-          const destroyCommand = await destroyHandler.prepare(
-            { type: 'destroyStructure', count: 1 },
+          // Destroy 1 worksite
+          const { DestroyWorksiteHandler } = await import('../../services/gameCommands/handlers/DestroyWorksiteHandler');
+          const worksiteHandler = new DestroyWorksiteHandler();
+          const worksiteCommand = await worksiteHandler.prepare(
+            { type: 'destroyWorksite', count: 1 },
             commandContext
           );
-          if (destroyCommand) {
-            ctx.metadata._preparedDestroyStructure = destroyCommand;
-            if (destroyCommand.outcomeBadges) {
-              outcomeBadges.push(...destroyCommand.outcomeBadges);
-            } else if (destroyCommand.outcomeBadge) {
-              outcomeBadges.push(destroyCommand.outcomeBadge);
+          if (worksiteCommand) {
+            ctx.metadata._preparedDestroyWorksite = worksiteCommand;
+            if (worksiteCommand.outcomeBadges) {
+              outcomeBadges.push(...worksiteCommand.outcomeBadges);
+            } else if (worksiteCommand.outcomeBadge) {
+              outcomeBadges.push(worksiteCommand.outcomeBadge);
+            }
+          }
+          // Damage 1 structure
+          const { DamageStructureHandler } = await import('../../services/gameCommands/handlers/DamageStructureHandler');
+          const damageHandler = new DamageStructureHandler();
+          const damageCommand = await damageHandler.prepare(
+            { type: 'damageStructure', count: 1 },
+            commandContext
+          );
+          if (damageCommand) {
+            ctx.metadata._preparedDamageStructureRuthlessCF = damageCommand;
+            if (damageCommand.outcomeBadges) {
+              outcomeBadges.push(...damageCommand.outcomeBadges);
+            } else if (damageCommand.outcomeBadge) {
+              outcomeBadges.push(damageCommand.outcomeBadge);
             }
           }
           // Adjust 1 random faction -1
@@ -343,9 +296,6 @@ export const plaguePipeline: CheckPipeline = {
           }
         }
       }
-
-      // Store modifiers in context for execute step
-      ctx.metadata._outcomeModifiers = modifiers;
 
       return { resources: [], outcomeBadges };
     }
@@ -422,9 +372,13 @@ export const plaguePipeline: CheckPipeline = {
           await damageCommand.commit();
         }
       } else if (outcome === 'criticalFailure') {
-        const destroyCommand = ctx.metadata?._preparedDestroyStructure;
-        if (destroyCommand?.commit) {
-          await destroyCommand.commit();
+        const worksiteCommand = ctx.metadata?._preparedDestroyWorksite;
+        if (worksiteCommand?.commit) {
+          await worksiteCommand.commit();
+        }
+        const damageCommand = ctx.metadata?._preparedDamageStructureRuthlessCF;
+        if (damageCommand?.commit) {
+          await damageCommand.commit();
         }
         const factionRuthlessCF = ctx.metadata?._preparedFactionRuthlessCF;
         if (factionRuthlessCF?.commit) {

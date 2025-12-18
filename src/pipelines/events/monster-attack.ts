@@ -15,8 +15,8 @@ import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
-import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
-import { updateKingdom } from '../../stores/KingdomStore';
+import { ApplyArmyConditionHandler } from '../../services/gameCommands/handlers/ApplyArmyConditionHandler';
+import { valueBadge, diceBadge, genericStructureDamaged, genericArmyConditionPositive, genericArmyConditionNegative } from '../../types/OutcomeBadge';
 
 export const monsterAttackPipeline: CheckPipeline = {
   id: 'monster-attack',
@@ -55,8 +55,7 @@ export const monsterAttackPipeline: CheckPipeline = {
             valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
           ],
           criticalFailure: [
-            textBadge('Damage 1 structure', 'fas fa-house-crack', 'negative'),
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
+            genericStructureDamaged(1)
           ]
         }
       },
@@ -107,19 +106,18 @@ export const monsterAttackPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3+1', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3+1', 'positive'),
+            genericArmyConditionPositive('Well Trained')
           ],
           success: [
-            textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
+            genericArmyConditionPositive('Well Trained')
           ],
           failure: [
-            textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative'),
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
+            genericStructureDamaged(1)
           ],
           criticalFailure: [
-            textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative'),
-            textBadge('Damage 1 structure', 'fas fa-house-crack', 'negative')
+            genericArmyConditionNegative('Enfeebled')
           ]
         }
       }
@@ -174,8 +172,6 @@ export const monsterAttackPipeline: CheckPipeline = {
       const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
       const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
       const commandContext: GameCommandContext = { kingdom, outcome: outcome || 'success' };
-
-      const PLAYER_KINGDOM = 'player';
 
       // Handle faction adjustment for virtuous critical success
       if (approach === 'virtuous' && outcome === 'criticalSuccess') {
@@ -251,52 +247,42 @@ export const monsterAttackPipeline: CheckPipeline = {
 
       // Handle army effects for ruthless approach
       if (approach === 'ruthless') {
+        const armyHandler = new ApplyArmyConditionHandler();
+
         if (outcome === 'criticalSuccess' || outcome === 'success') {
           // Well Trained bonus
-          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
-          if (playerArmies.length > 0) {
-            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
-            ctx.metadata._armyWellTrained = { actorId: randomArmy.actorId };
-            
-            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Well Trained'));
-            if (armyBadgeIndex >= 0) {
-              outcomeBadges[armyBadgeIndex] = textBadge(
-                `${randomArmy.name} becomes Well Trained (+1 saves)`,
-                'fas fa-star',
-                'positive'
-              );
+          const armyCommand = await armyHandler.prepare(
+            { type: 'applyArmyCondition', condition: 'well-trained', value: 1, armyId: 'random' },
+            commandContext
+          );
+          if (armyCommand) {
+            ctx.metadata._preparedArmyCondition = armyCommand;
+            if (armyCommand.outcomeBadges) {
+              outcomeBadges.push(...armyCommand.outcomeBadges);
             }
           }
         } else if (outcome === 'failure') {
           // Fatigued condition
-          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
-          if (playerArmies.length > 0) {
-            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
-            ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'fatigued', value: 1 };
-            
-            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Fatigued'));
-            if (armyBadgeIndex >= 0) {
-              outcomeBadges[armyBadgeIndex] = textBadge(
-                `${randomArmy.name} becomes Fatigued`,
-                'fas fa-tired',
-                'negative'
-              );
+          const armyCommand = await armyHandler.prepare(
+            { type: 'applyArmyCondition', condition: 'fatigued', value: 1, armyId: 'random' },
+            commandContext
+          );
+          if (armyCommand) {
+            ctx.metadata._preparedArmyCondition = armyCommand;
+            if (armyCommand.outcomeBadges) {
+              outcomeBadges.push(...armyCommand.outcomeBadges);
             }
           }
         } else if (outcome === 'criticalFailure') {
           // Enfeebled condition
-          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
-          if (playerArmies.length > 0) {
-            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
-            ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'enfeebled', value: 1 };
-            
-            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Enfeebled'));
-            if (armyBadgeIndex >= 0) {
-              outcomeBadges[armyBadgeIndex] = textBadge(
-                `${randomArmy.name} becomes Enfeebled`,
-                'fas fa-exclamation-triangle',
-                'negative'
-              );
+          const armyCommand = await armyHandler.prepare(
+            { type: 'applyArmyCondition', condition: 'enfeebled', value: 1, armyId: 'random' },
+            commandContext
+          );
+          if (armyCommand) {
+            ctx.metadata._preparedArmyCondition = armyCommand;
+            if (armyCommand.outcomeBadges) {
+              outcomeBadges.push(...armyCommand.outcomeBadges);
             }
           }
         }
@@ -311,12 +297,6 @@ export const monsterAttackPipeline: CheckPipeline = {
     // ResolutionDataBuilder + GameCommandsService via outcomeBadges.
     // This execute() only handles special game commands.
 
-    const { get } = await import('svelte/store');
-    const { kingdomData } = await import('../../stores/KingdomStore');
-    const kingdom = get(kingdomData);
-    const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
-    const outcome = ctx.outcome;
-
     // Execute faction adjustment
     const factionCommand = ctx.metadata?._preparedFaction;
     if (factionCommand?.commit) {
@@ -329,22 +309,10 @@ export const monsterAttackPipeline: CheckPipeline = {
       await damageCommand.commit();
     }
 
-    // Apply army condition (selected in preview.calculate)
-    const armyCondition = ctx.metadata?._armyCondition;
-    if (armyCondition?.actorId) {
-      const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
-      await applyArmyConditionExecution(armyCondition.actorId, armyCondition.condition, armyCondition.value);
-    }
-
-    // Apply Well Trained bonus
-    const wellTrained = ctx.metadata?._armyWellTrained;
-    if (wellTrained?.actorId) {
-      const actor = game.actors?.get(wellTrained.actorId);
-      if (actor) {
-        const currentBonus = (actor.getFlag('pf2e-reignmaker', 'wellTrainedBonus') as number) || 0;
-        await actor.setFlag('pf2e-reignmaker', 'wellTrainedBonus', currentBonus + 1);
-        ui.notifications?.info(`${actor.name} gains +1 to saves (Well Trained bonus)`);
-      }
+    // Execute army condition (prepared in preview.calculate)
+    const armyCommand = ctx.metadata?._preparedArmyCondition;
+    if (armyCommand?.commit) {
+      await armyCommand.commit();
     }
 
     return { success: true };

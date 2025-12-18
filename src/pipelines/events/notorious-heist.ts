@@ -17,7 +17,7 @@ import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/ha
 import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
-import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
 
 export const notoriousHeistPipeline: CheckPipeline = {
   id: 'notorious-heist',
@@ -122,7 +122,6 @@ export const notoriousHeistPipeline: CheckPipeline = {
             diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')
           ],
           criticalFailure: [
-            textBadge('1 structure damaged', 'fas fa-house-crack', 'negative'),
             valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
           ]
         }

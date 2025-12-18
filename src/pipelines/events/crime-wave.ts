@@ -15,7 +15,10 @@ import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
 import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
-import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
+import { ApplyArmyConditionHandler } from '../../services/gameCommands/handlers/ApplyArmyConditionHandler';
+import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
+import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
+import { valueBadge, diceBadge, genericInnocentsImprisoned, genericStructureDamaged } from '../../types/OutcomeBadge';
 
 export const crimeWavePipeline: CheckPipeline = {
   id: 'crime-wave',
@@ -45,8 +48,7 @@ export const crimeWavePipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
           ],
           success: [
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
@@ -76,8 +78,7 @@ export const crimeWavePipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive'),
-            textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d2', 'positive')
           ],
           success: [
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
@@ -86,7 +87,6 @@ export const crimeWavePipeline: CheckPipeline = {
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
           ],
           criticalFailure: [
-            textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative'),
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
           ]
         }
@@ -106,19 +106,17 @@ export const crimeWavePipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '2d4', 'positive'),
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3+1', 'positive')
           ],
           success: [
-            diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive'),
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           failure: [
-            diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')
+            genericInnocentsImprisoned()
           ],
           criticalFailure: [
-            diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d4', 'negative'),
-            textBadge('1 structure damaged', 'fas fa-house-crack', 'negative')
+            genericStructureDamaged(1),
+            genericInnocentsImprisoned()
           ]
         }
       }
@@ -167,7 +165,6 @@ export const crimeWavePipeline: CheckPipeline = {
       const kingdom = get(kingdomData);
       const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
       const outcome = ctx.outcome;
-      const PLAYER_KINGDOM = 'player';
 
       // Find the selected approach option
       const selectedOption = crimeWavePipeline.strategicChoice?.options.find(opt => opt.id === approach);
@@ -185,27 +182,48 @@ export const crimeWavePipeline: CheckPipeline = {
 
       if (approach === 'virtuous') {
         // Launch Investigation (Virtuous)
-        // All outcomes handled by standard badges (unrest reduction)
-        // Fair justice reduces unrest without creating prison issues
+        if (outcome === 'criticalSuccess') {
+          // Adjust 1 faction +1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionVirtuous = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        }
       } else if (approach === 'practical') {
         // Increase Patrols (Practical)
-        if (outcome === 'criticalFailure') {
+        if (outcome === 'criticalSuccess') {
+          // Army becomes well-trained
+          const armyHandler = new ApplyArmyConditionHandler();
+          const armyCmd = await armyHandler.prepare(
+            { type: 'applyArmyCondition', condition: 'well-trained', value: 1, armyId: 'random' },
+            commandContext
+          );
+          if (armyCmd) {
+            ctx.metadata._preparedArmyWellTrained = armyCmd;
+            if (armyCmd.outcomeBadges) {
+              outcomeBadges.push(...armyCmd.outcomeBadges);
+            }
+          }
+        } else if (outcome === 'criticalFailure') {
           // Army becomes enfeebled
-          const playerArmies = kingdom.armies?.filter((a: any) => a.ledBy === PLAYER_KINGDOM && a.actorId) || [];
-          if (playerArmies.length > 0) {
-            const randomArmy = playerArmies[Math.floor(Math.random() * playerArmies.length)];
-            
-            // Store in metadata for execute
-            ctx.metadata._armyCondition = { actorId: randomArmy.actorId, condition: 'enfeebled', value: 1 };
-            
-            // Update badge with army name
-            const armyBadgeIndex = outcomeBadges.findIndex(b => b.template?.includes('army becomes Enfeebled'));
-            if (armyBadgeIndex >= 0) {
-              outcomeBadges[armyBadgeIndex] = textBadge(
-                `${randomArmy.name} becomes Enfeebled`, 
-                'fas fa-exclamation-triangle', 
-                'negative'
-              );
+          const armyHandler = new ApplyArmyConditionHandler();
+          const armyCmd = await armyHandler.prepare(
+            { type: 'applyArmyCondition', condition: 'enfeebled', value: 1, armyId: 'random' },
+            commandContext
+          );
+          if (armyCmd) {
+            ctx.metadata._preparedArmyCondition = armyCmd;
+            if (armyCmd.outcomeBadges) {
+              outcomeBadges.push(...armyCmd.outcomeBadges);
             }
           }
         }
@@ -267,10 +285,22 @@ export const crimeWavePipeline: CheckPipeline = {
           if (imprisonCommand) {
             ctx.metadata._preparedAddImprisoned = imprisonCommand;
             if (imprisonCommand.outcomeBadges) {
-              // Remove static "innocents harmed" badge
-              const filteredBadges = outcomeBadges.filter(b => !b.template?.includes('innocents harmed'));
-              outcomeBadges.length = 0;
-              outcomeBadges.push(...filteredBadges, ...imprisonCommand.outcomeBadges);
+              outcomeBadges.push(...imprisonCommand.outcomeBadges);
+            }
+          }
+
+          // Damage 1 structure
+          const damageHandler = new DamageStructureHandler();
+          const damageCommand = await damageHandler.prepare(
+            { type: 'damageStructure', count: 1 },
+            commandContext
+          );
+          if (damageCommand) {
+            ctx.metadata._preparedDamage = damageCommand;
+            if (damageCommand.outcomeBadges) {
+              outcomeBadges.push(...damageCommand.outcomeBadges);
+            } else if (damageCommand.outcomeBadge) {
+              outcomeBadges.push(damageCommand.outcomeBadge);
             }
           }
         }
@@ -285,11 +315,22 @@ export const crimeWavePipeline: CheckPipeline = {
     // ResolutionDataBuilder + GameCommandsService via outcomeBadges.
     // This execute() only handles special game commands.
 
-    // Apply army condition (practical CF)
-    const armyCondition = ctx.metadata?._armyCondition;
-    if (armyCondition?.actorId) {
-      const { applyArmyConditionExecution } = await import('../../execution/armies/applyArmyCondition');
-      await applyArmyConditionExecution(armyCondition.actorId, armyCondition.condition, armyCondition.value);
+    // Execute faction adjustment (virtuous CS)
+    const factionVirtuous = ctx.metadata?._preparedFactionVirtuous;
+    if (factionVirtuous?.commit) {
+      await factionVirtuous.commit();
+    }
+
+    // Apply army condition - well trained (practical CS)
+    const armyWellTrained = ctx.metadata?._preparedArmyWellTrained;
+    if (armyWellTrained?.commit) {
+      await armyWellTrained.commit();
+    }
+
+    // Apply army condition - enfeebled (practical CF)
+    const armyCommand = ctx.metadata?._preparedArmyCondition;
+    if (armyCommand?.commit) {
+      await armyCommand.commit();
     }
 
     // Execute imprisonment (ruthless CS/S - converts unrest to imprisoned)
@@ -302,6 +343,12 @@ export const crimeWavePipeline: CheckPipeline = {
     const addImprisonedCommand = ctx.metadata?._preparedAddImprisoned;
     if (addImprisonedCommand?.commit) {
       await addImprisonedCommand.commit();
+    }
+
+    // Execute structure damage (ruthless CF)
+    const damageCommand = ctx.metadata?._preparedDamage;
+    if (damageCommand?.commit) {
+      await damageCommand.commit();
     }
 
     return { success: true };
