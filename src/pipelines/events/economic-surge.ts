@@ -14,6 +14,7 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
+import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 
 export const economicSurgePipeline: CheckPipeline = {
@@ -44,16 +45,13 @@ export const economicSurgePipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           success: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
           ],
           failure: [
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
           ],
           criticalFailure: [
@@ -118,7 +116,6 @@ export const economicSurgePipeline: CheckPipeline = {
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d3', 'positive')
           ],
           failure: [
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
           ],
           criticalFailure: [
@@ -189,7 +186,37 @@ export const economicSurgePipeline: CheckPipeline = {
 
       if (approach === 'virtuous') {
         // Raise Wages (Virtuous)
-        // All outcomes handled by standard badges
+        if (outcome === 'criticalSuccess' || outcome === 'success') {
+          // Adjust 1 faction +1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionVirtuousPositive = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'failure') {
+          // Adjust 1 faction -1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionVirtuousNegative = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        }
       } else if (approach === 'practical') {
         // Invest in Infrastructure (Practical)
         // All outcomes handled by standard badges
@@ -199,7 +226,22 @@ export const economicSurgePipeline: CheckPipeline = {
         }
       } else if (approach === 'ruthless') {
         // Maximize Taxes (Ruthless)
-        if (outcome === 'criticalSuccess') {
+        if (outcome === 'failure') {
+          // Adjust 1 faction -1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionRuthlessNegative = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'criticalSuccess') {
           // +2d3 Gold, -1d3 Unrest (intimidation), 1 settlement gains a structure
           // Structure gain handled in execute()
           ctx.metadata._gainStructure = true;
@@ -234,6 +276,29 @@ export const economicSurgePipeline: CheckPipeline = {
     const { kingdomData } = await import('../../stores/KingdomStore');
     const kingdom = get(kingdomData);
     const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
+    const outcome = ctx.outcome;
+
+    // Execute faction adjustments
+    if (approach === 'virtuous') {
+      if (outcome === 'criticalSuccess' || outcome === 'success') {
+        const factionCommand = ctx.metadata?._preparedFactionVirtuousPositive;
+        if (factionCommand?.commit) {
+          await factionCommand.commit();
+        }
+      } else if (outcome === 'failure') {
+        const factionCommand = ctx.metadata?._preparedFactionVirtuousNegative;
+        if (factionCommand?.commit) {
+          await factionCommand.commit();
+        }
+      }
+    } else if (approach === 'ruthless') {
+      if (outcome === 'failure') {
+        const factionCommand = ctx.metadata?._preparedFactionRuthlessNegative;
+        if (factionCommand?.commit) {
+          await factionCommand.commit();
+        }
+      }
+    }
 
     // Execute structure damage (ruthless CF)
     const damageCommand = ctx.metadata?._preparedDamage;

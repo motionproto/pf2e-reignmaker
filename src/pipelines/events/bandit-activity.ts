@@ -13,6 +13,7 @@
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
+import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
 import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
@@ -55,8 +56,7 @@ export const banditActivityPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Gain 1 worksite', 'fas fa-industry', 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+            textBadge('Gain 1 worksite', 'fas fa-industry', 'positive')
           ],
           success: [
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
@@ -204,9 +204,23 @@ export const banditActivityPipeline: CheckPipeline = {
       if (approach === 'virtuous') {
         // Negotiate Safe Passage (Virtuous)
         if (outcome === 'criticalSuccess') {
-          // +1 Fame, -1d3 Unrest, +1 new worksite
+          // +1 Fame, -1d3 Unrest, +1 new worksite, +1 faction
           // Worksite creation handled in execute()
           ctx.metadata._createWorksite = true;
+          // Adjust 1 faction +1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionVirtuous = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
         }
         // Other outcomes handled by standard badges
       } else if (approach === 'practical') {
@@ -433,6 +447,12 @@ export const banditActivityPipeline: CheckPipeline = {
       const { createWorksiteExecution } = await import('../../execution/territory/createWorksite');
       await createWorksiteExecution(hexId, worksiteType);
       ui.notifications?.info(`Bandits integrated as workers - ${worksiteType} created on hex ${hexId}`);
+    }
+
+    // Execute faction adjustment (virtuous CS)
+    const factionCommand = ctx.metadata?._preparedFactionVirtuous;
+    if (factionCommand?.commit) {
+      await factionCommand.commit();
     }
 
     // Execute worksite destruction (practical CF)

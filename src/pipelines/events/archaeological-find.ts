@@ -13,10 +13,11 @@
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
+import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { IncreaseSettlementLevelHandler } from '../../services/gameCommands/handlers/IncreaseSettlementLevelHandler';
 import { ReduceSettlementLevelHandler } from '../../services/gameCommands/handlers/ReduceSettlementLevelHandler';
 import { BuildKnowledgeStructureHandler } from '../../services/gameCommands/handlers/BuildKnowledgeStructureHandler';
-import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
 import { updateKingdom } from '../../stores/KingdomStore';
 
 export const archaeologicalFindPipeline: CheckPipeline = {
@@ -44,20 +45,10 @@ export const archaeologicalFindPipeline: CheckPipeline = {
           criticalFailure: 'Neglected ruins anger historians and locals alike.'
         },
         outcomeBadges: {
-          criticalSuccess: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
-            textBadge('1 settlement gains level', 'fas fa-city', 'positive')
-          ],
-          success: [
-            textBadge('1 settlement gains level', 'fas fa-city', 'positive')
-          ],
-          failure: [
-            textBadge('1 settlement loses level', 'fas fa-city', 'negative')
-          ],
-          criticalFailure: [
-            textBadge('1 settlement loses level', 'fas fa-city', 'negative'),
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
-          ]
+          criticalSuccess: [],
+          success: [],
+          failure: [],
+          criticalFailure: []
         }
       },
       {
@@ -74,21 +65,15 @@ export const archaeologicalFindPipeline: CheckPipeline = {
           criticalFailure: 'Failed exhibition embarrasses royal patrons.'
         },
         outcomeBadges: {
-          criticalSuccess: [
-            textBadge('Gain 1 structure', 'fas fa-building', 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
-          ],
+          criticalSuccess: [],
           success: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           failure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ],
           criticalFailure: [
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
           ]
         }
       },
@@ -107,8 +92,7 @@ export const archaeologicalFindPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
           ],
           success: [
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
@@ -117,7 +101,6 @@ export const archaeologicalFindPipeline: CheckPipeline = {
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')
           ],
           criticalFailure: [
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d4', 'negative')
           ]
         }
@@ -180,9 +163,10 @@ export const archaeologicalFindPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      // Virtuous approach: Settlement level changes
+      // Virtuous approach: Settlement level changes + faction adjustments
       if (approach === 'virtuous') {
-        if (outcome === 'criticalSuccess' || outcome === 'success') {
+        if (outcome === 'criticalSuccess') {
+          // Settlement gains level + faction +1
           const increaseHandler = new IncreaseSettlementLevelHandler();
           const increaseCommand = await increaseHandler.prepare(
             { type: 'increaseSettlementLevel', increase: 1 },
@@ -196,7 +180,36 @@ export const archaeologicalFindPipeline: CheckPipeline = {
               outcomeBadges.push(increaseCommand.outcomeBadge);
             }
           }
-        } else if (outcome === 'failure' || outcome === 'criticalFailure') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionVirtuous = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'success') {
+          // Settlement gains level only
+          const increaseHandler = new IncreaseSettlementLevelHandler();
+          const increaseCommand = await increaseHandler.prepare(
+            { type: 'increaseSettlementLevel', increase: 1 },
+            commandContext
+          );
+          if (increaseCommand) {
+            ctx.metadata._preparedSettlementIncrease = increaseCommand;
+            if (increaseCommand.outcomeBadges) {
+              outcomeBadges.push(...increaseCommand.outcomeBadges);
+            } else if (increaseCommand.outcomeBadge) {
+              outcomeBadges.push(increaseCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'failure') {
+          // Settlement loses level only
           const reduceHandler = new ReduceSettlementLevelHandler();
           const reduceCommand = await reduceHandler.prepare(
             { type: 'reduceSettlementLevel', reduction: 1 },
@@ -210,13 +223,41 @@ export const archaeologicalFindPipeline: CheckPipeline = {
               outcomeBadges.push(reduceCommand.outcomeBadge);
             }
           }
+        } else if (outcome === 'criticalFailure') {
+          // Settlement loses level + faction -1
+          const reduceHandler = new ReduceSettlementLevelHandler();
+          const reduceCommand = await reduceHandler.prepare(
+            { type: 'reduceSettlementLevel', reduction: 1 },
+            commandContext
+          );
+          if (reduceCommand) {
+            ctx.metadata._preparedSettlementReduce = reduceCommand;
+            if (reduceCommand.outcomeBadges) {
+              outcomeBadges.push(...reduceCommand.outcomeBadges);
+            } else if (reduceCommand.outcomeBadge) {
+              outcomeBadges.push(reduceCommand.outcomeBadge);
+            }
+          }
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionVirtuous = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
         }
       }
 
-      // Practical approach: Build Knowledge structure and ongoing tourism
+      // Practical approach: Build Knowledge structure, tourism, and faction adjustments
       if (approach === 'practical') {
         if (outcome === 'criticalSuccess') {
-          // Build Knowledge & Magic structure
+          // Build Knowledge & Magic structure + faction +1
           const buildHandler = new BuildKnowledgeStructureHandler();
           const buildCommand = await buildHandler.prepare(
             { type: 'buildKnowledgeStructure' },
@@ -230,9 +271,101 @@ export const archaeologicalFindPipeline: CheckPipeline = {
               outcomeBadges.push(buildCommand.outcomeBadge);
             }
           }
-          
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionPractical = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
           // Ongoing tourism gold
           ctx.metadata._ongoingTourism = { formula: '2d3', duration: 2 };
+        } else if (outcome === 'success') {
+          // Faction +1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionPractical = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'failure') {
+          // Faction -1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionPractical = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'criticalFailure') {
+          // Faction -1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionPractical = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        }
+      }
+
+      // Ruthless approach: Faction adjustments
+      if (approach === 'ruthless') {
+        if (outcome === 'criticalSuccess') {
+          // Faction +1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionRuthless = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'criticalFailure') {
+          // Faction -1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionRuthless = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
         }
       }
 
@@ -262,6 +395,24 @@ export const archaeologicalFindPipeline: CheckPipeline = {
     const buildCommand = ctx.metadata?._preparedBuildStructure;
     if (buildCommand?.commit) {
       await buildCommand.commit();
+    }
+
+    // Execute faction adjustments (virtuous)
+    const factionVirtuous = ctx.metadata?._preparedFactionVirtuous;
+    if (factionVirtuous?.commit) {
+      await factionVirtuous.commit();
+    }
+
+    // Execute faction adjustments (practical)
+    const factionPractical = ctx.metadata?._preparedFactionPractical;
+    if (factionPractical?.commit) {
+      await factionPractical.commit();
+    }
+
+    // Execute faction adjustments (ruthless)
+    const factionRuthless = ctx.metadata?._preparedFactionRuthless;
+    if (factionRuthless?.commit) {
+      await factionRuthless.commit();
     }
 
     // Add ongoing tourism modifier (practical CS)

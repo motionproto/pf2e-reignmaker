@@ -13,6 +13,7 @@
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
+import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
 import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
@@ -45,7 +46,6 @@ export const drugDenPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
           ],
           success: [
@@ -180,7 +180,21 @@ export const drugDenPipeline: CheckPipeline = {
       };
 
       if (approach === 'virtuous') {
-        // All outcomes handled by standard badges
+        if (outcome === 'criticalSuccess') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFaction = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        }
       } else if (approach === 'practical') {
         if (outcome === 'criticalSuccess') {
           ctx.metadata._ongoingGold = { duration: 2, formula: '2d3' };
@@ -274,6 +288,12 @@ export const drugDenPipeline: CheckPipeline = {
     const { kingdomData } = await import('../../stores/KingdomStore');
     const kingdom = get(kingdomData);
     const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
+
+    // Execute faction adjustment (virtuous CS)
+    const factionCommand = ctx.metadata?._preparedFaction;
+    if (factionCommand?.commit) {
+      await factionCommand.commit();
+    }
 
     // Add ongoing gold modifier (practical CS/S)
     if (ctx.metadata?._ongoingGold && approach === 'practical') {

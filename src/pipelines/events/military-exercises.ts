@@ -13,12 +13,11 @@
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
+import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { valueBadge, textBadge, diceBadge } from '../../types/OutcomeBadge';
 import { logger } from '../../utils/Logger';
 import { EQUIPMENT_ICONS, EQUIPMENT_NAMES } from '../../utils/presentation';
 import { PLAYER_KINGDOM } from '../../types/ownership';
-import { factionService } from '../../services/factions';
-import { adjustAttitudeBySteps } from '../../utils/faction-attitude-adjuster';
 
 export const militaryExercisesPipeline: CheckPipeline = {
   id: 'military-exercises',
@@ -55,8 +54,7 @@ export const militaryExercisesPipeline: CheckPipeline = {
             textBadge('Fortify 1 hex', 'fas fa-fort-awesome', 'positive')
           ],
           failure: [
-            textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative'),
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+            textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')
           ],
           criticalFailure: [
             textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative'),
@@ -120,8 +118,7 @@ export const militaryExercisesPipeline: CheckPipeline = {
             valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
           ],
           failure: [
-            textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative'),
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+            textBadge('Random army becomes Fatigued', 'fas fa-tired', 'negative')
           ],
           criticalFailure: [
             textBadge('Random army becomes Enfeebled', 'fas fa-exclamation-triangle', 'negative'),
@@ -338,6 +335,31 @@ export const militaryExercisesPipeline: CheckPipeline = {
       ctx.metadata._outcomeModifiers = modifiers;
       ctx.metadata._selectedApproach = approach;
 
+      // Prepare faction adjustments
+      const commandContext: GameCommandContext = {
+        actionId: 'military-exercises',
+        outcome: ctx.outcome,
+        kingdom: ctx.kingdom,
+        metadata: ctx.metadata || {}
+      };
+
+      if ((approach === 'virtuous' && outcome === 'failure') ||
+          (approach === 'ruthless' && outcome === 'failure')) {
+        const factionHandler = new AdjustFactionHandler();
+        const factionCommand = await factionHandler.prepare(
+          { type: 'adjustFactionAttitude', steps: -1, count: 1 },
+          commandContext
+        );
+        if (factionCommand) {
+          ctx.metadata._preparedFactionAdjust = factionCommand;
+          if (factionCommand.outcomeBadges) {
+            outcomeBadges.push(...factionCommand.outcomeBadges);
+          } else if (factionCommand.outcomeBadge) {
+            outcomeBadges.push(factionCommand.outcomeBadge);
+          }
+        }
+      }
+
       return { resources: [], outcomeBadges, warnings };
     }
   },
@@ -466,6 +488,12 @@ export const militaryExercisesPipeline: CheckPipeline = {
       }
     };
 
+    // Commit prepared faction adjustments
+    const factionCommand = ctx.metadata?._preparedFactionAdjust;
+    if (factionCommand?.commit) {
+      await factionCommand.commit();
+    }
+
     // Execute based on approach and outcome
     if (approach === 'virtuous') {
       // Defensive Drills
@@ -475,17 +503,6 @@ export const militaryExercisesPipeline: CheckPipeline = {
       } else if (outcome === 'failure') {
         const army = getSelectedArmy();
         await applyFatigued(army);
-        // Adjust 1 faction -1
-        const factions = factionService.getAllFactions();
-        const eligibleFactions = factions.filter((f: any) => f.attitude && f.attitude !== 'Hostile');
-        if (eligibleFactions.length > 0) {
-          const faction = eligibleFactions[Math.floor(Math.random() * eligibleFactions.length)];
-          const newAttitude = adjustAttitudeBySteps(faction.attitude, -1);
-          if (newAttitude) {
-            await factionService.updateAttitude(faction.id, newAttitude);
-            logger.info(`[Military Exercises] Adjusted faction ${faction.name} by -1`);
-          }
-        }
       } else if (outcome === 'criticalFailure') {
         const army = getSelectedArmy();
         await applyEnfeebled(army);
@@ -511,17 +528,6 @@ export const militaryExercisesPipeline: CheckPipeline = {
       } else if (outcome === 'failure') {
         const army = getSelectedArmy();
         await applyFatigued(army);
-        // Adjust 1 faction -1
-        const factions = factionService.getAllFactions();
-        const eligibleFactions = factions.filter((f: any) => f.attitude && f.attitude !== 'Hostile');
-        if (eligibleFactions.length > 0) {
-          const faction = eligibleFactions[Math.floor(Math.random() * eligibleFactions.length)];
-          const newAttitude = adjustAttitudeBySteps(faction.attitude, -1);
-          if (newAttitude) {
-            await factionService.updateAttitude(faction.id, newAttitude);
-            logger.info(`[Military Exercises] Adjusted faction ${faction.name} by -1`);
-          }
-        }
       } else if (outcome === 'criticalFailure') {
         const army = getSelectedArmy();
         await applyEnfeebled(army);

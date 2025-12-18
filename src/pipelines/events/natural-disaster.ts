@@ -12,6 +12,7 @@
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
+import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { valueBadge, textBadge, diceBadge } from '../../types/OutcomeBadge';
 import { PLAYER_KINGDOM } from '../../types/ownership';
 
@@ -44,7 +45,6 @@ export const naturalDisasterPipeline: CheckPipeline = {
         outcomeBadges: {
           criticalSuccess: [
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
           ],
           success: [
@@ -197,6 +197,20 @@ export const naturalDisasterPipeline: CheckPipeline = {
             { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
             { type: 'dice', resource: 'unrest', formula: '1d3', negative: true, duration: 'immediate' }
           ];
+          // Faction adjustment
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFaction = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
           // Damage 1 structure
           const { DamageStructureHandler } = await import('../../services/gameCommands/handlers/DamageStructureHandler');
           const handler = new DamageStructureHandler();
@@ -400,6 +414,12 @@ export const naturalDisasterPipeline: CheckPipeline = {
     // NOTE: Standard modifiers (unrest, fame, lumber, etc.) are applied automatically by
     // ResolutionDataBuilder + GameCommandsService via outcomeBadges.
     // This execute() only handles special game commands.
+
+    // Execute faction adjustment
+    const factionCommand = ctx.metadata?._preparedFaction;
+    if (factionCommand?.commit) {
+      await factionCommand.commit();
+    }
 
     // Execute game commands
     const damageCommand = ctx.metadata?._preparedDamageStructure;

@@ -13,6 +13,7 @@
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
+import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
 import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
@@ -45,7 +46,6 @@ export const undeadUprisingPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
           ],
           success: [
@@ -75,16 +75,13 @@ export const undeadUprisingPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
           ],
           success: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
           ],
           failure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ],
           criticalFailure: [
             textBadge('Damage 1 structure', 'fas fa-house-crack', 'negative'),
@@ -168,8 +165,82 @@ export const undeadUprisingPipeline: CheckPipeline = {
       const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
       const outcome = ctx.outcome;
 
-      const outcomeBadges = [];
-      const commandContext: GameCommandContext = { kingdom, outcome: outcome || 'success' };
+      // Find the selected approach option
+      const selectedOption = undeadUprisingPipeline.strategicChoice?.options.find(opt => opt.id === approach);
+
+      // Get outcome badges from the selected approach
+      const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
+      const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
+
+      const commandContext: GameCommandContext = {
+        actionId: 'undead-uprising',
+        outcome: ctx.outcome,
+        kingdom: ctx.kingdom,
+        metadata: ctx.metadata || {}
+      };
+
+      // Handle faction adjustments
+      if (approach === 'virtuous' && outcome === 'criticalSuccess') {
+        // adjust 1 faction +1, +1 Fame
+        const factionHandler = new AdjustFactionHandler();
+        const factionCommand = await factionHandler.prepare(
+          { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+          commandContext
+        );
+        if (factionCommand) {
+          ctx.metadata._preparedFactionVirtuousCS = factionCommand;
+          if (factionCommand.outcomeBadges) {
+            outcomeBadges.push(...factionCommand.outcomeBadges);
+          } else if (factionCommand.outcomeBadge) {
+            outcomeBadges.push(factionCommand.outcomeBadge);
+          }
+        }
+      } else if (approach === 'practical' && outcome === 'criticalSuccess') {
+        // adjust 1 faction +1, random army becomes Well Trained
+        const factionHandler = new AdjustFactionHandler();
+        const factionCommand = await factionHandler.prepare(
+          { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+          commandContext
+        );
+        if (factionCommand) {
+          ctx.metadata._preparedFactionPracticalCS = factionCommand;
+          if (factionCommand.outcomeBadges) {
+            outcomeBadges.push(...factionCommand.outcomeBadges);
+          } else if (factionCommand.outcomeBadge) {
+            outcomeBadges.push(factionCommand.outcomeBadge);
+          }
+        }
+      } else if (approach === 'practical' && outcome === 'success') {
+        // adjust 1 faction +1, +1 Gold
+        const factionHandler = new AdjustFactionHandler();
+        const factionCommand = await factionHandler.prepare(
+          { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+          commandContext
+        );
+        if (factionCommand) {
+          ctx.metadata._preparedFactionPracticalS = factionCommand;
+          if (factionCommand.outcomeBadges) {
+            outcomeBadges.push(...factionCommand.outcomeBadges);
+          } else if (factionCommand.outcomeBadge) {
+            outcomeBadges.push(factionCommand.outcomeBadge);
+          }
+        }
+      } else if (approach === 'practical' && outcome === 'failure') {
+        // -1d3 Gold, adjust 1 faction -1
+        const factionHandler = new AdjustFactionHandler();
+        const factionCommand = await factionHandler.prepare(
+          { type: 'adjustFactionAttitude', steps: -1, count: 1 },
+          commandContext
+        );
+        if (factionCommand) {
+          ctx.metadata._preparedFactionPracticalF = factionCommand;
+          if (factionCommand.outcomeBadges) {
+            outcomeBadges.push(...factionCommand.outcomeBadges);
+          } else if (factionCommand.outcomeBadge) {
+            outcomeBadges.push(factionCommand.outcomeBadge);
+          }
+        }
+      }
 
       // Handle special outcomes based on approach
       if (approach === 'virtuous' && outcome === 'criticalFailure') {
@@ -249,6 +320,27 @@ export const undeadUprisingPipeline: CheckPipeline = {
     // NOTE: Standard modifiers (unrest, gold, fame, food, lumber) are applied automatically by
     // ResolutionDataBuilder + GameCommandsService via outcomeBadges.
     // This execute() only handles special game commands.
+
+    // Execute faction adjustments
+    const factionVirtuousCS = ctx.metadata?._preparedFactionVirtuousCS;
+    if (factionVirtuousCS?.commit) {
+      await factionVirtuousCS.commit();
+    }
+
+    const factionPracticalCS = ctx.metadata?._preparedFactionPracticalCS;
+    if (factionPracticalCS?.commit) {
+      await factionPracticalCS.commit();
+    }
+
+    const factionPracticalS = ctx.metadata?._preparedFactionPracticalS;
+    if (factionPracticalS?.commit) {
+      await factionPracticalS.commit();
+    }
+
+    const factionPracticalF = ctx.metadata?._preparedFactionPracticalF;
+    if (factionPracticalF?.commit) {
+      await factionPracticalF.commit();
+    }
 
     // Execute structure damage
     const damageCommand = ctx.metadata?._preparedDamage;

@@ -14,9 +14,8 @@ import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
 import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
+import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { valueBadge, textBadge, diceBadge } from '../../types/OutcomeBadge';
-import { factionService } from '../../services/factions';
-import { adjustAttitudeBySteps } from '../../utils/faction-attitude-adjuster';
 
 export const publicScandalPipeline: CheckPipeline = {
   id: 'public-scandal',
@@ -179,6 +178,13 @@ export const publicScandalPipeline: CheckPipeline = {
 
       // Calculate modifiers based on approach
       let modifiers: any[] = [];
+      
+      const commandContext: GameCommandContext = {
+        actionId: 'public-scandal',
+        outcome: ctx.outcome,
+        kingdom: ctx.kingdom,
+        metadata: ctx.metadata || {}
+      };
 
       if (approach === 'virtuous') {
         // Transparent Investigation approach - Honest and open (Virtuous)
@@ -201,16 +207,28 @@ export const publicScandalPipeline: CheckPipeline = {
             { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
             { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
           ];
+          
+          // Adjust 1 random faction -1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, factionId: 'random' },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFaction = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              const filteredBadges = outcomeBadges.filter(b => !b.template?.match(/^Adjust \d+ faction [+-]\d+$/));
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...filteredBadges, ...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              const filteredBadges = outcomeBadges.filter(b => !b.template?.match(/^Adjust \d+ faction [+-]\d+$/));
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...filteredBadges, factionCommand.outcomeBadge);
+            }
+          }
         }
       } else if (approach === 'practical') {
         // Cover It Up approach - Suppress quietly (Practical)
-        const commandContext: GameCommandContext = {
-          actionId: 'public-scandal',
-          outcome: ctx.outcome,
-          kingdom: ctx.kingdom,
-          metadata: ctx.metadata || {}
-        };
-
         if (outcome === 'criticalSuccess') {
           modifiers = [
             { type: 'dice', resource: 'unrest', formula: '-1d3', negative: true, duration: 'immediate' }
@@ -245,16 +263,28 @@ export const publicScandalPipeline: CheckPipeline = {
             { type: 'static', resource: 'fame', value: -1, duration: 'immediate' },
             { type: 'dice', resource: 'gold', formula: '-1d3', negative: true, duration: 'immediate' }
           ];
+          
+          // Adjust 2 random factions -1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, factionId: 'random', count: 2 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFaction = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              const filteredBadges = outcomeBadges.filter(b => !b.template?.match(/^Adjust \d+ faction [+-]\d+$/));
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...filteredBadges, ...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              const filteredBadges = outcomeBadges.filter(b => !b.template?.match(/^Adjust \d+ faction [+-]\d+$/));
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...filteredBadges, factionCommand.outcomeBadge);
+            }
+          }
         }
       } else if (approach === 'ruthless') {
         // Scapegoat Official approach - Blame subordinate (Ruthless)
-        const commandContext: GameCommandContext = {
-          actionId: 'public-scandal',
-          outcome: ctx.outcome,
-          kingdom: ctx.kingdom,
-          metadata: ctx.metadata || {}
-        };
-
         if (outcome === 'criticalSuccess') {
           modifiers = [
             { type: 'dice', resource: 'unrest', formula: '-1d3', negative: true, duration: 'immediate' }
@@ -274,6 +304,21 @@ export const publicScandalPipeline: CheckPipeline = {
               outcomeBadges.push(...imprisonCommand.outcomeBadges);
             } else if (imprisonCommand.outcomeBadge) {
               outcomeBadges.push(imprisonCommand.outcomeBadge);
+            }
+          }
+          
+          // Adjust 1 random faction +1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, factionId: 'random' },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFaction = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
             }
           }
         } else if (outcome === 'success') {
@@ -338,31 +383,17 @@ export const publicScandalPipeline: CheckPipeline = {
           }
           
           // Adjust 1 random faction -1
-          const eligibleFactions = (kingdom.factions || []).filter((f: any) =>
-            f.attitude && f.attitude !== 'Hostile'
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, factionId: 'random' },
+            commandContext
           );
-          if (eligibleFactions.length > 0) {
-            const randomFaction = eligibleFactions[Math.floor(Math.random() * eligibleFactions.length)];
-            const newAttitude = adjustAttitudeBySteps(randomFaction.attitude, -1);
-            ctx.metadata._factionAdjustment = {
-              factionId: randomFaction.id,
-              factionName: randomFaction.name,
-              oldAttitude: randomFaction.attitude,
-              newAttitude: newAttitude,
-              steps: -1
-            };
-            if (newAttitude) {
-              const specificBadge = textBadge(
-                `Relations with ${randomFaction.name} worsen: ${randomFaction.attitude} → ${newAttitude}`,
-                'fas fa-handshake-slash',
-                'negative'
-              );
-              
-              // Replace generic badge with specific one
-              const { replaceGenericFactionBadge } = await import('../../utils/badge-helpers');
-              const updatedBadges = replaceGenericFactionBadge(outcomeBadges, specificBadge);
-              outcomeBadges.length = 0;
-              outcomeBadges.push(...updatedBadges);
+          if (factionCommand) {
+            ctx.metadata._preparedFaction = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
             }
           }
         }
@@ -392,13 +423,10 @@ export const publicScandalPipeline: CheckPipeline = {
       await innocentsHarmedCommand.commit();
     }
 
-    // Execute faction adjustment (scapegoat approach - critical failure)
-    const factionAdjustment = ctx.metadata?._factionAdjustment;
-    if (factionAdjustment?.factionId && factionAdjustment?.newAttitude) {
-      await factionService.adjustAttitude(
-        factionAdjustment.factionId,
-        factionAdjustment.steps
-      );
+    // Execute faction adjustment
+    const factionCommand = ctx.metadata?._preparedFaction;
+    if (factionCommand?.commit) {
+      await factionCommand.commit();
     }
 
     return { success: true };

@@ -12,6 +12,7 @@
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
+import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { valueBadge, textBadge, diceBadge } from '../../types/OutcomeBadge';
 import { PLAYER_KINGDOM } from '../../types/ownership';
 
@@ -43,9 +44,7 @@ export const foodShortagePipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+            diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
           ],
           success: [
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
@@ -119,8 +118,7 @@ export const foodShortagePipeline: CheckPipeline = {
           ],
           criticalFailure: [
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative'),
-            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative'),
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3', 'negative')
           ]
         }
       }
@@ -192,6 +190,26 @@ export const foodShortagePipeline: CheckPipeline = {
             { type: 'dice', resource: 'unrest', formula: '1d3', negative: true, duration: 'immediate' },
             { type: 'dice', resource: 'food', formula: '1d4', negative: true, duration: 'immediate' }
           ];
+          // Adjust 2 factions +1
+          const factionHandler = new AdjustFactionHandler();
+          const commandContext: GameCommandContext = {
+            actionId: 'food-shortage',
+            outcome: ctx.outcome,
+            kingdom: ctx.kingdom,
+            metadata: ctx.metadata || {}
+          };
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, count: 2 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionAdjust = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
         } else if (outcome === 'success') {
           modifiers = [
             { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' },
@@ -321,15 +339,29 @@ export const foodShortagePipeline: CheckPipeline = {
             { type: 'static', resource: 'fame', value: -1, duration: 'immediate' },
             { type: 'dice', resource: 'food', formula: '2d4', negative: true, duration: 'immediate' }
           ];
-          // Damage 1 structure
-          const { DamageStructureHandler } = await import('../../services/gameCommands/handlers/DamageStructureHandler');
-          const damageHandler = new DamageStructureHandler();
+          // Adjust 1 faction -1
+          const factionHandler = new AdjustFactionHandler();
           const commandContext: GameCommandContext = {
             actionId: 'food-shortage',
             outcome: ctx.outcome,
             kingdom: ctx.kingdom,
             metadata: ctx.metadata || {}
           };
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionAdjustRuthless = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+          // Damage 1 structure
+          const { DamageStructureHandler } = await import('../../services/gameCommands/handlers/DamageStructureHandler');
+          const damageHandler = new DamageStructureHandler();
           const damageCommand = await damageHandler.prepare(
             { type: 'damageStructure', count: 1 },
             commandContext
@@ -365,6 +397,12 @@ export const foodShortagePipeline: CheckPipeline = {
 
     // Execute game commands based on approach and outcome
     if (approach === 'virtuous') {
+      if (outcome === 'criticalSuccess') {
+        const factionCommand = ctx.metadata?._preparedFactionAdjust;
+        if (factionCommand?.commit) {
+          await factionCommand.commit();
+        }
+      }
       // Feed the People: failure applies sickened to army
       if (outcome === 'failure') {
         const armyCondition = ctx.metadata?._armyCondition;
@@ -389,7 +427,16 @@ export const foodShortagePipeline: CheckPipeline = {
         if (imprisonCommand?.commit) {
           await imprisonCommand.commit();
         }
-      } else if (outcome === 'failure' || outcome === 'criticalFailure') {
+      } else if (outcome === 'failure') {
+        const damageCommand = ctx.metadata?._preparedDamageStructure;
+        if (damageCommand?.commit) {
+          await damageCommand.commit();
+        }
+      } else if (outcome === 'criticalFailure') {
+        const factionCommand = ctx.metadata?._preparedFactionAdjustRuthless;
+        if (factionCommand?.commit) {
+          await factionCommand.commit();
+        }
         const damageCommand = ctx.metadata?._preparedDamageStructure;
         if (damageCommand?.commit) {
           await damageCommand.commit();

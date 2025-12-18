@@ -14,7 +14,7 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
-import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
 
 export const tradeAgreementPipeline: CheckPipeline = {
   id: 'trade-agreement',
@@ -44,12 +44,9 @@ export const tradeAgreementPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           success: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
           ],
           failure: [
@@ -80,7 +77,6 @@ export const tradeAgreementPipeline: CheckPipeline = {
           criticalSuccess: [
             diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive'),
             diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
           ],
           success: [
@@ -122,12 +118,10 @@ export const tradeAgreementPipeline: CheckPipeline = {
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           failure: [
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             valueBadge('Lose {{value}} random resource', 'fas fa-box', 1, 'negative')
           ],
           criticalFailure: [
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
           ]
         }
       }
@@ -197,7 +191,7 @@ export const tradeAgreementPipeline: CheckPipeline = {
           // +1 Fame, +2d3 Gold, adjust 2 factions +1, choose 1 resource type to gain 1d3 per turn for 2 turns
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: 1, count: 2 },
+            { type: 'adjustFactionAttitude', steps: 1, count: 2 },
             commandContext
           );
           if (factionCommand) {
@@ -214,7 +208,7 @@ export const tradeAgreementPipeline: CheckPipeline = {
           // +1d3 Gold, adjust 1 faction +1, choose 1 resource type to gain 1d3 per turn for 1 turn
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: 1, count: 1 },
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
             commandContext
           );
           if (factionCommand) {
@@ -230,7 +224,7 @@ export const tradeAgreementPipeline: CheckPipeline = {
           // +1d3 Gold, adjust 1 faction +1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: 1, count: 1 },
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
             commandContext
           );
           if (factionCommand) {
@@ -245,7 +239,7 @@ export const tradeAgreementPipeline: CheckPipeline = {
           // adjust 1 faction -1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: -1, count: 1 },
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
             commandContext
           );
           if (factionCommand) {
@@ -263,7 +257,7 @@ export const tradeAgreementPipeline: CheckPipeline = {
           // +2d3 Gold, adjust 2 factions +1, choose 1 resource type to gain 1d3 per turn for 2 turns
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: 1, count: 2 },
+            { type: 'adjustFactionAttitude', steps: 1, count: 2 },
             commandContext
           );
           if (factionCommand) {
@@ -279,7 +273,7 @@ export const tradeAgreementPipeline: CheckPipeline = {
           // +1d3 Gold, adjust 1 faction +1, choose 1 resource type to gain 1d3 per turn for 1 turn
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: 1, count: 1 },
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
             commandContext
           );
           if (factionCommand) {
@@ -295,7 +289,7 @@ export const tradeAgreementPipeline: CheckPipeline = {
           // adjust 1 faction +1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: 1, count: 1 },
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
             commandContext
           );
           if (factionCommand) {
@@ -310,7 +304,7 @@ export const tradeAgreementPipeline: CheckPipeline = {
           // +1 Unrest, adjust 1 faction -1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: -1, count: 1 },
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
             commandContext
           );
           if (factionCommand) {
@@ -328,7 +322,7 @@ export const tradeAgreementPipeline: CheckPipeline = {
           // +2d3 Gold, adjust 1 faction -1, choose 1 resource type to gain 2d3 per turn for 3 turns
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: -1, count: 1 },
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
             commandContext
           );
           if (factionCommand) {
@@ -344,7 +338,7 @@ export const tradeAgreementPipeline: CheckPipeline = {
           // +1d3 Gold, adjust 1 faction -1, choose 1 resource type to gain 1d3 per turn for 2 turns
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: -1, count: 1 },
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
             commandContext
           );
           if (factionCommand) {
@@ -360,7 +354,7 @@ export const tradeAgreementPipeline: CheckPipeline = {
           // +1d3 Gold, -1 Fame, adjust 2 factions -1, choose 1 resource type to gain 1d3 per turn for 1 turn
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: -1, count: 2 },
+            { type: 'adjustFactionAttitude', steps: -1, count: 2 },
             commandContext
           );
           if (factionCommand) {
@@ -376,7 +370,7 @@ export const tradeAgreementPipeline: CheckPipeline = {
           // +1d3 Unrest, -1 Fame, adjust 2 factions -1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: -1, count: 2 },
+            { type: 'adjustFactionAttitude', steps: -1, count: 2 },
             commandContext
           );
           if (factionCommand) {

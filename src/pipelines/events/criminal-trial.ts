@@ -194,7 +194,7 @@ export const criminalTrialPipeline: CheckPipeline = {
             { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
             { type: 'dice', resource: 'unrest', formula: '-1d3', negative: true, duration: 'immediate' }
           ];
-          // Remove 1d3 imprisoned (pardoned) - auto-distributes across settlements
+          // Prepare reduce imprisoned command (pardoned) - executed on Apply
           const reduceHandler = new ReduceImprisonedHandler();
           const reduceCommand = await reduceHandler.prepare(
             { type: 'reduceImprisoned', amount: 3, diceFormula: '1d3' },
@@ -202,17 +202,13 @@ export const criminalTrialPipeline: CheckPipeline = {
           );
           if (reduceCommand) {
             ctx.metadata._preparedReduceImprisoned = reduceCommand;
-            if (reduceCommand.outcomeBadges) {
-              outcomeBadges.push(...reduceCommand.outcomeBadges);
-            } else if (reduceCommand.outcomeBadge) {
-              outcomeBadges.push(reduceCommand.outcomeBadge);
-            }
+            // Don't add badges - static badge already in outcomeBadges
           }
         } else if (outcome === 'success') {
           modifiers = [
             { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
           ];
-          // Remove 1 imprisoned (pardoned) - auto-distributes across settlements
+          // Prepare reduce imprisoned command (pardoned) - executed on Apply
           const reduceHandler = new ReduceImprisonedHandler();
           const reduceCommand = await reduceHandler.prepare(
             { type: 'reduceImprisoned', amount: 1 },
@@ -220,11 +216,7 @@ export const criminalTrialPipeline: CheckPipeline = {
           );
           if (reduceCommand) {
             ctx.metadata._preparedReduceImprisoned = reduceCommand;
-            if (reduceCommand.outcomeBadges) {
-              outcomeBadges.push(...reduceCommand.outcomeBadges);
-            } else if (reduceCommand.outcomeBadge) {
-              outcomeBadges.push(reduceCommand.outcomeBadge);
-            }
+            // Don't add badges - static badge already in outcomeBadges
           }
         } else if (outcome === 'failure') {
           modifiers = [

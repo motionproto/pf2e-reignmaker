@@ -43,7 +43,6 @@ export const scholarlyDiscoveryPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
           ],
           success: [
@@ -176,7 +175,7 @@ export const scholarlyDiscoveryPipeline: CheckPipeline = {
         if (outcome === 'criticalSuccess') {
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: 1, count: 2 },
+            { type: 'adjustFactionAttitude', steps: 1, count: 2 },
             commandContext
           );
           if (factionCommand) {
@@ -196,7 +195,7 @@ export const scholarlyDiscoveryPipeline: CheckPipeline = {
         if (outcome === 'criticalSuccess') {
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: 1, count: 1 },
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
             commandContext
           );
           if (factionCommand) {

@@ -11,8 +11,9 @@
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
+import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { ReduceSettlementLevelHandler } from '../../services/gameCommands/handlers/ReduceSettlementLevelHandler';
-import { valueBadge, textBadge, diceBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 
 export const plaguePipeline: CheckPipeline = {
   id: 'plague',
@@ -42,12 +43,9 @@ export const plaguePipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d3', 'positive')
           ],
           success: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
           ],
           failure: [
@@ -55,8 +53,7 @@ export const plaguePipeline: CheckPipeline = {
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '2d4', 'negative'),
-            textBadge('1 settlement loses level', 'fas fa-city', 'negative')
+            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '2d4', 'negative')
           ]
         }
       },
@@ -180,6 +177,13 @@ export const plaguePipeline: CheckPipeline = {
       // Calculate modifiers and prepare game commands based on approach
       let modifiers: any[] = [];
 
+      const commandContext: GameCommandContext = {
+        actionId: 'plague',
+        outcome: ctx.outcome,
+        kingdom: ctx.kingdom,
+        metadata: ctx.metadata || {}
+      };
+
       if (approach === 'virtuous') {
         // Provide Free Treatment (Virtuous)
         if (outcome === 'criticalSuccess') {
@@ -187,10 +191,40 @@ export const plaguePipeline: CheckPipeline = {
             { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
             { type: 'dice', resource: 'unrest', formula: '1d3', negative: true, duration: 'immediate' }
           ];
+
+          // Adjust 2 random factions +1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, factionId: 'random', count: 2 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionVirtuousCS = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
         } else if (outcome === 'success') {
           modifiers = [
             { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
           ];
+
+          // Adjust 1 random faction +1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, factionId: 'random' },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionVirtuousS = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
         } else if (outcome === 'failure') {
           modifiers = [
             { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
@@ -208,18 +242,12 @@ export const plaguePipeline: CheckPipeline = {
           
           // Settlement level reduction
           const reduceHandler = new ReduceSettlementLevelHandler();
-          const commandContext: GameCommandContext = {
-            actionId: 'plague',
-            outcome: ctx.outcome,
-            kingdom: ctx.kingdom,
-            metadata: ctx.metadata || {}
-          };
           const reduceCommand = await reduceHandler.prepare(
             { type: 'reduceSettlementLevel', reduction: 1 },
             commandContext
           );
           if (reduceCommand) {
-            ctx.metadata._preparedSettlementReduce = reduceCommand;
+            ctx.metadata._preparedSettlementReduceVirtuousCF = reduceCommand;
             if (reduceCommand.outcomeBadges) {
               outcomeBadges.push(...reduceCommand.outcomeBadges);
             } else if (reduceCommand.outcomeBadge) {
@@ -267,12 +295,6 @@ export const plaguePipeline: CheckPipeline = {
           // Damage 1 structure
           const { DamageStructureHandler } = await import('../../services/gameCommands/handlers/DamageStructureHandler');
           const damageHandler = new DamageStructureHandler();
-          const commandContext: GameCommandContext = {
-            actionId: 'plague',
-            outcome: ctx.outcome,
-            kingdom: ctx.kingdom,
-            metadata: ctx.metadata || {}
-          };
           const damageCommand = await damageHandler.prepare(
             { type: 'damageStructure', count: 1 },
             commandContext
@@ -293,12 +315,6 @@ export const plaguePipeline: CheckPipeline = {
           // Destroy 1 structure
           const { DestroyStructureHandler } = await import('../../services/gameCommands/handlers/DestroyStructureHandler');
           const destroyHandler = new DestroyStructureHandler();
-          const commandContext: GameCommandContext = {
-            actionId: 'plague',
-            outcome: ctx.outcome,
-            kingdom: ctx.kingdom,
-            metadata: ctx.metadata || {}
-          };
           const destroyCommand = await destroyHandler.prepare(
             { type: 'destroyStructure', count: 1 },
             commandContext
@@ -312,32 +328,17 @@ export const plaguePipeline: CheckPipeline = {
             }
           }
           // Adjust 1 random faction -1
-          const { adjustAttitudeBySteps } = await import('../../utils/faction-attitude-adjuster');
-          const eligibleFactions = (kingdom.factions || []).filter((f: any) =>
-            f.attitude && f.attitude !== 'Hostile'
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, factionId: 'random' },
+            commandContext
           );
-          if (eligibleFactions.length > 0) {
-            const randomFaction = eligibleFactions[Math.floor(Math.random() * eligibleFactions.length)];
-            const newAttitude = adjustAttitudeBySteps(randomFaction.attitude, -1);
-            ctx.metadata._factionAdjustment = {
-              factionId: randomFaction.id,
-              factionName: randomFaction.name,
-              oldAttitude: randomFaction.attitude,
-              newAttitude: newAttitude,
-              steps: -1
-            };
-            if (newAttitude) {
-              const specificBadge = {
-                icon: 'fas fa-handshake-slash',
-                template: `Relations with ${randomFaction.name} worsen: ${randomFaction.attitude} → ${newAttitude}`,
-                variant: 'negative'
-              };
-              
-              // Replace generic badge with specific one
-              const { replaceGenericFactionBadge } = await import('../../utils/badge-helpers');
-              const updatedBadges = replaceGenericFactionBadge(outcomeBadges, specificBadge);
-              outcomeBadges.length = 0;
-              outcomeBadges.push(...updatedBadges);
+          if (factionCommand) {
+            ctx.metadata._preparedFactionRuthlessCF = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
             }
           }
         }
@@ -361,8 +362,19 @@ export const plaguePipeline: CheckPipeline = {
     const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
     const outcome = ctx.outcome;
 
+    // Execute faction adjustments
+    const factionVirtuousCS = ctx.metadata?._preparedFactionVirtuousCS;
+    if (factionVirtuousCS?.commit) {
+      await factionVirtuousCS.commit();
+    }
+
+    const factionVirtuousS = ctx.metadata?._preparedFactionVirtuousS;
+    if (factionVirtuousS?.commit) {
+      await factionVirtuousS.commit();
+    }
+
     // Execute settlement level reduction (virtuous CF)
-    const reduceCommand = ctx.metadata?._preparedSettlementReduce;
+    const reduceCommand = ctx.metadata?._preparedSettlementReduceVirtuousCF;
     if (reduceCommand?.commit) {
       await reduceCommand.commit();
     }
@@ -414,13 +426,9 @@ export const plaguePipeline: CheckPipeline = {
         if (destroyCommand?.commit) {
           await destroyCommand.commit();
         }
-        const factionAdjustment = ctx.metadata?._factionAdjustment;
-        if (factionAdjustment?.factionId && factionAdjustment?.newAttitude) {
-          const { factionService } = await import('../../services/factions');
-          await factionService.adjustAttitude(
-            factionAdjustment.factionId,
-            factionAdjustment.steps
-          );
+        const factionRuthlessCF = ctx.metadata?._preparedFactionRuthlessCF;
+        if (factionRuthlessCF?.commit) {
+          await factionRuthlessCF.commit();
         }
       }
     }

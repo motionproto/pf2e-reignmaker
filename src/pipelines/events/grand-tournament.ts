@@ -44,7 +44,6 @@ export const grandTournamentPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
             valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
           ],
@@ -76,20 +75,16 @@ export const grandTournamentPipeline: CheckPipeline = {
         outcomeBadges: {
           criticalSuccess: [
             textBadge('Gain 1 structure', 'fas fa-building', 'positive'),
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           failure: [
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ],
           criticalFailure: [
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             textBadge('Damage 1 structure', 'fas fa-house-crack', 'negative')
           ]
         }
@@ -110,7 +105,6 @@ export const grandTournamentPipeline: CheckPipeline = {
         outcomeBadges: {
           criticalSuccess: [
             textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           success: [
@@ -189,6 +183,58 @@ export const grandTournamentPipeline: CheckPipeline = {
       // All approaches CS: Gain 1 random structure
       if (outcome === 'criticalSuccess') {
         ctx.metadata._awardStructure = true;
+      }
+
+      // Virtuous approach: faction adjustments
+      if (approach === 'virtuous') {
+        if (outcome === 'criticalSuccess') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionVirtuousCS = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        }
+      }
+
+      // Practical approach: faction adjustments
+      if (approach === 'practical') {
+        if (outcome === 'criticalSuccess' || outcome === 'success') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionPractical = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'failure' || outcome === 'criticalFailure') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionPracticalNeg = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        }
       }
 
       // Ruthless approach: army effects and faction adjustments
@@ -281,6 +327,24 @@ export const grandTournamentPipeline: CheckPipeline = {
   },
 
   execute: async (ctx) => {
+    // Virtuous approach faction adjustments
+    const factionVirtuousCS = ctx.metadata?._preparedFactionVirtuousCS;
+    if (factionVirtuousCS?.commit) {
+      await factionVirtuousCS.commit();
+    }
+
+    // Practical approach faction adjustments
+    const factionPractical = ctx.metadata?._preparedFactionPractical;
+    if (factionPractical?.commit) {
+      await factionPractical.commit();
+    }
+
+    const factionPracticalNeg = ctx.metadata?._preparedFactionPracticalNeg;
+    if (factionPracticalNeg?.commit) {
+      await factionPracticalNeg.commit();
+    }
+
+    // Ruthless approach faction adjustments
     const factionCommand = ctx.metadata?._preparedFactionAdjust;
     if (factionCommand?.commit) {
       await factionCommand.commit();

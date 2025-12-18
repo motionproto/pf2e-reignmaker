@@ -13,6 +13,7 @@
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
+import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { DestroyWorksiteHandler } from '../../services/gameCommands/handlers/DestroyWorksiteHandler';
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
 import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
@@ -45,7 +46,6 @@ export const raidersPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
           ],
           success: [
@@ -55,7 +55,6 @@ export const raidersPipeline: CheckPipeline = {
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
           ],
           criticalFailure: [
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
           ]
         }
@@ -192,7 +191,37 @@ export const raidersPipeline: CheckPipeline = {
 
       if (approach === 'virtuous') {
         // Negotiate Peace Treaty (Virtuous)
-        // All outcomes handled by standard badges
+        if (outcome === 'criticalSuccess') {
+          // Adjust 1 random faction +1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, factionId: 'random' },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionVirtuousCS = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'criticalFailure') {
+          // Adjust 1 random faction -1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, factionId: 'random' },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionVirtuousCF = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        }
       } else if (approach === 'practical') {
         // Fortify Borders (Practical)
         if (outcome === 'failure') {
@@ -296,6 +325,17 @@ export const raidersPipeline: CheckPipeline = {
     const { kingdomData } = await import('../../stores/KingdomStore');
     const kingdom = get(kingdomData);
     const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
+
+    // Execute faction adjustments
+    const factionVirtuousCS = ctx.metadata?._preparedFactionVirtuousCS;
+    if (factionVirtuousCS?.commit) {
+      await factionVirtuousCS.commit();
+    }
+
+    const factionVirtuousCF = ctx.metadata?._preparedFactionVirtuousCF;
+    if (factionVirtuousCF?.commit) {
+      await factionVirtuousCF.commit();
+    }
 
     // Execute worksite destruction (practical CF)
     const destroyCommand = ctx.metadata?._preparedDestroyWorksite;

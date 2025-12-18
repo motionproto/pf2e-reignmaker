@@ -15,9 +15,8 @@ import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
 import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
-import { valueBadge, textBadge, diceBadge } from '../../types/OutcomeBadge';
-import { factionService } from '../../services/factions';
-import { adjustAttitudeBySteps } from '../../utils/faction-attitude-adjuster';
+import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
+import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
 
 export const inquisitionPipeline: CheckPipeline = {
   id: 'inquisition',
@@ -47,19 +46,15 @@ export const inquisitionPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
           ],
           success: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
           ],
           failure: [
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
           ],
           criticalFailure: [
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
           ]
         }
@@ -111,8 +106,7 @@ export const inquisitionPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive')
           ],
           success: [
             diceBadge('Imprison {{value}} dissidents', 'fas fa-user-lock', '1d3', 'positive'),
@@ -186,6 +180,13 @@ export const inquisitionPipeline: CheckPipeline = {
 
       // Calculate modifiers based on approach
       let modifiers: any[] = [];
+      
+      const commandContext: GameCommandContext = {
+        actionId: 'inquisition',
+        outcome: ctx.outcome,
+        kingdom: ctx.kingdom,
+        metadata: ctx.metadata || {}
+      };
 
       if (approach === 'virtuous') {
         // Protect the Accused (Virtuous)
@@ -194,18 +195,95 @@ export const inquisitionPipeline: CheckPipeline = {
             { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
             { type: 'dice', resource: 'unrest', formula: '-1d3', negative: true, duration: 'immediate' }
           ];
+          
+          // Adjust 1 random faction +1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, factionId: 'random' },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFaction = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              // Remove generic badge and add specific one
+              const filteredBadges = outcomeBadges.filter(b => !b.template?.match(/^Adjust \d+ faction [+-]\d+$/));
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...filteredBadges, ...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              const filteredBadges = outcomeBadges.filter(b => !b.template?.match(/^Adjust \d+ faction [+-]\d+$/));
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...filteredBadges, factionCommand.outcomeBadge);
+            }
+          }
         } else if (outcome === 'success') {
           modifiers = [
             { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
           ];
+          
+          // Adjust 1 random faction +1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, factionId: 'random' },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFaction = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              const filteredBadges = outcomeBadges.filter(b => !b.template?.match(/^Adjust \d+ faction [+-]\d+$/));
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...filteredBadges, ...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              const filteredBadges = outcomeBadges.filter(b => !b.template?.match(/^Adjust \d+ faction [+-]\d+$/));
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...filteredBadges, factionCommand.outcomeBadge);
+            }
+          }
         } else if (outcome === 'failure') {
           modifiers = [
             { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
           ];
+          
+          // Adjust 1 random faction -1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, factionId: 'random' },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFaction = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              const filteredBadges = outcomeBadges.filter(b => !b.template?.match(/^Adjust \d+ faction [+-]\d+$/));
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...filteredBadges, ...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              const filteredBadges = outcomeBadges.filter(b => !b.template?.match(/^Adjust \d+ faction [+-]\d+$/));
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...filteredBadges, factionCommand.outcomeBadge);
+            }
+          }
         } else if (outcome === 'criticalFailure') {
           modifiers = [
             { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' }
           ];
+          
+          // Adjust 1 random faction -1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, factionId: 'random' },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFaction = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              const filteredBadges = outcomeBadges.filter(b => !b.template?.match(/^Adjust \d+ faction [+-]\d+$/));
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...filteredBadges, ...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              const filteredBadges = outcomeBadges.filter(b => !b.template?.match(/^Adjust \d+ faction [+-]\d+$/));
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...filteredBadges, factionCommand.outcomeBadge);
+            }
+          }
         }
       } else if (approach === 'practical') {
         // Stay Neutral (Practical)
@@ -257,6 +335,25 @@ export const inquisitionPipeline: CheckPipeline = {
               outcomeBadges.push(...imprisonCommand.outcomeBadges);
             } else if (imprisonCommand.outcomeBadge) {
               outcomeBadges.push(imprisonCommand.outcomeBadge);
+            }
+          }
+          
+          // Adjust 1 random faction +1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, factionId: 'random' },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFaction = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              const filteredBadges = outcomeBadges.filter(b => !b.template?.match(/^Adjust \d+ faction [+-]\d+$/));
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...filteredBadges, ...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              const filteredBadges = outcomeBadges.filter(b => !b.template?.match(/^Adjust \d+ faction [+-]\d+$/));
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...filteredBadges, factionCommand.outcomeBadge);
             }
           }
         } else if (outcome === 'success') {
@@ -320,32 +417,23 @@ export const inquisitionPipeline: CheckPipeline = {
               outcomeBadges.push(...filteredBadges, ...imprisonCommand.outcomeBadges);
             }
           }
+          
           // Adjust 1 random faction -1
-          const eligibleFactions = (kingdom.factions || []).filter((f: any) =>
-            f.attitude && f.attitude !== 'Hostile'
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, factionId: 'random' },
+            commandContext
           );
-          if (eligibleFactions.length > 0) {
-            const randomFaction = eligibleFactions[Math.floor(Math.random() * eligibleFactions.length)];
-            const newAttitude = adjustAttitudeBySteps(randomFaction.attitude, -1);
-            ctx.metadata._factionAdjustment = {
-              factionId: randomFaction.id,
-              factionName: randomFaction.name,
-              oldAttitude: randomFaction.attitude,
-              newAttitude: newAttitude,
-              steps: -1
-            };
-            if (newAttitude) {
-              const specificBadge = textBadge(
-                `Relations with ${randomFaction.name} worsen: ${randomFaction.attitude} → ${newAttitude}`,
-                'fas fa-handshake-slash',
-                'negative'
-              );
-              
-              // Replace generic badge with specific one
-              const { replaceGenericFactionBadge } = await import('../../utils/badge-helpers');
-              const updatedBadges = replaceGenericFactionBadge(outcomeBadges, specificBadge);
+          if (factionCommand) {
+            ctx.metadata._preparedFaction = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              const filteredBadges = outcomeBadges.filter(b => !b.template?.match(/^Adjust \d+ faction [+-]\d+$/));
               outcomeBadges.length = 0;
-              outcomeBadges.push(...updatedBadges);
+              outcomeBadges.push(...filteredBadges, ...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              const filteredBadges = outcomeBadges.filter(b => !b.template?.match(/^Adjust \d+ faction [+-]\d+$/));
+              outcomeBadges.length = 0;
+              outcomeBadges.push(...filteredBadges, factionCommand.outcomeBadge);
             }
           }
         }
@@ -375,13 +463,10 @@ export const inquisitionPipeline: CheckPipeline = {
       await addImprisonedCommand.commit();
     }
 
-    // Execute faction adjustment (support approach - critical failure)
-    const factionAdjustment = ctx.metadata?._factionAdjustment;
-    if (factionAdjustment?.factionId && factionAdjustment?.newAttitude) {
-      await factionService.adjustAttitude(
-        factionAdjustment.factionId,
-        factionAdjustment.steps
-      );
+    // Execute faction adjustment (virtuous/ruthless approaches)
+    const factionCommand = ctx.metadata?._preparedFaction;
+    if (factionCommand?.commit) {
+      await factionCommand.commit();
     }
 
     return { success: true };

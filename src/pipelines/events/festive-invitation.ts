@@ -43,19 +43,15 @@ export const festiveInvitationPipeline: CheckPipeline = {
         outcomeBadges: {
           criticalSuccess: [
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
           ],
           success: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
           ],
           failure: [
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ],
           criticalFailure: [
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
             valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ]
@@ -76,22 +72,17 @@ export const festiveInvitationPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '2d4', 'positive'),
             diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')
           ],
           success: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             diceBadge('Gain {{value}} random resource', 'fas fa-box', '1d3', 'positive')
           ],
           failure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative'),
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+            diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
           ]
         }
       },
@@ -191,7 +182,7 @@ export const festiveInvitationPipeline: CheckPipeline = {
         if (outcome === 'criticalSuccess') {
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: 1, count: 2 },
+            { type: 'adjustFactionAttitude', steps: 1, count: 2 },
             commandContext
           );
           if (factionCommand) {
@@ -205,7 +196,7 @@ export const festiveInvitationPipeline: CheckPipeline = {
         } else if (outcome === 'success') {
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: 1, count: 1 },
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
             commandContext
           );
           if (factionCommand) {
@@ -219,7 +210,7 @@ export const festiveInvitationPipeline: CheckPipeline = {
         } else if (outcome === 'failure') {
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: -1, count: 1 },
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
             commandContext
           );
           if (factionCommand) {
@@ -233,7 +224,7 @@ export const festiveInvitationPipeline: CheckPipeline = {
         } else if (outcome === 'criticalFailure') {
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: -1, count: 1 },
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
             commandContext
           );
           if (factionCommand) {
@@ -249,7 +240,7 @@ export const festiveInvitationPipeline: CheckPipeline = {
         if (outcome === 'criticalSuccess') {
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: 1, count: 2 },
+            { type: 'adjustFactionAttitude', steps: 1, count: 2 },
             commandContext
           );
           if (factionCommand) {
@@ -263,7 +254,7 @@ export const festiveInvitationPipeline: CheckPipeline = {
         } else if (outcome === 'success') {
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: 1, count: 1 },
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
             commandContext
           );
           if (factionCommand) {
@@ -277,7 +268,7 @@ export const festiveInvitationPipeline: CheckPipeline = {
         } else if (outcome === 'failure') {
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: -1, count: 1 },
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
             commandContext
           );
           if (factionCommand) {
@@ -291,7 +282,7 @@ export const festiveInvitationPipeline: CheckPipeline = {
         } else if (outcome === 'criticalFailure') {
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: -1, count: 1 },
+            { type: 'adjustFactionAttitude', steps: -1, count: 2 },
             commandContext
           );
           if (factionCommand) {
@@ -359,7 +350,7 @@ export const festiveInvitationPipeline: CheckPipeline = {
         if (outcome === 'criticalSuccess') {
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: -1, count: 1 },
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
             commandContext
           );
           if (factionCommand) {
@@ -374,7 +365,7 @@ export const festiveInvitationPipeline: CheckPipeline = {
         } else if (outcome === 'success') {
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: -1, count: 1 },
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
             commandContext
           );
           if (factionCommand) {

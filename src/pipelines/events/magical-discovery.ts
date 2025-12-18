@@ -45,8 +45,6 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
           ],
           success: [
@@ -56,8 +54,6 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
             valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
           ],
           criticalFailure: [
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
           ]
         }
@@ -78,19 +74,15 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
         outcomeBadges: {
           criticalSuccess: [
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3+1', 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           failure: [
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ],
           criticalFailure: [
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')
           ]
@@ -187,20 +179,62 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
 
       if (approach === 'virtuous') {
         if (outcome === 'criticalSuccess') {
-          const factionHandler = new AdjustFactionHandler();
-          const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: 1, count: 1 },
+          const factionHandler1 = new AdjustFactionHandler();
+          const factionCommand1 = await factionHandler1.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
             commandContext
           );
-          if (factionCommand) {
-            ctx.metadata._preparedFactionAdjust = factionCommand;
-            if (factionCommand.outcomeBadges) {
-              outcomeBadges.push(...factionCommand.outcomeBadges);
-            } else if (factionCommand.outcomeBadge) {
-              outcomeBadges.push(factionCommand.outcomeBadge);
+          if (factionCommand1) {
+            ctx.metadata._preparedFactionVirtuousCS1 = factionCommand1;
+            if (factionCommand1.outcomeBadges) {
+              outcomeBadges.push(...factionCommand1.outcomeBadges);
+            } else if (factionCommand1.outcomeBadge) {
+              outcomeBadges.push(factionCommand1.outcomeBadge);
+            }
+          }
+
+          const factionHandler2 = new AdjustFactionHandler();
+          const factionCommand2 = await factionHandler2.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand2) {
+            ctx.metadata._preparedFactionVirtuousCS2 = factionCommand2;
+            if (factionCommand2.outcomeBadges) {
+              outcomeBadges.push(...factionCommand2.outcomeBadges);
+            } else if (factionCommand2.outcomeBadge) {
+              outcomeBadges.push(factionCommand2.outcomeBadge);
             }
           }
         } else if (outcome === 'criticalFailure') {
+          const factionHandler1 = new AdjustFactionHandler();
+          const factionCommand1 = await factionHandler1.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand1) {
+            ctx.metadata._preparedFactionVirtuousCF1 = factionCommand1;
+            if (factionCommand1.outcomeBadges) {
+              outcomeBadges.push(...factionCommand1.outcomeBadges);
+            } else if (factionCommand1.outcomeBadge) {
+              outcomeBadges.push(factionCommand1.outcomeBadge);
+            }
+          }
+
+          const factionHandler2 = new AdjustFactionHandler();
+          const factionCommand2 = await factionHandler2.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand2) {
+            ctx.metadata._preparedFactionVirtuousCF2 = factionCommand2;
+            if (factionCommand2.outcomeBadges) {
+              outcomeBadges.push(...factionCommand2.outcomeBadges);
+            } else if (factionCommand2.outcomeBadge) {
+              outcomeBadges.push(factionCommand2.outcomeBadge);
+            }
+          }
+
           const damageHandler = new DamageStructureHandler();
           const damageCommand = await damageHandler.prepare(
             { type: 'damageStructure', count: 1 },
@@ -218,16 +252,42 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
       } else if (approach === 'practical') {
         if (outcome === 'criticalSuccess') {
           ctx.metadata._ongoingResearch = { formula: '2d3', duration: 2 };
-        }
-      } else if (approach === 'ruthless') {
-        if (outcome === 'failure') {
+
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: -1, count: 1 },
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
             commandContext
           );
           if (factionCommand) {
-            ctx.metadata._preparedFactionAdjust = factionCommand;
+            ctx.metadata._preparedFactionPracticalCS = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'success') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionPracticalS = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'failure') {
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionPracticalF = factionCommand;
             if (factionCommand.outcomeBadges) {
               outcomeBadges.push(...factionCommand.outcomeBadges);
             } else if (factionCommand.outcomeBadge) {
@@ -237,15 +297,31 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
         } else if (outcome === 'criticalFailure') {
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: -1, count: 1 },
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
             commandContext
           );
           if (factionCommand) {
-            ctx.metadata._preparedFactionAdjust = factionCommand;
+            ctx.metadata._preparedFactionPracticalCF = factionCommand;
             if (factionCommand.outcomeBadges) {
               outcomeBadges.push(...factionCommand.outcomeBadges);
             } else if (factionCommand.outcomeBadge) {
               outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        }
+      } else if (approach === 'ruthless') {
+        if (outcome === 'criticalFailure') {
+          const damageHandler = new DamageStructureHandler();
+          const damageCommand = await damageHandler.prepare(
+            { type: 'damageStructure', count: 1 },
+            commandContext
+          );
+          if (damageCommand) {
+            ctx.metadata._preparedDamage = damageCommand;
+            if (damageCommand.outcomeBadges) {
+              outcomeBadges.push(...damageCommand.outcomeBadges);
+            } else if (damageCommand.outcomeBadge) {
+              outcomeBadges.push(damageCommand.outcomeBadge);
             }
           }
         }
@@ -261,9 +337,22 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
     const kingdom = get(kingdomData);
     const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
 
-    const factionCommand = ctx.metadata?._preparedFactionAdjust;
-    if (factionCommand?.commit) {
-      await factionCommand.commit();
+    // Commit all prepared faction commands
+    const factionCommands = [
+      ctx.metadata?._preparedFactionVirtuousCS1,
+      ctx.metadata?._preparedFactionVirtuousCS2,
+      ctx.metadata?._preparedFactionVirtuousCF1,
+      ctx.metadata?._preparedFactionVirtuousCF2,
+      ctx.metadata?._preparedFactionPracticalCS,
+      ctx.metadata?._preparedFactionPracticalS,
+      ctx.metadata?._preparedFactionPracticalF,
+      ctx.metadata?._preparedFactionPracticalCF
+    ];
+
+    for (const factionCommand of factionCommands) {
+      if (factionCommand?.commit) {
+        await factionCommand.commit();
+      }
     }
 
     const damageCommand = ctx.metadata?._preparedDamage;

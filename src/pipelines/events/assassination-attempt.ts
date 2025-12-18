@@ -12,8 +12,9 @@
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
+import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
-import { valueBadge, textBadge, diceBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
 
 export const assassinationAttemptPipeline: CheckPipeline = {
   id: 'assassination-attempt',
@@ -44,7 +45,6 @@ export const assassinationAttemptPipeline: CheckPipeline = {
         outcomeBadges: {
           criticalSuccess: [
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
           ],
           success: [
@@ -55,8 +55,7 @@ export const assassinationAttemptPipeline: CheckPipeline = {
             valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
           ],
           criticalFailure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            textBadge('Lose 1 kingdom action', 'fas fa-minus-circle', 'negative')
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ]
         }
       },
@@ -86,8 +85,7 @@ export const assassinationAttemptPipeline: CheckPipeline = {
             valueBadge('{{value}} innocents harmed', 'fas fa-user-injured', 1, 'negative')
           ],
           criticalFailure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            textBadge('Lose 1 kingdom action', 'fas fa-minus-circle', 'negative')
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ]
         }
       },
@@ -116,7 +114,6 @@ export const assassinationAttemptPipeline: CheckPipeline = {
             diceBadge('{{value}} innocents harmed', 'fas fa-user-injured', '1d3', 'negative')
           ],
           criticalFailure: [
-            textBadge('Lose 1 kingdom action', 'fas fa-minus-circle', 'negative'),
             valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ]
         }
@@ -194,6 +191,20 @@ export const assassinationAttemptPipeline: CheckPipeline = {
             { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
             { type: 'dice', resource: 'unrest', formula: '1d3', negative: true, duration: 'immediate' }
           ];
+          // Adjust 1 faction +1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionVirtuous = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
         } else if (outcome === 'success') {
           modifiers = [
             { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
@@ -248,6 +259,21 @@ export const assassinationAttemptPipeline: CheckPipeline = {
             { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
             { type: 'dice', resource: 'gold', formula: '2d3', negative: true, duration: 'immediate' }
           ];
+          // Leader loses action
+          const { SpendPlayerActionHandler } = await import('../../services/gameCommands/handlers/SpendPlayerActionHandler');
+          const actionHandler = new SpendPlayerActionHandler();
+          const actionCommand = await actionHandler.prepare(
+            { type: 'spendPlayerAction', characterSelection: 'random' },
+            commandContext
+          );
+          if (actionCommand) {
+            ctx.metadata._preparedSpendActionPractical = actionCommand;
+            if (actionCommand.outcomeBadges) {
+              outcomeBadges.push(...actionCommand.outcomeBadges);
+            } else if (actionCommand.outcomeBadge) {
+              outcomeBadges.push(actionCommand.outcomeBadge);
+            }
+          }
         }
       } else if (approach === 'ruthless') {
         // Purge Conspirators (Ruthless)
@@ -328,6 +354,21 @@ export const assassinationAttemptPipeline: CheckPipeline = {
               outcomeBadges.push(...filteredBadges, ...imprisonCommand.outcomeBadges);
             }
           }
+          // Leader loses action
+          const { SpendPlayerActionHandler } = await import('../../services/gameCommands/handlers/SpendPlayerActionHandler');
+          const actionHandler = new SpendPlayerActionHandler();
+          const actionCommand = await actionHandler.prepare(
+            { type: 'spendPlayerAction', characterSelection: 'random' },
+            commandContext
+          );
+          if (actionCommand) {
+            ctx.metadata._preparedSpendActionRuthless = actionCommand;
+            if (actionCommand.outcomeBadges) {
+              outcomeBadges.push(...actionCommand.outcomeBadges);
+            } else if (actionCommand.outcomeBadge) {
+              outcomeBadges.push(actionCommand.outcomeBadge);
+            }
+          }
         }
       }
 
@@ -350,8 +391,26 @@ export const assassinationAttemptPipeline: CheckPipeline = {
     const outcome = ctx.outcome;
 
     // Execute game commands based on approach and outcome
+
+    // Virtuous CS: Faction adjustment
+    if (approach === 'virtuous' && outcome === 'criticalSuccess') {
+      const factionCommand = ctx.metadata?._preparedFactionVirtuous;
+      if (factionCommand?.commit) {
+        await factionCommand.commit();
+      }
+    }
+
+    // Virtuous CF: Spend action
     if (approach === 'virtuous' && outcome === 'criticalFailure') {
       const actionCommand = ctx.metadata?._preparedSpendAction;
+      if (actionCommand?.commit) {
+        await actionCommand.commit();
+      }
+    }
+
+    // Practical CF: Spend action
+    if (approach === 'practical' && outcome === 'criticalFailure') {
+      const actionCommand = ctx.metadata?._preparedSpendActionPractical;
       if (actionCommand?.commit) {
         await actionCommand.commit();
       }
@@ -370,6 +429,14 @@ export const assassinationAttemptPipeline: CheckPipeline = {
       const addImprisonedCommand = ctx.metadata?._preparedAddImprisoned;
       if (addImprisonedCommand?.commit) {
         await addImprisonedCommand.commit();
+      }
+    }
+
+    // Ruthless CF: Spend action
+    if (approach === 'ruthless' && outcome === 'criticalFailure') {
+      const actionCommand = ctx.metadata?._preparedSpendActionRuthless;
+      if (actionCommand?.commit) {
+        await actionCommand.commit();
       }
     }
 

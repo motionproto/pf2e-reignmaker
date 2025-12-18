@@ -16,6 +16,7 @@ import type { GameCommandContext } from '../../services/gameCommands/GameCommand
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
 import { AddImprisonedHandler } from '../../services/gameCommands/handlers/AddImprisonedHandler';
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
+import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 
 export const notoriousHeistPipeline: CheckPipeline = {
@@ -79,7 +80,6 @@ export const notoriousHeistPipeline: CheckPipeline = {
         outcomeBadges: {
           criticalSuccess: [
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           success: [
@@ -92,8 +92,7 @@ export const notoriousHeistPipeline: CheckPipeline = {
           ],
           criticalFailure: [
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative'),
-            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative'),
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+            diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
           ]
         }
       },
@@ -194,7 +193,37 @@ export const notoriousHeistPipeline: CheckPipeline = {
         // All outcomes handled by standard badges (gold, fame)
       } else if (approach === 'practical') {
         // Increase Treasury Security (Practical)
-        // All outcomes handled by standard badges (unrest, gold)
+        if (outcome === 'criticalSuccess') {
+          // Faction adjustment +1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionPositive = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'criticalFailure') {
+          // Faction adjustment -1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionNegative = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        }
       } else if (approach === 'ruthless') {
         // Terrorize Underworld (Ruthless)
         if (outcome === 'criticalSuccess') {
@@ -269,6 +298,17 @@ export const notoriousHeistPipeline: CheckPipeline = {
     // NOTE: Standard modifiers (unrest, gold, fame) are applied automatically by
     // ResolutionDataBuilder + GameCommandsService via outcomeBadges.
     // This execute() only handles special game commands.
+
+    // Execute faction adjustments
+    const factionPositiveCommand = ctx.metadata?._preparedFactionPositive;
+    if (factionPositiveCommand?.commit) {
+      await factionPositiveCommand.commit();
+    }
+
+    const factionNegativeCommand = ctx.metadata?._preparedFactionNegative;
+    if (factionNegativeCommand?.commit) {
+      await factionNegativeCommand.commit();
+    }
 
     // Execute imprisonment (ruthless CS/S - converts unrest to imprisoned)
     const imprisonCommand = ctx.metadata?._preparedImprison;

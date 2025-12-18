@@ -13,6 +13,8 @@
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
+import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
+import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 import WorksiteTypeSelector from '../../services/hex-selector/WorksiteTypeSelector.svelte';
 import {
@@ -116,18 +118,15 @@ export const landRushPipeline: CheckPipeline = {
         outcomeBadges: {
           criticalSuccess: [
             textBadge('Claim 1 hex', 'fas fa-map', 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           success: [
             textBadge('Claim 1 hex', 'fas fa-map', 'positive')
           ],
           failure: [
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ],
           criticalFailure: [
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ]
@@ -186,6 +185,13 @@ export const landRushPipeline: CheckPipeline = {
       const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
       const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
 
+      const commandContext: GameCommandContext = {
+        actionId: 'land-rush',
+        outcome: ctx.outcome,
+        kingdom: ctx.kingdom,
+        metadata: ctx.metadata || {}
+      };
+
       if (approach === 'virtuous') {
         // Free Settlement (Virtuous)
         if (outcome === 'criticalSuccess') {
@@ -208,11 +214,57 @@ export const landRushPipeline: CheckPipeline = {
         // Other outcomes handled by standard badges
       } else if (approach === 'ruthless') {
         // Auction Land (Ruthless)
-        if (outcome === 'criticalSuccess' || outcome === 'success') {
+        if (outcome === 'criticalSuccess') {
+          // +Gold, gain new worksite, adjust 1 faction +1
+          ctx.metadata._gainWorksite = true;
+
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, factionId: 'random' },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionCS = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'success') {
           // +Gold, gain new worksite
           ctx.metadata._gainWorksite = true;
+        } else if (outcome === 'failure') {
+          // Adjust 1 faction -1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, factionId: 'random' },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionF = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'criticalFailure') {
+          // Adjust 1 faction -1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, factionId: 'random' },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionCF = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
         }
-        // Other outcomes handled by standard badges
       }
 
       return { resources: [], outcomeBadges };
@@ -308,6 +360,22 @@ export const landRushPipeline: CheckPipeline = {
     if (ctx.metadata?._loseRandomResource) {
       // TODO: Implement random resource loss
       console.log('Land Rush: Random resource loss needs implementation');
+    }
+
+    // Execute faction adjustments (ruthless approach)
+    const factionCommandCS = ctx.metadata?._preparedFactionCS;
+    if (factionCommandCS?.commit) {
+      await factionCommandCS.commit();
+    }
+
+    const factionCommandF = ctx.metadata?._preparedFactionF;
+    if (factionCommandF?.commit) {
+      await factionCommandF.commit();
+    }
+
+    const factionCommandCF = ctx.metadata?._preparedFactionCF;
+    if (factionCommandCF?.commit) {
+      await factionCommandCF.commit();
     }
 
     return { success: true };

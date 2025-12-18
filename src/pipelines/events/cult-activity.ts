@@ -48,7 +48,6 @@ export const cultActivityPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             diceBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', '1d4', 'positive')
           ],
           success: [
@@ -58,7 +57,6 @@ export const cultActivityPipeline: CheckPipeline = {
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
           ],
           criticalFailure: [
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative'),
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ]
@@ -79,15 +77,12 @@ export const cultActivityPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             textBadge('Random army becomes Well Trained (+1 saves)', 'fas fa-star', 'positive')
           ],
           success: [
-            valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+            valueBadge('Gain {{value}} Gold', 'fas fa-coins', 1, 'positive')
           ],
           failure: [
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             valueBadge('Lose {{value}} Gold', 'fas fa-coins', 1, 'negative')
           ],
           criticalFailure: [
@@ -181,14 +176,14 @@ export const cultActivityPipeline: CheckPipeline = {
       // Handle faction adjustments and special effects
       if (approach === 'virtuous') {
         if (outcome === 'criticalSuccess') {
-          // Adjust 2 factions +1
+          // Adjust 1 faction +1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFaction', adjustment: 1, count: 2 },
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
             commandContext
           );
           if (factionCommand) {
-            ctx.metadata._preparedFaction = factionCommand;
+            ctx.metadata._preparedFactionVirtuous = factionCommand;
             if (factionCommand.outcomeBadges) {
               outcomeBadges.push(...factionCommand.outcomeBadges);
             } else if (factionCommand.outcomeBadge) {
@@ -196,20 +191,7 @@ export const cultActivityPipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'success') {
-          // Adjust 1 faction +1
-          const factionHandler = new AdjustFactionHandler();
-          const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFaction', adjustment: 1, count: 1 },
-            commandContext
-          );
-          if (factionCommand) {
-            ctx.metadata._preparedFaction = factionCommand;
-            if (factionCommand.outcomeBadges) {
-              outcomeBadges.push(...factionCommand.outcomeBadges);
-            } else if (factionCommand.outcomeBadge) {
-              outcomeBadges.push(factionCommand.outcomeBadge);
-            }
-          }
+          // Adjust 1 faction +1 (removed - not in original outcomeBadges)
         } else if (outcome === 'criticalFailure') {
           // +1d3 Unrest, damage 1 structure, adjust 1 faction -1
           outcomeBadges.push(diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'));
@@ -230,11 +212,11 @@ export const cultActivityPipeline: CheckPipeline = {
 
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFaction', adjustment: -1, count: 1 },
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
             commandContext
           );
           if (factionCommand) {
-            ctx.metadata._preparedFaction = factionCommand;
+            ctx.metadata._preparedFactionVirtuous = factionCommand;
             if (factionCommand.outcomeBadges) {
               outcomeBadges.push(...factionCommand.outcomeBadges);
             } else if (factionCommand.outcomeBadge) {
@@ -242,10 +224,57 @@ export const cultActivityPipeline: CheckPipeline = {
             }
           }
         }
-      } else if (approach === 'practical' && outcome === 'criticalFailure') {
-        // +1d3 Unrest, ongoing: cult influence (+1 Unrest/turn for 2 turns)
-        outcomeBadges.push(diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'));
-        // Ongoing modifier handled in execute
+      } else if (approach === 'practical') {
+        if (outcome === 'criticalSuccess') {
+          // Adjust 1 faction +1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionPractical = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'success') {
+          // Adjust 1 faction +1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionPractical = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'failure') {
+          // Adjust 1 faction -1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionPractical = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'criticalFailure') {
+          // +1d3 Unrest, ongoing: cult influence (+1 Unrest/turn for 2 turns)
+          outcomeBadges.push(diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'));
+          // Ongoing modifier handled in execute
+        }
       } else if (approach === 'ruthless') {
         if (outcome === 'criticalSuccess') {
           // Imprison 1d3 cultists
@@ -301,11 +330,11 @@ export const cultActivityPipeline: CheckPipeline = {
           
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFaction', adjustment: -1, count: 2 },
+            { type: 'adjustFactionAttitude', steps: -1, count: 2 },
             commandContext
           );
           if (factionCommand) {
-            ctx.metadata._preparedFaction = factionCommand;
+            ctx.metadata._preparedFactionRuthless = factionCommand;
             if (factionCommand.outcomeBadges) {
               outcomeBadges.push(...factionCommand.outcomeBadges);
             } else if (factionCommand.outcomeBadge) {
@@ -336,10 +365,22 @@ export const cultActivityPipeline: CheckPipeline = {
       await damageCommand.commit();
     }
 
-    // Execute faction adjustments
-    const factionCommand = ctx.metadata?._preparedFaction;
-    if (factionCommand?.commit) {
-      await factionCommand.commit();
+    // Execute faction adjustments (virtuous)
+    const factionVirtuousCommand = ctx.metadata?._preparedFactionVirtuous;
+    if (factionVirtuousCommand?.commit) {
+      await factionVirtuousCommand.commit();
+    }
+
+    // Execute faction adjustments (practical)
+    const factionPracticalCommand = ctx.metadata?._preparedFactionPractical;
+    if (factionPracticalCommand?.commit) {
+      await factionPracticalCommand.commit();
+    }
+
+    // Execute faction adjustments (ruthless)
+    const factionRuthlessCommand = ctx.metadata?._preparedFactionRuthless;
+    if (factionRuthlessCommand?.commit) {
+      await factionRuthlessCommand.commit();
     }
 
     // Execute imprisonment (cultists - CS/S)

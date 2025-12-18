@@ -31,6 +31,9 @@ import { SpawnEnemyArmyHandler } from './handlers/SpawnEnemyArmyHandler';
 import { TransferSettlementHandler } from './handlers/TransferSettlementHandler';
 import { DefectArmiesHandler } from './handlers/DefectArmiesHandler';
 import { ConvertUnrestToImprisonedHandler } from './handlers/ConvertUnrestToImprisonedHandler';
+import { RandomArmyEquipmentHandler } from './handlers/RandomArmyEquipmentHandler';
+import { BuildKnowledgeStructureHandler } from './handlers/BuildKnowledgeStructureHandler';
+import { AddImprisonedHandler } from './handlers/AddImprisonedHandler';
 
 /**
  * Registry manages all game command handlers
@@ -57,7 +60,10 @@ export class GameCommandHandlerRegistry {
     new SpawnEnemyArmyHandler(),
     new TransferSettlementHandler(),
     new DefectArmiesHandler(),
-    new ConvertUnrestToImprisonedHandler()
+    new ConvertUnrestToImprisonedHandler(),
+    new RandomArmyEquipmentHandler(),
+    new BuildKnowledgeStructureHandler(),
+    new AddImprisonedHandler()
   ];
   
   /**
@@ -176,7 +182,7 @@ let registryInstance: GameCommandHandlerRegistry | null = null;
 export function getGameCommandRegistry(): GameCommandHandlerRegistry {
   if (!registryInstance) {
     registryInstance = new GameCommandHandlerRegistry();
-    console.log(`[GameCommandHandlerRegistry] Registry initialized with 19 handlers`);
+    console.log(`[GameCommandHandlerRegistry] Registry initialized with 22 handlers`);
   }
   return registryInstance;
 }

@@ -14,7 +14,7 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
-import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
 
 export const foodSurplusPipeline: CheckPipeline = {
   id: 'food-surplus',
@@ -44,11 +44,9 @@ export const foodSurplusPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
           ],
           success: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             valueBadge('Gain {{value}} Food', 'fas fa-drumstick-bite', 1, 'positive')
           ],
           failure: [
@@ -56,8 +54,7 @@ export const foodSurplusPipeline: CheckPipeline = {
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d2', 'negative')
           ],
           criticalFailure: [
-            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '2d4', 'negative'),
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+            diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '2d4', 'negative')
           ]
         }
       },
@@ -118,7 +115,6 @@ export const foodSurplusPipeline: CheckPipeline = {
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
           ],
           criticalFailure: [
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d4', 'negative')
           ]
         }
@@ -186,11 +182,52 @@ export const foodSurplusPipeline: CheckPipeline = {
       if (approach === 'virtuous') {
         // Distribute Freely (Virtuous)
         if (outcome === 'criticalSuccess') {
-          // +1 Fame, -1d3 Unrest, 1 settlement gains a structure
-          // Structure gain handled in execute()
+          // +1 Fame, adjust 1 faction +1, 1 settlement gains a structure
           ctx.metadata._gainStructure = true;
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionVirtuous = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'success') {
+          // +1 Food, adjust 1 faction +1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionVirtuous = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'criticalFailure') {
+          // Lose food, adjust 1 faction -1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionVirtuous = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
         }
-        // Other outcomes handled by standard badges
       } else if (approach === 'practical') {
         // Store Reserves (Practical)
         // All outcomes handled by standard badges
@@ -200,7 +237,7 @@ export const foodSurplusPipeline: CheckPipeline = {
           // +2d3 Gold, adjust 1 faction +1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: 1, count: 1 },
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
             commandContext
           );
           if (factionCommand) {
@@ -215,7 +252,7 @@ export const foodSurplusPipeline: CheckPipeline = {
           // +1d3 Unrest, -1 Fame, adjust 1 faction -1
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: -1, count: 1 },
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
             commandContext
           );
           if (factionCommand) {
@@ -242,6 +279,12 @@ export const foodSurplusPipeline: CheckPipeline = {
     const { kingdomData } = await import('../../stores/KingdomStore');
     const kingdom = get(kingdomData);
     const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
+
+    // Execute faction adjustments (virtuous approach)
+    const factionCommandVirtuous = ctx.metadata?._preparedFactionVirtuous;
+    if (factionCommandVirtuous?.commit) {
+      await factionCommandVirtuous.commit();
+    }
 
     // Execute faction adjustments (ruthless approach)
     const factionCommand = ctx.metadata?._preparedFactionAdjust;

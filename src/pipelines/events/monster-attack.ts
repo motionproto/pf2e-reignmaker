@@ -14,6 +14,7 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { DamageStructureHandler } from '../../services/gameCommands/handlers/DamageStructureHandler';
+import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 import { updateKingdom } from '../../stores/KingdomStore';
 
@@ -45,8 +46,7 @@ export const monsterAttackPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
           ],
           success: [
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
@@ -177,6 +177,23 @@ export const monsterAttackPipeline: CheckPipeline = {
 
       const PLAYER_KINGDOM = 'player';
 
+      // Handle faction adjustment for virtuous critical success
+      if (approach === 'virtuous' && outcome === 'criticalSuccess') {
+        const factionHandler = new AdjustFactionHandler();
+        const factionCommand = await factionHandler.prepare(
+          { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+          commandContext
+        );
+        if (factionCommand) {
+          ctx.metadata._preparedFaction = factionCommand;
+          if (factionCommand.outcomeBadges) {
+            outcomeBadges.push(...factionCommand.outcomeBadges);
+          } else if (factionCommand.outcomeBadge) {
+            outcomeBadges.push(factionCommand.outcomeBadge);
+          }
+        }
+      }
+
       // Handle structure damage for failure outcomes
       if (approach === 'virtuous' && outcome === 'criticalFailure') {
         // +1d3 Unrest, damage 1 structure
@@ -299,6 +316,12 @@ export const monsterAttackPipeline: CheckPipeline = {
     const kingdom = get(kingdomData);
     const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
     const outcome = ctx.outcome;
+
+    // Execute faction adjustment
+    const factionCommand = ctx.metadata?._preparedFaction;
+    if (factionCommand?.commit) {
+      await factionCommand.commit();
+    }
 
     // Execute structure damage
     const damageCommand = ctx.metadata?._preparedDamage;

@@ -12,6 +12,8 @@
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
+import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
+import { IncreaseSettlementLevelHandler } from '../../services/gameCommands/handlers/IncreaseSettlementLevelHandler';
 import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 import { updateKingdom } from '../../stores/KingdomStore';
 
@@ -43,11 +45,9 @@ export const boomtownPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('1 settlement gains level', 'fas fa-city', 'positive'),
             textBadge('Gain 1 structure', 'fas fa-building', 'positive')
           ],
           success: [
-            textBadge('1 settlement gains level', 'fas fa-city', 'positive')
           ],
           failure: [
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '2d3', 'negative')
@@ -175,8 +175,30 @@ export const boomtownPipeline: CheckPipeline = {
       const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
       const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
 
+      const commandContext: GameCommandContext = {
+        actionId: 'boomtown',
+        outcome: ctx.outcome,
+        kingdom: ctx.kingdom,
+        metadata: ctx.metadata || {}
+      };
+
       if (approach === 'virtuous') {
         // Fair Housing (Virtuous)
+        if (outcome === 'criticalSuccess' || outcome === 'success') {
+          const increaseHandler = new IncreaseSettlementLevelHandler();
+          const increaseCommand = await increaseHandler.prepare(
+            { type: 'increaseSettlementLevel', increase: 1 },
+            commandContext
+          );
+          if (increaseCommand) {
+            ctx.metadata._preparedSettlementIncrease = increaseCommand;
+            if (increaseCommand.outcomeBadges) {
+              outcomeBadges.push(...increaseCommand.outcomeBadges);
+            } else if (increaseCommand.outcomeBadge) {
+              outcomeBadges.push(increaseCommand.outcomeBadge);
+            }
+          }
+        }
         if (outcome === 'criticalSuccess') {
           // +1 Fame, -1d3 Unrest, gain a new structure
           ctx.metadata._gainStructure = true;
@@ -213,6 +235,12 @@ export const boomtownPipeline: CheckPipeline = {
     const kingdom = get(kingdomData);
     const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
 
+    // Commit settlement level increase
+    const settlementCommand = ctx.metadata?._preparedSettlementIncrease;
+    if (settlementCommand?.commit) {
+      await settlementCommand.commit();
+    }
+
     // Gain random structure (virtuous CS, practical CS)
     if (ctx.metadata?._gainStructure) {
       // TODO: Implement structure gain logic
@@ -222,7 +250,7 @@ export const boomtownPipeline: CheckPipeline = {
     // Add ongoing gold modifier (ruthless CS)
     if (ctx.metadata?._ongoingGold && approach === 'ruthless') {
       const ongoing = ctx.metadata._ongoingGold;
-      
+
       await updateKingdom(k => {
         if (!k.activeModifiers) k.activeModifiers = [];
         k.activeModifiers.push({

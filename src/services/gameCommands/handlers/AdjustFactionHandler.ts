@@ -1,17 +1,12 @@
 /**
  * AdjustFaction Command Handler
  *
- * Handles faction attitude adjustments for actions that target a specific faction
- * (diplomatic missions, request aid, etc.)
+ * Handles faction attitude adjustments for both actions and events.
  *
- * NOTE: For events that adjust a random faction, use the pattern in preview.calculate():
- *   1. Select random eligible faction
- *   2. Use adjustAttitudeBySteps() to calculate new attitude
- *   3. Store in ctx.metadata._factionAdjustment
- *   4. Create textBadge with faction name and attitude change
- *   5. In execute(), call factionService.adjustAttitude()
- *
- * See diplomaticMission.ts or feud.ts for examples.
+ * Usage:
+ * - For actions with specific faction: Pass factionId in command or context
+ * - For events with random faction: Pass factionId: 'random' in command
+ * - For user selection: Pass factionId: null in command
  */
 
 import { BaseGameCommandHandler } from '../GameCommandHandler';
@@ -28,14 +23,10 @@ export class AdjustFactionHandler extends BaseGameCommandHandler {
     const { adjustFactionAttitude } = await import('../../commands/factions/attitudeCommands');
 
     // Get factionId from command OR from explicit context OR from metadata
-    const factionId = command.factionId ||
-                      ctx.pendingState?.factionId ||
-                      ctx.metadata?.factionId;
-
-    if (!factionId) {
-      console.error('[AdjustFactionHandler] No faction selected for attitude adjustment');
-      throw new Error('Faction attitude adjustment requires faction selection - ensure faction context is provided');
-    }
+    // Default to 'random' if not specified (for events)
+    const factionId = command.factionId !== undefined 
+      ? command.factionId 
+      : (ctx.pendingState?.factionId || ctx.metadata?.factionId || 'random');
 
     const steps = command.steps || -1;
 

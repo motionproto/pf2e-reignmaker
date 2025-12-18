@@ -12,6 +12,7 @@
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
+import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { IncreaseSettlementLevelHandler } from '../../services/gameCommands/handlers/IncreaseSettlementLevelHandler';
 import { valueBadge, textBadge, diceBadge } from '../../types/OutcomeBadge';
 import WorksiteTypeSelector from '../../services/hex-selector/WorksiteTypeSelector.svelte';
@@ -52,19 +53,15 @@ export const immigrationPipeline: CheckPipeline = {
         outcomeBadges: {
           criticalSuccess: [
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
-            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
           ],
           success: [
-            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+            diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           failure: [
-            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative'),
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+            valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ],
           criticalFailure: [
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
             diceBadge('Lose {{value}} Food', 'fas fa-drumstick-bite', '1d3+1', 'negative')
           ]
@@ -219,20 +216,80 @@ export const immigrationPipeline: CheckPipeline = {
             { type: 'static', resource: 'fame', value: 1, duration: 'immediate' },
             { type: 'dice', resource: 'unrest', formula: '1d3', negative: true, duration: 'immediate' }
           ];
+
+          // Faction adjustment +1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionVirtuousCS = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
         } else if (outcome === 'success') {
           modifiers = [
             { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
           ];
+
+          // Faction adjustment +1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: 1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionVirtuousSuccess = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
         } else if (outcome === 'failure') {
           modifiers = [
             { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' },
             { type: 'dice', resource: 'gold', formula: '1d3', negative: true, duration: 'immediate' }
           ];
+
+          // Faction adjustment -1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionVirtuousFailure = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
         } else if (outcome === 'criticalFailure') {
           modifiers = [
             { type: 'dice', resource: 'unrest', formula: '1d3', duration: 'immediate' },
             { type: 'dice', resource: 'gold', formula: '2d3', negative: true, duration: 'immediate' }
           ];
+
+          // Faction adjustment -1
+          const factionHandler = new AdjustFactionHandler();
+          const factionCommand = await factionHandler.prepare(
+            { type: 'adjustFactionAttitude', steps: -1, count: 1 },
+            commandContext
+          );
+          if (factionCommand) {
+            ctx.metadata._preparedFactionVirtuousCF = factionCommand;
+            if (factionCommand.outcomeBadges) {
+              outcomeBadges.push(...factionCommand.outcomeBadges);
+            } else if (factionCommand.outcomeBadge) {
+              outcomeBadges.push(factionCommand.outcomeBadge);
+            }
+          }
         }
       } else if (approach === 'practical') {
         // Controlled Integration (Practical)
@@ -296,35 +353,6 @@ export const immigrationPipeline: CheckPipeline = {
             { type: 'static', resource: 'fame', value: -1, duration: 'immediate' }
           ];
           ctx.metadata._newWorksites = 1;
-          // Adjust 1 random faction -1
-          const { adjustAttitudeBySteps } = await import('../../utils/faction-attitude-adjuster');
-          const eligibleFactions = (kingdom.factions || []).filter((f: any) =>
-            f.attitude && f.attitude !== 'Hostile'
-          );
-          if (eligibleFactions.length > 0) {
-            const randomFaction = eligibleFactions[Math.floor(Math.random() * eligibleFactions.length)];
-            const newAttitude = adjustAttitudeBySteps(randomFaction.attitude, -1);
-            ctx.metadata._factionAdjustment = {
-              factionId: randomFaction.id,
-              factionName: randomFaction.name,
-              oldAttitude: randomFaction.attitude,
-              newAttitude: newAttitude,
-              steps: -1
-            };
-            if (newAttitude) {
-              const specificBadge = {
-                icon: 'fas fa-handshake-slash',
-                template: `Relations with ${randomFaction.name} worsen: ${randomFaction.attitude} → ${newAttitude}`,
-                variant: 'negative'
-              };
-              
-              // Replace generic badge with specific one
-              const { replaceGenericFactionBadge } = await import('../../utils/badge-helpers');
-              const updatedBadges = replaceGenericFactionBadge(outcomeBadges, specificBadge);
-              outcomeBadges.length = 0;
-              outcomeBadges.push(...updatedBadges);
-            }
-          }
         }
       }
 
@@ -410,16 +438,25 @@ export const immigrationPipeline: CheckPipeline = {
       await increaseCommand.commit();
     }
 
-    // Execute faction adjustment for ruthless critical failure
-    if (approach === 'ruthless' && outcome === 'criticalFailure') {
-      const factionAdjustment = ctx.metadata?._factionAdjustment;
-      if (factionAdjustment?.factionId && factionAdjustment?.newAttitude) {
-        const { factionService } = await import('../../services/factions');
-        await factionService.adjustAttitude(
-          factionAdjustment.factionId,
-          factionAdjustment.steps
-        );
-      }
+    // Execute faction adjustments (virtuous approach)
+    const factionVirtuousCS = ctx.metadata?._preparedFactionVirtuousCS;
+    if (factionVirtuousCS?.commit) {
+      await factionVirtuousCS.commit();
+    }
+
+    const factionVirtuousSuccess = ctx.metadata?._preparedFactionVirtuousSuccess;
+    if (factionVirtuousSuccess?.commit) {
+      await factionVirtuousSuccess.commit();
+    }
+
+    const factionVirtuousFailure = ctx.metadata?._preparedFactionVirtuousFailure;
+    if (factionVirtuousFailure?.commit) {
+      await factionVirtuousFailure.commit();
+    }
+
+    const factionVirtuousCF = ctx.metadata?._preparedFactionVirtuousCF;
+    if (factionVirtuousCF?.commit) {
+      await factionVirtuousCF.commit();
     }
 
     // Execute worksite creation from selected hex(es)

@@ -43,7 +43,6 @@ export const pilgrimagePipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
             valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
           ],
@@ -54,7 +53,6 @@ export const pilgrimagePipeline: CheckPipeline = {
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative')
           ],
           criticalFailure: [
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
             valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ]
@@ -119,7 +117,6 @@ export const pilgrimagePipeline: CheckPipeline = {
           ],
           criticalFailure: [
             valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             valueBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', 1, 'negative')
           ]
         }
@@ -186,25 +183,11 @@ export const pilgrimagePipeline: CheckPipeline = {
         if (outcome === 'criticalSuccess') {
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: 1, count: 2 },
+            { type: 'adjustFactionAttitude', steps: 1, factionId: 'random' },
             commandContext
           );
           if (factionCommand) {
-            ctx.metadata._preparedFactionAdjust = factionCommand;
-            if (factionCommand.outcomeBadges) {
-              outcomeBadges.push(...factionCommand.outcomeBadges);
-            } else if (factionCommand.outcomeBadge) {
-              outcomeBadges.push(factionCommand.outcomeBadge);
-            }
-          }
-        } else if (outcome === 'success') {
-          const factionHandler = new AdjustFactionHandler();
-          const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: 1, count: 1 },
-            commandContext
-          );
-          if (factionCommand) {
-            ctx.metadata._preparedFactionAdjust = factionCommand;
+            ctx.metadata._preparedFactionVirtuousCS = factionCommand;
             if (factionCommand.outcomeBadges) {
               outcomeBadges.push(...factionCommand.outcomeBadges);
             } else if (factionCommand.outcomeBadge) {
@@ -248,11 +231,11 @@ export const pilgrimagePipeline: CheckPipeline = {
 
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: -1, count: 1 },
+            { type: 'adjustFactionAttitude', steps: -1, factionId: 'random' },
             commandContext
           );
           if (factionCommand) {
-            ctx.metadata._preparedFactionAdjust = factionCommand;
+            ctx.metadata._preparedFactionPracticalCF = factionCommand;
             if (factionCommand.outcomeBadges) {
               outcomeBadges.push(...factionCommand.outcomeBadges);
             } else if (factionCommand.outcomeBadge) {
@@ -261,21 +244,7 @@ export const pilgrimagePipeline: CheckPipeline = {
           }
         }
       } else if (approach === 'ruthless') {
-        if (outcome === 'criticalSuccess') {
-          const factionHandler = new AdjustFactionHandler();
-          const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: 1, count: 1 },
-            commandContext
-          );
-          if (factionCommand) {
-            ctx.metadata._preparedFactionAdjust = factionCommand;
-            if (factionCommand.outcomeBadges) {
-              outcomeBadges.push(...factionCommand.outcomeBadges);
-            } else if (factionCommand.outcomeBadge) {
-              outcomeBadges.push(factionCommand.outcomeBadge);
-            }
-          }
-        } else if (outcome === 'failure') {
+        if (outcome === 'failure') {
           // Innocents harmed (add imprisoned without reducing unrest)
           const addImprisonedHandler = new AddImprisonedHandler();
           const imprisonCommand = await addImprisonedHandler.prepare(
@@ -294,11 +263,11 @@ export const pilgrimagePipeline: CheckPipeline = {
         } else if (outcome === 'criticalFailure') {
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
-            { type: 'adjustFactionAttitude', amount: -1, count: 2 },
+            { type: 'adjustFactionAttitude', steps: -1, factionId: 'random' },
             commandContext
           );
           if (factionCommand) {
-            ctx.metadata._preparedFactionAdjust = factionCommand;
+            ctx.metadata._preparedFactionRuthlessCF = factionCommand;
             if (factionCommand.outcomeBadges) {
               outcomeBadges.push(...factionCommand.outcomeBadges);
             } else if (factionCommand.outcomeBadge) {
@@ -313,9 +282,20 @@ export const pilgrimagePipeline: CheckPipeline = {
   },
 
   execute: async (ctx) => {
-    const factionCommand = ctx.metadata?._preparedFactionAdjust;
-    if (factionCommand?.commit) {
-      await factionCommand.commit();
+    // Execute faction adjustments
+    const factionVirtuousCS = ctx.metadata?._preparedFactionVirtuousCS;
+    if (factionVirtuousCS?.commit) {
+      await factionVirtuousCS.commit();
+    }
+
+    const factionPracticalCF = ctx.metadata?._preparedFactionPracticalCF;
+    if (factionPracticalCF?.commit) {
+      await factionPracticalCF.commit();
+    }
+
+    const factionRuthlessCF = ctx.metadata?._preparedFactionRuthlessCF;
+    if (factionRuthlessCF?.commit) {
+      await factionRuthlessCF.commit();
     }
 
     // Execute innocent imprisonment (ruthless F - adds imprisoned without reducing unrest)

@@ -14,7 +14,7 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
-import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
+import { valueBadge, diceBadge } from '../../types/OutcomeBadge';
 
 export const visitingCelebrityPipeline: CheckPipeline = {
   id: 'visiting-celebrity',
@@ -42,20 +42,16 @@ export const visitingCelebrityPipeline: CheckPipeline = {
         },
         outcomeBadges: {
           criticalSuccess: [
-            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive'),
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive')
+            valueBadge('Gain {{value}} Fame', 'fas fa-star', 1, 'positive')
           ],
           success: [
-            textBadge('Adjust 1 faction +1', 'fas fa-users', 'positive'),
             diceBadge('Gain {{value}} Gold', 'fas fa-coins', '1d3', 'positive')
           ],
           failure: [
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative'),
             diceBadge('Lose {{value}} Gold', 'fas fa-coins', '1d3', 'negative')
           ],
           criticalFailure: [
-            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative'),
-            textBadge('Adjust 1 faction -1', 'fas fa-users-slash', 'negative')
+            valueBadge('Lose {{value}} Fame', 'fas fa-star', 1, 'negative')
           ]
         }
       },
@@ -174,22 +170,8 @@ export const visitingCelebrityPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'virtuous' && outcome === 'criticalFailure') {
-        const factionHandler = new AdjustFactionHandler();
-        const factionCommand = await factionHandler.prepare(
-          { type: 'adjustFactionAttitude', amount: -1, count: 1 },
-          commandContext
-        );
-        if (factionCommand) {
-          ctx.metadata._preparedFactionAdjust = factionCommand;
-          if (factionCommand.outcomeBadges) {
-            outcomeBadges.push(...factionCommand.outcomeBadges);
-          } else if (factionCommand.outcomeBadge) {
-            outcomeBadges.push(factionCommand.outcomeBadge);
-          }
-        }
-      } else if (approach === 'ruthless') {
-        if (outcome === 'success') {
+      if (approach === 'virtuous') {
+        if (outcome === 'criticalSuccess' || outcome === 'success') {
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
             { type: 'adjustFactionAttitude', amount: 1, count: 1 },
@@ -203,7 +185,7 @@ export const visitingCelebrityPipeline: CheckPipeline = {
               outcomeBadges.push(factionCommand.outcomeBadge);
             }
           }
-        } else if (outcome === 'criticalFailure') {
+        } else if (outcome === 'failure' || outcome === 'criticalFailure') {
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
             { type: 'adjustFactionAttitude', amount: -1, count: 1 },
