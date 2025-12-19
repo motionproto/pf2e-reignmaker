@@ -8,6 +8,7 @@ import { applyActionCost } from '../shared/applyActionCost';
 import { buildRoadsExecution } from '../../execution/territory/buildRoads';
 import { validateRoadHex } from '../shared/roadValidator';
 import { PLAYER_KINGDOM } from '../../types/ownership';
+import { textBadge } from '../../types/OutcomeBadge';
 
 export const buildRoadsPipeline: CheckPipeline = {
   // === BASE DATA ===
@@ -29,21 +30,29 @@ export const buildRoadsPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'Excellent roads are constructed.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Build roads in 2 hexes', 'fa-road', 'positive')
+      ]
     },
     success: {
       description: 'A road is constructed.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Build road in 1 hex', 'fa-road', 'positive')
+      ]
     },
     failure: {
       description: 'Construction fails.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: []
     },
     criticalFailure: {
       description: 'Work crews are lost.',
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-      ]
+      ],
+      outcomeBadges: []
     }
   },
 
@@ -69,12 +78,25 @@ export const buildRoadsPipeline: CheckPipeline = {
 
   preview: {
     calculate: (ctx) => {
+      const outcomeBadges = [];
+      
+      if (ctx.outcome === 'criticalSuccess') {
+        outcomeBadges.push(
+          textBadge('Build roads in 2 hexes', 'fa-road', 'positive')
+        );
+      } else if (ctx.outcome === 'success') {
+        outcomeBadges.push(
+          textBadge('Build road in 1 hex', 'fa-road', 'positive')
+        );
+      }
+      // Failure and criticalFailure already have modifiers that convert to badges
+      
       return {
         resources: [
           { resource: 'lumber', value: -1 },
           { resource: 'stone', value: -1 }
         ],
-        outcomeBadges: [],
+        outcomeBadges,
         warnings: []
       };
     }

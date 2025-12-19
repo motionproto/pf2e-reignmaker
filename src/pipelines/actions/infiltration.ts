@@ -32,6 +32,9 @@ export const infiltrationPipeline: CheckPipeline = {
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '1d4', duration: 'immediate' }
       ],
+      outcomeBadges: [
+        textBadge('Infiltration success', 'fa-user-secret', 'positive')
+      ],
       manualEffects: ['The GM should disclose sensitive information.']
     },
     success: {

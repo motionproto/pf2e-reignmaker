@@ -25,7 +25,10 @@ export const buildStructurePipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The structure is constructed efficiently.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Build structure with discount', 'fa-building', 'positive')
+      ]
     },
     success: {
       description: 'Construction begins on the structure.',

@@ -9,6 +9,7 @@ import { structuresService } from '../../services/structures';
 import { get } from 'svelte/store';
 import { currentFaction } from '../../stores/KingdomStore';
 import ArrestDissidentsResolution from '../../view/kingdom/components/OutcomeDisplay/components/ArrestDissidentsResolution.svelte';
+import { textBadge } from '../../types/OutcomeBadge';
 
 export const arrestDissidentsPipeline: CheckPipeline = {
   // === BASE DATA ===
@@ -30,21 +31,29 @@ export const arrestDissidentsPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The troublemakers are swiftly arrested.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Imprison dissidents and reduce unrest', 'fa-user-lock', 'positive')
+      ]
     },
     success: {
       description: 'The troublemakers are arrested.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Imprison dissidents', 'fa-user-lock', 'positive')
+      ]
     },
     failure: {
       description: 'The arrests fail.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: []
     },
     criticalFailure: {
       description: 'Botched arrests cause riots.',
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-      ]
+      ],
+      outcomeBadges: []
     }
   },
 
@@ -90,17 +99,24 @@ export const arrestDissidentsPipeline: CheckPipeline = {
 
   preview: {
     calculate: (ctx) => {
-      if (ctx.outcome === 'criticalFailure') {
-        return {
-          resources: [{ resource: 'unrest', value: 1 }],
-          outcomeBadges: [],
-          warnings: []
-        };
+      const outcomeBadges = [];
+      const resources = [];
+
+      if (ctx.outcome === 'criticalSuccess') {
+        outcomeBadges.push(
+          textBadge('Imprison dissidents and reduce unrest', 'fa-user-lock', 'positive')
+        );
+      } else if (ctx.outcome === 'success') {
+        outcomeBadges.push(
+          textBadge('Imprison dissidents', 'fa-user-lock', 'positive')
+        );
+      } else if (ctx.outcome === 'criticalFailure') {
+        resources.push({ resource: 'unrest', value: 1 });
       }
 
       return {
-        resources: [],
-        outcomeBadges: [],
+        resources,
+        outcomeBadges,
         warnings: []
       };
     }

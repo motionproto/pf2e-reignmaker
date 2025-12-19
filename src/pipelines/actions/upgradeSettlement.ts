@@ -4,6 +4,7 @@
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
+import { textBadge } from '../../types/OutcomeBadge';
 import { settlementService } from '../../services/settlements';
 import type { ResourceType } from '../../types/modifiers';
 
@@ -28,7 +29,10 @@ export const upgradeSettlementPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The settlement grows rapidly. Upgrade at half cost.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Upgrade settlement', 'fa-arrow-up', 'positive')
+      ]
     },
     success: {
       description: 'The settlement grows. Upgrade at full cost.',

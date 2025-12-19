@@ -28,6 +28,9 @@ export const trainArmyPipeline: CheckPipeline = {
     criticalSuccess: {
       description: 'The troops train exceptionally well.',
       modifiers: [],
+      outcomeBadges: [
+        textBadge('Army gains +2 proficiency', 'fa-graduation-cap', 'positive')
+      ],
       manualEffects: ['Well trained: +1 to all saving throws']
     },
     success: {

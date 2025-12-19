@@ -4,6 +4,7 @@
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
+import { textBadge } from '../../types/OutcomeBadge';
 import { applyResourceChanges } from '../shared/InlineActionHelpers';
 import { hasCommerceStructure, getBestTradeRates } from '../../services/commerce/tradeRates';
 import { getResourceIcon } from '../../view/kingdom/utils/presentation';
@@ -28,7 +29,10 @@ export const sellSurplusPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'You secure exceptional trade rates.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Sell resources', 'fa-cash-register', 'positive')
+      ]
     },
     success: {
       description: 'Resources are sold.',

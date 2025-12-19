@@ -28,19 +28,29 @@ export const tendWoundedPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The troops recover completely.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Full heal + remove all conditions', 'fa-heart', 'positive')
+      ]
     },
     success: {
       description: 'The troops recover.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Heal HP or remove condition', 'fa-heart', 'positive')
+      ]
     },
     failure: {
       description: 'The troops fail to recover.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: []
     },
     criticalFailure: {
       description: 'The recovery effort fails.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Enfeebled condition increased by 1', 'fa-exclamation-triangle', 'negative')
+      ]
     }
   },
 

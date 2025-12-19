@@ -106,25 +106,29 @@
                 type: 'criticalSuccess',
                 description: action.outcomes.criticalSuccess?.description ?? action.outcomes.success?.description ?? '',
                 modifiers: action.outcomes.criticalSuccess?.modifiers ?? [],
-                gameCommands: action.outcomes.criticalSuccess?.gameCommands ?? []
+                gameCommands: action.outcomes.criticalSuccess?.gameCommands ?? [],
+                outcomeBadges: action.outcomes.criticalSuccess?.outcomeBadges ?? []
               },
               {
                 type: 'success',
                 description: action.outcomes.success?.description ?? '',
                 modifiers: action.outcomes.success?.modifiers ?? [],
-                gameCommands: action.outcomes.success?.gameCommands ?? []
+                gameCommands: action.outcomes.success?.gameCommands ?? [],
+                outcomeBadges: action.outcomes.success?.outcomeBadges ?? []
               },
               {
                 type: 'failure',
                 description: action.outcomes.failure?.description ?? '',
                 modifiers: action.outcomes.failure?.modifiers ?? [],
-                gameCommands: action.outcomes.failure?.gameCommands ?? []
+                gameCommands: action.outcomes.failure?.gameCommands ?? [],
+                outcomeBadges: action.outcomes.failure?.outcomeBadges ?? []
               },
               {
                 type: 'criticalFailure',
                 description: action.outcomes.criticalFailure?.description ?? '',
                 modifiers: action.outcomes.criticalFailure?.modifiers ?? [],
-                gameCommands: action.outcomes.criticalFailure?.gameCommands ?? []
+                gameCommands: action.outcomes.criticalFailure?.gameCommands ?? [],
+                outcomeBadges: action.outcomes.criticalFailure?.outcomeBadges ?? []
               }
             ]}
             checkType="action"

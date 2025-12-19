@@ -16,6 +16,7 @@ import {
   type ValidationResult
 } from '../shared/hexValidators';
 import { fortificationTiers, getFortificationTier } from '../../data/fortificationTiers';
+import { textBadge } from '../../types/OutcomeBadge';
 
 export const fortifyHexPipeline: CheckPipeline = {
   // === BASE DATA ===
@@ -39,21 +40,32 @@ export const fortifyHexPipeline: CheckPipeline = {
       description: 'The fortification is constructed swiftly.',
       modifiers: [
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
+      ],
+      outcomeBadges: [
+        textBadge('Fortify hex', 'fa-fort-awesome', 'positive')
+      ],
+      outcomeBadges: [
+        textBadge('Build or upgrade fortification', 'fa-fort-awesome', 'positive')
       ]
     },
     success: {
       description: 'The fortification is constructed.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Build or upgrade fortification', 'fa-fort-awesome', 'positive')
+      ]
     },
     failure: {
       description: 'Construction accidents delay progress.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: []
     },
     criticalFailure: {
       description: 'Workers are injured in a construction mishap.',
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-      ]
+      ],
+      outcomeBadges: []
     }
   },
 
@@ -79,17 +91,25 @@ export const fortifyHexPipeline: CheckPipeline = {
 
   preview: {
     calculate: (ctx) => {
+      const outcomeBadges = [];
       const resources = [];
 
       if (ctx.outcome === 'criticalSuccess') {
         resources.push({ resource: 'unrest', value: -1 });
+        outcomeBadges.push(
+          textBadge('Build or upgrade fortification', 'fa-fort-awesome', 'positive')
+        );
+      } else if (ctx.outcome === 'success') {
+        outcomeBadges.push(
+          textBadge('Build or upgrade fortification', 'fa-fort-awesome', 'positive')
+        );
       } else if (ctx.outcome === 'criticalFailure') {
         resources.push({ resource: 'unrest', value: 1 });
       }
 
       return {
         resources,
-        outcomeBadges: [],
+        outcomeBadges,
         warnings: []
       };
     }

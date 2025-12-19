@@ -16,6 +16,7 @@ import {
 } from '../shared/hexValidators';
 import { PLAYER_KINGDOM } from '../../types/ownership';
 import { logger } from '../../utils/Logger';
+import { textBadge } from '../../types/OutcomeBadge';
 
 export const claimHexesPipeline: CheckPipeline = {
   // === BASE DATA ===
@@ -35,21 +36,29 @@ export const claimHexesPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'Your kingdom expands rapidly.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Claim multiple hexes', 'fa-map', 'positive')
+      ]
     },
     success: {
       description: 'Your kingdom expands.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Claim 1 hex', 'fa-map', 'positive')
+      ]
     },
     failure: {
       description: 'The expansion fails.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: []
     },
     criticalFailure: {
       description: 'The expansion attempt backfires.',
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-      ]
+      ],
+      outcomeBadges: []
     }
   },
 
@@ -58,9 +67,24 @@ export const claimHexesPipeline: CheckPipeline = {
 
   preview: {
     calculate: (ctx) => {
+      const outcomeBadges = [];
+      
+      if (ctx.outcome === 'criticalSuccess') {
+        const proficiencyRank = ctx.metadata?.proficiencyRank || 0;
+        const hexCount = Math.max(2, proficiencyRank);
+        outcomeBadges.push(
+          textBadge(`Claim ${hexCount} ${hexCount === 1 ? 'hex' : 'hexes'}`, 'fa-map', 'positive')
+        );
+      } else if (ctx.outcome === 'success') {
+        outcomeBadges.push(
+          textBadge('Claim 1 hex', 'fa-map', 'positive')
+        );
+      }
+      // Failure and criticalFailure already have modifiers that convert to badges
+      
       return {
         resources: [],
-        outcomeBadges: [],
+        outcomeBadges,
         warnings: []
       };
     }

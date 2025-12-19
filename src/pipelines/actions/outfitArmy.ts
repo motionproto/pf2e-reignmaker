@@ -27,19 +27,29 @@ export const outfitArmyPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'Army receives +2 equipment bonus',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Grant army +2 equipment bonus', 'fa-shield-alt', 'positive')
+      ]
     },
     success: {
       description: 'Army receives +1 equipment bonus',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Grant army +1 equipment bonus', 'fa-shield-alt', 'positive')
+      ]
     },
     failure: {
       description: 'Failed to find a suitable supplier',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: []
     },
     criticalFailure: {
       description: 'Resources lost to corruption and waste',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Lose gold but gain no equipment', 'fa-coins', 'negative')
+      ]
     }
   },
 

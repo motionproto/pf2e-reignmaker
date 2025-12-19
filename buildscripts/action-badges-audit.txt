@@ -1,0 +1,88 @@
+================================================================================
+ACTION BADGES AUDIT REPORT
+================================================================================
+
+SUMMARY:
+  Total Actions: 23
+  ✅ Working (has badges): 18
+  ❌ Broken (missing badges): 2
+  ⚠️  Partial (unclear status): 3
+
+================================================================================
+
+❌ BROKEN ACTIONS (NEED FIXING)
+--------------------------------------------------------------------------------
+
+📄 collectStipend.ts
+   Status: Missing outcome badges
+   Outcomes checked: None (returns empty array)
+   Returns empty badges: True
+
+📄 upgradeSettlement.ts
+   Status: Missing outcome badges
+   Outcomes checked: None (returns empty array)
+   Returns empty badges: True
+
+================================================================================
+
+⚠️  PARTIAL ACTIONS (REVIEW NEEDED)
+--------------------------------------------------------------------------------
+
+📄 disbandArmy.ts
+   Outcomes checked: None
+
+📄 recruitUnit.ts
+   Outcomes checked: None
+
+📄 sellSurplus.ts
+   Outcomes checked: criticalFailure
+
+================================================================================
+
+✅ WORKING ACTIONS (REFERENCE)
+--------------------------------------------------------------------------------
+  • aidAnother.ts
+    Handles: criticalFailure, criticalSuccess, failure, success
+  • arrestDissidents.ts
+    Handles: criticalFailure, criticalSuccess, success
+  • buildRoads.ts
+    Handles: criticalSuccess, success
+  • buildStructure.ts
+    Handles: criticalSuccess
+  • claimHexes.ts
+    Handles: criticalSuccess, success
+  • createWorksite.ts
+    Handles: criticalSuccess, success
+  • deployArmy.ts
+    Handles: criticalFailure, criticalSuccess, failure
+  • establishSettlement.ts
+    Handles: criticalFailure, criticalSuccess, success
+  • executeOrPardonPrisoners.ts
+    Handles: criticalFailure, criticalSuccess, success
+  • fortifyHex.ts
+    Handles: criticalFailure, criticalSuccess, success
+  • infiltration.ts
+    Handles: criticalFailure, criticalSuccess
+  • outfitArmy.ts
+    Handles: criticalFailure
+  • repairStructure.ts
+    Handles: criticalFailure, criticalSuccess, failure, success
+  • requestEconomicAid.ts
+    Handles: criticalFailure, criticalSuccess, success
+  • requestMilitaryAid.ts
+    Handles: criticalFailure, criticalSuccess, success
+  • sendScouts.ts
+    Handles: criticalSuccess, success
+  • tendWounded.ts
+    Handles: criticalFailure, criticalSuccess, failure, success
+  • trainArmy.ts
+    Handles: criticalFailure, criticalSuccess, success
+
+================================================================================
+
+QUICK FIX LIST
+--------------------------------------------------------------------------------
+Actions that need badges added to preview.calculate():
+
+  - collectStipend.ts
+  - upgradeSettlement.ts

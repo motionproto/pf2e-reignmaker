@@ -33,6 +33,9 @@ export const establishDiplomaticRelationsPipeline: CheckPipeline = {
       description: 'The diplomatic mission is a resounding success.',
       modifiers: [
         { type: 'static', resource: 'gold', value: -2, duration: 'immediate' }
+      ],
+      outcomeBadges: [
+        textBadge('Diplomatic success', 'fa-handshake', 'positive')
       ]
     },
     success: {

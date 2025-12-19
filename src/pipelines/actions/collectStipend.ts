@@ -4,6 +4,7 @@
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
+import { textBadge } from '../../types/OutcomeBadge';
 import { giveActorGoldExecution } from '../../execution';
 import type { UnifiedOutcomeBadge } from '../../types/OutcomeBadge';
 
@@ -28,7 +29,10 @@ export const collectStipendPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'You are handsomely compensated.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Collect stipend', 'fa-coins', 'positive')
+      ]
     },
     success: {
       description: 'You receive your stipend.',

@@ -450,7 +450,7 @@
     modifiers: (o.modifiers || []) as any,  // Cast to any - old format compatibility
     gameCommands: o.gameCommands || [],
     manualEffects: [],  // No manual effects for basic outcomes
-    outcomeBadges: []   // No outcome badges for basic outcomes
+    outcomeBadges: (o as any).outcomeBadges || []   // Read badges from pipeline outcomes
   }));
   
   // Get card state class - never show as fully resolved for actions

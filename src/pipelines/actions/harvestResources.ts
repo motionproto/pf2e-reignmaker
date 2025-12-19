@@ -4,6 +4,7 @@
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
+import { textBadge } from '../../types/OutcomeBadge';
 import { applyResourceChanges } from '../shared/InlineActionHelpers';
 
 export const harvestResourcesPipeline: CheckPipeline = {
@@ -24,7 +25,10 @@ export const harvestResourcesPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The harvest is exceptional.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Choose resource to harvest', 'fa-seedling', 'info')
+      ]
     },
     success: {
       description: 'The harvest is good.',

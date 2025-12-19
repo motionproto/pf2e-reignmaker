@@ -30,7 +30,10 @@ export const repairStructurePipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'Structure repaired for free.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Repair structure with discount', 'fa-wrench', 'positive')
+      ]
     },
     success: {
       description: 'Structure repaired.',

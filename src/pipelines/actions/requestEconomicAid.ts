@@ -30,6 +30,9 @@ export const requestEconomicAidPipeline: CheckPipeline = {
       description: 'Your ally provides generous support.',
       modifiers: [
         { type: 'dice', resource: 'gold', formula: '2d6', duration: 'immediate' }
+      ],
+      outcomeBadges: [
+        textBadge('Receive economic aid', 'fa-coins', 'positive')
       ]
     },
     success: {

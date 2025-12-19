@@ -15,6 +15,7 @@ import {
   getFreshKingdomData,
   type ValidationResult
 } from '../shared/hexValidators';
+import { textBadge } from '../../types/OutcomeBadge';
 
 export const createWorksitePipeline: CheckPipeline = {
   // === BASE DATA ===
@@ -37,21 +38,32 @@ export const createWorksitePipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The worksite is established quickly and immediately produces resources.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Create worksite', 'fa-hammer', 'positive')
+      ],
+      outcomeBadges: [
+        textBadge('Create worksite with immediate production', 'fa-industry', 'positive')
+      ]
     },
     success: {
       description: 'The worksite is established.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Create worksite', 'fa-industry', 'positive')
+      ]
     },
     failure: {
       description: 'The workers make no progress.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: []
     },
     criticalFailure: {
       description: 'The work is abandoned and tensions rise.',
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-      ]
+      ],
+      outcomeBadges: []
     }
   },
 
@@ -60,9 +72,22 @@ export const createWorksitePipeline: CheckPipeline = {
 
   preview: {
     calculate: (ctx) => {
+      const outcomeBadges = [];
+      
+      if (ctx.outcome === 'criticalSuccess') {
+        outcomeBadges.push(
+          textBadge('Create worksite (with immediate production)', 'fa-industry', 'positive')
+        );
+      } else if (ctx.outcome === 'success') {
+        outcomeBadges.push(
+          textBadge('Create worksite (farm, mine, quarry, or lumber camp)', 'fa-industry', 'positive')
+        );
+      }
+      // Failure and criticalFailure already have modifiers that convert to badges
+      
       return {
         resources: [],
-        outcomeBadges: [],
+        outcomeBadges,
         warnings: []
       };
     }

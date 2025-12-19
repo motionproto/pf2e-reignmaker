@@ -28,21 +28,29 @@ export const recruitUnitPipeline: CheckPipeline = {
       description: 'Patriotic fervor spreads.',
       modifiers: [
         { type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }
+      ],
+      outcomeBadges: [
+        textBadge('Recruit new army', 'fa-shield-alt', 'positive')
       ]
     },
     success: {
       description: 'Troops are recruited.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Recruit new army', 'fa-shield-alt', 'positive')
+      ]
     },
     failure: {
       description: 'Recruitment fails.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: []
     },
     criticalFailure: {
       description: 'The recruitment attempt angers the populace.',
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-      ]
+      ],
+      outcomeBadges: []
     }
   },
 

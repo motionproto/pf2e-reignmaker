@@ -4,6 +4,7 @@
  */
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
+import { textBadge } from '../../types/OutcomeBadge';
 import { applyResourceChanges } from '../shared/InlineActionHelpers';
 import { hasCommerceStructure, getBestTradeRates } from '../../services/commerce/tradeRates';
 
@@ -26,7 +27,10 @@ export const purchaseResourcesPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'You secure exceptional trade rates.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Purchase resources', 'fa-shopping-cart', 'info')
+      ]
     },
     success: {
       description: 'Resources are purchased.',

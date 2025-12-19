@@ -27,7 +27,10 @@ export const requestMilitaryAidPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'Your ally sends elite reinforcements to support your cause.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Receive military aid', 'fa-shield-alt', 'positive')
+      ]
     },
     success: {
       description: 'Your ally provides military equipment and supplies.',

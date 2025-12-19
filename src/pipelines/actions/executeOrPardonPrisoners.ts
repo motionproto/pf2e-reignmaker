@@ -30,19 +30,30 @@ export const executeOrPardonPrisonersPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The prison is emptied.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Clear all imprisoned unrest', 'fa-gavel', 'positive'),
+        textBadge('Lose 1 Unrest', 'fa-fist-raised', 'positive')
+      ]
     },
     success: {
       description: 'Justice is served.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Remove imprisoned unrest (1d4)', 'fa-gavel', 'positive')
+      ]
     },
     failure: {
       description: 'The prisoners you choose are inconsequential.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: []
     },
     criticalFailure: {
       description: 'Your judgment causes outrage.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Gain 1 Unrest', 'fa-fist-raised', 'negative')
+      ]
     }
   },
 

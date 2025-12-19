@@ -3,17 +3,17 @@
   "currentTurn": 1,
   "currentPhase": "Actions",
   "currentPhaseStepIndex": 0,
-  "setupComplete": true,
+  "setupComplete": false,
   
-  "_comment": "Starting conditions per Reignmaker rules: First settlement is sponsored, claim settlement hex + all adjacent hexes (7 total), collect one resource from each adjacent hex, start with 4 gold seed capital",
+  "_comment": "Starting conditions per Reignmaker rules: First settlement will be sponsored by patron, claiming settlement hex + all adjacent hexes (7 total), collecting one resource from each adjacent hex, starting with 4 gold seed capital. Initially 0 claimed hexes before founding.",
   
   "resources": {
-    "gold": 4,
-    "food": 2,
-    "lumber": 2,
-    "stone": 1,
-    "ore": 1,
-    "foodCapacity": 4,
+    "gold": 0,
+    "food": 0,
+    "lumber": 0,
+    "stone": 0,
+    "ore": 0,
+    "foodCapacity": 0,
     "armyCapacity": 1,
     "diplomaticCapacity": 1,
     "imprisonedUnrestCapacity": 0
@@ -25,78 +25,70 @@
       "row": 5,
       "col": 5,
       "terrain": "plains",
-      "claimedBy": "player",
+      "claimedBy": null,
       "hasRoad": false,
-      "features": [
-        {
-          "type": "settlement",
-          "linked": true,
-          "settlementId": "settlement-oleg",
-          "tier": "Village",
-          "name": "Oleg's Trading Post"
-        }
-      ],
-      "_comment": "Settlement hex - center of starting territory"
+      "features": [],
+      "_comment": "Will become settlement hex when founded"
     },
     {
       "id": "5.6",
       "row": 5,
       "col": 6,
       "terrain": "plains",
-      "claimedBy": "player",
+      "claimedBy": null,
       "hasRoad": false,
       "features": [],
-      "_comment": "Adjacent hex - collected 1 food (plains)"
+      "_comment": "Adjacent hex - will provide 1 food (plains)"
     },
     {
       "id": "6.5",
       "row": 6,
       "col": 5,
       "terrain": "forest",
-      "claimedBy": "player",
+      "claimedBy": null,
       "hasRoad": false,
       "features": [],
-      "_comment": "Adjacent hex - collected 1 lumber (forest)"
+      "_comment": "Adjacent hex - will provide 1 lumber (forest)"
     },
     {
       "id": "6.6",
       "row": 6,
       "col": 6,
       "terrain": "hills",
-      "claimedBy": "player",
+      "claimedBy": null,
       "hasRoad": false,
       "features": [],
-      "_comment": "Adjacent hex - collected 1 stone (hills)"
+      "_comment": "Adjacent hex - will provide 1 stone (hills)"
     },
     {
       "id": "4.5",
       "row": 4,
       "col": 5,
       "terrain": "plains",
-      "claimedBy": "player",
+      "claimedBy": null,
       "hasRoad": false,
       "features": [],
-      "_comment": "Adjacent hex - collected 1 food (plains)"
+      "_comment": "Adjacent hex - will provide 1 food (plains)"
     },
     {
       "id": "5.4",
       "row": 5,
       "col": 4,
       "terrain": "forest",
-      "claimedBy": "player",
+      "claimedBy": null,
       "hasRoad": false,
       "features": [],
-      "_comment": "Adjacent hex - collected 1 lumber (forest)"
+      "_comment": "Adjacent hex - will provide 1 lumber (forest)"
     },
     {
       "id": "4.6",
       "row": 4,
       "col": 6,
       "terrain": "mountains",
-      "claimedBy": "player",
+      "claimedBy": null,
       "hasRoad": false,
       "features": [],
-      "_comment": "Adjacent hex - collected 1 ore (mountains)"
+      "_comment": "Adjacent hex - will provide 1 ore (mountains)"
     },
     {
       "id": "6.4",
@@ -160,28 +152,9 @@
     }
   ],
   
-  "settlements": [
-    {
-      "id": "settlement-oleg",
-      "name": "Oleg's Trading Post",
-      "location": { "x": 5, "y": 5 },
-      "level": 1,
-      "tier": "Village",
-      "structureIds": [],
-      "structureConditions": {},
-      "connectedByRoads": false,
-      "isCapital": true,
-      "ownedBy": "player",
-      "storedFood": 0,
-      "imprisonedUnrest": 0,
-      "supportedUnits": [],
-      "wasFedLastTurn": true,
-      "skillBonuses": {},
-      "_comment": "Village consumes 1 food/turn, generates 1 gold/turn when fed"
-    }
-  ],
+  "settlements": [],
   
-  "size": 7,
+  "size": 0,
   "worksiteCount": {},
   "worksiteProduction": {},
   

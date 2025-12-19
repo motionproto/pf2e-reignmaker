@@ -14,6 +14,7 @@ import {
   safeValidation,
   type ValidationResult
 } from '../shared/hexValidators';
+import { textBadge } from '../../types/OutcomeBadge';
 
 export const sendScoutsPipeline: CheckPipeline = {
   // === BASE DATA ===
@@ -37,21 +38,32 @@ export const sendScoutsPipeline: CheckPipeline = {
   outcomes: {
     criticalSuccess: {
       description: 'The scouts return with detailed information.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Explore hex', 'fa-binoculars', 'positive')
+      ],
+      outcomeBadges: [
+        textBadge('Explore 2 hexes', 'fa-binoculars', 'positive')
+      ]
     },
     success: {
       description: 'The scouts return with information.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: [
+        textBadge('Explore 1 hex', 'fa-binoculars', 'positive')
+      ]
     },
     failure: {
       description: 'The scouts find nothing.',
-      modifiers: []
+      modifiers: [],
+      outcomeBadges: []
     },
     criticalFailure: {
       description: 'The scouts are lost.',
       modifiers: [
         { type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }
-      ]
+      ],
+      outcomeBadges: []
     }
   },
 
@@ -74,11 +86,23 @@ export const sendScoutsPipeline: CheckPipeline = {
 
   preview: {
     calculate: async (ctx) => {
+      const outcomeBadges = [];
+      
+      if (ctx.outcome === 'criticalSuccess') {
+        outcomeBadges.push(
+          textBadge('Explore 2 hexes', 'fa-binoculars', 'positive')
+        );
+      } else if (ctx.outcome === 'success') {
+        outcomeBadges.push(
+          textBadge('Explore 1 hex', 'fa-binoculars', 'positive')
+        );
+      }
+      
       return {
         resources: [
           { resource: 'gold', change: -1, reason: 'Scout expedition cost' }
         ],
-        outcomeBadges: []
+        outcomeBadges
       };
     }
   },
