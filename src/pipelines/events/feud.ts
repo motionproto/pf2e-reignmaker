@@ -281,6 +281,21 @@ export const feudPipeline: CheckPipeline = {
       } else if (approach === 'ruthless') {
         // Force Compliance (Ruthless)
         if (outcome === 'criticalSuccess') {
+          // Imprison 2d3 dissidents (convert unrest to imprisoned)
+          const imprisonHandler = new ConvertUnrestToImprisonedHandler();
+          const imprisonCommand = await imprisonHandler.prepare(
+            { type: 'convertUnrestToImprisoned', amount: 6, diceFormula: '2d3' },
+            commandContext
+          );
+          if (imprisonCommand) {
+            ctx.metadata._preparedImprison = imprisonCommand;
+            if (imprisonCommand.outcomeBadges) {
+              outcomeBadges.push(...imprisonCommand.outcomeBadges);
+            } else if (imprisonCommand.outcomeBadge) {
+              outcomeBadges.push(imprisonCommand.outcomeBadge);
+            }
+          }
+        } else if (outcome === 'success') {
           // Imprison 1d3 dissidents (convert unrest to imprisoned)
           const imprisonHandler = new ConvertUnrestToImprisonedHandler();
           const imprisonCommand = await imprisonHandler.prepare(

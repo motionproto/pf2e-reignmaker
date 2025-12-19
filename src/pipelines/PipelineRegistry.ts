@@ -50,7 +50,7 @@ import { tendWoundedPipeline } from './actions/tendWounded';
 import { aidAnotherPipeline } from './actions/aidAnother';
 
 // ==================================================
-// EVENT PIPELINES (37)
+// EVENT PIPELINES (36)
 // ==================================================
 
 import { archaeologicalFindPipeline } from './events/archaeological-find';
@@ -73,7 +73,6 @@ import { grandTournamentPipeline } from './events/grand-tournament';
 import { immigrationPipeline } from './events/immigration';
 import { inquisitionPipeline } from './events/inquisition';
 import { landRushPipeline } from './events/land-rush';
-import { localDisasterPipeline } from './events/local-disaster';
 import { magicalDiscoveryPipeline } from './events/magical-discovery';
 import { militaryExercisesPipeline } from './events/military-exercises';
 import { monsterAttackPipeline } from './events/monster-attack';
@@ -173,7 +172,7 @@ const ACTION_PIPELINES: CheckPipeline[] = [
 ];
 
 /**
- * All registered event pipelines (37 total)
+ * All registered event pipelines (36 total)
  */
 const EVENT_PIPELINES: CheckPipeline[] = [
   archaeologicalFindPipeline,
@@ -196,7 +195,6 @@ const EVENT_PIPELINES: CheckPipeline[] = [
   immigrationPipeline,
   inquisitionPipeline,
   landRushPipeline,
-  localDisasterPipeline,
   magicalDiscoveryPipeline,
   militaryExercisesPipeline,
   monsterAttackPipeline,

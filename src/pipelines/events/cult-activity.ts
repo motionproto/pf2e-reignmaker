@@ -336,7 +336,7 @@ export const cultActivityPipeline: CheckPipeline = {
             }
           }
         } else if (outcome === 'criticalFailure') {
-          // +1d3 Unrest, -1 Fame, damage 1 structure, adjust 2 factions -1
+          // +1d3 Unrest, -1 Fame, damage 1 structure, innocents imprisoned, adjust 2 factions -1
           outcomeBadges.push(
             diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'),
             valueBadge('Lose {{value}} Fame', 'fas fa-star', -1, 'negative')
@@ -354,6 +354,21 @@ export const cultActivityPipeline: CheckPipeline = {
               outcomeBadges.push(...damageCommand.outcomeBadges);
             } else if (damageCommand.outcomeBadge) {
               outcomeBadges.push(damageCommand.outcomeBadge);
+            }
+          }
+
+          // Innocents imprisoned (add imprisoned without reducing unrest)
+          const imprisonHandler = new AddImprisonedHandler();
+          const imprisonCommand = await imprisonHandler.prepare(
+            { type: 'addImprisoned', amount: 3, diceFormula: '1d3' },
+            commandContext
+          );
+          if (imprisonCommand) {
+            ctx.metadata._preparedInnocentsHarmedCF = imprisonCommand;
+            if (imprisonCommand.outcomeBadges) {
+              outcomeBadges.push(...imprisonCommand.outcomeBadges);
+            } else if (imprisonCommand.outcomeBadge) {
+              outcomeBadges.push(imprisonCommand.outcomeBadge);
             }
           }
 
@@ -428,6 +443,12 @@ export const cultActivityPipeline: CheckPipeline = {
     const innocentsHarmedCommand = ctx.metadata?._preparedInnocentsHarmed;
     if (innocentsHarmedCommand?.commit) {
       await innocentsHarmedCommand.commit();
+    }
+
+    // Execute innocents harmed (critical failure)
+    const innocentsHarmedCFCommand = ctx.metadata?._preparedInnocentsHarmedCF;
+    if (innocentsHarmedCFCommand?.commit) {
+      await innocentsHarmedCFCommand.commit();
     }
 
     // Apply Well Trained effect (practical CS)

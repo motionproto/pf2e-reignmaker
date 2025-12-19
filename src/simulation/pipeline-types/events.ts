@@ -86,7 +86,6 @@ const PURE_MODIFIER_EVENTS = [
   'grand-tournament',
   'immigration',
   'inquisition',
-  'local-disaster',
   'magical-discovery',
   'military-exercises',
   'natural-disaster',
