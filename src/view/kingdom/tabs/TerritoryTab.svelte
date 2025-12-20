@@ -1,11 +1,12 @@
 <script lang="ts">
    import { onMount, onDestroy } from 'svelte';
    import { Chart, registerables } from 'chart.js';
-   import { kingdomData, currentFaction, allSettlements, ownedSettlements, claimedWorksites, selectSettlement } from '../../../stores/KingdomStore';
+   import { kingdomData, currentFaction, allSettlements, ownedSettlements, claimedWorksites, selectSettlement, updateKingdom } from '../../../stores/KingdomStore';
    import { setSelectedTab } from '../../../stores/ui';
    import { WorksiteConfig } from '../../../models/Hex';
    import { getResourceIcon, getResourceColor, getTerrainIcon, getTerrainColor } from '../utils/presentation';
    import { filterVisibleHexes } from '../../../utils/visibility-filter';
+   import Provinces from '../components/Provinces.svelte';
 
    // Register Chart.js components
    Chart.register(...registerables);
@@ -353,6 +354,49 @@
       selectSettlement(settlementId);
       setSelectedTab('settlements');
    }
+
+   // Province editor handler
+   async function handleEditProvinces() {
+      const { provinceEditorService } = await import('../../../services/province-editor/ProvinceEditorService');
+      await provinceEditorService.start({
+         onComplete: () => {
+            // Province editing completed
+         },
+         onCancel: () => {
+            // Province editing cancelled
+         }
+      });
+   }
+
+   // Territory color picker
+   let territoryColorInput: HTMLInputElement;
+
+   // Get current faction color
+   $: currentFactionColor = (() => {
+      if ($currentFaction === 'player') {
+         return $kingdomData.playerKingdomColor || '#5b9bd5';
+      } else if ($currentFaction) {
+         const faction = $kingdomData.factions?.find(f => f.id === $currentFaction);
+         return faction?.color || '#666666';
+      }
+      return '#666666';
+   })();
+
+   async function handleTerritoryColorChange(event: Event) {
+      const input = event.target as HTMLInputElement;
+      const newColor = input.value;
+
+      await updateKingdom((kingdom) => {
+         if ($currentFaction === 'player') {
+            kingdom.playerKingdomColor = newColor;
+         } else if ($currentFaction) {
+            const faction = kingdom.factions?.find(f => f.id === $currentFaction);
+            if (faction) {
+               faction.color = newColor;
+            }
+         }
+      });
+   }
 </script>
 
 <div class="territory-tab">
@@ -421,6 +465,24 @@
             <div class="stat-header">
                <i class="fas fa-map-marked-alt"></i>
                <h3>Claimed Territory</h3>
+               <div class="territory-color-picker">
+                  <span class="color-label">Territory Color</span>
+                  <div class="color-swatch-wrapper">
+                     <div
+                        class="color-swatch"
+                        style="background-color: {currentFactionColor};"
+                        title="Click to change territory color">
+                     </div>
+                     <input
+                        type="color"
+                        bind:this={territoryColorInput}
+                        value={currentFactionColor}
+                        on:change={handleTerritoryColorChange}
+                        class="color-picker-input"
+                        title="Click to change territory color"
+                     />
+                  </div>
+               </div>
             </div>
             <div class="territory-content">
                <div class="territory-stats">
@@ -595,6 +657,11 @@
                      </div>
                   {/if}
                </div>
+            </div>
+
+            <!-- Provinces -->
+            <div class="stat-card provinces-card">
+               <Provinces on:editProvinces={handleEditProvinces} />
             </div>
          </div>
       </div>
@@ -1172,8 +1239,13 @@
 
    .bottom-row {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: var(--space-16);
+   }
+
+   // Provinces card styling
+   .provinces-card {
+      // Uses the Provinces component which has its own styling
    }
 
    .stat-card {
@@ -1202,6 +1274,68 @@
             font-size: var(--font-lg);
             font-weight: var(--font-weight-semibold);
             color: var(--text-primary);
+         }
+
+         .territory-color-picker {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: var(--space-8);
+
+            .color-label {
+               font-size: var(--font-xs);
+               color: var(--text-secondary);
+               text-transform: uppercase;
+               letter-spacing: 0.03rem;
+            }
+
+            .color-swatch-wrapper {
+               position: relative;
+               width: 24px;
+               height: 24px;
+
+               .color-swatch {
+                  width: 100%;
+                  height: 100%;
+                  border-radius: var(--radius-md);
+                  border: 2px solid var(--border-default);
+                  cursor: pointer;
+                  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+               }
+
+               .color-picker-input {
+                  position: absolute;
+                  top: 0;
+                  left: 0;
+                  width: 100%;
+                  height: 100%;
+                  border: none;
+                  border-radius: var(--radius-md);
+                  cursor: pointer;
+                  opacity: 0;
+                  z-index: 1;
+
+                  &::-webkit-color-swatch-wrapper {
+                     padding: 0;
+                  }
+
+                  &::-webkit-color-swatch {
+                     border: none;
+                     border-radius: var(--radius-md);
+                  }
+
+                  &::-moz-color-swatch {
+                     border: none;
+                     border-radius: var(--radius-md);
+                  }
+               }
+
+               &:hover .color-swatch {
+                  transform: scale(1.1);
+                  border-color: var(--color-primary);
+                  box-shadow: 0 0.125rem 0.25rem var(--overlay-high);
+               }
+            }
          }
       }
 

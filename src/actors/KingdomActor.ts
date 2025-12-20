@@ -63,6 +63,13 @@ export interface PhaseStep {
   completed: 0 | 1;  // 0 = incomplete, 1 = complete
 }
 
+// Province - logical grouping of contiguous hexes within claimed territory
+export interface Province {
+  id: string;
+  name: string;
+  hexIds: string[];  // Hex IDs that belong to this province (must be contiguous)
+}
+
 // Simplified, serializable kingdom data structure
 export interface KingdomData {
   // Core identity
@@ -113,7 +120,10 @@ export interface KingdomData {
   
   // Diplomacy
   factions: Faction[];
-  
+
+  // Territory organization
+  provinces?: Province[];  // Logical groupings of contiguous hexes within claimed territory
+
   // Map colors
   playerKingdomColor?: string;  // Player kingdom territory color (default: '#5b9bd5')
   

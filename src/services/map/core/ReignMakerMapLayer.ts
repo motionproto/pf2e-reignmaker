@@ -12,7 +12,7 @@
 
 import { getKingdomActor } from '../../../main.kingdom';
 import { PLAYER_KINGDOM } from '../../../types/ownership';
-import type { KingdomData } from '../../../actors/KingdomActor';
+import type { KingdomData, Province } from '../../../actors/KingdomActor';
 import type { LayerId, HexStyle, MapLayer } from '../types';
 import { DEFAULT_HEX_STYLES, WORKSITE_ICONS } from '../types';
 import { TERRITORY_BORDER_COLORS } from '../../../view/kingdom/utils/presentation';
@@ -23,6 +23,7 @@ import { ToolbarManager } from './ToolbarManager';
 import { renderTerrainOverlay } from '../renderers/TerrainRenderer';
 import { renderTerrainDifficultyOverlay } from '../renderers/TerrainDifficultyRenderer';
 import { renderTerritoryOutline } from '../renderers/TerritoryRenderer';
+import { renderProvinceOutlines } from '../renderers/ProvinceRenderer';
 import { renderRoadConnections } from '../renderers/RoadRenderer';
 import { renderWorksiteIcons } from '../renderers/WorksiteRenderer';
 import { renderResourceIcons } from '../renderers/ResourceRenderer';
@@ -484,6 +485,44 @@ export class ReignMakerMapLayer {
     layer.addChild(graphics);
     this.showLayer(layerId);
 
+  }
+
+  /**
+   * Draw province border outlines
+   * Creates faint borders around province hex groupings
+   *
+   * @param provinces - Array of provinces with their hex assignments
+   * @param layerId - Layer to draw on (default: 'province-borders')
+   */
+  drawProvinceOutlines(
+    provinces: Province[],
+    layerId: LayerId = 'province-borders'
+  ): void {
+    this.ensureInitialized();
+
+    const canvas = (globalThis as any).canvas;
+    if (!canvas?.grid) {
+      logger.warn('[ReignMakerMapLayer] Canvas grid not available');
+      return;
+    }
+
+    // Validate and clear content
+    this.validateLayerEmpty(layerId);
+    this.clearLayerContent(layerId);
+
+    // Filter to provinces with hexes
+    const provincesWithHexes = provinces.filter((p) => p.hexIds.length > 0);
+    if (provincesWithHexes.length === 0) {
+      return;
+    }
+
+    // z-index 11: above territory outline (10) so province borders are visible
+    const layer = this.createLayer(layerId, 11);
+
+    // Delegate to renderer
+    renderProvinceOutlines(layer, provincesWithHexes);
+
+    this.showLayer(layerId);
   }
 
   /**

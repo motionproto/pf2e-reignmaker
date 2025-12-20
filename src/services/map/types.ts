@@ -24,11 +24,13 @@ import goldIcon from '../../img/map_icons/commodity_gold.webp';
 /**
  * Predefined and custom layer identifiers
  */
-export type LayerId = 
+export type LayerId =
   | 'terrain-overlay'             // Terrain type coloring (bottom layer)
   | 'terrain-difficulty-overlay'  // Terrain difficulty coloring (travel speed indicator)
   | 'kingdom-territory'           // Scene control toggle for kingdom hexes
   | 'kingdom-territory-outline'   // Territory outline border
+  | 'province-borders'            // Province border outlines (faint internal borders)
+  | 'provinces-fill'              // Province hex fills (for editing mode)
   | 'interactive-hover'           // Interactive hex hover (hex + road preview)
   | 'interactive-selection'       // Interactive hex selection (hex + road connections)
   | 'hex-selection'               // Temporary selections during actions (legacy, use interactive-selection)

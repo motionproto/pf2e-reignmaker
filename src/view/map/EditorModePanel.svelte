@@ -24,8 +24,8 @@
   let selectedSection = 'settlements';
   let isChangingSection = false;
   
-  // Territory claim state
-  let selectedClaimOwner: string | null = 'player';  // 'player' or faction.id
+  // Territory claim state ('null' string for unclaimed, 'player' for player kingdom, or faction.id)
+  let selectedClaimOwner: string = 'player';
   
   onMount(async () => {
     // Load saved position
@@ -143,17 +143,24 @@
     if (tool) {
       // Special handling for territory section - must set claim owner
       if (section === 'territory') {
-        editorService.setClaimOwner(selectedClaimOwner);
+        editorService.setClaimOwner(selectedClaimOwner === 'null' ? null : selectedClaimOwner);
       }
       await setTool(tool);
     }
   }
   
   // Handle claim owner selection
-  function selectClaimOwner(owner: string | null) {
+  function selectClaimOwner(owner: string) {
     selectedClaimOwner = owner;
-    editorService.setClaimOwner(owner);
+    // Convert 'null' string to actual null for the editor service
+    editorService.setClaimOwner(owner === 'null' ? null : owner);
     setTool('claimed-by');
+  }
+
+  // Handle claim owner dropdown change
+  function handleClaimOwnerChange(event: Event) {
+    const target = event.target as HTMLSelectElement;
+    selectClaimOwner(target.value);
   }
 
   // Color picker handling
@@ -169,7 +176,7 @@
     await updateKingdom((kingdom) => {
       if (selectedClaimOwner === 'player') {
         kingdom.playerKingdomColor = newColor;
-      } else if (selectedClaimOwner !== null) {
+      } else if (selectedClaimOwner !== 'null') {
         const faction = kingdom.factions?.find(f => f.id === selectedClaimOwner);
         if (faction) {
           faction.color = newColor;
@@ -645,18 +652,18 @@
         <div class="color-swatch-wrapper">
           <div
             class="color-swatch"
-            class:unclaimed={selectedClaimOwner === null}
-            style="background-color: {selectedClaimOwner === null
+            class:unclaimed={selectedClaimOwner === 'null'}
+            style="background-color: {selectedClaimOwner === 'null'
               ? '#444444'
               : selectedClaimOwner === 'player'
                 ? ($kingdomData.playerKingdomColor || '#5b9bd5')
                 : ($kingdomData.factions?.find(f => f.id === selectedClaimOwner)?.color || '#666666')};"
-            title="{selectedClaimOwner === null ? 'Unclaimed territory' : 'Click to change faction color'}">
-            {#if selectedClaimOwner === null}
+            title="{selectedClaimOwner === 'null' ? 'Unclaimed territory' : 'Click to change faction color'}">
+            {#if selectedClaimOwner === 'null'}
               <i class="fas fa-times"></i>
             {/if}
           </div>
-          {#if selectedClaimOwner !== null}
+          {#if selectedClaimOwner !== 'null'}
             <input
               type="color"
               bind:this={colorPickerInput}
@@ -669,12 +676,12 @@
             />
           {/if}
         </div>
-        <select 
+        <select
           class="faction-dropdown"
           bind:value={selectedClaimOwner}
-          on:change={() => selectClaimOwner(selectedClaimOwner)}
+          on:change={handleClaimOwnerChange}
           title="Select owner to claim hexes">
-          <option value={null}>Unclaimed</option>
+          <option value="null">Unclaimed</option>
           <option value="player">{$kingdomData.name || 'Player Kingdom'}</option>
           {#each $kingdomData.factions || [] as faction}
             <option value={faction.id}>{faction.name}</option>

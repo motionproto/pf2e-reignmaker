@@ -28,6 +28,8 @@ import {
   createTerrainDifficultyOverlay,
   createTerritoriesOverlay,
   createTerritoryBorderOverlay,
+  createProvinceOverlay,
+  createProvincesFillOverlay,
   createSettlementsOverlay,
   createRoadsOverlay,
   createWaterOverlay,
@@ -659,6 +661,8 @@ export class OverlayManager {
     this.registerOverlay(createTerrainDifficultyOverlay(this.mapLayer, boundIsActive));
     this.registerOverlay(createTerritoriesOverlay(this.mapLayer, boundIsActive));
     this.registerOverlay(createTerritoryBorderOverlay(this.mapLayer, boundIsActive));
+    this.registerOverlay(createProvinceOverlay(this.mapLayer, boundIsActive));
+    this.registerOverlay(createProvincesFillOverlay(this.mapLayer, boundIsActive));
     this.registerOverlay(createSettlementsOverlay(this.mapLayer, boundIsActive));
     this.registerOverlay(createRoadsOverlay(this.mapLayer, boundIsActive));
     this.registerOverlay(createWaterOverlay(this.mapLayer, boundIsActive));

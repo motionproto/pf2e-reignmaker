@@ -8,34 +8,12 @@ import Notification from '../components/baseComponents/Notification.svelte';
 import { setSelectedTab } from '../../../stores/ui';
 import { SettlementTier } from '../../../models/Settlement';
 import { logger } from '../../../utils/Logger';
-import { onMount } from 'svelte';
 import CitizensDemandExpansion from './components/CitizensDemandExpansion.svelte';
 import CitizensDemandStructure from './components/CitizensDemandStructure.svelte';
 
 // Props - add the missing prop to fix the warning
 export let isViewingCurrentPhase: boolean = true;
 
-// Debug: Log when component mounts
-onMount(() => {
-   // This alert CANNOT be missed - proves the code is running
-   const allHexes = $kingdomData.hexes || [];
-   const withDemanded = allHexes.filter((h: any) => 
-      h.features?.some((f: any) => f.type === 'demanded')
-   );
-   
-   // Use ui.notifications which shows in Foundry UI
-   const ui = (globalThis as any).ui;
-   ui?.notifications?.info(`[DEBUG] StatusPhase mounted. Hexes: ${allHexes.length}, With demanded: ${withDemanded.length}`);
-   
-   console.warn('[StatusPhase] ========== COMPONENT MOUNTED ==========');
-   console.warn('[StatusPhase] Hex count:', allHexes.length);
-   console.warn('[StatusPhase] Hexes with DEMANDED feature:', withDemanded.length);
-   
-   withDemanded.forEach((h: any) => {
-      console.warn(`  Demanded hex ${h.id}: claimedBy=${h.claimedBy}`);
-   });
-   console.warn('[StatusPhase] ========================================');
-});
 
 // Reactive: Get hexes with unlinked settlement features (in claimed territory)
 // Explicitly track dependencies for Svelte reactivity

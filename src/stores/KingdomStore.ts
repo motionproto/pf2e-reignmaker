@@ -4,7 +4,7 @@
  */
 
 import { writable, derived, get } from 'svelte/store';
-import type { KingdomActor, KingdomData } from '../actors/KingdomActor';
+import type { KingdomActor, KingdomData, Province } from '../actors/KingdomActor';
 import { createDefaultKingdom } from '../actors/KingdomActor';
 import { TurnPhase } from '../actors/KingdomActor';
 import { TurnManager } from '../models/turn-manager';
@@ -14,6 +14,7 @@ import { filterVisibleHexes, filterVisibleHexIds } from '../utils/visibility-fil
 import { logger } from '../utils/Logger';
 import { wrapKingdomActor } from '../utils/kingdom-actor-wrapper';
 import { createDefaultTurnState } from '../models/TurnState';
+import { findOrphanedHexes } from '../utils/hex-contiguity';
 
 // Core actor store - this is the single source of truth
 export const kingdomActor = writable<KingdomActor | null>(null);
@@ -689,6 +690,126 @@ export async function startKingdom(): Promise<void> {
 
 export function selectSettlement(settlementId: string | null): void {
   selectedSettlement.set(settlementId);
+}
+
+// ===== PROVINCE MANAGEMENT =====
+
+/**
+ * Derived store for provinces
+ */
+export const provinces = derived(kingdomData, $data => $data.provinces || []);
+
+/**
+ * Add a new province with the given name (starts with no hexes)
+ */
+export async function addProvince(name: string): Promise<Province> {
+  const newProvince: Province = {
+    id: `province-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    name: name.trim(),
+    hexIds: []
+  };
+
+  await updateKingdom(k => {
+    if (!k.provinces) {
+      k.provinces = [];
+    }
+    k.provinces.push(newProvince);
+  });
+
+  return newProvince;
+}
+
+/**
+ * Remove a province by ID (hexes become unassigned)
+ */
+export async function removeProvince(provinceId: string): Promise<void> {
+  await updateKingdom(k => {
+    if (!k.provinces) return;
+    k.provinces = k.provinces.filter(p => p.id !== provinceId);
+  });
+}
+
+/**
+ * Update a province's name
+ */
+export async function updateProvinceName(provinceId: string, name: string): Promise<void> {
+  await updateKingdom(k => {
+    const province = k.provinces?.find(p => p.id === provinceId);
+    if (province) {
+      province.name = name.trim();
+    }
+  });
+}
+
+/**
+ * Assign a hex to a province (removing it from any previous province)
+ * @param hexId - The hex to assign
+ * @param provinceId - The province to assign to, or null to unassign
+ */
+export async function assignHexToProvince(
+  hexId: string,
+  provinceId: string | null
+): Promise<void> {
+  await updateKingdom(k => {
+    if (!k.provinces) {
+      k.provinces = [];
+    }
+
+    // Remove from all provinces first
+    for (const province of k.provinces) {
+      province.hexIds = province.hexIds.filter(id => id !== hexId);
+    }
+
+    // Add to target province if specified
+    if (provinceId) {
+      const targetProvince = k.provinces.find(p => p.id === provinceId);
+      if (targetProvince) {
+        targetProvince.hexIds.push(hexId);
+      }
+    }
+  });
+}
+
+/**
+ * Remove a hex from its province (with orphan cleanup)
+ * @param hexId - The hex to remove
+ * @returns Array of additional hexes that were removed as orphans
+ */
+export async function removeHexFromProvince(hexId: string): Promise<string[]> {
+  let orphanedHexes: string[] = [];
+
+  await updateKingdom(k => {
+    if (!k.provinces) return;
+
+    for (const province of k.provinces) {
+      if (province.hexIds.includes(hexId)) {
+        // Find orphans before removing
+        orphanedHexes = findOrphanedHexes(province.hexIds, hexId);
+
+        // Remove the hex and all orphans
+        const toRemove = new Set([hexId, ...orphanedHexes]);
+        province.hexIds = province.hexIds.filter(id => !toRemove.has(id));
+        break;
+      }
+    }
+  });
+
+  return orphanedHexes;
+}
+
+/**
+ * Get the province that contains a hex
+ */
+export function getProvinceForHex(hexId: string): Province | null {
+  const data = get(kingdomData);
+  if (!data.provinces) return null;
+
+  for (const province of data.provinces) {
+    if (province.hexIds.includes(hexId)) {
+      return province;
+    }
+  }
+  return null;
 }
 
 /**

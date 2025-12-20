@@ -42,7 +42,6 @@ export async function createStatusPhaseController() {
         const actor = getKingdomActor();
         const kingdom = actor?.getKingdomData();
         if (kingdom?.turnState?.statusPhase?.completed) {
-          logger.info('✅ [StatusPhaseController] Status phase already completed this turn, skipping re-processing');
           return createPhaseResult(true);
         }
         
@@ -141,9 +140,7 @@ export async function createStatusPhaseController() {
       
       await actor.updateKingdomData((k: KingdomData) => {
         if (!k.turnState?.statusPhase?.displayModifiers) return;
-        
-        const before = k.turnState.statusPhase.displayModifiers.length;
-        
+
         // Filter out modifiers that are no longer displayed in Status Phase:
         // - Base modifiers (now computed reactively in UI)
         // - Fame conversion (moved to Upkeep Phase)
@@ -163,11 +160,6 @@ export async function createStatusPhaseController() {
         });
         
         k.turnState.statusPhase.displayModifiers = filtered;
-        const removed = before - filtered.length;
-        
-        if (removed > 0) {
-          logger.info(`🧹 [StatusPhaseController] Cleaned up ${removed} stale/duplicate modifier(s) from displayModifiers`);
-        }
       });
     },
 
@@ -246,12 +238,6 @@ export async function createStatusPhaseController() {
       // Note: Base status modifiers (size, metropolis) are now computed REACTIVELY
       // in StatusPhase.svelte, not stored here. This prevents duplicate display issues.
       // Only one-time events (fame conversion, donjon) are stored in displayModifiers.
-      
-      // Note: Demanded hex unrest is displayed separately in CitizensDemandExpansion component
-      // but we still need to actually apply the unrest here
-      if (demandedHexCount > 0) {
-        logger.info(`⚠️ [StatusPhaseController] Citizens demand expansion: ${demandedHexCount} unclaimed hex(es) = +${demandedHexCount} unrest`);
-      }
       
       if (totalBaseUnrest > 0) {
         await actor.updateKingdomData((k: KingdomData) => {
@@ -374,8 +360,6 @@ export async function createStatusPhaseController() {
         return;
       }
 
-      logger.info(`📊 [StatusPhaseController] Applying ${ongoingModifiers.length} ongoing modifier(s)`);
-
       // Apply each ongoing modifier's effects
       for (const modifier of ongoingModifiers) {
         for (const mod of modifier.modifiers || []) {
@@ -384,11 +368,8 @@ export async function createStatusPhaseController() {
             const value = typeof mod.value === 'string' ? parseInt(mod.value, 10) : mod.value;
             
             if (isNaN(value)) {
-              logger.warn(`⚠️ [StatusPhaseController] Invalid ongoing modifier value: ${mod.value} for ${resource}`);
               continue;
             }
-
-            logger.info(`  → ${modifier.name}: ${value > 0 ? '+' : ''}${value} ${resource}`);
 
             await actor.updateKingdomData((k: KingdomData) => {
               if (!k.resources) {
@@ -542,8 +523,6 @@ export async function createStatusPhaseController() {
             'Donjon Auto-Convert',
             result
           );
-
-          logger.info(`⚖️ [StatusPhaseController] Donjon converted ${amountToConvert} unrest to imprisoned`);
         } else {
           // No capacity - add notification
           await actor.updateKingdomData((k: KingdomData) => {
@@ -560,8 +539,6 @@ export async function createStatusPhaseController() {
               });
             }
           });
-          
-          logger.info(`⚖️ [StatusPhaseController] Donjon cannot convert - no prison capacity available`);
         }
       }
     }

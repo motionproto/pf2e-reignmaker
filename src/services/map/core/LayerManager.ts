@@ -217,9 +217,13 @@ export class LayerManager {
       case 'terrain-overlay':
       case 'terrain-difficulty-overlay':
         return 5; // Terrain/difficulty overlays at very bottom (never shown together)
+      case 'provinces-fill':
+        return 6; // Province fills above terrain but below territory
       case 'kingdom-territory':
       case 'kingdom-territory-outline':
         return 10; // Territory layers above terrain
+      case 'province-borders':
+        return 11; // Province borders above territory outline
       case 'settlements-overlay':
         return 30; // Settlements in middle
       case 'routes':

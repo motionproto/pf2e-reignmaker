@@ -8,6 +8,8 @@ export { createTerrainOverlay } from './TerrainOverlay';
 export { createTerrainDifficultyOverlay } from './TerrainDifficultyOverlay';
 export { createTerritoriesOverlay } from './TerritoriesOverlay';
 export { createTerritoryBorderOverlay } from './TerritoryBorderOverlay';
+export { createProvinceOverlay } from './ProvinceOverlay';
+export { createProvincesFillOverlay } from './ProvincesFillOverlay';
 export { createSettlementsOverlay } from './SettlementsOverlay';
 export { createRoadsOverlay } from './RoadsOverlay';
 export { createWaterOverlay } from './WaterOverlay';

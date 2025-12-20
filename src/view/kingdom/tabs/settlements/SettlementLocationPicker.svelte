@@ -133,13 +133,10 @@
          }
       });
       
-      // Write settlement name to Kingmaker map and refresh territory data
+      // Write settlement name to Kingmaker map
       if (updatedSettlement) {
          const { territoryService } = await import('../../../../services/territory');
          await territoryService.updateKingmakerSettlement(updatedSettlement);
-         
-         // Re-sync territory to update hex features with new settlement name
-         territoryService.syncFromKingmaker();
       }
       
       // Recalculate kingdom capacities since settlement is now mapped
@@ -181,9 +178,6 @@
       // Clear settlement name from Kingmaker map (keep the feature, set name to empty/vacant)
       const { territoryService } = await import('../../../../services/territory');
       await territoryService.clearKingmakerSettlementName(kmLocation);
-      
-      // Re-sync territory to update hex features
-      territoryService.syncFromKingmaker();
       
       // Recalculate kingdom capacities since settlement is now unmapped
       const { settlementService } = await import('../../../../services/settlements');
@@ -239,7 +233,7 @@
          <div class="location-list">
             {#if availableLocations.length === 0}
                <div class="empty-state">
-                  No map settlements found
+                  No settlement features found
                </div>
             {:else}
             {#each availableLocations as location}
