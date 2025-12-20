@@ -61,13 +61,13 @@ export type EditorMode =
 const EDITOR_MODE_OVERLAYS: Record<EditorMode, string[]> = {
   'waterways': ['water'],
   'crossings': ['water'],
-  'roads': ['roads'],
+  'roads': ['roads', 'territory-border', 'settlement-icons', 'settlement-labels'],
   'terrain': ['terrain'],
   'bounty': ['resources'],
-  'worksites': ['worksites', 'terrain'],
+  'worksites': ['worksites', 'terrain','territory-border'],
   'settlements': ['settlements', 'settlement-labels'],
-  'fortifications': ['fortifications'],
-  'territory': ['territories']
+  'fortifications': ['fortifications','territory-border'],
+  'territory': ['territories','territory-border']
 };
 
 /**
