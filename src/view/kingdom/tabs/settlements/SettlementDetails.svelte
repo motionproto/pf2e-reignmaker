@@ -13,7 +13,9 @@
    import Button from '../../components/baseComponents/Button.svelte';
    import Dialog from '../../components/baseComponents/Dialog.svelte';
    import Notification from '../../components/baseComponents/Notification.svelte';
+   import NotableNPCs from '../../components/NotableNPCs.svelte';
    import { createEventDispatcher } from 'svelte';
+   import type { NotablePerson } from '../../../../models/Faction';
    
    export let settlement: Settlement | null;
    
@@ -133,22 +135,22 @@
    
    async function confirmDelete() {
       if (!settlement || isDeleting) return;
-      
+
       isDeleting = true;
-      
+
       try {
          const result = await settlementService.deleteSettlement(settlement.id);
-         
+
          // Show notification
          // @ts-ignore - Foundry global
          ui.notifications?.info(`Deleted settlement "${result.name}" (${result.structuresRemoved} structures removed, ${result.armiesMarkedUnsupported} armies unsupported)`);
-         
+
          // Close dialog
          showDeleteConfirm = false;
-         
+
          // Notify parent to deselect
          dispatch('settlementDeleted');
-         
+
       } catch (error) {
          console.error('Failed to delete settlement:', error);
          // @ts-ignore - Foundry global
@@ -156,6 +158,14 @@
       } finally {
          isDeleting = false;
       }
+   }
+
+   // Handler for NotableNPCs component updates
+   async function handleNotablePeopleUpdate(event: CustomEvent<{ notablePeople: NotablePerson[] }>) {
+      if (!settlement) return;
+      await settlementService.updateSettlement(settlement.id, {
+         notablePeople: event.detail.notablePeople
+      });
    }
 </script>
 
@@ -266,6 +276,15 @@
          </div>
          <SettlementBasicInfo {settlement} />
          <SettlementManagement {settlement} />
+
+         <!-- Notable NPCs Section -->
+         <NotableNPCs
+            notablePeople={settlement.notablePeople || []}
+            entityName={settlement.name}
+            createActorAction="createFactionActor"
+            on:update={handleNotablePeopleUpdate}
+         />
+
          <SettlementStructures {settlement} />
          
          <!-- Delete Settlement Button -->

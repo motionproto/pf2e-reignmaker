@@ -16,6 +16,7 @@ import metropolisMapIcon from '../img/map_icons/settlement_metropolis.webp';
 // Import ownership types
 import type { OwnershipValue } from '../types/ownership';
 import { PLAYER_KINGDOM } from '../types/ownership';
+import type { NotablePerson } from './Faction';
 
 /**
  * Settlement tiers based on Reignmaker Lite rules
@@ -170,7 +171,10 @@ export interface Settlement {
   // Skill bonuses from structures (enhanced with source tracking)
   skillBonuses?: Record<string, number>; // Map of skill name -> bonus value (e.g. { athletics: 1, diplomacy: 2 })
   skillBonusDetails?: SkillBonusDetail[]; // Detailed tracking of which structures provide bonuses
-  
+
+  // Notable NPCs
+  notablePeople?: NotablePerson[]; // Important NPCs associated with this settlement
+
   // Computed properties (calculated by services dynamically)
   foodConsumption?: number;
   armySupport?: number;
@@ -296,6 +300,7 @@ export function createSettlement(
     supportedUnits: [],
     wasFedLastTurn: true, // Assume fed initially
     imagePath: getDefaultSettlementImage(tier), // Pre-populate with default tier image
-    skillBonuses: {} // Initialize empty skill bonuses
+    skillBonuses: {}, // Initialize empty skill bonuses
+    notablePeople: [] // Initialize empty notable people list
   };
 }
