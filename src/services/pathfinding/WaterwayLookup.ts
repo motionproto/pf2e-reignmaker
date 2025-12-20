@@ -1,23 +1,23 @@
 /**
  * WaterwayLookup - Efficient hex-to-waterway detection service
- * 
+ *
  * Builds lookup maps from kingdom waterway data (rivers, lakes, swamps, waterfalls, crossings)
  * to quickly determine what waterway features are present on each hex.
- * 
+ *
  * Reactive: Automatically rebuilds when kingdom data changes.
- * 
+ *
  * River Crossing Detection:
- * Uses WaterwayGeometryService for precomputed blocked edges.
- * Movement between hexes is blocked if the movement path intersects a river segment
+ * Uses line intersection to check if movement paths cross river barrier segments.
+ * Movement between hexes is blocked if the path intersects a river segment
  * without a crossing (bridge/ford).
  */
 
 import type { KingdomData, RiverPath, WaterFeature, RiverCrossing } from '../../actors/KingdomActor';
 import { kingdomData } from '../../stores/KingdomStore';
+import { get } from 'svelte/store';
 import { logger } from '../../utils/Logger';
 import { getEdgeIdForDirection, edgeNameToIndex } from '../../utils/edgeUtils';
-import type { Point } from '../../utils/geometryUtils';
-import { waterwayGeometryService } from './WaterwayGeometryService';
+import { lineSegmentsIntersect, type Point } from '../../utils/geometryUtils';
 import type { EdgeDirection } from '../../models/Hex';
 
 export type WaterwayType = 'river' | 'lake' | 'swamp';
@@ -410,11 +410,8 @@ export class WaterwayLookup {
   
   /**
    * Check if movement between two hexes crosses a river (without a crossing)
-   * Uses precomputed blocked edge data from WaterwayGeometryService for O(1) lookup.
-   * 
-   * Blocked edges are computed by the geometry service when kingdom data changes,
-   * independently of rendering.
-   * 
+   * Uses direct line intersection between movement path and river barrier segments.
+   *
    * @param fromHexI - Source hex row
    * @param fromHexJ - Source hex column
    * @param toHexI - Destination hex row
@@ -422,23 +419,40 @@ export class WaterwayLookup {
    * @returns true if movement crosses a river without a crossing
    */
   doesMovementCrossRiver(fromHexI: number, fromHexJ: number, toHexI: number, toHexJ: number): boolean {
-    // Check if geometry has been computed yet
-    if (!waterwayGeometryService.isGeometryReady()) {
-      logger.debug(`[WaterwayLookup] Geometry not ready yet (canvas may not be initialized)`);
-      return false;  // Can't block until we have geometry data
+    const canvas = (globalThis as any).canvas;
+    if (!canvas?.grid) {
+      return false;  // Canvas not ready
     }
-    
-    // Convert to hex IDs and do O(1) lookup
-    const fromHexId = `${fromHexI}.${fromHexJ}`;
-    const toHexId = `${toHexI}.${toHexJ}`;
-    
-    const blocked = waterwayGeometryService.isEdgeBlocked(fromHexId, toHexId);
-    
-    if (blocked) {
-      logger.info(`[WaterwayLookup] Movement ${fromHexId} → ${toHexId} BLOCKED by river`);
+
+    // Get stored barrier segments from fresh kingdom data (not cached)
+    const kingdom = get(kingdomData);
+    const segments = kingdom?.rivers?.barrierSegments;
+
+    if (!segments || segments.length === 0) {
+      return false;  // No barrier segments stored
     }
-    
-    return blocked;
+
+    // Get hex centers for the movement path
+    const fromCenter = canvas.grid.getCenterPoint({ i: fromHexI, j: fromHexJ });
+    const toCenter = canvas.grid.getCenterPoint({ i: toHexI, j: toHexJ });
+
+    if (!fromCenter || !toCenter) {
+      return false;  // Invalid hex coordinates
+    }
+
+    // Check if movement line intersects any barrier segment (without a crossing)
+    for (const segment of segments) {
+      // Skip segments that have crossings - they allow passage
+      if (segment.hasCrossing) continue;
+
+      // Check line intersection
+      if (lineSegmentsIntersect(fromCenter, toCenter, segment.start, segment.end)) {
+        logger.info(`[WaterwayLookup] Movement ${fromHexI}.${fromHexJ} → ${toHexI}.${toHexJ} BLOCKED by river segment`);
+        return true;  // Movement crosses a barrier
+      }
+    }
+
+    return false;  // No barrier crossed
   }
   
   /**

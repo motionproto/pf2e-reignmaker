@@ -160,6 +160,7 @@ export interface KingdomData {
     paths: RiverPath[];
     crossings?: RiverCrossing[];  // Bridges and fords (segment-based)
     waterfalls?: RiverWaterfall[];  // Waterfalls that block boats (segment-based)
+    barrierSegments?: BarrierSegment[];  // Pre-computed barrier lines for pathfinding
   };
   
   // NEW: Road editing system
@@ -267,6 +268,16 @@ export interface RiverWaterfall {
   isCenter?: boolean;  // Center connector
   edge?: string;  // Edge connector ('e', 'se', 'sw', 'w', 'nw', 'ne')
   cornerIndex?: number;  // Corner connector (0-5)
+}
+
+/**
+ * Barrier segment - pre-computed line segment for pathfinding intersection checks
+ * Stored in kingdom data when rivers are edited, used by pathfinding to block movement
+ */
+export interface BarrierSegment {
+  start: { x: number; y: number };  // Start point in pixel coordinates
+  end: { x: number; y: number };    // End point in pixel coordinates
+  hasCrossing: boolean;             // If true, segment allows passage (bridge/ford exists)
 }
 
 /**

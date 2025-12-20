@@ -5,6 +5,8 @@
 
 import { logger } from '../../../utils/Logger';
 import { waterFeatureService } from '../core/WaterFeatureService';
+import { getKingdomData, updateKingdom } from '../../../stores/KingdomStore';
+import { computeBarrierSegments } from '../../../utils/barrierSegmentUtils';
 
 export class CrossingEditorHandlers {
   /**
@@ -49,6 +51,11 @@ export class CrossingEditorHandlers {
     } else {
       ui?.notifications?.info('Bridge removed');
     }
+
+    // Recompute barrier segments (crossings affect which segments block)
+    if (result !== null) {
+      await this.updateBarrierSegments();
+    }
   }
 
   /**
@@ -71,5 +78,34 @@ export class CrossingEditorHandlers {
     } else {
       ui?.notifications?.info('Ford removed');
     }
+
+    // Recompute barrier segments (crossings affect which segments block)
+    if (result !== null) {
+      await this.updateBarrierSegments();
+    }
+  }
+
+  /**
+   * Recompute and save barrier segments after crossing changes
+   */
+  private async updateBarrierSegments(): Promise<void> {
+    const canvas = (globalThis as any).canvas;
+    if (!canvas?.grid) {
+      logger.warn('[CrossingEditorHandlers] Cannot update barrier segments - canvas not ready');
+      return;
+    }
+
+    const kingdom = getKingdomData();
+    const paths = kingdom.rivers?.paths || [];
+    const crossings = kingdom.rivers?.crossings;
+
+    const segments = computeBarrierSegments(paths, crossings, canvas);
+
+    await updateKingdom(k => {
+      if (!k.rivers) k.rivers = { paths: [] };
+      k.rivers.barrierSegments = segments;
+    });
+
+    logger.info(`[CrossingEditorHandlers] Updated ${segments.length} barrier segments`);
   }
 }

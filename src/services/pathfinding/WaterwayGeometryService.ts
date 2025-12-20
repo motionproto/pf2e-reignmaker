@@ -1,23 +1,20 @@
 /**
- * WaterwayGeometryService - Deterministic river geometry calculator
- * 
- * Decouples river segment computation from rendering:
- * - Reads kingdom river/crossing/waterfall data
+ * WaterwayGeometryService - River barrier segment calculator
+ *
+ * Computes river segments as barrier lines for pathfinding:
+ * - Reads kingdom river/crossing data
  * - Computes pixel positions for all segments
- * - Precomputes blocked edges for movement
- * - Provides data to both WaterwayLookup (pathfinding) and WaterRenderer (display)
- * 
- * This service rebuilds geometry when kingdom data changes, ensuring
- * pathfinding doesn't depend on rendering lifecycle.
+ * - Segments are used for line intersection checks during pathfinding
+ *
+ * This service rebuilds geometry when kingdom data changes.
  */
 
-import type { KingdomData, RiverPath, RiverCrossing } from '../../actors/KingdomActor';
+import type { KingdomData, RiverPath } from '../../actors/KingdomActor';
 import { kingdomData } from '../../stores/KingdomStore';
 import { logger } from '../../utils/Logger';
 import { getEdgeMidpoint, getHexCenter } from '../../utils/riverUtils';
 import type { EdgeDirection } from '../../models/Hex';
-import { lineSegmentsIntersect, type Point } from '../../utils/geometryUtils';
-import { getAdjacentHexes } from '../../utils/hexUtils';
+import type { Point } from '../../utils/geometryUtils';
 import { writable, derived, get } from 'svelte/store';
 
 /**
@@ -36,7 +33,6 @@ export interface WaterwaySegment {
  */
 interface WaterwayGeometry {
   segments: WaterwaySegment[];
-  blockedEdges: Set<string>;  // Canonical hex pair keys
   isReady: boolean;
 }
 
@@ -47,13 +43,11 @@ class WaterwayGeometryService {
   // Internal store for computed geometry
   private geometryStore = writable<WaterwayGeometry>({
     segments: [],
-    blockedEdges: new Set(),
     isReady: false
   });
-  
+
   // Derived stores for easy access
   public readonly segments = derived(this.geometryStore, $g => $g.segments);
-  public readonly blockedEdges = derived(this.geometryStore, $g => $g.blockedEdges);
   public readonly isReady = derived(this.geometryStore, $g => $g.isReady);
   
   private unsubscribe: (() => void) | null = null;
@@ -101,30 +95,25 @@ class WaterwayGeometryService {
       logger.warn('[WaterwayGeometryService] Canvas not ready - geometry deferred. Waiting for canvas initialization.');
       this.geometryStore.set({
         segments: [],
-        blockedEdges: new Set(),
         isReady: false
       });
       return;
     }
-    
+
     // Update hash (checked in derived store now)
     const currentHash = this.getRiverDataHash(kingdom);
     this.lastKingdomDataHash = currentHash;
-    
-    // Compute segments
+
+    // Compute segments (barrier lines)
     const segments = this.computeSegments(kingdom, canvas);
-    
-    // Compute blocked edges
-    const blockedEdges = this.computeBlockedEdges(kingdom.hexes || [], segments, canvas);
-    
+
     // Update store
     this.geometryStore.set({
       segments,
-      blockedEdges,
       isReady: true
     });
-    
-    logger.info(`[WaterwayGeometryService] Geometry ready: ${segments.length} segments, ${blockedEdges.size} blocked edges`);
+
+    logger.info(`[WaterwayGeometryService] Geometry ready: ${segments.length} barrier segments`);
   }
   
   /**
@@ -211,104 +200,12 @@ class WaterwayGeometryService {
   }
   
   /**
-   * Compute which hex-to-hex edges are blocked by rivers
-   * Precomputes intersection tests for O(1) pathfinding lookups
-   */
-  private computeBlockedEdges(
-    hexes: Array<{ id: string }>,
-    segments: WaterwaySegment[],
-    canvas: any
-  ): Set<string> {
-    const blockedEdges = new Set<string>();
-    
-    // Get segments that don't have crossings (only these block movement)
-    const blockingSegments = segments.filter(s => !s.hasCrossing);
-    
-    // Silently compute blocked edges - avoid console spam
-    
-    if (blockingSegments.length === 0) {
-      return blockedEdges;
-    }
-    
-    // Track processed edges to avoid duplicate checks
-    const processedEdges = new Set<string>();
-    
-    // For each hex, check movement to all neighbors
-    for (const hex of hexes) {
-      const parts = hex.id.split('.');
-      if (parts.length !== 2) continue;
-      
-      const hexI = parseInt(parts[0], 10);
-      const hexJ = parseInt(parts[1], 10);
-      if (isNaN(hexI) || isNaN(hexJ)) continue;
-      
-      // Get hex center
-      const fromCenter = canvas.grid.getCenterPoint({ i: hexI, j: hexJ });
-      if (!fromCenter) continue;
-      
-      // Get all 6 neighbors
-      const neighbors = getAdjacentHexes(hexI, hexJ);
-      
-      for (const neighbor of neighbors) {
-        const neighborId = `${neighbor.i}.${neighbor.j}`;
-        
-        // Create canonical edge key (smaller ID first)
-        const edgeKey = hex.id < neighborId 
-          ? `${hex.id}->${neighborId}` 
-          : `${neighborId}->${hex.id}`;
-        
-        // Skip if already processed
-        if (processedEdges.has(edgeKey)) continue;
-        processedEdges.add(edgeKey);
-        
-        // Get neighbor center
-        const toCenter = canvas.grid.getCenterPoint({ i: neighbor.i, j: neighbor.j });
-        if (!toCenter) continue;
-        
-        // Check if movement line intersects any blocking river segment
-        for (const segment of blockingSegments) {
-          if (lineSegmentsIntersect(fromCenter, toCenter, segment.start, segment.end)) {
-            blockedEdges.add(edgeKey);
-            break; // No need to check more segments for this edge
-          }
-        }
-      }
-    }
-    
-    return blockedEdges;
-  }
-  
-  /**
-   * Check if a hex-to-hex edge is blocked by a river
-   */
-  isEdgeBlocked(fromHexId: string, toHexId: string): boolean {
-    const geometry = get(this.geometryStore);
-    if (!geometry.isReady) {
-      return false; // Can't block if geometry not computed
-    }
-    
-    // Create canonical key
-    const edgeKey = fromHexId < toHexId 
-      ? `${fromHexId}->${toHexId}` 
-      : `${toHexId}->${fromHexId}`;
-    
-    return geometry.blockedEdges.has(edgeKey);
-  }
-  
-  /**
-   * Get all segments (for rendering)
+   * Get all segments (for rendering and intersection checks)
    */
   getSegments(): WaterwaySegment[] {
     return get(this.geometryStore).segments;
   }
-  
-  /**
-   * Get all blocked edges (for debugging)
-   */
-  getBlockedEdges(): Set<string> {
-    return get(this.geometryStore).blockedEdges;
-  }
-  
+
   /**
    * Check if geometry is ready
    */

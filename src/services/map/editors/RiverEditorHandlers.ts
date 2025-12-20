@@ -10,6 +10,7 @@ import { getEdgeMidpoint, getHexCenter } from '../../../utils/riverUtils';
 import type { EdgeDirection } from '../../../models/Hex';
 import type { RiverPathPoint } from '../../../actors/KingdomActor';
 import { getAdjacentHexes } from '../../../utils/hexUtils';
+import { computeBarrierSegments } from '../../../utils/barrierSegmentUtils';
 
 export class RiverEditorHandlers {
   // River path being drawn (sequential system)
@@ -17,10 +18,32 @@ export class RiverEditorHandlers {
   private currentPathOrder: number = 0;
   // Index of the currently active vertex within the active path (for editing/highlight)
   private currentVertexIndex: number | null = null;
-  
+
   // Preview graphics for drawing in progress
   private previewGraphics: PIXI.Graphics | null = null;
-  
+
+  /**
+   * Get pixel position for any connector type (center, edge, or corner)
+   */
+  private getConnectorPosition(
+    point: { hexI: number; hexJ: number; isCenter?: boolean; edge?: string; cornerIndex?: number },
+    canvas: any
+  ): { x: number; y: number } | null {
+    if (point.isCenter) {
+      return getHexCenter(point.hexI, point.hexJ, canvas);
+    }
+    if (point.edge) {
+      return getEdgeMidpoint(point.hexI, point.hexJ, point.edge as EdgeDirection, canvas);
+    }
+    if (point.cornerIndex !== undefined) {
+      const vertices = canvas.grid.getVertices({ i: point.hexI, j: point.hexJ });
+      if (vertices && vertices.length > point.cornerIndex) {
+        const v = vertices[point.cornerIndex];
+        return { x: v.x, y: v.y };
+      }
+    }
+    return null;
+  }
 
   /**
    * Handle river click - sequential path system
@@ -204,8 +227,11 @@ export class RiverEditorHandlers {
     if (insertedIndex !== null) {
       this.currentVertexIndex = insertedIndex;
     }
-    
+
     this.currentPathOrder += 10;
+
+    // Recompute barrier segments
+    await this.updateBarrierSegments();
   }
 
   /**
@@ -321,6 +347,9 @@ export class RiverEditorHandlers {
         }
       }
     }
+
+    // Recompute barrier segments
+    await this.updateBarrierSegments();
   }
 
   /**
@@ -464,11 +493,14 @@ export class RiverEditorHandlers {
     this.currentPathId = null;
     this.currentPathOrder = 0;
     this.currentVertexIndex = null;
-    
+
     // Destroy preview graphics
     this.destroyPreviewGraphics();
+
+    // Recompute barrier segments
+    await this.updateBarrierSegments();
   }
-  
+
   /**
    * Check if adding a new point would create a duplicate segment
    * A duplicate segment is one that already exists between the same two connector points
@@ -683,15 +715,10 @@ export class RiverEditorHandlers {
         const p1 = sortedPoints[i];
         const p2 = sortedPoints[i + 1];
         
-        // Get screen positions
-        const pos1 = p1.isCenter 
-          ? getHexCenter(p1.hexI, p1.hexJ, canvas)
-          : getEdgeMidpoint(p1.hexI, p1.hexJ, p1.edge as EdgeDirection, canvas);
-        
-        const pos2 = p2.isCenter
-          ? getHexCenter(p2.hexI, p2.hexJ, canvas)
-          : getEdgeMidpoint(p2.hexI, p2.hexJ, p2.edge as EdgeDirection, canvas);
-        
+        // Get screen positions (handles center, edge, and corner points)
+        const pos1 = this.getConnectorPosition(p1, canvas);
+        const pos2 = this.getConnectorPosition(p2, canvas);
+
         if (!pos1 || !pos2) continue;
         
         // Calculate distance from click to line segment
@@ -757,10 +784,13 @@ export class RiverEditorHandlers {
         logger.info('[RiverEditorHandlers] 🗑️ Path 2 orphaned (< 2 points), deleted');
       }
     });
-    
+
+    // Recompute barrier segments
+    await this.updateBarrierSegments();
+
     return { success: true, pathsDeleted };
   }
-  
+
   /**
    * Calculate distance from point to line segment
    */
@@ -821,15 +851,10 @@ export class RiverEditorHandlers {
         const p1 = sortedPoints[i];
         const p2 = sortedPoints[i + 1];
         
-        // Get screen positions
-        const pos1 = p1.isCenter 
-          ? getHexCenter(p1.hexI, p1.hexJ, canvas)
-          : getEdgeMidpoint(p1.hexI, p1.hexJ, p1.edge as EdgeDirection, canvas);
-        
-        const pos2 = p2.isCenter
-          ? getHexCenter(p2.hexI, p2.hexJ, canvas)
-          : getEdgeMidpoint(p2.hexI, p2.hexJ, p2.edge as EdgeDirection, canvas);
-        
+        // Get screen positions (handles center, edge, and corner points)
+        const pos1 = this.getConnectorPosition(p1, canvas);
+        const pos2 = this.getConnectorPosition(p2, canvas);
+
         if (!pos1 || !pos2) continue;
         
         // Calculate distance from click to line segment
@@ -869,7 +894,35 @@ export class RiverEditorHandlers {
       
       logger.info('[RiverEditorHandlers] ✅ Flow direction reversed');
     });
-    
+
+    // Recompute barrier segments
+    await this.updateBarrierSegments();
+
     return { success: true };
+  }
+
+  /**
+   * Recompute and save barrier segments after river edits
+   * Called automatically after any river modification
+   */
+  async updateBarrierSegments(): Promise<void> {
+    const canvas = (globalThis as any).canvas;
+    if (!canvas?.grid) {
+      logger.warn('[RiverEditorHandlers] Cannot update barrier segments - canvas not ready');
+      return;
+    }
+
+    const kingdom = getKingdomData();
+    const paths = kingdom.rivers?.paths || [];
+    const crossings = kingdom.rivers?.crossings;
+
+    const segments = computeBarrierSegments(paths, crossings, canvas);
+
+    await updateKingdom(k => {
+      if (!k.rivers) k.rivers = { paths: [] };
+      k.rivers.barrierSegments = segments;
+    });
+
+    logger.info(`[RiverEditorHandlers] Updated ${segments.length} barrier segments`);
   }
 }
