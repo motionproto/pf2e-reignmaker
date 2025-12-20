@@ -201,8 +201,14 @@ export class ProvinceEditorService {
    * Restore player's overlay preferences
    */
   private async restoreOverlays(): Promise<void> {
-    await this.overlayManager.popOverlayState();
-    logger.info('[ProvinceEditor] Restored player overlay preferences');
+    const restored = await this.overlayManager.popOverlayState();
+    if (restored) {
+      // Refresh all active overlays to ensure they render with current data
+      await this.overlayManager.refreshActiveOverlays();
+      logger.info('[ProvinceEditor] Restored player overlay preferences');
+    } else {
+      logger.warn('[ProvinceEditor] No overlay state to restore');
+    }
   }
 
   /**

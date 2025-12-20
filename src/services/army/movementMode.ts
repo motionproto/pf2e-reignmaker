@@ -12,11 +12,12 @@ import type { Army } from '../../models/Army';
 import type { PathResult, ReachabilityMap } from '../pathfinding/types';
 import { pathfindingService } from '../pathfinding';
 import { ReignMakerMapLayer } from '../map/core/ReignMakerMapLayer';
-import { 
-  renderOriginHex, 
-  renderReachableHexes, 
-  renderPath, 
-  renderEndpoint 
+import { getOverlayManager, type OverlayManager } from '../map/core/OverlayManager';
+import {
+  renderOriginHex,
+  renderReachableHexes,
+  renderPath,
+  renderEndpoint
 } from '../map/renderers/ArmyMovementRenderer';
 import { getKingdomActor } from '../../main.kingdom';
 import { positionToOffset, hexToKingmakerId } from '../hex-selector/coordinates';
@@ -56,6 +57,7 @@ export class ArmyMovementMode {
   private traits: ArmyMovementTraits = { canFly: false, canSwim: false, hasBoats: false, amphibious: false };
   private reachableHexes: ReachabilityMap = new Map();
   private mapLayer: ReignMakerMapLayer | null = null;
+  private overlayManager: OverlayManager | null = null;
   private canvasClickHandler: ((event: any) => void) | null = null;
   private canvasMoveHandler: ((event: any) => void) | null = null;
   private currentHoveredHex: string | null = null;
@@ -63,7 +65,17 @@ export class ArmyMovementMode {
   private pathCompleteCallback: (() => void) | null = null;
 
   constructor() {
-    // Lazy load map layer to avoid circular dependency
+    // Lazy load map layer and overlay manager to avoid circular dependency
+  }
+
+  /**
+   * Get overlay manager instance (lazy loaded)
+   */
+  private getOverlayManager(): OverlayManager {
+    if (!this.overlayManager) {
+      this.overlayManager = getOverlayManager();
+    }
+    return this.overlayManager;
   }
 
   /**
@@ -119,14 +131,14 @@ export class ArmyMovementMode {
 
   /**
    * Activate movement mode for an army
-   * 
+   *
    * @param armyId - ID of the army to move
    * @param startHexId - Hex ID where army is currently located
    */
   async activateForArmy(armyId: string, startHexId: string): Promise<void> {
     if (this.active) {
       logger.warn('[ArmyMovementMode] Already active, deactivating first');
-      this.deactivate();
+      await this.deactivate();
     }
 
     logger.info(`[ArmyMovementMode] Activating for army ${armyId} at ${startHexId}`);
@@ -147,15 +159,24 @@ export class ArmyMovementMode {
     this.startHexId = startHexId;
     this.active = true;
 
+    // Save current overlay state and set temporary overlays for army movement
+    // Show only territory context - hide other overlays that might clutter the view
+    const overlayManager = this.getOverlayManager();
+    await overlayManager.setTemporaryOverlays([
+      'territories',       // Show territory ownership for context
+      'territory-border',  // Show kingdom borders
+    ]);
+    logger.info('[ArmyMovementMode] Saved overlay state and set movement overlays');
+
     // Get army movement traits from actor
     this.traits = getArmyMovementTraits(army);
-    
+
     // Calculate movement range based on army's actor speed
     // (always half speed, special movement types have terrain advantages)
     const { getArmyMovementRange } = await import('../../utils/armyMovementRange');
     const movementData = await getArmyMovementRange(army.actorId);
     this.maxMovement = movementData.range;
-    
+
     logger.info(`[ArmyMovementMode] Army ${army.name}: range=${this.maxMovement}, traits:`, this.traits);
 
     // Calculate reachable hexes with army's movement range and traits
@@ -507,7 +528,7 @@ export class ArmyMovementMode {
     }
 
     // Deactivate mode
-    this.deactivate();
+    await this.deactivate();
   }
 
   /**
@@ -604,7 +625,7 @@ export class ArmyMovementMode {
   /**
    * Deactivate movement mode
    */
-  deactivate(): void {
+  async deactivate(): Promise<void> {
     if (!this.active) return;
 
     logger.info('[ArmyMovementMode] Deactivating');
@@ -620,13 +641,23 @@ export class ArmyMovementMode {
       this.canvasMoveHandler = null;
     }
 
-    // Clear all layers
+    // Clear all army movement layers
     if (this.mapLayer) {
       this.mapLayer.clearLayer(LAYER_IDS.origin);
       this.mapLayer.clearLayer(LAYER_IDS.range);
       this.mapLayer.clearLayer(LAYER_IDS.waypoints);
       this.mapLayer.clearLayer(LAYER_IDS.path);
       this.mapLayer.clearLayer(LAYER_IDS.hover);
+    }
+
+    // Restore player's overlay preferences
+    const overlayManager = this.getOverlayManager();
+    const restored = await overlayManager.popOverlayState();
+    if (restored) {
+      await overlayManager.refreshActiveOverlays();
+      logger.info('[ArmyMovementMode] Restored player overlay preferences');
+    } else {
+      logger.warn('[ArmyMovementMode] No overlay state to restore');
     }
 
     // Reset state

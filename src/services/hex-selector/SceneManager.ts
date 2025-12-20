@@ -182,7 +182,14 @@ export class SceneManager {
    * Restore player's overlay preferences
    */
   async restoreOverlays(): Promise<void> {
-    await this.overlayManager.popOverlayState();
-    logger.info('[HexSelector] � Restored player overlay preferences');
+    const restored = await this.overlayManager.popOverlayState();
+    if (restored) {
+      // Refresh all active overlays to ensure they render with current data
+      // This catches any cases where layers might have been affected by hex selection operations
+      await this.overlayManager.refreshActiveOverlays();
+      logger.info('[HexSelector] ✅ Restored player overlay preferences');
+    } else {
+      logger.warn('[HexSelector] ⚠️ No overlay state to restore');
+    }
   }
 }

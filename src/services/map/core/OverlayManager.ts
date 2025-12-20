@@ -342,6 +342,44 @@ export class OverlayManager {
   }
 
   /**
+   * Force re-render of all active overlays
+   * Use this when overlay state might be stale or out of sync
+   *
+   * This is useful after mode transitions where overlays may have been
+   * affected by other operations (editor mode, hex selection, etc.)
+   */
+  async refreshActiveOverlays(): Promise<void> {
+    const $active = get(this.activeOverlaysStore);
+    logger.info('[OverlayManager] 🔄 Refreshing active overlays:', Array.from($active));
+
+    for (const id of $active) {
+      const overlay = this.overlays.get(id);
+      if (!overlay) continue;
+
+      try {
+        // For reactive overlays, trigger a re-render by getting current store value
+        if (overlay.store && overlay.render) {
+          const currentData = get(overlay.store);
+          await overlay.render(currentData);
+        }
+        // For legacy overlays, call show() again
+        else if (overlay.show) {
+          await overlay.show();
+        }
+
+        // Ensure all layer IDs for this overlay are visible
+        overlay.layerIds.forEach(layerId => {
+          this.mapLayer.showLayer(layerId);
+        });
+      } catch (error) {
+        logger.error(`[OverlayManager] ❌ Failed to refresh overlay ${id}:`, error);
+      }
+    }
+
+    logger.info('[OverlayManager] ✅ Active overlays refreshed');
+  }
+
+  /**
    * Push current overlay state onto stack (for temporary overlay changes)
    * Use this before showing temporary overlays during map interactions
    * 
@@ -358,7 +396,7 @@ export class OverlayManager {
   /**
    * Pop and restore previous overlay state from stack
    * Use this to restore player's overlay preferences after map interaction
-   * 
+   *
    * @returns true if state was restored, false if stack was empty
    */
   async popOverlayState(): Promise<boolean> {
@@ -366,37 +404,57 @@ export class OverlayManager {
       logger.warn('[OverlayManager] ⚠️ Cannot pop overlay state - stack is empty');
       return false;
     }
-    
+
     const previousState = this.overlayStateStack.pop()!;
     logger.info(`[OverlayManager] 📍 Popping overlay state (stack depth: ${this.overlayStateStack.length}):`, Array.from(previousState));
-    
+
     // Get current active overlays
     const $active = get(this.activeOverlaysStore);
-    
+
+    // Track any errors during restoration
+    const errors: Array<{ id: string; error: unknown }> = [];
+
     // Hide overlays that weren't in the previous state
     const toHide = Array.from($active).filter(id => !previousState.has(id));
     for (const id of toHide) {
-      logger.info(`[OverlayManager]   - Hiding: ${id}`);
-      this.hideOverlay(id, true); // Skip state save during batch operation
+      try {
+        logger.info(`[OverlayManager]   - Hiding: ${id}`);
+        this.hideOverlay(id, true); // Skip state save during batch operation
+      } catch (error) {
+        logger.error(`[OverlayManager] ❌ Failed to hide overlay ${id}:`, error);
+        errors.push({ id, error });
+        // Continue with other overlays - don't let one failure break restoration
+      }
     }
-    
+
     // Show overlays that were in the previous state but aren't active now
     const toShow = Array.from(previousState).filter(id => !$active.has(id));
     for (const id of toShow) {
-      logger.info(`[OverlayManager]   + Showing: ${id}`);
-      await this.showOverlay(id);
+      try {
+        logger.info(`[OverlayManager]   + Showing: ${id}`);
+        await this.showOverlay(id);
+      } catch (error) {
+        logger.error(`[OverlayManager] ❌ Failed to show overlay ${id}:`, error);
+        errors.push({ id, error });
+        // Continue with other overlays - don't let one failure break restoration
+      }
     }
-    
+
     // Save the restored state to localStorage
     this.saveState();
-    
+
+    // Log summary if there were errors
+    if (errors.length > 0) {
+      logger.warn(`[OverlayManager] ⚠️ Overlay state restoration completed with ${errors.length} error(s)`);
+    }
+
     return true;
   }
   
   /**
    * Set temporary overlays for map interaction (auto-saves current state)
    * This is a convenience method that combines pushOverlayState() + showing specific overlays
-   * 
+   *
    * @param overlayIds - Array of overlay IDs to show (all others will be hidden)
    * @param skipPush - If true, don't push state (useful if already pushed manually)
    */
@@ -405,26 +463,43 @@ export class OverlayManager {
     if (!skipPush) {
       this.pushOverlayState();
     }
-    
+
     logger.info('[OverlayManager] 🔄 Setting temporary overlays:', overlayIds);
-    
+
+    // Track any errors during the operation
+    const errors: Array<{ id: string; error: unknown }> = [];
+
     // Get current active overlays
     const $active = get(this.activeOverlaysStore);
-    
+
     // Hide overlays not in the target list
     const toHide = Array.from($active).filter(id => !overlayIds.includes(id));
     for (const id of toHide) {
-      this.hideOverlay(id, true); // Skip state save during batch operation
+      try {
+        this.hideOverlay(id, true); // Skip state save during batch operation
+      } catch (error) {
+        logger.error(`[OverlayManager] ❌ Failed to hide overlay ${id}:`, error);
+        errors.push({ id, error });
+      }
     }
-    
+
     // Show overlays in the target list
     for (const id of overlayIds) {
       if (!$active.has(id)) {
-        await this.showOverlay(id);
+        try {
+          await this.showOverlay(id);
+        } catch (error) {
+          logger.error(`[OverlayManager] ❌ Failed to show overlay ${id}:`, error);
+          errors.push({ id, error });
+        }
       }
     }
-    
-    logger.info('[OverlayManager] ✅ Temporary overlays set');
+
+    if (errors.length > 0) {
+      logger.warn(`[OverlayManager] ⚠️ setTemporaryOverlays completed with ${errors.length} error(s)`);
+    } else {
+      logger.info('[OverlayManager] ✅ Temporary overlays set');
+    }
   }
   
   /**
@@ -448,45 +523,65 @@ export class OverlayManager {
   /**
    * Set active overlays - show specified overlays and hide all others
    * This is the centralized way to manage overlay state
-   * 
+   *
    * @param overlayIds - Array of overlay IDs to show (all others will be hidden)
    * @param saveState - If true, save the new state to localStorage (default: true)
    */
   async setActiveOverlays(overlayIds: string[], saveState: boolean = true): Promise<void> {
-    logger.info('[OverlayManager] � setActiveOverlays START - requested:', overlayIds);
-    
+    logger.info('[OverlayManager] 🔄 setActiveOverlays START - requested:', overlayIds);
+
     // Get current active overlays
     const $active = get(this.activeOverlaysStore);
     logger.info('[OverlayManager] 🔍 Current active overlays:', Array.from($active));
-    
+
+    // Track any errors during the operation
+    const errors: Array<{ id: string; error: unknown }> = [];
+
     // Hide overlays not in the target list (skip individual state saves for batch operation)
     const toHide = Array.from($active).filter(id => !overlayIds.includes(id));
     logger.info('[OverlayManager] 🔍 Overlays to hide:', toHide);
     for (const id of toHide) {
-      logger.info(`[OverlayManager] 🔍 Hiding overlay: ${id}...`);
-      this.hideOverlay(id, true); // Skip state save during batch operation
+      try {
+        logger.info(`[OverlayManager] 🔍 Hiding overlay: ${id}...`);
+        this.hideOverlay(id, true); // Skip state save during batch operation
+      } catch (error) {
+        logger.error(`[OverlayManager] ❌ Failed to hide overlay ${id}:`, error);
+        errors.push({ id, error });
+        // Continue with other overlays - don't let one failure break the batch
+      }
     }
-    
+
     // Show overlays in the target list (skip individual state saves for batch operation)
     logger.info('[OverlayManager] 🔍 Overlays to show:', overlayIds.filter(id => !$active.has(id)));
     for (const id of overlayIds) {
       if (!$active.has(id)) {
-        logger.info(`[OverlayManager] 🔍 Showing overlay: ${id}...`);
-        await this.showOverlay(id);
-        logger.info(`[OverlayManager] 🔍 showOverlay(${id}) completed`);
+        try {
+          logger.info(`[OverlayManager] 🔍 Showing overlay: ${id}...`);
+          await this.showOverlay(id);
+          logger.info(`[OverlayManager] 🔍 showOverlay(${id}) completed`);
+        } catch (error) {
+          logger.error(`[OverlayManager] ❌ Failed to show overlay ${id}:`, error);
+          errors.push({ id, error });
+          // Continue with other overlays - don't let one failure break the batch
+        }
       } else {
         logger.info(`[OverlayManager] 🔍 Overlay ${id} already active, skipping`);
       }
     }
-    
+
     // Save the new state if requested
     if (saveState) {
       logger.info('[OverlayManager] 🔍 Saving state to localStorage...');
       this.saveState();
     }
-    
+
     const $activeAfter = get(this.activeOverlaysStore);
     logger.info('[OverlayManager] ✅ setActiveOverlays COMPLETE - final active overlays:', Array.from($activeAfter));
+
+    // Log summary if there were errors
+    if (errors.length > 0) {
+      logger.warn(`[OverlayManager] ⚠️ setActiveOverlays completed with ${errors.length} error(s)`);
+    }
   }
   
   /**

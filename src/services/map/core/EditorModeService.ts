@@ -188,7 +188,7 @@ export class EditorModeService {
   
   /**
    * Enter editor mode - backup kingdom data and take control of mouse interactions
-   * 
+   *
    * OVERLAY MANAGEMENT:
    * - Preserves user's current overlay state via overlay stack
    * - Clears all graphics layers for clean slate
@@ -199,77 +199,89 @@ export class EditorModeService {
       logger.warn('[EditorModeService] Already in editor mode');
       return;
     }
-    
+
     logger.info('[EditorModeService] Entering editor mode');
-    
+
     // Backup kingdom data (deep copy for restore on cancel)
     const kingdom = getKingdomData();
     this.backupKingdomData = structuredClone(kingdom);
-    
-    this.active = true;
-    this.currentTool = 'inactive';
-    this.currentMode = null;
-    
-    // Disable canvas layer interactivity (prevents token/tile selection)
-    this.savedLayerInteractivity = disableCanvasLayerInteractivity();
-    
-    // CRITICAL: Push current overlay state onto stack BEFORE any changes
-    // This allows us to restore user's exact overlay preferences on exit
+
+    // CRITICAL: Push overlay state FIRST before any operations
+    // This must happen before setting this.active = true so we can clean up on error
     const { getOverlayManager } = await import('./OverlayManager');
     const overlayManager = getOverlayManager();
     overlayManager.pushOverlayState();
     logger.info('[EditorModeService] Saved user overlay state to stack');
-    
-    // Clear ALL map layers for clean slate (but don't touch overlay manager state yet)
-    const { ReignMakerMapLayer } = await import('./ReignMakerMapLayer');
-    const mapLayer = ReignMakerMapLayer.getInstance();
-    mapLayer.clearAllLayers();
-    logger.info('[EditorModeService] Cleared all map layer graphics before editor start');
-    
-    // Disable Foundry token scene control by activating our custom control
-    this.disableTokenSceneControl();
-    
-    // Attach direct event listeners to canvas stage
-    this.attachDirectEventListeners();
-    
-    // Note: Default overlays will be set when setEditorMode() is called
+
+    try {
+      this.active = true;
+      this.currentTool = 'inactive';
+      this.currentMode = null;
+
+      // Disable canvas layer interactivity (prevents token/tile selection)
+      this.savedLayerInteractivity = disableCanvasLayerInteractivity();
+
+      // Clear ALL map layers for clean slate (but don't touch overlay manager state yet)
+      const { ReignMakerMapLayer } = await import('./ReignMakerMapLayer');
+      const mapLayer = ReignMakerMapLayer.getInstance();
+      mapLayer.clearAllLayers();
+      logger.info('[EditorModeService] Cleared all map layer graphics before editor start');
+
+      // Disable Foundry token scene control by activating our custom control
+      this.disableTokenSceneControl();
+
+      // Attach direct event listeners to canvas stage
+      this.attachDirectEventListeners();
+
+      // Note: Default overlays will be set when setEditorMode() is called
+    } catch (error) {
+      // If anything fails during setup, restore overlay state and rethrow
+      logger.error('[EditorModeService] ❌ Failed to enter editor mode, restoring state:', error);
+      this.active = false;
+      await overlayManager.popOverlayState();
+      throw error;
+    }
   }
   
   /**
    * Exit editor mode - restore original mouse manager and user's overlay state
-   * 
+   *
    * OVERLAY MANAGEMENT:
    * - Restores user's pre-editor overlay configuration via overlay stack
    * - Cleans up editor-only graphics layers
+   * - Refreshes active overlays to ensure proper rendering
    */
   async exitEditorMode(): Promise<void> {
     if (!this.active) return;
-    
+
     logger.info('[EditorModeService] Exiting editor mode');
-    
+
     // Destroy connector layer (clears all control point graphics)
     this.destroyConnectorLayer();
-    
+
     // Remove direct event listeners
     this.removeDirectEventListeners();
-    
+
     // Restore canvas layer interactivity
     restoreCanvasLayerInteractivity(this.savedLayerInteractivity);
     this.savedLayerInteractivity.clear();
-    
+
     // Restore previous active scene control
     this.restoreTokenSceneControl();
-    
+
     // CRITICAL: Restore user's pre-editor overlay state from stack
     const { getOverlayManager } = await import('./OverlayManager');
     const overlayManager = getOverlayManager();
     const restored = await overlayManager.popOverlayState();
     if (restored) {
       logger.info('[EditorModeService] Restored user overlay state from stack');
+      // Refresh all active overlays to ensure they render with current data
+      // This catches any cases where layers might have been affected by editor operations
+      await overlayManager.refreshActiveOverlays();
     } else {
       logger.warn('[EditorModeService] No overlay state to restore (stack was empty)');
     }
-    
+
     this.active = false;
     this.currentTool = 'inactive';
     this.currentMode = null;
