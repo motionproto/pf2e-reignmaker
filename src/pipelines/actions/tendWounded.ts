@@ -63,7 +63,7 @@ export const tendWoundedPipeline: CheckPipeline = {
       };
     }
 
-    const hasPlayerArmiesWithActors = kingdom.armies.some((army: any) => 
+    const hasPlayerArmiesWithActors = kingdom.armies.some((army: any) =>
       army.ledBy === PLAYER_KINGDOM && army.actorId
     );
 
@@ -71,6 +71,44 @@ export const tendWoundedPipeline: CheckPipeline = {
       return {
         met: false,
         reason: 'No player armies available'
+      };
+    }
+
+    // Check if any armies are actually wounded
+    const game = (globalThis as any).game;
+    const hasWoundedTroops = kingdom.armies.some((army: any) => {
+      if (army.ledBy !== PLAYER_KINGDOM || !army.actorId) return false;
+
+      const npcActor = game?.actors?.get(army.actorId);
+      if (!npcActor) return false;
+
+      // Check if HP is below max
+      const currentHP = npcActor.system?.attributes?.hp?.value || 0;
+      const maxHP = npcActor.system?.attributes?.hp?.max || 0;
+      if (currentHP < maxHP) return true;
+
+      // Check if there are any negative conditions
+      const items = Array.from(npcActor.items.values()) as any[];
+      const hasNegativeConditions = items.some((i: any) => {
+        if (i.type !== 'condition' && i.type !== 'effect') return false;
+
+        const name = i.name?.toLowerCase() || '';
+        const isBeneficial = name.includes('bonus') ||
+                            name.includes('+') ||
+                            name.includes('deploy') ||
+                            name.includes('stance') ||
+                            name.includes('inspire');
+
+        return !isBeneficial;
+      });
+
+      return hasNegativeConditions;
+    });
+
+    if (!hasWoundedTroops) {
+      return {
+        met: false,
+        reason: 'No wounded troops available'
       };
     }
 

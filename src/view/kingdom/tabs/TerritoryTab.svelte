@@ -1,11 +1,17 @@
 <script lang="ts">
-   import { kingdomData, currentFaction, allSettlements, ownedSettlements, claimedWorksites } from '../../../stores/KingdomStore';
+   import { onMount, onDestroy } from 'svelte';
+   import { Chart, registerables } from 'chart.js';
+   import { kingdomData, currentFaction, allSettlements, ownedSettlements, claimedWorksites, selectSettlement } from '../../../stores/KingdomStore';
+   import { setSelectedTab } from '../../../stores/ui';
    import { WorksiteConfig } from '../../../models/Hex';
-   import { getResourceIcon, getResourceColor } from '../utils/presentation';
+   import { getResourceIcon, getResourceColor, getTerrainIcon, getTerrainColor } from '../utils/presentation';
    import { filterVisibleHexes } from '../../../utils/visibility-filter';
 
+   // Register Chart.js components
+   Chart.register(...registerables);
+
    // View mode toggle
-   let viewMode: 'territory' | 'world' | 'overview' = 'territory';
+   let viewMode: 'territory' | 'world' | 'overview' = 'overview';
    
    // Check if current user is GM
    $: isGM = (game as any)?.user?.isGM || false;
@@ -75,30 +81,10 @@
    // Sorting state
    let sortColumn: string = 'id';
    let sortDirection: 'asc' | 'desc' = 'asc';
-   
-   // Filter state
-   let filterTerrain: string = 'all';
-   let filterWorksite: string = 'all';
-   
-   // Get unique terrain types from SOURCE hexes (filtered by view mode)
-   $: terrainTypes = [...new Set(sourceHexes.map(h => h.terrain))].sort();
-   
-   // Get unique worksite types from SOURCE hexes (filtered by view mode)
-   $: worksiteTypes = [...new Set(sourceHexes
-      .filter(h => h.worksite)
-      .map(h => h.worksite!.type))].sort();
-   
-   // Apply filters and sorting to source hexes
+
+   // Apply sorting to source hexes
    $: filteredAndSortedHexes = (() => {
       let hexes = [...sourceHexes];
-      
-      // Apply filters
-      if (filterTerrain !== 'all') {
-         hexes = hexes.filter(h => h.terrain === filterTerrain);
-      }
-      if (filterWorksite !== 'all') {
-         hexes = hexes.filter(h => h.worksite && h.worksite.type === filterWorksite);
-      }
       
       // Helper function to get settlement name for a hex
       const getSettlementName = (hex: any): string => {
@@ -183,8 +169,11 @@
       return hexes;
    })();
    
-   // Calculate territory statistics from SOURCE hexes
-   $: terrainBreakdown = sourceHexes.reduce((acc, hex) => {
+   // Get claimed hexes for overview statistics
+   $: claimedHexes = ($kingdomData.hexes || []).filter((h: any) => h.claimedBy === $currentFaction);
+
+   // Calculate terrain breakdown - use claimed hexes for overview, sourceHexes for other views
+   $: terrainBreakdown = (viewMode === 'overview' ? claimedHexes : sourceHexes).reduce((acc, hex) => {
       acc[hex.terrain] = (acc[hex.terrain] || 0) + 1;
       return acc;
    }, {} as Record<string, number>);
@@ -290,33 +279,86 @@
       
       return result;
    }
+
+   // Chart.js terrain pie chart
+   let terrainChartCanvas: HTMLCanvasElement;
+   let terrainChart: Chart | null = null;
+
+   // Create/update terrain chart
+   function updateTerrainChart() {
+      if (!terrainChartCanvas || Object.keys(terrainBreakdown).length === 0) return;
+
+      const sortedTerrains = Object.entries(terrainBreakdown).sort(([,a], [,b]) => b - a);
+      const labels = sortedTerrains.map(([terrain]) => terrain);
+      const data = sortedTerrains.map(([, count]) => count);
+      const backgroundColors = sortedTerrains.map(([terrain]) => getTerrainColor(terrain));
+
+      if (terrainChart) {
+         // Update existing chart
+         terrainChart.data.labels = labels;
+         terrainChart.data.datasets[0].data = data;
+         terrainChart.data.datasets[0].backgroundColor = backgroundColors;
+         terrainChart.update();
+      } else {
+         // Create new chart
+         terrainChart = new Chart(terrainChartCanvas, {
+            type: 'pie',
+            data: {
+               labels: labels,
+               datasets: [{
+                  data: data,
+                  backgroundColor: backgroundColors,
+                  borderColor: 'rgba(0, 0, 0, 0.3)',
+                  borderWidth: 2
+               }]
+            },
+            options: {
+               responsive: true,
+               maintainAspectRatio: true,
+               plugins: {
+                  legend: {
+                     display: false
+                  },
+                  tooltip: {
+                     callbacks: {
+                        label: function(context) {
+                           const label = context.label || '';
+                           const value = context.parsed;
+                           const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0) as number;
+                           const percentage = Math.round((value / total) * 100);
+                           return `${label}: ${value} (${percentage}%)`;
+                        }
+                     }
+                  }
+               }
+            }
+         });
+      }
+   }
+
+   // Update chart when data changes
+   $: if (terrainChartCanvas && viewMode === 'overview') {
+      updateTerrainChart();
+   }
+
+   onDestroy(() => {
+      if (terrainChart) {
+         terrainChart.destroy();
+         terrainChart = null;
+      }
+   });
+
+   // Handle settlement name click - navigate to settlements tab with that settlement selected
+   function handleSettlementClick(settlementId: string) {
+      selectSettlement(settlementId);
+      setSelectedTab('settlements');
+   }
 </script>
 
 <div class="territory-tab">
-   <!-- Filters with View Mode Toggle -->
+   <!-- View Mode Toggle -->
    <div class="territory-filters">
-      <div class="filter-group">
-         <label for="terrain-filter">Terrain:</label>
-         <select id="terrain-filter" bind:value={filterTerrain}>
-            <option value="all">All Terrains</option>
-            {#each terrainTypes as terrain}
-               <option value={terrain}>{terrain} ({terrainBreakdown[terrain] || 0})</option>
-            {/each}
-         </select>
-      </div>
-      
-      <div class="filter-group">
-         <label for="worksite-filter">Worksite:</label>
-         <select id="worksite-filter" bind:value={filterWorksite}>
-            <option value="all">All Worksites</option>
-            {#each worksiteTypes as worksite}
-               <option value={worksite}>{WorksiteConfig[worksite]?.displayName || worksite}</option>
-            {/each}
-         </select>
-      </div>
-      
-      <!-- View Mode Radio Group (right side) -->
-      <div class="filter-group view-mode-group">
+      <div class="view-mode-group">
          <div class="radio-group" role="radiogroup" aria-label="View mode">
             <label class="radio-option" class:selected={viewMode === 'overview'}>
                <input
@@ -374,15 +416,14 @@
    <!-- Kingdom Overview -->
    {#if viewMode === 'overview'}
       <div class="kingdom-overview">
-         <!-- Statistics Grid -->
-         <div class="stats-grid">
-            <!-- Territory Statistics -->
-            <div class="stat-card">
-               <div class="stat-header">
-                  <i class="fas fa-map-marked-alt"></i>
-                  <h3>Territory</h3>
-               </div>
-               <div class="stat-content">
+         <!-- Territory Statistics - Full Width -->
+         <div class="stat-card territory-card">
+            <div class="stat-header">
+               <i class="fas fa-map-marked-alt"></i>
+               <h3>Claimed Territory</h3>
+            </div>
+            <div class="territory-content">
+               <div class="territory-stats">
                   <div class="stat-row">
                      <span class="stat-label">Claimed Hexes</span>
                      <span class="stat-value">{claimedHexCount}</span>
@@ -396,10 +437,33 @@
                      <span class="stat-value">{($kingdomData.roadsBuilt || []).length}</span>
                   </div>
                </div>
-            </div>
 
-            <!-- Settlement Statistics -->
-            <div class="stat-card">
+               {#if Object.keys(terrainBreakdown).length > 0}
+                  {@const sortedTerrains = Object.entries(terrainBreakdown).sort(([,a], [,b]) => b - a)}
+                  <div class="terrain-chart-center">
+                     <div class="chart-wrapper">
+                        <canvas bind:this={terrainChartCanvas} class="terrain-pie-chart"></canvas>
+                     </div>
+                     <h4 class="chart-title">Terrain Distribution</h4>
+                  </div>
+
+                  <div class="terrain-legend-column">
+                     {#each sortedTerrains as [terrain, count]}
+                        <div class="terrain-legend-item">
+                           <span class="terrain-color-box" style="background-color: {getTerrainColor(terrain)}"></span>
+                           <span class="terrain-legend-label">{terrain}</span>
+                           <span class="terrain-legend-count">{count}</span>
+                        </div>
+                     {/each}
+                  </div>
+               {/if}
+            </div>
+         </div>
+
+         <!-- Bottom Row: Settlements and Worksites/Production -->
+         <div class="bottom-row">
+            <!-- Settlements -->
+            <div class="stat-card settlements-card">
                <div class="stat-header">
                   <i class="fas fa-city"></i>
                   <h3>Settlements</h3>
@@ -409,111 +473,128 @@
                      <span class="stat-label">Total Settlements</span>
                      <span class="stat-value">{$ownedSettlements.length}</span>
                   </div>
-                  {#each Object.entries($ownedSettlements.reduce((acc, s) => {
-                     acc[s.tier] = (acc[s.tier] || 0) + 1;
-                     return acc;
-                  }, {})) as [tier, count]}
-                     <div class="stat-row tier-row">
-                        <span class="stat-label">{tier}s</span>
-                        <span class="stat-value">{count}</span>
+
+                  {#if $ownedSettlements.length > 0}
+                     {@const sortedSettlements = [...$ownedSettlements].sort((a, b) => {
+                        // Capital always first
+                        if (a.isCapital && !b.isCapital) return -1;
+                        if (!a.isCapital && b.isCapital) return 1;
+                        // Then by name
+                        return a.name.localeCompare(b.name);
+                     })}
+                     <div class="settlements-list">
+                        {#each sortedSettlements as settlement}
+                           <div class="settlement-item">
+                              {#if settlement.isCapital}
+                                 <i class="fas fa-crown capital-icon" title="Capital"></i>
+                              {/if}
+                              <span
+                                 class="settlement-name-link"
+                                 on:click={() => handleSettlementClick(settlement.id)}
+                                 on:keydown={(e) => e.key === 'Enter' && handleSettlementClick(settlement.id)}
+                                 tabindex="0"
+                                 role="link"
+                                 title="View in Settlements tab"
+                              >
+                                 {settlement.name}
+                              </span>
+                              <span class="settlement-tier">{settlement.tier}</span>
+                              <span class="settlement-level">Level {settlement.level}</span>
+                              <span class="settlement-structures">
+                                 <i class="fas fa-building"></i> {settlement.structureIds.length}
+                              </span>
+                           </div>
+                        {/each}
                      </div>
-                  {/each}
+                  {:else}
+                     <div class="stat-row empty">
+                        <span class="stat-label">No settlements founded</span>
+                     </div>
+                  {/if}
                </div>
             </div>
 
-            <!-- Worksite Statistics -->
-            <div class="stat-card">
+            <!-- Worksites & Production Combined -->
+            <div class="stat-card worksites-production-card">
                <div class="stat-header">
                   <i class="fas fa-industry"></i>
-                  <h3>Worksites</h3>
+                  <h3>Worksites & Production</h3>
                </div>
                <div class="stat-content">
                   <div class="stat-row">
                      <span class="stat-label">Total Worksites</span>
                      <span class="stat-value">{Object.values($claimedWorksites).reduce((sum, count) => sum + count, 0)}</span>
                   </div>
-                  {#if $claimedWorksites.farmlands}
-                     <div class="stat-row">
-                        <span class="stat-label">Farmlands</span>
-                        <span class="stat-value">{$claimedWorksites.farmlands}</span>
-                     </div>
-                  {/if}
-                  {#if $claimedWorksites.lumberCamps}
-                     <div class="stat-row">
-                        <span class="stat-label">Lumber Camps</span>
-                        <span class="stat-value">{$claimedWorksites.lumberCamps}</span>
-                     </div>
-                  {/if}
-                  {#if $claimedWorksites.quarries}
-                     <div class="stat-row">
-                        <span class="stat-label">Quarries</span>
-                        <span class="stat-value">{$claimedWorksites.quarries}</span>
-                     </div>
-                  {/if}
-                  {#if $claimedWorksites.mines}
-                     <div class="stat-row">
-                        <span class="stat-label">Mines</span>
-                        <span class="stat-value">{$claimedWorksites.mines}</span>
-                     </div>
-                  {/if}
-                  {#if Object.values($claimedWorksites).reduce((sum, count) => sum + count, 0) === 0}
-                     <div class="stat-row empty">
-                        <span class="stat-label">No worksites built</span>
-                     </div>
-                  {/if}
-               </div>
-            </div>
 
-            <!-- Production Statistics -->
-            <div class="stat-card">
-               <div class="stat-header">
-                  <i class="fas fa-chart-line"></i>
-                  <h3>Production</h3>
-               </div>
-               <div class="stat-content">
-                  {#if Object.keys(totalProduction).length > 0}
-                     {#each Object.entries(totalProduction) as [resource, amount]}
-                        <div class="stat-row production-row">
-                           <span class="stat-label">
-                              <i class="fas {getResourceIcon(resource)}" style="color: {getResourceColor(resource)}"></i>
-                              {resource.charAt(0).toUpperCase() + resource.slice(1)}
-                           </span>
-                           <span class="stat-value">{amount}</span>
-                        </div>
-                     {/each}
+                  {#if Object.keys(totalProduction).length > 0 || Object.values($claimedWorksites).reduce((sum, count) => sum + count, 0) > 0}
+                     <div class="worksite-production-grid">
+                        {#if $claimedWorksites.farmlands}
+                           <div class="worksite-row">
+                              <span class="worksite-name">
+                                 <i class="fas {getResourceIcon('food')}" style="color: {getResourceColor('food')}"></i>
+                                 Farmlands
+                              </span>
+                              <span class="worksite-count">{$claimedWorksites.farmlands}</span>
+                              <span class="production-value">
+                                 {totalProduction.food || 0} <i class="fas {getResourceIcon('food')}" style="color: {getResourceColor('food')}"></i>
+                              </span>
+                           </div>
+                        {/if}
+                        {#if $claimedWorksites.lumberCamps}
+                           <div class="worksite-row">
+                              <span class="worksite-name">
+                                 <i class="fas {getResourceIcon('lumber')}" style="color: {getResourceColor('lumber')}"></i>
+                                 Lumber Camps
+                              </span>
+                              <span class="worksite-count">{$claimedWorksites.lumberCamps}</span>
+                              <span class="production-value">
+                                 {totalProduction.lumber || 0} <i class="fas {getResourceIcon('lumber')}" style="color: {getResourceColor('lumber')}"></i>
+                              </span>
+                           </div>
+                        {/if}
+                        {#if $claimedWorksites.quarries}
+                           <div class="worksite-row">
+                              <span class="worksite-name">
+                                 <i class="fas {getResourceIcon('stone')}" style="color: {getResourceColor('stone')}"></i>
+                                 Quarries
+                              </span>
+                              <span class="worksite-count">{$claimedWorksites.quarries}</span>
+                              <span class="production-value">
+                                 {totalProduction.stone || 0} <i class="fas {getResourceIcon('stone')}" style="color: {getResourceColor('stone')}"></i>
+                              </span>
+                           </div>
+                        {/if}
+                        {#if $claimedWorksites.mines}
+                           <div class="worksite-row">
+                              <span class="worksite-name">
+                                 <i class="fas {getResourceIcon('ore')}" style="color: {getResourceColor('ore')}"></i>
+                                 Mines
+                              </span>
+                              <span class="worksite-count">{$claimedWorksites.mines}</span>
+                              <span class="production-value">
+                                 {totalProduction.ore || 0} <i class="fas {getResourceIcon('ore')}" style="color: {getResourceColor('ore')}"></i>
+                              </span>
+                           </div>
+                        {/if}
+                        {#if totalProduction.gold}
+                           <div class="worksite-row">
+                              <span class="worksite-name">
+                                 <i class="fas {getResourceIcon('gold')}" style="color: {getResourceColor('gold')}"></i>
+                                 Gold Bonus
+                              </span>
+                              <span class="worksite-count">-</span>
+                              <span class="production-value">
+                                 {totalProduction.gold} <i class="fas {getResourceIcon('gold')}" style="color: {getResourceColor('gold')}"></i>
+                              </span>
+                           </div>
+                        {/if}
+                     </div>
                   {:else}
                      <div class="stat-row empty">
-                        <span class="stat-label">No production yet</span>
+                        <span class="stat-label">No worksites or production yet</span>
                      </div>
                   {/if}
                </div>
-            </div>
-         </div>
-
-         <!-- Terrain Breakdown -->
-         <div class="terrain-breakdown">
-            <div class="breakdown-header">
-               <i class="fas fa-mountain"></i>
-               <h3>Terrain Distribution</h3>
-            </div>
-            <div class="terrain-grid">
-               {#each Object.entries(terrainBreakdown).sort(([,a], [,b]) => b - a) as [terrain, count]}
-                  <div class="terrain-item">
-                     <span class="terrain-badge terrain-{terrain.toLowerCase()}">{terrain}</span>
-                     <div class="terrain-bar-container">
-                        <div
-                           class="terrain-bar terrain-{terrain.toLowerCase()}"
-                           style="width: {(count / claimedHexCount) * 100}%"
-                        ></div>
-                     </div>
-                     <span class="terrain-count">{count} ({Math.round((count / claimedHexCount) * 100)}%)</span>
-                  </div>
-               {/each}
-               {#if Object.keys(terrainBreakdown).length === 0}
-                  <div class="empty-state">
-                     <p>No terrain data available</p>
-                  </div>
-               {/if}
             </div>
          </div>
       </div>
@@ -700,41 +781,14 @@
    }
    
    .territory-filters {
-      display: flex;
-      gap: var(--space-16);
-      flex-wrap: wrap;
       padding: var(--space-12);
       background: var(--overlay-lower);
       border-radius: var(--radius-lg);
-      
-      .filter-group {
-         display: flex;
-         align-items: center;
-         gap: var(--space-8);
-         
-         label {
-            color: var(--text-secondary);
-            font-size: var(--font-sm);
-         }
-         
-         select {
-            padding: var(--space-4) var(--space-8);
-            background: var(--surface);
-            border: 1px solid var(--border-default);
-            border-radius: var(--radius-md);
-            color: var(--text-primary);
-            
-            &:focus {
-               outline: none;
-               border-color: var(--color-primary);
-            }
-         }
-      }
+      display: flex;
+      justify-content: center;
    }
-   
+
    .view-mode-group {
-      flex: 0 0 auto;
-      margin-left: auto;
       
       .radio-group {
          display: flex;
@@ -1112,13 +1166,13 @@
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: var(--space-24);
+      gap: var(--space-16);
       padding: var(--space-16);
    }
 
-   .stats-grid {
+   .bottom-row {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(15.625rem, 1fr));
+      grid-template-columns: 1fr 1fr;
       gap: var(--space-16);
    }
 
@@ -1200,109 +1254,206 @@
       }
    }
 
-   .terrain-breakdown {
-      background: var(--overlay-lower);
-      border-radius: var(--radius-lg);
-      padding: var(--space-16);
-      border: 1px solid var(--border-default);
+   // Territory card with pie chart - three column layout
+   .territory-card {
+      .territory-content {
+         display: grid;
+         grid-template-columns: auto 1fr auto;
+         gap: var(--space-24);
+         align-items: flex-start;
 
-      .breakdown-header {
-         display: flex;
-         align-items: center;
-         gap: var(--space-8);
-         padding-bottom: var(--space-16);
-         border-bottom: 2px solid var(--color-primary);
-         margin-bottom: var(--space-16);
-
-         i {
-            font-size: var(--font-xl);
-            color: var(--color-primary);
+         .territory-stats {
+            min-width: 200px;
          }
 
-         h3 {
-            margin: 0;
-            font-size: var(--font-lg);
-            font-weight: var(--font-weight-semibold);
-            color: var(--text-primary);
+         .terrain-chart-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-12);
+
+            .chart-wrapper {
+               width: 250px;
+               height: 250px;
+               position: relative;
+               flex-shrink: 0;
+
+               .terrain-pie-chart {
+                  width: 100% !important;
+                  height: 100% !important;
+               }
+            }
+
+            .chart-title {
+               margin: 0;
+               font-size: var(--font-md);
+               font-weight: var(--font-weight-semibold);
+               color: var(--text-primary);
+               text-align: center;
+            }
+         }
+
+         .terrain-legend-column {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-8);
+            min-width: 180px;
+            padding-top: var(--space-8);
+
+            .terrain-legend-item {
+               display: flex;
+               align-items: center;
+               gap: var(--space-8);
+               font-size: var(--font-sm);
+
+               .terrain-color-box {
+                  width: 16px;
+                  height: 16px;
+                  border-radius: var(--radius-sm);
+                  flex-shrink: 0;
+                  border: 1px solid var(--border-subtle);
+               }
+
+               .terrain-legend-label {
+                  flex: 1;
+                  color: var(--text-secondary);
+               }
+
+               .terrain-legend-count {
+                  color: var(--text-primary);
+                  font-weight: var(--font-weight-medium);
+               }
+            }
          }
       }
+   }
 
-      .terrain-grid {
+   // Settlements card with single-row items
+   .settlements-card {
+      .settlements-list {
+         margin-top: var(--space-12);
          display: flex;
          flex-direction: column;
-         gap: var(--space-12);
+         gap: var(--space-8);
+
+         .settlement-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-10);
+            padding: var(--space-8) var(--space-10);
+            background: var(--overlay);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-subtle);
+            font-size: var(--font-sm);
+
+            .capital-icon {
+               color: #ffd700;
+               font-size: var(--font-sm);
+               flex-shrink: 0;
+            }
+
+            .settlement-name-link {
+               font-weight: var(--font-weight-semibold);
+               color: var(--color-text-dark-primary, #b5b3a4);
+               font-size: var(--font-md);
+               cursor: pointer;
+               transition: all 0.2s;
+               flex: 1;
+               text-decoration: underline;
+               text-decoration-style: dotted;
+               text-underline-offset: 0.1875rem;
+
+               &:hover {
+                  background: var(--hover);
+                  text-decoration-style: solid;
+               }
+
+               &:focus {
+                  outline: 2px solid var(--color-primary);
+                  outline-offset: 2px;
+                  border-radius: 2px;
+               }
+            }
+
+            .settlement-tier {
+               color: var(--text-secondary);
+               font-weight: var(--font-weight-medium);
+               flex-shrink: 0;
+            }
+
+            .settlement-level {
+               color: var(--text-secondary);
+               flex-shrink: 0;
+            }
+
+            .settlement-structures {
+               display: flex;
+               align-items: center;
+               gap: var(--space-4);
+               color: var(--text-secondary);
+               flex-shrink: 0;
+
+               i {
+                  font-size: var(--font-xs);
+               }
+            }
+         }
       }
+   }
 
-      .terrain-item {
-         display: grid;
-         grid-template-columns: 7.5rem 1fr 6.25rem;
-         align-items: center;
-         gap: var(--space-12);
-      }
+   // Worksites & Production combined card
+   .worksites-production-card {
+      .worksite-production-grid {
+         margin-top: var(--space-12);
+         display: flex;
+         flex-direction: column;
+         gap: var(--space-8);
 
-      .terrain-bar-container {
-         height: 1.5rem;
-         background: var(--overlay);
-         border-radius: var(--radius-md);
-         overflow: hidden;
-         border: 1px solid var(--border-subtle);
-      }
+         .worksite-row {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: var(--space-12);
+            align-items: center;
+            padding: var(--space-8);
+            background: var(--overlay);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-subtle);
 
-      .terrain-bar {
-         height: 100%;
-         transition: width 0.3s ease;
+            .worksite-name {
+               display: flex;
+               align-items: center;
+               gap: var(--space-8);
+               color: var(--text-secondary);
+               font-size: var(--font-sm);
 
-         &.terrain-plains {
-            background: var(--color-food-subtle);
-            border-right: 2px solid var(--color-food);
-         }
+               i {
+                  font-size: var(--font-sm);
+               }
+            }
 
-         &.terrain-forest {
-            background: var(--color-lumber-subtle);
-            border-right: 2px solid var(--color-lumber);
-         }
+            .worksite-count {
+               color: var(--text-primary);
+               font-weight: var(--font-weight-semibold);
+               font-size: var(--font-md);
+               text-align: right;
+               min-width: 2rem;
+            }
 
-         &.terrain-hills {
-            background: var(--color-stone-subtle);
-            border-right: 2px solid var(--color-stone);
-         }
+            .production-value {
+               display: flex;
+               align-items: center;
+               gap: var(--space-6);
+               color: var(--color-success);
+               font-weight: var(--font-weight-semibold);
+               font-size: var(--font-md);
+               min-width: 4rem;
+               justify-content: flex-end;
 
-         &.terrain-mountains {
-            background: var(--color-ore-subtle);
-            border-right: 2px solid var(--color-ore);
-         }
-
-         &.terrain-swamp {
-            background: rgba(85, 107, 47, 0.2);
-            border-right: 2px solid #556b2f;
-         }
-
-         &.terrain-desert {
-            background: rgba(238, 203, 173, 0.2);
-            border-right: 2px solid #eecbad;
-         }
-
-         &.terrain-water {
-            background: var(--color-ore-subtle);
-            border-right: 2px solid var(--color-ore);
-         }
-      }
-
-      .terrain-count {
-         text-align: right;
-         color: var(--text-secondary);
-         font-size: var(--font-sm);
-         font-weight: var(--font-weight-medium);
-      }
-
-      .empty-state {
-         text-align: center;
-         padding: var(--space-24);
-         color: var(--text-muted);
-         font-style: italic;
-
-         p {
-            margin: 0;
+               i {
+                  font-size: var(--font-sm);
+               }
+            }
          }
       }
    }

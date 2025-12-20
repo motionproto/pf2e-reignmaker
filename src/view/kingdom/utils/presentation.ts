@@ -3,6 +3,8 @@
  * Icon and color mappings used across multiple components
  */
 
+import { TERRAIN_OVERLAY_COLORS } from '../../../styles/colors';
+
 /**
  * Get icon for a structure category
  */
@@ -114,22 +116,16 @@ export function getTerrainIcon(terrain: string): string {
 
 /**
  * Get color for a terrain type (CSS hex format)
+ * Converts from centralized TERRAIN_OVERLAY_COLORS to CSS hex
  */
 export function getTerrainColor(terrain: string): string {
-  const colors: Record<string, string> = {
-    plains: '#90C650',
-    forest: '#228B22',
-    hills: '#8B7355',
-    mountains: '#808080',
-    swamp: '#6B8E23',
-    desert: '#EDC9AF',
-    water: '#4682B4',
-    lake: '#4682B4',
-    river: '#4682B4',
-    coast: '#5F9EA0',
-    unknown: '#666666'
-  };
-  return colors[terrain.toLowerCase()] || '#888888';
+  const terrainKey = terrain.toLowerCase();
+
+  // Get color from centralized terrain overlay colors
+  const overlayColor = TERRAIN_OVERLAY_COLORS[terrainKey] || TERRAIN_OVERLAY_COLORS['default'];
+
+  // Convert PIXI hex (0xRRGGBB) to CSS hex (#RRGGBB)
+  return '#' + overlayColor.color.toString(16).padStart(6, '0').toUpperCase();
 }
 
 /**

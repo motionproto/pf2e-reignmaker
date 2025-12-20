@@ -897,7 +897,21 @@ export class SettlementService {
         // Since we can't distinguish, we keep it safe and leave hasRoad as-is
         // TODO: Track explicitly-built roads separately if needed
       }
-      
+
+      // Unlink hex features (but keep the feature itself)
+      // This allows the settlement site to remain on the hex for future use
+      for (const h of k.hexes) {
+        const hexData = h as any;
+        if (hexData.features) {
+          for (const feature of hexData.features) {
+            if (feature.type === 'settlement' && feature.settlementId === settlementId) {
+              feature.linked = false;
+              feature.settlementId = null;
+            }
+          }
+        }
+      }
+
       // Remove settlement
       k.settlements = k.settlements.filter(s => s.id !== settlementId);
     });

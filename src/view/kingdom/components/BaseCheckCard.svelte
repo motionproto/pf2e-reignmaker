@@ -66,19 +66,7 @@
   export let brief: string = '';
   export let special: string | null = null;
   export let cost: Map<string, number> | null = null;
-  
-  // Migration status tracking
-  export let actionStatus: 'untested' | 'testing' | 'tested' | null = null;
-  export let actionNumber: number | undefined = undefined;  // Action number for migration badge (1-26)
-  
-  // Incident status tracking
-  export let incidentStatus: 'untested' | 'testing' | 'tested' | null = null;
-  export let incidentNumber: number | undefined = undefined;  // Incident number for testing badge (1-30)
-  
-  // Event status tracking
-  export let eventStatus: 'untested' | 'testing' | 'tested' | null = null;
-  export let eventNumber: number | undefined = undefined;  // Event number for testing badge (1-37)
-  
+
   // State props
   export let expanded: boolean = false;
   export let available: boolean = true;
@@ -470,12 +458,6 @@
     {traits}
     {expandable}
     {statusBadge}
-    {actionStatus}
-    {actionNumber}
-    {incidentStatus}
-    {incidentNumber}
-    {eventStatus}
-    {eventNumber}
     on:toggle={toggleExpanded}
   />
   

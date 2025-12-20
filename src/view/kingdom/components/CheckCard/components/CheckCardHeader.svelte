@@ -12,19 +12,7 @@
   export let traits: string[] = [];
   export let expandable: boolean = true;  // Control chevron visibility
   export let statusBadge: { text: string; type: 'ongoing' | 'resolved' } | null = null;
-  
-  // Migration status tracking
-  export let actionStatus: 'untested' | 'testing' | 'tested' | null = null;
-  export let actionNumber: number | null | undefined = undefined;  // Action number for migration badge (1-26)
-  
-  // Incident status tracking
-  export let incidentStatus: 'untested' | 'testing' | 'tested' | null = null;
-  export let incidentNumber: number | null | undefined = undefined;  // Incident number for testing badge (1-30)
-  
-  // Event status tracking
-  export let eventStatus: 'untested' | 'testing' | 'tested' | null = null;
-  export let eventNumber: number | null | undefined = undefined;  // Event number for testing badge (1-37)
-  
+
   const dispatch = createEventDispatcher();
   
   function handleClick(event: Event) {
@@ -65,45 +53,6 @@
               {missingRequirements.join(', ')}
             </span>
           {/if}
-          {#if actionStatus === 'tested' && actionNumber}
-            <span class="migration-badge tested" title="Tested with PipelineCoordinator">
-              #{actionNumber} ✓
-            </span>
-          {:else if actionStatus === 'testing' && actionNumber}
-            <span class="migration-badge testing" title="Currently being tested">
-              #{actionNumber} ⟳
-            </span>
-          {:else if actionStatus === 'untested' && actionNumber}
-            <span class="migration-number untested" title="Pipeline exists, needs testing">
-              #{actionNumber}
-            </span>
-          {/if}
-          {#if incidentStatus === 'tested'}
-            <span class="incident-badge tested" title="Tested with PipelineCoordinator">
-              <i class="fas fa-check"></i>
-            </span>
-          {:else if incidentStatus === 'testing'}
-            <span class="incident-badge testing" title="Currently being tested">
-              testing
-            </span>
-          {:else if incidentStatus === 'untested'}
-            <span class="incident-badge untested" title="Pipeline exists, needs testing">
-              untested
-            </span>
-          {/if}
-          {#if eventStatus === 'tested' && eventNumber}
-            <span class="event-badge tested" title="Tested with PipelineCoordinator">
-              #{eventNumber} ✓
-            </span>
-          {:else if eventStatus === 'testing' && eventNumber}
-            <span class="event-badge testing" title="Currently being tested">
-              #{eventNumber} ⟳
-            </span>
-          {:else if eventStatus === 'untested' && eventNumber}
-            <span class="event-badge untested" title="Pipeline exists, needs testing">
-              #{eventNumber}
-            </span>
-          {/if}
           <div class="expand-icon-wrapper">
             <i class="fas fa-chevron-{expanded ? 'down' : 'right'} expand-icon"></i>
           </div>
@@ -134,32 +83,6 @@
             <span class="requirements-badge">
               <i class="fas fa-exclamation-triangle"></i>
               {missingRequirements.join(', ')}
-            </span>
-          {/if}
-          {#if incidentStatus === 'tested'}
-            <span class="incident-badge tested" title="Tested with PipelineCoordinator">
-              <i class="fas fa-check"></i>
-            </span>
-          {:else if incidentStatus === 'testing'}
-            <span class="incident-badge testing" title="Currently being tested">
-              testing
-            </span>
-          {:else if incidentStatus === 'untested'}
-            <span class="incident-badge untested" title="Pipeline exists, needs testing">
-              untested
-            </span>
-          {/if}
-          {#if eventStatus === 'tested' && eventNumber}
-            <span class="event-badge tested" title="Tested with PipelineCoordinator">
-              #{eventNumber} ✓
-            </span>
-          {:else if eventStatus === 'testing' && eventNumber}
-            <span class="event-badge testing" title="Currently being tested">
-              #{eventNumber} ⟳
-            </span>
-          {:else if eventStatus === 'untested' && eventNumber}
-            <span class="event-badge untested" title="Pipeline exists, needs testing">
-              #{eventNumber}
             </span>
           {/if}
         </div>
@@ -345,131 +268,17 @@
       letter-spacing: 0.05rem;
       line-height: 1.2;
       flex-shrink: 0;
-      
+
       &.ongoing {
         background: var(--surface-accent-high);
         color: var(--color-amber-light);
         border: 1px solid var(--color-amber);
       }
-      
+
       &.resolved {
         background: var(--surface-success-high);
         color: var(--color-green);
         border: 1px solid var(--color-green-border);
-      }
-    }
-    
-    .migration-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: var(--space-4) var(--space-10);
-      border-radius: var(--radius-full);
-      font-size: var(--font-xs);
-      font-weight: var(--font-weight-semibold);
-      letter-spacing: 0.05rem;
-      line-height: 1.2;
-      flex-shrink: 0;
-      cursor: help;
-      
-      &.tested {
-        background: var(--surface-success);
-        border: 1px solid var(--border-success);
-        color: var(--color-green);
-      }
-      
-      &.testing {
-        background: transparent;
-        border: 1px solid var(--text-primary);
-        color: var(--text-primary);
-      }
-    }
-    
-    .migration-number {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: var(--font-xs);
-      font-weight: var(--font-weight-medium);
-      letter-spacing: 0.05rem;
-      line-height: 1.2;
-      flex-shrink: 0;
-      cursor: help;
-      
-      &.untested {
-        color: var(--text-tertiary);
-      }
-    }
-    
-    .incident-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: var(--space-4) var(--space-10);
-      border-radius: var(--radius-full);
-      font-size: var(--font-xs);
-      font-weight: var(--font-weight-medium);
-      letter-spacing: 0.025rem;
-      line-height: 1.2;
-      flex-shrink: 0;
-      cursor: help;
-      text-transform: lowercase;
-      
-      &.untested {
-        color: var(--text-tertiary);
-        background: transparent;
-        opacity: 0.6;
-        font-weight: var(--font-weight-normal);
-      }
-      
-      &.testing {
-        background: var(--surface-success);
-        border: 1px solid var(--border-success);
-        color: var(--color-green);
-        text-transform: lowercase;
-      }
-      
-      &.tested {
-        background: var(--surface-success);
-        border: 1px solid var(--border-success);
-        color: var(--color-green);
-        
-        i {
-          font-size: var(--font-xs);
-        }
-      }
-    }
-    
-    .event-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: var(--space-4) var(--space-10);
-      border-radius: var(--radius-full);
-      font-size: var(--font-xs);
-      font-weight: var(--font-weight-semibold);
-      letter-spacing: 0.05rem;
-      line-height: 1.2;
-      flex-shrink: 0;
-      cursor: help;
-      
-      &.untested {
-        color: var(--text-tertiary);
-        background: transparent;
-        opacity: 0.6;
-        font-weight: var(--font-weight-normal);
-      }
-      
-      &.testing {
-        background: transparent;
-        border: 1px solid var(--text-primary);
-        color: var(--text-primary);
-      }
-      
-      &.tested {
-        background: var(--surface-success);
-        border: 1px solid var(--border-success);
-        color: var(--color-green);
       }
     }
   }
