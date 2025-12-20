@@ -35,7 +35,7 @@ export type EditorTool =
   | 'terrain-plains' | 'terrain-forest' | 'terrain-hills' | 'terrain-mountains' | 'terrain-swamp' | 'terrain-desert' | 'terrain-water'
   | 'bounty-food' | 'bounty-lumber' | 'bounty-stone' | 'bounty-ore' | 'bounty-gold' | 'bounty-minus'
   | 'worksite-farm' | 'worksite-lumber-mill' | 'worksite-mine' | 'worksite-quarry' | 'worksite-minus'
-  | 'settlement-place'
+  | 'settlement-place' | 'settlement-minus'
   | 'fortification-tier1' | 'fortification-tier2' | 'fortification-tier3' | 'fortification-tier4'
   | 'claimed-by'
   | 'inactive';
@@ -659,8 +659,11 @@ export class EditorModeService {
         await this.handleWorksiteEdit(hexId, event.ctrlKey);
         this.paintedWorksiteHexes.add(hexId);
       } else if (this.currentTool === 'settlement-place') {
-        // Settlement tool → Place/remove settlement
-        await this.handleSettlementEdit(hexId, event.ctrlKey);
+        // Settlement tool → Place/edit settlement
+        await this.handleSettlementEdit(hexId, false);
+      } else if (this.currentTool === 'settlement-minus') {
+        // Settlement minus tool → Remove settlement
+        await this.handleSettlementEdit(hexId, true);
       } else if (this.currentTool.startsWith('fortification-')) {
         // Fortification tool → Place/remove fortification
         await this.handleFortificationEdit(hexId, event.ctrlKey);
@@ -1144,16 +1147,16 @@ export class EditorModeService {
   }
 
   /**
-   * Handle settlement edit - place/remove settlement
-   * - Normal click: Place settlement (prompts for name)
-   * - Ctrl+Click: Remove settlement
+   * Handle settlement edit - place/edit/remove settlement
+   * - Place tool: Create new settlement or edit existing
+   * - Minus tool: Remove settlement feature (preserves settlement data by unlinking)
    */
-  private async handleSettlementEdit(hexId: string, isCtrlPressed: boolean): Promise<void> {
-    if (isCtrlPressed) {
-      // Remove mode - remove settlement
-      await this.featureHandlers.removeSettlement(hexId);
+  private async handleSettlementEdit(hexId: string, isRemoving: boolean): Promise<void> {
+    if (isRemoving) {
+      // Remove mode - remove settlement feature (preserves settlement data)
+      await this.featureHandlers.removeSettlementFeature(hexId);
     } else {
-      // Place mode - prompt for name and place settlement
+      // Place/edit mode - prompt for name and place settlement or edit existing
       await this.featureHandlers.placeSettlement(hexId);
     }
   }
@@ -1329,6 +1332,7 @@ export class EditorModeService {
         'worksite-quarry': ['worksites'],
         'worksite-minus': ['worksites'],
         'settlement-place': ['settlements', 'settlement-labels'],
+        'settlement-minus': ['settlements', 'settlement-labels'],
         'fortification-tier1': ['fortifications'],
         'fortification-tier2': ['fortifications'],
         'fortification-tier3': ['fortifications'],

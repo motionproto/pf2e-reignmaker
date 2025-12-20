@@ -197,28 +197,28 @@ export class FeatureEditorHandlers {
   }
   
   /**
-   * Remove settlement feature from a hex
-   * If the feature is linked to a settlement, unlinks it (sets location to 0,0) instead of deleting
+   * Remove settlement feature from a hex (preserves settlement data by unlinking)
+   * This removes the map marker but keeps all settlement data intact
    */
-  async removeSettlement(hexId: string): Promise<void> {
-    logger.info(`[FeatureEditorHandlers] Removing settlement from hex ${hexId}`);
+  async removeSettlementFeature(hexId: string): Promise<void> {
+    logger.info(`[FeatureEditorHandlers] Removing settlement feature from hex ${hexId}`);
     
-    // First, check if there's a linked settlement we need to unlink
+    // Get existing feature if it exists
     const existingFeature = this.getSettlementFeature(hexId);
-    const linkedSettlement = existingFeature ? this.getLinkedSettlement(existingFeature) : null;
+    if (!existingFeature) {
+      ui.notifications?.warn(`No settlement found on hex ${hexId}`);
+      logger.warn(`[FeatureEditorHandlers] No settlement feature found on hex ${hexId}`);
+      return;
+    }
+    
+    // Get linked settlement if it exists
+    const linkedSettlement = this.getLinkedSettlement(existingFeature);
     
     await updateKingdom((kingdom) => {
       // Remove the hex feature
       kingdom.hexes = kingdom.hexes.map(h => {
         if (h.id === hexId && h.features) {
           const features = h.features.filter(f => f.type !== 'settlement');
-          
-          // Check if we actually removed anything
-          if (features.length === h.features.length) {
-            logger.warn(`[FeatureEditorHandlers] No settlement found on hex ${hexId}`);
-            return h;
-          }
-          
           return { ...h, features };
         }
         return h;
@@ -236,11 +236,11 @@ export class FeatureEditorHandlers {
     });
     
     if (linkedSettlement) {
-      ui.notifications?.info(`Removed settlement from hex ${hexId} - settlement "${linkedSettlement.name}" is now unlinked`);
+      ui.notifications?.info(`Removed settlement marker from hex ${hexId} - settlement "${linkedSettlement.name}" preserved`);
     } else {
-      ui.notifications?.info(`Removed settlement from hex ${hexId}`);
+      ui.notifications?.info(`Removed settlement marker from hex ${hexId}`);
     }
-    logger.info(`[FeatureEditorHandlers] Removed settlement from hex ${hexId}`);
+    logger.info(`[FeatureEditorHandlers] Removed settlement feature from hex ${hexId}`);
   }
   
   /**

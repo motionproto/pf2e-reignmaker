@@ -109,7 +109,7 @@
     if (tool.startsWith('worksite-')) {
       return 'worksites';
     }
-    if (tool === 'settlement-place') {
+    if (tool === 'settlement-place' || tool === 'settlement-minus') {
       return 'settlements';
     }
     if (tool.startsWith('fortification-')) {
@@ -154,6 +154,28 @@
     selectedClaimOwner = owner;
     editorService.setClaimOwner(owner);
     setTool('claimed-by');
+  }
+
+  // Color picker handling
+  let colorPickerInput: HTMLInputElement;
+
+  async function handleColorChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const newColor = input.value;
+
+    // Update the kingdom data immediately
+    const { updateKingdom } = await import('../../stores/KingdomStore');
+
+    await updateKingdom((kingdom) => {
+      if (selectedClaimOwner === 'player') {
+        kingdom.playerKingdomColor = newColor;
+      } else if (selectedClaimOwner !== null) {
+        const faction = kingdom.factions?.find(f => f.id === selectedClaimOwner);
+        if (faction) {
+          faction.color = newColor;
+        }
+      }
+    });
   }
   
   // Dragging handlers
@@ -560,8 +582,15 @@
           class="tool-button"
           class:active={$currentTool === 'settlement-place'}
           on:click={() => setTool('settlement-place')}
-          title="Settlement - Click to place, Ctrl+Click to remove">
+          title="Settlement - Click to place/edit">
           <i class="fas fa-city"></i>
+        </button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'settlement-minus'}
+          on:click={() => setTool('settlement-minus')}
+          title="Remove - Click to clear settlement marker from hex">
+          <i class="fa-solid fa-minus"></i>
         </button>
       </div>
     </section>
@@ -613,17 +642,31 @@
         <label class="section-label" on:click={() => selectSection('territory')}>Territory</label>
       {/if}
       <div class="territory-controls">
-        <div 
-          class="color-swatch"
-          class:unclaimed={selectedClaimOwner === null}
-          style="background-color: {selectedClaimOwner === null
-            ? '#444444'
-            : selectedClaimOwner === 'player' 
-              ? ($kingdomData.playerKingdomColor || '#5b9bd5')
-              : ($kingdomData.factions?.find(f => f.id === selectedClaimOwner)?.color || '#666666')};"
-          title="Claim color">
-          {#if selectedClaimOwner === null}
-            <i class="fas fa-times"></i>
+        <div class="color-swatch-wrapper">
+          <div
+            class="color-swatch"
+            class:unclaimed={selectedClaimOwner === null}
+            style="background-color: {selectedClaimOwner === null
+              ? '#444444'
+              : selectedClaimOwner === 'player'
+                ? ($kingdomData.playerKingdomColor || '#5b9bd5')
+                : ($kingdomData.factions?.find(f => f.id === selectedClaimOwner)?.color || '#666666')};"
+            title="{selectedClaimOwner === null ? 'Unclaimed territory' : 'Click to change faction color'}">
+            {#if selectedClaimOwner === null}
+              <i class="fas fa-times"></i>
+            {/if}
+          </div>
+          {#if selectedClaimOwner !== null}
+            <input
+              type="color"
+              bind:this={colorPickerInput}
+              value={selectedClaimOwner === 'player'
+                ? ($kingdomData.playerKingdomColor || '#5b9bd5')
+                : ($kingdomData.factions?.find(f => f.id === selectedClaimOwner)?.color || '#666666')}
+              on:change={handleColorChange}
+              class="color-picker-input"
+              title="Click to change faction color"
+            />
           {/if}
         </div>
         <select 
@@ -760,9 +803,11 @@
     padding: var(--space-8);
     border-radius: var(--radius-lg);
     transition: all 0.2s;
-    
+    border: 2px solid transparent;
+
     &.active-section {
-      background-color: var(--surface-lower) ;
+      border: 2px solid var(--color-primary);
+      box-shadow: 0 0 12px rgba(139, 0, 0, 0.4);
     }
     
     .section-label {
@@ -855,33 +900,75 @@
         gap: var(--space-8);
         flex: 1;
         align-items: center;
-        
-        .color-swatch {
+
+        .color-swatch-wrapper {
+          position: relative;
           width: 2.5rem;
           height: 2.5rem;
+          flex-shrink: 0;
+        }
+
+        .color-swatch {
+          width: 100%;
+          height: 100%;
           border-radius: var(--radius-lg);
           border: 3px solid var(--border-strong);
           box-shadow: 0 0.1875rem 0.375rem rgba(0, 0, 0, 0.4);
-          flex-shrink: 0;
           transition: all 0.2s;
           display: flex;
           align-items: center;
           justify-content: center;
-          
-          &:hover {
-            transform: scale(1.05);
-            border-color: var(--border-strong);
-            box-shadow: 0 0.25rem 0.5rem var(--overlay-high);
-          }
-          
+          pointer-events: none;
+
           &.unclaimed {
             border-style: dashed;
-            
+
             i {
               color: rgba(255, 255, 255, 0.5);
               font-size: var(--font-md);
             }
           }
+        }
+
+        .color-picker-input {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          border: none;
+          border-radius: var(--radius-lg);
+          cursor: pointer;
+          opacity: 0;
+          z-index: 1;
+
+          &::-webkit-color-swatch-wrapper {
+            padding: 0;
+          }
+
+          &::-webkit-color-swatch {
+            border: none;
+            border-radius: var(--radius-lg);
+          }
+
+          &::-moz-color-swatch {
+            border: none;
+            border-radius: var(--radius-lg);
+          }
+        }
+
+        .color-swatch-wrapper:hover .color-swatch {
+          transform: scale(1.05);
+          border-color: var(--color-primary, #8b0000);
+          box-shadow: 0 0.25rem 0.5rem var(--overlay-high);
+        }
+
+        .color-swatch-wrapper:active .color-swatch {
+          transform: scale(0.98);
+        }
+
+        .color-swatch-wrapper:has(.color-swatch.unclaimed):hover .color-swatch {
+          border-color: var(--border-strong);
         }
         
         .faction-dropdown {

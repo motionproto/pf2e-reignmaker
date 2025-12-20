@@ -154,15 +154,15 @@ export async function renderWaterConnections(
     }
     
     if (positions.length < 2) continue;
-    
+
     // Determine color (use navigable property or default to blue)
     const isActive = !!activePathId && path.id === activePathId;
     const riverColor = isActive ? 0x66CCFF : FLOW_COLOR; // brighter blue for active path
     const riverAlpha = isActive ? Math.min(1, RIVER_ALPHA + 0.2) : RIVER_ALPHA;
-    
+
     // Draw border
     drawRiverPath(borderGraphics, positions, RIVER_BORDER_WIDTH, RIVER_BORDER_COLOR, RIVER_BORDER_ALPHA);
-    
+
     // Draw river
     drawRiverPath(riverGraphics, positions, RIVER_WIDTH, riverColor, riverAlpha);
     
