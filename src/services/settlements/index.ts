@@ -211,8 +211,35 @@ export class SettlementService {
   
   
   /**
-   * Check if a settlement can be upgraded
-   * Based on Reignmaker Lite rules: structure requirements only
+   * Check if a settlement can build more structures based on its current tier
+   * Villages max 2, Towns max 5, Cities max 8, Metropolis unlimited
+   */
+  canBuildMoreStructures(settlement: Settlement): {
+    canBuild: boolean,
+    currentCount: number,
+    maxCount: number,
+    message: string
+  } {
+    const config = SettlementTierConfig[settlement.tier];
+    const currentCount = settlement.structureIds?.length || 0;
+    const maxCount = config?.maxStructures || 0;
+
+    const canBuild = currentCount < maxCount;
+    const message = canBuild
+      ? `Can build ${maxCount - currentCount} more structure(s)`
+      : `Structure limit reached (${currentCount}/${maxCount}). Upgrade settlement tier to build more.`;
+
+    return {
+      canBuild,
+      currentCount,
+      maxCount,
+      message
+    };
+  }
+
+  /**
+   * Check if a settlement can be upgraded to next tier
+   * Based on Reignmaker rules: BOTH level AND structure requirements must be met
    */
   canUpgradeSettlement(settlement: Settlement): {
     canUpgrade: boolean,
@@ -221,25 +248,28 @@ export class SettlementService {
   } {
     const requirements: string[] = [];
     let nextTier: SettlementTier | null = null;
-    
+
     switch (settlement.tier) {
       case SettlementTier.VILLAGE:
         nextTier = SettlementTier.TOWN;
-        if (settlement.structureIds.length < 3) requirements.push('3 structures required');
+        if (settlement.structureIds.length < 2) requirements.push('2 structures required');
+        if (settlement.level < 2) requirements.push('Level 2 required');
         break;
       case SettlementTier.TOWN:
         nextTier = SettlementTier.CITY;
-        if (settlement.structureIds.length < 6) requirements.push('6 structures required');
+        if (settlement.structureIds.length < 5) requirements.push('5 structures required');
+        if (settlement.level < 5) requirements.push('Level 5 required');
         break;
       case SettlementTier.CITY:
         nextTier = SettlementTier.METROPOLIS;
-        if (settlement.structureIds.length < 9) requirements.push('9 structures required');
+        if (settlement.structureIds.length < 8) requirements.push('8 structures required');
+        if (settlement.level < 8) requirements.push('Level 8 required');
         break;
       case SettlementTier.METROPOLIS:
         // Already at max tier
         break;
     }
-    
+
     return {
       canUpgrade: requirements.length === 0 && nextTier !== null,
       nextTier,
@@ -261,37 +291,42 @@ export class SettlementService {
     const currentLevel = settlement.level;
     const currentTier = settlement.tier;
     const structureCount = settlement.structureIds?.length || 0;
-    
-    // Get tier thresholds
+
+    // Get tier thresholds (from Reignmaker rules)
     const tierInfo: Record<string, { minStructures: number; nextTier: string; nextTierLevel: number }> = {
-      'village': { minStructures: 3, nextTier: 'Town', nextTierLevel: 5 },
-      'town': { minStructures: 6, nextTier: 'City', nextTierLevel: 10 },
-      'city': { minStructures: 9, nextTier: 'Metropolis', nextTierLevel: 15 },
+      'village': { minStructures: 2, nextTier: 'Town', nextTierLevel: 2 },
+      'town': { minStructures: 5, nextTier: 'City', nextTierLevel: 5 },
+      'city': { minStructures: 8, nextTier: 'Metropolis', nextTierLevel: 8 },
       'metropolis': { minStructures: 999, nextTier: '', nextTierLevel: 999 }
     };
-    
+
     const info = tierInfo[currentTier.toLowerCase()];
     if (!info) return '';
-    
+
     // Can't upgrade if at max level
     if (currentLevel >= 20) {
       return '(Max Level)';
     }
-    
+
     // Only show structure progress for tiers that can upgrade
     if (currentTier.toLowerCase() === 'metropolis') {
       return '';
     }
-    
+
     // Structure progress with next tier info
     const structureProgress = `${structureCount}/${info.minStructures} structures`;
-    const canUpgradeTier = structureCount >= info.minStructures;
-    const nextLevel = currentLevel + 1;
-    
-    if (canUpgradeTier && nextLevel >= info.nextTierLevel) {
+    const hasEnoughStructures = structureCount >= info.minStructures;
+    const hasEnoughLevel = currentLevel >= info.nextTierLevel;
+
+    if (hasEnoughStructures && hasEnoughLevel) {
       // Ready to become next tier
-      return `${structureProgress} → ${info.nextTier} at level ${info.nextTierLevel}`;
-    } else if (!canUpgradeTier) {
+      return `${structureProgress} → ${info.nextTier} ready!`;
+    } else if (!hasEnoughStructures && !hasEnoughLevel) {
+      // Need both
+      const neededStructures = info.minStructures - structureCount;
+      const neededLevels = info.nextTierLevel - currentLevel;
+      return `${structureProgress} (need ${neededStructures} more structures + ${neededLevels} levels for ${info.nextTier})`;
+    } else if (!hasEnoughStructures) {
       // Need more structures
       const needed = info.minStructures - structureCount;
       return `${structureProgress} (need ${needed} more for ${info.nextTier})`;
@@ -994,11 +1029,13 @@ export class SettlementService {
   
   /**
    * Update settlement level with automatic tier transitions
-   * 
+   *
    * Uses centralized tier requirements from SettlementTierConfig.
-   * Tier transitions occur automatically when structure requirements are met.
-   * Level is NOT a blocker - you can upgrade level freely (up to 20), tier upgrades require structures.
-   * 
+   * Tier transitions occur automatically when BOTH level AND structure requirements are met.
+   * According to Reignmaker rules, you need BOTH:
+   * - Sufficient structures (2/5/8 for Town/City/Metropolis)
+   * - Sufficient level (2/5/8 for Town/City/Metropolis)
+   *
    * @param settlementId - Settlement ID
    * @param newLevel - New settlement level (1-20)
    */
@@ -1008,56 +1045,56 @@ export class SettlementService {
     if (newLevel < 1 || newLevel > 20) {
       throw new Error(`Invalid settlement level: ${newLevel} (must be 1-20)`);
     }
-    
+
     const { getKingdomActor } = await import('../../stores/KingdomStore');
     const actor = getKingdomActor();
     if (!actor) {
       throw new Error('No kingdom actor available');
     }
-    
+
     const kingdom = actor.getKingdomData();
     if (!kingdom) {
       throw new Error('No kingdom data available');
     }
-    
+
     const settlement = kingdom.settlements.find(s => s.id === settlementId);
     if (!settlement) {
       throw new Error(`Settlement not found: ${settlementId}`);
     }
-    
+
     const structureCount = settlement.structureIds?.length || 0;
     const oldTier = settlement.tier;
-    
+
     // Import helper functions from Settlement model
     const { getNextTier, getNextTierRequirements } = await import('../../models/Settlement');
-    
-    // Determine new tier based on structure count ONLY
+
+    // Determine new tier based on BOTH level AND structure requirements
     let newTier = settlement.tier;
     const nextTier = getNextTier(oldTier);
-    
+
     if (nextTier) {
       const reqs = getNextTierRequirements(oldTier);
-      // Only check structure count - level is not a blocker
-      if (reqs && structureCount >= reqs.minStructures) {
+      // Check BOTH requirements: structures AND level
+      if (reqs && structureCount >= reqs.minStructures && newLevel >= reqs.minLevel) {
         newTier = nextTier;
       }
     }
-    
+
     // Check if settlement is using the old tier's default image
     const isUsingDefaultImage = settlement.imagePath === getDefaultSettlementImage(oldTier);
-    
+
     const updates: Partial<Settlement> = { level: newLevel };
-    
+
     // Update tier if it changed
     if (newTier !== oldTier) {
       updates.tier = newTier;
-      
+
       // Update to new tier's default image if settlement was using old default
       if (isUsingDefaultImage) {
         updates.imagePath = getDefaultSettlementImage(newTier);
       }
     }
-    
+
     await this.updateSettlement(settlementId, updates);
 
   }

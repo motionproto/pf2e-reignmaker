@@ -1,0 +1,281 @@
+.analysis-charts {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 2rem;
+}
+
+.analysis-charts h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  color: #2c3e50;
+}
+
+.analysis-charts h3 {
+  font-size: 1rem;
+  color: #34495e;
+  margin-bottom: 0.75rem;
+}
+
+.analysis-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.analysis-chart-container {
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid #e0e0e0;
+}
+
+.analysis-chart-container.wide {
+  grid-column: span 2;
+}
+
+.analysis-chart-wrapper {
+  height: 250px;
+  width: 100%;
+}
+
+.analysis-chart-wrapper-tall {
+  height: 350px;
+  width: 100%;
+}
+
+/* Tier legend for unrest chart */
+.tier-legend {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.tier-label {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.tier-label.stable {
+  background: rgba(39, 174, 96, 0.2);
+  color: #155724;
+}
+
+.tier-label.discontent {
+  background: rgba(255, 193, 7, 0.2);
+  color: #856404;
+}
+
+.tier-label.turmoil {
+  background: rgba(255, 152, 0, 0.3);
+  color: #7a4a00;
+}
+
+.tier-label.rebellion {
+  background: rgba(244, 67, 54, 0.3);
+  color: #721c24;
+}
+
+/* Milestones section */
+.milestones-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.milestones-section h3 {
+  margin-bottom: 1rem;
+}
+
+.milestones-timeline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.milestone-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f0f7ff;
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  border: 1px solid #b3d4ff;
+}
+
+.milestone-turn {
+  font-weight: 600;
+  color: #2c5aa0;
+}
+
+.milestone-event {
+  color: #34495e;
+}
+
+.milestone-item.clickable {
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.milestone-item.clickable:hover {
+  background: #d4e8ff;
+  border-color: #66a3ff;
+  transform: translateY(-1px);
+}
+
+/* CSS-based Action Bar Chart */
+.action-bars-container {
+  padding: 0.5rem 0;
+}
+
+.action-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.action-bar-label {
+  width: 120px;
+  font-size: 0.8rem;
+  color: #34495e;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.action-bar-track {
+  flex: 1;
+  height: 24px;
+  background: #f0f0f0;
+  border-radius: 4px;
+  display: flex;
+  overflow: hidden;
+}
+
+.action-bar-segment {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.action-bar-segment.crit-success {
+  background: #27ae60;
+}
+
+.action-bar-segment.success {
+  background: #3498db;
+}
+
+.action-bar-segment.failure {
+  background: #f39c12;
+}
+
+.action-bar-segment.crit-failure {
+  background: #e74c3c;
+}
+
+.action-bar-unused {
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    45deg,
+    #e8e8e8,
+    #e8e8e8 4px,
+    #f5f5f5 4px,
+    #f5f5f5 8px
+  );
+}
+
+.action-bar-row.unused {
+  opacity: 0.6;
+}
+
+.action-bar-row.unused .action-bar-label {
+  color: #999;
+}
+
+.action-bar-total {
+  width: 35px;
+  font-size: 0.8rem;
+  color: #7f8c8d;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.action-bar-legend {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: #555;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.legend-color.crit-success {
+  background: #27ae60;
+}
+
+.legend-color.success {
+  background: #3498db;
+}
+
+.legend-color.failure {
+  background: #f39c12;
+}
+
+.legend-color.crit-failure {
+  background: #e74c3c;
+}
+
+.legend-color.unused {
+  background: repeating-linear-gradient(
+    45deg,
+    #e8e8e8,
+    #e8e8e8 2px,
+    #f5f5f5 2px,
+    #f5f5f5 4px
+  );
+  border: 1px solid #ddd;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1000px) {
+  .analysis-charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analysis-chart-container.wide {
+    grid-column: span 1;
+  }
+
+  .action-bar-label {
+    width: 80px;
+    font-size: 0.7rem;
+  }
+
+  .action-bar-legend {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+}

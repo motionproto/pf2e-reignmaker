@@ -1,0 +1,136 @@
+.kingdom-map {
+  width: 100%;
+  height: 500px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Map Statistics Overlay */
+.map-statistics {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  backdrop-filter: blur(4px);
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.stat-item:last-child {
+  margin-bottom: 0;
+}
+
+.stat-label {
+  font-weight: 500;
+  color: #555;
+  margin-right: 12px;
+}
+
+.stat-value {
+  font-weight: 600;
+  color: #2c3e50;
+  font-family: 'Courier New', monospace;
+  background: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  min-width: 30px;
+  text-align: center;
+}
+
+.kingdom-map-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.kingdom-map-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 500px;
+  color: #888;
+  font-size: 1.2rem;
+}
+
+.hex-terrain {
+  transition: fill 0.3s ease, opacity 0.3s ease;
+}
+
+.hex-claimed-overlay {
+  pointer-events: none;
+  transition: fill 0.3s ease;
+}
+
+.hex-claimed-border {
+  pointer-events: none;
+  transition: stroke 0.3s ease;
+}
+
+.hex-road {
+  pointer-events: none;
+}
+
+.hex-label {
+  pointer-events: none;
+  font-family: 'Courier New', monospace;
+  user-select: none;
+  paint-order: stroke fill;
+}
+
+.hex-icon {
+  pointer-events: none;
+  user-select: none;
+  paint-order: stroke fill;
+}
+
+.settlement-icon {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.worksite-icon {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.hex-tooltip {
+  position: fixed;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 0.75rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  pointer-events: none;
+  z-index: 1000;
+  min-width: 150px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.tooltip-title {
+  font-weight: bold;
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  padding-bottom: 0.25rem;
+}
+
+.tooltip-row {
+  margin: 0.25rem 0;
+  line-height: 1.4;
+}
+
+.tooltip-row strong {
+  color: #3b82f6;
+  margin-right: 0.5rem;
+}

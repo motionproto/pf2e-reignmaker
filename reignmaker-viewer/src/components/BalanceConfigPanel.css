@@ -1,0 +1,137 @@
+.balance-config-panel {
+  background: linear-gradient(135deg, #1a2634 0%, #0d1821 100%);
+  border: 1px solid #3d5a80;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  color: #e8e8e8;
+}
+
+.balance-config-panel h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+  color: #fff;
+  border-bottom: 2px solid #3d5a80;
+  padding-bottom: 0.5rem;
+}
+
+.config-intro {
+  margin: 0 0 1rem 0;
+  color: #98c1d9;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.no-config {
+  color: #7f8c8d;
+  text-align: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.config-section {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 1rem;
+  border: 1px solid rgba(61, 90, 128, 0.5);
+}
+
+.config-section h3 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+  color: #98c1d9;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.config-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.config-table td {
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.config-table tr:last-child td {
+  border-bottom: none;
+}
+
+.config-table .label {
+  color: #adb5bd;
+}
+
+.config-table .value {
+  text-align: right;
+  font-weight: 600;
+  color: #4ecdc4;
+}
+
+.config-table .value.enabled {
+  color: #f39c12;
+}
+
+.config-table .value.disabled {
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* Commerce section spans full width */
+.commerce-section {
+  grid-column: 1 / -1;
+}
+
+.commerce-table {
+  width: 100%;
+}
+
+.commerce-table th {
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  color: #98c1d9;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(61, 90, 128, 0.8);
+}
+
+.commerce-table th:not(:first-child) {
+  text-align: center;
+}
+
+.commerce-table td {
+  padding: 0.35rem 0.5rem;
+}
+
+.commerce-table .tier-name {
+  color: #adb5bd;
+  font-size: 0.8rem;
+}
+
+.commerce-table .rate {
+  text-align: center;
+  font-weight: 600;
+  color: #4ecdc4;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .config-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .balance-config-panel {
+    padding: 1rem;
+  }
+}

@@ -7,7 +7,20 @@
       "Bash(npm run build:*)",
       "Bash(xargs:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(ls:*)",
+      "Bash(npm create:*)",
+      "Bash(npm install)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(npm run simulate:*)",
+      "Bash(cat:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run simulate:10:*)",
+      "Bash(done)",
+      "Bash(npm uninstall:*)",
+      "Bash(grep:*)",
+      "Bash(tree:*)"
     ],
     "deny": [],
     "ask": []

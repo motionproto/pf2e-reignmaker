@@ -1,0 +1,177 @@
+.settlement-details {
+  margin-top: 2rem;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.settlement-details h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #2c3e50;
+}
+
+.no-settlements {
+  color: #7f8c8d;
+  text-align: center;
+  padding: 2rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px dashed #ddd;
+}
+
+/* Settlement Summary Badges */
+.settlement-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.settlement-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+
+.capital-star {
+  color: #f39c12;
+  font-size: 1rem;
+}
+
+.badge-name {
+  font-weight: 600;
+}
+
+.badge-info {
+  opacity: 0.8;
+  font-size: 0.8rem;
+}
+
+/* Category Sections */
+.structures-by-category {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.category-section {
+  background: #f8f9fa;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+}
+
+.category-header {
+  background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+  color: white;
+  padding: 0.6rem 1rem;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+/* Structures Table */
+.structures-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.structures-table thead {
+  background: #ecf0f1;
+}
+
+.structures-table th {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  color: #7f8c8d;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.structures-table tbody tr {
+  border-bottom: 1px solid #e0e0e0;
+  transition: background-color 0.15s;
+}
+
+.structures-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.structures-table tbody tr:hover {
+  background: #fff;
+}
+
+.structures-table tbody tr.damaged {
+  background: #fff3cd;
+}
+
+.structures-table td {
+  padding: 0.5rem 0.75rem;
+  vertical-align: middle;
+}
+
+.col-tier {
+  width: 50px;
+  text-align: center;
+}
+
+.col-name {
+  width: 180px;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.col-settlement {
+  width: 120px;
+  color: #7f8c8d;
+}
+
+.col-effect {
+  color: #155724;
+}
+
+.tier-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 10px;
+  color: white;
+  font-weight: bold;
+  font-size: 0.7rem;
+}
+
+.damaged-icon {
+  color: #e74c3c;
+  margin-right: 0.3rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .structures-table {
+    font-size: 0.8rem;
+  }
+
+  .col-name {
+    width: auto;
+  }
+
+  .col-settlement {
+    width: auto;
+  }
+
+  .structures-table th,
+  .structures-table td {
+    padding: 0.4rem 0.5rem;
+  }
+}

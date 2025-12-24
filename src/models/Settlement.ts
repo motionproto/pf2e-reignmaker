@@ -39,48 +39,48 @@ export interface TierUpgradeRequirements {
 /**
  * Settlement tier configuration
  * Storage and capacity values now come from structures
- * 
- * HARD STRUCTURE CAPS:
+ *
+ * HARD STRUCTURE CAPS (from Reignmaker rules):
  * - Village: Max 2 structures (must upgrade to Town for more)
  * - Town: Max 5 structures (must upgrade to City for more)
  * - City: Max 8 structures (must upgrade to Metropolis for more)
  * - Metropolis: Unlimited structures (endgame tier)
- * 
- * TIER UPGRADE REQUIREMENTS (Structure-Based Only):
- * - Village → Town: 2+ structures (level can be any value)
- * - Town → City: 5+ structures (level can be any value)
- * - City → Metropolis: 8+ structures (level can be any value)
- * 
- * Note: Settlement level is separate from tier and does NOT block tier upgrades.
- * You can upgrade level freely (costs gold), tier upgrades happen automatically when structure count is met.
+ *
+ * TIER UPGRADE REQUIREMENTS (BOTH level AND structures required):
+ * - Village → Town: 2 structures AND Level 2+
+ * - Town → City: 5 structures AND Level 5+
+ * - City → Metropolis: 8 structures AND Level 8+
+ *
+ * Note: Both requirements must be met. You cannot upgrade tier if either is missing.
+ * Tier transitions happen automatically when you upgrade settlement level while meeting both requirements.
  */
 export const SettlementTierConfig = {
-  [SettlementTier.VILLAGE]: { 
-    displayName: 'Village', 
+  [SettlementTier.VILLAGE]: {
+    displayName: 'Village',
     maxStructures: 2,
     upgradeRequirements: null, // Starting tier - no upgrade needed
-    foodConsumption: 1, 
+    foodConsumption: 1,
     armySupport: 1
   },
-  [SettlementTier.TOWN]: { 
-    displayName: 'Town', 
+  [SettlementTier.TOWN]: {
+    displayName: 'Town',
     maxStructures: 5,
-    upgradeRequirements: { minLevel: 0, minStructures: 2 }, // minLevel=0 means no level requirement
-    foodConsumption: 4, 
+    upgradeRequirements: { minLevel: 2, minStructures: 2 },
+    foodConsumption: 4,
     armySupport: 2
   },
-  [SettlementTier.CITY]: { 
-    displayName: 'City', 
+  [SettlementTier.CITY]: {
+    displayName: 'City',
     maxStructures: 8,
-    upgradeRequirements: { minLevel: 0, minStructures: 5 }, // minLevel=0 means no level requirement
-    foodConsumption: 8, 
+    upgradeRequirements: { minLevel: 5, minStructures: 5 },
+    foodConsumption: 8,
     armySupport: 3
   },
-  [SettlementTier.METROPOLIS]: { 
-    displayName: 'Metropolis', 
+  [SettlementTier.METROPOLIS]: {
+    displayName: 'Metropolis',
     maxStructures: Infinity,
-    upgradeRequirements: { minLevel: 0, minStructures: 8 }, // minLevel=0 means no level requirement
-    foodConsumption: 12, 
+    upgradeRequirements: { minLevel: 8, minStructures: 8 },
+    foodConsumption: 12,
     armySupport: 4
   }
 };
