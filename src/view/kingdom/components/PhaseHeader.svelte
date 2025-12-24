@@ -13,6 +13,9 @@
   export let showUntrainedToggle: boolean = false;
   export let hideUntrained: boolean = true;
   export let onToggleUntrained: ((value: boolean) => void) | undefined = undefined;
+  export let showTestingModeToggle: boolean = false;
+  export let testingModeEnabled: boolean = false;
+  export let onToggleTestingMode: ((value: boolean) => void) | undefined = undefined;
   // currentTurn is now imported from stores, remove the export
   
   // Use the reactive phaseComplete property from KingdomActor
@@ -99,6 +102,19 @@
       {/if}
     </div>
     <div class="controls-wrapper">
+      {#if showTestingModeToggle}
+        <div class="testing-mode-toggle-wrapper">
+          <label class="testing-mode-toggle">
+            <input
+              type="checkbox"
+              checked={testingModeEnabled}
+              on:change={(e) => onToggleTestingMode?.(e.currentTarget.checked)}
+            />
+            <i class="fas fa-flask"></i>
+            <span>Testing Mode</span>
+          </label>
+        </div>
+      {/if}
       {#if showUntrainedToggle}
         <div class="untrained-toggle-wrapper">
           <label class="untrained-toggle">
@@ -245,6 +261,40 @@
     font-weight: var(--font-weight-medium);
     user-select: none;
     line-height: 1.5;
+  }
+
+  .testing-mode-toggle-wrapper {
+    display: flex;
+    align-items: center;
+    padding: var(--space-12) var(--space-16);
+    min-height: 2.5rem;
+  }
+
+  .testing-mode-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .testing-mode-toggle input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    cursor: pointer;
+    margin: 0;
+  }
+
+  .testing-mode-toggle span {
+    color: var(--text-primary);
+    font-size: var(--font-md);
+    font-weight: var(--font-weight-medium);
+    user-select: none;
+    line-height: 1.5;
+  }
+
+  .testing-mode-toggle i {
+    color: var(--border-special);
   }
 
   /* GM Force Advance Button Styling */

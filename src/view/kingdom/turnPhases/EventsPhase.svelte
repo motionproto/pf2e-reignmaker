@@ -36,6 +36,14 @@
    import { buildEventOutcomes } from '../../../controllers/shared/EventOutcomeHelpers';
    import { textBadge } from '../../../types/OutcomeBadge';
 
+   // Testing Mode
+   import {
+     testingModeEnabled,
+     selectedCharacter,
+     markCharacterAsActed,
+     autoAdvanceToNextAvailable
+   } from '../../../stores/TestingModeStore';
+
    /**
     * Get outcome badges from the pipeline's strategicChoice options
     * Reads directly from the event definition instead of a separate lookup file
@@ -473,12 +481,23 @@
 
          // Use PipelineCoordinator for events (same as actions/incidents)
          const { getPipelineCoordinator } = await import('../../../services/PipelineCoordinator');
-         const { getCurrentUserCharacter } = await import('../../../services/pf2e');
+         const { getCurrentUserCharacter: getCharacter } = await import('../../../services/pf2e');
 
          const pipelineCoordinator = await getPipelineCoordinator();
-         const actingCharacter = getCurrentUserCharacter();
-         if (!actingCharacter) {
-            throw new Error('No character selected');
+
+         // Get character for roll
+         let actingCharacter;
+
+         // Testing Mode: use selected character from store
+         if ($testingModeEnabled && $selectedCharacter) {
+            actingCharacter = $selectedCharacter.actor;
+            console.log(`🧪 [EventsPhase] Testing Mode: Using character ${actingCharacter.name}`);
+         } else {
+            // Normal mode: use current user's character
+            actingCharacter = getCharacter();
+            if (!actingCharacter) {
+               throw new Error('No character selected');
+            }
          }
 
          await pipelineCoordinator.executePipeline(targetEvent.id, {
@@ -494,6 +513,12 @@
          });
 
          // Pipeline handles everything: roll, create instance, calculate preview, wait for apply
+
+         // Testing Mode: mark character as acted and auto-advance
+         if ($testingModeEnabled && $selectedCharacter) {
+            markCharacterAsActed($selectedCharacter.actorId);
+            autoAdvanceToNextAvailable();
+         }
 
       } catch (error) {
          if ((error as Error).message === 'Action cancelled by user') {

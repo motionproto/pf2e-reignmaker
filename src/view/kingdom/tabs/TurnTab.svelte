@@ -2,11 +2,19 @@
    import { kingdomData, advancePhase, viewingPhase, setViewingPhase } from '../../../stores/KingdomStore';
    import { TurnPhase, TurnPhaseConfig } from '../../../actors/KingdomActor';
    import { onMount } from 'svelte';
-   
+
    // Components
    import PhaseBar from '../components/PhaseBar.svelte';
    import PhaseHeader from '../components/PhaseHeader.svelte';
    import PlayerActionTracker from '../components/PlayerActionTracker.svelte';
+   import TestingModeCharacterBar from '../components/TestingModeCharacterBar.svelte';
+
+   // Testing Mode Store
+   import {
+      testingModeEnabled,
+      toggleTestingMode,
+      initializeCharacters
+   } from '../../../stores/TestingModeStore';
    
    // Setup Tab for Turn 0
    import SetupTab from './SetupTab.svelte';
@@ -81,6 +89,17 @@
       hideUntrainedSkills = value;
       localStorage.setItem(STORAGE_KEY, String(value));
    }
+
+   // Check if current user is GM (only GMs can use testing mode)
+   $: isGM = (globalThis as any).game?.user?.isGM || false;
+
+   // Handler for testing mode toggle
+   function handleToggleTestingMode(value: boolean) {
+      toggleTestingMode(value);
+      if (value) {
+         initializeCharacters();
+      }
+   }
 </script>
 
 <div class="turn-management">
@@ -91,7 +110,7 @@
       <!-- Regular Turn Phases -->
       <!-- Phase header with gradient styling -->
       <!-- Note: Button behavior (onNextPhase, isUpkeepPhase) is always tied to the ACTUAL phase, not the viewing phase -->
-      <PhaseHeader 
+      <PhaseHeader
          title={safePhaseInfo.displayName}
          description={safePhaseInfo.description}
          icon={displayPhaseIcon}
@@ -101,11 +120,19 @@
          showUntrainedToggle={displayPhase === TurnPhase.ACTIONS || displayPhase === TurnPhase.EVENTS || displayPhase === TurnPhase.UNREST}
          hideUntrained={hideUntrainedSkills}
          onToggleUntrained={handleToggleUntrained}
+         showTestingModeToggle={isGM && (displayPhase === TurnPhase.EVENTS || displayPhase === TurnPhase.ACTIONS)}
+         testingModeEnabled={$testingModeEnabled}
+         onToggleTestingMode={handleToggleTestingMode}
       />
       
       <!-- Phase Bar underneath phase header -->
       <PhaseBar />
-      
+
+      <!-- Testing Mode Character Bar (GM only, Events/Actions phases) -->
+      {#if $testingModeEnabled && (displayPhase === TurnPhase.EVENTS || displayPhase === TurnPhase.ACTIONS)}
+         <TestingModeCharacterBar />
+      {/if}
+
       <!-- Player Action Tracker underneath phase bar (only shown in Events and Actions phases) -->
       {#if displayPhase === TurnPhase.EVENTS || displayPhase === TurnPhase.ACTIONS}
          <PlayerActionTracker />

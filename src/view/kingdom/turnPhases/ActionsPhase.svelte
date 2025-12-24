@@ -14,6 +14,14 @@
   import { onMount, onDestroy, tick } from "svelte";
   import { logger } from '../../../utils/Logger';
 
+  // Testing Mode
+  import {
+    testingModeEnabled,
+    selectedCharacter,
+    markCharacterAsActed,
+    autoAdvanceToNextAvailable
+  } from '../../../stores/TestingModeStore';
+
   // Props
   export let isViewingCurrentPhase: boolean = true;
 
@@ -293,14 +301,23 @@
     }
     
     console.log(`🚀 [ActionsPhase] Using PipelineCoordinator for ${action.id}`);
-    
+
     // Get character for roll
-    let actingCharacter = getCurrentUserCharacter();
-    if (!actingCharacter) {
-      actingCharacter = await showCharacterSelectionDialog();
+    let actingCharacter;
+
+    // Testing Mode: use selected character from store
+    if ($testingModeEnabled && $selectedCharacter) {
+      actingCharacter = $selectedCharacter.actor;
+      console.log(`🧪 [ActionsPhase] Testing Mode: Using character ${actingCharacter.name}`);
+    } else {
+      // Normal mode: use current user's character
+      actingCharacter = getCurrentUserCharacter();
       if (!actingCharacter) {
-        console.log('⚠️ [ActionsPhase] User cancelled character selection');
-        return;
+        actingCharacter = await showCharacterSelectionDialog();
+        if (!actingCharacter) {
+          console.log('⚠️ [ActionsPhase] User cancelled character selection');
+          return;
+        }
       }
     }
     
@@ -318,6 +335,12 @@
       });
       
       console.log(`✅ [ActionsPhase] Pipeline complete for ${action.id}`);
+
+      // Testing Mode: mark character as acted and auto-advance
+      if ($testingModeEnabled && $selectedCharacter) {
+        markCharacterAsActed($selectedCharacter.actorId);
+        autoAdvanceToNextAvailable();
+      }
     } catch (error: any) {
       // Handle user cancellation gracefully (not an error)
       if (error.message === 'Action cancelled by user') {
