@@ -23,7 +23,7 @@
   import Button from "./baseComponents/Button.svelte";
   import { economicsService } from "../../../services/economics";
   import { calculateSizeUnrest } from "../../../services/domain/unrest/UnrestService";
-  import { getResourceIcon, getResourceColor } from "../utils/presentation";
+  import { getResourceIcon, getResourceColor, getDoctrineIcon, getDoctrineColor } from "../utils/presentation";
   import { PLAYER_KINGDOM } from "../../../types/ownership";
   import { validateKingdomOrFactionName } from "../../../utils/reserved-names";
 
@@ -486,7 +486,7 @@
               Accumulated from choosing virtuous approaches to events. Represents compassionate and righteous leadership.
             </div>
             <span class="stat-label"
-              ><i class="fa-solid fa-dove stat-icon doctrine-virtuous"></i>Virtuous:</span
+              ><i class="fa-solid {getDoctrineIcon('virtuous')} stat-icon" style="color: {getDoctrineColor('virtuous')}"></i>Virtuous:</span
             >
             <span class="stat-value">{$doctrine.virtuous}</span>
           </div>
@@ -495,7 +495,7 @@
               Accumulated from choosing practical approaches to events. Represents balanced and lawful leadership.
             </div>
             <span class="stat-label"
-              ><i class="fa-solid fa-scale-balanced stat-icon doctrine-practical"></i>Practical:</span
+              ><i class="fa-solid {getDoctrineIcon('practical')} stat-icon" style="color: {getDoctrineColor('practical')}"></i>Practical:</span
             >
             <span class="stat-value">{$doctrine.practical}</span>
           </div>
@@ -504,7 +504,7 @@
               Accumulated from choosing ruthless approaches to events. Represents expedient and self-serving leadership.
             </div>
             <span class="stat-label"
-              ><i class="fa-solid fa-skull stat-icon doctrine-ruthless"></i>Ruthless:</span
+              ><i class="fa-solid {getDoctrineIcon('ruthless')} stat-icon" style="color: {getDoctrineColor('ruthless')}"></i>Ruthless:</span
             >
             <span class="stat-value">{$doctrine.ruthless}</span>
           </div>
@@ -857,16 +857,4 @@
     background: var(--overlay);
   }
 
-  /* Doctrine icon colors */
-  .doctrine-virtuous {
-    color: var(--color-success);
-  }
-
-  .doctrine-practical {
-    color: var(--color-info);
-  }
-
-  .doctrine-ruthless {
-    color: var(--color-danger);
-  }
 </style>

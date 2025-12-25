@@ -575,6 +575,9 @@ export async function createUpkeepPhaseController() {
 
     /**
      * Get display data for the UI
+     *
+     * This function reads actual values from the data store rather than simulating.
+     * The store is the source of truth - as steps complete, values update automatically.
      */
     async getDisplayData(kingdomData: any) {
       if (!kingdomData) {
@@ -606,25 +609,27 @@ export async function createUpkeepPhaseController() {
       const { calculateConsumption, calculateArmySupportCapacity, calculateUnsupportedArmies } = await import('../services/economics/consumption');
       const { SettlementTierConfig, SettlementTier } = await import('../models/Settlement');
       const { PLAYER_KINGDOM } = await import('../types/ownership');
-      
+
+      // Get step completion status
+      const feedSettlementsCompleted = await isStepCompletedByIndex(UpkeepPhaseSteps.FEED_SETTLEMENTS);
+      const supportMilitaryCompleted = await isStepCompletedByIndex(UpkeepPhaseSteps.SUPPORT_MILITARY);
+
       const settlements = kingdomData.settlements || [];
       const allArmies = kingdomData.armies || [];
       // Filter for player-led, non-exempt armies for consumption calculations
-      // Allied armies and armies led by other factions don't require player upkeep
-      const armies = allArmies.filter((a: any) => 
+      const armies = allArmies.filter((a: any) =>
         a.ledBy === PLAYER_KINGDOM && !a.exemptFromUpkeep
       );
       const hexes = kingdomData.hexes || [];
       const consumption = calculateConsumption(settlements, armies, hexes);
       const armySupport = calculateArmySupportCapacity(settlements, hexes);
       const unsupportedCount = calculateUnsupportedArmies(armies, settlements, hexes);
-      
+
+      // Read actual values from the store - this is the source of truth
       const currentFood = kingdomData.resources?.food || 0;
       const armyCount = armies.length;
-      
-      // Get food storage capacity from stored resource
       const foodStorageCapacity = kingdomData.resources?.foodCapacity || 0;
-      
+
       // Map settlement tier enum to numeric values
       const tierToNumber = (tier: typeof SettlementTier[keyof typeof SettlementTier]): number => {
         switch (tier) {
@@ -635,60 +640,58 @@ export async function createUpkeepPhaseController() {
           default: return 1;
         }
       };
-      
-      // Calculate which settlements would be fed/unfed based on current food (simulation)
-      // IMPORTANT: Always filter for PLAYER_KINGDOM settlements, not the currentFaction view
-      // The GM may be viewing a different faction, but upkeep always applies to the player's kingdom
+
+      // Filter for player settlements
       const playerSettlements = (kingdomData.settlements || []).filter((s: any) => {
         const hex = hexes.find(h => h.row === s.location.x && h.col === s.location.y);
         return hex?.claimedBy === PLAYER_KINGDOM;
       });
-      
+
       // Sort by priority: capital first, then by tier (descending)
       const sortedSettlements = [...playerSettlements].sort((a, b) => {
-        // Capital always comes first
         if (a.isCapital && !b.isCapital) return -1;
         if (!a.isCapital && b.isCapital) return 1;
-        
-        // Otherwise sort by tier (highest first)
         return tierToNumber(b.tier) - tierToNumber(a.tier);
       });
-      let availableFood = currentFood;
+
+      // Calculate unfed settlements preview (only if step not yet completed)
       const unfedSettlements: Array<{name: string, tier: string, tierNum: number, unrest: number}> = [];
       let unfedUnrest = 0;
-      
-      for (const settlement of sortedSettlements) {
-        const config = SettlementTierConfig[settlement.tier as keyof typeof SettlementTierConfig];
-        const required = config ? config.foodConsumption : 0;
-        const tierNum = tierToNumber(settlement.tier);
-        
-        if (availableFood >= required) {
-          // Fully fed - consume food
-          availableFood -= required;
-        } else {
-          // Not enough food - consume what's available and mark as unfed
-          availableFood = 0;  // Consume all remaining food
-          unfedSettlements.push({ 
-            name: settlement.name, 
-            tier: settlement.tier, 
-            tierNum,
-            unrest: tierNum 
-          });
-          unfedUnrest += tierNum;
+
+      if (!feedSettlementsCompleted) {
+        // Preview which settlements would be unfed with current food
+        let previewFood = currentFood;
+        for (const settlement of sortedSettlements) {
+          const config = SettlementTierConfig[settlement.tier as keyof typeof SettlementTierConfig];
+          const required = config ? config.foodConsumption : 0;
+          const tierNum = tierToNumber(settlement.tier);
+
+          if (previewFood >= required) {
+            previewFood -= required;
+          } else {
+            previewFood = 0;
+            unfedSettlements.push({
+              name: settlement.name,
+              tier: settlement.tier,
+              tierNum,
+              unrest: tierNum
+            });
+            unfedUnrest += tierNum;
+          }
         }
       }
-      
-      // Deduct army food consumption before calculating excess
-      // This ensures the storage warning accounts for ALL upkeep costs
-      const armyFoodRequired = consumption.armyFood;
-      availableFood = Math.max(0, availableFood - armyFoodRequired);
-      
-      // Calculate excess food (what would be lost after ALL upkeep)
-      const excessFood = Math.max(0, availableFood - foodStorageCapacity);
-      
-      const foodRemainingForArmies = Math.max(0, availableFood);
-      const settlementFoodShortage = Math.max(0, consumption.settlementFood - currentFood);
-      const armyFoodShortage = Math.max(0, consumption.armyFood - foodRemainingForArmies);
+
+      // Food available for armies = current food in store
+      // After settlements are fed, this reflects post-settlement food
+      // After military is processed, this reflects final food
+      const foodRemainingForArmies = currentFood;
+
+      // Calculate shortages based on current food vs requirements
+      const settlementFoodShortage = feedSettlementsCompleted ? 0 : Math.max(0, consumption.settlementFood - currentFood);
+      const armyFoodShortage = supportMilitaryCompleted ? 0 : Math.max(0, consumption.armyFood - currentFood);
+
+      // Calculate excess food beyond storage capacity
+      const excessFood = Math.max(0, currentFood - foodStorageCapacity);
       
       // Calculate fortification maintenance costs (skip fortifications built this turn)
       // Only include fortifications on player-claimed hexes

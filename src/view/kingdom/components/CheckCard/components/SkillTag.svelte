@@ -1,6 +1,7 @@
 <script lang="ts">
    import { createEventDispatcher } from 'svelte';
    import type { DoctrineType } from '../../../../../types/CheckPipeline';
+   import { getDoctrineIcon } from '../../../utils/presentation';
 
    export let skill: string;
    export let description: string = '';
@@ -12,16 +13,6 @@
    export let doctrine: DoctrineType | undefined = undefined;
 
    const dispatch = createEventDispatcher();
-
-   // Get the icon class for the doctrine type
-   function getDoctrineIcon(d: DoctrineType): string {
-      switch (d) {
-         case 'virtuous': return 'fa-dove';
-         case 'practical': return 'fa-scale-balanced';
-         case 'ruthless': return 'fa-skull';
-         default: return '';
-      }
-   }
    
    // Simple UI component - just dispatches events
    function handleClick() {

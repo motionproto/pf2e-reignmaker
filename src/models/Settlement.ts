@@ -66,21 +66,21 @@ export const SettlementTierConfig = {
     displayName: 'Town',
     maxStructures: 5,
     upgradeRequirements: { minLevel: 2, minStructures: 2 },
-    foodConsumption: 4,
+    foodConsumption: 3,
     armySupport: 2
   },
   [SettlementTier.CITY]: {
     displayName: 'City',
     maxStructures: 8,
     upgradeRequirements: { minLevel: 5, minStructures: 5 },
-    foodConsumption: 8,
+    foodConsumption: 6,
     armySupport: 3
   },
   [SettlementTier.METROPOLIS]: {
     displayName: 'Metropolis',
     maxStructures: Infinity,
     upgradeRequirements: { minLevel: 8, minStructures: 8 },
-    foodConsumption: 12,
+    foodConsumption: 9,
     armySupport: 4
   }
 };

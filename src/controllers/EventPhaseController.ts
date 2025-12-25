@@ -306,7 +306,7 @@ export async function createEventPhaseController() {
                 const allEvents = pipelineRegistry.getPipelinesByType('event')
                     .filter(evt => {
                         if (!evt.requirements) return true;
-                        return evt.requirements(kingdom!).met;
+                        return evt.requirements(storeKingdom!).met;
                     });
 
                 // Edge case: no available events (all filtered out)

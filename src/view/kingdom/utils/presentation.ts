@@ -159,6 +159,26 @@ export function formatSkillsString(skills: string[]): string {
 }
 
 /**
+ * Get icon for a doctrine type
+ */
+export function getDoctrineIcon(doctrine: string): string {
+  const icons: Record<string, string> = {
+    virtuous: 'fa-heart',
+    practical: 'fa-scale-balanced',
+    ruthless: 'fa-skull'
+  };
+  return icons[doctrine.toLowerCase()] || 'fa-circle';
+}
+
+/**
+ * Get color CSS variable for a doctrine type
+ * Uses muted color to match other stat icons
+ */
+export function getDoctrineColor(_doctrine: string): string {
+  return 'var(--text-muted)';
+}
+
+/**
  * Get badge class for outcome type
  */
 export function getOutcomeBadgeClass(outcome: string): string {
