@@ -42,11 +42,32 @@ export class PF2eSkillBonusService {
    */
   getSkillBonuses(skillNames: string[]): Map<string, number | null> {
     const bonuses = new Map<string, number | null>();
-    
+
     for (const skillName of skillNames) {
       bonuses.set(skillName, this.getSkillBonus(skillName));
     }
-    
+
+    return bonuses;
+  }
+
+  /**
+   * Get skill bonuses for a specific character
+   * Used by Testing Mode to display bonuses for the selected character
+   */
+  getSkillBonusesForCharacter(skillNames: string[], character: any): Map<string, number | null> {
+    const bonuses = new Map<string, number | null>();
+
+    if (!character) {
+      for (const skillName of skillNames) {
+        bonuses.set(skillName, null);
+      }
+      return bonuses;
+    }
+
+    for (const skillName of skillNames) {
+      bonuses.set(skillName, this.skillService.getCharacterSkillModifier(character, skillName));
+    }
+
     return bonuses;
   }
 
@@ -65,8 +86,11 @@ export const pf2eSkillBonusService = PF2eSkillBonusService.getInstance();
 export const getSkillBonus = (skillName: string) => 
   pf2eSkillBonusService.getSkillBonus(skillName);
 
-export const getSkillBonuses = (skillNames: string[]) => 
+export const getSkillBonuses = (skillNames: string[]) =>
   pf2eSkillBonusService.getSkillBonuses(skillNames);
 
-export const hasCharacterAssigned = () => 
+export const getSkillBonusesForCharacter = (skillNames: string[], character: any) =>
+  pf2eSkillBonusService.getSkillBonusesForCharacter(skillNames, character);
+
+export const hasCharacterAssigned = () =>
   pf2eSkillBonusService.hasCharacterAssigned();

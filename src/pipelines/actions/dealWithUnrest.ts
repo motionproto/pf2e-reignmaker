@@ -15,13 +15,14 @@ export const dealWithUnrestPipeline: CheckPipeline = {
   checkType: 'action',
 
   skills: [
-    { skill: 'performance', description: 'entertainment and festivities' },
-    { skill: 'religion', description: 'religious ceremonies' },
-    { skill: 'intimidation', description: 'shows of force' },
-    { skill: 'diplomacy', description: 'diplomatic engagement' },
-    { skill: 'arcana', description: 'magical persuasion' },
-    { skill: 'medicine', description: 'public health initiatives' },
-    { skill: 'occultism', description: 'mystical demonstrations' }
+    { skill: 'religion', description: 'religious ceremonies', doctrine: 'virtuous' },
+    { skill: 'diplomacy', description: 'community engagement', doctrine: 'virtuous' },
+    { skill: 'medicine', description: 'public health initiatives', doctrine: 'practical' },
+    { skill: 'performance', description: 'entertainment and festivities', doctrine: 'practical' },
+    { skill: 'arcana', description: 'magical persuasion', doctrine: 'practical' },
+    { skill: 'intimidation', description: 'shows of force', doctrine: 'ruthless' },
+    { skill: 'thievery', description: 'hide the evidence', doctrine: 'ruthless' },
+    { skill: 'occultism', description: 'dark pacts', doctrine: 'ruthless' }
   ],
 
   outcomes: {

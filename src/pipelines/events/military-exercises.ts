@@ -174,10 +174,14 @@ export const militaryExercisesPipeline: CheckPipeline = {
   },
 
   requirements: (kingdom) => {
-    // Need at least one army for military exercises to matter
-    if (!kingdom.armies || kingdom.armies.length === 0) {
+    // Need at least one player army for military exercises
+    const playerArmies = kingdom.armies?.filter(
+      (a: any) => a.actorId && a.ledBy === PLAYER_KINGDOM
+    ) || [];
+
+    if (playerArmies.length === 0) {
       return {
-        met: true, // Still allow the event, just won't have army effects
+        met: false,
         reason: 'No armies available for exercises'
       };
     }

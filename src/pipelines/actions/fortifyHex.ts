@@ -29,10 +29,10 @@ export const fortifyHexPipeline: CheckPipeline = {
   special: 'Must be placed in claimed territory. Automatically upgrades existing fortifications by one tier. Unpaid maintenance reduces effectiveness by one tier (minimum Tier 1).',
 
   skills: [
-    { skill: 'crafting', description: 'build fortifications' },
-    { skill: 'athletics', description: 'manual construction' },
-    { skill: 'intimidation', description: 'defensive displays' },
-    { skill: 'survival', description: 'wilderness defenses' }
+    { skill: 'crafting', description: 'build fortifications', doctrine: 'practical' },
+    { skill: 'athletics', description: 'manual construction', doctrine: 'practical' },
+    { skill: 'survival', description: 'wilderness defenses', doctrine: 'practical' },
+    { skill: 'intimidation', description: 'defensive displays', doctrine: 'ruthless' }
   ],
 
   outcomes: {

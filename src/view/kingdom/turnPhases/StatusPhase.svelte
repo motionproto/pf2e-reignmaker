@@ -128,45 +128,9 @@ $: hexesPerUnrest = (() => {
 })();
 
 // Computed: Base status modifiers (reactive from kingdom data)
+// Note: Kingdom size and metropolis penalties removed - hex counting kept for future modifier use
 $: computedStatusModifiers = (() => {
    const modifiers: any[] = [];
-   
-   // Kingdom Size unrest
-   const hexUnrest = Math.floor(($kingdomData.size || 0) / hexesPerUnrest);
-   if (hexUnrest > 0) {
-      modifiers.push({
-         id: 'status-size-unrest',
-         name: `Kingdom Size (${$kingdomData.size} hexes)`,
-         description: `Larger kingdoms are harder to govern (${$kingdomData.size} ÷ ${hexesPerUnrest} = ${hexUnrest})`,
-         sourceType: 'structure',
-         modifiers: [{
-            type: 'static',
-            resource: 'unrest',
-            value: hexUnrest,
-            duration: 'permanent'
-         }]
-      });
-   }
-   
-   // Metropolis Complexity unrest
-   const metropolisCount = ($kingdomData.settlements || []).filter(
-      (s: any) => s.tier === SettlementTier.METROPOLIS
-   ).length;
-   if (metropolisCount > 0) {
-      modifiers.push({
-         id: 'status-metropolis-unrest',
-         name: 'Metropolis Complexity',
-         description: `${metropolisCount} ${metropolisCount === 1 ? 'metropolis' : 'metropolises'} create additional governance complexity`,
-         sourceType: 'structure',
-         modifiers: [{
-            type: 'static',
-            resource: 'unrest',
-            value: metropolisCount,
-            duration: 'permanent'
-         }]
-      });
-   }
-   
    return modifiers;
 })();
 

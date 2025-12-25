@@ -1,6 +1,6 @@
 <script lang="ts">
    import { onMount, onDestroy } from 'svelte';
-   import { kingdomData, getKingdomActor, updateKingdom, getTurnManager } from '../../../stores/KingdomStore';
+   import { kingdomData, getKingdomActor, updateKingdom, getTurnManager, currentTurn } from '../../../stores/KingdomStore';
    import { TurnPhase } from '../../../actors/KingdomActor';
    import { get } from 'svelte/store';
    
@@ -39,9 +39,7 @@
    // Testing Mode
    import {
      testingModeEnabled,
-     selectedCharacter,
-     markCharacterAsActed,
-     autoAdvanceToNextAvailable
+     selectedCharacter
    } from '../../../stores/TestingModeStore';
 
    /**
@@ -513,12 +511,7 @@
          });
 
          // Pipeline handles everything: roll, create instance, calculate preview, wait for apply
-
-         // Testing Mode: mark character as acted and auto-advance
-         if ($testingModeEnabled && $selectedCharacter) {
-            markCharacterAsActed($selectedCharacter.actorId);
-            autoAdvanceToNextAvailable();
-         }
+         // Note: Testing mode character tracking is handled reactively via actionLog in TestingModeCharacterBar
 
       } catch (error) {
          if ((error as Error).message === 'Action cancelled by user') {
@@ -972,8 +965,13 @@
             <!-- No event - show result message -->
             <div class="check-result-display">
                <div class="roll-result failure">
-                  <strong>No Event</strong> (Rolled {stabilityRoll} &lt; DC {rolledAgainstDC})
-                  <div>DC reduced to {eventDC} for next turn.</div>
+                  <strong>No Event</strong>
+                  {#if $currentTurn === 1}
+                     <div>Founding first settlement.</div>
+                  {:else}
+                     <div class="roll-details">(Rolled {stabilityRoll} &lt; DC {rolledAgainstDC})</div>
+                     <div>DC reduced to {eventDC} for next turn.</div>
+                  {/if}
                </div>
             </div>
          {/if}

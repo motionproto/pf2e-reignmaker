@@ -18,12 +18,12 @@ export const collectStipendPipeline: CheckPipeline = {
   checkType: 'action',
 
   skills: [
-    { skill: 'intimidation', description: 'demand payment' },
-    { skill: 'deception', description: 'creative accounting' },
-    { skill: 'diplomacy', description: 'formal request' },
-    { skill: 'society', description: 'proper procedures' },
-    { skill: 'performance', description: 'justify worth' },
-    { skill: 'thievery', description: 'skim the treasury' }
+    { skill: 'diplomacy', description: 'formal request', doctrine: 'virtuous' },
+    { skill: 'society', description: 'proper procedures', doctrine: 'practical' },
+    { skill: 'performance', description: 'justify worth', doctrine: 'practical' },
+    { skill: 'intimidation', description: 'demand payment', doctrine: 'ruthless' },
+    { skill: 'deception', description: 'creative accounting', doctrine: 'ruthless' },
+    { skill: 'thievery', description: 'skim the treasury', doctrine: 'ruthless' }
   ],
 
   outcomes: {

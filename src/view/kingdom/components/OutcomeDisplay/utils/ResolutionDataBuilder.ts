@@ -36,7 +36,12 @@ export function buildResolutionData(options: {
   } = options;
 
   const numericModifiers: Array<{ resource: string; value: number }> = [];
-  
+
+  // ✨ Track which modifier types have been processed via badges to prevent double-counting
+  // When modifiers are converted to badges (by convertModifiersToBadges), we process them
+  // here from badges. We must NOT also process the original modifiers in Case 1/3 below.
+  const processedFromBadges = { dice: false, static: false };
+
   // ✨ AUTO-CONVERT OUTCOME BADGES: Extract resource from badge template
   // This allows badges to work without manually creating matching modifiers
   // Handles both dice badges (after rolling) and static badges
@@ -84,6 +89,7 @@ export function buildResolutionData(options: {
 
         const finalValue = isNegative ? -Math.abs(rolledValue) : rolledValue;
         numericModifiers.push({ resource, value: finalValue });
+        processedFromBadges.dice = true;
         console.log(`✨ [ResolutionDataBuilder] Auto-converted dice badge: ${resource} = ${finalValue}`);
       }
       // Handle static badges (use amount directly)
@@ -91,6 +97,7 @@ export function buildResolutionData(options: {
         const amount = badge.value.amount;
         const finalValue = isNegative ? -Math.abs(amount) : amount;
         numericModifiers.push({ resource, value: finalValue });
+        processedFromBadges.static = true;
         console.log(`✨ [ResolutionDataBuilder] Auto-converted static badge: ${resource} = ${finalValue}`);
       }
     }
@@ -102,20 +109,25 @@ export function buildResolutionData(options: {
     if (modifiers) {
       for (let i = 0; i < modifiers.length; i++) {
         const mod = modifiers[i] as any;
-        
-        // ⚠️ SKIP DICE MODIFIERS: Already converted from outcomeBadges above (lines 47-75)
-        if (mod.type === 'dice' && mod.formula) {
+
+        // ⚠️ SKIP MODIFIERS ALREADY PROCESSED FROM BADGES
+        // Dice and static modifiers are converted to badges by convertModifiersToBadges(),
+        // then processed above. Skip them here to prevent double-counting.
+        if (mod.type === 'dice' && mod.formula && processedFromBadges.dice) {
           continue;
         }
-        
+        if (mod.type === 'static' && processedFromBadges.static) {
+          continue;
+        }
+
         // Skip resource arrays (they're replaced by the choice)
         if (Array.isArray(mod.resources)) {
           continue;
         }
-        
+
         // Get rolled value or use static value
         const value = resolvedDice.get(i) ?? mod.value;
-        
+
         if (typeof value === 'number') {
           numericModifiers.push({ resource: mod.resource as string, value });
         }
@@ -136,16 +148,21 @@ export function buildResolutionData(options: {
   }
   // Case 3: No choices, apply all modifiers
   else {
-    console.log('📊 [ResolutionDataBuilder] Case 3: Processing all modifiers', { modifiersLength: modifiers?.length });
+    console.log('📊 [ResolutionDataBuilder] Case 3: Processing all modifiers', { modifiersLength: modifiers?.length, processedFromBadges });
     if (modifiers) {
       for (let i = 0; i < modifiers.length; i++) {
         const mod = modifiers[i] as any;
         console.log(`📊 [ResolutionDataBuilder] Processing modifier ${i}:`, mod);
 
-        // ⚠️ SKIP DICE MODIFIERS: Already converted from outcomeBadges above (lines 47-75)
-        // This prevents double-application of penalties/bonuses
-        if (mod.type === 'dice' && mod.formula) {
+        // ⚠️ SKIP MODIFIERS ALREADY PROCESSED FROM BADGES
+        // Dice and static modifiers are converted to badges by convertModifiersToBadges(),
+        // then processed above. Skip them here to prevent double-counting.
+        if (mod.type === 'dice' && mod.formula && processedFromBadges.dice) {
           console.log(`📊 [ResolutionDataBuilder] Skipping dice modifier ${i} (already processed from badges)`);
+          continue;
+        }
+        if (mod.type === 'static' && processedFromBadges.static) {
+          console.log(`📊 [ResolutionDataBuilder] Skipping static modifier ${i} (already processed from badges)`);
           continue;
         }
 
@@ -153,9 +170,9 @@ export function buildResolutionData(options: {
         if (mod.type === 'choice-dropdown' && Array.isArray(mod.resources)) {
           const selectedResource = selectedResources.get(i);
           if (selectedResource) {
-            numericModifiers.push({ 
-              resource: selectedResource as string, 
-              value: mod.value as number 
+            numericModifiers.push({
+              resource: selectedResource as string,
+              value: mod.value as number
             });
             console.log(`📊 [ResolutionDataBuilder] Added choice modifier: ${selectedResource} = ${mod.value}`);
           }
@@ -167,11 +184,11 @@ export function buildResolutionData(options: {
           console.log(`📊 [ResolutionDataBuilder] Skipping resource array modifier ${i}`);
           continue;
         }
-        
+
         // Get rolled value or use static value
         let value = resolvedDice.get(i) ?? resolvedDice.get(`state:${mod.resource}`) ?? mod.value;
-        console.log(`📊 [ResolutionDataBuilder] Modifier ${i} value resolution:`, { 
-          rolledAtIndex: resolvedDice.get(i), 
+        console.log(`📊 [ResolutionDataBuilder] Modifier ${i} value resolution:`, {
+          rolledAtIndex: resolvedDice.get(i),
           rolledAtState: resolvedDice.get(`state:${mod.resource}`),
           staticValue: mod.value,
           finalValue: value

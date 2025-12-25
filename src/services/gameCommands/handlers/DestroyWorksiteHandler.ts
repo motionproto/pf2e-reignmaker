@@ -105,11 +105,7 @@ export class DestroyWorksiteHandler extends BaseGameCommandHandler {
             return hex;
           });
         });
-        
-        // Recalculate production after worksite removal
-        const { tryRecalculateProduction } = await import('../../../utils/recalculateProduction');
-        await tryRecalculateProduction();
-        
+
         // Build worksite list for chat message
         const worksiteList = selectedHexes.map(hex => {
           const hexName = hex.name || `Hex ${hex.id}`;

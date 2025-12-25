@@ -117,29 +117,18 @@
   
   // Notify parent of current selection (enables Apply button, no persistence)
   // ✨ STANDARD INTERFACE: Dispatch 'resolution' event per ComponentResolutionData
+  // NOTE: We do NOT include modifiers here because the onComplete handler in the pipeline
+  // applies the resource changes. Including modifiers would cause double-application.
   function notifySelectionChanged() {
     if (!selectedResource) return;
-    
+
     const sets = Math.ceil(selectedAmount / resourceGain);
     const cost = sets * goldCost;
-    
+
     // Standard 'resolution' event per CustomComponentInterface
-    dispatch('resolution', { 
+    // Only metadata - onComplete handler uses this to apply changes
+    dispatch('resolution', {
       isResolved: isValid,
-      modifiers: [
-        {
-          type: 'static',
-          resource: 'gold',
-          value: -cost,
-          duration: 'immediate'
-        },
-        {
-          type: 'static',
-          resource: selectedResource,
-          value: selectedAmount,
-          duration: 'immediate'
-        }
-      ],
       metadata: {
         selectedResource,
         selectedAmount,

@@ -5,6 +5,7 @@
 
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import { textBadge } from '../../types/OutcomeBadge';
+import { SettlementTierConfig } from '../../models/Settlement';
 
 export const buildStructurePipeline: CheckPipeline = {
   // === BASE DATA ===
@@ -16,10 +17,11 @@ export const buildStructurePipeline: CheckPipeline = {
   checkType: 'action',
 
   skills: [
-    { skill: 'crafting', description: 'construction expertise' },
-    { skill: 'society', description: 'organize workforce' },
-    { skill: 'athletics', description: 'physical labor' },
-    { skill: 'arcana', description: 'magically assisted construction' }
+    { skill: 'religion', description: 'blessed construction', doctrine: 'virtuous' },
+    { skill: 'crafting', description: 'construction expertise', doctrine: 'practical' },
+    { skill: 'society', description: 'organize workforce', doctrine: 'practical' },
+    { skill: 'arcana', description: 'magically assisted', doctrine: 'practical' },
+    { skill: 'athletics', description: 'forced labor', doctrine: 'ruthless' }
   ],
 
   outcomes: {
@@ -48,12 +50,42 @@ export const buildStructurePipeline: CheckPipeline = {
 
   // === TYPESCRIPT LOGIC ===
   requirements: (kingdom) => {
+    // Check if any settlements exist
     if (!kingdom.settlements || kingdom.settlements.length === 0) {
       return {
         met: false,
         reason: 'No settlements available for construction'
       };
     }
+
+    // Count structures in build queue per settlement
+    const buildQueueCountBySettlement = new Map<string, number>();
+    for (const project of kingdom.buildQueue || []) {
+      const count = buildQueueCountBySettlement.get(project.settlementName) || 0;
+      buildQueueCountBySettlement.set(project.settlementName, count + 1);
+    }
+
+    // Check if any settlement has room for more structures
+    const settlementsWithCapacity = kingdom.settlements.filter(settlement => {
+      const tierConfig = SettlementTierConfig[settlement.tier as keyof typeof SettlementTierConfig];
+      const maxStructures = tierConfig?.maxStructures || 0;
+
+      // Metropolis has unlimited capacity (Infinity)
+      if (maxStructures === Infinity) return true;
+
+      const currentStructures = settlement.structureIds?.length || 0;
+      const queuedStructures = buildQueueCountBySettlement.get(settlement.name) || 0;
+
+      return currentStructures + queuedStructures < maxStructures;
+    });
+
+    if (settlementsWithCapacity.length === 0) {
+      return {
+        met: false,
+        reason: 'All settlements at capacity. Upgrade a settlement or found a new one.'
+      };
+    }
+
     return { met: true };
   },
 
@@ -93,45 +125,56 @@ export const buildStructurePipeline: CheckPipeline = {
   },
 
   execute: async (ctx: any) => {
+    // On failure outcomes, don't queue the structure
+    if (ctx.outcome === 'failure' || ctx.outcome === 'criticalFailure') {
+      const game = (window as any).game;
+      if (ctx.outcome === 'criticalFailure') {
+        game?.ui?.notifications?.warn(`Construction failed catastrophically. The kingdom gains 1 Unrest.`);
+      } else {
+        game?.ui?.notifications?.warn(`Construction efforts failed. No structure was built.`);
+      }
+      return { success: true, message: 'Construction failed - no structure queued' };
+    }
+
     const buildingDetails = ctx.metadata.buildingDetails || {};
     const structureId = buildingDetails.structureId;
     const settlementId = buildingDetails.settlementId;
-    
+
     if (!structureId || !settlementId) {
       return { success: false, error: 'Missing structure or settlement data' };
     }
-    
+
     const { structuresService } = await import('../../services/structures');
     const { createBuildStructureController } = await import('../../controllers/BuildStructureController');
     const { getKingdomActor } = await import('../../stores/KingdomStore');
-    
+
     const structure = structuresService.getStructure(structureId);
     if (!structure) {
       return { success: false, error: 'Structure not found' };
     }
-    
+
     const buildController = await createBuildStructureController();
     const result = await buildController.addToBuildQueue(structureId, settlementId);
-    
+
     if (!result.success || !result.project) {
       return { success: false, error: result.error || 'Failed to add to build queue' };
     }
-    
+
     if (ctx.outcome === 'criticalSuccess') {
       const costModifier = 0.5;
       const actor = getKingdomActor();
-      
+
       if (actor) {
         await actor.updateKingdomData((kingdom: any) => {
           const project = kingdom.buildQueue?.find((p: any) => p.id === result.project!.id);
           if (project && project.totalCost) {
             const totalCostObj = project.totalCost as any;
             const remainingCostObj = project.remainingCost as any;
-            
+
             for (const [resource, amount] of Object.entries(totalCostObj)) {
               totalCostObj[resource] = Math.ceil((amount as number) * costModifier);
             }
-            
+
             if (remainingCostObj) {
               for (const [resource, amount] of Object.entries(remainingCostObj)) {
                 remainingCostObj[resource] = Math.ceil((amount as number) * costModifier);
@@ -141,16 +184,16 @@ export const buildStructurePipeline: CheckPipeline = {
         });
       }
     }
-    
+
     const game = (window as any).game;
     if (ctx.outcome === 'criticalSuccess') {
       game?.ui?.notifications?.info(`🎉 Critical Success! ${structure.name} added to build queue at half cost!`);
     } else {
       game?.ui?.notifications?.info(`✅ ${structure.name} added to build queue!`);
     }
-    
+
     game?.ui?.notifications?.info(`Pay for construction during the Upkeep phase.`);
-    
+
     return { success: true, message: `${structure.name} added to build queue` };
   }
 };

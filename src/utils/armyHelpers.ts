@@ -63,14 +63,17 @@ export async function placeArmyTokenAtSettlement(
   }
   
   // Settlement location stores row,col (i,j format)
-  // Convert to hex center using Foundry's official API
   const i = settlement.location.x; // row
   const j = settlement.location.y; // column
-  
-  // Get precise hex center using Foundry's API
-  const center = canvas.grid.getCenterPoint({i, j});
-  
-  // Foundry tokens are positioned by their center point, so we can use the center directly
+
+  // Get precise hex center using GridHex (same method as tokenAnimation.ts)
+  // Note: canvas.grid.getCenterPoint() returns incorrect Y values for hex grids
+  const GridHex = (globalThis as any).foundry.grid.GridHex;
+  const hex = new GridHex({ i, j }, canvas.grid);
+  const center = hex.center;
+
+  // Foundry tokens are positioned by top-left corner, so armyService.placeArmyToken
+  // will adjust the center coordinates to get the correct top-left position
   const x = center.x;
   const y = center.y;
   

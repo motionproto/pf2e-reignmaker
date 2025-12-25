@@ -12,6 +12,8 @@
     getKingdomActor,
     currentFaction,
     availableFactions,
+    currentProduction,
+    doctrine,
   } from "../../../stores/KingdomStore";
   import type { KingdomData } from "../../../actors/KingdomActor";
   import { tick } from "svelte";
@@ -133,11 +135,11 @@
   // Total unrest per turn
   $: totalUnrestPerTurn = sizeUnrest + warUnrest + eventUnrest - structureBonus;
 
-  // Get production values from the kingdom data
-  $: actualFoodIncome = $kingdomData.worksiteProduction?.food || 0;
-  $: actualLumberIncome = $kingdomData.worksiteProduction?.lumber || 0;
-  $: actualStoneIncome = $kingdomData.worksiteProduction?.stone || 0;
-  $: actualOreIncome = $kingdomData.worksiteProduction?.ore || 0;
+  // Get production values from derived store (calculated directly from hexes)
+  $: actualFoodIncome = $currentProduction.food || 0;
+  $: actualLumberIncome = $currentProduction.lumber || 0;
+  $: actualStoneIncome = $currentProduction.stone || 0;
+  $: actualOreIncome = $currentProduction.ore || 0;
 
   // Calculate gold income from settlements using economics service
   $: actualGoldIncome =
@@ -471,6 +473,40 @@
             >
               {totalUnrestPerTurn >= 0 ? "+" : ""}{totalUnrestPerTurn}
             </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Doctrine -->
+      <div class="stat-group-wrapper">
+        <h4 class="stat-group-header">Doctrine</h4>
+        <div class="stat-group-card">
+          <div class="stat-item has-tooltip">
+            <div class="stat-tooltip">
+              Accumulated from choosing virtuous approaches to events. Represents compassionate and righteous leadership.
+            </div>
+            <span class="stat-label"
+              ><i class="fa-solid fa-dove stat-icon doctrine-virtuous"></i>Virtuous:</span
+            >
+            <span class="stat-value">{$doctrine.virtuous}</span>
+          </div>
+          <div class="stat-item has-tooltip">
+            <div class="stat-tooltip">
+              Accumulated from choosing practical approaches to events. Represents balanced and lawful leadership.
+            </div>
+            <span class="stat-label"
+              ><i class="fa-solid fa-scale-balanced stat-icon doctrine-practical"></i>Practical:</span
+            >
+            <span class="stat-value">{$doctrine.practical}</span>
+          </div>
+          <div class="stat-item has-tooltip">
+            <div class="stat-tooltip">
+              Accumulated from choosing ruthless approaches to events. Represents expedient and self-serving leadership.
+            </div>
+            <span class="stat-label"
+              ><i class="fa-solid fa-skull stat-icon doctrine-ruthless"></i>Ruthless:</span
+            >
+            <span class="stat-value">{$doctrine.ruthless}</span>
           </div>
         </div>
       </div>
@@ -819,5 +855,18 @@
   
   .stat-item.has-tooltip:hover {
     background: var(--overlay);
+  }
+
+  /* Doctrine icon colors */
+  .doctrine-virtuous {
+    color: var(--color-success);
+  }
+
+  .doctrine-practical {
+    color: var(--color-info);
+  }
+
+  .doctrine-ruthless {
+    color: var(--color-danger);
   }
 </style>

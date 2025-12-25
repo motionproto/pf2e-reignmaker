@@ -51,10 +51,6 @@ export async function createWorksiteExecution(hexId: string, worksiteType: strin
     }
   });
 
-  // Recalculate production (worksites affect resource production)
-  const { tryRecalculateProduction } = await import('../../utils/recalculateProduction');
-  await tryRecalculateProduction();
-
   // Ensure PIXI container is visible (scene control active)
   const { ReignMakerMapLayer } = await import('../../services/map/core/ReignMakerMapLayer');
   const mapLayer = ReignMakerMapLayer.getInstance();

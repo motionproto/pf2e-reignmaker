@@ -20,11 +20,12 @@ export const executeOrPardonPrisonersPipeline: CheckPipeline = {
   checkType: 'action',
 
   skills: [
-    { skill: 'intimidation', description: 'harsh justice (execute)' },
-    { skill: 'society', description: 'legal proceedings (execute)' },
-    { skill: 'diplomacy', description: 'clemency (pardon)' },
-    { skill: 'religion', description: 'divine forgiveness (pardon)' },
-    { skill: 'performance', description: 'public ceremony (pardon)' }
+    { skill: 'diplomacy', description: 'clemency (pardon)', doctrine: 'virtuous' },
+    { skill: 'religion', description: 'divine forgiveness', doctrine: 'virtuous' },
+    { skill: 'performance', description: 'public ceremony (pardon)', doctrine: 'practical' },
+    { skill: 'society', description: 'legal proceedings (execute)', doctrine: 'practical' },
+    { skill: 'intimidation', description: 'harsh justice (execute)', doctrine: 'ruthless' },
+    { skill: 'religion', description: 'ritual sacrifice', doctrine: 'ruthless' }
   ],
 
   outcomes: {

@@ -19,8 +19,9 @@
    */
   
   import { createEventDispatcher } from 'svelte';
-  import { getSkillBonuses, getCurrentUserCharacter } from '../../../services/pf2e';
+  import { getSkillBonusesForCharacter, getCurrentUserCharacter } from '../../../services/pf2e';
   import { pf2eSkillService } from '../../../services/pf2e/PF2eSkillService';
+  import { testingModeEnabled, selectedCharacter } from '../../../stores/TestingModeStore';
   import { kingdomData } from '../../../stores/KingdomStore';
   import { TurnPhase } from '../../../actors/KingdomActor';
   import { structuresService } from '../../../services/structures';
@@ -43,7 +44,7 @@
   export let id: string;
   export let name: string;
   export let description: string;
-  export let skills: Array<{ skill: string; description?: string }> = [];
+  export let skills: Array<{ skill: string; description?: string; doctrine?: 'virtuous' | 'practical' | 'ruthless' }> = [];
   export let conditionalSkills: any[] | undefined = undefined;  // Conditional skills (type from action-types.ts)
   export let outcomes: Array<{
     type: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
@@ -193,6 +194,7 @@
   // Internal confirmation dialog state
   let showOwnConfirmDialog: boolean = false;
   let pendingSkill: string = '';
+  let pendingDoctrine: 'virtuous' | 'practical' | 'ruthless' | undefined = undefined;
   
   // ✅ READ applied state from resolution (synced across all clients via KingdomActor)
   $: outcomeApplied = resolution?.effectsApplied || false;
@@ -244,7 +246,7 @@
   let baseSkillsWithLore: Array<{ skill: string; description?: string }> = [];
   $: baseSkillsWithLore = [
     ...baseSkillsForCheck,
-    { skill: 'applicable lore', description: 'relevant expertise' }
+    { skill: 'applicable lore', description: 'relevant expertise', doctrine: 'practical' as const }
   ];
   
   // Filter untrained skills if hideUntrainedSkills is enabled
@@ -252,30 +254,47 @@
     if (!hideUntrainedSkills) {
       return baseSkillsWithLore;
     }
-    
-    const currentCharacter = getCurrentUserCharacter();
+
+    // Use Testing Mode character if enabled, otherwise current user's character
+    const currentCharacter = ($testingModeEnabled && $selectedCharacter)
+      ? $selectedCharacter.actor
+      : getCurrentUserCharacter();
+
     if (!currentCharacter) {
       return baseSkillsWithLore;
     }
-    
+
     return baseSkillsWithLore.filter(skillOption => {
       const skillName = skillOption.skill.toLowerCase();
-      
+
       // Always show lore skills (hard to determine proficiency dynamically)
       if (skillName.includes('lore')) {
         return true;
       }
-      
+
       // Check proficiency for other skills
       return pf2eSkillService.isCharacterProficientInSkill(currentCharacter, skillOption.skill);
     });
   })();
   
-  // No additional filtering needed - skills are already approach-specific
-  $: effectiveSkills = skillsWithLore;
+  // Sort skills by doctrine (virtuous → practical → ruthless) then alphabetically
+  const doctrineOrder: Record<string, number> = { virtuous: 0, practical: 1, ruthless: 2 };
+  $: effectiveSkills = [...skillsWithLore].sort((a, b) => {
+    const orderA = a.doctrine ? doctrineOrder[a.doctrine] ?? 3 : 3;
+    const orderB = b.doctrine ? doctrineOrder[b.doctrine] ?? 3 : 3;
+    if (orderA !== orderB) return orderA - orderB;
+    return a.skill.localeCompare(b.skill);
+  });
   
   // Get skill bonuses for all skills (including injected lore)
-  $: skillBonuses = getSkillBonuses(skillsWithLore.map(s => s.skill));
+  // Use Testing Mode character if enabled, otherwise current user's character
+  $: skillBonuses = (() => {
+    const currentCharacter = ($testingModeEnabled && $selectedCharacter)
+      ? $selectedCharacter.actor
+      : getCurrentUserCharacter();
+
+    return getSkillBonusesForCharacter(skillsWithLore.map(s => s.skill), currentCharacter);
+  })();
   
   // Get the skill that was used
   $: usedSkill = resolution?.skillName || localUsedSkill || '';
@@ -299,49 +318,53 @@
     }
   }
   
-  function handleSkillClick(skill: string) {
+  function handleSkillClick(skill: string, doctrine?: 'virtuous' | 'practical' | 'ruthless') {
     if (isRolling || !isViewingCurrentPhase || resolved) return;
-    
+
     // Check if player has already acted (for actions and events, not incidents)
     if (hasPlayerActedCheck() && (checkType === 'action' || checkType === 'event') && !resolved) {
       // Show own confirmation dialog
       pendingSkill = skill;
+      pendingDoctrine = doctrine;
       showOwnConfirmDialog = true;
       return;
     }
-    
+
     // Proceed with skill execution
-    executeSkillNow(skill);
+    executeSkillNow(skill, doctrine);
   }
   
   function handleConfirmationApproved() {
     showOwnConfirmDialog = false;
-    executeSkillNow(pendingSkill);
+    executeSkillNow(pendingSkill, pendingDoctrine);
     pendingSkill = '';
+    pendingDoctrine = undefined;
   }
   
   function handleConfirmationCancelled() {
     showOwnConfirmDialog = false;
     pendingSkill = '';
+    pendingDoctrine = undefined;
   }
   
-  function executeSkillNow(skill: string) {
+  function executeSkillNow(skill: string, doctrine?: 'virtuous' | 'practical' | 'ruthless') {
     isRolling = true;
     localUsedSkill = skill;
-    
+
     // Ensure the card stays expanded when rolling (if expandable)
     if (expandable && !expanded) {
       dispatch('toggle');
     }
-    
+
     dispatch('executeSkill', {
       skill,
+      doctrine,
       checkId: id,
       eventId: id,  // For events/incidents, eventId is the same as checkId
       checkName: name,
       checkType
     });
-    
+
     // Parent will reset isRolling via resolved/resolution props
     setTimeout(() => { isRolling = false; }, 100);
   }
@@ -556,11 +579,12 @@
                   <SkillTag
                     skill={skillOption.skill}
                     description={skillOption.description || ''}
+                    doctrine={skillOption.doctrine}
                     bonus={bonus}
                     selected={localUsedSkill === skillOption.skill}
                     disabled={isRolling || !isViewingCurrentPhase || (resolved && checkType !== 'action') || (!available && showAvailability) || isBeingResolvedByOther}
                     loading={isRolling && localUsedSkill === skillOption.skill}
-                    on:execute={() => handleSkillClick(skillOption.skill)}
+                    on:execute={(e) => handleSkillClick(e.detail.skill, e.detail.doctrine)}
                   />
                 {/each}
               </div>

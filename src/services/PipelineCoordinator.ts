@@ -8,10 +8,10 @@
  * 5+ different locations in ActionsPhase.svelte.
  */
 
-import type { PipelineContext, StepResult } from '../types/PipelineContext';
+import type { PipelineContext, StepResult, SerializablePipelineContext } from '../types/PipelineContext';
 import type { CheckPipeline, OutcomeType, KingdomSkill } from '../types/CheckPipeline';
 import type { ActorContext } from '../types/CheckContext';
-import { createPipelineContext, log, getPipeline, getKingdom, getOutcome } from '../types/PipelineContext';
+import { createPipelineContext, log, getPipeline, getKingdom, getOutcome, toSerializableContext, fromSerializableContext } from '../types/PipelineContext';
 import { getKingdomActor } from '../stores/KingdomStore';
 import { getCurrentUserCharacter } from './pf2e';
 import { unifiedCheckHandler } from './UnifiedCheckHandler';
@@ -60,6 +60,65 @@ export class PipelineCoordinator {
    */
   private async ensureServices(): Promise<void> {
     await this.servicesInitialized;
+  }
+
+  /**
+   * Persist pipeline context to kingdom data for recovery after page reload
+   */
+  private async persistContext(ctx: PipelineContext): Promise<void> {
+    if (!ctx.instanceId) return;
+
+    const actor = getKingdomActor();
+    if (!actor) return;
+
+    const serialized = toSerializableContext(ctx);
+
+    await actor.updateKingdomData((kingdom: any) => {
+      if (!kingdom.turnState) return;
+      if (!kingdom.turnState.activePipelineContexts) {
+        kingdom.turnState.activePipelineContexts = {};
+      }
+      kingdom.turnState.activePipelineContexts[ctx.instanceId!] = serialized;
+    });
+
+    console.log(`💾 [PipelineCoordinator] Persisted context for ${ctx.instanceId}`);
+  }
+
+  /**
+   * Recover pipeline context from kingdom data
+   */
+  private recoverContext(instanceId: string): PipelineContext | null {
+    const actor = getKingdomActor();
+    if (!actor) return null;
+
+    const kingdom = actor.getKingdomData();
+    const serialized = kingdom.turnState?.activePipelineContexts?.[instanceId];
+
+    if (!serialized) {
+      console.log(`⚠️ [PipelineCoordinator] No persisted context found for ${instanceId}`);
+      return null;
+    }
+
+    const recovered = fromSerializableContext(serialized, kingdom);
+    console.log(`🔄 [PipelineCoordinator] Recovered context from kingdom data for ${instanceId}`);
+
+    return recovered;
+  }
+
+  /**
+   * Remove persisted context from kingdom data
+   */
+  private async removePersistedContext(instanceId: string): Promise<void> {
+    const actor = getKingdomActor();
+    if (!actor) return;
+
+    await actor.updateKingdomData((kingdom: any) => {
+      if (kingdom.turnState?.activePipelineContexts?.[instanceId]) {
+        delete kingdom.turnState.activePipelineContexts[instanceId];
+      }
+    });
+
+    console.log(`🗑️ [PipelineCoordinator] Removed persisted context for ${instanceId}`);
   }
 
   /**
@@ -178,69 +237,36 @@ export class PipelineCoordinator {
 
   /**
    * Reroll from Step 3 (keep existing pipeline context)
-   * 
+   *
    * Called when user clicks "Reroll" button.
    * Rewinds to Step 3 and re-executes the roll with the SAME context.
-   * 
+   *
+   * Recovery:
+   * 1. In-memory pendingContexts (fast path, same session)
+   * 2. Persisted kingdom.turnState.activePipelineContexts (survives page reload)
+   *
    * @param instanceId - Pipeline instance ID
    */
   async rerollFromStep3(instanceId: string): Promise<void> {
     let context = this.pendingContexts.get(instanceId);
 
     if (!context) {
-      // Context lost - reconstruct from persisted instance
-      console.log(`🔄 [PipelineCoordinator] Context lost for ${instanceId}, reconstructing from persisted data`);
+      // Recover from persisted kingdom data
+      console.log(`🔄 [PipelineCoordinator] Context lost for ${instanceId}, recovering from kingdom data`);
+      context = this.recoverContext(instanceId);
 
-      const actor = getKingdomActor();
-      if (!actor) {
-        throw new Error(`[PipelineCoordinator] No kingdom actor found`);
+      if (context) {
+        // Store recovered context in memory for future use
+        this.pendingContexts.set(instanceId, context);
+        console.log(`✅ [PipelineCoordinator] Recovered context from activePipelineContexts`);
       }
+    }
 
-      const kingdom = actor.getKingdomData();
-      const instance = kingdom.pendingOutcomes?.find((i: any) => i.previewId === instanceId);
-
-      if (!instance) {
-        throw new Error(`[PipelineCoordinator] No pipeline context or instance found for: ${instanceId}`);
-      }
-
-      // Reconstruct context from persisted instance (similar to resumeFromPersistedPreview)
-      const resolutionData = instance.metadata?._resolutionData || {
-        diceRolls: {},
-        choices: {},
-        allocations: {},
-        textInputs: {},
-        compoundData: {},
-        numericModifiers: [],
-        manualEffects: [],
-        customComponentData: null
-      };
-
-      context = {
-        actionId: instance.checkId,
-        checkType: instance.checkType as 'action' | 'event' | 'incident',
-        userId: (window as any).game?.user?.id || 'unknown',
-        kingdom,
-        actor: instance.metadata?.actor,
-        metadata: instance.metadata || {},
-        resolutionData,
-        rollData: instance.appliedOutcome ? {
-          outcome: instance.appliedOutcome.outcome as any,
-          rollBreakdown: instance.appliedOutcome.rollBreakdown
-        } : undefined,
-        instanceId,
-        userConfirmed: false,
-        logs: []
-      };
-
-      // Store reconstructed context for future use
-      this.pendingContexts.set(instanceId, context);
-
-      console.log(`💾 [PipelineCoordinator] Reconstructed context for reroll:`, {
-        actionId: context.actionId,
-        checkType: context.checkType,
-        hasResolutionData: !!context.resolutionData,
-        hasRollData: !!context.rollData
-      });
+    if (!context) {
+      throw new Error(
+        `[PipelineCoordinator] Cannot reroll: pipeline context not found for ${instanceId}. ` +
+        `The action may have been completed or the session expired. Please re-initiate the action.`
+      );
     }
     
     console.log(`🔄 [PipelineCoordinator] Rerolling from Step 3 (same pipeline context)`);
@@ -269,11 +295,22 @@ export class PipelineCoordinator {
    * @param resolutionData - Resolution data from OutcomeDisplay (includes customComponentData)
    */
   async confirmApply(instanceId: string, resolutionData?: any): Promise<void> {
-    const context = this.pendingContexts.get(instanceId);
-    
+    let context = this.pendingContexts.get(instanceId);
+
     if (!context) {
-      console.warn(`[PipelineCoordinator] No pending context for instance: ${instanceId} - resuming from persisted data`);
-      
+      // Try to recover from persisted kingdom data first
+      console.log(`🔄 [PipelineCoordinator] Context lost for confirmApply, attempting recovery`);
+      context = this.recoverContext(instanceId);
+
+      if (context) {
+        this.pendingContexts.set(instanceId, context);
+        console.log(`✅ [PipelineCoordinator] Recovered context from kingdom data for confirmApply`);
+      }
+    }
+
+    if (!context) {
+      console.warn(`[PipelineCoordinator] No pending context for instance: ${instanceId} - resuming from persisted preview`);
+
       // Context was lost (page reload or client sync) - execute from persisted preview
       await this.resumeFromPersistedPreview(instanceId, resolutionData);
       return;
@@ -296,25 +333,30 @@ export class PipelineCoordinator {
       console.log(`📦 [PipelineCoordinator] Stored resolution data in context:`, context.resolutionData);
     }
     
-    // ✅ FIX: Persist resolution data to instance metadata for reroll preservation
-    // This ensures reroll can access the same resolution data (like hex selection)
+    // Persist resolution data to instance.resolutionState for reroll preservation and UI sync
     if (context.instanceId && resolutionData) {
       const actor = getKingdomActor();
       if (actor) {
         await actor.updateKingdomData((kingdom: any) => {
           const instance = kingdom.pendingOutcomes?.find((i: any) => i.previewId === context.instanceId);
           if (instance) {
-            // Store resolution data in instance metadata
-            instance.metadata = {
-              ...instance.metadata,
-              _resolutionData: context.resolutionData
+            instance.resolutionState = {
+              ...instance.resolutionState,
+              selectedChoice: resolutionData.selectedChoice ?? instance.resolutionState?.selectedChoice,
+              resolvedDice: { ...instance.resolutionState?.resolvedDice, ...resolutionData.resolvedDice },
+              selectedResources: { ...instance.resolutionState?.selectedResources, ...resolutionData.selectedResources },
+              customComponentData: resolutionData.customComponentData ?? instance.resolutionState?.customComponentData
             };
-            console.log(`💾 [PipelineCoordinator] Persisted resolution data to instance for reroll:`, context.resolutionData);
+
+            console.log(`💾 [PipelineCoordinator] Persisted resolution data to instance.resolutionState`);
           }
         });
       }
     }
-    
+
+    // Update persisted context with the new resolution data
+    await this.persistContext(context);
+
     // Resolve the callback (continues execution to Step 7)
     if (context._resumeCallback) {
       context._resumeCallback();
@@ -324,37 +366,48 @@ export class PipelineCoordinator {
   }
 
   /**
-   * Resume execution from persisted preview (after reload or client sync)
-   * 
-   * Executes Steps 7-9 directly from the persisted outcome preview
+   * Resume execution from persisted preview (edge case: context lost after turn boundary)
+   *
+   * Only called when both in-memory and activePipelineContexts are lost,
+   * but the outcome preview is still visible. Executes Steps 7-9 directly.
    */
   private async resumeFromPersistedPreview(instanceId: string, resolutionData?: any): Promise<void> {
     console.log(`🔄 [PipelineCoordinator] Resuming from persisted preview: ${instanceId}`);
-    
-    // Ensure services are initialized
+
     await this.ensureServices();
-    
-    // Get persisted preview from kingdom data
+
     const actor = getKingdomActor();
     if (!actor) {
-      console.error('[PipelineCoordinator] No kingdom actor found');
-      return;
+      throw new Error('[PipelineCoordinator] No kingdom actor found');
     }
-    
+
     const kingdom = actor.getKingdomData();
     const instance = kingdom.pendingOutcomes?.find((i: any) => i.previewId === instanceId);
-    
+
     if (!instance || !instance.appliedOutcome) {
-      console.error('[PipelineCoordinator] Instance or outcome not found:', instanceId);
-      return;
+      throw new Error(`[PipelineCoordinator] Instance or outcome not found: ${instanceId}`);
     }
-    
-    const pipeline = await getPipeline({ actionId: instance.checkId });
-    if (!pipeline) {
-      console.error(`[PipelineCoordinator] Pipeline not found: ${instance.checkId}`);
-      return;
-    }
-    
+
+    // Validate pipeline exists
+    await getPipeline({ actionId: instance.checkId });
+
+    // Build resolution data from instance.resolutionState (primary) merged with passed data
+    const instanceResolutionState = instance.resolutionState || {};
+    const mergedResolutionData = {
+      diceRolls: {},
+      choices: {},
+      allocations: {},
+      textInputs: {},
+      compoundData: {},
+      numericModifiers: [],
+      manualEffects: [],
+      customComponentData: instanceResolutionState.customComponentData || null,
+      selectedChoice: instanceResolutionState.selectedChoice,
+      resolvedDice: instanceResolutionState.resolvedDice || {},
+      selectedResources: instanceResolutionState.selectedResources || {},
+      ...resolutionData
+    };
+
     // Reconstruct minimal context from persisted data
     const ctx: PipelineContext = {
       actionId: instance.checkId,
@@ -363,45 +416,23 @@ export class PipelineCoordinator {
       kingdom,
       actor: instance.metadata?.actor,
       metadata: instance.metadata || {},
-      resolutionData: resolutionData || {
-        diceRolls: {},
-        choices: {},
-        allocations: {},
-        textInputs: {},
-        compoundData: {},
-        numericModifiers: [],
-        manualEffects: [],
-        customComponentData: null
-      },
+      resolutionData: mergedResolutionData,
       rollData: {
         outcome: instance.appliedOutcome.outcome as any,
         rollBreakdown: instance.appliedOutcome.rollBreakdown
       },
       instanceId,
       userConfirmed: true,
-      logs: []  // Initialize logs array for resumed execution
+      logs: []
     };
-    
-    console.log(`🔄 [PipelineCoordinator] Reconstructed context:`, {
-      actionId: ctx.actionId,
-      checkType: ctx.checkType,
-      outcome: ctx.rollData?.outcome,
-      instanceId: ctx.instanceId,
-      appliedOutcome: instance.appliedOutcome
-    });
-    console.log(`🔄 [PipelineCoordinator] Executing Steps 7-9`);
-    
-    // Execute Steps 7-9 (post-apply interactions, execute, cleanup)
-    try {
-      await this.step7_postApplyInteractions(ctx);
-      await this.step8_executeAction(ctx);
-      await this.step9_cleanup(ctx);
-      
-      console.log(`✅ [PipelineCoordinator] Resumed execution complete`);
-    } catch (error) {
-      console.error(`❌ [PipelineCoordinator] Resumed execution failed:`, error);
-      throw error;
-    }
+
+    console.log(`🔄 [PipelineCoordinator] Executing Steps 7-9 from persisted preview`);
+
+    await this.step7_postApplyInteractions(ctx);
+    await this.step8_executeAction(ctx);
+    await this.step9_cleanup(ctx);
+
+    console.log(`✅ [PipelineCoordinator] Resumed execution complete`);
   }
 
   // ========================================
@@ -504,10 +535,10 @@ export class PipelineCoordinator {
 
   /**
    * Step 3: Execute Roll
-   * 
+   *
    * Execute the PF2e skill check roll and capture result
    * ALWAYS RUNS
-   * 
+   *
    * Uses modular services:
    * - KingdomModifierService for modifier collection
    * - RollStateService for reroll modifier persistence
@@ -515,20 +546,60 @@ export class PipelineCoordinator {
    */
   private async step3_executeRoll(ctx: PipelineContext): Promise<void> {
     log(ctx, 3, 'executeRoll', 'Executing skill check');
-    
+
     const pipeline = await getPipeline(ctx);
-    
+
     // Import services
     const { pf2eSkillService } = await import('./pf2e/PF2eSkillService');
     const { kingdomModifierService } = await import('./domain/KingdomModifierService');
     const { rollStateService } = await import('./roll/RollStateService');
     const { fromPF2eModifier } = await import('../types/RollModifier');
-    
+    const { showCharacterSelectionDialog } = await import('./pf2e/PF2eCharacterService');
+
     // Get actor (character performing the check)
-    let actingCharacter = ctx.actor?.fullActor || getCurrentUserCharacter();
-    
+    // Priority: fullActor reference > lookup by actorId > current user's character > character selection dialog
+    let actingCharacter = ctx.actor?.fullActor;
+
+    // If fullActor is missing but actorId exists, try to recover from Foundry's collection
+    if (!actingCharacter && ctx.actor?.actorId) {
+      const game = (window as any).game;
+      actingCharacter = game?.actors?.get(ctx.actor.actorId);
+      if (actingCharacter) {
+        console.log(`🔄 [PipelineCoordinator] Recovered actor from actorId: ${ctx.actor.actorId} (${actingCharacter.name})`);
+        // Update context with recovered actor
+        ctx.actor.fullActor = actingCharacter;
+      }
+    }
+
+    // Fallback to current user's character
     if (!actingCharacter) {
-      throw new Error('No character available for roll');
+      actingCharacter = getCurrentUserCharacter();
+      if (actingCharacter) {
+        console.log(`🔄 [PipelineCoordinator] Using current user's character: ${actingCharacter.name}`);
+      }
+    }
+
+    // Last resort: show character selection dialog
+    if (!actingCharacter) {
+      console.log(`⚠️ [PipelineCoordinator] No character found, showing selection dialog`);
+      actingCharacter = await showCharacterSelectionDialog(
+        'Select Character for Reroll',
+        'No character found. Please select who will perform this roll:'
+      );
+
+      if (actingCharacter) {
+        // Store in context for future use
+        if (!ctx.actor) {
+          ctx.actor = {} as ActorContext;
+        }
+        ctx.actor.fullActor = actingCharacter;
+        ctx.actor.actorId = actingCharacter.id;
+        ctx.actor.actorName = actingCharacter.name;
+      }
+    }
+
+    if (!actingCharacter) {
+      throw new Error('No character available for roll. Please ensure you have a character assigned.');
     }
     
     // Populate actor context with character info
@@ -1068,14 +1139,17 @@ export class PipelineCoordinator {
    */
   private async step6_waitForUserConfirmation(ctx: PipelineContext): Promise<void> {
     log(ctx, 6, 'waitForApply', 'Pausing for user to apply result');
-    
+
     if (!ctx.instanceId) {
       throw new Error('[PipelineCoordinator] Cannot wait for confirmation without instance ID');
     }
-    
-    // Store context in pending map
+
+    // Store context in pending map (in-memory)
     this.pendingContexts.set(ctx.instanceId, ctx);
-    
+
+    // Persist context to kingdom data (survives page reload, syncs across clients)
+    await this.persistContext(ctx);
+
     // Return promise that resolves when resumePipeline() is called
     return new Promise<void>((resolve) => {
       ctx._resumeCallback = resolve;
@@ -1134,18 +1208,18 @@ export class PipelineCoordinator {
 
   /**
    * Step 8: Execute Action
-   * 
+   *
    * Apply state changes (resources, entities, etc.)
    * ALWAYS RUNS
-   * 
+   *
    * Either uses pipeline.execute() or default behavior
    */
   private async step8_executeAction(ctx: PipelineContext): Promise<void> {
     log(ctx, 8, 'executeAction', 'Executing action');
-    
+
     const pipeline = await getPipeline(ctx);
     const outcome = ctx.rollData?.outcome || 'success';
-    
+
     // Build check context for execution
     const checkContext = {
       check: pipeline,
@@ -1156,21 +1230,146 @@ export class PipelineCoordinator {
       metadata: ctx.metadata,
       instanceId: ctx.instanceId
     };
-    
+
     // Execute via UnifiedCheckHandler (which handles fame bonus)
     await unifiedCheckHandler.executeCheck(
       ctx.actionId,
       checkContext,
       ctx.preview || { resources: [], outcomeBadges: [] }
     );
-    
+
+    // Track doctrine for events with strategic choices
+    if (ctx.checkType === 'event' && pipeline.strategicChoice) {
+      await this.trackEventDoctrine(ctx, pipeline);
+    }
+
+    // Track doctrine for actions based on selected skill
+    if (ctx.checkType === 'action') {
+      await this.trackActionDoctrine(ctx, pipeline);
+    }
+
     // Store execution result
     ctx.executionResult = {
       success: true,
       message: 'Action executed successfully'
     };
-    
+
     log(ctx, 8, 'executeAction', 'Action executed successfully');
+  }
+
+  /**
+   * Track doctrine points when an event with a strategic choice is resolved
+   *
+   * Adds 5 points to the winning doctrine category (virtuous, practical, or ruthless)
+   * based on the selected approach's personality weight.
+   */
+  private async trackEventDoctrine(ctx: PipelineContext, pipeline: CheckPipeline): Promise<void> {
+    const actor = getKingdomActor();
+    if (!actor) return;
+
+    // Get the selected approach from kingdom state
+    const kingdom = actor.getKingdomData();
+    const selectedApproach = kingdom?.turnState?.eventsPhase?.selectedApproach;
+
+    if (!selectedApproach || !pipeline.strategicChoice?.options) {
+      log(ctx, 8, 'trackDoctrine', 'No selected approach or strategic options found');
+      return;
+    }
+
+    // Find the selected option
+    const selectedOption = pipeline.strategicChoice.options.find(opt => opt.id === selectedApproach);
+
+    if (!selectedOption?.personality) {
+      log(ctx, 8, 'trackDoctrine', `No personality data for option: ${selectedApproach}`);
+      return;
+    }
+
+    // Determine the primary doctrine category (highest weighted personality value)
+    const personality = selectedOption.personality;
+    let primaryDoctrine: 'virtuous' | 'practical' | 'ruthless' | null = null;
+    let highestWeight = 0;
+
+    if (personality.virtuous && personality.virtuous > highestWeight) {
+      highestWeight = personality.virtuous;
+      primaryDoctrine = 'virtuous';
+    }
+    if (personality.practical && personality.practical > highestWeight) {
+      highestWeight = personality.practical;
+      primaryDoctrine = 'practical';
+    }
+    if (personality.ruthless && personality.ruthless > highestWeight) {
+      highestWeight = personality.ruthless;
+      primaryDoctrine = 'ruthless';
+    }
+
+    if (!primaryDoctrine) {
+      log(ctx, 8, 'trackDoctrine', 'No valid doctrine found in personality');
+      return;
+    }
+
+    // Add 5 points to the primary doctrine category
+    const DOCTRINE_POINTS = 5;
+
+    await actor.updateKingdomData((k: any) => {
+      // Initialize doctrine if not present
+      if (!k.doctrine) {
+        k.doctrine = { virtuous: 0, practical: 0, ruthless: 0 };
+      }
+
+      k.doctrine[primaryDoctrine!] = (k.doctrine[primaryDoctrine!] || 0) + DOCTRINE_POINTS;
+    });
+
+    console.log(`📜 [PipelineCoordinator] Doctrine updated: +${DOCTRINE_POINTS} ${primaryDoctrine} (event: ${ctx.actionId}, choice: ${selectedApproach})`);
+    log(ctx, 8, 'trackDoctrine', `Added ${DOCTRINE_POINTS} points to ${primaryDoctrine} doctrine`);
+  }
+
+  /**
+   * Track doctrine points when an action is completed
+   *
+   * Adds 1 point to the doctrine category of the selected skill.
+   * Aid Another actions are excluded from doctrine tracking.
+   */
+  private async trackActionDoctrine(ctx: PipelineContext, pipeline: CheckPipeline): Promise<void> {
+    // Exclude Aid Another from doctrine tracking
+    if (ctx.actionId === 'aid-another') {
+      return;
+    }
+
+    const actor = getKingdomActor();
+    if (!actor) return;
+
+    // Get the selected skill from context
+    const selectedSkill = ctx.actor?.selectedSkill;
+    if (!selectedSkill) {
+      log(ctx, 8, 'trackActionDoctrine', 'No selected skill found');
+      return;
+    }
+
+    // Use selectedDoctrine if passed directly (supports duplicate skills with different doctrines)
+    // Fall back to looking up from pipeline for backwards compatibility
+    let doctrine = ctx.actor?.selectedDoctrine;
+    if (!doctrine) {
+      const skillOption = pipeline.skills?.find(s => s.skill === selectedSkill);
+      doctrine = skillOption?.doctrine;
+    }
+
+    if (!doctrine) {
+      log(ctx, 8, 'trackActionDoctrine', `No doctrine for skill: ${selectedSkill}`);
+      return;
+    }
+    const DOCTRINE_POINTS = 1;
+
+    await actor.updateKingdomData((k: any) => {
+      // Initialize doctrine if not present
+      if (!k.doctrine) {
+        k.doctrine = { virtuous: 0, practical: 0, ruthless: 0 };
+      }
+
+      k.doctrine[doctrine] = (k.doctrine[doctrine] || 0) + DOCTRINE_POINTS;
+    });
+
+    console.log(`📜 [PipelineCoordinator] Doctrine updated: +${DOCTRINE_POINTS} ${doctrine} (action: ${ctx.actionId}, skill: ${selectedSkill})`);
+    log(ctx, 8, 'trackActionDoctrine', `Added ${DOCTRINE_POINTS} point to ${doctrine} doctrine`);
   }
 
   /**
@@ -1249,8 +1448,13 @@ export class PipelineCoordinator {
     // The card remains visible in "applied" state - cleaned up at end of turn
     if (ctx.instanceId) {
       this.pendingContexts.delete(ctx.instanceId);
+      await this.removePersistedContext(ctx.instanceId);
       log(ctx, 9, 'cleanup', `Removed context for instance: ${ctx.instanceId} (card remains visible)`);
     }
+
+    // Clear pipeline metadata storage to prevent memory leak
+    const { pipelineMetadataStorage } = await import('./PipelineMetadataStorage');
+    pipelineMetadataStorage.clear(ctx.actionId, ctx.userId);
 
     log(ctx, 9, 'cleanup', 'Cleanup complete');
   }

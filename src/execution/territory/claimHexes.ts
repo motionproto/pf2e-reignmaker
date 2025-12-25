@@ -39,10 +39,6 @@ export async function claimHexesExecution(hexIds: string[]): Promise<void> {
   const mapLayer = ReignMakerMapLayer.getInstance();
   mapLayer.showPixiContainer();
 
-  // Recalculate production (claimed hexes may have worksites)
-  const { tryRecalculateProduction } = await import('../../utils/recalculateProduction');
-  await tryRecalculateProduction();
-
   // ✅ REACTIVE OVERLAYS: Kingdom Store change automatically triggers overlay updates
   // No need to manually call showOverlay() - the reactive subscriptions handle it!
   // Territory and border overlays subscribe to claimedHexes store and auto-redraw.

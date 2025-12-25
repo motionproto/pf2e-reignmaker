@@ -120,62 +120,69 @@ function calculateHexProduction(hex: HexData): Map<string, number> {
 /**
  * Get base production for a worksite type on specific terrain
  * Replicates Worksite.getBaseProduction() logic without requiring class instances
- * 
+ *
  * @param worksiteType - Type of worksite
  * @param terrain - Terrain type
  * @returns Map of resource to production amount
  */
 export function getWorksiteBaseProduction(worksiteType: string, terrain: string): Map<string, number> {
   const normalizedTerrain = terrain.toLowerCase();
-  
+
+  logger.info(`[Production] Calculating for type="${worksiteType}", terrain="${normalizedTerrain}"`);
+
   switch (worksiteType) {
-    case 'Farmstead':
-      switch (normalizedTerrain) {
-        case 'plains':
-          return new Map([['food', 2]]);
-        case 'forest':
-        case 'hills':
-        case 'swamp':
-        case 'desert':
-        case 'water':
-          return new Map([['food', 1]]);
-        default:
-          logger.warn(`Farmstead on unexpected terrain: ${terrain}, defaulting to 1 food`);
-          return new Map([['food', 1]]);
-      }
-      
-    case 'Logging Camp':
+    case 'Farmstead': {
+      const foodAmount = normalizedTerrain === 'plains' ? 2 : 1;
+      const result = new Map([['food', foodAmount]]);
+      logger.info(`[Production] Farmstead on ${normalizedTerrain} produces: ${foodAmount} food`);
+      return result;
+    }
+
+    case 'Logging Camp': {
       if (normalizedTerrain === 'forest') {
-        return new Map([['lumber', 2]]);
+        const result = new Map([['lumber', 2]]);
+        logger.info(`[Production] Logging Camp on forest produces: 2 lumber`);
+        return result;
       }
+      logger.warn(`[Production] Logging Camp on ${normalizedTerrain} produces nothing (requires forest)`);
       return new Map();
+    }
       
-    case 'Quarry':
+    case 'Quarry': {
       if (normalizedTerrain === 'hills' || normalizedTerrain === 'mountains') {
+        logger.info(`[Production] Quarry on ${normalizedTerrain} produces: 1 stone`);
         return new Map([['stone', 1]]);
       }
       return new Map();
-      
+    }
+
     case 'Mine':
-    case 'Bog Mine':
+    case 'Bog Mine': {
       if (normalizedTerrain === 'mountains' || normalizedTerrain === 'swamp') {
+        logger.info(`[Production] ${worksiteType} on ${normalizedTerrain} produces: 1 ore`);
         return new Map([['ore', 1]]);
       }
       return new Map();
-      
-    case 'Hunting/Fishing Camp':
+    }
+
+    case 'Hunting/Fishing Camp': {
       if (normalizedTerrain === 'swamp') {
+        logger.info(`[Production] Hunting/Fishing Camp on swamp produces: 1 food`);
         return new Map([['food', 1]]);
       }
       return new Map();
-      
-    case 'Oasis Farm':
+    }
+
+    case 'Oasis Farm': {
       if (normalizedTerrain === 'desert') {
+        logger.info(`[Production] Oasis Farm on desert produces: 1 food`);
         return new Map([['food', 1]]);
       }
       return new Map();
-      
+    }
+
     default:
+      logger.warn(`[Production] Unknown worksite type: "${worksiteType}" - returning empty production`);
       return new Map();
   }
 }

@@ -16,9 +16,10 @@ export interface ActorContext {
   actorId: string;
   actorName: string;
   level: number;
-  
+
   // Skill info
   selectedSkill: string;
+  selectedDoctrine?: 'virtuous' | 'practical' | 'ruthless';  // Doctrine of selected skill option
   proficiencyRank: number;  // 0 = untrained, 1 = trained, 2 = expert, 3 = master, 4 = legendary
   
   // Full skill data (for future use)

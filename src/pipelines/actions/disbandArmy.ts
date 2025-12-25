@@ -18,10 +18,10 @@ export const disbandArmyPipeline: CheckPipeline = {
   checkType: 'action',
 
   skills: [
-    { skill: 'intimidation', description: 'stern dismissal' },
-    { skill: 'diplomacy', description: 'honorable discharge' },
-    { skill: 'society', description: 'reintegration programs' },
-    { skill: 'performance', description: 'farewell ceremony' }
+    { skill: 'diplomacy', description: 'honorable discharge', doctrine: 'virtuous' },
+    { skill: 'society', description: 'reintegration programs', doctrine: 'practical' },
+    { skill: 'performance', description: 'farewell ceremony', doctrine: 'practical' },
+    { skill: 'intimidation', description: 'stern dismissal', doctrine: 'ruthless' }
   ],
 
   outcomes: {

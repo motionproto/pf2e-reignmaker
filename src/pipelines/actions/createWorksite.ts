@@ -27,12 +27,14 @@ export const createWorksitePipeline: CheckPipeline = {
   checkType: 'action',
 
   skills: [
-    { skill: 'crafting', description: 'build infrastructure' },
-    { skill: 'nature', description: 'identify resources' },
-    { skill: 'survival', description: 'frontier operations' },
-    { skill: 'athletics', description: 'manual labor' },
-    { skill: 'arcana', description: 'magical extraction' },
-    { skill: 'religion', description: 'blessed endeavors' }
+    { skill: 'religion', description: 'blessed endeavors', doctrine: 'virtuous' },
+    { skill: 'crafting', description: 'build infrastructure', doctrine: 'practical' },
+    { skill: 'nature', description: 'identify resources', doctrine: 'practical' },
+    { skill: 'survival', description: 'frontier operations', doctrine: 'practical' },
+    { skill: 'athletics', description: 'manual labor', doctrine: 'practical' },
+    { skill: 'arcana', description: 'magical extraction', doctrine: 'practical' },
+    { skill: 'intimidation', description: 'labor camps', doctrine: 'ruthless' },
+    { skill: 'occultism', description: 'dark pacts', doctrine: 'ruthless' }
   ],
 
   outcomes: {

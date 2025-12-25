@@ -21,10 +21,12 @@ export const buildRoadsPipeline: CheckPipeline = {
   cost: { lumber: 1, stone: 1 },
 
   skills: [
-    { skill: 'crafting', description: 'engineering expertise' },
-    { skill: 'survival', description: 'pathfinding routes' },
-    { skill: 'athletics', description: 'manual labor' },
-    { skill: 'nature', description: 'work with terrain' }
+    { skill: 'society', description: 'volunteer crews', doctrine: 'virtuous' },
+    { skill: 'nature', description: 'work with terrain', doctrine: 'virtuous' },
+    { skill: 'crafting', description: 'engineering expertise', doctrine: 'practical' },
+    { skill: 'survival', description: 'pathfinding routes', doctrine: 'practical' },
+    { skill: 'intimidation', description: 'chain gangs', doctrine: 'ruthless' },
+    { skill: 'athletics', description: 'forced labour', doctrine: 'ruthless' }
   ],
 
   outcomes: {

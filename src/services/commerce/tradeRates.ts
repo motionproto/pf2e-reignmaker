@@ -20,7 +20,7 @@ export interface TradeRates {
 
 // Tier progression for critical success bonuses
 const SELL_TIERS: TradeRatio[] = [
-  { resourceCost: 2, goldGain: 1 },   // Tier 0: No structure (2:1)
+  { resourceCost: 3, goldGain: 1 },   // Tier 0: No structure (3:1)
   { resourceCost: 2, goldGain: 1 },   // Tier 1: Market Square (2:1)
   { resourceCost: 3, goldGain: 2 },   // Tier 2: Bazaar (3:2)
   { resourceCost: 1, goldGain: 1 },   // Tier 3: Merchant Guild (1:1)
@@ -29,7 +29,7 @@ const SELL_TIERS: TradeRatio[] = [
 ];
 
 const BUY_TIERS: TradeRatio[] = [
-  { resourceCost: 1, goldGain: 2 },   // Tier 0: No structure (2:1 inverted)
+  { resourceCost: 1, goldGain: 3 },   // Tier 0: No structure (3:1 inverted)
   { resourceCost: 1, goldGain: 2 },   // Tier 1: Market Square (2:1 inverted)
   { resourceCost: 2, goldGain: 3 },   // Tier 2: Bazaar (3:2 inverted)
   { resourceCost: 1, goldGain: 1 },   // Tier 3: Merchant Guild (1:1 inverted)

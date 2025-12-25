@@ -4,9 +4,15 @@
  * Local UI state for Testing Mode - allows developers to cycle through
  * party members when testing gameplay. This state is NOT persisted and
  * resets on page reload.
+ *
+ * Note: "Acted" status is derived from kingdomData.turnState.actionLog
+ * (single source of truth) rather than maintained separately here.
+ * See TestingModeCharacterBar.svelte for the derivation logic.
  */
 
 import { writable, derived, get } from 'svelte/store';
+import { TurnPhase } from '../actors/KingdomActor';
+import { kingdomData } from './KingdomStore';
 
 export interface TestingModeCharacter {
   actorId: string;
@@ -19,18 +25,11 @@ export interface TestingModeCharacter {
 export const testingModeEnabled = writable<boolean>(false);
 export const testingModeCharacters = writable<TestingModeCharacter[]>([]);
 export const selectedCharacterIndex = writable<number>(0);
-export const actedCharacterIds = writable<Set<string>>(new Set());
 
 // Derived: Currently selected character
 export const selectedCharacter = derived(
   [testingModeCharacters, selectedCharacterIndex],
   ([$chars, $idx]) => $chars[$idx] || null
-);
-
-// Derived: Characters that haven't acted yet
-export const availableCharacters = derived(
-  [testingModeCharacters, actedCharacterIds],
-  ([$chars, $acted]) => $chars.filter(c => !$acted.has(c.actorId))
 );
 
 /**
@@ -42,7 +41,6 @@ export function toggleTestingMode(enabled: boolean): void {
     // Reset state when disabling
     testingModeCharacters.set([]);
     selectedCharacterIndex.set(0);
-    actedCharacterIds.set(new Set());
   }
 }
 
@@ -57,40 +55,34 @@ export function selectCharacter(index: number): void {
 }
 
 /**
- * Mark a character as having acted
- */
-export function markCharacterAsActed(actorId: string): void {
-  actedCharacterIds.update(acted => {
-    const newSet = new Set(acted);
-    newSet.add(actorId);
-    return newSet;
-  });
-}
-
-/**
  * Auto-advance to the next character who hasn't acted
+ * Derives "acted" status from actionLog (single source of truth)
  */
 export function autoAdvanceToNextAvailable(): void {
   const chars = get(testingModeCharacters);
-  const acted = get(actedCharacterIds);
   const currentIdx = get(selectedCharacterIndex);
+
+  // Get acted character names from actionLog (single source of truth)
+  const kingdom = get(kingdomData);
+  const actionLog = kingdom?.turnState?.actionLog || [];
+
+  const actedCharacterNames = new Set(
+    actionLog
+      .filter((entry: any) => entry.phase === TurnPhase.ACTIONS || entry.phase === TurnPhase.EVENTS)
+      .map((entry: any) => entry.characterName)
+  );
 
   // Find next character who hasn't acted
   for (let i = 1; i <= chars.length; i++) {
     const nextIdx = (currentIdx + i) % chars.length;
-    if (!acted.has(chars[nextIdx].actorId)) {
+    if (!actedCharacterNames.has(chars[nextIdx].characterName)) {
+      console.log(`🧪 [TestingMode] Auto-advancing to ${chars[nextIdx].characterName}`);
       selectedCharacterIndex.set(nextIdx);
       return;
     }
   }
   // All have acted - stay on current
-}
-
-/**
- * Reset acted characters (for new turn)
- */
-export function resetActedCharacters(): void {
-  actedCharacterIds.set(new Set());
+  console.log('🧪 [TestingMode] All characters have acted, staying on current');
 }
 
 /**
@@ -125,5 +117,4 @@ export function initializeCharacters(): void {
 
   testingModeCharacters.set(characters);
   selectedCharacterIndex.set(0);
-  actedCharacterIds.set(new Set());
 }

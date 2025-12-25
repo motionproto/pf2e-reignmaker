@@ -21,11 +21,11 @@ export const arrestDissidentsPipeline: CheckPipeline = {
   checkType: 'action',
 
   skills: [
-    { skill: 'intimidation', description: 'show of force' },
-    { skill: 'society', description: 'legal procedures' },
-    { skill: 'stealth', description: 'covert operations' },
-    { skill: 'deception', description: 'infiltration tactics' },
-    { skill: 'athletics', description: 'physical pursuit' }
+    { skill: 'society', description: 'legal procedures', doctrine: 'virtuous' },
+    { skill: 'athletics', description: 'physical pursuit', doctrine: 'practical' },
+    { skill: 'stealth', description: 'discreet investigations', doctrine: 'practical' },
+    { skill: 'intimidation', description: 'forced confession', doctrine: 'ruthless' },
+    { skill: 'deception', description: 'false charges', doctrine: 'ruthless' }
   ],
 
   outcomes: {

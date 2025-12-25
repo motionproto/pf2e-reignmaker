@@ -492,16 +492,11 @@ Hooks.once('ready', async () => {
         };
         
         const recalculateProduction = async () => {
-            const { recalculateWorksiteProduction } = await import('./utils/recalculateProduction');
-            const success = await recalculateWorksiteProduction();
-            if (success) {
-                // @ts-ignore
-                ui?.notifications?.info('Production recalculated successfully');
-                console.log('PF2E ReignMaker | Production recalculated from current hex data');
-            } else {
-                // @ts-ignore
-                ui?.notifications?.warn('Failed to recalculation production');
-            }
+            // Production is now calculated directly from hexes on-demand
+            // This function is kept for backwards compatibility but is no longer needed
+            // @ts-ignore
+            ui?.notifications?.info('Production is now calculated directly from hex data (no cache to refresh)');
+            console.log('PF2E ReignMaker | Production is calculated on-demand from hex data');
         };
         
         // Register production inspector for debugging

@@ -16,6 +16,7 @@ import type { CheckPipeline } from '../../types/CheckPipeline';
 import type { GameCommandContext } from '../../services/gameCommands/GameCommandHandler';
 import { AdjustFactionHandler } from '../../services/gameCommands/handlers/AdjustFactionHandler';
 import { GrantStructureHandler } from '../../services/gameCommands/handlers/GrantStructureHandler';
+import { DestroyWorksiteHandler } from '../../services/gameCommands/handlers/DestroyWorksiteHandler';
 import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
 import {
   validateExplored,
@@ -211,9 +212,26 @@ export const landRushPipeline: CheckPipeline = {
           }
         } else if (outcome === 'success') {
           ctx.metadata._claimHexCount = 1;
-        } else if (outcome === 'failure' || outcome === 'criticalFailure') {
-          // Lose random resource
-          ctx.metadata._loseRandomResource = true;
+        } else if (outcome === 'failure') {
+          // Failure: just resource loss handled by badges
+        } else if (outcome === 'criticalFailure') {
+          // Critical Failure: Lose 1 worksite
+          const destroyHandler = new DestroyWorksiteHandler();
+          const destroyCommand = await destroyHandler.prepare(
+            { type: 'destroyWorksite', count: 1 },
+            commandContext
+          );
+          if (destroyCommand) {
+            ctx.metadata._preparedDestroyWorksite = destroyCommand;
+            if (destroyCommand.metadata) {
+              Object.assign(ctx.metadata, destroyCommand.metadata);
+            }
+            if (destroyCommand.outcomeBadges) {
+              outcomeBadges.push(...destroyCommand.outcomeBadges);
+            } else if (destroyCommand.outcomeBadge) {
+              outcomeBadges.push(destroyCommand.outcomeBadge);
+            }
+          }
         }
       } else if (approach === 'practical') {
         // Controlled Development (Practical) - Claim hexes on success
@@ -341,7 +359,8 @@ export const landRushPipeline: CheckPipeline = {
           return { valid: true, message: 'Valid hex for settlement' };
         }, hexId, 'land-rush claim validation');
       }
-    }
+    },
+    DestroyWorksiteHandler.getMapDisplayInteraction('Worksite Destroyed by Land Rush')
   ],
 
   execute: async (ctx) => {
@@ -377,10 +396,10 @@ export const landRushPipeline: CheckPipeline = {
       await structureCommand.commit();
     }
 
-    // Lose random resource (virtuous F/CF)
-    if (ctx.metadata?._loseRandomResource) {
-      // TODO: Implement random resource loss
-      console.log('Land Rush: Random resource loss needs implementation');
+    // Execute worksite destruction (virtuous CF)
+    const destroyCommand = ctx.metadata?._preparedDestroyWorksite;
+    if (destroyCommand?.commit) {
+      await destroyCommand.commit();
     }
 
     // Execute faction adjustments (ruthless approach)

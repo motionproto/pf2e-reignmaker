@@ -18,11 +18,12 @@ export const tendWoundedPipeline: CheckPipeline = {
   checkType: 'action',
 
   skills: [
-    { skill: 'medicine', description: 'heal the wounded' },
-    { skill: 'performance', description: 'boost morale' },
-    { skill: 'religion', description: 'spiritual restoration' },
-    { skill: 'nature', description: 'natural remedies' },
-    { skill: 'crafting', description: 'repair equipment' }
+    { skill: 'religion', description: 'spiritual restoration', doctrine: 'virtuous' },
+    { skill: 'nature', description: 'natural remedies', doctrine: 'virtuous' },
+    { skill: 'medicine', description: 'heal the wounded', doctrine: 'practical' },
+    { skill: 'crafting', description: 'repair equipment', doctrine: 'practical' },
+    { skill: 'performance', description: 'propeganda celebrations', doctrine: 'ruthless' },
+    { skill: 'intimidation', description: 'triage the expendable', doctrine: 'ruthless' }
   ],
 
   outcomes: {

@@ -323,20 +323,19 @@ export class VoteService {
   
   /**
    * Clean up votes from previous turns
+   * NOTE: This is called at END of turn cleanup, so currentTurn is the turn that just ended.
+   * We want to remove ALL votes since we're starting a fresh turn.
    */
   static async cleanupOldVotes(): Promise<void> {
     const actor = getKingdomActor();
     if (!actor) return;
-    
-    const kingdom = get(kingdomData);
-    const currentTurn = kingdom.currentTurn || 0;
-    
+
     const allVotes = actor.getFlag('pf2e-reignmaker', 'eventVotes') as EventVote[] || [];
-    const filteredVotes = allVotes.filter(v => v.turn === currentTurn);
-    
-    if (filteredVotes.length !== allVotes.length) {
-      await actor.setFlag('pf2e-reignmaker', 'eventVotes', filteredVotes);
-      console.log(`🗳️ [VoteService] Cleaned up ${allVotes.length - filteredVotes.length} old votes`);
+
+    // Remove all votes - we're transitioning to a new turn
+    if (allVotes.length > 0) {
+      await actor.setFlag('pf2e-reignmaker', 'eventVotes', []);
+      console.log(`🗳️ [VoteService] Cleaned up ${allVotes.length} votes from previous turn`);
     }
   }
   

@@ -18,12 +18,14 @@ export const infiltrationPipeline: CheckPipeline = {
   checkType: 'action',
 
   skills: [
-    { skill: 'deception', description: 'false identities' },
-    { skill: 'stealth', description: 'covert operations' },
-    { skill: 'thievery', description: 'steal secrets' },
-    { skill: 'society', description: 'social infiltration' },
-    { skill: 'arcana', description: 'magical espionage' },
-    { skill: 'acrobatics', description: 'daring infiltration' }
+    { skill: 'diplomacy', description: 'diplomatic inquiry', doctrine: 'virtuous' },
+    { skill: 'society', description: 'cultural observation', doctrine: 'virtuous' },
+    { skill: 'acrobatics', description: 'daring infiltration', doctrine: 'virtuous' },
+    { skill: 'arcana', description: 'magical espionage', doctrine: 'virtuous' },
+    { skill: 'deception', description: 'false identities', doctrine: 'ruthless' },
+    { skill: 'stealth', description: 'covert operations', doctrine: 'ruthless' },
+    { skill: 'thievery', description: 'steal secrets', doctrine: 'ruthless' }
+    
   ],
 
   outcomes: {

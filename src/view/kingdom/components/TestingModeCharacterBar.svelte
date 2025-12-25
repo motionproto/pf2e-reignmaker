@@ -2,9 +2,44 @@
   import {
     testingModeCharacters,
     selectedCharacterIndex,
-    actedCharacterIds,
-    selectCharacter
+    selectCharacter,
+    autoAdvanceToNextAvailable
   } from '../../../stores/TestingModeStore';
+  import { kingdomData } from '../../../stores/KingdomStore';
+  import { TurnPhase } from '../../../actors/KingdomActor';
+
+  // Derive acted character names from actionLog (single source of truth)
+  // This tracks which characters have taken actions in the current turn
+  $: actionLog = $kingdomData.turnState?.actionLog || [];
+
+  // Build a set of character names that have acted (from actionLog entries in ACTIONS or EVENTS phases)
+  $: actedCharacterNames = new Set(
+    actionLog
+      .filter((entry: any) => entry.phase === TurnPhase.ACTIONS || entry.phase === TurnPhase.EVENTS)
+      .map((entry: any) => entry.characterName)
+  );
+
+  // Check if a character has acted by matching their name against actionLog
+  function hasCharacterActed(characterName: string): boolean {
+    return actedCharacterNames.has(characterName);
+  }
+
+  // Track previous action count to detect new actions
+  let previousActionCount = 0;
+
+  // Auto-advance to next character when a new action is logged
+  $: {
+    const currentActionCount = actionLog.filter(
+      (entry: any) => entry.phase === TurnPhase.ACTIONS || entry.phase === TurnPhase.EVENTS
+    ).length;
+
+    if (currentActionCount > previousActionCount && previousActionCount > 0) {
+      // A new action was logged - auto-advance to next available character
+      console.log('🧪 [TestingModeCharacterBar] New action logged, auto-advancing...');
+      autoAdvanceToNextAvailable();
+    }
+    previousActionCount = currentActionCount;
+  }
 </script>
 
 <div class="testing-mode-bar">
@@ -14,15 +49,16 @@
   </div>
   <div class="character-list">
     {#each $testingModeCharacters as char, index}
+      {@const hasActed = hasCharacterActed(char.characterName)}
       <button
         class="character-pill"
         class:selected={index === $selectedCharacterIndex}
-        class:acted={$actedCharacterIds.has(char.actorId)}
+        class:acted={hasActed}
         on:click={() => selectCharacter(index)}
       >
         <span class="char-name">{char.characterName}</span>
         <span class="char-level">Lv.{char.level}</span>
-        {#if $actedCharacterIds.has(char.actorId)}
+        {#if hasActed}
           <i class="fas fa-check acted-check"></i>
         {/if}
       </button>

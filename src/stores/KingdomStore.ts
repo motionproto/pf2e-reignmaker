@@ -43,6 +43,9 @@ export const imprisonedUnrest = derived(settlements, $settlements => {
 });
 export const fame = derived(kingdomData, $data => $data.fame);
 
+// Doctrine tracking - accumulated points from event vote choices
+export const doctrine = derived(kingdomData, $data => $data.doctrine || { virtuous: 0, practical: 0, ruthless: 0 });
+
 // Event votes - reactive store for voting system
 export const eventVotes = derived(kingdomActor, $actor => {
   if (!$actor) return [];
@@ -275,18 +278,20 @@ export const hexesWithSettlementFeatures = derived(kingdomData, $data => {
 
 /**
  * Current production from all hexes
- * Uses worksiteProduction which is kept up-to-date by the economics service
- * This is derived from hexes but stored in the model for efficiency
- * Falls back to empty object if no production data available
+ * Calculated directly from hex data - no cache required.
+ * This ensures production is always in sync with actual hex state.
  */
 export const currentProduction = derived(kingdomData, $data => {
-  // Use worksite production if available
-  if ($data.worksiteProduction && typeof $data.worksiteProduction === 'object') {
-    return $data.worksiteProduction;
-  }
-  
-  // Fallback to empty production
-  return { food: 0, lumber: 0, stone: 0, ore: 0 };
+  // Calculate production directly from hexes
+  const result = calculateProduction($data.hexes as any[], []);
+
+  // Convert Map to plain object for UI consumption
+  const production: Record<string, number> = { food: 0, lumber: 0, stone: 0, ore: 0 };
+  result.totalProduction.forEach((value, key) => {
+    production[key] = value;
+  });
+
+  return production;
 });
 
 // UI-only state (no persistence needed)

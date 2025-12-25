@@ -18,10 +18,10 @@ export const requestMilitaryAidPipeline: CheckPipeline = {
   checkType: 'action',
 
   skills: [
-    { skill: 'diplomacy', description: 'alliance obligations' },
-    { skill: 'intimidation', description: 'pressure tactics' },
-    { skill: 'society', description: 'mutual defense' },
-    { skill: 'arcana', description: 'magical pacts' }
+    { skill: 'diplomacy', description: 'alliance obligations', doctrine: 'virtuous' },
+    { skill: 'society', description: 'mutual defense', doctrine: 'practical' },
+    { skill: 'arcana', description: 'magical pacts', doctrine: 'practical' },
+    { skill: 'intimidation', description: 'pressure tactics', doctrine: 'ruthless' }
   ],
 
   outcomes: {

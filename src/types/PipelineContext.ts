@@ -4,6 +4,9 @@
  * Unified context object that persists through all 9 pipeline steps.
  * Replaces the fragmented approach where data was scattered across
  * instance.metadata, resolutionData, and global state.
+ *
+ * SerializablePipelineContext is stored in kingdom.turnState.activePipelineContexts
+ * to survive page reloads and sync across clients.
  */
 
 import type { CheckPipeline, OutcomeType, KingdomSkill } from './CheckPipeline';
@@ -139,6 +142,126 @@ export interface PipelineContext {
   
   /** Internal: Temporary storage for modifiers (Step 3 → Step 4) */
   _pendingModifiers?: Array<{ label: string; modifier: number; enabled: boolean; ignored: boolean }>;
+}
+
+/**
+ * Serializable version of PipelineContext for persistence in kingdom data
+ *
+ * Excludes non-serializable fields:
+ * - kingdom (reference to live data - re-fetched on recovery)
+ * - actor.fullActor (PF2e actor reference - recovered via actorId)
+ * - rollData.roll (PF2e ChatMessage - we keep rollBreakdown instead)
+ * - _resumeCallback (Promise callback - recreated on recovery)
+ * - logs (debug only, not needed for persistence)
+ */
+export interface SerializablePipelineContext {
+  // Identifiers
+  readonly actionId: string;
+  readonly checkType: 'action' | 'event' | 'incident';
+  readonly userId: string;
+  instanceId?: string;
+
+  // Actor context (without fullActor reference)
+  actor?: Omit<ActorContext, 'fullActor'>;
+
+  // Step data
+  metadata: CheckMetadata;
+  rollData?: {
+    skill: KingdomSkill;
+    dc: number;
+    outcome: OutcomeType;
+    rollBreakdown?: {
+      d20Result: number;
+      total: number;
+      dc: number;
+      modifiers: any[];
+    };
+  };
+  preview?: PreviewData;
+  userConfirmed: boolean;
+  resolutionData: ResolutionData;
+  executionResult?: ExecutionResult;
+  isReroll?: boolean;
+}
+
+/**
+ * Convert PipelineContext to serializable form for persistence
+ */
+export function toSerializableContext(ctx: PipelineContext): SerializablePipelineContext {
+  // Extract actor without fullActor
+  const serializableActor = ctx.actor ? {
+    actorId: ctx.actor.actorId,
+    actorName: ctx.actor.actorName,
+    level: ctx.actor.level,
+    selectedSkill: ctx.actor.selectedSkill,
+    selectedDoctrine: ctx.actor.selectedDoctrine,
+    proficiencyRank: ctx.actor.proficiencyRank
+  } : undefined;
+
+  // Extract rollData without the live roll object
+  const serializableRollData = ctx.rollData ? {
+    skill: ctx.rollData.skill,
+    dc: ctx.rollData.dc,
+    outcome: ctx.rollData.outcome,
+    rollBreakdown: ctx.rollData.rollBreakdown
+  } : undefined;
+
+  return {
+    actionId: ctx.actionId,
+    checkType: ctx.checkType,
+    userId: ctx.userId,
+    instanceId: ctx.instanceId,
+    actor: serializableActor,
+    metadata: ctx.metadata,
+    rollData: serializableRollData,
+    preview: ctx.preview,
+    userConfirmed: ctx.userConfirmed,
+    resolutionData: ctx.resolutionData,
+    executionResult: ctx.executionResult,
+    isReroll: ctx.isReroll
+  };
+}
+
+/**
+ * Recover full PipelineContext from serialized form
+ * Recovers actor.fullActor from Foundry's actor collection
+ */
+export function fromSerializableContext(
+  serialized: SerializablePipelineContext,
+  kingdom: KingdomData
+): PipelineContext {
+  // Recover fullActor from actorId
+  let fullActor: any = null;
+  if (serialized.actor?.actorId) {
+    const game = (window as any).game;
+    fullActor = game?.actors?.get(serialized.actor.actorId);
+  }
+
+  // Rebuild actor context with fullActor
+  const actor: ActorContext | undefined = serialized.actor ? {
+    ...serialized.actor,
+    fullActor
+  } : undefined;
+
+  return {
+    actionId: serialized.actionId,
+    checkType: serialized.checkType,
+    userId: serialized.userId,
+    instanceId: serialized.instanceId,
+    actor,
+    metadata: serialized.metadata,
+    rollData: serialized.rollData ? {
+      ...serialized.rollData,
+      roll: null // Not recovered - only needed for initial roll
+    } as any : undefined,
+    preview: serialized.preview,
+    userConfirmed: serialized.userConfirmed,
+    resolutionData: serialized.resolutionData,
+    executionResult: serialized.executionResult,
+    isReroll: serialized.isReroll,
+    kingdom,
+    logs: []
+  };
 }
 
 /**

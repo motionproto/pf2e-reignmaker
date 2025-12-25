@@ -133,40 +133,51 @@ export class EconomicsService {
   /**
    * Get potential gold income from settlements
    * (Only collected if settlements are properly fed and in claimed territory)
+   *
+   * Capital and road-connected settlements generate double gold.
    */
   calculateSettlementGoldIncome(settlements: Settlement[], hexes?: any[]): number {
-    const tierCounts = new Map<string, number>();
-    
+    let goldIncome = 0;
+
+    // Check if there's a capital (needed for road connection bonus)
+    const hasCapital = settlements.some(s => s.isCapital);
+
     // Only count settlements that were fed last turn AND are in claimed territory
     settlements
       .filter(s => {
         // Must be fed
         if (!s.wasFedLastTurn) return false;
-        
+
         // Must have valid location
         if (s.location.x === 0 && s.location.y === 0) return false;
-        
+
         // If hexes provided, must be in claimed territory
         if (hexes) {
-          const settlementHex = hexes.find((h: any) => 
+          const settlementHex = hexes.find((h: any) =>
             h.row === s.location.x && h.col === s.location.y
           );
-          
+
           // Settlement must be in a player-claimed hex (claimedBy === PLAYER_KINGDOM)
           if (!settlementHex || settlementHex.claimedBy !== PLAYER_KINGDOM) {
             return false;
           }
         }
-        
+
         return true;
       })
       .forEach(settlement => {
-        const count = tierCounts.get(settlement.tier) || 0;
-        tierCounts.set(settlement.tier, count + 1);
+        // Get base gold value for this tier
+        const tierCounts = new Map<string, number>([[settlement.tier, 1]]);
+        let settlementGold = calculateSettlementGoldIncome(tierCounts);
 
+        // Capital generates double gold
+        // Settlements connected by road to capital also generate double
+        if (settlement.isCapital || (hasCapital && settlement.connectedByRoads)) {
+          settlementGold *= 2;
+        }
+
+        goldIncome += settlementGold;
       });
-
-    const goldIncome = calculateSettlementGoldIncome(tierCounts);
 
     return goldIncome;
   }
@@ -174,26 +185,26 @@ export class EconomicsService {
   /**
    * Collect all resources for the current turn
    * This is the main method to be called during the Resources Phase
+   *
+   * Production is calculated directly from hexes - no cache required.
    */
   collectTurnResources(
     state: {
       hexes: Hex[];
       settlements: Settlement[];
-      worksiteProduction: Map<string, number>;
-      worksiteProductionByHex: Array<[Hex, Map<string, number>]>;
       modifiers?: EconomicModifier[];
     }
   ): ResourceCollectionResult {
-
-    // Use worksite production from KingdomState (calculated once when hexes change)
-    const hexProduction = new Map(state.worksiteProduction);
+    // Calculate production directly from hexes (no cache)
+    const productionResult = calculateProduction(state.hexes as any[], state.modifiers || []);
+    const hexProduction = productionResult.totalProduction;
 
     // Check if there's any gold in hex production (shouldn't be, but let's verify)
     const hexGold = hexProduction.get('gold') || 0;
     if (hexGold > 0) {
       logger.warn(`⚠️ [EconomicsService] WARNING: Hex production contains ${hexGold} gold (should only come from settlements)`);
     }
-    
+
     // Calculate gold income from fed settlements in claimed territory
     const fedSettlements = state.settlements.filter(s => s.wasFedLastTurn);
     const unfedSettlements = state.settlements.filter(s => !s.wasFedLastTurn);
@@ -202,15 +213,15 @@ export class EconomicsService {
     // Create separate collections for clarity
     const territoryResources = new Map(hexProduction);
     const settlementGold = goldIncome;
-    
+
     // Combine all resources collected (maintaining backward compatibility)
     const totalCollected = new Map(hexProduction);
     if (goldIncome > 0) {
       totalCollected.set('gold', (totalCollected.get('gold') || 0) + goldIncome);
     }
-    
-    // Prepare detailed breakdown for UI
-    const productionByHex = state.worksiteProductionByHex.map(([hex, production]) => ({
+
+    // Prepare detailed breakdown for UI from calculated production
+    const productionByHex = productionResult.byHex.map(({ hex, production }) => ({
       hexId: hex.id,
       hexName: hex.name || `Hex ${hex.id}`,
       terrain: hex.terrain,
@@ -229,7 +240,7 @@ export class EconomicsService {
         settlementGold
       },
       details: {
-        hexCount: state.worksiteProductionByHex.length,
+        hexCount: productionResult.byHex.length,
         productionByHex
       }
     };

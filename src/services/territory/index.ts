@@ -434,31 +434,6 @@ export class TerritoryService {
             });
             state.worksiteCount = worksiteCount;
             
-            // Calculate worksite production from all hexes (stored state for efficiency)
-            const worksiteProduction: Record<string, number> = {};
-            const worksiteProductionByHex: Array<[any, Map<string, number>]> = [];
-            
-            for (const hex of hexes) {
-                const production = hex.getProduction();
-                
-                // Add to total worksite production
-                production.forEach((amount, resource) => {
-                    worksiteProduction[resource] = (worksiteProduction[resource] || 0) + amount;
-                });
-                
-                // Store per-hex production for detailed breakdown
-                if (production.size > 0) {
-                    worksiteProductionByHex.push([{
-                        id: hex.id,
-                        name: hex.name || `Hex ${hex.id}`,
-                        terrain: hex.terrain
-                    }, production]);
-                }
-            }
-            
-            state.worksiteProduction = worksiteProduction;
-            state.worksiteProductionByHex = worksiteProductionByHex;
-            
             // Initialize water features if provided (from Kingmaker import)
             if (waterFeatures) {
                 state.waterFeatures = {
@@ -485,11 +460,6 @@ export class TerritoryService {
                 source: 'kingmaker-sync'
             });
         }
-        
-        // CRITICAL: Recalculate worksite production after hex data changes
-        // This ensures worksiteProduction stays in sync with hex modifications
-        const { tryRecalculateProduction } = await import('../../utils/recalculateProduction');
-        await tryRecalculateProduction();
     }
     
     /**

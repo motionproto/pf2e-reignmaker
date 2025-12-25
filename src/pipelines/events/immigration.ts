@@ -270,6 +270,12 @@ export const immigrationPipeline: CheckPipeline = {
             }
           }
         }
+      } else if (approach === 'practical') {
+        // Selective Entry (Practical)
+        if (outcome === 'criticalSuccess') {
+          // Gain 1 worksite on critical success
+          ctx.metadata._newWorksites = 1;
+        }
       } else if (approach === 'ruthless') {
         // Exploit as Labor (Ruthless)
         if (outcome === 'criticalSuccess') {
@@ -309,17 +315,21 @@ export const immigrationPipeline: CheckPipeline = {
       mode: 'hex-selection',
       count: (ctx: any) => {
         const approach = ctx.kingdom?.turnState?.eventsPhase?.selectedApproach;
-        
+        const outcome = ctx.outcome;
+
         // Return number of worksites to create based on approach and outcome
         if (approach === 'virtuous') {
           return 1; // All outcomes grant 1 worksite
-        } else if (approach === 'ruthless') {
-          const outcome = ctx.outcome;
-          if (outcome === 'criticalSuccess' || outcome === 'success') {
-            return 2; // 2 worksites
-          } else {
-            return 1; // 1 worksite for failure/criticalFailure
+        } else if (approach === 'practical') {
+          if (outcome === 'criticalSuccess') {
+            return 1; // 1 worksite on critical success
           }
+          return 0;
+        } else if (approach === 'ruthless') {
+          if (outcome === 'criticalSuccess' || outcome === 'success') {
+            return 1; // 1 worksite
+          }
+          return 0;
         }
         return 0;
       },
@@ -328,9 +338,15 @@ export const immigrationPipeline: CheckPipeline = {
       required: true,
       condition: (ctx: any) => {
         const approach = ctx.kingdom?.turnState?.eventsPhase?.selectedApproach;
-        
-        // All outcomes for virtuous and ruthless approaches grant worksites
-        return approach === 'virtuous' || approach === 'ruthless';
+        const outcome = ctx.outcome;
+
+        // Virtuous: all outcomes grant worksites
+        // Practical: only critical success
+        // Ruthless: critical success and success
+        if (approach === 'virtuous') return true;
+        if (approach === 'practical' && outcome === 'criticalSuccess') return true;
+        if (approach === 'ruthless' && (outcome === 'criticalSuccess' || outcome === 'success')) return true;
+        return false;
       },
       validateHex: (hexId: string): ValidationResult => {
         return safeValidation(() => {

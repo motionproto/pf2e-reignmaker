@@ -295,8 +295,8 @@ export async function createGameCommandsService() {
           return;
         }
         
-        await this.applyResourceChange(modifier.resource, modifier.value, modifierLabel, result);
-        
+        await this.applyResourceChange(modifier.resource, modifier.value, modifierLabel, result, false, params.sourceId);
+
       } else if (isDiceModifier(modifier)) {
         // Dice modifier: { type: 'dice', resource, formula, negative?, duration? }
         
@@ -324,8 +324,8 @@ export async function createGameCommandsService() {
           throw new Error(`Dice modifier "${modifier.resource}" has no pre-rolled value - dice must be rolled in UI before applying`);
         }
         
-        await this.applyResourceChange(modifier.resource, numericValue, modifierLabel, result);
-        
+        await this.applyResourceChange(modifier.resource, numericValue, modifierLabel, result, false, params.sourceId);
+
       } else if (isChoiceModifier(modifier)) {
         // Choice modifier: { type: 'choice', resources[], value, duration? }
         // This should have been resolved by OutcomeDisplay before calling
@@ -342,19 +342,21 @@ export async function createGameCommandsService() {
 
     /**
      * Apply a resource change to the kingdom
-     * 
+     *
      * @param skipShortfallCheck - If true, skip automatic +1 unrest per shortfall (used when caller handles accumulation)
+     * @param sourceId - Optional source identifier (e.g., 'deal-with-unrest') for special handling
      */
     async applyResourceChange(
       resource: ResourceType,
       value: number,
       modifierName: string,
       result: ApplyOutcomeResult,
-      skipShortfallCheck: boolean = false
+      skipShortfallCheck: boolean = false,
+      sourceId?: string
     ): Promise<void> {
       // Handle special resource types
       if (resource === 'unrest') {
-        await this.applyUnrestChange(value, modifierName, result);
+        await this.applyUnrestChange(value, modifierName, result, sourceId);
         return;
       }
 
@@ -410,8 +412,10 @@ export async function createGameCommandsService() {
      * Special rule: If reducing unrest below 0 (kingdom already at peace),
      * award 1d3 gold per point of unrest that would have been reduced.
      * This is the opposite of the shortfall penalty for resources.
+     *
+     * @param sourceId - Optional source identifier. If 'deal-with-unrest', peace dividend is skipped.
      */
-    async applyUnrestChange(value: number, modifierName: string, result: ApplyOutcomeResult): Promise<void> {
+    async applyUnrestChange(value: number, modifierName: string, result: ApplyOutcomeResult, sourceId?: string): Promise<void> {
       logger.info(`📊 [GameCommands] applyUnrestChange called: value=${value}, modifierName="${modifierName}"`);
 
       let excessReduction = 0;
@@ -434,7 +438,8 @@ export async function createGameCommandsService() {
       result.applied.resources.push({ resource: 'unrest', value });
 
       // Award gold bonus for excess unrest reduction (kingdom at peace bonus)
-      if (excessReduction > 0) {
+      // Skip for deal-with-unrest action to prevent income exploit
+      if (excessReduction > 0 && sourceId !== 'deal-with-unrest') {
         // Roll 1d3 gold per point of excess reduction
         let totalGoldBonus = 0;
         for (let i = 0; i < excessReduction; i++) {

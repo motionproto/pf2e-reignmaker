@@ -235,7 +235,11 @@ export const banditActivityPipeline: CheckPipeline = {
         }
       } else if (approach === 'practical') {
         // Drive Them Off (Practical)
-        if (outcome === 'criticalFailure') {
+        if (outcome === 'criticalSuccess') {
+          // +1 Gold, +1 worksite, -1 Unrest
+          // Worksite creation handled in execute()
+          ctx.metadata._createWorksite = true;
+        } else if (outcome === 'criticalFailure') {
           // +1d3 Unrest, -1d3 Gold, destroy 1 worksite, army becomes fatigued
           const destroyHandler = new DestroyWorksiteHandler();
           const destroyCommand = await destroyHandler.prepare(

@@ -27,12 +27,12 @@ export const sendScoutsPipeline: CheckPipeline = {
   cost: { gold: 1 },
 
   skills: [
-    { skill: 'stealth', description: 'covert reconnaissance' },
-    { skill: 'survival', description: 'wilderness expertise' },
-    { skill: 'nature', description: 'read the land' },
-    { skill: 'society', description: 'gather local information' },
-    { skill: 'athletics', description: 'rapid exploration' },
-    { skill: 'acrobatics', description: 'navigate obstacles' }
+    { skill: 'diplomacy', description: 'peaceful outreach', doctrine: 'virtuous' },
+    { skill: 'survival', description: 'wilderness exploration', doctrine: 'virtuous' },
+    { skill: 'nature', description: 'read the land', doctrine: 'practical' },
+    { skill: 'society', description: 'meet the people', doctrine: 'practical' },
+    { skill: 'athletics', description: 'colonial scouts', doctrine: 'ruthless' },
+    { skill: 'stealth', description: 'covert reconnaissance', doctrine: 'ruthless' }
   ],
 
   outcomes: {
@@ -145,21 +145,21 @@ export const sendScoutsPipeline: CheckPipeline = {
   ],
 
   execute: async (ctx) => {
-    await applyActionCost(sendScoutsPipeline);
-    
     switch (ctx.outcome) {
       case 'criticalSuccess':
       case 'success':
         const hexIds = ctx.resolutionData.compoundData?.selectedHexes;
-        
+
         if (!hexIds || hexIds.length === 0) {
-          return { 
-            success: true, 
+          return {
+            success: true,
             message: 'Action cancelled - no hexes selected',
-            cancelled: true 
+            cancelled: true
           };
         }
-        
+
+        // Only charge on successful scouting
+        await applyActionCost(sendScoutsPipeline);
         await sendScoutsExecution(hexIds);
         return { success: true };
         

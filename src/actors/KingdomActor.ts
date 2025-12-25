@@ -134,6 +134,14 @@ export interface KingdomData {
   isAtWar: boolean;
   partyLevel: number;  // Highest level among player characters
   leadershipPenalty?: number;  // Turn-scoped penalty to all skill checks (e.g., -1 from scandals)
+
+  // Doctrine tracking - accumulated points from event vote choices
+  // Each winning vote adds 5 points to the corresponding category
+  doctrine?: {
+    virtuous: number;   // Chose virtuous/compassionate approaches
+    practical: number;  // Chose practical/balanced approaches
+    ruthless: number;   // Chose ruthless/expedient approaches
+  };
   
   // Events & Modifiers (persistent across turns)
   ongoingEvents: string[];  // Event IDs that persist across turns (legacy - may be deprecated)
@@ -450,6 +458,11 @@ export class KingdomActor extends Actor {
       fame: 0,
       isAtWar: false,
       partyLevel: partyLevel,  // Synced from party actors during initialization
+      doctrine: {
+        virtuous: 0,
+        practical: 0,
+        ruthless: 0
+      },
       ongoingEvents: [],
       pendingOutcomes: [],
       activeModifiers: [],
@@ -458,7 +471,7 @@ export class KingdomActor extends Actor {
       phaseComplete: false,
       oncePerTurnActions: []
     };
-    
+
     await this.setKingdomData(defaultKingdom);
   }
   
@@ -620,6 +633,11 @@ export function createDefaultKingdom(name: string = 'New Kingdom'): KingdomData 
       fame: 0,
       isAtWar: false,
       partyLevel: partyLevel,  // Synced from party actors during initialization
+      doctrine: {
+        virtuous: 0,
+        practical: 0,
+        ruthless: 0
+      },
       ongoingEvents: [],
       pendingOutcomes: [],
       activeModifiers: [],

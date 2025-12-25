@@ -6,24 +6,24 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import { textBadge } from '../../types/OutcomeBadge';
 import { applyResourceChanges } from '../shared/InlineActionHelpers';
-import { hasCommerceStructure, getBestTradeRates } from '../../services/commerce/tradeRates';
+import { getBestTradeRates } from '../../services/commerce/tradeRates';
 import { getResourceIcon } from '../../view/kingdom/utils/presentation';
 
 export const sellSurplusPipeline: CheckPipeline = {
   // === BASE DATA ===
   id: 'sell-surplus',
   name: 'Sell Surplus',
-  description: 'Convert excess resources into gold through your kingdom\'s commerce infrastructure. Better commerce structures provide better trade rates. Requires at least one commerce structure.',
+  description: 'Convert excess resources into gold. Better commerce structures provide better trade rates.',
   brief: 'Trade resources for gold based on commerce structure tier',
   category: 'economic-resources',
   checkType: 'action',
 
   skills: [
-    { skill: 'society', description: 'market knowledge' },
-    { skill: 'diplomacy', description: 'trade negotiations' },
-    { skill: 'deception', description: 'inflate value' },
-    { skill: 'performance', description: 'showcase goods' },
-    { skill: 'thievery', description: 'black market' }
+    { skill: 'diplomacy', description: 'trade negotiations', doctrine: 'virtuous' },
+    { skill: 'society', description: 'market knowledge', doctrine: 'practical' },
+    { skill: 'performance', description: 'showcase goods', doctrine: 'practical' },
+    { skill: 'deception', description: 'inflate value', doctrine: 'ruthless' },
+    { skill: 'thievery', description: 'black market', doctrine: 'ruthless' }
   ],
 
   outcomes: {
@@ -50,13 +50,9 @@ export const sellSurplusPipeline: CheckPipeline = {
 
   // === TYPESCRIPT LOGIC ===
   requirements: (kingdom) => {
-    if (!hasCommerceStructure()) {
-      return { met: false, reason: 'Requires a commerce structure' };
-    }
-    
     const baseRates = getBestTradeRates();
     const minAmount = baseRates.sell.resourceCost;
-    
+
     const resources = kingdom.resources;
     const hasEnough = resources && (
       (resources.food || 0) >= minAmount ||
@@ -64,11 +60,11 @@ export const sellSurplusPipeline: CheckPipeline = {
       (resources.stone || 0) >= minAmount ||
       (resources.ore || 0) >= minAmount
     );
-    
+
     if (!hasEnough) {
       return { met: false, reason: `Need at least ${minAmount} of any resource to sell` };
     }
-    
+
     return { met: true };
   },
 

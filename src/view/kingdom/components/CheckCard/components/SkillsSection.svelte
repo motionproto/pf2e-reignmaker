@@ -4,8 +4,9 @@
   import { getSkillBonuses } from '../../../../../services/pf2e';
   import { structuresService } from '../../../../../services/structures';
   import type { ConditionalSkillGroup, SkillCondition } from '../../../../../types/player-actions';
-  
-  export let skills: Array<{ skill: string; description?: string }> = [];
+  import type { DoctrineType } from '../../../../../types/CheckPipeline';
+
+  export let skills: Array<{ skill: string; description?: string; doctrine?: DoctrineType }> = [];
   export let conditionalSkills: ConditionalSkillGroup[] | undefined = undefined;
   export let skillSectionTitle: string = 'Choose Skill:';
   export let canPerformMore: boolean = true;
@@ -87,7 +88,8 @@
       {@const bonus = skillBonuses.get(skillOption.skill) ?? null}
       <SkillTag
         skill={skillOption.skill}
-        description={skillOption.description || ''} 
+        description={skillOption.description || ''}
+        doctrine={skillOption.doctrine}
         bonus={bonus}
         selected={false}
         disabled={isDisabled}

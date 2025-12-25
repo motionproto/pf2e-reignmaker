@@ -70,10 +70,6 @@ export class WorksiteEditorHandlers {
       });
       logger.info(`[WorksiteEditorHandlers] Placed ${finalWorksiteType} on hex ${hexId}`);
     });
-    
-    // Recalculate production after worksite placement
-    const { tryRecalculateProduction } = await import('../../../utils/recalculateProduction');
-    await tryRecalculateProduction();
   }
   
   /**
@@ -108,10 +104,6 @@ export class WorksiteEditorHandlers {
       });
       logger.info(`[WorksiteEditorHandlers] Removed ${removedType} from hex ${hexId}`);
     });
-    
-    // Recalculate production after worksite removal
-    const { tryRecalculateProduction } = await import('../../../utils/recalculateProduction');
-    await tryRecalculateProduction();
   }
   
   /**

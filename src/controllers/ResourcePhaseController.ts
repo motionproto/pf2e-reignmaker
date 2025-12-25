@@ -86,32 +86,45 @@ export async function createResourcePhaseController() {
         // Get active economic modifiers
         const modifiers = getActiveModifiers(kingdom);
 
-        // Use economics service to collect all resources
+        // Use economics service to collect all resources (calculates production directly from hexes)
         const result = economicsService.collectTurnResources({
-          hexes: (kingdom.hexes || []) as any[], // Cast to avoid type mismatch - economics service handles the actual hex format
+          hexes: (kingdom.hexes || []) as any[],
           settlements: kingdom.settlements || [],
-          worksiteProduction: new Map(Object.entries(kingdom.worksiteProduction || {})),
-          worksiteProductionByHex: [],
           modifiers
         });
-        
+
+        // Log production result for debugging
+        logger.info('[ResourcePhase] Production result:', {
+          territoryResources: Object.fromEntries(result.resourceCollection.territoryResources),
+          hexCount: result.details.hexCount,
+          byHex: result.details.productionByHex.map(h => ({
+            id: h.hexId,
+            terrain: h.terrain,
+            production: Object.fromEntries(h.production)
+          }))
+        });
+
         // Apply collected resources to kingdom using the new separated structure
         await actor.updateKingdomData((kingdom: any) => {
+          logger.info('[ResourcePhase] Resources BEFORE collection:', JSON.stringify(kingdom.resources));
+
           // Apply territory resources (food, lumber, stone, ore)
           result.resourceCollection.territoryResources.forEach((amount, resource) => {
             if (amount > 0) {
               const current = kingdom.resources[resource] || 0;
               kingdom.resources[resource] = current + amount;
-
+              logger.info(`[ResourcePhase] Applied ${amount} ${resource}: ${current} -> ${kingdom.resources[resource]}`);
             }
           });
-          
+
           // Apply settlement gold
           if (result.resourceCollection.settlementGold > 0) {
             const current = kingdom.resources['gold'] || 0;
             kingdom.resources['gold'] = current + result.resourceCollection.settlementGold;
-
+            logger.info(`[ResourcePhase] Applied ${result.resourceCollection.settlementGold} gold: ${current} -> ${kingdom.resources['gold']}`);
           }
+
+          logger.info('[ResourcePhase] Resources AFTER collection:', JSON.stringify(kingdom.resources));
         });
         
         // Log detailed results with clear separation
@@ -141,7 +154,9 @@ export async function createResourcePhaseController() {
         // Apply custom modifiers with turn-based durations (e.g., plague event)
         // This is done AFTER resource collection so there are resources to modify
         const { applyCustomModifiers } = await import('../services/domain/CustomModifierService');
+        logger.info('[ResourcePhase] Applying custom modifiers...');
         await applyCustomModifiers({ phase: 'Resources' });
+        logger.info('[ResourcePhase] Custom modifiers applied');
         
         // Mark collect resources step as completed (using type-safe constant)
         await completePhaseStepByIndex(ResourcesPhaseSteps.COLLECT_RESOURCES);
@@ -167,12 +182,10 @@ export async function createResourcePhaseController() {
         // Get active economic modifiers (including commodities, leadership bonuses, etc.)
         const modifiers = getActiveModifiers(kingdom);
         
-        // Use economics service with the same worksite production that actual collection uses
+        // Use economics service (calculates production directly from hexes)
         const result = economicsService.collectTurnResources({
-          hexes: hexes as any[], // Cast to avoid type mismatch - economics service handles the actual hex format
+          hexes: hexes as any[],
           settlements,
-          worksiteProduction: new Map(Object.entries(kingdom.worksiteProduction || {})),
-          worksiteProductionByHex: [], // This will be calculated by the economics service from hexes
           modifiers
         });
         

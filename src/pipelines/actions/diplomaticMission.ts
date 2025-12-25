@@ -20,12 +20,13 @@ export const establishDiplomaticRelationsPipeline: CheckPipeline = {
   checkType: 'action',
 
   skills: [
-    { skill: 'diplomacy', description: 'formal negotiations' },
-    { skill: 'society', description: 'cultural exchange' },
-    { skill: 'performance', description: 'diplomatic ceremonies' },
-    { skill: 'deception', description: 'strategic positioning' },
-    { skill: 'occultism', description: 'mystical bonds' },
-    { skill: 'religion', description: 'sacred alliances' }
+    { skill: 'diplomacy', description: 'formal negotiations', doctrine: 'virtuous' },
+    { skill: 'society', description: 'cultural exchange', doctrine: 'virtuous' },
+    { skill: 'religion', description: 'sacred alliances', doctrine: 'virtuous' },
+    { skill: 'performance', description: 'gala events', doctrine: 'practical' },
+    { skill: 'occultism', description: 'mystical bonds', doctrine: 'practical' },
+    { skill: 'deception', description: 'manipulation and subterfuge', doctrine: 'ruthless' },
+    { skill: 'intimidation', description: 'demand compliance', doctrine: 'ruthless' }
   ],
 
   outcomes: {

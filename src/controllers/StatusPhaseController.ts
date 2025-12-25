@@ -18,7 +18,6 @@ import {
 } from './shared/PhaseControllerHelpers';
 import { TurnPhase, type KingdomData } from '../actors/KingdomActor';
 import { StatusPhaseSteps } from './shared/PhaseStepConstants';
-import { createDefaultTurnState } from '../models/TurnState';
 import { SettlementTier, type Settlement } from '../models/Settlement';
 import { logger } from '../utils/Logger';
 import type { BuildProject } from '../services/buildQueue/BuildProject';
@@ -32,11 +31,16 @@ export async function createStatusPhaseController() {
         // Phase guard - prevents initialization when not in Status phase or already initialized
         const guardResult = checkPhaseGuard(TurnPhase.STATUS, 'StatusPhaseController');
         if (guardResult) return guardResult;
-        
+
+        // Ensure turn is properly initialized (handles Turn 1, legacy saves, etc.)
+        // TurnManager is the single source of truth for turn initialization
+        const { TurnManager } = await import('../models/turn-manager/TurnManager');
+        await TurnManager.getInstance().ensureTurnInitialized();
+
         // Clean up any stale base modifiers from displayModifiers (now computed reactively)
         // This handles legacy data from before the reactive refactor
         await this.cleanupStaleDisplayModifiers();
-        
+
         // Check if Status phase was already completed this turn (prevents duplicate processing)
         // This handles the case where user navigates away and back to Status phase
         const actor = getKingdomActor();
@@ -61,8 +65,8 @@ export async function createStatusPhaseController() {
         // Clear completed build projects from previous turn
         await this.clearCompletedProjects();
         
-        // NOTE: Resource decay, fame initialization, and turnState reset
-        // are now handled by TurnManager.endOfTurnCleanup() and TurnManager.initializeTurn()
+        // NOTE: Fame initialization and turnState reset are handled by TurnManager.ensureTurnInitialized()
+        // Resource decay is handled by TurnManager.endOfTurnCleanup()
         
         // Apply base unrest (size + metropolises)
         await this.applyBaseUnrest();
@@ -233,7 +237,7 @@ export async function createStatusPhaseController() {
         return hasDemanded && notPlayerClaimed;
       }).length;
       
-      const totalBaseUnrest = hexUnrest + metropolisCount + demandedHexCount;
+      const totalBaseUnrest = demandedHexCount;
 
       // Note: Base status modifiers (size, metropolis) are now computed REACTIVELY
       // in StatusPhase.svelte, not stored here. This prevents duplicate display issues.
@@ -383,58 +387,6 @@ export async function createStatusPhaseController() {
           }
         }
       }
-    },
-
-    /**
-     * Ensures turnState exists and is properly initialized/reset.
-     * Phase 1 of TurnState Migration:
-     * - Initialize turnState if missing (first turn or legacy save)
-     * - Reset turnState when advancing turns (detect via turnNumber mismatch)
-     * - Migrate legacy fields if needed
-     */
-    async ensureTurnState(): Promise<void> {
-      const actor = getKingdomActor();
-      if (!actor) {
-        logger.error('❌ [StatusPhaseController] No KingdomActor available');
-        return;
-      }
-
-      const kingdom = actor.getKingdomData();
-      if (!kingdom) {
-        logger.error('❌ [StatusPhaseController] No kingdom data available');
-        return;
-      }
-
-      const currentTurn = kingdom.currentTurn || 1;
-
-      // Case 1: No turnState exists (first run or legacy save)
-      if (!kingdom.turnState) {
-
-        // Fresh initialization (no migration needed - data is already clean)
-        await actor.updateKingdomData((k: KingdomData) => {
-          k.turnState = createDefaultTurnState(currentTurn);
-          // Clear faction aid tracking for new turn
-          k.factionsAidedThisTurn = [];
-        });
-
-        return;
-      }
-
-      // Case 2: turnState exists but turn number mismatch (turn advanced)
-      if (kingdom.turnState.turnNumber !== currentTurn) {
-
-
-        await actor.updateKingdomData((k: KingdomData) => {
-          k.turnState = createDefaultTurnState(currentTurn);
-          // Clear faction aid tracking for new turn
-          k.factionsAidedThisTurn = [];
-        });
-
-        return;
-      }
-
-      // Case 3: turnState exists and matches current turn (phase navigation within same turn)
-
     },
 
     /**

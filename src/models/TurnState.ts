@@ -12,6 +12,8 @@
  */
 
 import type { TurnPhase } from '../actors/KingdomActor';
+import type { SerializablePipelineContext } from '../types/PipelineContext';
+import type { ResolutionState } from './Modifiers';
 
 /**
  * Action log entry - tracks individual actions performed by players during a turn
@@ -171,14 +173,17 @@ export interface UpkeepPhaseState {
 export interface TurnState {
   // Turn metadata
   turnNumber: number;
-  
+
   // Action tracking across all phases
   actionLog: ActionLogEntry[];
-  
-  // NEW: Unified intermediate resolution state for all CheckCards
-  // Keyed by checkId (instanceId for events, "incident-{id}" for incidents, etc.)
-  // Contains in-progress choice selections and dice rolls
-  activeResolutions: Record<string, import('../models/Modifiers').ResolutionState>;
+
+  // Pipeline contexts for active pipelines (survives page reload, syncs across clients)
+  // Keyed by instanceId - stores serializable context for reroll recovery
+  // Cleared at end of turn by StatusPhaseController
+  activePipelineContexts: Record<string, SerializablePipelineContext>;
+
+  // NOTE: Resolution state is now stored in pendingOutcomes[].resolutionState (instance-level)
+  // See ResolutionStateHelpers.ts for the unified API
   
   // Phase-specific state objects
   statusPhase: StatusPhaseState;
@@ -196,8 +201,8 @@ export function createDefaultTurnState(turnNumber: number): TurnState {
   return {
     turnNumber,
     actionLog: [],
-    activeResolutions: {},
-    
+    activePipelineContexts: {},
+
     statusPhase: {
       completed: false,
       fameInitialized: false,
@@ -234,7 +239,9 @@ export function createDefaultTurnState(turnNumber: number): TurnState {
       eventInstanceId: null,
       eventResolved: false,
       appliedOutcomes: [],
-      activeAids: []
+      activeAids: [],
+      selectedApproach: null,  // Reset approach selection between turns
+      resolvedOngoingEvents: []  // Reset resolved tracking
     },
     
     actionsPhase: {

@@ -263,17 +263,10 @@ export async function createUpkeepPhaseController() {
         }
       }
       
-      // Get food storage capacity from stored resource
-      const foodStorageCapacity = kingdom.resources?.foodCapacity || 0;
-      let excessFood = 0;
-      
-      // Enforce storage capacity - excess food is lost
-      if (availableFood > foodStorageCapacity) {
-        excessFood = availableFood - foodStorageCapacity;
-        availableFood = foodStorageCapacity;
+      // NOTE: Food storage enforcement moved to TurnManager.endOfTurnCleanup()
+      // This allows the UI to show the correct food amount after feeding,
+      // with decay happening when "End Turn" is clicked.
 
-      }
-      
       // Update kingdom state
       await actor.updateKingdomData((kingdom: any) => {
         kingdom.resources.food = availableFood;
@@ -294,9 +287,6 @@ export async function createUpkeepPhaseController() {
 
       }
       if (unfedSettlements.length > 0) {
-
-      }
-      if (excessFood > 0) {
 
       }
     },

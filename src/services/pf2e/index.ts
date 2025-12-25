@@ -28,6 +28,7 @@ export {
 export {
   getSkillBonus,
   getSkillBonuses,
+  getSkillBonusesForCharacter,
   hasCharacterAssigned
 } from './PF2eSkillBonusService';
 

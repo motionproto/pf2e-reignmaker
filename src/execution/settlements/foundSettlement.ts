@@ -82,10 +82,6 @@ export async function foundSettlementExecution(
     }
   });
 
-  // Recalculate production (settlements affect resource production)
-  const { tryRecalculateProduction } = await import('../../utils/recalculateProduction');
-  await tryRecalculateProduction();
-
   // Debug logging to verify settlement creation
   logger.info(`✅ Settlement ${settlementData.name} added to kingdom store`);
   const verify = getKingdomData();

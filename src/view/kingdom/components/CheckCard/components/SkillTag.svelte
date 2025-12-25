@@ -1,6 +1,7 @@
 <script lang="ts">
    import { createEventDispatcher } from 'svelte';
-   
+   import type { DoctrineType } from '../../../../../types/CheckPipeline';
+
    export let skill: string;
    export let description: string = '';
    export let bonus: number | null = null;
@@ -8,13 +9,24 @@
    export let disabled: boolean = false;
    export let loading: boolean = false;
    export let faded: boolean = false;
-   
+   export let doctrine: DoctrineType | undefined = undefined;
+
    const dispatch = createEventDispatcher();
+
+   // Get the icon class for the doctrine type
+   function getDoctrineIcon(d: DoctrineType): string {
+      switch (d) {
+         case 'virtuous': return 'fa-dove';
+         case 'practical': return 'fa-scale-balanced';
+         case 'ruthless': return 'fa-skull';
+         default: return '';
+      }
+   }
    
    // Simple UI component - just dispatches events
    function handleClick() {
       if (!disabled && !loading) {
-         dispatch('execute', { skill });
+         dispatch('execute', { skill, doctrine });
       }
    }
 </script>
@@ -27,6 +39,9 @@
 >
    {#if loading}
       <i class="fas fa-dice-d20 fa-spin"></i>
+   {/if}
+   {#if doctrine}
+      <i class="fas {getDoctrineIcon(doctrine)} doctrine-icon"></i>
    {/if}
    <span class="skill-label">
       {skill}
@@ -88,7 +103,13 @@
          color: var(--text-secondary);
          opacity: 0.8;
       }
-      
+
+      .doctrine-icon {
+         color: var(--text-secondary);
+         opacity: 0.6;
+         font-size: var(--font-sm);
+      }
+
       &:hover:not(.disabled):not(.selected) {
          transform: translateY(-0.0625rem);
          border-color: var(--border-strong);

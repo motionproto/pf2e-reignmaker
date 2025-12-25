@@ -26,11 +26,17 @@ export type CheckType = 'action' | 'event' | 'incident';
 export type OutcomeType = 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
 
 /**
+ * Doctrine type for skill-based approach tracking
+ */
+export type DoctrineType = 'virtuous' | 'practical' | 'ruthless';
+
+/**
  * Skill option for a check
  */
 export interface SkillOption {
   skill: KingdomSkill;
   description: string;
+  doctrine?: DoctrineType;  // Optional doctrine category for approach tracking
 }
 
 /**

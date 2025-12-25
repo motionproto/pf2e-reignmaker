@@ -6,9 +6,9 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import { textBadge } from '../../types/OutcomeBadge';
 
-export const recruitUnitPipeline: CheckPipeline = {
+export const recruitArmyPipeline: CheckPipeline = {
   // === BASE DATA ===
-  id: 'recruit-unit',
+  id: 'recruit-army',
   name: 'Recruit Army',
   description: 'Rally citizens to arms, drawing from the population to form new military units through inspiration, coercion, or demonstration of prowess',
   brief: 'Raise new troops for your armies',
@@ -16,11 +16,11 @@ export const recruitUnitPipeline: CheckPipeline = {
   checkType: 'action',
 
   skills: [
-    { skill: 'diplomacy', description: 'inspire patriotism' },
-    { skill: 'intimidation', description: 'conscription' },
-    { skill: 'society', description: 'civic duty' },
-    { skill: 'performance', description: 'recruitment rallies' },
-    { skill: 'athletics', description: 'demonstrations of prowess' }
+    { skill: 'diplomacy', description: 'inspire patriotism', doctrine: 'virtuous' },
+    { skill: 'performance', description: 'recruitment rallies', doctrine: 'virtuous' },
+    { skill: 'society', description: 'civic duty', doctrine: 'practical' },
+    { skill: 'athletics', description: 'demonstrations of prowess', doctrine: 'practical' },
+    { skill: 'intimidation', description: 'conscription', doctrine: 'ruthless' }
   ],
 
   outcomes: {
@@ -63,7 +63,7 @@ export const recruitUnitPipeline: CheckPipeline = {
                           ctx.outcome === 'criticalFailure' ? 1 : 0;
 
       const outcomeBadges = [];
-      
+
       if (ctx.outcome === 'criticalSuccess' || ctx.outcome === 'success') {
         outcomeBadges.push(
           textBadge('Will recruit new army at party level', 'fa-shield-alt', 'positive')
@@ -98,8 +98,8 @@ export const recruitUnitPipeline: CheckPipeline = {
 
   execute: async (ctx: any) => {
     if (ctx.outcome === 'failure' || ctx.outcome === 'criticalFailure') {
-      return { 
-        success: true, 
+      return {
+        success: true,
         message: ctx.outcome === 'failure'
           ? 'Failed to recruit troops'
           : 'Recruitment attempt angered the populace'
@@ -107,18 +107,18 @@ export const recruitUnitPipeline: CheckPipeline = {
     }
 
     const recruitmentData = ctx.resolutionData?.customComponentData?.['recruit-army'];
-    
+
     if (!recruitmentData) {
-      return { 
-        success: true, 
+      return {
+        success: true,
         message: 'Army recruitment cancelled - no army was created',
-        cancelled: true 
+        cancelled: true
       };
     }
 
     const { getPartyLevel } = await import('../../services/gameCommands/GameCommandUtils');
     const { getGameCommandRegistry } = await import('../../services/gameCommands/GameCommandHandlerRegistry');
-    
+
     const partyLevel = getPartyLevel();
     const registry = getGameCommandRegistry();
 
@@ -140,9 +140,9 @@ export const recruitUnitPipeline: CheckPipeline = {
       await preparedCommand.commit();
     }
 
-    return { 
-      success: true, 
-      message: `Successfully recruited ${recruitmentData.name}` 
+    return {
+      success: true,
+      message: `Successfully recruited ${recruitmentData.name}`
     };
   }
 };

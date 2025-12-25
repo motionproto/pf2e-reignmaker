@@ -6,22 +6,23 @@
 import type { CheckPipeline } from '../../types/CheckPipeline';
 import { textBadge } from '../../types/OutcomeBadge';
 import { applyResourceChanges } from '../shared/InlineActionHelpers';
-import { hasCommerceStructure, getBestTradeRates } from '../../services/commerce/tradeRates';
+import { getBestTradeRates } from '../../services/commerce/tradeRates';
 
 export const purchaseResourcesPipeline: CheckPipeline = {
   // === BASE DATA ===
   id: 'purchase-resources',
   name: 'Purchase Resources',
-  description: 'Use the kingdom\'s treasury to acquire needed materials through your commerce infrastructure. Better commerce structures provide better trade rates. Requires at least one commerce structure.',
+  description: 'Use the kingdom\'s treasury to acquire needed materials. Better commerce structures provide better trade rates.',
   brief: 'Purchase resources with gold based on commerce structure tier',
   category: 'economic-resources',
   checkType: 'action',
 
   skills: [
-    { skill: 'society', description: 'find suppliers' },
-    { skill: 'diplomacy', description: 'negotiate deals' },
-    { skill: 'intimidation', description: 'demand better prices' },
-    { skill: 'deception', description: 'misleading negotiations' }
+    { skill: 'diplomacy', description: 'negotiate deals', doctrine: 'virtuous' },
+    { skill: 'society', description: 'find suppliers', doctrine: 'practical' },
+    { skill: 'intimidation', description: 'demand better prices', doctrine: 'ruthless' },
+    { skill: 'deception', description: 'misleading negotiations', doctrine: 'ruthless' },
+    { skill: 'thievery', description: 'confiscate shipments', doctrine: 'ruthless' }
   ],
 
   outcomes: {
@@ -50,18 +51,14 @@ export const purchaseResourcesPipeline: CheckPipeline = {
 
   // === TYPESCRIPT LOGIC ===
   requirements: (kingdom) => {
-    if (!hasCommerceStructure()) {
-      return { met: false, reason: 'Requires a commerce structure' };
-    }
-    
     const currentGold = kingdom.resources?.gold || 0;
     const tradeRates = getBestTradeRates();
     const goldCostPerTransaction = tradeRates.buy.goldGain;
-    
+
     if (currentGold < goldCostPerTransaction) {
       return { met: false, reason: `Requires at least ${goldCostPerTransaction} gold to purchase resources (current: ${currentGold})` };
     }
-    
+
     return { met: true };
   },
 

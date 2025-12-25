@@ -22,9 +22,11 @@ export const repairStructurePipeline: CheckPipeline = {
   checkType: 'action',
 
   skills: [
-    { skill: 'crafting', description: 'construction expertise' },
-    { skill: 'society', description: 'organize workforce' },
-    { skill: 'athletics', description: 'physical labor' }
+    { skill: 'diplomacy', description: 'community effort', doctrine: 'virtuous' },
+    { skill: 'crafting', description: 'construction expertise', doctrine: 'practical' },
+    { skill: 'society', description: 'organize workforce', doctrine: 'practical' },
+    { skill: 'athletics', description: 'physical labor', doctrine: 'practical' },
+    { skill: 'intimidation', description: 'demand repairs', doctrine: 'ruthless' }
   ],
 
   outcomes: {

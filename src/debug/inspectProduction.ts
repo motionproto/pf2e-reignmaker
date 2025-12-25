@@ -72,23 +72,28 @@ export async function inspectProduction(): Promise<void> {
     console.log('  Expected Production:', expectedProduction);
   });
   
-  // Check cached production
-  console.log('\n💾 Cached Production (worksiteProduction):');
-  console.log(kingdom.worksiteProduction);
-  
+  // Calculate production directly from hexes (no cache)
+  const { calculateProduction } = await import('../services/economics/production');
+  const result = calculateProduction(kingdom.hexes || [], []);
+
+  console.log('\n📈 Calculated Production (from hexes):');
+  const production: Record<string, number> = {};
+  result.totalProduction.forEach((value, key) => {
+    production[key] = value;
+  });
+  console.log(production);
+
   // Check if production is empty
-  const hasProduction = kingdom.worksiteProduction && 
-    Object.values(kingdom.worksiteProduction).some((v: any) => v > 0);
-  
-  if (!hasProduction) {
-    console.warn('⚠️ Cached production is empty or all zeros!');
-    console.log('This indicates the production calculation did not run correctly.');
+  const hasProduction = Object.values(production).some((v: any) => v > 0);
+
+  if (!hasProduction && hexesWithWorksites.length > 0) {
+    console.warn('⚠️ Calculated production is empty despite having worksites!');
     console.log('Possible causes:');
     console.log('  1. Terrain data is missing or incorrect');
     console.log('  2. Worksites are on incompatible terrain');
     console.log('  3. Production calculation logic has an error');
   }
-  
+
   console.log('\n=== END INSPECTION ===');
 }
 

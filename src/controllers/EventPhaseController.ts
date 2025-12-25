@@ -252,6 +252,45 @@ export async function createEventPhaseController() {
                 };
             }
 
+            // Get kingdom to check current turn - use store for reactivity
+            const { getKingdomActor, kingdomData } = await import('../stores/KingdomStore');
+            const { get } = await import('svelte/store');
+            const actor = getKingdomActor();
+
+            // Use the reactive store instead of direct actor flag read
+            // This ensures we get the latest data that the UI is displaying
+            const storeKingdom = get(kingdomData);
+            const currentTurn = storeKingdom?.currentTurn || 1;
+
+            logger.info(`[EventPhaseController] performEventCheck - currentTurn from store: ${currentTurn}`);
+
+            // No events on turn 1 - skip entirely (no roll, no DC change)
+            if (currentTurn === 1) {
+                if (actor) {
+                    await actor.updateKingdomData((kingdom: any) => {
+                        if (kingdom.turnState) {
+                            kingdom.turnState.eventsPhase.eventRolled = true;
+                            kingdom.turnState.eventsPhase.eventRoll = 0;
+                            kingdom.turnState.eventsPhase.eventTriggered = false;
+                            kingdom.turnState.eventsPhase.eventId = null;
+                        }
+                    });
+                }
+
+                await completePhaseStepByIndex(EventsPhaseSteps.EVENT_ROLL);
+                await completePhaseStepByIndex(EventsPhaseSteps.RESOLVE_EVENT);
+                await completePhaseStepByIndex(EventsPhaseSteps.APPLY_MODIFIERS);
+
+                logger.info('[EventPhaseController] Turn 1 - events skipped');
+
+                return {
+                    triggered: false,
+                    event: null,
+                    roll: 0,
+                    newDC: currentDC
+                };
+            }
+
             // Roll d20 for event check
             const roll = Math.floor(Math.random() * 20) + 1;
             const triggered = roll >= currentDC;
@@ -263,10 +302,39 @@ export async function createEventPhaseController() {
             
             if (triggered) {
                 // Event triggered - get random event and reset DC to 15
-                const allEvents = pipelineRegistry.getPipelinesByType('event');
-                event = allEvents[Math.floor(Math.random() * allEvents.length)] as any;
-                newDC = 15;
-                
+                // Filter events by requirements (e.g., military-exercises requires armies)
+                const allEvents = pipelineRegistry.getPipelinesByType('event')
+                    .filter(evt => {
+                        if (!evt.requirements) return true;
+                        return evt.requirements(kingdom!).met;
+                    });
+
+                // Edge case: no available events (all filtered out)
+                if (allEvents.length === 0) {
+                    logger.info('[EventPhaseController] All events filtered by requirements - treating as no event');
+                    newDC = Math.max(6, currentDC - 5);
+
+                    // Update kingdom state (same as "no event" branch)
+                    const { getKingdomActor } = await import('../stores/KingdomStore');
+                    const actor = getKingdomActor();
+                    if (actor) {
+                        await actor.updateKingdomData((kingdom: any) => {
+                            kingdom.eventDC = newDC;
+                            if (kingdom.turnState) {
+                                kingdom.turnState.eventsPhase.eventRolled = true;
+                                kingdom.turnState.eventsPhase.eventRoll = roll;
+                                kingdom.turnState.eventsPhase.eventTriggered = false;
+                                kingdom.turnState.eventsPhase.eventId = null;
+                            }
+                        });
+                    }
+                    await completePhaseStepByIndex(EventsPhaseSteps.RESOLVE_EVENT);
+                    await completePhaseStepByIndex(EventsPhaseSteps.APPLY_MODIFIERS);
+                } else {
+                    event = allEvents[Math.floor(Math.random() * allEvents.length)] as any;
+                    newDC = 15;
+                }
+
                 if (event) {
                     state.currentEvent = event;
 

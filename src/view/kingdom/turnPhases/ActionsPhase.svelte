@@ -17,9 +17,7 @@
   // Testing Mode
   import {
     testingModeEnabled,
-    selectedCharacter,
-    markCharacterAsActed,
-    autoAdvanceToNextAvailable
+    selectedCharacter
   } from '../../../stores/TestingModeStore';
 
   // Props
@@ -293,7 +291,7 @@
   // Handle skill execution from CheckCard (decoupled from component)
   // ALL actions use PipelineCoordinator - no legacy code paths
   async function handleExecuteSkill(event: CustomEvent, action: any) {
-    const { skill } = event.detail;
+    const { skill, doctrine } = event.detail;
     
     // 🚀 CONTINUOUS PIPELINE: Execute all 9 steps (pauses internally at Step 6)
     if (!pipelineCoordinator) {
@@ -322,10 +320,12 @@
     }
     
     // Execute complete pipeline (Steps 1-9, pauses at Step 6 for user confirmation)
+    // Note: Testing mode character tracking is handled reactively via actionLog in TestingModeCharacterBar
     try {
       await pipelineCoordinator.executePipeline(action.id, {
         actor: {
           selectedSkill: skill,
+          selectedDoctrine: doctrine,
           fullActor: actingCharacter,
           actorName: actingCharacter.name,
           actorId: actingCharacter.id,
@@ -333,14 +333,8 @@
           proficiencyRank: 0 // TODO: Get from actor
         }
       });
-      
-      console.log(`✅ [ActionsPhase] Pipeline complete for ${action.id}`);
 
-      // Testing Mode: mark character as acted and auto-advance
-      if ($testingModeEnabled && $selectedCharacter) {
-        markCharacterAsActed($selectedCharacter.actorId);
-        autoAdvanceToNextAvailable();
-      }
+      console.log(`✅ [ActionsPhase] Pipeline initiated for ${action.id}`);
     } catch (error: any) {
       // Handle user cancellation gracefully (not an error)
       if (error.message === 'Action cancelled by user') {

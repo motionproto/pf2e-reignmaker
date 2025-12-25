@@ -250,9 +250,18 @@ export class TurnManager {
             k.resources.lumber = 0;
             k.resources.stone = 0;
             k.resources.ore = 0;
-            
+
             if (decayed.lumber > 0 || decayed.stone > 0 || decayed.ore > 0) {
                 logger.info(`📦 [TurnManager] Resource decay: lumber=${decayed.lumber}, stone=${decayed.stone}, ore=${decayed.ore}`);
+            }
+
+            // Food decay - excess food beyond storage capacity is lost
+            const currentFood = k.resources?.food || 0;
+            const foodCapacity = k.resources?.foodCapacity || 0;
+            if (currentFood > foodCapacity) {
+                const excessFood = currentFood - foodCapacity;
+                k.resources.food = foodCapacity;
+                logger.info(`🍞 [TurnManager] Food decay: ${excessFood} food lost (exceeded storage capacity of ${foodCapacity})`);
             }
         });
         
@@ -318,78 +327,110 @@ export class TurnManager {
     }
 
     /**
-     * Initialize new turn - runs AFTER cleanup, sets up fresh turn state
+     * Ensure the current turn is properly initialized
+     * Called at the start of Status phase to handle Turn 1 and any edge cases
+     *
+     * This is idempotent - safe to call multiple times per turn
      */
-    private async initializeTurn(): Promise<void> {
-        logger.info('🎬 [TurnManager] Initializing new turn...');
-        
+    async ensureTurnInitialized(): Promise<void> {
         const { createDefaultTurnState } = await import('../TurnState');
         const { updateKingdom, kingdomData } = await import('../../stores/KingdomStore');
         const { get } = await import('svelte/store');
         const currentKingdom = get(kingdomData);
-        
+
+        const currentTurn = currentKingdom.currentTurn || 1;
+        const turnState = currentKingdom.turnState;
+
+        // Check if this turn has already been initialized
+        // (turnState exists and matches current turn number)
+        if (turnState && turnState.turnNumber === currentTurn) {
+            return; // Already initialized
+        }
+
+        logger.info(`🎬 [TurnManager] Initializing turn ${currentTurn}...`);
+
+        // Note: Testing mode "acted" status is derived from actionLog, which is
+        // reset via createDefaultTurnState() below - no separate reset needed
+
         await updateKingdom(kingdom => {
-            // 1. Increment turn number
-            kingdom.currentTurn++;
-            
-            // 2. Reset to STATUS phase
-            kingdom.currentPhase = TurnPhase.STATUS;
-            kingdom.currentPhaseSteps = [];
-            kingdom.currentPhaseStepIndex = 0;
-            kingdom.oncePerTurnActions = [];
-            
-            // 3. Reset turn-scoped penalties
+            // Initialize turnState for this turn
+            kingdom.turnState = createDefaultTurnState(currentTurn);
+
+            // Clear faction aid tracking for new turn
+            kingdom.factionsAidedThisTurn = [];
+
+            // Reset turn-scoped penalties
             kingdom.leadershipPenalty = 0;
-            
-            // 4. Reset turnState for new turn
-            kingdom.turnState = createDefaultTurnState(kingdom.currentTurn);
-            
-            // 5. Initialize fame for new turn (moved from StatusPhaseController)
+
+            // Reset once-per-turn actions
+            kingdom.oncePerTurnActions = [];
+
+            // Initialize fame for this turn
             kingdom.fame = 1;
         });
-        
-        logger.info(`✅ [TurnManager] Turn ${currentKingdom.currentTurn + 1} initialized`);
+
+        logger.info(`✅ [TurnManager] Turn ${currentTurn} initialized`);
     }
 
     /**
      * End the current turn and start a new one
      */
     async endTurn(): Promise<void> {
-        const { kingdomData } = await import('../../stores/KingdomStore');
+        const { updateKingdom, kingdomData } = await import('../../stores/KingdomStore');
         const { get } = await import('svelte/store');
         const currentKingdom = get(kingdomData);
+        const nextTurn = (currentKingdom.currentTurn || 1) + 1;
 
         this.onTurnEnded?.(currentKingdom.currentTurn);
-        
-        // ✅ NEW: Call end-of-turn cleanup FIRST
+
+        // 1. Run end-of-turn cleanup (resource decay, expired modifiers, etc.)
         await this.endOfTurnCleanup();
-        
-        // ✅ NEW: Call turn initialization (increments turn, resets state)
-        await this.initializeTurn();
-        
-        // ✅ Existing notification logic (unchanged)
-        this.onTurnChanged?.(currentKingdom.currentTurn + 1);
+
+        // 2. Increment turn number and reset phase
+        logger.info(`🎬 [TurnManager] Advancing to turn ${nextTurn}...`);
+        await updateKingdom(kingdom => {
+            kingdom.currentTurn = nextTurn;
+            kingdom.currentPhase = TurnPhase.STATUS;
+            kingdom.currentPhaseSteps = [];
+            kingdom.currentPhaseStepIndex = 0;
+        });
+
+        // 3. Initialize the new turn's state (fame, turnState, etc.)
+        await this.ensureTurnInitialized();
+
+        // 4. Notify UI of changes
+        this.onTurnChanged?.(nextTurn);
         this.onPhaseChanged?.(TurnPhase.STATUS);
+
+        logger.info(`✅ [TurnManager] Turn ${nextTurn} started`);
     }
     
     /**
      * Start a new game/reset turns
      */
     async startNewGame(): Promise<void> {
+        logger.info('🎮 [TurnManager] Starting new game...');
 
         const { updateKingdom } = await import('../../stores/KingdomStore');
+
+        // Set up fresh game state
         await updateKingdom((kingdom) => {
             kingdom.currentTurn = 1;
             kingdom.currentPhase = TurnPhase.STATUS;
             kingdom.currentPhaseSteps = [];
             kingdom.currentPhaseStepIndex = 0;
-            kingdom.oncePerTurnActions = [];
             kingdom.unrest = 0;
-            kingdom.fame = 0;
+            // Clear turnState so ensureTurnInitialized() will run
+            kingdom.turnState = undefined as any;
         });
-        
+
+        // Initialize Turn 1 state (fame, turnState, etc.)
+        await this.ensureTurnInitialized();
+
         this.onTurnChanged?.(1);
         this.onPhaseChanged?.(TurnPhase.STATUS);
+
+        logger.info('✅ [TurnManager] New game started');
     }
     
     /**

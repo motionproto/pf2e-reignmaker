@@ -61,25 +61,22 @@
   }
 
   // ✅ STANDARD EVENT: Emit 'resolution' with ComponentResolutionData
+  // NOTE: We do NOT include modifiers here because the onComplete handler in the pipeline
+  // applies the resource changes. Including modifiers would cause double-application.
   function handleResourceClick(resource: ResourceType) {
     // Update local UI state
     selectedResource = resource;
-    
+
     // Emit standardized resolution event
+    // Only metadata - onComplete handler uses this to apply changes
     const resolutionData: ComponentResolutionData = {
       isResolved: true,
-      modifiers: [{
-        type: 'static',
-        resource: resource,
-        value: amount,
-        duration: 'immediate'
-      }],
       metadata: {
         selectedResource: resource,
         amount: amount
       }
     };
-    
+
     dispatch('resolution', resolutionData);
   }
 </script>

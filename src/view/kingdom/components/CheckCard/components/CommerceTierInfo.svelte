@@ -11,6 +11,7 @@
   
   // Define tiers with display info
   const tiers = [
+    { tier: 0, name: 'No Structure', ratio: '3:1' },
     { tier: 1, name: 'Market Square', ratio: '2:1' },
     { tier: 2, name: 'Bazaar', ratio: '3:2' },
     { tier: 3, name: 'Merchant Guild', ratio: '1:1' },
@@ -71,12 +72,6 @@
     </div>
   {/each}
 </div>
-{#if currentTier === 0}
-  <div class="no-commerce-notice">
-    <i class="fas fa-info-circle"></i>
-    <span>No commerce structure built. Build one to enable trading!</span>
-  </div>
-{/if}
 
 <style lang="scss">
   .tier-badges {
@@ -117,23 +112,5 @@
   .tier-ratio {
     font-weight: var(--font-weight-semibold);
     opacity: 0.9;
-  }
-  
-  .no-commerce-notice {
-    display: flex;
-    align-items: center;
-    gap: var(--space-8);
-    margin-top: var(--space-8);
-    padding: var(--space-8) var(--space-12);
-    background: var(--surface-accent-low);
-    border: 1px solid var(--border-accent-subtle);
-    border-radius: var(--radius-sm);
-    font-size: var(--font-sm);
-    color: var(--color-amber);
-    
-    i {
-      font-size: var(--font-md);
-      opacity: 0.8;
-    }
   }
 </style>

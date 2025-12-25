@@ -18,10 +18,10 @@ export const outfitArmyPipeline: CheckPipeline = {
   cost: { ore: 1, gold: 2 },
 
   skills: [
-    { skill: 'crafting', description: 'forge equipment' },
-    { skill: 'society', description: 'requisition supplies' },
-    { skill: 'intimidation', description: 'commandeer resources' },
-    { skill: 'thievery', description: 'acquire through subterfuge' }
+    { skill: 'crafting', description: 'forge equipment', doctrine: 'practical' },
+    { skill: 'society', description: 'requisition supplies', doctrine: 'practical' },
+    { skill: 'intimidation', description: 'commandeer resources', doctrine: 'ruthless' },
+    { skill: 'thievery', description: 'divert resources', doctrine: 'ruthless' }
   ],
 
   outcomes: {

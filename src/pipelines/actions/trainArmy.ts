@@ -18,10 +18,12 @@ export const trainArmyPipeline: CheckPipeline = {
   checkType: 'action',
 
   skills: [
-    { skill: 'intimidation', description: 'harsh discipline' },
-    { skill: 'athletics', description: 'physical conditioning' },
-    { skill: 'acrobatics', description: 'agility training' },
-    { skill: 'survival', description: 'endurance exercises' }
+    { skill: 'diplomacy', description: 'inspired leadership', doctrine: 'virtuous' },
+    { skill: 'religion', description: 'martial blessing', doctrine: 'virtuous' },
+    { skill: 'athletics', description: 'physical conditioning', doctrine: 'practical' },
+    { skill: 'acrobatics', description: 'agility training', doctrine: 'practical' },
+    { skill: 'survival', description: 'endurance exercises', doctrine: 'practical' },
+    { skill: 'intimidation', description: 'harsh discipline', doctrine: 'ruthless' }
   ],
 
   outcomes: {

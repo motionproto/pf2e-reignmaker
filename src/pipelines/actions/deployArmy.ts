@@ -17,10 +17,10 @@ export const deployArmyPipeline: CheckPipeline = {
   checkType: 'action',
 
   skills: [
-    { skill: 'nature', description: 'natural pathways' },
-    { skill: 'survival', description: 'wilderness navigation' },
-    { skill: 'athletics', description: 'forced march' },
-    { skill: 'stealth', description: 'covert movement' }
+    { skill: 'nature', description: 'natural pathways', doctrine: 'virtuous' },
+    { skill: 'survival', description: 'wilderness navigation', doctrine: 'practical' },
+    { skill: 'athletics', description: 'forced march', doctrine: 'practical' },
+    { skill: 'stealth', description: 'covert movement', doctrine: 'ruthless' }
   ],
 
   outcomes: {

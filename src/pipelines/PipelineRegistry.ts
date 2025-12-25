@@ -33,7 +33,7 @@ import { trainArmyPipeline } from './actions/trainArmy';
 import { disbandArmyPipeline } from './actions/disbandArmy';
 
 // Week 7: Game Command Actions (5)
-import { recruitUnitPipeline } from './actions/recruitUnit';
+import { recruitArmyPipeline } from './actions/recruitArmy';
 import { deployArmyPipeline } from './actions/deployArmy';
 import { buildStructurePipeline } from './actions/buildStructure';
 import { repairStructurePipeline } from './actions/repairStructure';
@@ -154,7 +154,7 @@ const ACTION_PIPELINES: CheckPipeline[] = [
   disbandArmyPipeline,
 
   // Week 7: Game Command Actions (5)
-  recruitUnitPipeline,
+  recruitArmyPipeline,
   deployArmyPipeline,
   buildStructurePipeline,
   repairStructurePipeline,

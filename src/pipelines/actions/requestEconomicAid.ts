@@ -18,11 +18,11 @@ export const requestEconomicAidPipeline: CheckPipeline = {
   checkType: 'action',
 
   skills: [
-    { skill: 'diplomacy', description: 'formal request' },
-    { skill: 'society', description: 'leverage connections' },
-    { skill: 'performance', description: 'emotional appeal' },
-    { skill: 'deception', description: 'exaggerate need' },
-    { skill: 'medicine', description: 'humanitarian aid' }
+    { skill: 'diplomacy', description: 'formal request', doctrine: 'virtuous' },
+    { skill: 'performance', description: 'emotional appeal', doctrine: 'virtuous' },
+    { skill: 'medicine', description: 'humanitarian aid', doctrine: 'practical' },
+    { skill: 'society', description: 'leverage connections', doctrine: 'practical' },
+    { skill: 'deception', description: 'exaggerate need', doctrine: 'ruthless' }
   ],
 
   outcomes: {
