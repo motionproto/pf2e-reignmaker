@@ -186,38 +186,61 @@ export class PipelineCoordinator {
    */
   async rerollFromStep3(instanceId: string): Promise<void> {
     let context = this.pendingContexts.get(instanceId);
-    
+
     if (!context) {
-      // Context lost - try to restore from persisted instance
-      console.log(`🔄 [PipelineCoordinator] Context lost for ${instanceId}, restoring from persisted data`);
-      
+      // Context lost - reconstruct from persisted instance
+      console.log(`🔄 [PipelineCoordinator] Context lost for ${instanceId}, reconstructing from persisted data`);
+
       const actor = getKingdomActor();
       if (!actor) {
         throw new Error(`[PipelineCoordinator] No kingdom actor found`);
       }
-      
+
       const kingdom = actor.getKingdomData();
       const instance = kingdom.pendingOutcomes?.find((i: any) => i.previewId === instanceId);
-      
+
       if (!instance) {
         throw new Error(`[PipelineCoordinator] No pipeline context or instance found for: ${instanceId}`);
       }
-      
-      // Restore resolution data from instance metadata if it exists
-      if (instance.metadata?._resolutionData) {
-        console.log(`💾 [PipelineCoordinator] Restored resolution data from instance:`, instance.metadata._resolutionData);
-        
-        // Find context in pending map (should exist after Step 6)
-        const existingContext = this.pendingContexts.get(instanceId);
-        if (existingContext) {
-          existingContext.resolutionData = instance.metadata._resolutionData;
-          context = existingContext;
-        }
-      }
-      
-      if (!context) {
-        throw new Error(`[PipelineCoordinator] Failed to restore context for reroll: ${instanceId}`);
-      }
+
+      // Reconstruct context from persisted instance (similar to resumeFromPersistedPreview)
+      const resolutionData = instance.metadata?._resolutionData || {
+        diceRolls: {},
+        choices: {},
+        allocations: {},
+        textInputs: {},
+        compoundData: {},
+        numericModifiers: [],
+        manualEffects: [],
+        customComponentData: null
+      };
+
+      context = {
+        actionId: instance.checkId,
+        checkType: instance.checkType as 'action' | 'event' | 'incident',
+        userId: (window as any).game?.user?.id || 'unknown',
+        kingdom,
+        actor: instance.metadata?.actor,
+        metadata: instance.metadata || {},
+        resolutionData,
+        rollData: instance.appliedOutcome ? {
+          outcome: instance.appliedOutcome.outcome as any,
+          rollBreakdown: instance.appliedOutcome.rollBreakdown
+        } : undefined,
+        instanceId,
+        userConfirmed: false,
+        logs: []
+      };
+
+      // Store reconstructed context for future use
+      this.pendingContexts.set(instanceId, context);
+
+      console.log(`💾 [PipelineCoordinator] Reconstructed context for reroll:`, {
+        actionId: context.actionId,
+        checkType: context.checkType,
+        hasResolutionData: !!context.resolutionData,
+        hasRollData: !!context.rollData
+      });
     }
     
     console.log(`🔄 [PipelineCoordinator] Rerolling from Step 3 (same pipeline context)`);
