@@ -30,9 +30,9 @@ export const establishSettlementPipeline: CheckPipeline = {
   special: 'A new settlement begins as a level 1 Village unless special circumstances apply. Must be founded in a claimed hex with no other settlement within 4 hexes.',
 
   skills: [
-    { skill: 'diplomacy', description: 'attract settlers', doctrine: 'virtuous' },
-    { skill: 'religion', description: 'blessed founding', doctrine: 'virtuous' },
-    { skill: 'medicine', description: 'healthy community planning', doctrine: 'virtuous' },
+    { skill: 'diplomacy', description: 'attract settlers', doctrine: 'idealist' },
+    { skill: 'religion', description: 'blessed founding', doctrine: 'idealist' },
+    { skill: 'medicine', description: 'healthy community planning', doctrine: 'idealist' },
     { skill: 'society', description: 'organized settlement', doctrine: 'practical' },
     { skill: 'survival', description: 'frontier establishment', doctrine: 'practical' },
     { skill: 'intimidation', description: 'forced labour', doctrine: 'ruthless' }

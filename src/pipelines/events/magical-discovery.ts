@@ -31,12 +31,12 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Share Freely',
         description: 'Make knowledge available to all',
         icon: 'fas fa-book-open',
         skills: ['arcana', 'diplomacy', 'occultism', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Selfless sharing sparks wondrous breakthroughs; nations praise generosity.',
           success: 'Open hearts share arcane secrets; grateful scholars spread your fame.',
@@ -176,7 +176,7 @@ export const magicalDiscoveryPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         if (outcome === 'criticalSuccess') {
           const factionHandler1 = new AdjustFactionHandler();
           const factionCommand1 = await factionHandler1.prepare(

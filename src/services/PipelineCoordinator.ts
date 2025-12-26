@@ -639,8 +639,29 @@ export class PipelineCoordinator {
     const characterLevel = ctx.actor?.level || actingCharacter.level || 1;
     const { getPartyLevel, getLevelBasedDC } = await import('../pipelines/shared/ActionHelpers');
     const effectiveLevel = getPartyLevel(characterLevel);
-    const dc = getLevelBasedDC(effectiveLevel);
-    
+    let dc = getLevelBasedDC(effectiveLevel);
+
+    // Apply doctrine DC adjustment for events with aligned approaches
+    if (ctx.checkType === 'event') {
+      const { doctrineService } = await import('./doctrine/DoctrineService');
+      const doctrineState = doctrineService.getDoctrineState();
+
+      if (doctrineState.dominant && doctrineState.dominantTier !== 'none') {
+        // Get the selected approach from kingdom state
+        const selectedApproach = ctx.kingdom?.turnState?.eventsPhase?.selectedApproach;
+        if (selectedApproach && pipeline.strategicChoice?.options) {
+          const selectedOption = pipeline.strategicChoice.options.find(opt => opt.id === selectedApproach);
+          // Check if approach's personality aligns with dominant doctrine
+          if (selectedOption?.personality?.[doctrineState.dominant]) {
+            const adjustment = doctrineState.tierInfo[doctrineState.dominant].dcAdjustment;
+            const { MINIMUM_DC } = await import('../constants/doctrine');
+            dc = Math.max(MINIMUM_DC, dc + adjustment);
+            log(ctx, 3, 'executeRoll', `Doctrine DC adjustment: ${adjustment} (aligned with ${doctrineState.dominant})`);
+          }
+        }
+      }
+    }
+
     // Store DC in context immediately
     ctx.rollData = { ...(ctx.rollData || {}), dc } as any;
     
@@ -1260,7 +1281,7 @@ export class PipelineCoordinator {
   /**
    * Track doctrine points when an event with a strategic choice is resolved
    *
-   * Adds 5 points to the winning doctrine category (virtuous, practical, or ruthless)
+   * Adds 5 points to the winning doctrine category (idealist, practical, or ruthless)
    * based on the selected approach's personality weight.
    */
   private async trackEventDoctrine(ctx: PipelineContext, pipeline: CheckPipeline): Promise<void> {
@@ -1286,12 +1307,12 @@ export class PipelineCoordinator {
 
     // Determine the primary doctrine category (highest weighted personality value)
     const personality = selectedOption.personality;
-    let primaryDoctrine: 'virtuous' | 'practical' | 'ruthless' | null = null;
+    let primaryDoctrine: 'idealist' | 'practical' | 'ruthless' | null = null;
     let highestWeight = 0;
 
-    if (personality.virtuous && personality.virtuous > highestWeight) {
-      highestWeight = personality.virtuous;
-      primaryDoctrine = 'virtuous';
+    if (personality.idealist && personality.idealist > highestWeight) {
+      highestWeight = personality.idealist;
+      primaryDoctrine = 'idealist';
     }
     if (personality.practical && personality.practical > highestWeight) {
       highestWeight = personality.practical;
@@ -1313,7 +1334,7 @@ export class PipelineCoordinator {
     await actor.updateKingdomData((k: any) => {
       // Initialize doctrine if not present
       if (!k.doctrine) {
-        k.doctrine = { virtuous: 0, practical: 0, ruthless: 0 };
+        k.doctrine = { idealist: 0, practical: 0, ruthless: 0 };
       }
 
       k.doctrine[primaryDoctrine!] = (k.doctrine[primaryDoctrine!] || 0) + DOCTRINE_POINTS;
@@ -1362,7 +1383,7 @@ export class PipelineCoordinator {
     await actor.updateKingdomData((k: any) => {
       // Initialize doctrine if not present
       if (!k.doctrine) {
-        k.doctrine = { virtuous: 0, practical: 0, ruthless: 0 };
+        k.doctrine = { idealist: 0, practical: 0, ruthless: 0 };
       }
 
       k.doctrine[doctrine] = (k.doctrine[doctrine] || 0) + DOCTRINE_POINTS;

@@ -43,12 +43,12 @@ export const banditActivityPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Negotiate',
         description: 'Offer bandits employment and peaceful resolution',
         icon: 'fas fa-handshake',
         skills: ['diplomacy', 'society', 'religion', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Reformed outlaws become loyal workers; compassion builds prosperity.',
           success: 'Diplomatic resolution spares bloodshed; bandits depart peacefully.',
@@ -194,7 +194,7 @@ export const banditActivityPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         // Negotiate Safe Passage (Virtuous)
         if (outcome === 'criticalSuccess') {
           // +1 Fame, -1d3 Unrest, +1 new worksite, +1 faction
@@ -429,7 +429,7 @@ export const banditActivityPipeline: CheckPipeline = {
       await armyCommand.commit();
     }
 
-    // Create worksite (virtuous CS)
+    // Create worksite (idealist CS)
     if (ctx.metadata?._createWorksite) {
       const selectedHexData = ctx.resolutionData?.compoundData?.selectedHex;
       
@@ -456,13 +456,13 @@ export const banditActivityPipeline: CheckPipeline = {
       ui.notifications?.info(`Bandits integrated as workers - ${worksiteType} created on hex ${hexId}`);
     }
 
-    // Execute faction adjustment (virtuous CS)
+    // Execute faction adjustment (idealist CS)
     const factionCommand = ctx.metadata?._preparedFactionVirtuous;
     if (factionCommand?.commit) {
       await factionCommand.commit();
     }
 
-    // Execute worksite destruction (virtuous CF)
+    // Execute worksite destruction (idealist CF)
     const destroyVirtuous = ctx.metadata?._preparedDestroyWorksiteVirtuous;
     if (destroyVirtuous?.commit) {
       await destroyVirtuous.commit();

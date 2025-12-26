@@ -31,12 +31,12 @@ export const foodSurplusPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Feed the Poor',
         description: 'Share abundance with the poor and needy',
         icon: 'fas fa-bread-slice',
         skills: ['nature', 'diplomacy', 'medicine', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Selfless sharing inspires hope; grateful communities build new structures.',
           success: 'Generous hearts feed hungry mouths; loyalty blooms amid plenty.',
@@ -180,7 +180,7 @@ export const foodSurplusPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         // Distribute Freely (Virtuous)
         if (outcome === 'criticalSuccess') {
           // +1 Fame, adjust 1 faction +1, 1 settlement gains a structure
@@ -292,7 +292,7 @@ export const foodSurplusPipeline: CheckPipeline = {
     const kingdom = get(kingdomData);
     const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
 
-    // Execute faction adjustments (virtuous approach)
+    // Execute faction adjustments (idealist approach)
     const factionCommandVirtuous = ctx.metadata?._preparedFactionVirtuous;
     if (factionCommandVirtuous?.commit) {
       await factionCommandVirtuous.commit();
@@ -304,7 +304,7 @@ export const foodSurplusPipeline: CheckPipeline = {
       await factionCommand.commit();
     }
 
-    // Commit structure grant (virtuous CS)
+    // Commit structure grant (idealist CS)
     const structureCommand = ctx.metadata?._preparedStructure;
     if (structureCommand?.commit) {
       await structureCommand.commit();

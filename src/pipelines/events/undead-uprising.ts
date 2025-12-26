@@ -33,12 +33,12 @@ export const undeadUprisingPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Consecrate Land',
         description: 'Lay spirits to rest through consecration rituals',
         icon: 'fas fa-hands-praying',
         skills: ['occultism', 'diplomacy', 'religion', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Sacred rituals grant eternal peace; blessed ground yields abundant harvest.',
           success: 'Compassionate rites lay troubled spirits to rest; gratitude fills the air.',
@@ -176,7 +176,7 @@ export const undeadUprisingPipeline: CheckPipeline = {
       };
 
       // Handle faction adjustments
-      if (approach === 'virtuous' && outcome === 'criticalSuccess') {
+      if (approach === 'idealist' && outcome === 'criticalSuccess') {
         // adjust 1 faction +1, +1 Fame
         const factionHandler = new AdjustFactionHandler();
         const factionCommand = await factionHandler.prepare(
@@ -253,7 +253,7 @@ export const undeadUprisingPipeline: CheckPipeline = {
       }
 
       // Handle special outcomes based on approach
-      if (approach === 'virtuous' && outcome === 'criticalFailure') {
+      if (approach === 'idealist' && outcome === 'criticalFailure') {
         // damage 1 structure (unrest already in outcomeBadges)
         const damageHandler = new DamageStructureHandler();
         const damageCommand = await damageHandler.prepare(
@@ -360,7 +360,7 @@ export const undeadUprisingPipeline: CheckPipeline = {
       await factionPracticalF.commit();
     }
 
-    // Execute structure damage (virtuous CF)
+    // Execute structure damage (idealist CF)
     const damageVirtuous = ctx.metadata?._preparedDamageVirtuous;
     if (damageVirtuous?.commit) {
       await damageVirtuous.commit();

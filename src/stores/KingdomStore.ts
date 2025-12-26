@@ -15,6 +15,8 @@ import { logger } from '../utils/Logger';
 import { wrapKingdomActor } from '../utils/kingdom-actor-wrapper';
 import { createDefaultTurnState } from '../models/TurnState';
 import { findOrphanedHexes } from '../utils/hex-contiguity';
+import type { DoctrineType, DoctrineTier, DoctrineState, DoctrineTierConfig } from '../types/Doctrine';
+import { DOCTRINE_THRESHOLDS, DOCTRINE_TIER_EFFECTS, DOCTRINE_COLORS, DEFAULT_DOCTRINE_VALUES } from '../constants/doctrine';
 
 // Core actor store - this is the single source of truth
 export const kingdomActor = writable<KingdomActor | null>(null);
@@ -44,7 +46,74 @@ export const imprisonedUnrest = derived(settlements, $settlements => {
 export const fame = derived(kingdomData, $data => $data.fame);
 
 // Doctrine tracking - accumulated points from event vote choices
-export const doctrine = derived(kingdomData, $data => $data.doctrine || { virtuous: 0, practical: 0, ruthless: 0 });
+// Handles migration from old 'virtuous' field to 'idealist'
+export const doctrine = derived(kingdomData, $data => {
+  const raw = $data.doctrine as Record<string, number> | undefined;
+  if (!raw) return { idealist: 0, practical: 0, ruthless: 0 };
+  return {
+    idealist: raw.idealist ?? raw.virtuous ?? 0,
+    practical: raw.practical ?? 0,
+    ruthless: raw.ruthless ?? 0
+  };
+});
+
+// Helper functions for computing doctrine state inline (to avoid circular dependency with DoctrineService)
+function getTierForValue(value: number): DoctrineTier {
+  if (value >= DOCTRINE_THRESHOLDS.absolute) return 'absolute';
+  if (value >= DOCTRINE_THRESHOLDS.major) return 'major';
+  if (value >= DOCTRINE_THRESHOLDS.moderate) return 'moderate';
+  if (value >= DOCTRINE_THRESHOLDS.minor) return 'minor';
+  return 'none';
+}
+
+function getTierConfig(doctrine: DoctrineType, value: number): DoctrineTierConfig {
+  const tier = getTierForValue(value);
+  const effects = DOCTRINE_TIER_EFFECTS[tier];
+  const tierCapitalized = tier === 'none' ? '' : tier.charAt(0).toUpperCase() + tier.slice(1);
+  const doctrineCapitalized = doctrine.charAt(0).toUpperCase() + doctrine.slice(1);
+
+  return {
+    tier,
+    threshold: DOCTRINE_THRESHOLDS[tier],
+    label: tier === 'none' ? 'No Doctrine' : `${tierCapitalized} ${doctrineCapitalized}`,
+    color: tier === 'none' ? 'var(--text-muted)' : DOCTRINE_COLORS[doctrine],
+    skillBonus: effects.skillBonus
+  };
+}
+
+function calculateDominant(values: Record<DoctrineType, number>): DoctrineType | null {
+  const i = values.idealist || 0;
+  const p = values.practical || 0;
+  const r = values.ruthless || 0;
+  const max = Math.max(i, p, r);
+  if (max === 0) return null;
+  const dominants: DoctrineType[] = [];
+  if (i === max) dominants.push('idealist');
+  if (p === max) dominants.push('practical');
+  if (r === max) dominants.push('ruthless');
+  return dominants.length === 1 ? dominants[0] : null;
+}
+
+// Doctrine state - comprehensive state including dominant, tiers, and effects
+export const doctrineState = derived(kingdomData, ($data): DoctrineState => {
+  const values = $data?.doctrine || { ...DEFAULT_DOCTRINE_VALUES };
+
+  const tierInfo: Record<DoctrineType, DoctrineTierConfig> = {
+    idealist: getTierConfig('idealist', values.idealist || 0),
+    practical: getTierConfig('practical', values.practical || 0),
+    ruthless: getTierConfig('ruthless', values.ruthless || 0)
+  };
+
+  const dominant = calculateDominant(values);
+  const dominantTier = dominant ? tierInfo[dominant].tier : 'none';
+
+  return {
+    dominant,
+    dominantTier,
+    values,
+    tierInfo
+  };
+});
 
 // Event votes - reactive store for voting system
 export const eventVotes = derived(kingdomActor, $actor => {

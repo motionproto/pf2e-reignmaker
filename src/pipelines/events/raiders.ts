@@ -34,12 +34,12 @@ export const raidersPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Defend & Protect',
         description: 'Seek peaceful resolution through diplomacy',
         icon: 'fas fa-dove',
         skills: ['diplomacy', 'society', 'survival', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Former enemies become trading partners; mutual prosperity blooms.',
           success: 'Diplomacy wins fragile peace; raiders depart with dignity.',
@@ -184,7 +184,7 @@ export const raidersPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         // Negotiate Peace Treaty (Virtuous)
         if (outcome === 'criticalSuccess') {
           // Adjust 1 random faction +1

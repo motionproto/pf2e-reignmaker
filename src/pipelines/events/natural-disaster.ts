@@ -30,12 +30,12 @@ export const naturalDisasterPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Rescue & Relief',
         description: 'Save people over property at any cost',
         icon: 'fas fa-people-roof',
         skills: ['survival', 'medicine', 'athletics', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Heroic rescues save every soul; grateful survivors rebuild together.',
           success: 'Compassionate evacuation spares lives; survivors mourn lost homes, not loved ones.',
@@ -189,7 +189,7 @@ export const naturalDisasterPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         // Prioritize Lives (Virtuous)
         if (outcome === 'criticalSuccess') {
           // Faction adjustment

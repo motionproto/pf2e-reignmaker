@@ -33,12 +33,12 @@ export const criminalTrialPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Show Mercy',
         description: 'Demonstrate compassion and forgiveness',
         icon: 'fas fa-dove',
         skills: ['religion', 'diplomacy', 'performance', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Redemptive justice inspires reformation; pardoned criminals become model citizens.',
           success: 'Merciful sentences restore balance; pardoned souls embrace second chances.',
@@ -176,7 +176,7 @@ export const criminalTrialPipeline: CheckPipeline = {
       const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
       const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
 
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         // Show Mercy (Virtuous)
         const commandContext: GameCommandContext = {
           actionId: 'criminal-trial',

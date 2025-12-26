@@ -32,12 +32,12 @@ export const grandTournamentPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Free Celebrations',
         description: 'Open celebration for all citizens',
         icon: 'fas fa-users',
         skills: ['performance', 'athletics', 'religion', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Free games unite the realm; joy echoes in every heart.',
           success: 'Open celebration inspires pride and loyalty.',
@@ -176,7 +176,7 @@ export const grandTournamentPipeline: CheckPipeline = {
       };
 
       // Virtuous approach: structure effects and faction adjustments
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         if (outcome === 'criticalSuccess') {
           // Grant structure
           const structureHandler = new GrantStructureHandler();
@@ -431,7 +431,7 @@ export const grandTournamentPipeline: CheckPipeline = {
       await factionVirtuousCS.commit();
     }
 
-    // Damage structure (virtuous F/CF)
+    // Damage structure (idealist F/CF)
     const damageVirtuous = ctx.metadata?._preparedDamageVirtuous;
     if (damageVirtuous?.commit) {
       await damageVirtuous.commit();

@@ -28,12 +28,12 @@ export const visitingCelebrityPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Simple Hospitality',
         description: 'Focus on the person, not spectacle',
         icon: 'fas fa-handshake',
         skills: ['diplomacy', 'society', 'crafting', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Heartfelt welcome touches hearts; moved celebrity spreads glowing tales.',
           success: 'Humble kindness forms genuine bond; grateful guest honors friendship.',
@@ -170,7 +170,7 @@ export const visitingCelebrityPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         if (outcome === 'criticalSuccess' || outcome === 'success') {
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(

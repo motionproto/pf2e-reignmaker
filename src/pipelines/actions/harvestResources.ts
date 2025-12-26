@@ -17,7 +17,7 @@ export const harvestResourcesPipeline: CheckPipeline = {
   checkType: 'action',
 
   skills: [
-    { skill: 'nature', description: 'sustainable harvest', doctrine: 'virtuous' },
+    { skill: 'nature', description: 'sustainable harvest', doctrine: 'idealist' },
     { skill: 'survival', description: 'efficient extraction', doctrine: 'practical' },
     { skill: 'crafting', description: 'process materials', doctrine: 'practical' },
     { skill: 'intimidation', description: 'work quotas', doctrine: 'ruthless' }

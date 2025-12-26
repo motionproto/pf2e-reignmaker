@@ -1,6 +1,6 @@
 <script lang="ts">
    import { PLAYER_KINGDOM } from '../../../types/ownership';
-import { kingdomData, kingdomActor, isInitialized } from '../../../stores/KingdomStore';
+import { kingdomData, kingdomActor, isInitialized, doctrine, doctrineState } from '../../../stores/KingdomStore';
 import { TurnPhase } from '../../../actors/KingdomActor';
 import ModifierCard from '../components/ModifierCard.svelte';
 import CustomModifierDisplay from '../components/CustomModifierDisplay.svelte';
@@ -10,6 +10,9 @@ import { SettlementTier } from '../../../models/Settlement';
 import { logger } from '../../../utils/Logger';
 import CitizensDemandExpansion from './components/CitizensDemandExpansion.svelte';
 import CitizensDemandStructure from './components/CitizensDemandStructure.svelte';
+import { getDoctrineIcon, getDoctrineColor, getDoctrineTierLabel } from '../utils/presentation';
+import { DOCTRINE_THRESHOLDS, DOCTRINE_TIER_ORDER, DOCTRINE_TIER_EFFECTS, DOCTRINE_SKILL_GROUPS, DOCTRINE_PENALTIES } from '../../../constants/doctrine';
+import type { DoctrineType, DoctrineTier } from '../../../types/Doctrine';
 
 // Props - add the missing prop to fix the warning
 export let isViewingCurrentPhase: boolean = true;
@@ -83,6 +86,41 @@ $: unassignedHexes = hexes
 
 // Reactive: Check if kingdom has a capital
 $: hasCapital = $kingdomData.settlements?.some(s => s.isCapital === true) ?? false;
+
+// Doctrine types for iteration
+const doctrineTypes = ['idealist', 'practical', 'ruthless'] as const;
+const doctrineTiers: DoctrineTier[] = ['minor', 'moderate', 'major', 'absolute'];
+
+// Doctrine progression expandable state
+let showDoctrineProgression = false;
+
+// Helper: Get next threshold for a doctrine value
+function getNextThreshold(value: number): number | null {
+   for (const tier of DOCTRINE_TIER_ORDER) {
+      if (tier === 'none') continue;
+      const threshold = DOCTRINE_THRESHOLDS[tier];
+      if (value < threshold) return threshold;
+   }
+   return null; // Already at max tier
+}
+
+// Helper: Calculate progress percentage toward next tier
+function getProgressPercent(value: number): number {
+   const nextThreshold = getNextThreshold(value);
+   if (!nextThreshold) return 100; // At max tier
+
+   // Find previous threshold
+   let prevThreshold = 0;
+   for (const tier of DOCTRINE_TIER_ORDER) {
+      const threshold = DOCTRINE_THRESHOLDS[tier];
+      if (threshold >= nextThreshold) break;
+      prevThreshold = threshold;
+   }
+
+   const range = nextThreshold - prevThreshold;
+   const progress = value - prevThreshold;
+   return Math.min(100, Math.round((progress / range) * 100));
+}
 
 // Debug: Always log hex data when component mounts or hexes change
 $: {
@@ -274,6 +312,115 @@ async function initializePhase() {
       </div>
    </div>
 
+   <!-- Doctrine Dashboard Section -->
+   <div class="doctrine-section">
+      <div class="section-header-minimal">
+         <i class="fas fa-scroll"></i>
+         <h3>Kingdom Doctrine</h3>
+      </div>
+
+      <!-- Dominant Doctrine Banner -->
+      {#if $doctrineState.dominant}
+         {@const dominant = $doctrineState.dominant}
+         {@const tierInfo = $doctrineState.tierInfo[dominant]}
+         <div class="dominant-doctrine-banner" style="--doctrine-color: {tierInfo.color}">
+            <i class="fas {getDoctrineIcon(dominant)} banner-icon"></i>
+            <div class="banner-content">
+               <span class="banner-label">{tierInfo.label}</span>
+               {#if tierInfo.skillBonus > 0}
+                  <span class="banner-effect">+{tierInfo.skillBonus} to aligned skills</span>
+               {/if}
+            </div>
+         </div>
+      {/if}
+
+      <div class="doctrine-dashboard">
+         {#each doctrineTypes as doctrineType}
+            {@const value = $doctrine[doctrineType] || 0}
+            {@const icon = getDoctrineIcon(doctrineType)}
+            {@const tierInfo = $doctrineState.tierInfo[doctrineType]}
+            {@const nextThreshold = getNextThreshold(value)}
+            {@const progress = getProgressPercent(value)}
+            {@const isDominant = $doctrineState.dominant === doctrineType}
+
+            <div class="doctrine-card" class:has-value={value > 0} class:is-dominant={isDominant}>
+               <div class="doctrine-header">
+                  <i class="fas {icon} doctrine-icon" style="color: {tierInfo.color}"></i>
+                  <span class="doctrine-name">{doctrineType}</span>
+                  {#if tierInfo.tier !== 'none'}
+                     <span class="doctrine-tier-badge" style="background: {tierInfo.color}">{tierInfo.tier}</span>
+                  {/if}
+               </div>
+
+               <div class="doctrine-progress-container">
+                  <div class="doctrine-progress-bar" style="width: {progress}%; background: {tierInfo.color}"></div>
+               </div>
+
+               <div class="doctrine-stats">
+                  <span class="doctrine-value">{value}</span>
+                  {#if nextThreshold}
+                     <span class="doctrine-next">/ {nextThreshold}</span>
+                  {:else}
+                     <span class="doctrine-max">MAX</span>
+                  {/if}
+               </div>
+            </div>
+         {/each}
+      </div>
+
+      <!-- Expandable Doctrine Progression -->
+      <button
+         class="doctrine-toggle"
+         on:click={() => showDoctrineProgression = !showDoctrineProgression}
+      >
+         <i class="fas {showDoctrineProgression ? 'fa-chevron-up' : 'fa-chevron-down'}"></i>
+         {showDoctrineProgression ? 'Hide' : 'Show'} Tier Benefits
+      </button>
+
+      {#if showDoctrineProgression}
+         <div class="doctrine-progression">
+            <div class="doctrine-columns">
+               {#each doctrineTypes as doctrineType}
+                  {@const tierInfo = $doctrineState.tierInfo[doctrineType]}
+                  <div class="doctrine-column">
+                     <h5 class="doctrine-column-header" style="border-color: {tierInfo.color}">
+                        <i class="fas {getDoctrineIcon(doctrineType)}" style="color: {tierInfo.color}"></i>
+                        {doctrineType.charAt(0).toUpperCase() + doctrineType.slice(1)}
+                     </h5>
+                     <div class="doctrine-skills">
+                        {DOCTRINE_SKILL_GROUPS[doctrineType].map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ')}
+                     </div>
+                     <div class="doctrine-tiers-list">
+                        {#each doctrineTiers as tier}
+                           {@const effects = DOCTRINE_TIER_EFFECTS[tier]}
+                           {@const hasPenalty = tier === 'major' || tier === 'absolute'}
+                           {@const currentValue = $doctrine[doctrineType] || 0}
+                           {@const isReached = currentValue >= DOCTRINE_THRESHOLDS[tier]}
+                           <div class="doctrine-tier-row" class:reached={isReached}>
+                              <div class="tier-header">
+                                 <span class="tier-name">{tier.charAt(0).toUpperCase() + tier.slice(1)}</span>
+                                 <span class="tier-threshold">{DOCTRINE_THRESHOLDS[tier]}+</span>
+                              </div>
+                              <div class="tier-effects">
+                                 <span class="tier-bonus">+{effects.skillBonus} aligned skills</span>
+                                 {#if hasPenalty}
+                                    <span class="tier-penalty">
+                                       {#if doctrineType === 'idealist'}+1 consumption
+                                       {:else if doctrineType === 'practical'}-1 non-aligned
+                                       {:else}+1 unrest{/if}
+                                    </span>
+                                 {/if}
+                              </div>
+                           </div>
+                        {/each}
+                     </div>
+                  </div>
+               {/each}
+            </div>
+         </div>
+      {/if}
+   </div>
+
    <!-- Status Phase Modifiers (Size, Metropolises, Fame Conversion, etc.) -->
    {#if allStatusModifiers.length > 0}
       <div class="status-modifiers">
@@ -413,6 +560,256 @@ async function initializePhase() {
          color: var(--color-amber-light);
          text-shadow: var(--text-shadow-md);
       }
+   }
+
+   // Doctrine Dashboard Styles
+   .dominant-doctrine-banner {
+      display: flex;
+      align-items: center;
+      gap: var(--space-12);
+      padding: var(--space-12) var(--space-16);
+      background: linear-gradient(135deg,
+         rgba(var(--doctrine-color), 0.15),
+         rgba(var(--doctrine-color), 0.05));
+      border: 1px solid var(--doctrine-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: var(--space-16);
+
+      .banner-icon {
+         font-size: var(--font-3xl);
+         color: var(--doctrine-color);
+      }
+
+      .banner-content {
+         display: flex;
+         flex-direction: column;
+         gap: var(--space-2);
+      }
+
+      .banner-label {
+         font-size: var(--font-lg);
+         font-weight: var(--font-weight-semibold);
+         color: var(--text-primary);
+      }
+
+      .banner-effect {
+         font-size: var(--font-sm);
+         color: var(--text-secondary);
+      }
+   }
+
+   .doctrine-dashboard {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-12);
+   }
+
+   .doctrine-card {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-8);
+      padding: var(--space-12) var(--space-16);
+      background: var(--overlay-low);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-subtle);
+      transition: all 0.2s ease;
+
+      &.is-dominant {
+         border-color: var(--color-amber);
+         box-shadow: 0 0 0.5rem rgba(251, 191, 36, 0.2);
+      }
+
+      .doctrine-header {
+         display: flex;
+         align-items: center;
+         gap: var(--space-8);
+      }
+
+      .doctrine-icon {
+         font-size: var(--font-xl);
+         flex-shrink: 0;
+      }
+
+      .doctrine-name {
+         font-size: var(--font-md);
+         font-weight: var(--font-weight-medium);
+         color: var(--text-primary);
+         text-transform: capitalize;
+         flex: 1;
+      }
+
+      .doctrine-tier-badge {
+         font-size: var(--font-xs);
+         font-weight: var(--font-weight-semibold);
+         color: white;
+         padding: var(--space-2) var(--space-6);
+         border-radius: var(--radius-sm);
+         text-transform: capitalize;
+      }
+
+      .doctrine-progress-container {
+         height: 0.375rem;
+         background: var(--overlay);
+         border-radius: var(--radius-full);
+         overflow: hidden;
+      }
+
+      .doctrine-progress-bar {
+         height: 100%;
+         border-radius: var(--radius-full);
+         transition: width 0.3s ease;
+      }
+
+      .doctrine-stats {
+         display: flex;
+         align-items: baseline;
+         gap: var(--space-4);
+      }
+
+      .doctrine-value {
+         font-size: var(--font-xl);
+         font-weight: var(--font-weight-bold);
+         color: var(--text-primary);
+      }
+
+      .doctrine-next {
+         font-size: var(--font-sm);
+         color: var(--text-tertiary);
+      }
+
+      .doctrine-max {
+         font-size: var(--font-xs);
+         font-weight: var(--font-weight-semibold);
+         color: var(--color-success);
+         background: rgba(34, 197, 94, 0.2);
+         padding: var(--space-2) var(--space-6);
+         border-radius: var(--radius-sm);
+      }
+   }
+
+   /* Doctrine Progression Toggle & Panel */
+   .doctrine-toggle {
+      width: 100%;
+      padding: var(--space-8) var(--space-12);
+      margin-top: var(--space-12);
+      background: var(--overlay-low);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      font-size: var(--font-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-8);
+      transition: all 0.2s ease;
+
+      &:hover {
+         background: var(--overlay);
+         color: var(--text-primary);
+      }
+   }
+
+   .doctrine-progression {
+      margin-top: var(--space-12);
+      padding: var(--space-16);
+      background: var(--overlay-low);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-subtle);
+   }
+
+   .doctrine-columns {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-16);
+   }
+
+   .doctrine-column {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-12);
+   }
+
+   .doctrine-column-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-8);
+      font-size: var(--font-md);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-primary);
+      margin: 0;
+      padding-bottom: var(--space-8);
+      border-bottom: 2px solid;
+   }
+
+   .doctrine-skills {
+      font-size: var(--font-sm);
+      color: var(--text-secondary);
+      line-height: 1.5;
+   }
+
+   .doctrine-tiers-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-8);
+   }
+
+   .doctrine-tier-row {
+      padding: var(--space-10) var(--space-12);
+      background: var(--overlay);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      opacity: 0.6;
+      transition: all 0.2s ease;
+
+      &.reached {
+         opacity: 1;
+         border-color: var(--color-success);
+         background: rgba(34, 197, 94, 0.1);
+      }
+   }
+
+   .tier-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-6);
+   }
+
+   .tier-name {
+      font-size: var(--font-sm);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-primary);
+   }
+
+   .tier-threshold {
+      font-size: var(--font-xs);
+      color: var(--text-tertiary);
+      background: var(--overlay);
+      padding: var(--space-2) var(--space-6);
+      border-radius: var(--radius-sm);
+   }
+
+   .tier-effects {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-6);
+   }
+
+   .tier-bonus {
+      font-size: var(--font-xs);
+      padding: var(--space-2) var(--space-6);
+      background: var(--overlay);
+      border-radius: var(--radius-sm);
+      color: var(--color-success);
+   }
+
+   .tier-penalty {
+      font-size: var(--font-xs);
+      padding: var(--space-2) var(--space-6);
+      background: rgba(239, 68, 68, 0.15);
+      border-radius: var(--radius-sm);
+      color: var(--color-danger);
    }
 
    // No Modifiers Styles

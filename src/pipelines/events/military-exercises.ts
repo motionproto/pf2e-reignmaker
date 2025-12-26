@@ -41,12 +41,12 @@ export const militaryExercisesPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Defensive Drills',
         description: 'Focus on defense and minimize disruption',
         icon: 'fas fa-shield-alt',
         skills: ['athletics', 'survival', 'performance', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Inspired defenders fortify borders; citizens praise your vigilance.',
           success: 'Methodical drills secure strategic positions without incident.',
@@ -216,7 +216,7 @@ export const militaryExercisesPipeline: CheckPipeline = {
       const warnings: string[] = [];
 
       // Check if we have armies for military effects
-      const needsArmy = (approach === 'virtuous' && outcome !== 'criticalSuccess' && outcome !== 'success') ||
+      const needsArmy = (approach === 'idealist' && outcome !== 'criticalSuccess' && outcome !== 'success') ||
                         (approach === 'practical') ||
                         (approach === 'ruthless');
 
@@ -235,7 +235,7 @@ export const militaryExercisesPipeline: CheckPipeline = {
 
       // Prepare army condition handlers based on approach and outcome
       const conditionMap: Record<string, Record<string, string>> = {
-        virtuous: { failure: 'fatigued', criticalFailure: 'enfeebled' },
+        idealist: { failure: 'fatigued', criticalFailure: 'enfeebled' },
         practical: { failure: 'fatigued', criticalFailure: 'enfeebled' },
         ruthless: { criticalSuccess: 'well-trained', success: 'well-trained', failure: 'fatigued', criticalFailure: 'enfeebled' }
       };
@@ -296,7 +296,7 @@ export const militaryExercisesPipeline: CheckPipeline = {
       ctx.metadata._selectedApproach = approach;
 
       // Prepare faction adjustments for failure outcomes
-      if ((approach === 'virtuous' && outcome === 'failure') ||
+      if ((approach === 'idealist' && outcome === 'failure') ||
           (approach === 'ruthless' && outcome === 'failure')) {
         const factionHandler = new AdjustFactionHandler();
         const factionCommand = await factionHandler.prepare(
@@ -328,7 +328,7 @@ export const militaryExercisesPipeline: CheckPipeline = {
       required: true,
       condition: (ctx: any) => {
         const approach = ctx.kingdom?.turnState?.eventsPhase?.selectedApproach;
-        return approach === 'virtuous' &&
+        return approach === 'idealist' &&
                (ctx.outcome === 'criticalSuccess' || ctx.outcome === 'success');
       },
       validateHex: (hexId: string): ValidationResult => {
@@ -426,8 +426,8 @@ export const militaryExercisesPipeline: CheckPipeline = {
       await equipmentCommand.commit();
     }
 
-    // Handle fortify hex for virtuous success outcomes
-    if (approach === 'virtuous' && (outcome === 'criticalSuccess' || outcome === 'success')) {
+    // Handle fortify hex for idealist success outcomes
+    if (approach === 'idealist' && (outcome === 'criticalSuccess' || outcome === 'success')) {
       const selectedHexData = ctx.resolutionData?.compoundData?.fortifyHex;
 
       if (selectedHexData) {

@@ -30,12 +30,12 @@ export const tradeAgreementPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Generous Terms',
         description: 'Build friendship with favorable trade terms',
         icon: 'fas fa-handshake',
         skills: ['diplomacy', 'society', 'crafting', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Selfless terms forge unbreakable bonds; grateful merchants pledge lasting loyalty.',
           success: 'Fair dealing earns respect; honest trade builds enduring partnerships.',
@@ -185,7 +185,7 @@ export const tradeAgreementPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         // Generous Terms (Virtuous)
         if (outcome === 'criticalSuccess') {
           // +1 Fame, +2d3 Gold, adjust 2 factions +1, choose 1 resource type to gain 1d3 per turn for 2 turns

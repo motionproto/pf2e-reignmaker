@@ -32,12 +32,12 @@ export const inquisitionPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Protect the Accused',
         description: 'Stand against persecution',
         icon: 'fas fa-shield-alt',
         skills: ['diplomacy', 'society', 'medicine', 'applicable lore'],
-        personality: { virtuous: 4 },
+        personality: { idealist: 4 },
         outcomeDescriptions: {
           criticalSuccess: 'Brave defiance vindicates innocents; grateful refugees enrich the realm.',
           success: 'Principled protection ends hysteria; justice prevails over fear.',
@@ -185,7 +185,7 @@ export const inquisitionPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         // Protect the Accused (Virtuous)
         if (outcome === 'criticalSuccess') {
           // Adjust 1 random faction +1
@@ -404,7 +404,7 @@ export const inquisitionPipeline: CheckPipeline = {
       await addImprisonedCommand.commit();
     }
 
-    // Execute faction adjustment (virtuous/ruthless approaches)
+    // Execute faction adjustment (idealist/ruthless approaches)
     const factionCommand = ctx.metadata?._preparedFaction;
     if (factionCommand?.commit) {
       await factionCommand.commit();

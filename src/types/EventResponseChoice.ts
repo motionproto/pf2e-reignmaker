@@ -18,7 +18,7 @@ export interface EventResponseChoice {
    * Multiple values can be set for nuanced choices
    */
   personality?: {
-    virtuous?: number;  // Does what is right, regardless of cost (0-10)
+    idealist?: number;  // Does what is right, regardless of cost (0-10)
     practical?: number; // Balanced, lawful, tries to please all parties (0-10)
     ruthless?: number;  // Acts at expense of others for self-profit (0-10)
   };

@@ -29,7 +29,7 @@ export const claimHexesPipeline: CheckPipeline = {
   special: 'Can only claim hexes adjacent to existing territory. Enemy territory requires army occupation.',
 
   skills: [
-    { skill: 'diplomacy', description: 'peaceful integration', doctrine: 'virtuous' },
+    { skill: 'diplomacy', description: 'peaceful integration', doctrine: 'idealist' },
     { skill: 'survival', description: 'wilderness expertise', doctrine: 'practical' },
     { skill: 'society', description: 'administrative control', doctrine: 'practical' },
     { skill: 'intimidation', description: 'show of dominance', doctrine: 'ruthless' }

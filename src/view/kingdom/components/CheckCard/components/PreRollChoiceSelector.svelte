@@ -133,36 +133,36 @@
     return [...opts].sort((a, b) => {
       const aPersonality = a.personality || {};
       const bPersonality = b.personality || {};
-      
+
       // Calculate dominant alignment and intensity
-      const aVirtuous = aPersonality.virtuous || 0;
+      const aIdealist = aPersonality.idealist || 0;
       const aPractical = aPersonality.practical || 0;
       const aRuthless = aPersonality.ruthless || 0;
-      
-      const bVirtuous = bPersonality.virtuous || 0;
+
+      const bIdealist = bPersonality.idealist || 0;
       const bPractical = bPersonality.practical || 0;
       const bRuthless = bPersonality.ruthless || 0;
-      
+
       // Determine primary alignment (highest value wins)
       const getDominant = (v: number, p: number, r: number) => {
-        if (v >= p && v >= r) return 'virtuous';
+        if (v >= p && v >= r) return 'idealist';
         if (r >= p && r >= v) return 'ruthless';
         return 'practical';
       };
-      
-      const aDominant = getDominant(aVirtuous, aPractical, aRuthless);
-      const bDominant = getDominant(bVirtuous, bPractical, bRuthless);
-      
-      // Sort order: virtuous < practical < ruthless
-      const order = { virtuous: 0, practical: 1, ruthless: 2 };
-      
+
+      const aDominant = getDominant(aIdealist, aPractical, aRuthless);
+      const bDominant = getDominant(bIdealist, bPractical, bRuthless);
+
+      // Sort order: idealist < practical < ruthless
+      const order = { idealist: 0, practical: 1, ruthless: 2 };
+
       if (aDominant !== bDominant) {
         return order[aDominant] - order[bDominant];
       }
-      
+
       // Same alignment - sort by intensity (highest first within category)
-      if (aDominant === 'virtuous') {
-        return bVirtuous - aVirtuous;  // Descending (most virtuous on far left)
+      if (aDominant === 'idealist') {
+        return bIdealist - aIdealist;  // Descending (most idealist on far left)
       } else if (aDominant === 'ruthless') {
         return bRuthless - aRuthless;  // Descending (most ruthless on far right)
       } else {

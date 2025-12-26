@@ -70,7 +70,13 @@ export async function createStatusPhaseController() {
         
         // Apply base unrest (size + metropolises)
         await this.applyBaseUnrest();
-        
+
+        // Apply doctrine penalties (ruthless +1 unrest, idealist +1 gold consumption)
+        await this.applyDoctrinePenalties();
+
+        // Check for doctrine milestones and emit notifications
+        await this.checkDoctrineMilestones();
+
         // Clean up expired modifiers
         await this.cleanupExpiredModifiers();
         
@@ -259,6 +265,122 @@ export async function createStatusPhaseController() {
             k.turnState.statusPhase.displayModifiers = [];
           }
         });
+      }
+    },
+
+    /**
+     * Apply doctrine penalties for extreme (Major+) doctrines
+     *
+     * Penalties at Major+ tier:
+     * - Ruthless: +1 unrest per turn (fear-based rule breeds discontent)
+     * - Virtuous: +1 gold consumption per turn (charitable obligations)
+     * - Practical: -1 to non-aligned skills (handled in KingdomModifierService)
+     */
+    async applyDoctrinePenalties() {
+      const actor = getKingdomActor();
+      if (!actor) {
+        logger.error('❌ [StatusPhaseController] No KingdomActor available');
+        return;
+      }
+
+      const { doctrineService } = await import('../services/doctrine/DoctrineService');
+      const effects = doctrineService.getDoctrineEffects();
+
+      if (effects.penalties.length === 0) {
+        return;
+      }
+
+      let unrestPenalty = 0;
+      let goldPenalty = 0;
+
+      for (const penalty of effects.penalties) {
+        if (penalty.type === 'unrest') {
+          unrestPenalty += penalty.value;
+        } else if (penalty.type === 'gold') {
+          goldPenalty += penalty.value;
+        }
+        // 'skill' type penalties are handled in KingdomModifierService
+      }
+
+      if (unrestPenalty > 0 || goldPenalty > 0) {
+        const state = doctrineService.getDoctrineState();
+        const doctrineLabel = state.dominant
+          ? state.tierInfo[state.dominant].label
+          : 'Doctrine';
+
+        await actor.updateKingdomData((k: KingdomData) => {
+          // Apply unrest penalty (Ruthless)
+          if (unrestPenalty > 0) {
+            k.unrest = (k.unrest || 0) + unrestPenalty;
+          }
+
+          // Apply gold penalty (Virtuous) - reduce gold (consumption)
+          if (goldPenalty > 0 && k.resources) {
+            k.resources.gold = Math.max(0, (k.resources.gold || 0) - goldPenalty);
+          }
+
+          // Add to display modifiers
+          if (k.turnState?.statusPhase) {
+            if (!k.turnState.statusPhase.displayModifiers) {
+              k.turnState.statusPhase.displayModifiers = [];
+            }
+
+            if (unrestPenalty > 0) {
+              k.turnState.statusPhase.displayModifiers.push({
+                id: 'doctrine-penalty-unrest',
+                name: `${doctrineLabel} Penalty`,
+                description: 'Fear-based rule breeds discontent',
+                sourceType: 'doctrine',
+                modifiers: [{
+                  type: 'static',
+                  resource: 'unrest',
+                  value: unrestPenalty,
+                  duration: 'immediate'
+                }]
+              });
+            }
+
+            if (goldPenalty > 0) {
+              k.turnState.statusPhase.displayModifiers.push({
+                id: 'doctrine-penalty-gold',
+                name: `${doctrineLabel} Penalty`,
+                description: 'Charitable obligations cost resources',
+                sourceType: 'doctrine',
+                modifiers: [{
+                  type: 'static',
+                  resource: 'gold',
+                  value: -goldPenalty,
+                  duration: 'immediate'
+                }]
+              });
+            }
+          }
+        });
+
+        logger.info(`[StatusPhaseController] Applied doctrine penalties: unrest +${unrestPenalty}, gold -${goldPenalty}`);
+      }
+    },
+
+    /**
+     * Check for doctrine milestones and emit notifications
+     */
+    async checkDoctrineMilestones() {
+      const { doctrineService } = await import('../services/doctrine/DoctrineService');
+      const newMilestones = await doctrineService.checkAndRecordMilestones();
+
+      // Emit notifications for new milestones
+      for (const milestone of newMilestones) {
+        const doctrineCapitalized = milestone.doctrine.charAt(0).toUpperCase() + milestone.doctrine.slice(1);
+        const tierCapitalized = milestone.tier.charAt(0).toUpperCase() + milestone.tier.slice(1);
+        const message = `Milestone achieved: ${tierCapitalized} ${doctrineCapitalized} Doctrine!`;
+
+        // Use Foundry's notification system
+        try {
+          // @ts-ignore - Foundry globals
+          ui?.notifications?.info(message);
+        } catch {
+          logger.info(`[StatusPhaseController] ${message}`);
+        }
       }
     },
 

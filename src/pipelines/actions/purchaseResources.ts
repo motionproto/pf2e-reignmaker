@@ -18,7 +18,7 @@ export const purchaseResourcesPipeline: CheckPipeline = {
   checkType: 'action',
 
   skills: [
-    { skill: 'diplomacy', description: 'negotiate deals', doctrine: 'virtuous' },
+    { skill: 'diplomacy', description: 'negotiate deals', doctrine: 'idealist' },
     { skill: 'society', description: 'find suppliers', doctrine: 'practical' },
     { skill: 'intimidation', description: 'demand better prices', doctrine: 'ruthless' },
     { skill: 'deception', description: 'misleading negotiations', doctrine: 'ruthless' },

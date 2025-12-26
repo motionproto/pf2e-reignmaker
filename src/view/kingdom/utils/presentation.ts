@@ -163,7 +163,7 @@ export function formatSkillsString(skills: string[]): string {
  */
 export function getDoctrineIcon(doctrine: string): string {
   const icons: Record<string, string> = {
-    virtuous: 'fa-heart',
+    idealist: 'fa-heart',
     practical: 'fa-scale-balanced',
     ruthless: 'fa-skull'
   };
@@ -172,10 +172,24 @@ export function getDoctrineIcon(doctrine: string): string {
 
 /**
  * Get color CSS variable for a doctrine type
- * Uses muted color to match other stat icons
  */
-export function getDoctrineColor(_doctrine: string): string {
-  return 'var(--text-muted)';
+export function getDoctrineColor(doctrine: string): string {
+  const colors: Record<string, string> = {
+    idealist: 'var(--color-amber)',
+    practical: 'var(--color-info)',
+    ruthless: 'var(--color-danger)'
+  };
+  return colors[doctrine.toLowerCase()] || 'var(--text-muted)';
+}
+
+/**
+ * Get display label for a doctrine tier
+ */
+export function getDoctrineTierLabel(doctrine: string, tier: string): string {
+  if (tier === 'none') return 'No Doctrine';
+  const doctrineCapitalized = doctrine.charAt(0).toUpperCase() + doctrine.slice(1);
+  const tierCapitalized = tier.charAt(0).toUpperCase() + tier.slice(1);
+  return `${tierCapitalized} ${doctrineCapitalized}`;
 }
 
 /**

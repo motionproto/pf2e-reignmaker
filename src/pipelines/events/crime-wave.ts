@@ -34,12 +34,12 @@ export const crimeWavePipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Community outreach',
         description: 'Bring criminals to justice through fair investigation',
         icon: 'fas fa-search',
         skills: ['society', 'diplomacy', 'religion', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Brilliant detective work captures criminals and vindicates innocents.',
           success: 'Methodical investigation brings real culprits to fair trial.',
@@ -180,7 +180,7 @@ export const crimeWavePipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         // Launch Investigation (Virtuous)
         if (outcome === 'criticalSuccess') {
           // Adjust 1 faction +1
@@ -315,7 +315,7 @@ export const crimeWavePipeline: CheckPipeline = {
     // ResolutionDataBuilder + GameCommandsService via outcomeBadges.
     // This execute() only handles special game commands.
 
-    // Execute faction adjustment (virtuous CS)
+    // Execute faction adjustment (idealist CS)
     const factionVirtuous = ctx.metadata?._preparedFactionVirtuous;
     if (factionVirtuous?.commit) {
       await factionVirtuous.commit();

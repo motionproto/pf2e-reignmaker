@@ -10,6 +10,7 @@ import type { ActiveModifier, ActiveEventInstance } from '../models/Modifiers';
 import type { OutcomePreview } from '../models/OutcomePreview';
 import type { TurnState } from '../models/TurnState';
 import type { Faction } from '../models/Faction';
+import type { DoctrineMilestone } from '../types/Doctrine';
 import { loadDefaultFactions } from '../models/DefaultFactions';
 import { getHighestPartyLevel } from '../hooks/partyLevelHooks';
 import { logger } from '../utils/Logger';
@@ -138,11 +139,14 @@ export interface KingdomData {
   // Doctrine tracking - accumulated points from event vote choices
   // Each winning vote adds 5 points to the corresponding category
   doctrine?: {
-    virtuous: number;   // Chose virtuous/compassionate approaches
+    idealist: number;   // Chose idealist/compassionate approaches
     practical: number;  // Chose practical/balanced approaches
     ruthless: number;   // Chose ruthless/expedient approaches
   };
-  
+
+  // Doctrine milestones - records of when each tier was achieved
+  doctrineMilestones?: DoctrineMilestone[];
+
   // Events & Modifiers (persistent across turns)
   ongoingEvents: string[];  // Event IDs that persist across turns (legacy - may be deprecated)
   pendingOutcomes: OutcomePreview[];  // Unified outcome preview tracking (incidents, events, actions)
@@ -459,7 +463,7 @@ export class KingdomActor extends Actor {
       isAtWar: false,
       partyLevel: partyLevel,  // Synced from party actors during initialization
       doctrine: {
-        virtuous: 0,
+        idealist: 0,
         practical: 0,
         ruthless: 0
       },
@@ -634,7 +638,7 @@ export function createDefaultKingdom(name: string = 'New Kingdom'): KingdomData 
       isAtWar: false,
       partyLevel: partyLevel,  // Synced from party actors during initialization
       doctrine: {
-        virtuous: 0,
+        idealist: 0,
         practical: 0,
         ruthless: 0
       },

@@ -44,7 +44,7 @@
   export let id: string;
   export let name: string;
   export let description: string;
-  export let skills: Array<{ skill: string; description?: string; doctrine?: 'virtuous' | 'practical' | 'ruthless' }> = [];
+  export let skills: Array<{ skill: string; description?: string; doctrine?: 'idealist' | 'practical' | 'ruthless' }> = [];
   export let conditionalSkills: any[] | undefined = undefined;  // Conditional skills (type from action-types.ts)
   export let outcomes: Array<{
     type: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
@@ -194,7 +194,7 @@
   // Internal confirmation dialog state
   let showOwnConfirmDialog: boolean = false;
   let pendingSkill: string = '';
-  let pendingDoctrine: 'virtuous' | 'practical' | 'ruthless' | undefined = undefined;
+  let pendingDoctrine: 'idealist' | 'practical' | 'ruthless' | undefined = undefined;
   
   // ✅ READ applied state from resolution (synced across all clients via KingdomActor)
   $: outcomeApplied = resolution?.effectsApplied || false;
@@ -277,8 +277,8 @@
     });
   })();
   
-  // Sort skills by doctrine (virtuous → practical → ruthless) then alphabetically
-  const doctrineOrder: Record<string, number> = { virtuous: 0, practical: 1, ruthless: 2 };
+  // Sort skills by doctrine (idealist → practical → ruthless) then alphabetically
+  const doctrineOrder: Record<string, number> = { idealist: 0, practical: 1, ruthless: 2 };
   $: effectiveSkills = [...skillsWithLore].sort((a, b) => {
     const orderA = a.doctrine ? doctrineOrder[a.doctrine] ?? 3 : 3;
     const orderB = b.doctrine ? doctrineOrder[b.doctrine] ?? 3 : 3;
@@ -318,7 +318,7 @@
     }
   }
   
-  function handleSkillClick(skill: string, doctrine?: 'virtuous' | 'practical' | 'ruthless') {
+  function handleSkillClick(skill: string, doctrine?: 'idealist' | 'practical' | 'ruthless') {
     if (isRolling || !isViewingCurrentPhase || resolved) return;
 
     // Check if player has already acted (for actions and events, not incidents)
@@ -347,7 +347,7 @@
     pendingDoctrine = undefined;
   }
   
-  function executeSkillNow(skill: string, doctrine?: 'virtuous' | 'practical' | 'ruthless') {
+  function executeSkillNow(skill: string, doctrine?: 'idealist' | 'practical' | 'ruthless') {
     isRolling = true;
     localUsedSkill = skill;
 

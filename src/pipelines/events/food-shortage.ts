@@ -31,12 +31,12 @@ export const foodShortagePipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Share Reserves',
         description: 'Distribute aid freely, drain military supplies if needed',
         icon: 'fas fa-hand-holding-heart',
         skills: ['diplomacy', 'society', 'medicine', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Selfless generosity inspires miraculous donations; unity thrives amid scarcity.',
           success: 'Compassionate aid heals hearts; grateful communities endure together.',
@@ -180,7 +180,7 @@ export const foodShortagePipeline: CheckPipeline = {
       const outcomeType = outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
       const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
 
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         // Feed the People (Virtuous)
         if (outcome === 'criticalSuccess') {
           // Adjust 2 factions +1
@@ -335,7 +335,7 @@ export const foodShortagePipeline: CheckPipeline = {
     const outcome = ctx.outcome;
 
     // Execute game commands based on approach and outcome
-    if (approach === 'virtuous') {
+    if (approach === 'idealist') {
       if (outcome === 'criticalSuccess') {
         const factionCommand = ctx.metadata?._preparedFactionAdjust;
         if (factionCommand?.commit) {

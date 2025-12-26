@@ -30,12 +30,12 @@ export const assassinationAttemptPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Public Investigation',
         description: 'Protect the leader but maintain transparent rule',
         icon: 'fas fa-landmark',
         skills: ['diplomacy', 'society', 'medicine', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Public vigilance captures assassin; transparency forges unbreakable trust.',
           success: 'Open governance reassures citizens; calm resolve foils plot.',
@@ -182,7 +182,7 @@ export const assassinationAttemptPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         // Open Governance (Virtuous)
         if (outcome === 'criticalSuccess') {
           // Adjust 1 faction +1
@@ -341,7 +341,7 @@ export const assassinationAttemptPipeline: CheckPipeline = {
     // Execute game commands based on approach and outcome
 
     // Virtuous CS: Faction adjustment
-    if (approach === 'virtuous' && outcome === 'criticalSuccess') {
+    if (approach === 'idealist' && outcome === 'criticalSuccess') {
       const factionCommand = ctx.metadata?._preparedFactionVirtuous;
       if (factionCommand?.commit) {
         await factionCommand.commit();
@@ -349,7 +349,7 @@ export const assassinationAttemptPipeline: CheckPipeline = {
     }
 
     // Virtuous CF: Spend action
-    if (approach === 'virtuous' && outcome === 'criticalFailure') {
+    if (approach === 'idealist' && outcome === 'criticalFailure') {
       const actionCommand = ctx.metadata?._preparedSpendAction;
       if (actionCommand?.commit) {
         await actionCommand.commit();

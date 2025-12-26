@@ -27,8 +27,8 @@ export const sendScoutsPipeline: CheckPipeline = {
   cost: { gold: 1 },
 
   skills: [
-    { skill: 'diplomacy', description: 'peaceful outreach', doctrine: 'virtuous' },
-    { skill: 'survival', description: 'wilderness exploration', doctrine: 'virtuous' },
+    { skill: 'diplomacy', description: 'peaceful outreach', doctrine: 'idealist' },
+    { skill: 'survival', description: 'wilderness exploration', doctrine: 'idealist' },
     { skill: 'nature', description: 'read the land', doctrine: 'practical' },
     { skill: 'society', description: 'meet the people', doctrine: 'practical' },
     { skill: 'athletics', description: 'colonial scouts', doctrine: 'ruthless' },

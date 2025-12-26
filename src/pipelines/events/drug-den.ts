@@ -32,12 +32,12 @@ export const drugDenPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Rehabilitation',
         description: 'Provide treatment and help addicts recover',
         icon: 'fas fa-hand-holding-medical',
         skills: ['medicine', 'diplomacy', 'religion', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Compassionate care redeems addicts; community celebrates recovery stories.',
           success: 'Treatment programs heal suffering souls and restore shattered families.',
@@ -178,7 +178,7 @@ export const drugDenPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         if (outcome === 'criticalSuccess') {
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
@@ -303,7 +303,7 @@ export const drugDenPipeline: CheckPipeline = {
     const kingdom = get(kingdomData);
     const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
 
-    // Execute faction adjustment (virtuous CS)
+    // Execute faction adjustment (idealist CS)
     const factionCommand = ctx.metadata?._preparedFaction;
     if (factionCommand?.commit) {
       await factionCommand.commit();
@@ -337,7 +337,7 @@ export const drugDenPipeline: CheckPipeline = {
       await imprisonCommand.commit();
     }
 
-    // Execute structure damage (virtuous CF)
+    // Execute structure damage (idealist CF)
     const damageVirtuous = ctx.metadata?._preparedDamageVirtuous;
     if (damageVirtuous?.commit) {
       await damageVirtuous.commit();

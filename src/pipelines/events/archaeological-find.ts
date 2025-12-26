@@ -32,12 +32,12 @@ export const archaeologicalFindPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Preserve Heritage',
         description: 'Free public access to cultural treasure',
         icon: 'fas fa-monument',
         skills: ['society', 'religion', 'crafting', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Citizens flock to the heritage site; the settlement thrives.',
           success: 'Cultural pride strengthens community bonds.',
@@ -174,7 +174,7 @@ export const archaeologicalFindPipeline: CheckPipeline = {
       };
 
       // Virtuous approach: Settlement level changes + faction adjustments
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         if (outcome === 'criticalSuccess') {
           // Settlement gains level + faction +1
           const increaseHandler = new IncreaseSettlementLevelHandler();
@@ -389,13 +389,13 @@ export const archaeologicalFindPipeline: CheckPipeline = {
     const kingdom = get(kingdomData);
     const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
 
-    // Execute settlement level increase (virtuous CS/S)
+    // Execute settlement level increase (idealist CS/S)
     const increaseCommand = ctx.metadata?._preparedSettlementIncrease;
     if (increaseCommand?.commit) {
       await increaseCommand.commit();
     }
 
-    // Execute settlement level reduction (virtuous F/CF)
+    // Execute settlement level reduction (idealist F/CF)
     const reduceCommand = ctx.metadata?._preparedSettlementReduce;
     if (reduceCommand?.commit) {
       await reduceCommand.commit();
@@ -407,7 +407,7 @@ export const archaeologicalFindPipeline: CheckPipeline = {
       await structureCommand.commit();
     }
 
-    // Execute faction adjustments (virtuous)
+    // Execute faction adjustments (idealist)
     const factionVirtuous = ctx.metadata?._preparedFactionVirtuous;
     if (factionVirtuous?.commit) {
       await factionVirtuous.commit();

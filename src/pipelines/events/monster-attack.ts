@@ -32,12 +32,12 @@ export const monsterAttackPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Relocate Peacefully',
         description: 'Try to relocate the creature without violence',
         icon: 'fas fa-dove',
         skills: ['nature', 'diplomacy', 'medicine', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Harmony restored; the grateful beast becomes a local guardian.',
           success: 'Peaceful relocation succeeds; creature departs safely.',
@@ -173,8 +173,8 @@ export const monsterAttackPipeline: CheckPipeline = {
       const outcomeBadges = selectedOption?.outcomeBadges?.[outcomeType] ? [...selectedOption.outcomeBadges[outcomeType]] : [];
       const commandContext: GameCommandContext = { kingdom, outcome: outcome || 'success' };
 
-      // Handle faction adjustment for virtuous critical success
-      if (approach === 'virtuous' && outcome === 'criticalSuccess') {
+      // Handle faction adjustment for idealist critical success
+      if (approach === 'idealist' && outcome === 'criticalSuccess') {
         const factionHandler = new AdjustFactionHandler();
         const factionCommand = await factionHandler.prepare(
           { type: 'adjustFactionAttitude', steps: 1, count: 1 },
@@ -191,7 +191,7 @@ export const monsterAttackPipeline: CheckPipeline = {
       }
 
       // Handle structure damage for failure outcomes
-      if (approach === 'virtuous' && outcome === 'criticalFailure') {
+      if (approach === 'idealist' && outcome === 'criticalFailure') {
         // +1d3 Unrest, damage 1 structure
         outcomeBadges.push(diceBadge('Gain {{value}} Unrest', 'fas fa-exclamation-triangle', '1d3', 'negative'));
         

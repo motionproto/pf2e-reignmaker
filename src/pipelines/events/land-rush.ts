@@ -42,12 +42,12 @@ export const landRushPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Fair Distribution',
         description: 'Grant free land to all settlers',
         icon: 'fas fa-handshake',
         skills: ['diplomacy', 'survival', 'society', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Generous grants unite pioneers; thriving settlements spring forth.',
           success: 'Fair distribution earns loyalty; grateful settlers claim their plots.',
@@ -194,7 +194,7 @@ export const landRushPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         // Free Settlement (Virtuous) - Claim hexes on success
         if (outcome === 'criticalSuccess') {
           ctx.metadata._claimHexCount = 2; // Two "Claim 1 hex" badges
@@ -390,13 +390,13 @@ export const landRushPipeline: CheckPipeline = {
       }
     }
 
-    // Commit structure grant (virtuous CS, practical CS)
+    // Commit structure grant (idealist CS, practical CS)
     const structureCommand = ctx.metadata?._preparedStructure;
     if (structureCommand?.commit) {
       await structureCommand.commit();
     }
 
-    // Execute worksite destruction (virtuous CF)
+    // Execute worksite destruction (idealist CF)
     const destroyCommand = ctx.metadata?._preparedDestroyWorksite;
     if (destroyCommand?.commit) {
       await destroyCommand.commit();

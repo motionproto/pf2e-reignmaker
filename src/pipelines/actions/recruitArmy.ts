@@ -16,8 +16,8 @@ export const recruitArmyPipeline: CheckPipeline = {
   checkType: 'action',
 
   skills: [
-    { skill: 'diplomacy', description: 'inspire patriotism', doctrine: 'virtuous' },
-    { skill: 'performance', description: 'recruitment rallies', doctrine: 'virtuous' },
+    { skill: 'diplomacy', description: 'inspire patriotism', doctrine: 'idealist' },
+    { skill: 'performance', description: 'recruitment rallies', doctrine: 'idealist' },
     { skill: 'society', description: 'civic duty', doctrine: 'practical' },
     { skill: 'athletics', description: 'demonstrations of prowess', doctrine: 'practical' },
     { skill: 'intimidation', description: 'conscription', doctrine: 'ruthless' }

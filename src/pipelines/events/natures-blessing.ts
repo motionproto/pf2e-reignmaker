@@ -26,12 +26,12 @@ export const naturesBlessingPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Preserve Carefully',
         description: 'Protect and cherish the natural wonder',
         icon: 'fas fa-leaf',
         skills: ['nature', 'diplomacy', 'religion', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Reverent stewardship multiplies nature\'s gifts; wonder endures for generations.',
           success: 'Gentle care preserves beauty; grateful hearts harvest sustainable bounty.',

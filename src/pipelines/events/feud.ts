@@ -35,12 +35,12 @@ export const feudPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Mediate Peacefully',
         description: 'Use diplomacy to bring the families together',
         icon: 'fas fa-handshake',
         skills: ['diplomacy', 'society', 'religion', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeBadges: {
           criticalSuccess: [
             valueBadge('Reduce Unrest by {{value}}', 'fas fa-shield-alt', 1, 'positive')
@@ -191,7 +191,7 @@ export const feudPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         // Mediate Peacefully (Virtuous)
         if (outcome === 'criticalSuccess') {
           // Adjust 2 random factions +1

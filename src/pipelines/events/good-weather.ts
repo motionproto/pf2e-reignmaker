@@ -28,12 +28,12 @@ export const goodWeatherPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Celebrate',
         description: 'Celebrate and let people rest',
         icon: 'fas fa-sun',
         skills: ['performance', 'diplomacy', 'religion', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Joyous festivals unite hearts; tales of revelry spread far and wide.',
           success: 'Grateful citizens rest beneath blue skies; harmony fills the realm.',

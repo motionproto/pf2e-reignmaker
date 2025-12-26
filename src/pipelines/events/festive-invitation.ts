@@ -30,12 +30,12 @@ export const festiveInvitationPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Attend Humbly',
         description: 'Join festivities as equals, no pretense',
         icon: 'fas fa-glass-cheers',
         skills: ['diplomacy', 'performance', 'acrobatics', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Your down-to-earth warmth inspires joy and lasting friendships.',
           success: 'Sincere camaraderie earns respect among common folk.',
@@ -176,7 +176,7 @@ export const festiveInvitationPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         if (outcome === 'criticalSuccess') {
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(

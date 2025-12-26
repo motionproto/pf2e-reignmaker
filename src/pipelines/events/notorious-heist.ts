@@ -33,12 +33,12 @@ export const notoriousHeistPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Track & Recover',
         description: 'Pursue the thieves to recover stolen goods',
         icon: 'fas fa-search',
         skills: ['society', 'diplomacy', 'religion', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Brilliant detective work captures thieves red-handed; recovered treasures shine.',
           success: 'Determined pursuit recovers most stolen goods; justice triumphs over greed.',
@@ -187,7 +187,7 @@ export const notoriousHeistPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         // Track Down and Recover (Virtuous)
         // All outcomes handled by standard badges (gold, fame)
       } else if (approach === 'practical') {

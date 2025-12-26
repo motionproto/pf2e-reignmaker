@@ -31,12 +31,12 @@ export const publicScandalPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Transparent Response',
         description: 'Publicly investigate and reveal the truth',
         icon: 'fas fa-search',
         skills: ['society', 'diplomacy', 'religion', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Honesty transforms scandal into triumph; extra action granted.',
           success: 'Truth earns respect and unexpected donations.',
@@ -181,7 +181,7 @@ export const publicScandalPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         // Transparent Investigation approach - Honest and open (Virtuous)
         if (outcome === 'criticalFailure') {
           // Adjust 1 random faction -1

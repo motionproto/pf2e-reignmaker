@@ -28,7 +28,7 @@ export type OutcomeType = 'criticalSuccess' | 'success' | 'failure' | 'criticalF
 /**
  * Doctrine type for skill-based approach tracking
  */
-export type DoctrineType = 'virtuous' | 'practical' | 'ruthless';
+export type DoctrineType = 'idealist' | 'practical' | 'ruthless';
 
 /**
  * Skill option for a check

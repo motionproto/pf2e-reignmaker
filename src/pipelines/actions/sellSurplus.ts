@@ -19,7 +19,7 @@ export const sellSurplusPipeline: CheckPipeline = {
   checkType: 'action',
 
   skills: [
-    { skill: 'diplomacy', description: 'trade negotiations', doctrine: 'virtuous' },
+    { skill: 'diplomacy', description: 'trade negotiations', doctrine: 'idealist' },
     { skill: 'society', description: 'market knowledge', doctrine: 'practical' },
     { skill: 'performance', description: 'showcase goods', doctrine: 'practical' },
     { skill: 'deception', description: 'inflate value', doctrine: 'ruthless' },

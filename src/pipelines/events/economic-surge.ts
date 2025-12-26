@@ -32,12 +32,12 @@ export const economicSurgePipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Share Prosperity',
         description: 'Improve worker conditions and share prosperity',
         icon: 'fas fa-heart',
         skills: ['diplomacy', 'society', 'crafting', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Generous wages inspire loyalty; thriving workers fuel even greater prosperity.',
           success: 'Fair compensation eases tensions and sustains economic momentum.',
@@ -185,7 +185,7 @@ export const economicSurgePipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         // Raise Wages (Virtuous)
         if (outcome === 'criticalSuccess' || outcome === 'success') {
           // Adjust 1 faction +1
@@ -289,7 +289,7 @@ export const economicSurgePipeline: CheckPipeline = {
     const outcome = ctx.outcome;
 
     // Execute faction adjustments
-    if (approach === 'virtuous') {
+    if (approach === 'idealist') {
       if (outcome === 'criticalSuccess' || outcome === 'success') {
         const factionCommand = ctx.metadata?._preparedFactionVirtuousPositive;
         if (factionCommand?.commit) {

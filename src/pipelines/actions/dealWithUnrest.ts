@@ -15,8 +15,8 @@ export const dealWithUnrestPipeline: CheckPipeline = {
   checkType: 'action',
 
   skills: [
-    { skill: 'religion', description: 'religious ceremonies', doctrine: 'virtuous' },
-    { skill: 'diplomacy', description: 'community engagement', doctrine: 'virtuous' },
+    { skill: 'religion', description: 'religious ceremonies', doctrine: 'idealist' },
+    { skill: 'diplomacy', description: 'community engagement', doctrine: 'idealist' },
     { skill: 'medicine', description: 'public health initiatives', doctrine: 'practical' },
     { skill: 'performance', description: 'entertainment and festivities', doctrine: 'practical' },
     { skill: 'arcana', description: 'magical persuasion', doctrine: 'practical' },

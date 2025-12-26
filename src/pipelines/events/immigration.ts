@@ -38,12 +38,12 @@ export const immigrationPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Welcome Citizens',
         description: 'Open borders and generous integration support',
         icon: 'fas fa-door-open',
         skills: ['diplomacy', 'society', 'medicine', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Newcomers thrive; their success inspires others to join.',
           success: 'Grateful settlers share their skills and resources.',
@@ -189,7 +189,7 @@ export const immigrationPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         // Welcome All Freely (Virtuous) - all outcomes grant 1 new worksite
         // Find a valid hex for farmstead
         const validHexes = (kingdom.hexes || []).filter((hex: any) =>
@@ -318,7 +318,7 @@ export const immigrationPipeline: CheckPipeline = {
         const outcome = ctx.outcome;
 
         // Return number of worksites to create based on approach and outcome
-        if (approach === 'virtuous') {
+        if (approach === 'idealist') {
           return 1; // All outcomes grant 1 worksite
         } else if (approach === 'practical') {
           if (outcome === 'criticalSuccess') {
@@ -343,7 +343,7 @@ export const immigrationPipeline: CheckPipeline = {
         // Virtuous: all outcomes grant worksites
         // Practical: only critical success
         // Ruthless: critical success and success
-        if (approach === 'virtuous') return true;
+        if (approach === 'idealist') return true;
         if (approach === 'practical' && outcome === 'criticalSuccess') return true;
         if (approach === 'ruthless' && (outcome === 'criticalSuccess' || outcome === 'success')) return true;
         return false;
@@ -393,7 +393,7 @@ export const immigrationPipeline: CheckPipeline = {
       await increaseCommand.commit();
     }
 
-    // Execute faction adjustments (virtuous approach)
+    // Execute faction adjustments (idealist approach)
     const factionVirtuousCS = ctx.metadata?._preparedFactionVirtuousCS;
     if (factionVirtuousCS?.commit) {
       await factionVirtuousCS.commit();
@@ -428,7 +428,7 @@ export const immigrationPipeline: CheckPipeline = {
         // Create each worksite with its specific type
         for (const hexId of hexIds) {
           const hexMetadata = perHexMetadata[hexId];
-          const worksiteType = hexMetadata?.worksiteType || (approach === 'virtuous' ? 'farmstead' : undefined);
+          const worksiteType = hexMetadata?.worksiteType || (approach === 'idealist' ? 'farmstead' : undefined);
           
           await createWorksiteExecution(hexId, worksiteType);
           
@@ -437,7 +437,7 @@ export const immigrationPipeline: CheckPipeline = {
       } else if (Array.isArray(selectedHexData)) {
         // Fallback: Simple array of hex IDs (no custom selector data)
         for (const hexId of selectedHexData) {
-          const worksiteType = approach === 'virtuous' ? 'farmstead' : 'worksite';
+          const worksiteType = approach === 'idealist' ? 'farmstead' : 'worksite';
           await createWorksiteExecution(hexId, worksiteType);
           ui.notifications?.info(`New settlers established a ${worksiteType} on hex ${hexId}`);
         }

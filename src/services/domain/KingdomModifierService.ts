@@ -15,6 +15,7 @@ import { kingdomData } from '../../stores/KingdomStore';
 import { structuresService } from '../structures';
 import { getSkillPenalty } from './unrest/UnrestService';
 import type { RollModifier } from '../../types/RollModifier';
+import { doctrineService } from '../doctrine/DoctrineService';
 
 export interface ModifierCheckOptions {
   /** Skill being checked (for structure bonuses) */
@@ -73,7 +74,19 @@ class KingdomModifierService {
       const aidModifiers = this.getAidBonuses(options.actionId, options.checkType);
       modifiers.push(...aidModifiers);
     }
-    
+
+    // Add doctrine bonus (if skill aligns with dominant doctrine)
+    const doctrineBonus = this.getDoctrineBonus(options.skillName);
+    if (doctrineBonus) {
+      modifiers.push(doctrineBonus);
+    }
+
+    // Add doctrine penalty (Practical doctrine at Major+ penalizes non-aligned skills)
+    const doctrinePenalty = this.getDoctrinePenalty(options.skillName);
+    if (doctrinePenalty) {
+      modifiers.push(doctrinePenalty);
+    }
+
     return modifiers;
   }
 
@@ -243,13 +256,13 @@ class KingdomModifierService {
    */
   hasKeepHigherAid(actionId: string, checkType: 'action' | 'event' | 'incident'): boolean {
     const currentKingdomState = get(kingdomData);
-    
+
     if (!currentKingdomState?.turnState) {
       return false;
     }
-    
+
     let aids: any[] = [];
-    
+
     // Check for event aids
     if (checkType === 'event' && currentKingdomState.turnState.eventsPhase?.activeAids) {
       aids = currentKingdomState.turnState.eventsPhase.activeAids.filter(
@@ -262,9 +275,54 @@ class KingdomModifierService {
         aid => aid.targetActionId === actionId
       );
     }
-    
+
     // Return true if any aid grants keep higher
     return aids.some(aid => aid.grantKeepHigher);
+  }
+
+  /**
+   * Get doctrine bonus for a skill aligned with the dominant doctrine
+   */
+  private getDoctrineBonus(skillName: string): RollModifier | null {
+    const bonus = doctrineService.getSkillBonus(skillName);
+
+    if (bonus > 0) {
+      const state = doctrineService.getDoctrineState();
+      const label = state.dominant
+        ? `${state.tierInfo[state.dominant].label} Doctrine`
+        : 'Doctrine Bonus';
+
+      return {
+        label,
+        value: bonus,
+        type: 'circumstance',
+        enabled: true,
+        ignored: false,
+        source: 'doctrine'
+      };
+    }
+
+    return null;
+  }
+
+  /**
+   * Get doctrine penalty for non-aligned skills (Practical doctrine at Major+ tier)
+   */
+  private getDoctrinePenalty(skillName: string): RollModifier | null {
+    const penalty = doctrineService.getSkillPenalty(skillName);
+
+    if (penalty < 0) {
+      return {
+        label: 'Practical Doctrine Penalty',
+        value: penalty,
+        type: 'circumstance',
+        enabled: true,
+        ignored: false,
+        source: 'doctrine'
+      };
+    }
+
+    return null;
   }
 }
 

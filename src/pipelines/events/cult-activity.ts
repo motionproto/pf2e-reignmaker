@@ -35,12 +35,12 @@ export const cultActivityPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Investigate Respectfully',
         description: 'Investigate while respecting religious freedom',
         icon: 'fas fa-balance-scale',
         skills: ['society', 'diplomacy', 'religion', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Respectful inquiry reveals benign practices; relations bloom.',
           success: 'Understanding dispels fear and mistrust.',
@@ -174,7 +174,7 @@ export const cultActivityPipeline: CheckPipeline = {
       const commandContext: GameCommandContext = { kingdom, outcome: outcome || 'success' };
 
       // Handle faction adjustments and special effects
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         if (outcome === 'criticalSuccess') {
           // Adjust 1 faction +1
           const factionHandler = new AdjustFactionHandler();
@@ -403,7 +403,7 @@ export const cultActivityPipeline: CheckPipeline = {
     const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
     const outcome = ctx.outcome;
 
-    // Execute structure damage (virtuous CF)
+    // Execute structure damage (idealist CF)
     const damageCommand = ctx.metadata?._preparedDamage;
     if (damageCommand?.commit) {
       await damageCommand.commit();
@@ -415,7 +415,7 @@ export const cultActivityPipeline: CheckPipeline = {
       await damageRuthless.commit();
     }
 
-    // Execute faction adjustments (virtuous)
+    // Execute faction adjustments (idealist)
     const factionVirtuousCommand = ctx.metadata?._preparedFactionVirtuous;
     if (factionVirtuousCommand?.commit) {
       await factionVirtuousCommand.commit();

@@ -23,7 +23,7 @@
   import Button from "./baseComponents/Button.svelte";
   import { economicsService } from "../../../services/economics";
   import { calculateSizeUnrest } from "../../../services/domain/unrest/UnrestService";
-  import { getResourceIcon, getResourceColor, getDoctrineIcon, getDoctrineColor } from "../utils/presentation";
+  import { getResourceIcon, getResourceColor, getDoctrineIcon } from "../utils/presentation";
   import { PLAYER_KINGDOM } from "../../../types/ownership";
   import { validateKingdomOrFactionName } from "../../../utils/reserved-names";
 
@@ -483,19 +483,19 @@
         <div class="stat-group-card">
           <div class="stat-item has-tooltip">
             <div class="stat-tooltip">
-              Accumulated from choosing virtuous approaches to events. Represents compassionate and righteous leadership.
+              Accumulated from choosing idealist approaches to events. Represents compassionate and principled leadership.
             </div>
             <span class="stat-label"
-              ><i class="fa-solid {getDoctrineIcon('virtuous')} stat-icon" style="color: {getDoctrineColor('virtuous')}"></i>Virtuous:</span
+              ><i class="fa-solid {getDoctrineIcon('idealist')} stat-icon"></i>Idealist:</span
             >
-            <span class="stat-value">{$doctrine.virtuous}</span>
+            <span class="stat-value">{$doctrine.idealist}</span>
           </div>
           <div class="stat-item has-tooltip">
             <div class="stat-tooltip">
               Accumulated from choosing practical approaches to events. Represents balanced and lawful leadership.
             </div>
             <span class="stat-label"
-              ><i class="fa-solid {getDoctrineIcon('practical')} stat-icon" style="color: {getDoctrineColor('practical')}"></i>Practical:</span
+              ><i class="fa-solid {getDoctrineIcon('practical')} stat-icon"></i>Practical:</span
             >
             <span class="stat-value">{$doctrine.practical}</span>
           </div>
@@ -504,7 +504,7 @@
               Accumulated from choosing ruthless approaches to events. Represents expedient and self-serving leadership.
             </div>
             <span class="stat-label"
-              ><i class="fa-solid {getDoctrineIcon('ruthless')} stat-icon" style="color: {getDoctrineColor('ruthless')}"></i>Ruthless:</span
+              ><i class="fa-solid {getDoctrineIcon('ruthless')} stat-icon"></i>Ruthless:</span
             >
             <span class="stat-value">{$doctrine.ruthless}</span>
           </div>
@@ -852,7 +852,7 @@
     position: relative;
     cursor: help;
   }
-  
+
   .stat-item.has-tooltip:hover {
     background: var(--overlay);
   }

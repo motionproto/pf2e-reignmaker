@@ -29,12 +29,12 @@ export const diplomaticOverturePipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Generous Terms',
         description: 'Build friendship through generous agreement',
         icon: 'fas fa-handshake',
         skills: ['diplomacy', 'society', 'religion', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Magnanimous generosity forges unbreakable alliance and thriving trade.',
           success: 'Generous treaty strengthens bonds; neighbors become trusted friends.',
@@ -170,7 +170,7 @@ export const diplomaticOverturePipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         if (outcome === 'criticalSuccess') {
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(

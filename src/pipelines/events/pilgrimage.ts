@@ -30,12 +30,12 @@ export const pilgrimagePipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Free Passage',
         description: 'Open hospitality for all pilgrims',
         icon: 'fas fa-praying-hands',
         skills: ['religion', 'diplomacy', 'medicine', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Divine blessings rain upon generous hosts.',
           success: 'Grateful pilgrims leave offerings and prayers.',
@@ -176,7 +176,7 @@ export const pilgrimagePipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         if (outcome === 'criticalSuccess') {
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(

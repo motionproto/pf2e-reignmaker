@@ -32,12 +32,12 @@ export const boomtownPipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Community Planning',
         description: 'Ensure fair housing and protect worker rights',
         icon: 'fas fa-home',
         skills: ['diplomacy', 'society', 'medicine', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Equitable growth inspires loyalty; grateful workers build freely.',
           success: 'Fair housing stabilizes boom; settlement expands peacefully.',
@@ -185,7 +185,7 @@ export const boomtownPipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         // Fair Housing (Virtuous)
         if (outcome === 'criticalSuccess' || outcome === 'success') {
           const increaseHandler = new IncreaseSettlementLevelHandler();
@@ -283,7 +283,7 @@ export const boomtownPipeline: CheckPipeline = {
       await settlementCommand.commit();
     }
 
-    // Commit structure grant (virtuous CS, practical CS/S, ruthless CS/S)
+    // Commit structure grant (idealist CS, practical CS/S, ruthless CS/S)
     const structureCommand = ctx.metadata?._preparedStructure;
     if (structureCommand?.commit) {
       await structureCommand.commit();

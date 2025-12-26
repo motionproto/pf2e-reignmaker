@@ -29,12 +29,12 @@ export const plaguePipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Quarantine & Care',
         description: 'Care for all citizens regardless of cost',
         icon: 'fas fa-hand-holding-medical',
         skills: ['medicine', 'religion', 'nature', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Your selfless devotion inspires hope; people rally together.',
           success: 'Compassionate care earns gratitude and donations.',
@@ -180,7 +180,7 @@ export const plaguePipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         // Provide Free Treatment (Virtuous)
         if (outcome === 'criticalSuccess') {
           // Adjust 2 random factions +1
@@ -323,14 +323,14 @@ export const plaguePipeline: CheckPipeline = {
       await factionVirtuousS.commit();
     }
 
-    // Execute settlement level reduction (virtuous CF)
+    // Execute settlement level reduction (idealist CF)
     const reduceCommand = ctx.metadata?._preparedSettlementReduceVirtuousCF;
     if (reduceCommand?.commit) {
       await reduceCommand.commit();
     }
 
     // Execute game commands for treatment approach
-    if (approach === 'virtuous') {
+    if (approach === 'idealist') {
       if (outcome === 'criticalFailure' && ctx.metadata?._addOngoingPlague) {
         // Add ongoing plague modifier directly to kingdom
         const { updateKingdom } = await import('../../stores/KingdomStore');

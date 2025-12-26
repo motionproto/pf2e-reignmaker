@@ -17,7 +17,7 @@ export const buildStructurePipeline: CheckPipeline = {
   checkType: 'action',
 
   skills: [
-    { skill: 'religion', description: 'blessed construction', doctrine: 'virtuous' },
+    { skill: 'religion', description: 'blessed construction', doctrine: 'idealist' },
     { skill: 'crafting', description: 'construction expertise', doctrine: 'practical' },
     { skill: 'society', description: 'organize workforce', doctrine: 'practical' },
     { skill: 'arcana', description: 'magically assisted', doctrine: 'practical' },

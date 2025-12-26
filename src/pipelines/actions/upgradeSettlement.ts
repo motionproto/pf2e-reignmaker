@@ -19,8 +19,8 @@ export const upgradeSettlementPipeline: CheckPipeline = {
   special: 'Cost equals the settlement\'s NEW level in gold.',
 
   skills: [
-    { skill: 'performance', description: 'inspire growth', doctrine: 'virtuous' },
-    { skill: 'medicine', description: 'public health improvements', doctrine: 'virtuous' },
+    { skill: 'performance', description: 'inspire growth', doctrine: 'idealist' },
+    { skill: 'medicine', description: 'public health improvements', doctrine: 'idealist' },
     { skill: 'crafting', description: 'infrastructure expansion', doctrine: 'practical' },
     { skill: 'society', description: 'urban planning', doctrine: 'practical' },
     { skill: 'arcana', description: 'magical enhancement', doctrine: 'practical' },

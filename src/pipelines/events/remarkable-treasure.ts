@@ -28,12 +28,12 @@ export const remarkableTreasurePipeline: CheckPipeline = {
     required: true,
     options: [
       {
-        id: 'virtuous',
+        id: 'idealist',
         label: 'Share with All',
         description: 'Distribute wealth to all citizens',
         icon: 'fas fa-hand-holding-heart',
         skills: ['diplomacy', 'society', 'religion', 'applicable lore'],
-        personality: { virtuous: 3 },
+        personality: { idealist: 3 },
         outcomeDescriptions: {
           criticalSuccess: 'Selfless sharing unites hearts; grateful factions celebrate generous leaders.',
           success: 'Fair distribution eases burdens; grateful citizens praise compassion.',
@@ -174,7 +174,7 @@ export const remarkableTreasurePipeline: CheckPipeline = {
         metadata: ctx.metadata || {}
       };
 
-      if (approach === 'virtuous') {
+      if (approach === 'idealist') {
         if (outcome === 'criticalSuccess') {
           const factionHandler = new AdjustFactionHandler();
           const factionCommand = await factionHandler.prepare(
