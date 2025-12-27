@@ -5,7 +5,7 @@
  * Replaces the fragmented approach where data was scattered across
  * instance.metadata, resolutionData, and global state.
  *
- * SerializablePipelineContext is stored in kingdom.turnState.activePipelineContexts
+ * SerializablePipelineContext is stored in kingdom.turnState.activePipelines[instanceId].context
  * to survive page reloads and sync across clients.
  */
 

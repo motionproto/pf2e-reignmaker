@@ -4,26 +4,84 @@
  */
 
 import { logger } from './Logger';
-
-// Import army token images
-import cavalryImg from '../img/army_tokens/army-calvary.webp';
-import engineersImg from '../img/army_tokens/army-engineers.webp';
-import infantryImg from '../img/army_tokens/army-infantry.webp';
-import koboldImg from '../img/army_tokens/army-kobold.webp';
-import wolvesImg from '../img/army_tokens/army-wolves.webp';
+import { armyTypesService } from '../services/armyTypes';
+import type { ArmyTypesConfig } from '../types/armyTypes';
 
 /**
- * Army type definitions with images
+ * Get army types asynchronously (preferred method)
+ * This will initialize defaults if not set
  */
-export const ARMY_TYPES = {
-  cavalry: { name: 'Cavalry', image: cavalryImg },
-  engineers: { name: 'Engineers', image: engineersImg },
-  infantry: { name: 'Infantry', image: infantryImg },
-  kobold: { name: 'Kobold', image: koboldImg },
-  wolves: { name: 'Wolves', image: wolvesImg }
-} as const;
+export async function getArmyTypes(): Promise<ArmyTypesConfig> {
+  return armyTypesService.getArmyTypes();
+}
 
-export type ArmyType = keyof typeof ARMY_TYPES;
+/**
+ * Get army types synchronously (uses cache, may be stale)
+ * Falls back to defaults if cache not populated
+ */
+export function getArmyTypesSync(): ArmyTypesConfig {
+  return armyTypesService.getArmyTypesSync();
+}
+
+/**
+ * Invalidate cache when types are updated externally
+ */
+export function invalidateArmyTypesCache(): void {
+  armyTypesService.invalidateCache();
+}
+
+/**
+ * Legacy ARMY_TYPES export for backwards compatibility
+ * Uses a Proxy to dynamically fetch from the service cache
+ *
+ * @deprecated Use getArmyTypes() or getArmyTypesSync() instead
+ */
+export const ARMY_TYPES: ArmyTypesConfig = new Proxy({} as ArmyTypesConfig, {
+  get(_target, prop: string | symbol) {
+    if (typeof prop === 'symbol') return undefined;
+    const types = armyTypesService.getArmyTypesSync();
+    if (prop in types) {
+      const config = types[prop];
+      return {
+        name: config.name,
+        portraitImage: config.portraitImage,
+        tokenImage: config.tokenImage,
+        // Legacy: provide 'image' as alias for tokenImage for backwards compatibility
+        image: config.tokenImage
+      };
+    }
+    return undefined;
+  },
+  ownKeys(_target) {
+    return Object.keys(armyTypesService.getArmyTypesSync());
+  },
+  getOwnPropertyDescriptor(_target, prop: string | symbol) {
+    if (typeof prop === 'symbol') return undefined;
+    const types = armyTypesService.getArmyTypesSync();
+    if (prop in types) {
+      const config = types[prop];
+      return {
+        enumerable: true,
+        configurable: true,
+        value: {
+          name: config.name,
+          portraitImage: config.portraitImage,
+          tokenImage: config.tokenImage,
+          image: config.tokenImage
+        }
+      };
+    }
+    return undefined;
+  },
+  has(_target, prop: string | symbol) {
+    if (typeof prop === 'symbol') return false;
+    const types = armyTypesService.getArmyTypesSync();
+    return prop in types;
+  }
+});
+
+/** Army type is now dynamic (string) rather than a fixed union */
+export type ArmyType = string;
 
 /**
  * Place an army token at a settlement location

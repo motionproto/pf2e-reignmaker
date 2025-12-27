@@ -1,10 +1,12 @@
 <script lang="ts">
    import { PLAYER_KINGDOM } from '../../../types/ownership';
-import { kingdomData, kingdomActor, isInitialized, doctrine, doctrineState } from '../../../stores/KingdomStore';
+import { kingdomData, kingdomActor, isInitialized, doctrine, doctrineState, updateKingdom } from '../../../stores/KingdomStore';
+import { tick } from 'svelte';
 import { TurnPhase } from '../../../actors/KingdomActor';
 import ModifierCard from '../components/ModifierCard.svelte';
 import CustomModifierDisplay from '../components/CustomModifierDisplay.svelte';
 import Notification from '../components/baseComponents/Notification.svelte';
+import Dialog from '../components/baseComponents/Dialog.svelte';
 import { setSelectedTab } from '../../../stores/ui';
 import { SettlementTier } from '../../../models/Settlement';
 import { logger } from '../../../utils/Logger';
@@ -12,7 +14,27 @@ import CitizensDemandExpansion from './components/CitizensDemandExpansion.svelte
 import CitizensDemandStructure from './components/CitizensDemandStructure.svelte';
 import { getDoctrineIcon, getDoctrineColor, getDoctrineTierLabel } from '../utils/presentation';
 import { DOCTRINE_THRESHOLDS, DOCTRINE_TIER_ORDER, DOCTRINE_TIER_EFFECTS, DOCTRINE_SKILL_GROUPS, DOCTRINE_PENALTIES } from '../../../constants/doctrine';
+import { DOCTRINE_ABILITY_MAPPINGS, type DoctrineAbilityConfig } from '../../../constants/doctrineAbilityMappings';
 import type { DoctrineType, DoctrineTier } from '../../../types/Doctrine';
+
+// Helper: Get army ability for a doctrine at a specific tier
+function getArmyAbilityForTier(doctrineType: DoctrineType, tier: DoctrineTier) {
+   return DOCTRINE_ABILITY_MAPPINGS.find(a => a.doctrine === doctrineType && a.tier === tier);
+}
+
+// Ability dialog state
+let showAbilityDialog = false;
+let selectedAbility: DoctrineAbilityConfig | null = null;
+
+function openAbilityDialog(ability: DoctrineAbilityConfig) {
+   selectedAbility = ability;
+   showAbilityDialog = true;
+}
+
+function closeAbilityDialog() {
+   showAbilityDialog = false;
+   selectedAbility = null;
+}
 
 // Props - add the missing prop to fix the warning
 export let isViewingCurrentPhase: boolean = true;
@@ -93,6 +115,64 @@ const doctrineTiers: DoctrineTier[] = ['minor', 'moderate', 'major', 'absolute']
 
 // Doctrine progression expandable state
 let showDoctrineProgression = false;
+
+// Leader section state
+interface LeaderInfo {
+   actorId: string;
+   name: string;
+   portraitImg: string | null;
+   tokenImg: string | null;
+}
+
+// Get party members reactively
+$: leaders = (() => {
+   const game = (globalThis as any).game;
+   if (!game?.actors) return [];
+
+   const partyActor = game.actors.find((a: any) => a.type === 'party');
+   if (!partyActor?.members) return [];
+
+   const members = Array.from(partyActor.members) as any[];
+   return members
+      .filter((a: any) => a.type === 'character')
+      .map((actor: any): LeaderInfo => ({
+         actorId: actor.id,
+         name: actor.name,
+         portraitImg: actor.img || null,
+         tokenImg: actor.prototypeToken?.texture?.src || null
+      }));
+})();
+
+// Get leader titles from kingdom data
+$: leaderTitles = $kingdomData.leaderTitles || {};
+
+// Title editing state
+let editingTitleFor: string | null = null;
+let editTitleInput = '';
+let titleInputElement: HTMLInputElement;
+
+function startEditingTitle(actorId: string) {
+   editingTitleFor = actorId;
+   editTitleInput = leaderTitles[actorId] || '';
+}
+
+async function saveTitle(actorId: string) {
+   const newTitle = editTitleInput.trim();
+   await updateKingdom((k) => {
+      if (!k.leaderTitles) k.leaderTitles = {};
+      if (newTitle) {
+         k.leaderTitles[actorId] = newTitle;
+      } else {
+         delete k.leaderTitles[actorId];
+      }
+   });
+   editingTitleFor = null;
+}
+
+function cancelEditTitle() {
+   editingTitleFor = null;
+   editTitleInput = '';
+}
 
 // Helper: Get next threshold for a doctrine value
 function getNextThreshold(value: number): number | null {
@@ -289,6 +369,69 @@ async function initializePhase() {
       </div>
    {/if}
 
+   <!-- Leaders Section -->
+   {#if leaders.length > 0}
+      <div class="leaders-section">
+         <div class="section-header-minimal">
+            <i class="fas fa-crown"></i>
+            <h3>Leaders</h3>
+         </div>
+
+         <div class="leaders-grid">
+            {#each leaders as leader (leader.actorId)}
+               <div class="leader-card">
+                  <div class="leader-portrait">
+                     {#if leader.portraitImg}
+                        <img src={leader.portraitImg} alt={leader.name} />
+                     {:else if leader.tokenImg}
+                        <img src={leader.tokenImg} alt={leader.name} />
+                     {:else}
+                        <div class="portrait-placeholder">
+                           <i class="fas fa-user"></i>
+                        </div>
+                     {/if}
+                  </div>
+
+                  <div class="leader-info">
+                     {#if editingTitleFor === leader.actorId}
+                        <div class="title-edit">
+                           <input
+                              bind:this={titleInputElement}
+                              bind:value={editTitleInput}
+                              on:keydown={(e) => {
+                                 if (e.key === 'Enter') saveTitle(leader.actorId);
+                                 if (e.key === 'Escape') cancelEditTitle();
+                              }}
+                              on:blur={() => saveTitle(leader.actorId)}
+                              placeholder="Enter title..."
+                              class="title-input"
+                           />
+                        </div>
+                     {:else}
+                        <button
+                           class="leader-title"
+                           on:click={async () => {
+                              startEditingTitle(leader.actorId);
+                              await tick();
+                              titleInputElement?.focus();
+                              titleInputElement?.select();
+                           }}
+                           title="Click to edit title"
+                        >
+                           <i class="fas fa-pen-fancy edit-icon spacer" aria-hidden="true"></i>
+                           <span class="title-text">{leaderTitles[leader.actorId] || 'Click to set title'}</span>
+                           <i class="fas fa-pen-fancy edit-icon"></i>
+                        </button>
+                     {/if}
+
+                     <div class="leader-name">{leader.name}</div>
+                  </div>
+               </div>
+            {/each}
+         </div>
+      </div>
+   {/if}
+
    <!-- Fame Display Section -->
    <div class="fame-section">
       <div class="section-header-minimal">
@@ -393,22 +536,42 @@ async function initializePhase() {
                      <div class="doctrine-tiers-list">
                         {#each doctrineTiers as tier}
                            {@const effects = DOCTRINE_TIER_EFFECTS[tier]}
-                           {@const hasPenalty = tier === 'major' || tier === 'absolute'}
                            {@const currentValue = $doctrine[doctrineType] || 0}
                            {@const isReached = currentValue >= DOCTRINE_THRESHOLDS[tier]}
+                           {@const armyAbility = getArmyAbilityForTier(doctrineType, tier)}
+                           {@const showSkillBonus = tier === 'minor' || tier === 'absolute'}
+                           {@const showPenalty = tier === 'absolute' && doctrineType !== 'practical'}
+                           {@const showPracticalPenalty = tier === 'absolute' && doctrineType === 'practical'}
                            <div class="doctrine-tier-row" class:reached={isReached}>
                               <div class="tier-header">
                                  <span class="tier-name">{tier.charAt(0).toUpperCase() + tier.slice(1)}</span>
                                  <span class="tier-threshold">{DOCTRINE_THRESHOLDS[tier]}+</span>
                               </div>
                               <div class="tier-effects">
-                                 <span class="tier-bonus">+{effects.skillBonus} aligned skills</span>
-                                 {#if hasPenalty}
+                                 {#if showSkillBonus}
+                                    <span class="tier-bonus">+{effects.skillBonus} aligned skills</span>
+                                 {/if}
+                                 {#if armyAbility}
+                                    <button
+                                       class="tier-army"
+                                       title={armyAbility.description}
+                                       on:click={() => openAbilityDialog(armyAbility)}
+                                    >
+                                       <span class="army-ability-label">Army Ability</span>
+                                       <span class="army-ability-name">
+                                          <i class="fas fa-shield-alt"></i>
+                                          {armyAbility.name}
+                                       </span>
+                                    </button>
+                                 {/if}
+                                 {#if showPenalty}
                                     <span class="tier-penalty">
                                        {#if doctrineType === 'idealist'}+1 consumption
-                                       {:else if doctrineType === 'practical'}-1 non-aligned
                                        {:else}+1 unrest{/if}
                                     </span>
+                                 {/if}
+                                 {#if showPracticalPenalty}
+                                    <span class="tier-penalty">-1 non-aligned</span>
                                  {/if}
                               </div>
                            </div>
@@ -455,10 +618,35 @@ async function initializePhase() {
 
    <!-- Citizens Demand Expansion -->
    <CitizensDemandExpansion />
-   
+
    <!-- Citizens Demand Structure -->
    <CitizensDemandStructure />
 </div>
+
+<!-- Army Ability Details Dialog -->
+<Dialog
+   bind:show={showAbilityDialog}
+   title={selectedAbility?.name || 'Army Ability'}
+   showConfirm={false}
+   cancelLabel="Close"
+   width="420px"
+   onCancel={closeAbilityDialog}
+>
+   {#if selectedAbility}
+      <div class="ability-dialog-content">
+         <p class="ability-description">{selectedAbility.fullDescription || selectedAbility.description}</p>
+
+         <div class="ability-requirement">
+            <span class="requirement-label">Requirement:</span>
+            <span class="requirement-value">
+               {selectedAbility.tier.charAt(0).toUpperCase() + selectedAbility.tier.slice(1)}
+               {selectedAbility.doctrine.charAt(0).toUpperCase() + selectedAbility.doctrine.slice(1)}
+               doctrine
+            </span>
+         </div>
+      </div>
+   {/if}
+</Dialog>
 
 <style lang="scss">
    .status-phase {
@@ -559,6 +747,164 @@ async function initializePhase() {
          font-weight: var(--font-weight-semibold);
          color: var(--color-amber-light);
          text-shadow: var(--text-shadow-md);
+      }
+   }
+
+   // Leaders Section Styles
+   .leaders-section {
+      background: transparent;
+   }
+
+   .leaders-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-12);
+      padding: var(--space-12);
+      justify-content: center;
+
+      // Default: 4 per row (for 1-4 and 7-8 cards)
+      .leader-card {
+         flex: 0 0 calc(25% - var(--space-12) * 3 / 4);
+         max-width: calc(25% - var(--space-12) * 3 / 4);
+      }
+   }
+
+   // 5-6 cards: 3 per row
+   .leaders-grid:has(.leader-card:nth-child(5)):not(:has(.leader-card:nth-child(7))) {
+      .leader-card {
+         flex: 0 0 calc(33.333% - var(--space-12) * 2 / 3);
+         max-width: calc(33.333% - var(--space-12) * 2 / 3);
+      }
+   }
+
+   .leader-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-8);
+      background: var(--overlay-low);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-subtle);
+      overflow: hidden;
+      transition: all 0.2s ease;
+
+      &:hover {
+         border-color: var(--border-medium);
+         background: var(--overlay);
+      }
+   }
+
+   .leader-portrait {
+      width: 100%;
+      aspect-ratio: 1;
+      overflow: hidden;
+      background: var(--overlay);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      img {
+         width: 100%;
+         height: 100%;
+         object-fit: contain;
+      }
+   }
+
+   .portrait-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--overlay);
+      color: var(--text-tertiary);
+
+      i {
+         font-size: var(--font-3xl);
+      }
+   }
+
+   .leader-info {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-4);
+      width: 100%;
+      padding: var(--space-8) var(--space-8) var(--space-12);
+   }
+
+   .leader-name {
+      font-size: var(--font-md);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-primary);
+      text-align: center;
+      line-height: 1.2;
+   }
+
+   .leader-title {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-4);
+      font-size: var(--font-sm);
+      color: var(--text-secondary);
+      background: transparent;
+      border: none;
+      padding: var(--space-2) var(--space-6);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+         background: var(--overlay);
+         color: var(--text-primary);
+      }
+
+      .title-text {
+         text-transform: capitalize;
+      }
+
+      .edit-icon {
+         font-size: var(--font-xs);
+         opacity: 0;
+         transition: opacity 0.2s ease;
+         width: 0.75em;
+
+         &.spacer {
+            visibility: hidden;
+         }
+      }
+
+      &:hover .edit-icon:not(.spacer) {
+         opacity: 1;
+      }
+   }
+
+   .title-edit {
+      width: 100%;
+   }
+
+   .title-input {
+      width: 100%;
+      padding: var(--space-4) var(--space-8);
+      font-size: var(--font-sm);
+      background: var(--overlay);
+      border: 1px solid var(--border-accent-medium);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      text-align: center;
+      text-transform: capitalize;
+
+      &:focus {
+         outline: none;
+         border-color: var(--color-accent);
+         background: var(--overlay-high);
+      }
+
+      &::placeholder {
+         color: var(--text-tertiary);
+         font-style: italic;
+         text-transform: none;
       }
    }
 
@@ -690,29 +1036,30 @@ async function initializePhase() {
    /* Doctrine Progression Toggle & Panel */
    .doctrine-toggle {
       width: 100%;
-      padding: var(--space-8) var(--space-12);
-      margin-top: var(--space-12);
-      background: var(--overlay-low);
-      border: 1px solid var(--border-subtle);
+      padding: var(--space-12) var(--space-16);
+      margin-top: var(--space-16);
+      background: var(--overlay);
+      border: 1px solid var(--border-medium);
       border-radius: var(--radius-md);
-      color: var(--text-secondary);
-      font-size: var(--font-sm);
+      color: var(--text-primary);
+      font-size: var(--font-lg);
+      font-weight: var(--font-weight-medium);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: var(--space-8);
+      gap: var(--space-10);
       transition: all 0.2s ease;
 
       &:hover {
-         background: var(--overlay);
-         color: var(--text-primary);
+         background: var(--overlay-high);
+         border-color: var(--border-accent-medium);
       }
    }
 
    .doctrine-progression {
-      margin-top: var(--space-12);
-      padding: var(--space-16);
+      margin-top: var(--space-16);
+      padding: var(--space-20);
       background: var(--overlay-low);
       border-radius: var(--radius-lg);
       border: 1px solid var(--border-subtle);
@@ -734,16 +1081,16 @@ async function initializePhase() {
       display: flex;
       align-items: center;
       gap: var(--space-8);
-      font-size: var(--font-md);
+      font-size: var(--font-xl);
       font-weight: var(--font-weight-semibold);
       color: var(--text-primary);
       margin: 0;
-      padding-bottom: var(--space-8);
+      padding-bottom: var(--space-10);
       border-bottom: 2px solid;
    }
 
    .doctrine-skills {
-      font-size: var(--font-sm);
+      font-size: var(--font-md);
       color: var(--text-secondary);
       line-height: 1.5;
    }
@@ -751,11 +1098,11 @@ async function initializePhase() {
    .doctrine-tiers-list {
       display: flex;
       flex-direction: column;
-      gap: var(--space-8);
+      gap: var(--space-10);
    }
 
    .doctrine-tier-row {
-      padding: var(--space-10) var(--space-12);
+      padding: var(--space-12) var(--space-14);
       background: var(--overlay);
       border-radius: var(--radius-md);
       border: 1px solid var(--border-subtle);
@@ -773,17 +1120,17 @@ async function initializePhase() {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: var(--space-6);
+      margin-bottom: var(--space-8);
    }
 
    .tier-name {
-      font-size: var(--font-sm);
+      font-size: var(--font-lg);
       font-weight: var(--font-weight-semibold);
       color: var(--text-primary);
    }
 
    .tier-threshold {
-      font-size: var(--font-xs);
+      font-size: var(--font-sm);
       color: var(--text-tertiary);
       background: var(--overlay);
       padding: var(--space-2) var(--space-6);
@@ -792,24 +1139,94 @@ async function initializePhase() {
 
    .tier-effects {
       display: flex;
-      flex-wrap: wrap;
-      gap: var(--space-6);
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-8);
    }
 
-   .tier-bonus {
-      font-size: var(--font-xs);
-      padding: var(--space-2) var(--space-6);
+   .tier-bonus,
+   .tier-penalty,
+   .tier-army {
+      font-size: var(--font-md);
+      padding: var(--space-4) var(--space-8);
       background: var(--overlay);
       border-radius: var(--radius-sm);
-      color: var(--color-success);
+      color: var(--text-primary);
    }
 
-   .tier-penalty {
-      font-size: var(--font-xs);
-      padding: var(--space-2) var(--space-6);
-      background: rgba(239, 68, 68, 0.15);
-      border-radius: var(--radius-sm);
-      color: var(--color-danger);
+   .tier-army {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-2);
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      padding: var(--space-6) var(--space-10);
+
+      &:hover {
+         background: var(--overlay-high);
+
+         .army-ability-name {
+            color: var(--color-accent);
+         }
+      }
+
+      .army-ability-label {
+         font-size: var(--font-xs);
+         text-transform: uppercase;
+         letter-spacing: 0.05em;
+         color: var(--text-tertiary);
+         font-weight: var(--font-weight-medium);
+      }
+
+      .army-ability-name {
+         display: flex;
+         align-items: center;
+         gap: var(--space-6);
+         font-size: var(--font-md);
+         color: var(--text-primary);
+         transition: color 0.2s ease;
+
+         i {
+            font-size: var(--font-sm);
+         }
+      }
+   }
+
+   // Ability Dialog Content
+   .ability-dialog-content {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-16);
+   }
+
+   .ability-description {
+      margin: 0;
+      font-size: var(--font-md);
+      line-height: 1.6;
+      color: var(--text-primary);
+   }
+
+   .ability-requirement {
+      padding: var(--space-12);
+      background: var(--overlay);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+   }
+
+   .requirement-label {
+      font-size: var(--font-sm);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-secondary);
+   }
+
+   .requirement-value {
+      font-size: var(--font-md);
+      color: var(--text-primary);
    }
 
    // No Modifiers Styles

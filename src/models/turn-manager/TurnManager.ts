@@ -235,10 +235,15 @@ export class TurnManager {
      */
     private async endOfTurnCleanup(): Promise<void> {
         logger.info('🧹 [TurnManager] Running end-of-turn cleanup...');
-        
+
         const { updateKingdom, kingdomData } = await import('../../stores/KingdomStore');
         const { get } = await import('svelte/store');
         const kingdom = get(kingdomData);
+
+        // 0. Clear pipeline state for the turn
+        const { pipelineStateService } = await import('../../services/pipeline/PipelineStateService');
+        await pipelineStateService.clearAllPipelines();
+        logger.info('🧹 [TurnManager] Cleared pipeline state');
         
         // 1. Resource decay (moved from StatusPhaseController)
         await updateKingdom(k => {

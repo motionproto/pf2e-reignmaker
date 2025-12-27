@@ -62,7 +62,7 @@ export class SettlementStructureManagementService {
     const currentCount = settlement.structureIds.length;
 
     // Get all structures that need to be added (including prerequisites)
-    const structuresToAdd: string[] = [];
+    let structuresToAdd: string[] = [];
     
     if (options.autoAddPrerequisites) {
       // Get the full upgrade path

@@ -41,18 +41,19 @@ export class ArmyService {
    * @param options - Optional army options (type, image, custom actor data, settlement assignment, upkeep exemption, ledBy faction, supportedBy faction)
    * @returns Created army with actorId
    */
-  async createArmy(name: string, level: number, options?: { type?: string; image?: string; actorData?: any; settlementId?: string | null; exemptFromUpkeep?: boolean; ledBy?: string; supportedBy?: string }): Promise<Army> {
+  async createArmy(name: string, level: number, options?: { type?: string; portraitImage?: string; tokenImage?: string; actorData?: any; settlementId?: string | null; exemptFromUpkeep?: boolean; ledBy?: string; supportedBy?: string }): Promise<Army> {
     const { actionDispatcher } = await import('../ActionDispatcher');
-    
+
     if (!actionDispatcher.isAvailable()) {
       throw new Error('Action dispatcher not initialized. Please reload the game.');
     }
-    
+
     return await actionDispatcher.dispatch('createArmy', {
       name,
       level,
       type: options?.type,
-      image: options?.image,
+      portraitImage: options?.portraitImage,
+      tokenImage: options?.tokenImage,
       actorData: options?.actorData,
       settlementId: options?.settlementId,
       exemptFromUpkeep: options?.exemptFromUpkeep,
@@ -68,15 +69,15 @@ export class ArmyService {
    * 
    * @internal
    */
-  async _createArmyInternal(name: string, level: number, type?: string, image?: string, actorData?: any, settlementId?: string | null, exemptFromUpkeep?: boolean, ledBy?: string, supportedBy?: string): Promise<Army> {
+  async _createArmyInternal(name: string, level: number, type?: string, portraitImage?: string, tokenImage?: string, actorData?: any, settlementId?: string | null, exemptFromUpkeep?: boolean, ledBy?: string, supportedBy?: string): Promise<Army> {
 
     // Generate unique army ID
     const armyId = `army-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
-    // Create NPC actor in Foundry with army type image
+
+    // Create NPC actor in Foundry with army type images
     // Determine alliance based on faction attitude
     const factionId = ledBy || get(currentFaction) || PLAYER_KINGDOM;
-    const actorId = await this.createNPCActor(name, level, image, actorData, factionId);
+    const actorId = await this.createNPCActor(name, level, portraitImage, tokenImage, actorData, factionId);
     
     // Determine which settlement to assign to (for support tracking)
     let supportSettlement: Settlement | null = null;
@@ -530,27 +531,27 @@ export class ArmyService {
    * @returns Actor ID
    * @throws Error if Foundry not ready or creation fails
    */
-  async createNPCActor(name: string, level: number, image?: string, customData?: any, factionId?: string): Promise<string> {
+  async createNPCActor(name: string, level: number, portraitImage?: string, tokenImage?: string, customData?: any, factionId?: string): Promise<string> {
 
     const { createNPCInFolder } = await import('../actors/folderManager');
     const game = (globalThis as any).game;
-    
+
     // Determine alliance based on faction attitude
     let alliance: "party" | "neutral" | "opposition" = "party";
     const isNPCFaction = factionId && factionId !== PLAYER_KINGDOM;
-    
+
     if (isNPCFaction) {
       // Get faction attitude to determine alliance
       const actor = getKingdomActor();
       const kingdom = actor?.getKingdomData();
       const faction = kingdom?.factions?.find((f: any) => f.id === factionId);
-      
+
       if (faction) {
         // Indifferent or better = neutral, worse than indifferent = opposition
         const attitudeOrder = ['Helpful', 'Friendly', 'Indifferent', 'Unfriendly', 'Hostile'];
         const attitudeIndex = attitudeOrder.indexOf(faction.attitude);
         const indifferentIndex = attitudeOrder.indexOf('Indifferent');
-        
+
         if (attitudeIndex >= indifferentIndex) {
           // Indifferent or better
           alliance = "neutral";
@@ -560,13 +561,14 @@ export class ArmyService {
         }
       }
     }
-    
+
     // Build additional actor data for armies
+    // Use portrait image for actor img, token image for prototype token
     const additionalData = customData || {
-      img: image, // Portrait image
+      img: portraitImage || tokenImage, // Portrait image (fallback to token if not set)
       prototypeToken: {
         texture: {
-          src: image // Token image
+          src: tokenImage || portraitImage // Token image (fallback to portrait if not set)
         },
         displayName: 30, // Hover by Anyone
         actorLink: true // Link tokens to actor (changes to actor affect all tokens)

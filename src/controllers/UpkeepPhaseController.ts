@@ -623,7 +623,9 @@ export async function createUpkeepPhaseController() {
       const hexes = kingdomData.hexes || [];
       const consumption = calculateConsumption(settlements, armies, hexes);
       const armySupport = calculateArmySupportCapacity(settlements, hexes);
-      const unsupportedCount = calculateUnsupportedArmies(armies, settlements, hexes);
+      // Count armies without settlement assignment (isSupported = false)
+      // This matches the morale check logic in processUnsupportedArmies()
+      const unsupportedCount = armies.filter((a: any) => !a.isSupported).length;
 
       // Read actual values from the store - this is the source of truth
       const currentFood = kingdomData.resources?.food || 0;

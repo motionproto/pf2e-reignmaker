@@ -128,15 +128,29 @@ export interface AidEntry {
 }
 
 /**
- * Action instance - stores state for a specific action during the turn
- * Used for reroll modifier preservation and action-specific state
+ * Pipeline status - lifecycle stages for a pipeline execution
  */
-export interface ActionInstance {
-  instanceId: string;  // Check instance ID (format: T{turn}-{actionId}-{randomId})
-  actionId: string;    // Action ID
-  turnNumber: number;  // Turn when the roll was made (for validation on reroll)
-  rollModifiers: Array<{ label: string; modifier: number; type?: string; enabled?: boolean; ignored?: boolean }>;  // Modifiers from the roll
-  timestamp: number;   // When the roll was made
+export type PipelineStatus = 'pending' | 'rolling' | 'awaiting-confirmation' | 'resolved' | 'applied';
+
+/**
+ * Unified pipeline state - single source of truth for all pipeline execution state
+ * Replaces fragmented storage in activePipelineContexts and actionsPhase.actionInstances
+ *
+ * Stored in turnState.activePipelines[instanceId] for:
+ * - Roll modifier preservation (rerolls)
+ * - Context recovery (page reload)
+ * - Status tracking (UI visibility)
+ */
+export interface PipelineState {
+  instanceId: string;
+  actionId: string;
+  checkType: 'action' | 'event' | 'incident';
+  turnNumber: number;
+  phase: TurnPhase;
+  status: PipelineStatus;
+  rollModifiers?: Array<{ label: string; modifier: number; type?: string; enabled?: boolean; ignored?: boolean }>;
+  context?: SerializablePipelineContext;
+  timestamp: number;
 }
 
 /**
@@ -147,9 +161,7 @@ export interface ActionsPhaseState {
   activeAids: AidEntry[];  // Aid bonuses available for actions this turn
   deployedArmyIds: string[];  // Army IDs that have been deployed this turn
   factionsAidedThisTurn: string[];  // Faction IDs that have provided aid (economic or military) this turn
-  actionInstances?: Record<string, ActionInstance>;  // Action-specific state (keyed by actionId)
-  // Removed: playerActions - now using actionLog at top level instead
-  // Removed: completionsByAction - now using actionLog instead
+  // NOTE: actionInstances moved to turnState.activePipelines (unified pipeline state)
 }
 
 /**
@@ -177,14 +189,14 @@ export interface TurnState {
   // Action tracking across all phases
   actionLog: ActionLogEntry[];
 
-  // Pipeline contexts for active pipelines (survives page reload, syncs across clients)
-  // Keyed by instanceId - stores serializable context for reroll recovery
+  // Unified pipeline state (survives page reload, syncs across clients)
+  // Keyed by instanceId - stores context, modifiers, and status for all pipelines
   // Cleared at end of turn by StatusPhaseController
-  activePipelineContexts: Record<string, SerializablePipelineContext>;
+  activePipelines: Record<string, PipelineState>;
 
   // NOTE: Resolution state is now stored in pendingOutcomes[].resolutionState (instance-level)
   // See ResolutionStateHelpers.ts for the unified API
-  
+
   // Phase-specific state objects
   statusPhase: StatusPhaseState;
   resourcesPhase: ResourcesPhaseState;
@@ -201,7 +213,7 @@ export function createDefaultTurnState(turnNumber: number): TurnState {
   return {
     turnNumber,
     actionLog: [],
-    activePipelineContexts: {},
+    activePipelines: {},
 
     statusPhase: {
       completed: false,
@@ -211,12 +223,12 @@ export function createDefaultTurnState(turnNumber: number): TurnState {
       previousIncidentCleared: false,
       previousOutcomesCleared: false
     },
-    
+
     resourcesPhase: {
       completed: false,
       resourcesCollected: false
     },
-    
+
     unrestPhase: {
       completed: false,
       incidentRolled: false,
@@ -230,7 +242,7 @@ export function createDefaultTurnState(turnNumber: number): TurnState {
       resolutionState: undefined,
       appliedOutcome: undefined
     },
-    
+
     eventsPhase: {
       completed: false,
       eventRolled: false,
@@ -243,15 +255,14 @@ export function createDefaultTurnState(turnNumber: number): TurnState {
       selectedApproach: null,  // Reset approach selection between turns
       resolvedOngoingEvents: []  // Reset resolved tracking
     },
-    
+
     actionsPhase: {
       completed: false,
       activeAids: [],
       deployedArmyIds: [],
-      factionsAidedThisTurn: [],
-      actionInstances: {}
+      factionsAidedThisTurn: []
     },
-    
+
     upkeepPhase: {
       completed: false,
       consumptionPaid: false,

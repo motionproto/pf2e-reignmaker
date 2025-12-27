@@ -22,7 +22,10 @@
       "Bash(grep:*)",
       "Bash(tree:*)",
       "Bash(for file in src/pipelines/actions/sellSurplus.ts src/pipelines/actions/repairStructure.ts src/pipelines/actions/upgradeSettlement.ts src/pipelines/actions/disbandArmy.ts src/pipelines/actions/requestMilitaryAid.ts src/pipelines/actions/trainArmy.ts src/pipelines/actions/harvestResources.ts src/pipelines/actions/tendWounded.ts src/pipelines/actions/purchaseResources.ts src/pipelines/actions/recruitUnit.ts src/pipelines/actions/outfitArmy.ts)",
-      "Bash(do echo \"=== $file ===\" grep -A2 \"component:\" \"$file\")"
+      "Bash(do echo \"=== $file ===\" grep -A2 \"component:\" \"$file\")",
+      "WebFetch(domain:2e.aonprd.com)",
+      "WebSearch",
+      "Bash(npx ts-node:*)"
     ],
     "deny": [],
     "ask": []

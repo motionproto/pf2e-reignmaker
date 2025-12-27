@@ -4,37 +4,25 @@
   import Dialog from './baseComponents/Dialog.svelte';
   import { kingdomData } from '../../../stores/KingdomStore';
   import { SettlementTierConfig } from '../../../models/Settlement';
-  
-// Import army token images
-  import cavalryImg from '../../../img/army_tokens/army-calvary.webp';
-  import engineersImg from '../../../img/army_tokens/army-engineers.webp';
-  import infantryImg from '../../../img/army_tokens/army-infantry.webp';
-  import koboldImg from '../../../img/army_tokens/army-kobold.webp';
-  import wolvesImg from '../../../img/army_tokens/army-wolves.webp';
-  
-  // Army type definitions
-  const ARMY_TYPES = {
-    cavalry: { name: 'Cavalry', image: cavalryImg },
-    engineers: { name: 'Engineers', image: engineersImg },
-    infantry: { name: 'Infantry', image: infantryImg },
-    kobold: { name: 'Kobold', image: koboldImg },
-    wolves: { name: 'Wolves', image: wolvesImg }
-  } as const;
-  
-  type ArmyType = keyof typeof ARMY_TYPES;
-  
+  import { armyTypesService } from '../../../services/armyTypes';
+  import type { ArmyTypesConfig, ArmyTypeConfig } from '../../../types/armyTypes';
+
+  // Dynamic army types (loaded from settings)
+  let armyTypes: ArmyTypesConfig = {};
+  let armyTypesLoading = true;
+
   export let show: boolean = false;
   export let exemptFromUpkeep: boolean = false; // For allied armies (no settlement support needed)
   export let isGM: boolean = false; // Whether current user is GM (allows faction selection)
   
   const dispatch = createEventDispatcher<{
-    confirm: { name: string; settlementId: string | null; armyType: ArmyType; ledBy?: string };
+    confirm: { name: string; settlementId: string | null; armyType: string; ledBy?: string };
     cancel: void;
   }>();
-  
+
   let armyName: string = '';
   let selectedSettlementId: string = '';
-  let selectedArmyType: ArmyType = 'infantry';
+  let selectedArmyType: string = 'infantry';
   let selectedFaction: string = PLAYER_KINGDOM; // Default to player
   let confirmDisabled = true; // Confirm disabled state
   let userHasEnteredName = false; // Track if user manually entered a name
@@ -49,8 +37,8 @@
   $: confirmDisabled = !armyName.trim();
   
   // Generate a unique default name based on army type
-  function generateDefaultName(armyType: ArmyType): string {
-    const typeName = ARMY_TYPES[armyType].name;
+  function generateDefaultName(armyType: string): string {
+    const typeName = armyTypes[armyType]?.name || armyType;
     const existingArmies = $kingdomData.armies || [];
     
     // Find existing armies with the same type
@@ -142,13 +130,30 @@
       )
     : null;
   
-  onMount(() => {
+  onMount(async () => {
+    // Load army types from settings (filtered for players unless GM)
+    try {
+      armyTypes = isGM
+        ? await armyTypesService.getArmyTypes()
+        : await armyTypesService.getPlayerArmyTypes();
+    } catch (error) {
+      console.error('[RecruitArmyDialog] Failed to load army types:', error);
+      armyTypes = armyTypesService.getDefaultTypes();
+    }
+    armyTypesLoading = false;
+
+    // Set default selected type to first available (or 'infantry' if available)
+    const typeKeys = Object.keys(armyTypes);
+    if (typeKeys.length > 0) {
+      selectedArmyType = typeKeys.includes('infantry') ? 'infantry' : typeKeys[0];
+    }
+
     // Generate default army name based on selected type
     const defaultName = generateDefaultName(selectedArmyType);
     armyName = defaultName;
     lastDefaultName = defaultName;
     userHasEnteredName = false;
-    
+
     // For allied armies, auto-select capital
     if (exemptFromUpkeep && capitalSettlement) {
       selectedSettlementId = capitalSettlement.id;
@@ -185,7 +190,7 @@
     let counter = 1;
     
     while (existingArmies.some((army: any) => army.name === uniqueName)) {
-      const typeName = ARMY_TYPES[selectedArmyType].name;
+      const typeName = armyTypes[selectedArmyType]?.name || selectedArmyType;
       // Extract number if exists, otherwise start from 1
       const match = finalName.match(/^(.+?)\s+(\d+)$/);
       if (match) {
@@ -271,22 +276,35 @@
   
   <div class="form-group">
     <label>Army Type:</label>
-    <div class="army-type-grid">
-      {#each Object.entries(ARMY_TYPES) as [type, config]}
-        <label class="army-type-option">
-          <input 
-            type="radio" 
-            name="army-type" 
-            value={type}
-            bind:group={selectedArmyType}
-          />
-          <div class="army-type-card">
-            <img src={config.image} alt={config.name} />
-            <span>{config.name}</span>
-          </div>
-        </label>
-      {/each}
-    </div>
+    {#if armyTypesLoading}
+      <div class="loading-types">Loading army types...</div>
+    {:else if Object.keys(armyTypes).length === 0}
+      <div class="warning-box">
+        <i class="fas fa-exclamation-triangle"></i>
+        No army types available. Please contact your GM.
+      </div>
+    {:else}
+      <div class="army-type-grid">
+        {#each Object.entries(armyTypes) as [type, config]}
+          <label class="army-type-option">
+            <input
+              type="radio"
+              name="army-type"
+              value={type}
+              bind:group={selectedArmyType}
+            />
+            <div class="army-type-card">
+              {#if config.tokenImage || config.portraitImage}
+                <img src={config.tokenImage || config.portraitImage} alt={config.name} />
+              {:else}
+                <i class="fas fa-shield-alt placeholder-icon"></i>
+              {/if}
+              <span>{config.name}</span>
+            </div>
+          </label>
+        {/each}
+      </div>
+    {/if}
   </div>
   
   {#if isGM}
@@ -515,5 +533,17 @@
   
   .gm-only-section select {
     margin-top: var(--space-8);
+  }
+
+  .loading-types {
+    padding: var(--space-16);
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+  }
+
+  .placeholder-icon {
+    font-size: 3rem;
+    color: var(--text-tertiary);
   }
 </style>

@@ -175,7 +175,18 @@ function registerModuleSettings() {
         type: ResetKingdomDialog as any,  // Extends FormApplication, type assertion for TS
         restricted: true  // GM only
     });
-    
+
+    // Register army types setting (world-level, GM configurable via UI)
+    // @ts-ignore - Foundry globals
+    game.settings.register('pf2e-reignmaker', 'armyTypes', {
+        name: 'Army Types',
+        hint: 'Configure available army types for recruitment',
+        scope: 'world',  // Shared across all kingdoms in the world
+        config: false,   // Custom UI in ArmiesTab
+        type: Object,
+        default: null,   // Will be initialized with defaults on first access
+    });
+
     console.log('PF2E ReignMaker | Settings registered');
 }
 
@@ -335,6 +346,10 @@ Hooks.once('ready', async () => {
         // Initialize vote system hooks
         const { initializeVoteHooks } = await import('./hooks/voteHooks');
         initializeVoteHooks();
+
+        // Initialize army types cache
+        const { armyTypesService } = await import('./services/armyTypes');
+        await armyTypesService.initializeCache();
     } catch (error) {
         console.error('[Module] Failed to initialize kingdom system:', error);
     }

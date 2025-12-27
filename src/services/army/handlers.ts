@@ -20,7 +20,8 @@ export function registerArmyHandlers(): void {
     name: string;
     level: number;
     type?: string;
-    image?: string;
+    portraitImage?: string;
+    tokenImage?: string;
     actorData?: any;
     settlementId?: string | null;
     exemptFromUpkeep?: boolean;
@@ -29,16 +30,29 @@ export function registerArmyHandlers(): void {
   }) => {
 
     const army = await armyService._createArmyInternal(
-      data.name, 
-      data.level, 
-      data.type, 
-      data.image, 
-      data.actorData, 
+      data.name,
+      data.level,
+      data.type,
+      data.portraitImage,
+      data.tokenImage,
+      data.actorData,
       data.settlementId,
       data.exemptFromUpkeep,
       data.ledBy,
       data.supportedBy
     );
+
+    // Sync doctrine abilities to the newly created army (if player-owned)
+    const isPlayerArmy = !data.ledBy || data.ledBy === 'player' || data.ledBy === 'PLAYER_KINGDOM';
+    if (isPlayerArmy && army.actorId) {
+      try {
+        const { doctrineAbilityService } = await import('../doctrine/DoctrineAbilityService');
+        await doctrineAbilityService.syncAbilitiesToArmy(army.actorId);
+        console.log(`✅ [ArmyHandlers] Synced doctrine abilities to ${army.name}`);
+      } catch (error) {
+        console.error(`[ArmyHandlers] Failed to sync doctrine abilities to ${army.name}:`, error);
+      }
+    }
 
     return army;
   });

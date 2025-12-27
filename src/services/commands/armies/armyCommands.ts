@@ -58,8 +58,10 @@ export async function recruitArmy(level: number, recruitmentData: RecruitArmyDat
   // Army limit validation is done at faction selection dialog (RequestMilitaryAidDialog.svelte)
   // so we don't need to check here - if we got this far, the faction is eligible
 
-  const { ARMY_TYPES } = await import('../../../utils/armyHelpers');
-  if (!ARMY_TYPES[armyType as keyof typeof ARMY_TYPES]) {
+  // Validate army type exists in settings
+  const { armyTypesService } = await import('../../armyTypes');
+  const typeConfig = await armyTypesService.getType(armyType);
+  if (!typeConfig) {
     throw new Error(`Invalid army type: ${armyType}`);
   }
 
@@ -97,7 +99,8 @@ export async function recruitArmy(level: number, recruitmentData: RecruitArmyDat
       
       const createdArmy = await armyService.createArmy(armyName, level, {
         type: armyType,
-        image: ARMY_TYPES[armyType as keyof typeof ARMY_TYPES].image,
+        portraitImage: typeConfig.portraitImage,
+        tokenImage: typeConfig.tokenImage,
         settlementId: settlementId,
         exemptFromUpkeep: exemptFromUpkeep,
         supportedBy: supportedBy  // Pass faction name for allied armies (who pays upkeep)

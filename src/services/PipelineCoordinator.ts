@@ -16,6 +16,7 @@ import { getKingdomActor } from '../stores/KingdomStore';
 import { getCurrentUserCharacter } from './pf2e';
 import { unifiedCheckHandler } from './UnifiedCheckHandler';
 import { createOutcomePreviewService } from './OutcomePreviewService';
+import { pipelineStateService } from './pipeline/PipelineStateService';
 
 /**
  * PF2e native callback type for skill rolls
@@ -64,21 +65,22 @@ export class PipelineCoordinator {
 
   /**
    * Persist pipeline context to kingdom data for recovery after page reload
+   * Uses unified PipelineStateService for storage
    */
   private async persistContext(ctx: PipelineContext): Promise<void> {
     if (!ctx.instanceId) return;
 
-    const actor = getKingdomActor();
-    if (!actor) return;
-
     const serialized = toSerializableContext(ctx);
+    const kingdom = getKingdomActor()?.getKingdomData();
 
-    await actor.updateKingdomData((kingdom: any) => {
-      if (!kingdom.turnState) return;
-      if (!kingdom.turnState.activePipelineContexts) {
-        kingdom.turnState.activePipelineContexts = {};
-      }
-      kingdom.turnState.activePipelineContexts[ctx.instanceId!] = serialized;
+    await pipelineStateService.upsertPipelineState({
+      instanceId: ctx.instanceId,
+      actionId: ctx.actionId,
+      checkType: ctx.checkType,
+      turnNumber: kingdom?.currentTurn || 0,
+      phase: kingdom?.currentPhase,
+      status: 'awaiting-confirmation',
+      context: serialized
     });
 
     console.log(`💾 [PipelineCoordinator] Persisted context for ${ctx.instanceId}`);
@@ -86,13 +88,14 @@ export class PipelineCoordinator {
 
   /**
    * Recover pipeline context from kingdom data
+   * Uses unified PipelineStateService for retrieval
    */
   private recoverContext(instanceId: string): PipelineContext | null {
     const actor = getKingdomActor();
     if (!actor) return null;
 
     const kingdom = actor.getKingdomData();
-    const serialized = kingdom.turnState?.activePipelineContexts?.[instanceId];
+    const serialized = pipelineStateService.getContext(instanceId);
 
     if (!serialized) {
       console.log(`⚠️ [PipelineCoordinator] No persisted context found for ${instanceId}`);
@@ -107,17 +110,10 @@ export class PipelineCoordinator {
 
   /**
    * Remove persisted context from kingdom data
+   * Uses unified PipelineStateService for removal
    */
   private async removePersistedContext(instanceId: string): Promise<void> {
-    const actor = getKingdomActor();
-    if (!actor) return;
-
-    await actor.updateKingdomData((kingdom: any) => {
-      if (kingdom.turnState?.activePipelineContexts?.[instanceId]) {
-        delete kingdom.turnState.activePipelineContexts[instanceId];
-      }
-    });
-
+    await pipelineStateService.clearPipelineState(instanceId);
     console.log(`🗑️ [PipelineCoordinator] Removed persisted context for ${instanceId}`);
   }
 
@@ -167,7 +163,16 @@ export class PipelineCoordinator {
       context.instanceId = `T${currentTurn}-${actionId}-${foundry.utils.randomID()}`;
       console.log(`🆔 [PipelineCoordinator] Generated new instanceId: ${context.instanceId} (turn ${currentTurn})`);
     }
-    
+
+    // Initialize unified pipeline state
+    await pipelineStateService.initializePipeline(
+      context.instanceId,
+      actionId,
+      checkType,
+      currentTurn,
+      kingdom?.currentPhase
+    );
+
     log(context, 0, 'initialize', `Starting pipeline for ${actionId}`);
     
     try {
@@ -243,7 +248,7 @@ export class PipelineCoordinator {
    *
    * Recovery:
    * 1. In-memory pendingContexts (fast path, same session)
-   * 2. Persisted kingdom.turnState.activePipelineContexts (survives page reload)
+   * 2. Persisted kingdom.turnState.activePipelines[instanceId] (survives page reload)
    *
    * @param instanceId - Pipeline instance ID
    */
@@ -258,7 +263,7 @@ export class PipelineCoordinator {
       if (context) {
         // Store recovered context in memory for future use
         this.pendingContexts.set(instanceId, context);
-        console.log(`✅ [PipelineCoordinator] Recovered context from activePipelineContexts`);
+        console.log(`✅ [PipelineCoordinator] Recovered context from activePipelines`);
       }
     }
 
@@ -368,7 +373,7 @@ export class PipelineCoordinator {
   /**
    * Resume execution from persisted preview (edge case: context lost after turn boundary)
    *
-   * Only called when both in-memory and activePipelineContexts are lost,
+   * Only called when both in-memory and activePipelines context are lost,
    * but the outcome preview is still visible. Executes Steps 7-9 directly.
    */
   private async resumeFromPersistedPreview(instanceId: string, resolutionData?: any): Promise<void> {
@@ -1342,6 +1347,9 @@ export class PipelineCoordinator {
 
     console.log(`📜 [PipelineCoordinator] Doctrine updated: +${DOCTRINE_POINTS} ${primaryDoctrine} (event: ${ctx.actionId}, choice: ${selectedApproach})`);
     log(ctx, 8, 'trackDoctrine', `Added ${DOCTRINE_POINTS} points to ${primaryDoctrine} doctrine`);
+
+    // Sync doctrine abilities to armies
+    await this.syncDoctrineAbilities();
   }
 
   /**
@@ -1391,6 +1399,27 @@ export class PipelineCoordinator {
 
     console.log(`📜 [PipelineCoordinator] Doctrine updated: +${DOCTRINE_POINTS} ${doctrine} (action: ${ctx.actionId}, skill: ${selectedSkill})`);
     log(ctx, 8, 'trackActionDoctrine', `Added ${DOCTRINE_POINTS} point to ${doctrine} doctrine`);
+
+    // Sync doctrine abilities to armies
+    await this.syncDoctrineAbilities();
+  }
+
+  /**
+   * Sync doctrine abilities to all player armies
+   * Called after doctrine values change
+   */
+  private async syncDoctrineAbilities(): Promise<void> {
+    try {
+      // Update the persisted dominant doctrine (for tie-breaking)
+      const { doctrineService } = await import('./doctrine/DoctrineService');
+      await doctrineService.updateDominantDoctrine();
+
+      // Sync abilities to armies based on current dominant doctrine
+      const { doctrineAbilityService } = await import('./doctrine/DoctrineAbilityService');
+      await doctrineAbilityService.syncAbilitiesToAllArmies();
+    } catch (error) {
+      console.error('[PipelineCoordinator] Failed to sync doctrine abilities:', error);
+    }
   }
 
   /**

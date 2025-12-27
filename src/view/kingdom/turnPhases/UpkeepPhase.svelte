@@ -320,7 +320,7 @@
                   title="No food storage"
                   description="Build a Granary to store food."
                />
-            {:else if excessFood > 0 && !consumeCompleted}
+            {:else if (currentFood - settlementConsumption) > foodStorageCapacity && !consumeCompleted}
                <Notification 
                   variant="info"
                   title="Storage capacity exceeded"
@@ -472,7 +472,7 @@
                   <Notification 
                      variant="warning"
                      title="Unsupported armies"
-                     description="{unsupportedCount} {unsupportedCount === 1 ? 'army' : 'armies'} without support. Future update: Morale checks will be required."
+                     description="{unsupportedCount} {unsupportedCount === 1 ? 'army' : 'armies'} without settlement support. Morale check required."
                      impact="+{unsupportedCount} Unrest"
                   />
                {/if}

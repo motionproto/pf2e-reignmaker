@@ -7,8 +7,21 @@
    import InlineEditActions from '../components/baseComponents/InlineEditActions.svelte';
    import DisbandArmyDialog from '../components/DisbandArmyDialog.svelte';
    import RecruitArmyDialog from '../components/RecruitArmyDialog.svelte';
+   import ArmyTypeEditor from './armies/ArmyTypeEditor.svelte';
    import { logger } from '../../../utils/Logger';
    import { EQUIPMENT_ICONS } from '../../../utils/presentation';
+
+   // View mode for sub-navigation (list view vs army types editor)
+   type ViewMode = 'list' | 'types';
+   let currentView: ViewMode = 'list';
+
+   function handleConfigureTypes() {
+      currentView = 'types';
+   }
+
+   function handleBackToList() {
+      currentView = 'list';
+   }
 
    // Check if current user is GM
    $: isGM = (globalThis as any).game?.user?.isGM || false;
@@ -808,6 +821,11 @@
 {/if}
 
 <div class="armies-tab">
+   {#if currentView === 'types'}
+      <!-- Army Type Editor View -->
+      <ArmyTypeEditor on:back={handleBackToList} />
+   {:else}
+      <!-- List View -->
    <!-- Summary Stats -->
    <div class="armies-summary">
       <div class="summary-card">
@@ -840,12 +858,16 @@
          <option value="supported">Supported Only</option>
          <option value="unsupported">Unsupported Only</option>
       </select>
-      
+
       {#if isGM}
          <label class="gm-checkbox">
             <input type="checkbox" bind:checked={showAllArmies} />
             <span>Show all factions' armies</span>
          </label>
+         <button class="configure-types-btn" on:click={handleConfigureTypes}>
+            <i class="fas fa-cog"></i>
+            Customize Army Types
+         </button>
       {/if}
    </div>
    
@@ -1304,14 +1326,15 @@
             Page {currentPage} of {totalPages}
          </span>
          
-         <button 
-            class="page-btn" 
+         <button
+            class="page-btn"
             on:click={nextPage}
             disabled={currentPage === totalPages}
          >
             <i class="fas fa-chevron-right"></i>
          </button>
       </div>
+   {/if}
    {/if}
 </div>
 
@@ -1380,7 +1403,9 @@
          border: 1px solid var(--border-default);
          border-radius: var(--radius-lg);
          color: var(--color-text-dark-primary, #b5b3a4);
-         
+         width: 160px;
+         flex-shrink: 0;
+
          &:focus {
             outline: none;
             border-color: var(--color-primary, #5e0000);
@@ -1392,25 +1417,47 @@
          align-items: center;
          gap: var(--space-8);
          cursor: pointer;
-         padding: var(--space-8) var(--space-12);
-         background: var(--surface-warning-low);
-         border: 1px solid var(--border-warning-subtle);
-         border-radius: var(--radius-md);
          font-size: var(--font-md);
          color: var(--text-primary);
-         
+         margin-left: auto;
+
          input[type="checkbox"] {
             width: 1rem;
             height: 1rem;
             cursor: pointer;
+            accent-color: var(--surface-special);
          }
-         
+
          span {
             white-space: nowrap;
          }
       }
+
+      .configure-types-btn {
+         display: flex;
+         align-items: center;
+         gap: var(--space-8);
+         padding: var(--space-8) var(--space-12);
+         background: var(--surface-special-low);
+         border: 1px solid var(--border-special-subtle);
+         border-radius: var(--radius-md);
+         font-size: var(--font-md);
+         color: var(--text-primary);
+         cursor: pointer;
+         transition: all 0.2s;
+         white-space: nowrap;
+
+         &:hover {
+            background: var(--surface-special);
+            border-color: var(--border-special);
+         }
+
+         i {
+            color: var(--text-secondary);
+         }
+      }
    }
-   
+
    .led-by-cell {
       .faction-badge {
          display: inline-block;

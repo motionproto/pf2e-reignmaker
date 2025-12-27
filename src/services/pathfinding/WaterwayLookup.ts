@@ -17,7 +17,8 @@ import { kingdomData } from '../../stores/KingdomStore';
 import { get } from 'svelte/store';
 import { logger } from '../../utils/Logger';
 import { getEdgeIdForDirection, edgeNameToIndex } from '../../utils/edgeUtils';
-import { lineSegmentsIntersect, type Point } from '../../utils/geometryUtils';
+import { type Point } from '../../utils/geometryUtils';
+import { checkLineBarrierCrossing } from '../../utils/gridTraversal';
 import type { EdgeDirection } from '../../models/Hex';
 
 export type WaterwayType = 'river' | 'lake' | 'swamp';

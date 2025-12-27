@@ -136,6 +136,9 @@ export interface KingdomData {
   partyLevel: number;  // Highest level among player characters
   leadershipPenalty?: number;  // Turn-scoped penalty to all skill checks (e.g., -1 from scandals)
 
+  // Leader titles - maps party member actor IDs to their kingdom titles
+  leaderTitles?: Record<string, string>;  // actorId -> title (e.g., "Ruler", "General")
+
   // Doctrine tracking - accumulated points from event vote choices
   // Each winning vote adds 5 points to the corresponding category
   doctrine?: {
@@ -143,6 +146,10 @@ export interface KingdomData {
     practical: number;  // Chose practical/balanced approaches
     ruthless: number;   // Chose ruthless/expedient approaches
   };
+
+  // Current dominant doctrine - persisted for tie-breaking
+  // In case of a tie, previous dominant is preserved
+  dominantDoctrine?: 'idealist' | 'practical' | 'ruthless' | null;
 
   // Doctrine milestones - records of when each tier was achieved
   doctrineMilestones?: DoctrineMilestone[];

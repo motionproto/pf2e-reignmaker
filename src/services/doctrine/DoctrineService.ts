@@ -63,6 +63,7 @@ class DoctrineService {
     }
 
     const values = kingdom.doctrine || { ...DEFAULT_DOCTRINE_VALUES };
+    const previousDominant = kingdom.dominantDoctrine || null;
 
     const tierInfo: Record<DoctrineType, DoctrineTierConfig> = {
       idealist: this.getTierConfig('idealist', values.idealist || 0),
@@ -70,7 +71,7 @@ class DoctrineService {
       ruthless: this.getTierConfig('ruthless', values.ruthless || 0)
     };
 
-    const dominant = this.calculateDominant(values);
+    const dominant = this.calculateDominant(values, previousDominant);
     const dominantTier = dominant ? tierInfo[dominant].tier : 'none';
 
     return {
@@ -83,9 +84,13 @@ class DoctrineService {
 
   /**
    * Calculate which doctrine is dominant
-   * Returns null if all are equal or all are zero
+   * In case of a tie, uses previous dominant if available,
+   * otherwise prefers: practical > idealist > ruthless
    */
-  private calculateDominant(values: Record<DoctrineType, number>): DoctrineType | null {
+  private calculateDominant(
+    values: Record<DoctrineType, number>,
+    previousDominant: DoctrineType | null
+  ): DoctrineType | null {
     const i = values.idealist || 0;
     const p = values.practical || 0;
     const r = values.ruthless || 0;
@@ -98,8 +103,23 @@ class DoctrineService {
     if (p === max) dominants.push('practical');
     if (r === max) dominants.push('ruthless');
 
-    // If tied, no single dominant doctrine
-    if (dominants.length > 1) return null;
+    // Single dominant - clear winner
+    if (dominants.length === 1) {
+      return dominants[0];
+    }
+
+    // Tie - prefer previous dominant if it's one of the tied values
+    if (previousDominant && dominants.includes(previousDominant)) {
+      return previousDominant;
+    }
+
+    // No previous dominant or it's not in the tie - use preference order
+    const preferenceOrder: DoctrineType[] = ['practical', 'idealist', 'ruthless'];
+    for (const doctrine of preferenceOrder) {
+      if (dominants.includes(doctrine)) {
+        return doctrine;
+      }
+    }
 
     return dominants[0];
   }
@@ -342,6 +362,28 @@ class DoctrineService {
     const kingdom = get(kingdomData);
     const milestones = kingdom.doctrineMilestones || [];
     return milestones.filter(m => m.achievedTurn === kingdom.currentTurn);
+  }
+
+  /**
+   * Update the persisted dominant doctrine if it has changed
+   * Should be called whenever doctrine values change
+   */
+  async updateDominantDoctrine(): Promise<void> {
+    const actor = getKingdomActor();
+    if (!actor) return;
+
+    const state = this.getDoctrineState();
+    const kingdom = actor.getKingdomData();
+    const currentPersisted = kingdom.dominantDoctrine || null;
+
+    // Only update if dominant has changed
+    if (state.dominant !== currentPersisted) {
+      await actor.updateKingdomData((k: KingdomData) => {
+        k.dominantDoctrine = state.dominant;
+      });
+
+      logger.info(`[DoctrineService] Dominant doctrine changed: ${currentPersisted} -> ${state.dominant}`);
+    }
   }
 }
 

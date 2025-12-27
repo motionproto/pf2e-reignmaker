@@ -1024,6 +1024,8 @@ export class SettlementService {
       await territoryService.updateKingmakerSettlement(upgradedSettlement);
     }
 
+    // Recalculate derived properties (armySupport, goldIncome, etc.) after tier change
+    await this.recalculateAfterStructureChange(settlementId);
   }
   
   

@@ -12,10 +12,10 @@ import type { DoctrineTier, DoctrineType, DoctrinePenalty } from '../types/Doctr
  */
 export const DOCTRINE_THRESHOLDS: Record<DoctrineTier, number> = {
   none: 0,
-  minor: 15,
-  moderate: 30,
-  major: 60,
-  absolute: 120
+  minor: 20,
+  moderate: 40,
+  major: 80,
+  absolute: 160
 };
 
 /**
@@ -58,8 +58,8 @@ export const DOCTRINE_ICONS: Record<DoctrineType, string> = {
  */
 export const DOCTRINE_SKILL_GROUPS: Record<DoctrineType, string[]> = {
   idealist: ['religion', 'diplomacy', 'medicine', 'nature', 'performance'],
-  practical: ['crafting', 'society', 'arcana', 'lore', 'survival', 'occultism'],
-  ruthless: ['thievery', 'intimidation', 'deception', 'stealth', 'athletics', 'acrobatics']
+  practical: ['crafting', 'society', 'arcana', 'lore', 'survival', 'occultism', 'acrobatics'],
+  ruthless: ['thievery', 'intimidation', 'deception', 'stealth', 'athletics']
 };
 
 /**
@@ -77,13 +77,13 @@ export function getSkillDoctrine(skillName: string): DoctrineType | null {
 }
 
 /**
- * Penalties for extreme (Major+) doctrine levels
+ * Penalties for Absolute doctrine level
  * Each doctrine has a unique downside to create meaningful trade-offs
  */
 export const DOCTRINE_PENALTIES: Record<DoctrineType, { minTier: DoctrineTier; effects: DoctrinePenalty[] }> = {
   // Ruthless: Fear-based rule breeds discontent
   ruthless: {
-    minTier: 'major',
+    minTier: 'absolute',
     effects: [
       {
         type: 'unrest',
@@ -94,7 +94,7 @@ export const DOCTRINE_PENALTIES: Record<DoctrineType, { minTier: DoctrineTier; e
   },
   // Idealist: Charity and compassion cost resources
   idealist: {
-    minTier: 'major',
+    minTier: 'absolute',
     effects: [
       {
         type: 'gold',
@@ -105,7 +105,7 @@ export const DOCTRINE_PENALTIES: Record<DoctrineType, { minTier: DoctrineTier; e
   },
   // Practical: Over-optimization reduces flexibility
   practical: {
-    minTier: 'major',
+    minTier: 'absolute',
     effects: [
       {
         type: 'skill',
