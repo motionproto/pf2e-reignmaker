@@ -14,7 +14,7 @@ export function createSettlementsOverlay(
 ): MapOverlay {
   return {
     id: 'settlement-hacks',
-    name: 'Settlement Hacks',
+    name: 'Settlement Hexes',
     icon: 'fa-city',
     layerIds: ['settlements-overlay'],
     store: hexesWithSettlementFeatures,

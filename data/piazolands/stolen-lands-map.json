@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "exportDate": "2025-12-29T00:00:00.000Z",
+  "mapName": "Stolen Lands",
+  "terrain": [],
+  "roads": [],
+  "rivers": {
+    "cellPaths": [],
+    "rasterizedCells": [],
+    "crossings": [],
+    "waterfalls": [],
+    "paths": []
+  },
+  "waterFeatures": {
+    "lakeCells": [],
+    "passageCells": [],
+    "lakes": [],
+    "swamps": []
+  }
+}

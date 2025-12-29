@@ -25,6 +25,7 @@ import { ResetKingdomDialog } from './ui/ResetKingdomDialog';
 import { initializeActionDispatcher } from './services/ActionDispatcher';
 import { registerKingdomHexControl } from './services/map';
 import { initializePipelineSystem } from './services/PipelineIntegrationAdapter';
+import { exportMapData, downloadMapData, copyMapDataToClipboard } from './services/MapDataExportService';
 
 // Extend module type for our API
 declare global {
@@ -38,6 +39,9 @@ declare global {
             importKingdom?: () => Promise<void>;
             resetKingdom?: () => Promise<void>;
             recalculateProduction?: () => Promise<void>;
+            exportMapData?: (mapName?: string) => any;
+            downloadMapData?: (mapName?: string) => Promise<void>;
+            copyMapDataToClipboard?: (mapName?: string) => Promise<void>;
         };
     }
     
@@ -52,6 +56,9 @@ declare global {
             importKingdom?: () => Promise<void>;
             resetKingdom?: () => Promise<void>;
             recalculateProduction?: () => Promise<void>;
+            exportMapData?: (mapName?: string) => any;
+            downloadMapData?: (mapName?: string) => Promise<void>;
+            copyMapDataToClipboard?: (mapName?: string) => Promise<void>;
         };
     }
 }
@@ -532,15 +539,18 @@ Hooks.once('ready', async () => {
         const module = game.modules.get('pf2e-reignmaker') as any;
         if (module) {
             // Add API object with all functions
-            module.api = { 
-                openKingdomUI, 
+            module.api = {
+                openKingdomUI,
                 syncKingmaker,
                 saveKingdom,
                 loadKingdom,
                 exportKingdom,
                 importKingdom,
                 resetKingdom,
-                recalculateProduction
+                recalculateProduction,
+                exportMapData,
+                downloadMapData,
+                copyMapDataToClipboard
             };
             // For backwards compatibility
             module.openKingdomUI = openKingdomUI;
@@ -548,29 +558,35 @@ Hooks.once('ready', async () => {
         
         // Register global function to open Kingdom UI
         // @ts-ignore
-        game.pf2eReignMaker = { 
-            openKingdomUI, 
+        game.pf2eReignMaker = {
+            openKingdomUI,
             syncKingmaker,
             saveKingdom,
             loadKingdom,
             exportKingdom,
             importKingdom,
             resetKingdom,
-            recalculateProduction
+            recalculateProduction,
+            exportMapData,
+            downloadMapData,
+            copyMapDataToClipboard
         };
         
         // Also add to window for easy console access in dev mode
         if (import.meta.env.DEV) {
             window.openKingdomUI = openKingdomUI;
-            window.pf2eReignMaker = { 
-                openKingdomUI, 
+            window.pf2eReignMaker = {
+                openKingdomUI,
                 syncKingmaker,
                 saveKingdom,
                 loadKingdom,
                 exportKingdom,
                 importKingdom,
                 resetKingdom,
-                recalculateProduction
+                recalculateProduction,
+                exportMapData,
+                downloadMapData,
+                copyMapDataToClipboard
             };
         }
         

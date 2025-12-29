@@ -39,6 +39,9 @@ import type { TerrainType, TravelDifficulty } from '../../types/terrain';
 import { PLAYER_KINGDOM } from '../../types/ownership';
 // @ts-ignore - Static JSON import for Vite
 import waterwaysData from '../../../data/kingmaker-support/waterways.json';
+// @ts-ignore - Static JSON import for Vite - Stolen Lands map data
+import stolenLandsMapData from '../../../data/piazolands/stolen-lands-map.json';
+import type { ExportedMapData } from '../MapDataExportService';
 
 // Declare Foundry globals
 declare const Hooks: any;
@@ -271,12 +274,22 @@ export class TerritoryService {
 
             // Generate water features from terrain data (lakes from water, swamps from swamp terrain)
             const waterFeatures = this.generateWaterFeaturesFromTerrain(hexes);
-            
+
             // Load Kingmaker-specific waterways (rivers, crossings, waterfalls)
             const waterwaysData = await this.loadKingmakerWaterways();
-            
-            // Update kingdom store with territory data, water features, and rivers
-            await this.updateKingdomStore(hexes, undefined, waterFeatures, waterwaysData?.rivers);
+
+            // Load pre-configured Stolen Lands map data (roads, cell rivers, lakes, passages)
+            const mapData = this.loadStolenLandsMapData();
+
+            // Apply pre-configured roads to hexes and create settlements from map data
+            let mapDataSettlements: Settlement[] | undefined;
+            if (mapData) {
+                this.applyMapDataToHexes(hexes, mapData);
+                mapDataSettlements = this.createSettlementsFromMapData(mapData);
+            }
+
+            // Update kingdom store with territory data, water features, rivers, map data, and settlements
+            await this.updateKingdomStore(hexes, mapDataSettlements, waterFeatures, waterwaysData?.rivers, mapData);
 
             // Switch to setup tab after successful import
             const { setSelectedTab } = await import('../../stores/ui');
@@ -285,7 +298,7 @@ export class TerritoryService {
             return {
                 success: true,
                 hexesSynced: hexes.length,
-                settlementsSynced: 0  // Settlements are hex features, not Settlement objects
+                settlementsSynced: mapDataSettlements?.length || 0
             };
             
         } catch (error) {
@@ -350,18 +363,127 @@ export class TerritoryService {
             return null;
         }
     }
-    
+
+    /**
+     * Load pre-configured Stolen Lands map data
+     * This includes roads, water features, crossings, and terrain
+     * that have been manually configured and exported
+     */
+    private loadStolenLandsMapData(): ExportedMapData | null {
+        try {
+            // Handle both default export and direct object
+            const data = (stolenLandsMapData as any).default || stolenLandsMapData;
+
+            // Check if the data has content (not just empty arrays)
+            const hasContent = data &&
+                (data.roads?.length > 0 ||
+                 data.rivers?.cellPaths?.length > 0 ||
+                 data.rivers?.rasterizedCells?.length > 0 ||
+                 data.waterFeatures?.lakeCells?.length > 0 ||
+                 data.waterFeatures?.passageCells?.length > 0 ||
+                 data.settlements?.length > 0);
+
+            if (hasContent) {
+                logger.info('[Territory Service] Loaded Stolen Lands map data');
+                logger.info(`[Territory Service] Map data: ${data.roads?.length || 0} roads, ${data.rivers?.cellPaths?.length || 0} cell paths, ${data.waterFeatures?.lakeCells?.length || 0} lake cells, ${data.settlements?.length || 0} settlements`);
+                return data as ExportedMapData;
+            } else {
+                logger.info('[Territory Service] Stolen Lands map data is empty - skipping pre-configured data');
+                return null;
+            }
+        } catch (error) {
+            logger.warn('[Territory Service] Could not load Stolen Lands map data:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Apply pre-configured map data to hexes
+     * Updates roads and terrain from the exported map data
+     */
+    private applyMapDataToHexes(hexes: Hex[], mapData: ExportedMapData): void {
+        // Create lookup maps for efficient access
+        const roadSet = new Set(mapData.roads || []);
+        const terrainMap = new Map<string, { terrain: string; travel?: string }>();
+
+        for (const t of mapData.terrain || []) {
+            terrainMap.set(t.id, { terrain: t.terrain, travel: t.travel });
+        }
+
+        // Apply to hexes
+        let roadsApplied = 0;
+        let terrainApplied = 0;
+
+        for (const hex of hexes) {
+            // Apply roads
+            if (roadSet.has(hex.id)) {
+                hex.hasRoad = true;
+                roadsApplied++;
+            }
+
+            // Apply terrain (if present in map data)
+            const terrainData = terrainMap.get(hex.id);
+            if (terrainData) {
+                hex.terrain = normalizeTerrainType(terrainData.terrain);
+                if (terrainData.travel) {
+                    hex.travel = terrainData.travel as TravelDifficulty;
+                }
+                terrainApplied++;
+            }
+        }
+
+        logger.info(`[Territory Service] Applied map data: ${roadsApplied} roads, ${terrainApplied} terrain updates`);
+    }
+
+    /**
+     * Create Settlement objects from map data
+     * Converts the simple settlement export format to full Settlement objects
+     */
+    private createSettlementsFromMapData(mapData: ExportedMapData): Settlement[] {
+        if (!mapData.settlements || mapData.settlements.length === 0) {
+            return [];
+        }
+
+        const settlements: Settlement[] = [];
+
+        for (const s of mapData.settlements) {
+            // Parse hex ID to get coordinates (format: "x.y")
+            const [xStr, yStr] = s.hexId.split('.');
+            const x = parseInt(xStr, 10);
+            const y = parseInt(yStr, 10);
+
+            if (isNaN(x) || isNaN(y)) {
+                logger.warn(`[Territory Service] Invalid settlement hex ID: ${s.hexId}`);
+                continue;
+            }
+
+            // Create settlement with parsed location
+            const settlement = createSettlement(
+                s.name,
+                { x, y },
+                s.tier as SettlementTier
+            );
+
+            settlements.push(settlement);
+        }
+
+        logger.info(`[Territory Service] Created ${settlements.length} settlements from map data`);
+        return settlements;
+    }
+
     /**
      * Update the Kingdom store with territory data
      * Optionally accepts settlements to merge into kingdom data (for initial import only)
      * Optionally accepts water features (lakes, swamps) to initialize waterFeatures structure
      * Optionally accepts rivers to initialize rivers structure (stored at root level)
+     * Optionally accepts pre-configured map data (cell rivers, lakes, passages, roads)
      */
     private async updateKingdomStore(
-        hexes: Hex[], 
-        settlements?: Settlement[], 
+        hexes: Hex[],
+        settlements?: Settlement[],
         waterFeatures?: { lakes: any[], swamps: any[], waterfalls?: any[] },
-        rivers?: { paths: any[], crossings?: any[], waterfalls?: any[] }
+        rivers?: { paths: any[], crossings?: any[], waterfalls?: any[] },
+        mapData?: ExportedMapData | null
     ): Promise<void> {
         // Log territory update attempt
 
@@ -447,6 +569,33 @@ export class TerritoryService {
             if (rivers) {
                 state.rivers = rivers;
                 logger.info(`[Territory Service] Initialized rivers: ${rivers.paths?.length || 0} paths, ${rivers.crossings?.length || 0} crossings, ${rivers.waterfalls?.length || 0} waterfalls`);
+            }
+
+            // Apply pre-configured map data (cell rivers, lake cells, passage cells)
+            if (mapData) {
+                // Merge cell-based river data
+                if (mapData.rivers) {
+                    state.rivers = state.rivers || {};
+                    if (mapData.rivers.cellPaths?.length) {
+                        state.rivers.cellPaths = mapData.rivers.cellPaths;
+                    }
+                    if (mapData.rivers.rasterizedCells?.length) {
+                        state.rivers.rasterizedCells = mapData.rivers.rasterizedCells;
+                    }
+                }
+
+                // Merge water features (lake cells, passage cells)
+                if (mapData.waterFeatures) {
+                    state.waterFeatures = state.waterFeatures || { lakes: [], swamps: [] };
+                    if (mapData.waterFeatures.lakeCells?.length) {
+                        state.waterFeatures.lakeCells = mapData.waterFeatures.lakeCells;
+                    }
+                    if (mapData.waterFeatures.passageCells?.length) {
+                        state.waterFeatures.passageCells = mapData.waterFeatures.passageCells;
+                    }
+                }
+
+                logger.info(`[Territory Service] Applied pre-configured map data: ${mapData.rivers?.cellPaths?.length || 0} cell paths, ${mapData.rivers?.rasterizedCells?.length || 0} rasterized cells, ${mapData.waterFeatures?.lakeCells?.length || 0} lake cells, ${mapData.waterFeatures?.passageCells?.length || 0} passage cells`);
             }
 
             return state;

@@ -848,16 +848,16 @@ export class OverlayManager {
     this.registerOverlay(createTerritoryCompositeOverlay(this.mapLayer, boundIsActive));
     this.registerOverlay(createProvinceOverlay(this.mapLayer, boundIsActive));
     this.registerOverlay(createProvincesFillOverlay(this.mapLayer, boundIsActive));
+    this.registerOverlay(createSettlementIconsOverlay(this.mapLayer, boundIsActive));
     this.registerOverlay(createSettlementsOverlay(this.mapLayer, boundIsActive));
     this.registerOverlay(createRoadsOverlay(this.mapLayer, boundIsActive));
-    this.registerOverlay(createRiversOverlay(this.mapLayer, boundIsActive));
     this.registerOverlay(createWorksitesOverlay(this.mapLayer, boundIsActive));
     this.registerOverlay(createResourcesOverlay(this.mapLayer, boundIsActive));
-    this.registerOverlay(createSettlementIconsOverlay(this.mapLayer, boundIsActive));
     this.registerOverlay(createSettlementLabelsOverlay(this.mapLayer, boundIsActive));
     this.registerOverlay(createFortificationsOverlay(this.mapLayer, boundIsActive));
-    
+
     // Debug overlays (GM only, shown in overlay panel)
+    this.registerOverlay(createRiversOverlay(this.mapLayer, boundIsActive));
     this.registerOverlay(createNavigationGridDebugOverlay(this.mapLayer, boundIsActive));
     
     // Event-based overlays (shown when relevant events are active)

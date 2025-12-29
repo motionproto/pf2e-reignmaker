@@ -8,6 +8,7 @@
   import SettlementEditorDialog from './SettlementEditorDialog.svelte';
   import { settlementEditorDialog } from '../../stores/SettlementEditorDialogStore';
   import { kingdomData } from '../../stores/KingdomStore';
+  import { downloadMapData } from '../../services/MapDataExportService';
   
   // Props
   export let onClose: () => void;
@@ -31,27 +32,30 @@
   let selectedClaimOwner: string = 'player';
   
   onMount(async () => {
+    // Check GM status
+    isGM = (globalThis as any).game?.user?.isGM ?? false;
+
     // Load saved position
     const savedPosition = localStorage.getItem('reignmaker-editor-panel-position');
     if (savedPosition) {
       position = JSON.parse(savedPosition);
     }
-    
+
     // Load saved minimize state
     const savedMinimized = localStorage.getItem('reignmaker-editor-panel-minimized');
     if (savedMinimized) {
       isMinimized = savedMinimized === 'true';
     }
-    
+
     // Load saved selected section (defaults to 'settlements' if not set)
     const savedSection = localStorage.getItem('reignmaker-editor-panel-section');
     if (savedSection) {
       selectedSection = savedSection;
     }
-    
+
     // Enter editor mode (automatically clears all stale overlays)
     await editorService.enterEditorMode();
-    
+
     // Set initial tool and overlay to match the selected section (await to ensure overlays are set)
     await selectSection(selectedSection);
   });
@@ -300,6 +304,15 @@
 
   // Delete confirmation states (which section is showing confirmation)
   let deleteConfirmSection: string | null = null;
+
+  // GM check for export button (evaluated once - GM status doesn't change during session)
+  let isGM = false;
+
+  // Export map data handler
+  async function handleExportMapData() {
+    const mapName = $kingdomData.name || 'Stolen Lands';
+    await downloadMapData(mapName);
+  }
 
   function showDeleteConfirm(section: string) {
     deleteConfirmSection = section;
@@ -1052,12 +1065,19 @@
   
   <!-- Actions -->
   <div class="panel-actions">
-    <button class="action-button cancel-button" on:click={handleCancel}>
-      <i class="fas fa-times"></i> Cancel
+    {#if isGM}
+    <button class="action-button export-button" on:click={handleExportMapData} title="Export map data (terrain, roads, rivers, etc.) to JSON file">
+      <i class="fas fa-download"></i> Export Map Data
     </button>
-    <button class="action-button save-button" on:click={handleSave}>
-      <i class="fas fa-check"></i> Save
-    </button>
+    {/if}
+    <div class="action-row">
+      <button class="action-button cancel-button" on:click={handleCancel}>
+        <i class="fas fa-times"></i> Cancel
+      </button>
+      <button class="action-button save-button" on:click={handleSave}>
+        <i class="fas fa-check"></i> Save
+      </button>
+    </div>
   </div>
 </div>
 
@@ -1507,10 +1527,16 @@
   
   .panel-actions {
     display: flex;
+    flex-direction: column;
     gap: var(--space-8);
     padding: var(--space-12);
     border-top: 1px solid var(--border-subtle);
-    
+
+    .action-row {
+      display: flex;
+      gap: var(--space-8);
+    }
+
     .action-button {
       flex: 1;
       padding: var(--space-12) var(--space-16);
@@ -1524,26 +1550,38 @@
       justify-content: center;
       gap: var(--space-8);
       font-size: var(--font-sm);
-      
+
       &.cancel-button {
         background: var(--hover);
         color: rgba(255, 255, 255, 0.8);
         border: 1px solid var(--border-default);
-        
+
         &:hover {
           background: var(--hover-high);
           color: #fff;
         }
       }
-      
+
       &.save-button {
         background: var(--color-primary, #8b0000);
         color: #fff;
-        
+
         &:hover {
           background: rgba(139, 0, 0, 0.8);
           transform: translateY(-0.0625rem);
           box-shadow: 0 0.125rem 0.5rem rgba(139, 0, 0, 0.4);
+        }
+      }
+
+      &.export-button {
+        background: var(--hover);
+        color: rgba(255, 255, 255, 0.8);
+        border: 1px solid var(--border-default);
+
+        &:hover {
+          background: var(--hover-high);
+          color: #fff;
+          border-color: var(--border-medium);
         }
       }
     }
