@@ -441,19 +441,17 @@ export class WaterwayLookup {
       return false;  // Invalid hex coordinates
     }
 
-    // Check if movement line intersects any barrier segment (without a crossing)
-    for (const segment of segments) {
-      // Skip segments that have crossings - they allow passage
-      if (segment.hasCrossing) continue;
+    // Use grid traversal for robust barrier crossing detection
+    // This steps along the movement vector and checks for barrier crossings at each step,
+    // which is more robust than a single line-line intersection check (handles collinear
+    // lines and endpoint edge cases better)
+    const blocked = checkLineBarrierCrossing(fromCenter, toCenter, segments);
 
-      // Check line intersection
-      if (lineSegmentsIntersect(fromCenter, toCenter, segment.start, segment.end)) {
-        logger.info(`[WaterwayLookup] Movement ${fromHexI}.${fromHexJ} → ${toHexI}.${toHexJ} BLOCKED by river segment`);
-        return true;  // Movement crosses a barrier
-      }
+    if (blocked) {
+      logger.info(`[WaterwayLookup] Movement ${fromHexI}.${fromHexJ} → ${toHexI}.${toHexJ} BLOCKED by river segment`);
     }
 
-    return false;  // No barrier crossed
+    return blocked;
   }
   
   /**
