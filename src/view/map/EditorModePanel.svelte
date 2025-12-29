@@ -309,9 +309,9 @@
   let isGM = false;
 
   // Export map data handler
+  // Uses 'Stolen Lands' to generate 'stolen-lands-map.json' which matches the import path
   async function handleExportMapData() {
-    const mapName = $kingdomData.name || 'Stolen Lands';
-    await downloadMapData(mapName);
+    await downloadMapData('Stolen Lands');
   }
 
   function showDeleteConfirm(section: string) {
@@ -1066,7 +1066,7 @@
   <!-- Actions -->
   <div class="panel-actions">
     {#if isGM}
-    <button class="action-button export-button" on:click={handleExportMapData} title="Export map data (terrain, roads, rivers, etc.) to JSON file">
+    <button class="action-button export-button" on:click={handleExportMapData} title="Export to stolen-lands-map.json (save to data/piazolands/)">
       <i class="fas fa-download"></i> Export Map Data
     </button>
     {/if}
