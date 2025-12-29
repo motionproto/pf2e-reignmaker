@@ -32,14 +32,15 @@ import {
   createProvincesFillOverlay,
   createSettlementsOverlay,
   createRoadsOverlay,
-  createWaterOverlay,
+  createRiversOverlay,
   createWorksitesOverlay,
   createResourcesOverlay,
   createSettlementIconsOverlay,
   createSettlementLabelsOverlay,
   createFortificationsOverlay,
   createInteractiveHoverOverlay,
-  createBlockedEdgesDebugOverlay,
+  createArmyMovementOverlay,
+  createNavigationGridDebugOverlay,
   createDemandedHexOverlay
 } from '../overlays';
 
@@ -80,6 +81,9 @@ export class OverlayManager {
   private subscriptions: Map<string, Unsubscriber> = new Map();  // Store subscriptions
   private zoomSubscriptions: Map<string, { callback: Function; lastScale: number }> = new Map();  // Zoom hook tracking
   private renderLocks: Map<string, Promise<void>> = new Map();  // Rendering locks to prevent race conditions
+  private cancelledOverlays: Set<string> = new Set();  // Track overlays cancelled during render
+  private pendingRenders: Map<string, any> = new Map();  // Latest data waiting to be rendered (prevents queue buildup)
+  private batchOperationInProgress: boolean = false;  // Prevents subscription renders during batch operations
   private mapLayer: ReignMakerMapLayer;
   private readonly STORAGE_KEY = 'reignmaker-overlay-states';
   
@@ -138,10 +142,13 @@ export class OverlayManager {
   /**
    * Show an overlay (with automatic cleanup)
    * Supports both reactive (store + render) and legacy (show) patterns
-   * 
+   *
    * IDEMPOTENT: Safe to call multiple times - returns early if already active
+   *
+   * @param id - Overlay ID to show
+   * @param skipStateSave - If true, don't save state to localStorage (used during editor mode)
    */
-  async showOverlay(id: string): Promise<void> {
+  async showOverlay(id: string, skipStateSave: boolean = false): Promise<void> {
     const overlay = this.overlays.get(id);
     if (!overlay) {
       logger.warn(`[OverlayManager] Overlay not found: ${id}`);
@@ -169,13 +176,16 @@ export class OverlayManager {
     }
 
     try {
+      // Clear cancellation flag - overlay is being shown again
+      this.cancelledOverlays.delete(id);
+
       // Mark as active FIRST (before subscription fires)
       // This ensures isOverlayActive() returns true when subscription callback fires
       this.activeOverlaysStore.update($set => {
         $set.add(id);
         return $set;
       });
-      
+
       // Reactive pattern: Subscribe to store for automatic updates
       if (overlay.store && overlay.render) {
         // Cleanup old subscription if exists
@@ -187,35 +197,25 @@ export class OverlayManager {
         }
 
         // Subscribe to store - automatically redraws when data changes
-        const unsubscribe = overlay.store.subscribe(async ($data) => {
-          // Only render if overlay is still active
-          if (this.isOverlayActive(id)) {
-            try {
-              // 🔒 RENDERING LOCK: Wait for any in-progress render to complete
-              // This prevents race conditions when store updates rapidly (e.g., army deletion)
-              const existingRender = this.renderLocks.get(id);
-              if (existingRender) {
-                // Silently wait for in-progress render (no log spam needed)
-                await existingRender;
-              }
-              
-              // Start new render and store the promise (wrap in Promise.resolve for sync renders)
-              const renderPromise = Promise.resolve(overlay.render!($data));
-              this.renderLocks.set(id, renderPromise);
-              
-              // Wait for render to complete
-              await renderPromise;
-              
-              // Clear the lock after successful render
-              this.renderLocks.delete(id);
-            } catch (error) {
-              logger.error(`[OverlayManager] ❌ Render failed for ${id}:`, error);
-              // Clear lock even on error to prevent permanent deadlock
-              this.renderLocks.delete(id);
-            }
-          } else {
-            logger.warn(`[OverlayManager] ⚠️ Subscription fired for inactive overlay: ${id} - this shouldn't happen!`);
+        const unsubscribe = overlay.store.subscribe(($data) => {
+          // Skip rendering during batch operations (e.g., setActiveOverlays)
+          if (this.batchOperationInProgress) {
+            return;
           }
+
+          // Check cancellation BEFORE any work
+          if (this.cancelledOverlays.has(id) || !this.isOverlayActive(id)) {
+            return; // Overlay was hidden, skip render
+          }
+
+          // Store latest data - if render is in progress, it will pick this up when done
+          this.pendingRenders.set(id, $data);
+
+          // If no render in progress, start the render loop
+          if (!this.renderLocks.has(id)) {
+            this.processRenderQueue(id, overlay);
+          }
+          // If render IS in progress, it will automatically process pendingRenders when done
         });
         
         this.subscriptions.set(id, unsubscribe);
@@ -240,10 +240,19 @@ export class OverlayManager {
       if (id === 'settlement-labels') {
         this.setupZoomSubscription(id);
       }
-      
-      // Save state after successful activation
-      this.saveState();
-      
+
+      // CRITICAL: Show all layers used by this overlay
+      // This is the ONLY place where layers become visible
+      // Draw methods no longer auto-show to prevent visibility bypassing the OverlayManager
+      overlay.layerIds.forEach(layerId => {
+        this.mapLayer.showLayer(layerId);
+      });
+
+      // Save state after successful activation (unless told to skip)
+      if (!skipStateSave) {
+        this.saveState();
+      }
+
       const $activeAfter = get(this.activeOverlaysStore);
 
     } catch (error) {
@@ -270,14 +279,18 @@ export class OverlayManager {
     }
 
     try {
+      // Mark as cancelled FIRST - prevents any in-flight renders from continuing
+      this.cancelledOverlays.add(id);
+
       // Cleanup subscription if exists
       const unsubscribe = this.subscriptions.get(id);
       if (unsubscribe) {
         unsubscribe();
         this.subscriptions.delete(id);
       }
-      
-      // Clear any in-progress render lock
+
+      // Clear any pending renders and locks
+      this.pendingRenders.delete(id);
       this.renderLocks.delete(id);
       
       // Cleanup zoom subscription if exists
@@ -312,6 +325,42 @@ export class OverlayManager {
       logger.error(`[OverlayManager] Failed to hide overlay ${id}:`, error);
       throw error;
     }
+  }
+
+  /**
+   * Process render queue for an overlay - renders latest data, skipping intermediate updates
+   * This prevents UI blocking when store updates rapidly
+   */
+  private async processRenderQueue(id: string, overlay: MapOverlay): Promise<void> {
+    // Keep rendering while there's pending data
+    while (this.pendingRenders.has(id)) {
+      // Check cancellation
+      if (this.cancelledOverlays.has(id) || !this.isOverlayActive(id)) {
+        this.pendingRenders.delete(id);
+        this.renderLocks.delete(id);
+        return;
+      }
+
+      // Get and clear pending data (grab latest, discard any that came before)
+      const data = this.pendingRenders.get(id);
+      this.pendingRenders.delete(id);
+
+      try {
+        // Create render promise and store as lock
+        const renderPromise = Promise.resolve(overlay.render!(data));
+        this.renderLocks.set(id, renderPromise);
+
+        // Wait for render to complete
+        await renderPromise;
+      } catch (error) {
+        logger.error(`[OverlayManager] ❌ Render failed for ${id}:`, error);
+      }
+
+      // Loop continues if new data arrived during render
+    }
+
+    // No more pending data, clear the lock
+    this.renderLocks.delete(id);
   }
 
   /**
@@ -530,57 +579,66 @@ export class OverlayManager {
   async setActiveOverlays(overlayIds: string[], saveState: boolean = true): Promise<void> {
     logger.info('[OverlayManager] 🔄 setActiveOverlays START - requested:', overlayIds);
 
-    // Get current active overlays
-    const $active = get(this.activeOverlaysStore);
-    logger.info('[OverlayManager] 🔍 Current active overlays:', Array.from($active));
+    // Prevent subscription callbacks from rendering during batch operation
+    this.batchOperationInProgress = true;
 
-    // Track any errors during the operation
-    const errors: Array<{ id: string; error: unknown }> = [];
+    try {
+      // Get current active overlays
+      const $active = get(this.activeOverlaysStore);
+      logger.info('[OverlayManager] 🔍 Current active overlays:', Array.from($active));
 
-    // Hide overlays not in the target list (skip individual state saves for batch operation)
-    const toHide = Array.from($active).filter(id => !overlayIds.includes(id));
-    logger.info('[OverlayManager] 🔍 Overlays to hide:', toHide);
-    for (const id of toHide) {
-      try {
-        logger.info(`[OverlayManager] 🔍 Hiding overlay: ${id}...`);
-        this.hideOverlay(id, true); // Skip state save during batch operation
-      } catch (error) {
-        logger.error(`[OverlayManager] ❌ Failed to hide overlay ${id}:`, error);
-        errors.push({ id, error });
-        // Continue with other overlays - don't let one failure break the batch
-      }
-    }
+      // Track any errors during the operation
+      const errors: Array<{ id: string; error: unknown }> = [];
 
-    // Show overlays in the target list (skip individual state saves for batch operation)
-    logger.info('[OverlayManager] 🔍 Overlays to show:', overlayIds.filter(id => !$active.has(id)));
-    for (const id of overlayIds) {
-      if (!$active.has(id)) {
+      // Hide overlays not in the target list (skip individual state saves for batch operation)
+      const toHide = Array.from($active).filter(id => !overlayIds.includes(id));
+      logger.info('[OverlayManager] 🔍 Overlays to hide:', toHide);
+      for (const id of toHide) {
         try {
-          logger.info(`[OverlayManager] 🔍 Showing overlay: ${id}...`);
-          await this.showOverlay(id);
-          logger.info(`[OverlayManager] 🔍 showOverlay(${id}) completed`);
+          logger.info(`[OverlayManager] 🔍 Hiding overlay: ${id}...`);
+          this.hideOverlay(id, true); // Skip state save during batch operation
         } catch (error) {
-          logger.error(`[OverlayManager] ❌ Failed to show overlay ${id}:`, error);
+          logger.error(`[OverlayManager] ❌ Failed to hide overlay ${id}:`, error);
           errors.push({ id, error });
           // Continue with other overlays - don't let one failure break the batch
         }
-      } else {
-        logger.info(`[OverlayManager] 🔍 Overlay ${id} already active, skipping`);
       }
-    }
 
-    // Save the new state if requested
-    if (saveState) {
-      logger.info('[OverlayManager] 🔍 Saving state to localStorage...');
-      this.saveState();
-    }
+      // Show overlays in the target list (skip individual state saves for batch operation)
+      logger.info('[OverlayManager] 🔍 Overlays to show:', overlayIds.filter(id => !$active.has(id)));
+      for (const id of overlayIds) {
+        if (!$active.has(id)) {
+          try {
+            logger.info(`[OverlayManager] 🔍 Showing overlay: ${id}...`);
+            // Pass !saveState as skipStateSave - if we're not saving state for the batch, skip individual saves too
+            await this.showOverlay(id, !saveState);
+            logger.info(`[OverlayManager] 🔍 showOverlay(${id}) completed`);
+          } catch (error) {
+            logger.error(`[OverlayManager] ❌ Failed to show overlay ${id}:`, error);
+            errors.push({ id, error });
+            // Continue with other overlays - don't let one failure break the batch
+          }
+        } else {
+          logger.info(`[OverlayManager] 🔍 Overlay ${id} already active, skipping`);
+        }
+      }
 
-    const $activeAfter = get(this.activeOverlaysStore);
-    logger.info('[OverlayManager] ✅ setActiveOverlays COMPLETE - final active overlays:', Array.from($activeAfter));
+      // Save the new state if requested
+      if (saveState) {
+        logger.info('[OverlayManager] 🔍 Saving state to localStorage...');
+        this.saveState();
+      }
 
-    // Log summary if there were errors
-    if (errors.length > 0) {
-      logger.warn(`[OverlayManager] ⚠️ setActiveOverlays completed with ${errors.length} error(s)`);
+      const $activeAfter = get(this.activeOverlaysStore);
+      logger.info('[OverlayManager] ✅ setActiveOverlays COMPLETE - final active overlays:', Array.from($activeAfter));
+
+      // Log summary if there were errors
+      if (errors.length > 0) {
+        logger.warn(`[OverlayManager] ⚠️ setActiveOverlays completed with ${errors.length} error(s)`);
+      }
+    } finally {
+      // Always reset batch flag, even if errors occurred
+      this.batchOperationInProgress = false;
     }
   }
   
@@ -760,7 +818,7 @@ export class OverlayManager {
     this.registerOverlay(createProvincesFillOverlay(this.mapLayer, boundIsActive));
     this.registerOverlay(createSettlementsOverlay(this.mapLayer, boundIsActive));
     this.registerOverlay(createRoadsOverlay(this.mapLayer, boundIsActive));
-    this.registerOverlay(createWaterOverlay(this.mapLayer, boundIsActive));
+    this.registerOverlay(createRiversOverlay(this.mapLayer, boundIsActive));
     this.registerOverlay(createWorksitesOverlay(this.mapLayer, boundIsActive));
     this.registerOverlay(createResourcesOverlay(this.mapLayer, boundIsActive));
     this.registerOverlay(createSettlementIconsOverlay(this.mapLayer, boundIsActive));
@@ -768,13 +826,14 @@ export class OverlayManager {
     this.registerOverlay(createFortificationsOverlay(this.mapLayer, boundIsActive));
     
     // Debug overlays (GM only, shown in overlay panel)
-    this.registerOverlay(createBlockedEdgesDebugOverlay(this.mapLayer, boundIsActive));
+    this.registerOverlay(createNavigationGridDebugOverlay(this.mapLayer, boundIsActive));
     
     // Event-based overlays (shown when relevant events are active)
     this.registerOverlay(createDemandedHexOverlay(this.mapLayer, boundIsActive));
     
     // Internal overlays (used during map interactions, not shown in overlay panel)
     this.registerOverlay(createInteractiveHoverOverlay(this.mapLayer, boundIsActive));
+    this.registerOverlay(createArmyMovementOverlay(this.mapLayer, boundIsActive));
   }
 }
 

@@ -18,6 +18,7 @@ export async function deployArmyExecution(deployment: {
   path: string[];
   conditionsToApply?: string[];
   animationSpeed?: number;
+  finalNavCell?: { x: number; y: number }; // Final nav-grid position for pathfinding
 }): Promise<void> {
   logger.info(`🚀 [deployArmyExecution] Deploying army ${deployment.armyId}`);
 
@@ -79,7 +80,7 @@ export async function deployArmyExecution(deployment: {
     }
   }
 
-  // Mark army as deployed this turn
+  // Mark army as deployed this turn and save final nav cell position
   await updateKingdom(k => {
     // Ensure turnState exists
     if (!k.turnState) {
@@ -105,6 +106,16 @@ export async function deployArmyExecution(deployment: {
     // Add army to deployed list if not already there
     if (!k.turnState!.actionsPhase.deployedArmyIds.includes(deployment.armyId)) {
       k.turnState!.actionsPhase.deployedArmyIds.push(deployment.armyId);
+    }
+
+    // Save the final nav cell position to the army (for future pathfinding)
+    if (deployment.finalNavCell && k.armies) {
+      const armyIndex = k.armies.findIndex((a: any) => a.id === deployment.armyId);
+      if (armyIndex !== -1) {
+        k.armies[armyIndex].navCellX = deployment.finalNavCell.x;
+        k.armies[armyIndex].navCellY = deployment.finalNavCell.y;
+        logger.info(`📍 [deployArmyExecution] Saved navCell (${deployment.finalNavCell.x}, ${deployment.finalNavCell.y}) for ${k.armies[armyIndex].name}`);
+      }
     }
   });
 

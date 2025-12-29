@@ -99,15 +99,16 @@ export class DeployArmyHandler extends BaseGameCommandHandler {
       }],
       commit: async () => {
         logger.info(`[DeployArmyHandler] Deploying ${army.name}`);
-        
+
         // Use the existing execution function
         const { deployArmyExecution } = await import('../../../execution/armies/deployArmy');
-        
+
         await deployArmyExecution({
           armyId: armyId,
           path: finalPath,
           conditionsToApply: conditionsToApply,
-          animationSpeed: 100
+          animationSpeed: 100,
+          finalNavCell: command.finalNavCell // Pass nav cell for future pathfinding
         });
         
         // Show chat message

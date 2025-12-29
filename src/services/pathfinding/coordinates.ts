@@ -145,17 +145,17 @@ export function getNeighborHexIds(hexId: string): string[] {
   try {
     // Parse hex ID to offset coords
     const offset = hexIdToOffset(hexId);
-    
+
     // Get all 6 neighbors using shared utility
     const hexNeighbors = getAdjacentHexes(offset.i, offset.j);
-    
+
     // Convert to hex ID format
     const neighbors: string[] = [];
     hexNeighbors.forEach((neighbor) => {
       const neighborId = `${neighbor.i}.${neighbor.j}`;
       neighbors.push(neighborId);
     });
-    
+
     return neighbors;
   } catch (error) {
     logger.error(`[Coordinates] Failed to get neighbors for ${hexId}:`, error);

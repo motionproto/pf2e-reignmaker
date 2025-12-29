@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { ReignMakerMapLayer } from '../../services/map/core/ReignMakerMapLayer';
   import { getOverlayManager } from '../../services/map/core/OverlayManager';
   import { getEditorModeService } from '../../services/map/core/EditorModeService';
@@ -104,11 +104,23 @@
   onMount(() => {
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
-    
+
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
+  });
+
+  // Clean up editor panel if toolbar is destroyed while editor is open
+  onDestroy(() => {
+    if (editorPanelComponent) {
+      editorPanelComponent.$destroy();
+      editorPanelComponent = null;
+    }
+    if (editorPanelMountPoint) {
+      editorPanelMountPoint.remove();
+      editorPanelMountPoint = null;
+    }
   });
 
   // Dispatch custom event to notify parent when toolbar is closed
@@ -126,9 +138,9 @@
     
     showEditorPanel = true;
     
-    // Ensure water overlay is active for river editing
-    if (!$activeOverlaysStore.has('water')) {
-      await overlayManager.toggleOverlay('water');
+    // Ensure rivers overlay is active for water editing
+    if (!$activeOverlaysStore.has('rivers')) {
+      await overlayManager.toggleOverlay('rivers');
     }
     
     // Create mount point

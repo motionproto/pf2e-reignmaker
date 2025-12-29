@@ -15,9 +15,7 @@ import {
   disableCanvasLayerInteractivity, 
   restoreCanvasLayerInteractivity 
 } from '../../../utils/canvasLayerInteractivity';
-import { renderRiverConnectors } from '../renderers/RiverConnectorRenderer';
 import { EditorDebugHandlers } from '../editors/EditorDebugHandlers';
-import { RiverEditorHandlers } from '../editors/RiverEditorHandlers';
 import { CrossingEditorHandlers } from '../editors/CrossingEditorHandlers';
 import { RoadEditorHandlers } from '../editors/RoadEditorHandlers';
 import { TerrainEditorHandlers } from '../editors/TerrainEditorHandlers';
@@ -26,11 +24,20 @@ import { WorksiteEditorHandlers } from '../editors/WorksiteEditorHandlers';
 import type { WorksiteType } from '../editors/WorksiteEditorHandlers';
 import { FeatureEditorHandlers } from '../editors/FeatureEditorHandlers';
 import { ClaimedByEditorHandlers } from '../editors/ClaimedByEditorHandlers';
+import { cellRiverEditorHandlers } from '../editors/CellRiverEditorHandlers';
+import { cellLakeEditorHandlers } from '../editors/CellLakeEditorHandlers';
+import { cellCrossingEditorHandlers } from '../editors/CellCrossingEditorHandlers';
 
-export type EditorTool = 
-  | 'river-edit' | 'river-scissors' | 'river-reverse' 
-  | 'lake-toggle' | 'swamp-toggle' | 'waterfall-toggle' 
-  | 'bridge-toggle' | 'ford-toggle' 
+export type EditorTool =
+  | 'cell-river-edit'  // Cell-based river drawing
+  | 'cell-river-erase' // Eraser for cell rivers (removes entire path)
+  | 'cell-river-area-erase' // Area eraser (removes points within radius)
+  | 'cell-river-flip'  // Flip river direction
+  | 'cell-lake-paint'  // Cell-based lake painting (brush mode)
+  | 'cell-lake-erase'  // Eraser for cell lakes (brush mode)
+  | 'cell-crossing-paint'  // Cell-based crossing painting (brush mode)
+  | 'cell-crossing-erase'  // Eraser for cell crossings (brush mode)
+  | 'waterfall-toggle' | 'bridge-toggle' | 'ford-toggle' 
   | 'road-edit' | 'road-scissors'
   | 'terrain-plains' | 'terrain-forest' | 'terrain-hills' | 'terrain-mountains' | 'terrain-swamp' | 'terrain-desert' | 'terrain-water'
   | 'bounty-food' | 'bounty-lumber' | 'bounty-stone' | 'bounty-ore' | 'bounty-gold' | 'bounty-minus'
@@ -43,8 +50,9 @@ export type EditorTool =
 /**
  * High-level editor modes that group related tools and define default overlay configurations
  */
-export type EditorMode = 
-  | 'waterways'      // Rivers, lakes, swamps
+export type EditorMode =
+  | 'rivers'         // Cell-based river editing
+  | 'lakes'          // Cell-based lake painting
   | 'crossings'      // Waterfalls, bridges, fords
   | 'roads'          // Road network
   | 'terrain'        // Terrain types
@@ -59,8 +67,9 @@ export type EditorMode =
  * These overlays are shown when entering a mode, but users can toggle them freely
  */
 const EDITOR_MODE_OVERLAYS: Record<EditorMode, string[]> = {
-  'waterways': ['water'],
-  'crossings': ['water'],
+  'rivers': ['rivers'],      // Cell-based river editing - show rivers overlay
+  'lakes': ['rivers'],       // Cell-based lake editing - show rivers overlay (includes lakes)
+  'crossings': ['rivers', 'navigation-grid-debug'],  // Show rivers and nav grid for crossing placement
   'roads': ['roads', 'territory-border', 'settlement-icons', 'settlement-labels'],
   'terrain': ['terrain'],
   'bounty': ['resources'],
@@ -86,6 +95,8 @@ export class EditorModeService {
   private pointerDownHandler: ((event: PointerEvent) => void) | null = null;
   private pointerMoveHandler: ((event: PointerEvent) => void) | null = null;
   private pointerUpHandler: ((event: PointerEvent) => void) | null = null;
+  private dblClickHandler: ((event: MouseEvent) => void) | null = null;
+  private keyDownHandler: ((event: KeyboardEvent) => void) | null = null;
   
   // Store layer interactivity state for restoration
   private savedLayerInteractivity: Map<string, boolean> = new Map();
@@ -93,10 +104,7 @@ export class EditorModeService {
   // Store previous active scene control for restoration
   private previousActiveControl: string | null = null;
   private previousTokenActiveTool: string | null = null;
-  
-  // River editing state
-  private connectorLayer: PIXI.Container | null = null;
-  
+
   // Road painting state (drag-to-paint)
   private isRoadPainting = false;
   private paintedHexesThisDrag = new Set<string>();
@@ -120,10 +128,34 @@ export class EditorModeService {
   // Worksite painting state (drag-to-paint)
   private isWorksitePainting = false;
   private paintedWorksiteHexes = new Set<string>();
+
+  // Cell river drawing state (drag-to-draw)
+  private isRiverDrawing = false;
+  private drawnRiverCells = new Set<string>();
+
+  // Cell river reshape state (drag-to-reshape segment)
+  private isRiverReshaping = false;
+  private reshapedRiverCells = new Set<string>();
+
+  // Cell river click position (for detecting drag after selection)
+  private riverClickPos: { x: number; y: number } | null = null;
+
+  // Cell river area erase state (drag-to-erase)
+  private isAreaErasing = false;
+
+  // Cell river vertex move state (shift+drag-to-move)
+  private isVertexMoving = false;
+
+  // Cell lake painting state (drag-to-paint brush mode)
+  private isLakePainting = false;
+  private isLakeErasing = false;
+
+  // Cell crossing painting state (drag-to-paint brush mode)
+  private isCrossingPainting = false;
+  private isCrossingErasing = false;
   
   // Handler modules
   private debugHandlers = new EditorDebugHandlers();
-  private riverHandlers = new RiverEditorHandlers();
   private crossingHandlers = new CrossingEditorHandlers();
   private roadHandlers = new RoadEditorHandlers();
   private terrainHandlers = new TerrainEditorHandlers();
@@ -200,47 +232,46 @@ export class EditorModeService {
       return;
     }
 
+    // CRITICAL: Check canvas availability BEFORE entering editor mode
+    // If canvas isn't ready, event listeners won't attach and editor won't work
+    const canvas = (globalThis as any).canvas;
+    if (!canvas?.stage) {
+      logger.error('[EditorModeService] Cannot enter editor mode - canvas not ready');
+      const ui = (globalThis as any).ui;
+      ui?.notifications?.error('Cannot open map editor - canvas not ready. Please wait for the scene to fully load.');
+      throw new Error('Canvas not ready for editor mode');
+    }
+
     logger.info('[EditorModeService] Entering editor mode');
 
     // Backup kingdom data (deep copy for restore on cancel)
     const kingdom = getKingdomData();
     this.backupKingdomData = structuredClone(kingdom);
 
-    // CRITICAL: Push overlay state FIRST before any operations
-    // This must happen before setting this.active = true so we can clean up on error
     const { getOverlayManager } = await import('./OverlayManager');
     const overlayManager = getOverlayManager();
-    overlayManager.pushOverlayState();
-    logger.info('[EditorModeService] Saved user overlay state to stack');
 
-    try {
-      this.active = true;
-      this.currentTool = 'inactive';
-      this.currentMode = null;
+    this.currentTool = 'inactive';
+    this.currentMode = null;
 
-      // Disable canvas layer interactivity (prevents token/tile selection)
-      this.savedLayerInteractivity = disableCanvasLayerInteractivity();
+    // Disable canvas layer interactivity (prevents token/tile selection)
+    this.savedLayerInteractivity = disableCanvasLayerInteractivity();
 
-      // Clear ALL map layers for clean slate (but don't touch overlay manager state yet)
-      const { ReignMakerMapLayer } = await import('./ReignMakerMapLayer');
-      const mapLayer = ReignMakerMapLayer.getInstance();
-      mapLayer.clearAllLayers();
-      logger.info('[EditorModeService] Cleared all map layer graphics before editor start');
+    // Hide all overlays - editor modes will show what they need
+    // Note: User's overlay preferences are already saved in localStorage by OverlayManager
+    await overlayManager.setActiveOverlays([], false);
+    logger.info('[EditorModeService] Hid all overlays for editor mode');
 
-      // Disable Foundry token scene control by activating our custom control
-      this.disableTokenSceneControl();
+    // Disable Foundry token scene control by activating our custom control
+    this.disableTokenSceneControl();
 
-      // Attach direct event listeners to canvas stage
-      this.attachDirectEventListeners();
+    // Attach direct event listeners to canvas stage
+    this.attachDirectEventListeners();
 
-      // Note: Default overlays will be set when setEditorMode() is called
-    } catch (error) {
-      // If anything fails during setup, restore overlay state and rethrow
-      logger.error('[EditorModeService] ❌ Failed to enter editor mode, restoring state:', error);
-      this.active = false;
-      await overlayManager.popOverlayState();
-      throw error;
-    }
+    // Only set active AFTER all setup succeeds
+    this.active = true;
+
+    // Note: Default overlays will be set when setEditorMode() is called
   }
   
   /**
@@ -256,8 +287,8 @@ export class EditorModeService {
 
     logger.info('[EditorModeService] Exiting editor mode');
 
-    // Destroy connector layer (clears all control point graphics)
-    this.destroyConnectorLayer();
+    // Cleanup cell river editor if it was active
+    cellRiverEditorHandlers.cleanup();
 
     // Remove direct event listeners
     this.removeDirectEventListeners();
@@ -269,18 +300,11 @@ export class EditorModeService {
     // Restore previous active scene control
     this.restoreTokenSceneControl();
 
-    // CRITICAL: Restore user's pre-editor overlay state from stack
+    // Restore user's overlay preferences from localStorage
     const { getOverlayManager } = await import('./OverlayManager');
     const overlayManager = getOverlayManager();
-    const restored = await overlayManager.popOverlayState();
-    if (restored) {
-      logger.info('[EditorModeService] Restored user overlay state from stack');
-      // Refresh all active overlays to ensure they render with current data
-      // This catches any cases where layers might have been affected by editor operations
-      await overlayManager.refreshActiveOverlays();
-    } else {
-      logger.warn('[EditorModeService] No overlay state to restore (stack was empty)');
-    }
+    await overlayManager.restoreState();
+    logger.info('[EditorModeService] Restored overlay state from localStorage');
 
     this.active = false;
     this.currentTool = 'inactive';
@@ -292,29 +316,28 @@ export class EditorModeService {
   /**
    * Set editor mode - applies default overlay configuration for the mode
    * This is the high-level mode change (e.g., switching from waterways to roads)
-   * 
+   *
    * @param mode - The editor mode to activate
    */
   async setEditorMode(mode: EditorMode): Promise<void> {
     logger.info(`[EditorModeService] Setting editor mode: ${mode}`);
     this.currentMode = mode;
-    
+
     // Apply default overlay configuration for this mode using OverlayManager
     const { getOverlayManager } = await import('./OverlayManager');
     const overlayManager = getOverlayManager();
-    const defaultOverlays = EDITOR_MODE_OVERLAYS[mode];
-    
-    if (defaultOverlays && defaultOverlays.length > 0) {
-      // Use setActiveOverlays to establish the mode's default overlay set
-      // This is the ONLY place we use setActiveOverlays - not in per-tool changes
-      await overlayManager.setActiveOverlays(defaultOverlays);
-      logger.info(`[EditorModeService] Applied default overlays for ${mode}:`, defaultOverlays);
-    }
+    const defaultOverlays = EDITOR_MODE_OVERLAYS[mode] || [];
+
+    // ALWAYS set active overlays to the mode's defaults (even if empty)
+    // This ensures we hide overlays that aren't needed for this mode
+    // Pass false for saveState to avoid corrupting user's localStorage preferences during editor mode
+    await overlayManager.setActiveOverlays(defaultOverlays, false);
+    logger.info(`[EditorModeService] Applied default overlays for ${mode}:`, defaultOverlays);
   }
   
   /**
    * Set current editing tool
-   * This is a fine-grained tool change within a mode (e.g., river-edit to river-scissors)
+   * This is a fine-grained tool change within a mode (e.g., cell-river-edit to cell-river-erase)
    * 
    * OVERLAY BEHAVIOR:
    * - Ensures required overlays for the tool are ON (additive)
@@ -327,20 +350,31 @@ export class EditorModeService {
     // Ensure required overlays for this tool are visible (additive, not exclusive)
     await this.ensureToolOverlaysVisible(tool);
     
-    // Render connectors when river-edit or crossing tools are activated
-    const needsConnectors = tool === 'river-edit' || 
-                           tool === 'bridge-toggle' || 
-                           tool === 'ford-toggle' || 
-                           tool === 'waterfall-toggle';
-    
-    logger.info(`[EditorModeService] Tool=${tool}, needsConnectors=${needsConnectors}`);
-    
-    if (needsConnectors) {
-      logger.info('[EditorModeService] Initializing connector layer...');
-      await this.initializeConnectorLayer();
+    // Initialize cell river editor when any cell-river tool is activated
+    const isCellRiverTool = tool === 'cell-river-edit' ||
+                            tool === 'cell-river-erase' ||
+                            tool === 'cell-river-area-erase' ||
+                            tool === 'cell-river-flip';
+    if (isCellRiverTool) {
+      cellRiverEditorHandlers.initialize();
     } else {
-      // Completely destroy connector layer when switching away from connector-based tools
-      this.destroyConnectorLayer();
+      cellRiverEditorHandlers.cleanup();
+    }
+
+    // Initialize cell lake editor when any cell-lake tool is activated
+    const isCellLakeTool = tool === 'cell-lake-paint' || tool === 'cell-lake-erase';
+    if (isCellLakeTool) {
+      cellLakeEditorHandlers.initialize();
+    } else {
+      cellLakeEditorHandlers.cleanup();
+    }
+
+    // Initialize cell crossing editor when any cell-crossing tool is activated
+    const isCellCrossingTool = tool === 'cell-crossing-paint' || tool === 'cell-crossing-erase';
+    if (isCellCrossingTool) {
+      cellCrossingEditorHandlers.initialize();
+    } else {
+      cellCrossingEditorHandlers.cleanup();
     }
   }
   
@@ -366,22 +400,25 @@ export class EditorModeService {
       logger.warn('[EditorModeService] Cannot save - not in editor mode');
       return;
     }
-    
+
     logger.info('[EditorModeService] Saving changes');
-    
+
+    // Rasterize river polylines to blocked cells before saving
+    await cellRiverEditorHandlers.rasterizeOnSave();
+
     // Force Svelte reactivity by creating new array reference
     // This ensures the Territory tab and other components refresh on save
     await updateKingdom(kingdom => {
       kingdom.hexes = [...kingdom.hexes];
     });
-    
+
     // Kingdom data already updated reactively via updateKingdom calls
     // Just clear backup and notify user
     this.backupKingdomData = null;
-    
+
     // Exit editor mode after saving
     this.exitEditorMode();
-    
+
     const ui = (globalThis as any).ui;
     ui?.notifications?.info('Map changes saved');
   }
@@ -417,24 +454,32 @@ export class EditorModeService {
   /**
    * Attach direct PIXI event listeners to canvas stage
    * Uses capture phase to intercept events BEFORE Foundry's handlers
+   * @throws Error if canvas is not available
    */
   private attachDirectEventListeners(): void {
     const canvas = (globalThis as any).canvas;
     if (!canvas?.stage) {
-      logger.warn('[EditorModeService] Canvas not available');
-      return;
+      // This should never happen if enterEditorMode() checks canvas first
+      // But throw to prevent silent failure if called directly
+      throw new Error('Cannot attach event listeners - canvas not available');
     }
-    
+
     // Create bound handlers
     this.pointerDownHandler = this.handlePointerDown.bind(this);
     this.pointerMoveHandler = this.handlePointerMove.bind(this);
     this.pointerUpHandler = this.handlePointerUp.bind(this);
-    
+    this.dblClickHandler = this.handleDoubleClick.bind(this);
+    this.keyDownHandler = this.handleKeyDown.bind(this);
+
     // Attach with capture:true to intercept BEFORE Foundry's handlers
     canvas.stage.addEventListener('pointerdown', this.pointerDownHandler, { capture: true });
     canvas.stage.addEventListener('pointermove', this.pointerMoveHandler, { capture: true });
     canvas.stage.addEventListener('pointerup', this.pointerUpHandler, { capture: true });
-    
+    canvas.stage.addEventListener('dblclick', this.dblClickHandler, { capture: true });
+
+    // Keyboard handler on document (not canvas.stage which doesn't receive keyboard events)
+    document.addEventListener('keydown', this.keyDownHandler, { capture: true });
+
     logger.info('[EditorModeService] ✅ Attached direct event listeners (marquee selection blocked)');
   }
   
@@ -459,7 +504,17 @@ export class EditorModeService {
       canvas.stage.removeEventListener('pointerup', this.pointerUpHandler, { capture: true });
       this.pointerUpHandler = null;
     }
-    
+
+    if (this.dblClickHandler) {
+      canvas.stage.removeEventListener('dblclick', this.dblClickHandler, { capture: true });
+      this.dblClickHandler = null;
+    }
+
+    if (this.keyDownHandler) {
+      document.removeEventListener('keydown', this.keyDownHandler, { capture: true });
+      this.keyDownHandler = null;
+    }
+
     logger.info('[EditorModeService] ✅ Removed direct event listeners');
   }
   
@@ -601,27 +656,84 @@ export class EditorModeService {
     // Handle left-click (either draw or remove with Ctrl)
     if (event.button === 0) {
       logger.info(`[EditorModeService] 🖱️ Left-click on hex ${hexId} with tool ${this.currentTool}`);
-      
-      if (this.currentTool === 'river-edit') {
-        if (event.ctrlKey) {
-          // Ctrl+Click → Delete vertex
-          this.handleRiverRemove(hexId, canvasPos);
+
+      if (this.currentTool === 'cell-river-edit') {
+        // Cell-based river editing (drag-to-draw mode)
+        if (event.altKey || event.metaKey) {
+          // Alt/Cmd+Click finishes current path
+          cellRiverEditorHandlers.finishPath();
+        } else if (event.ctrlKey) {
+          // Ctrl+Click removes the specific point clicked (no notification)
+          await cellRiverEditorHandlers.removePointAt(canvasPos.x, canvasPos.y);
+        } else if (event.shiftKey) {
+          // Shift+Click/drag moves a vertex on the active path
+          const vertex = cellRiverEditorHandlers.findNearbyVertex(canvasPos.x, canvasPos.y);
+          if (vertex) {
+            this.isVertexMoving = true;
+            cellRiverEditorHandlers.startVertexMove(vertex);
+            logger.info(`[EditorModeService] Started moving vertex at (${vertex.cellX}, ${vertex.cellY})`);
+          } else {
+            // Shift+Click on empty space or non-active path - just deselect
+            cellRiverEditorHandlers.deselectPath();
+          }
         } else {
-          // Normal click → Add point to path
-          this.handleRiverClick(hexId, canvasPos);
+          // Check if clicking on any path (for selection) - includes all points, not just endpoints
+          const nearbyPathId = cellRiverEditorHandlers.findNearbyPath(canvasPos.x, canvasPos.y);
+          if (nearbyPathId) {
+            // Select the clicked path (turns it pink)
+            // Dragging will be handled in handlePointerMove to continue/reshape
+            cellRiverEditorHandlers.selectPath(nearbyPathId);
+            logger.info(`[EditorModeService] Selected path ${nearbyPathId}`);
+
+            // Store click position for potential drag detection
+            this.riverClickPos = { x: canvasPos.x, y: canvasPos.y };
+          } else {
+            // Clicking on empty space - deselect current path and start new
+            cellRiverEditorHandlers.deselectPath();
+
+            // Start drag-to-draw mode with new path
+            this.isRiverDrawing = true;
+            this.drawnRiverCells.clear();
+
+            // Add first point
+            await cellRiverEditorHandlers.handleCellRiverClick(canvasPos.x, canvasPos.y);
+
+            // Track this cell so we don't add it again during drag
+            const cellX = Math.floor(canvasPos.x / 8);
+            const cellY = Math.floor(canvasPos.y / 8);
+            this.drawnRiverCells.add(`${cellX},${cellY}`);
+          }
         }
-      } else if (this.currentTool === 'river-scissors') {
-        // Scissors tool → Cut segment at click position
-        this.handleRiverScissorClick(canvasPos);
-      } else if (this.currentTool === 'river-reverse') {
-        // Reverser tool → Reverse flow direction of path
-        this.handleRiverReverseClick(canvasPos);
-      } else if (this.currentTool === 'lake-toggle') {
-        // Lake tool → Toggle lake feature on hex (Ctrl+Click to force remove)
-        this.handleLakeToggle(hexId, event.ctrlKey);
-      } else if (this.currentTool === 'swamp-toggle') {
-        // Swamp tool → Toggle swamp feature on hex (Ctrl+Click to force remove)
-        this.handleSwampToggle(hexId, event.ctrlKey);
+      } else if (this.currentTool === 'cell-river-erase') {
+        // Eraser tool - remove entire river path at click position
+        await cellRiverEditorHandlers.handleCellRiverErase(canvasPos.x, canvasPos.y);
+      } else if (this.currentTool === 'cell-river-area-erase') {
+        // Area eraser tool - start drag-to-erase mode
+        this.isAreaErasing = true;
+        await cellRiverEditorHandlers.handleAreaErase(canvasPos.x, canvasPos.y);
+      } else if (this.currentTool === 'cell-river-flip') {
+        // Flip tool - reverse direction of path at click position
+        await cellRiverEditorHandlers.handleCellRiverFlip(canvasPos.x, canvasPos.y);
+      } else if (this.currentTool === 'cell-lake-paint') {
+        // Cell-based lake painting (drag-to-paint brush mode)
+        this.isLakePainting = true;
+        cellLakeEditorHandlers.startPainting();
+        await cellLakeEditorHandlers.handleLakePaint(canvasPos.x, canvasPos.y);
+      } else if (this.currentTool === 'cell-lake-erase') {
+        // Cell-based lake erasing (drag-to-erase brush mode)
+        this.isLakeErasing = true;
+        cellLakeEditorHandlers.startPainting();
+        await cellLakeEditorHandlers.handleLakeErase(canvasPos.x, canvasPos.y);
+      } else if (this.currentTool === 'cell-crossing-paint') {
+        // Cell-based crossing painting (drag-to-paint brush mode)
+        this.isCrossingPainting = true;
+        cellCrossingEditorHandlers.startPainting();
+        await cellCrossingEditorHandlers.handleCrossingPaint(canvasPos.x, canvasPos.y);
+      } else if (this.currentTool === 'cell-crossing-erase') {
+        // Cell-based crossing erasing (drag-to-erase brush mode)
+        this.isCrossingErasing = true;
+        cellCrossingEditorHandlers.startPainting();
+        await cellCrossingEditorHandlers.handleCrossingErase(canvasPos.x, canvasPos.y);
       } else if (this.currentTool === 'waterfall-toggle') {
         // Waterfall tool → Toggle waterfall on edge
         this.handleWaterfallToggle(hexId, canvasPos);
@@ -708,23 +820,172 @@ export class EditorModeService {
     event.stopImmediatePropagation();
     event.stopPropagation();
     
+    // Handle cell-river hover preview and drag-to-draw/reshape/vertex-move
+    if (this.currentTool === 'cell-river-edit') {
+      const canvas = (globalThis as any).canvas;
+      if (!canvas?.grid) return;
+
+      const point = { x: event.clientX, y: event.clientY };
+      const canvasPos = canvas.canvasCoordinatesFromClient(point);
+
+      // If moving a vertex, update its position
+      if (this.isVertexMoving) {
+        await cellRiverEditorHandlers.updateVertexPosition(canvasPos.x, canvasPos.y);
+      }
+      // If reshaping, add cells to reshaped segment
+      else if (this.isRiverReshaping) {
+        // Update hover preview
+        cellRiverEditorHandlers.handleCellRiverMove(canvasPos.x, canvasPos.y);
+
+        const cellX = Math.floor(canvasPos.x / 8);
+        const cellY = Math.floor(canvasPos.y / 8);
+        const cellKey = `${cellX},${cellY}`;
+
+        // Only add if we haven't already added this cell during reshape
+        if (!this.reshapedRiverCells.has(cellKey)) {
+          this.reshapedRiverCells.add(cellKey);
+          cellRiverEditorHandlers.addReshapePoint(canvasPos.x, canvasPos.y);
+        }
+      }
+      // Detect drag start after path selection (to continue from endpoint or reshape segment)
+      else if (this.riverClickPos && !this.isRiverDrawing) {
+        // Check if mouse has moved enough to consider it a drag (5 pixel threshold)
+        const dx = canvasPos.x - this.riverClickPos.x;
+        const dy = canvasPos.y - this.riverClickPos.y;
+        const dragDistance = Math.sqrt(dx * dx + dy * dy);
+
+        if (dragDistance > 5) {
+          // Dragging from selected path - check if from endpoint or segment
+          const endpoint = cellRiverEditorHandlers.findNearbyEndpoint(
+            this.riverClickPos.x,
+            this.riverClickPos.y
+          );
+
+          if (endpoint) {
+            // Start drawing from endpoint
+            this.isRiverDrawing = true;
+            this.drawnRiverCells.clear();
+            cellRiverEditorHandlers.continueFromEndpoint(endpoint);
+            logger.info(`[EditorModeService] Drag-continue from ${endpoint.endpoint} of path ${endpoint.pathId}`);
+          } else {
+            // Check for segment reshape
+            const segment = cellRiverEditorHandlers.findNearbySegment(
+              this.riverClickPos.x,
+              this.riverClickPos.y
+            );
+
+            if (segment) {
+              // Start reshape mode
+              this.isRiverReshaping = true;
+              this.reshapedRiverCells.clear();
+              await cellRiverEditorHandlers.startReshapeSegment(
+                segment.pathId,
+                segment.insertAfterOrder,
+                segment.insertBeforeOrder
+              );
+              logger.info(`[EditorModeService] Drag-reshape segment ${segment.insertAfterOrder}-${segment.insertBeforeOrder}`);
+            }
+          }
+
+          // Clear click position - we've processed the drag start
+          this.riverClickPos = null;
+        }
+      }
+      // If dragging (not reshaping or moving vertex), add cells to path
+      else if (this.isRiverDrawing) {
+        // Update hover preview
+        cellRiverEditorHandlers.handleCellRiverMove(canvasPos.x, canvasPos.y);
+
+        const cellX = Math.floor(canvasPos.x / 8);
+        const cellY = Math.floor(canvasPos.y / 8);
+        const cellKey = `${cellX},${cellY}`;
+
+        // Only add if we haven't already drawn this cell
+        if (!this.drawnRiverCells.has(cellKey)) {
+          this.drawnRiverCells.add(cellKey);
+          cellRiverEditorHandlers.handleCellRiverClick(canvasPos.x, canvasPos.y);
+        }
+      }
+      // Not actively editing - just show hover preview
+      else {
+        cellRiverEditorHandlers.handleCellRiverMove(canvasPos.x, canvasPos.y);
+      }
+    }
+
+    // Handle area eraser preview and drag-to-erase
+    if (this.currentTool === 'cell-river-area-erase') {
+      const canvas = (globalThis as any).canvas;
+      if (!canvas?.grid) return;
+
+      const point = { x: event.clientX, y: event.clientY };
+      const canvasPos = canvas.canvasCoordinatesFromClient(point);
+
+      // Always show eraser preview circle
+      cellRiverEditorHandlers.showEraserPreview(canvasPos.x, canvasPos.y);
+
+      // If dragging, continuously erase
+      if (this.isAreaErasing) {
+        cellRiverEditorHandlers.handleAreaErase(canvasPos.x, canvasPos.y);
+      }
+    }
+
+    // Handle cell lake painting preview and drag-to-paint
+    if (this.currentTool === 'cell-lake-paint' || this.currentTool === 'cell-lake-erase') {
+      const canvas = (globalThis as any).canvas;
+      if (!canvas?.grid) return;
+
+      const point = { x: event.clientX, y: event.clientY };
+      const canvasPos = canvas.canvasCoordinatesFromClient(point);
+      const isErasing = this.currentTool === 'cell-lake-erase';
+
+      // Always show brush preview
+      cellLakeEditorHandlers.handleMouseMove(canvasPos.x, canvasPos.y, isErasing);
+
+      // If dragging, continuously paint/erase
+      if (this.isLakePainting) {
+        await cellLakeEditorHandlers.handleLakePaint(canvasPos.x, canvasPos.y);
+      } else if (this.isLakeErasing) {
+        await cellLakeEditorHandlers.handleLakeErase(canvasPos.x, canvasPos.y);
+      }
+    }
+
+    // Handle cell crossing painting preview and drag-to-paint
+    if (this.currentTool === 'cell-crossing-paint' || this.currentTool === 'cell-crossing-erase') {
+      const canvas = (globalThis as any).canvas;
+      if (!canvas?.grid) return;
+
+      const point = { x: event.clientX, y: event.clientY };
+      const canvasPos = canvas.canvasCoordinatesFromClient(point);
+      const isErasing = this.currentTool === 'cell-crossing-erase';
+
+      // Always show brush preview
+      cellCrossingEditorHandlers.handleMouseMove(canvasPos.x, canvasPos.y, isErasing);
+
+      // If dragging, continuously paint/erase
+      if (this.isCrossingPainting) {
+        await cellCrossingEditorHandlers.handleCrossingPaint(canvasPos.x, canvasPos.y);
+      } else if (this.isCrossingErasing) {
+        await cellCrossingEditorHandlers.handleCrossingErase(canvasPos.x, canvasPos.y);
+      }
+    }
+
     // Handle road painting (drag-to-paint)
     if (this.isRoadPainting && this.currentTool === 'road-edit') {
       const canvas = (globalThis as any).canvas;
       if (!canvas?.grid) return;
-      
+
       const point = { x: event.clientX, y: event.clientY };
       const canvasPos = canvas.canvasCoordinatesFromClient(point);
       const offset = canvas.grid.getOffset(canvasPos);
       const hexId = `${offset.i}.${offset.j}`;
-      
+
       // Only paint if we haven't already painted this hex during this drag
       if (!this.paintedHexesThisDrag.has(hexId)) {
         this.handleRoadToggle(hexId, this.isErasing);
         this.paintedHexesThisDrag.add(hexId);
       }
     }
-    
+
     // Handle terrain painting (drag-to-paint)
     if (this.isTerrainPainting && this.currentTerrainType) {
       const canvas = (globalThis as any).canvas;
@@ -801,7 +1062,97 @@ export class EditorModeService {
   private handlePointerUp(event: PointerEvent): void {
     // Only handle our events
     if (!this.active) return;
-    
+
+    // Clear river click position (used for drag detection after selection)
+    this.riverClickPos = null;
+
+    // Handle vertex move stop
+    if (this.isVertexMoving) {
+      this.isVertexMoving = false;
+      cellRiverEditorHandlers.finishVertexMove();
+
+      // CRITICAL: Stop event propagation
+      event.stopImmediatePropagation();
+      event.stopPropagation();
+
+      logger.info('[EditorModeService] 🖱️ Vertex move ended');
+      return;
+    }
+
+    // Handle area eraser stop
+    if (this.isAreaErasing) {
+      this.isAreaErasing = false;
+
+      // CRITICAL: Stop event propagation
+      event.stopImmediatePropagation();
+      event.stopPropagation();
+
+      logger.info('[EditorModeService] 🖱️ Area erase ended');
+      return;
+    }
+
+    // Handle river reshape stop
+    if (this.isRiverReshaping) {
+      this.isRiverReshaping = false;
+      this.reshapedRiverCells.clear();
+
+      // Finish reshaping
+      cellRiverEditorHandlers.finishReshape();
+
+      // CRITICAL: Stop event propagation
+      event.stopImmediatePropagation();
+      event.stopPropagation();
+
+      logger.info('[EditorModeService] 🖱️ River reshape ended');
+      return;
+    }
+
+    // Handle river drawing stop (drag-to-draw)
+    if (this.isRiverDrawing) {
+      this.isRiverDrawing = false;
+      this.drawnRiverCells.clear();
+
+      // Finish the path
+      cellRiverEditorHandlers.finishPath();
+
+      // CRITICAL: Stop event propagation
+      event.stopImmediatePropagation();
+      event.stopPropagation();
+
+      logger.info('[EditorModeService] 🖱️ River drawing ended');
+      return;
+    }
+
+    // Handle lake painting stop (drag-to-paint brush mode)
+    if (this.isLakePainting || this.isLakeErasing) {
+      this.isLakePainting = false;
+      this.isLakeErasing = false;
+      // Commit all pending cells to kingdom data
+      cellLakeEditorHandlers.stopPainting();
+
+      // CRITICAL: Stop event propagation
+      event.stopImmediatePropagation();
+      event.stopPropagation();
+
+      logger.info('[EditorModeService] 🖱️ Lake painting ended');
+      return;
+    }
+
+    // Handle crossing painting stop (drag-to-paint brush mode)
+    if (this.isCrossingPainting || this.isCrossingErasing) {
+      this.isCrossingPainting = false;
+      this.isCrossingErasing = false;
+      // Commit all pending cells to kingdom data
+      cellCrossingEditorHandlers.stopPainting();
+
+      // CRITICAL: Stop event propagation
+      event.stopImmediatePropagation();
+      event.stopPropagation();
+
+      logger.info('[EditorModeService] 🖱️ Crossing painting ended');
+      return;
+    }
+
     // Handle road painting stop
     if (this.isRoadPainting) {
       this.isRoadPainting = false;
@@ -875,184 +1226,94 @@ export class EditorModeService {
       // CRITICAL: Stop event propagation
       event.stopImmediatePropagation();
       event.stopPropagation();
-      
+
       logger.info('[EditorModeService] 🖱️ Pointer up - drag ended');
-      
+
       this.isDragging = false;
     }
   }
-  
+
   /**
-   * Initialize connector layer and render all control points
-   * 
-   * EDITOR-ONLY GRAPHICS:
-   * - Creates a separate PIXI.Container for connector dots (not part of overlay system)
-   * - These graphics are editor-specific and don't interfere with overlay rendering
+   * Handle double-click event - used to finish river paths
    */
-  private async initializeConnectorLayer(): Promise<void> {
-    const canvas = (globalThis as any).canvas;
-    if (!canvas?.grid) {
-      logger.warn('[EditorModeService] ❌ Canvas grid not available, cannot initialize connectors');
-      return;
-    }
+  private handleDoubleClick(event: MouseEvent): void {
+    if (!this.active) return;
 
-    // Destroy existing layer if it exists (ensures fresh render)
-    this.destroyConnectorLayer();
+    // Only handle cell-river-edit tool
+    if (this.currentTool !== 'cell-river-edit') return;
 
-    const kingdom = getKingdomData();
-    
-    logger.info('[EditorModeService] 📊 Initializing connector layer', {
-      pathCount: kingdom.rivers?.paths?.length || 0,
-      totalHexes: kingdom.hexes?.length || 0
-    });
+    // Stop propagation
+    event.stopImmediatePropagation();
+    event.stopPropagation();
 
-    // Create fresh connector layer
-    this.connectorLayer = new PIXI.Container();
-    this.connectorLayer.name = 'RiverConnectorLayer';
-    this.connectorLayer.sortableChildren = true;
-    this.connectorLayer.zIndex = 1000;
-    this.connectorLayer.visible = true;
-    
-    const primaryGroup = canvas.primary;
-    if (primaryGroup) {
-      primaryGroup.addChild(this.connectorLayer);
-      logger.info('[EditorModeService] ✅ Added connector layer to canvas.primary');
-    } else {
-      logger.error('[EditorModeService] ❌ canvas.primary not found!');
-      canvas.stage.addChild(this.connectorLayer);
-    }
+    // Finish current path
+    cellRiverEditorHandlers.finishPath();
 
-    // Render all connector dots
-    logger.info('[EditorModeService] 🎨 Rendering river connectors...');
-    await renderRiverConnectors(this.connectorLayer, canvas, null);
-    
-    logger.info('[EditorModeService] ✅ Connector layer initialized with', this.connectorLayer.children.length, 'children');
+    logger.info('[EditorModeService] 🖱️ Double-click - finished river path');
   }
 
   /**
-   * Completely destroy connector layer and all its graphics
-   * 
-   * EDITOR-ONLY GRAPHICS CLEANUP:
-   * - Removes connector dots container from PIXI stage
-   * - Destroys preview graphics (orange path line)
-   * - These are separate from overlay-managed layers and must be cleaned up manually
+   * Handle keyboard events - used for Ctrl+Z undo in river editing and brush size in lake editing
    */
-  private destroyConnectorLayer(): void {
-    if (!this.connectorLayer) return;
+  private async handleKeyDown(event: KeyboardEvent): Promise<void> {
+    if (!this.active) return;
 
-    if (this.connectorLayer.parent) {
-      this.connectorLayer.parent.removeChild(this.connectorLayer);
-    }
+    // Handle Ctrl+Z (or Cmd+Z on Mac) for undo in cell-river-edit mode
+    if (this.currentTool === 'cell-river-edit' && (event.ctrlKey || event.metaKey) && event.key === 'z') {
+      event.preventDefault();
+      event.stopPropagation();
 
-    this.connectorLayer.destroy({ children: true });
-    this.connectorLayer = null;
-    
-    // Also destroy river preview graphics
-    this.riverHandlers.destroyPreviewGraphics();
-    
-    logger.info('[EditorModeService] ✅ Destroyed connector layer');
-  }
-
-  /**
-   * Handle river click - delegates to RiverEditorHandlers
-   */
-  private async handleRiverClick(hexId: string, position: { x: number; y: number }): Promise<void> {
-    await this.riverHandlers.handleRiverClick(hexId, position);
-    await this.refreshWaterLayer();
-    await this.renderPathPreview();
-  }
-
-  /**
-   * Handle river remove - delegates to RiverEditorHandlers
-   */
-  private async handleRiverRemove(hexId: string, position: { x: number; y: number }): Promise<void> {
-    await this.riverHandlers.handleRiverRemove(hexId, position);
-    await this.refreshWaterLayer();
-    await this.renderPathPreview();
-  }
-
-  /**
-   * Render preview of current path - delegates to RiverEditorHandlers
-   */
-  private async renderPathPreview(): Promise<void> {
-    const canvas = (globalThis as any).canvas;
-    if (!canvas?.primary) return;
-    
-    await this.riverHandlers.renderPathPreview(canvas.primary);
-  }
-
-  /**
-   * Handle river scissor click - cuts a segment at click position
-   */
-  private async handleRiverScissorClick(position: { x: number; y: number }): Promise<void> {
-    const result = await this.riverHandlers.handleScissorClick(position);
-    
-    if (result.success) {
-      await this.refreshWaterLayer();
-      
-      const ui = (globalThis as any).ui;
-      if (result.pathsDeleted > 0) {
-        ui?.notifications?.info(`Path cut - ${result.pathsDeleted} orphaned path(s) removed`);
-      } else {
-        ui?.notifications?.info('Path cut successfully');
+      const removed = await cellRiverEditorHandlers.undoLastPoint();
+      if (removed) {
+        logger.info('[EditorModeService] ⌨️ Ctrl+Z - undid last river point');
       }
-    } else {
-      const ui = (globalThis as any).ui;
-      ui?.notifications?.warn('No river segment found at click position');
     }
-  }
 
-  /**
-   * Handle river reverse click - reverses flow direction of path
-   */
-  private async handleRiverReverseClick(position: { x: number; y: number }): Promise<void> {
-    const result = await this.riverHandlers.handleReverseClick(position);
-    
-    if (result.success) {
-      await this.refreshWaterLayer();
-      
-      const ui = (globalThis as any).ui;
-      ui?.notifications?.info('River flow direction reversed');
-    } else {
-      const ui = (globalThis as any).ui;
-      ui?.notifications?.warn('No river path found at click position');
+    // Handle [ and ] for brush size adjustment in lake editing mode
+    const isLakeTool = this.currentTool === 'cell-lake-paint' || this.currentTool === 'cell-lake-erase';
+    if (isLakeTool) {
+      if (event.key === '[') {
+        event.preventDefault();
+        event.stopPropagation();
+        const newRadius = cellLakeEditorHandlers.adjustBrushRadius(-8); // Decrease by 1 cell
+        logger.info(`[EditorModeService] ⌨️ [ - decreased brush radius to ${newRadius}px`);
+      } else if (event.key === ']') {
+        event.preventDefault();
+        event.stopPropagation();
+        const newRadius = cellLakeEditorHandlers.adjustBrushRadius(8); // Increase by 1 cell
+        logger.info(`[EditorModeService] ⌨️ ] - increased brush radius to ${newRadius}px`);
+      } else if (event.key === 'x' || event.key === 'X') {
+        event.preventDefault();
+        event.stopPropagation();
+        // Toggle between paint and erase
+        const newTool = this.currentTool === 'cell-lake-paint' ? 'cell-lake-erase' : 'cell-lake-paint';
+        this.setTool(newTool);
+        logger.info(`[EditorModeService] ⌨️ X - switched to ${newTool}`);
+      }
     }
-  }
 
-  /**
-   * Handle lake toggle - add/remove lake feature on hex
-   * Ctrl+Click forces removal regardless of tool
-   */
-  private async handleLakeToggle(hexId: string, isCtrlPressed: boolean): Promise<void> {
-    const parts = hexId.split('.');
-    if (parts.length !== 2) return;
-    
-    const hexI = parseInt(parts[0], 10);
-    const hexJ = parseInt(parts[1], 10);
-    if (isNaN(hexI) || isNaN(hexJ)) return;
-    
-    const { waterFeatureService } = await import('./WaterFeatureService');
-    await waterFeatureService.toggleLake(hexI, hexJ, isCtrlPressed);
-    
-    await this.refreshWaterLayer();
-  }
-
-  /**
-   * Handle swamp toggle - add/remove swamp feature on hex
-   * Ctrl+Click forces removal regardless of tool
-   */
-  private async handleSwampToggle(hexId: string, isCtrlPressed: boolean): Promise<void> {
-    const parts = hexId.split('.');
-    if (parts.length !== 2) return;
-    
-    const hexI = parseInt(parts[0], 10);
-    const hexJ = parseInt(parts[1], 10);
-    if (isNaN(hexI) || isNaN(hexJ)) return;
-    
-    const { waterFeatureService } = await import('./WaterFeatureService');
-    await waterFeatureService.toggleSwamp(hexI, hexJ, isCtrlPressed);
-    
-    await this.refreshWaterLayer();
+    // Handle [ and ] for brush size adjustment in crossing editing mode
+    const isCrossingTool = this.currentTool === 'cell-crossing-paint' || this.currentTool === 'cell-crossing-erase';
+    if (isCrossingTool) {
+      if (event.key === '[') {
+        event.preventDefault();
+        event.stopPropagation();
+        const newRadius = cellCrossingEditorHandlers.adjustBrushRadius(-8); // Decrease by 1 cell
+        logger.info(`[EditorModeService] ⌨️ [ - decreased crossing brush radius to ${newRadius}px`);
+      } else if (event.key === ']') {
+        event.preventDefault();
+        event.stopPropagation();
+        const newRadius = cellCrossingEditorHandlers.adjustBrushRadius(8); // Increase by 1 cell
+        logger.info(`[EditorModeService] ⌨️ ] - increased crossing brush radius to ${newRadius}px`);
+      } else if (event.key === 'x' || event.key === 'X') {
+        event.preventDefault();
+        event.stopPropagation();
+        // Toggle between paint and erase
+        const newTool = this.currentTool === 'cell-crossing-paint' ? 'cell-crossing-erase' : 'cell-crossing-paint';
+        this.setTool(newTool);
+        logger.info(`[EditorModeService] ⌨️ X - switched to ${newTool}`);
+      }
+    }
   }
 
   /**
@@ -1060,7 +1321,7 @@ export class EditorModeService {
    */
   private async handleWaterfallToggle(hexId: string, position: { x: number; y: number }): Promise<void> {
     await this.crossingHandlers.handleWaterfallClick(hexId, position);
-    await this.refreshWaterLayer();
+    // NOTE: Overlay updates automatically via reactive store subscription
   }
 
   /**
@@ -1068,7 +1329,7 @@ export class EditorModeService {
    */
   private async handleBridgeToggle(hexId: string, position: { x: number; y: number }): Promise<void> {
     await this.crossingHandlers.handleBridgeClick(hexId, position);
-    await this.refreshWaterLayer();
+    // NOTE: Overlay updates automatically via reactive store subscription
   }
 
   /**
@@ -1076,7 +1337,7 @@ export class EditorModeService {
    */
   private async handleFordToggle(hexId: string, position: { x: number; y: number }): Promise<void> {
     await this.crossingHandlers.handleFordClick(hexId, position);
-    await this.refreshWaterLayer();
+    // NOTE: Overlay updates automatically via reactive store subscription
   }
 
   /**
@@ -1084,7 +1345,7 @@ export class EditorModeService {
    */
   private async handleRoadToggle(hexId: string, isCtrlPressed: boolean): Promise<void> {
     await this.roadHandlers.handleRoadToggle(hexId, isCtrlPressed);
-    await this.refreshRoadLayer();
+    // NOTE: Overlay updates automatically via reactive store subscription
   }
 
   /**
@@ -1092,13 +1353,12 @@ export class EditorModeService {
    */
   private async handleRoadScissorClick(position: { x: number; y: number }): Promise<void> {
     const result = await this.roadHandlers.handleScissorClick(position);
-    
-    if (result.success) {
-      await this.refreshRoadLayer();
-    } else {
+
+    if (!result.success) {
       const ui = (globalThis as any).ui;
       ui?.notifications?.warn('No road segment found at click position');
     }
+    // NOTE: Overlay updates automatically via reactive store subscription
   }
 
   /**
@@ -1224,107 +1484,38 @@ export class EditorModeService {
     return this.currentClaimOwner;
   }
 
-  /**
-   * Refresh the water layer to show updated river segments
-   * CRITICAL: Always clears before drawing to prevent graphics stacking
-   * OVERLAY-AWARE: Only draws if water overlay is active
-   */
-  private async refreshWaterLayer(): Promise<void> {
-    try {
-      const { getOverlayManager } = await import('./OverlayManager');
-      const { ReignMakerMapLayer } = await import('./ReignMakerMapLayer');
-      const overlayManager = getOverlayManager();
-      const mapLayer = ReignMakerMapLayer.getInstance();
-      
-      // Check if water overlay is active before drawing
-      if (!overlayManager.isOverlayActive('water')) {
-        logger.info('[EditorModeService] Skipping water layer refresh (overlay inactive)');
-        return;
-      }
-      
-      // ✅ CRITICAL: Clear layer first to prevent stacking graphics
-      // Each call to drawWaterConnections adds new graphics, so we must clear old ones
-      mapLayer.clearLayer('water');
-      
-      // Highlight the currently edited river path (if any) by passing activePathId
-      const activePathId = this.currentTool === 'river-edit'
-        ? this.riverHandlers.getCurrentPathId()
-        : null;
-      
-      await mapLayer.drawWaterConnections('water', activePathId);
-      logger.info('[EditorModeService] ✅ Refreshed water layer');
-    } catch (error) {
-      logger.error('[EditorModeService] ❌ Failed to refresh water layer:', error);
-    }
-  }
-  
+  // NOTE: refreshWaterLayer and refreshRoadLayer removed
+  // Overlays now update automatically via reactive store subscriptions
+  // This ensures visibility is controlled solely by OverlayManager
 
-  /**
-   * Refresh the road layer to show updated road segments
-   * OVERLAY-AWARE: Only draws if roads overlay is active
-   */
-  private async refreshRoadLayer(): Promise<void> {
-    try {
-      const { getOverlayManager } = await import('./OverlayManager');
-      const overlayManager = getOverlayManager();
-      
-      // Check if roads overlay is active before drawing
-      if (!overlayManager.isOverlayActive('roads')) {
-        logger.info('[EditorModeService] Skipping road layer refresh (overlay inactive)');
-        return;
-      }
-      
-      const { getKingdomActor } = await import('../../../main.kingdom');
-      const { ReignMakerMapLayer } = await import('./ReignMakerMapLayer');
-      
-      const mapLayer = ReignMakerMapLayer.getInstance();
-      const kingdomActor = await getKingdomActor();
-      
-      if (!kingdomActor) {
-        logger.warn('[EditorModeService] No kingdom actor found');
-        return;
-      }
-      
-      const kingdom = kingdomActor.getKingdomData();
-      if (!kingdom) {
-        logger.warn('[EditorModeService] No kingdom data found');
-        return;
-      }
-      
-      // Get all hexes with roads
-      const roadHexIds = kingdom.hexes?.filter(h => h.hasRoad).map(h => h.id) || [];
-      
-      // Clear and redraw roads
-      mapLayer.clearLayer('routes');
-      await mapLayer.drawRoadConnections(roadHexIds, 'routes');
-      logger.info('[EditorModeService] ✅ Refreshed road layer');
-    } catch (error) {
-      logger.error('[EditorModeService] ❌ Failed to refresh road layer:', error);
-    }
-  }
-  
   /**
    * Ensure required overlays for a tool are visible (additive, not exclusive)
    * This does NOT hide other overlays - it only ensures the tool's overlays are ON
    * Users can still toggle overlays freely via the toolbar
+   *
+   * Exception: Cell-river tools hide conflicting overlays (water, rivers) to prevent
+   * visual clutter while editing.
    */
   private async ensureToolOverlaysVisible(tool: EditorTool): Promise<void> {
     try {
       const { getOverlayManager } = await import('./OverlayManager');
       const overlayManager = getOverlayManager();
-      
+
       // Map tools to their REQUIRED overlay IDs (minimal set needed for tool to function)
       const toolRequiredOverlays: Record<string, string[]> = {
         'road-edit': ['roads'],
         'road-scissors': ['roads'],
-        'river-edit': ['water'],
-        'river-scissors': ['water'],
-        'river-reverse': ['water'],
-        'lake-toggle': ['water'],
-        'swamp-toggle': ['water'],
-        'waterfall-toggle': ['water'],
-        'bridge-toggle': ['water'],
-        'ford-toggle': ['water'],
+        'cell-river-edit': ['rivers'],  // Cell-based river editing - show rivers overlay
+        'cell-river-erase': ['rivers'],
+        'cell-river-area-erase': ['rivers'],
+        'cell-river-flip': ['rivers'],
+        'cell-lake-paint': ['rivers'],  // Cell-based lake painting - show rivers overlay (includes lakes)
+        'cell-lake-erase': ['rivers'],
+        'cell-crossing-paint': ['rivers', 'navigation-grid-debug'],  // Show rivers and nav grid for crossing placement
+        'cell-crossing-erase': ['rivers', 'navigation-grid-debug'],
+        'waterfall-toggle': ['rivers'],
+        'bridge-toggle': ['rivers'],
+        'ford-toggle': ['rivers'],
         'terrain-plains': ['terrain'],
         'terrain-forest': ['terrain'],
         'terrain-hills': ['terrain'],
@@ -1353,16 +1544,18 @@ export class EditorModeService {
       };
       
       const requiredOverlays = toolRequiredOverlays[tool];
-      
+
       if (requiredOverlays) {
         // Show each required overlay (additive - doesn't hide others)
+        // Pass true for skipStateSave to avoid corrupting user's localStorage preferences
         for (const overlayId of requiredOverlays) {
           if (!overlayManager.isOverlayActive(overlayId)) {
-            await overlayManager.showOverlay(overlayId);
+            await overlayManager.showOverlay(overlayId, true);
             logger.info(`[EditorModeService] Ensured overlay visible for tool: ${overlayId}`);
           }
         }
       }
+
     } catch (error) {
       logger.error('[EditorModeService] ❌ Failed to ensure tool overlays visible:', error);
     }

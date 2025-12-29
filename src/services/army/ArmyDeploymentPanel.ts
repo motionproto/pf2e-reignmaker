@@ -26,6 +26,7 @@ export interface DeploymentResult {
   armyId: string;
   path: string[];
   skill: string;
+  finalNavCell?: { x: number; y: number }; // Final nav-grid position for pathfinding
 }
 
 export interface RollResultData {
@@ -46,6 +47,7 @@ export class ArmyDeploymentPanel {
   private tokenClickHandler: ((event: any) => void) | null = null;
   private keyDownHandler: ((event: KeyboardEvent) => void) | null = null;
   private rollCompleteHandler: ((event: any) => void) | null = null;
+  private rollCancelledHandler: ((event: any) => void) | null = null;
   private onRollTrigger: ((skill: string, armyId: string, path: string[]) => Promise<void>) | null = null;
   
   // Panel state machine
@@ -90,8 +92,11 @@ export class ArmyDeploymentPanel {
         
         // 5. Attach roll completion listener
         this.attachRollCompleteListener();
-        
-        // 6. Notify user
+
+        // 6. Attach roll cancellation listener
+        this.attachRollCancelledListener();
+
+        // 7. Notify user
         const ui = (globalThis as any).ui;
         ui?.notifications?.info(`Select an army from the panel or click an army token on the map`);
         
@@ -370,7 +375,55 @@ export class ArmyDeploymentPanel {
     window.addEventListener('kingdomRollComplete', this.rollCompleteHandler as any);
     logger.info('[ArmyDeploymentPanel] Roll completion listener attached');
   }
-  
+
+  /**
+   * Attach roll cancellation listener
+   */
+  private attachRollCancelledListener(): void {
+    this.rollCancelledHandler = async (event: any) => {
+      const { checkId } = event.detail;
+
+      // Only handle deploy-army roll cancellations
+      if (checkId !== 'deploy-army') return;
+
+      // Ignore if not waiting for roll
+      if (this.panelState !== 'waiting-for-roll') return;
+
+      logger.info('[ArmyDeploymentPanel] Roll cancelled by user');
+
+      // Re-activate movement mode so user can continue plotting path
+      if (this.selectedArmyId) {
+        const armiesOnMap = await this.getArmiesOnMap();
+        const armyData = armiesOnMap.find(a => a.army.id === this.selectedArmyId);
+        if (armyData?.hexId) {
+          await armyMovementMode.activateForArmy(this.selectedArmyId, armyData.hexId);
+
+          // Restore path changed callback
+          armyMovementMode.setPathChangedCallback((path: string[]) => {
+            this.plottedPath = path;
+            this.updateComponentProps();
+          });
+
+          // Restore path complete callback
+          armyMovementMode.setPathCompleteCallback(async () => {
+            logger.info('[ArmyDeploymentPanel] Path auto-completed, triggering roll');
+            await this.handleDone();
+          });
+        }
+      }
+
+      // Return to selection state
+      this.panelState = 'selection';
+      await this.updateComponentProps();
+
+      const ui = (globalThis as any).ui;
+      ui?.notifications?.info('Deployment cancelled. Select a path and try again.');
+    };
+
+    window.addEventListener('kingdomRollCancelled', this.rollCancelledHandler as any);
+    logger.info('[ArmyDeploymentPanel] Roll cancellation listener attached');
+  }
+
   /**
    * Select an army (from panel click or token click)
    */
@@ -730,13 +783,15 @@ export class ArmyDeploymentPanel {
       }
     }
     
-    // Complete successfully
+    // Complete successfully - include final nav cell for pathfinding
+    const finalNavCell = armyMovementMode.getFinalNavCell();
     const deploymentResult: DeploymentResult = {
       armyId: this.selectedArmyId!,
       path: this.plottedPath,
-      skill: this.skill
+      skill: this.skill,
+      finalNavCell: finalNavCell ?? undefined
     };
-    
+
     const resolver_callback = this.resolve;
     this.cleanup();
     resolver_callback?.(deploymentResult);
@@ -913,7 +968,13 @@ export class ArmyDeploymentPanel {
       window.removeEventListener('kingdomRollComplete', this.rollCompleteHandler as any);
       this.rollCompleteHandler = null;
     }
-    
+
+    // Remove roll cancellation listener
+    if (this.rollCancelledHandler) {
+      window.removeEventListener('kingdomRollCancelled', this.rollCancelledHandler as any);
+      this.rollCancelledHandler = null;
+    }
+
     // Deactivate movement mode
     if (armyMovementMode.isActive()) {
       armyMovementMode.deactivate();

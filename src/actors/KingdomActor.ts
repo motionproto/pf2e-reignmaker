@@ -187,9 +187,11 @@ export interface KingdomData {
   // Crossings and waterfalls are segment-based: attached to specific path segments
   rivers?: {
     paths: RiverPath[];
+    cellPaths?: CellRiverPath[];  // Polyline vertices (editable, source of truth)
+    rasterizedCells?: RasterizedCell[];  // Pre-computed blocked cells (derived from polylines)
     crossings?: RiverCrossing[];  // Bridges and fords (segment-based)
     waterfalls?: RiverWaterfall[];  // Waterfalls that block boats (segment-based)
-    barrierSegments?: BarrierSegment[];  // Pre-computed barrier lines for pathfinding
+    barrierSegments?: BarrierSegment[];  // Pre-computed barrier lines for pathfinding (legacy)
   };
   
   // NEW: Road editing system
@@ -204,8 +206,10 @@ export interface KingdomData {
   // Swamps = difficult water (boats: difficult, auto-granted when terrain='swamp')
   // Note: hex can have lake OR swamp (mutually exclusive)
   waterFeatures?: {
-    lakes: WaterFeature[];      // Open water features
+    lakes: WaterFeature[];      // Open water features (hex-level)
     swamps: WaterFeature[];     // Difficult water features (auto-populated from terrain='swamp')
+    lakeCells?: RasterizedCell[];  // Cell-level painted lake blobs (8x8 pixel grid)
+    passageCells?: RasterizedCell[];  // Cell-level crossings that override water blocking (bridges/fords)
   };
 }
 
@@ -307,6 +311,36 @@ export interface BarrierSegment {
   start: { x: number; y: number };  // Start point in pixel coordinates
   end: { x: number; y: number };    // End point in pixel coordinates
   hasCrossing: boolean;             // If true, segment allows passage (bridge/ford exists)
+}
+
+/**
+ * Cell-based river path (new system)
+ * Rivers are drawn directly on the NavigationGrid (8x8 pixel cells)
+ * Each path is a sequence of cell positions that get marked as blocked
+ */
+export interface CellRiverPath {
+  id: string;                    // UUID
+  cells: CellRiverPoint[];       // Ordered cell positions
+  navigable?: boolean;           // For future naval support
+}
+
+/**
+ * Single point in a cell-based river path
+ * Stored as NavigationGrid cell coordinates (not pixels)
+ */
+export interface CellRiverPoint {
+  x: number;                     // Cell X coordinate
+  y: number;                     // Cell Y coordinate
+  order: number;                 // Sequence order (10, 20, 30...)
+}
+
+/**
+ * Pre-computed rasterized cell for navigation blocking
+ * Derived from polyline paths via Bresenham rasterization
+ */
+export interface RasterizedCell {
+  x: number;                     // Cell X coordinate
+  y: number;                     // Cell Y coordinate
 }
 
 /**

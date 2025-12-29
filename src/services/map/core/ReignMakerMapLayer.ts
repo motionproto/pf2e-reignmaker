@@ -267,10 +267,7 @@ export class ReignMakerMapLayer {
     });
 
     layer.addChild(graphics);
-    
-    // PHASE 1 FIX: Always show layer after drawing (consistency with other draw methods)
-    this.showLayer(layerId);
-
+    // NOTE: Visibility is controlled by OverlayManager, not draw methods
   }
 
   /**
@@ -291,9 +288,7 @@ export class ReignMakerMapLayer {
 
     this.drawSingleHex(graphics, hexId, style, canvas);
     layer.addChild(graphics);
-    
-    // Make layer visible (critical - without this, graphics won't render after layer cleanup!)
-    this.showLayer(layerId);
+    // NOTE: Visibility is controlled by OverlayManager, not draw methods
   }
 
   /**
@@ -336,7 +331,7 @@ export class ReignMakerMapLayer {
     }
 
     layer.addChild(graphics);
-    this.showLayer(layerId);
+    // NOTE: Visibility is controlled by OverlayManager, not draw methods
   }
 
   /**
@@ -391,9 +386,7 @@ export class ReignMakerMapLayer {
     
     // Delegate to renderer
     renderTerrainOverlay(layer, hexData, canvas, this.drawSingleHex.bind(this));
-    
-    // Show layer after drawing
-    this.showLayer(layerId);
+    // NOTE: Visibility is controlled by OverlayManager, not draw methods
   }
 
   /**
@@ -414,9 +407,7 @@ export class ReignMakerMapLayer {
     
     // Delegate to renderer
     renderTerrainDifficultyOverlay(layer, hexData, canvas, this.drawSingleHex.bind(this));
-    
-    // Show layer after drawing
-    this.showLayer(layerId);
+    // NOTE: Visibility is controlled by OverlayManager, not draw methods
   }
 
   /**
@@ -483,8 +474,7 @@ export class ReignMakerMapLayer {
     });
 
     layer.addChild(graphics);
-    this.showLayer(layerId);
-
+    // NOTE: Visibility is controlled by OverlayManager, not draw methods
   }
 
   /**
@@ -521,8 +511,7 @@ export class ReignMakerMapLayer {
 
     // Delegate to renderer
     renderProvinceOutlines(layer, provincesWithHexes);
-
-    this.showLayer(layerId);
+    // NOTE: Visibility is controlled by OverlayManager, not draw methods
   }
 
   /**
@@ -542,9 +531,7 @@ export class ReignMakerMapLayer {
     
     // Delegate to renderer
     await renderRoadConnections(layer, roadHexIds, canvas);
-    
-    // Show layer after drawing
-    this.showLayer(layerId);
+    // NOTE: Visibility is controlled by OverlayManager, not draw methods
   }
 
   /**
@@ -564,9 +551,7 @@ export class ReignMakerMapLayer {
     // Delegate to renderer
     const { renderWaterConnections } = await import('../renderers/WaterRenderer');
     await renderWaterConnections(layer, canvas, activePathId);
-    
-    // Show layer after drawing
-    this.showLayer(layerId);
+    // NOTE: Visibility is controlled by OverlayManager, not draw methods
   }
 
   /**
@@ -587,9 +572,7 @@ export class ReignMakerMapLayer {
     
     // Delegate to renderer
     await renderWorksiteIcons(layer, worksiteData, canvas);
-    
-    // Show layer after drawing
-    this.showLayer(layerId);
+    // NOTE: Visibility is controlled by OverlayManager, not draw methods
   }
 
   /**
@@ -610,9 +593,7 @@ export class ReignMakerMapLayer {
     
     // Delegate to renderer
     await renderResourceIcons(layer, bountyData, canvas);
-    
-    // Show layer after drawing
-    this.showLayer(layerId);
+    // NOTE: Visibility is controlled by OverlayManager, not draw methods
   }
 
   /**
@@ -633,9 +614,7 @@ export class ReignMakerMapLayer {
     
     // Delegate to renderer
     await renderSettlementIcons(layer, settlementData, canvas);
-    
-    // Show layer after drawing
-    this.showLayer(layerId);
+    // NOTE: Visibility is controlled by OverlayManager, not draw methods
   }
 
   /**
@@ -657,9 +636,7 @@ export class ReignMakerMapLayer {
     // Delegate to renderer
     const { renderSettlementLabels } = await import('../renderers/SettlementLabelRenderer');
     await renderSettlementLabels(layer, settlementData, canvas);
-    
-    // Show layer after drawing
-    this.showLayer(layerId);
+    // NOTE: Visibility is controlled by OverlayManager, not draw methods
   }
 
   /**
@@ -682,9 +659,7 @@ export class ReignMakerMapLayer {
     // Import and delegate to renderer
     const { renderFortificationIcons } = await import('../renderers/FortificationRenderer');
     await renderFortificationIcons(layer, fortificationData, canvas);
-    
-    // Show layer after drawing
-    this.showLayer(layerId);
+    // NOTE: Visibility is controlled by OverlayManager, not draw methods
   }
 
   /**
@@ -975,41 +950,40 @@ export class ReignMakerMapLayer {
    * Handle scene control toggle click
    */
   async handleSceneControlToggle(): Promise<void> {
-
-
     if (!this.toggleState) {
       // Toggle OFF -> ON
-
-      this.toggleState = true;
-      this.toolbarManager.resetManuallyClosed();
-      this.showPixiContainer();
-      await this.toolbarManager.show(() => this.handleToolbarManualClose());
-      // Toolbar's onMount will automatically restore saved overlay states
+      try {
+        this.toolbarManager.resetManuallyClosed();
+        this.showPixiContainer();
+        await this.toolbarManager.show(() => this.handleToolbarManualClose());
+        // Only set toggleState after successful show
+        this.toggleState = true;
+        // Toolbar's onMount will automatically restore saved overlay states
+      } catch (error) {
+        // If show fails, ensure state is consistent
+        logger.error('[ReignMakerMapLayer] Failed to show toolbar:', error);
+        this.hidePixiContainer();
+        this.toggleState = false;
+      }
     } else {
       // Toggle ON -> OFF
-
       this.toggleState = false;
       this.toolbarManager.resetManuallyClosed();
-      
-      // Step 1: Hide toolbar
 
+      // Step 1: Hide toolbar
       this.toolbarManager.hide();
-      
+
       // Step 2: Clear all overlays - THIS IS CRITICAL
       // Unsubscribes from all reactive stores to prevent rendering while hidden
       // BUT preserve state so overlays restore when toggling back ON
-
       const { getOverlayManager } = await import('./OverlayManager');
       const overlayManager = getOverlayManager();
       overlayManager.clearAll(true); // preserveState = true
-      
+
       // Step 3: Hide the PIXI container
-
       this.hidePixiContainer();
-
-
     }
-    
+
     // Update scene control button state
     this.updateSceneControlButton();
   }

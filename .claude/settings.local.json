@@ -25,7 +25,9 @@
       "Bash(do echo \"=== $file ===\" grep -A2 \"component:\" \"$file\")",
       "WebFetch(domain:2e.aonprd.com)",
       "WebSearch",
-      "Bash(npx ts-node:*)"
+      "Bash(npx ts-node:*)",
+      "WebFetch(domain:www.redblobgames.com)",
+      "WebFetch(domain:theory.stanford.edu)"
     ],
     "deny": [],
     "ask": []

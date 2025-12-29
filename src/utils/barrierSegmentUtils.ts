@@ -7,6 +7,7 @@
 
 import type { RiverPath, RiverCrossing, BarrierSegment } from '../actors/KingdomActor';
 import { getEdgeMidpoint, getHexCenter } from './riverUtils';
+import { getKingdomData, updateKingdom } from '../stores/KingdomStore';
 import type { EdgeDirection } from '../models/Hex';
 
 /**
@@ -108,4 +109,81 @@ function getConnectorPosition(
   }
 
   return null;
+}
+
+/**
+ * Ensure barrier segments exist for rivers.
+ * Call this on module initialization to handle kingdoms created before barrier segments existed.
+ *
+ * @returns Number of segments computed, or 0 if no computation needed
+ */
+export async function ensureBarrierSegments(): Promise<number> {
+  const canvas = (globalThis as any).canvas;
+  if (!canvas?.grid) {
+    console.warn('[BarrierSegments] Canvas not ready, cannot ensure segments');
+    return 0;
+  }
+
+  const kingdom = getKingdomData();
+  const hasRivers = (kingdom.rivers?.paths?.length ?? 0) > 0;
+  const hasSegments = (kingdom.rivers?.barrierSegments?.length ?? 0) > 0;
+
+  // Only compute if rivers exist but segments don't
+  if (!hasRivers) {
+    return 0;
+  }
+
+  if (hasSegments) {
+    console.log(`[BarrierSegments] ${kingdom.rivers!.barrierSegments!.length} barrier segments already exist`);
+    return kingdom.rivers!.barrierSegments!.length;
+  }
+
+  // Compute and save barrier segments
+  console.log('[BarrierSegments] Computing missing barrier segments for existing rivers...');
+  const segments = computeBarrierSegments(
+    kingdom.rivers!.paths,
+    kingdom.rivers!.crossings,
+    canvas
+  );
+
+  await updateKingdom(k => {
+    if (!k.rivers) k.rivers = { paths: [] };
+    k.rivers.barrierSegments = segments;
+  });
+
+  console.log(`[BarrierSegments] Computed and saved ${segments.length} barrier segments`);
+  return segments.length;
+}
+
+/**
+ * Force recalculation of all barrier segments.
+ * Use this to fix issues or after manual river data changes.
+ *
+ * @returns Number of segments computed
+ */
+export async function recalculateBarrierSegments(): Promise<number> {
+  const canvas = (globalThis as any).canvas;
+  if (!canvas?.grid) {
+    console.error('[BarrierSegments] Canvas not ready, cannot recalculate');
+    return 0;
+  }
+
+  const kingdom = getKingdomData();
+  const paths = kingdom.rivers?.paths || [];
+  const crossings = kingdom.rivers?.crossings;
+
+  if (paths.length === 0) {
+    console.log('[BarrierSegments] No rivers to compute barriers for');
+    return 0;
+  }
+
+  const segments = computeBarrierSegments(paths, crossings, canvas);
+
+  await updateKingdom(k => {
+    if (!k.rivers) k.rivers = { paths: [] };
+    k.rivers.barrierSegments = segments;
+  });
+
+  console.log(`[BarrierSegments] Recalculated ${segments.length} barrier segments from ${paths.length} river paths`);
+  return segments.length;
 }

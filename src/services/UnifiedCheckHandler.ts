@@ -278,19 +278,32 @@ export class UnifiedCheckHandler {
               return;
             }
             
-            // Get army name
+            // Get army name and final nav cell for pathfinding
             const kingdom = getKingdomData();
             const army = kingdom?.armies?.find((a: any) => a.id === armyId);
-            
+
+            // Get final nav cell BEFORE deactivating movement mode
+            let finalNavCell: { x: number; y: number } | undefined;
+            try {
+              const { armyMovementMode } = await import('./army/movementMode');
+              const navCell = armyMovementMode.getFinalNavCell();
+              if (navCell) {
+                finalNavCell = navCell;
+              }
+            } catch (navCellError) {
+              console.warn('[UnifiedCheckHandler] Error getting finalNavCell:', navCellError);
+            }
+
             const result = {
               armyId: armyId,
               path: path,
-              armyName: army?.name || 'Unknown'
+              armyName: army?.name || 'Unknown',
+              finalNavCell: finalNavCell
             };
-            
+
             if (!selectionResolved) {
               selectionResolved = true;
-              
+
               // Deactivate movement mode (no longer needed for path plotting)
               // But DON'T clean up the panel - it needs to stay active to listen for roll completion
               try {
@@ -301,7 +314,7 @@ export class UnifiedCheckHandler {
               } catch (cleanupError) {
                 console.warn('[UnifiedCheckHandler] Error during movement mode cleanup:', cleanupError);
               }
-              
+
               // Resolve immediately with selection data so pipeline can proceed
               // Panel will remain active and update when roll completes
               resolve(result);

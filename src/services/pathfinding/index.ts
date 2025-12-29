@@ -1,15 +1,19 @@
 /**
- * PathfindingService - A* pathfinding for army movement
+ * PathfindingService - Cell-based A* pathfinding for army movement
  * Based on Red Blob Games: https://www.redblobgames.com/pathfinding/a-star/
+ *
+ * Uses NavigationGrid for cell-based pathfinding with hex cost lookup.
+ * A* runs on 8x8 pixel grid cells, with movement cost charged per hex entered.
  */
 
 import type { Hex } from '../../models/Hex';
 import type { PathResult, PathNode, ReachabilityMap } from './types';
-import { hexDistance, getNeighborHexIds, normalizeHexId } from './coordinates';
+import { hexDistance, normalizeHexId, getNeighborHexIds } from './coordinates';
 import { kingdomData } from '../../stores/KingdomStore';
 import { get } from 'svelte/store';
 import { logger } from '../../utils/Logger';
-import { waterwayLookup } from './WaterwayLookup';
+import { movementGraph } from './MovementGraph';
+import { navigationGrid } from './NavigationGrid';
 import type { ArmyMovementTraits } from '../../utils/armyMovementTraits';
 
 /**
@@ -19,279 +23,225 @@ const DEFAULT_MOVEMENT_RANGE = 20;
 
 /**
  * PathfindingService - Core pathfinding logic for army movement
- * Uses reactive KingdomStore subscription for automatic cache updates
+ * Uses precomputed MovementGraph for efficient cost lookups
  */
 export class PathfindingService {
   private hexMap: Map<string, Hex> = new Map();
   private unsubscribe: (() => void) | null = null;
+  private isInitialized = false;
 
   constructor() {
-    // Subscribe to kingdom data changes for automatic reactivity
+    // Subscribe to kingdom data changes for hex map
     this.unsubscribe = kingdomData.subscribe(kingdom => {
       this.buildHexMap(kingdom.hexes || []);
     });
-    
-    // logger.debug('[Pathfinding] Service initialized with reactive store subscription');
+  }
+
+  /**
+   * Initialize the pathfinding service with canvas
+   * Must be called when canvas is ready for graph to work
+   */
+  initialize(canvas: any): void {
+    if (this.isInitialized) return;
+
+    movementGraph.initialize(canvas);
+    this.isInitialized = true;
+    logger.info('[Pathfinding] Service initialized with MovementGraph');
+  }
+
+  /**
+   * Check if pathfinding is ready
+   */
+  isReady(): boolean {
+    return this.isInitialized && movementGraph.isReady();
   }
 
   /**
    * Build hex lookup map from kingdom hex data
-   * Called automatically when kingdom data changes
    */
   private buildHexMap(hexes: any[]): void {
     this.hexMap.clear();
-    
+
     hexes.forEach((hex: any) => {
       const normalized = normalizeHexId(hex.id);
       this.hexMap.set(normalized, hex as Hex);
     });
-    
-    // logger.debug(`[Pathfinding] Hex map rebuilt with ${this.hexMap.size} hexes`);
   }
 
   /**
-   * Refresh kingdom data (for backwards compatibility)
-   * Note: Usually not needed due to reactive store subscription
+   * Refresh kingdom data and rebuild graph
    */
   refresh(): void {
     const kingdom = get(kingdomData);
     this.buildHexMap(kingdom.hexes || []);
-    // logger.debug('[Pathfinding] Manual refresh triggered');
+    movementGraph.rebuild();
   }
-  
+
   /**
-   * Clean up store subscription
-   * Call when service is no longer needed
+   * Clean up subscriptions
    */
   destroy(): void {
     if (this.unsubscribe) {
       this.unsubscribe();
       this.unsubscribe = null;
-      // logger.debug('[Pathfinding] Store subscription cleaned up');
     }
+    movementGraph.destroy();
+    this.isInitialized = false;
   }
 
   /**
    * Get movement cost for entering a hex
-   * 
-   * Movement costs:
-   * - Flying armies: Always 1 (ignores all terrain)
-   * - Naval/Swimming armies on water: 1 (rivers, lakes) or 2 (swamps - difficult)
-   *   - +1 penalty for upstream river travel
-   * - Grounded armies crossing rivers: Infinity (unless crossing exists on movement path)
-   * - Grounded armies on lakes/swamps: Infinity (unless can swim/has boats)
-   * - Grounded armies on land:
-   *   - Open terrain: 1
-   *   - Difficult terrain: 2
-   *   - Greater difficult terrain: 3
-   *   - Roads reduce cost by 1 step (min 1)
-   * 
-   * RIVER CROSSING: Rivers are edge-based features. Movement is only blocked
-   * if the movement path (from source hex to target hex) intersects a river
-   * line segment that doesn't have a crossing (bridge/ford).
-   * 
+   *
+   * Uses the precomputed MovementGraph for efficient lookups.
+   * Falls back to Infinity if graph is not ready.
+   *
    * @param hexId - Target hex ID
    * @param traits - Army movement traits (canFly, canSwim, hasBoats)
-   * @param fromHexId - Optional source hex (required for river crossing detection)
-   * @returns Movement cost (or Infinity if hex doesn't exist or impassable)
+   * @param fromHexId - Source hex (required for edge-based cost lookup)
+   * @returns Movement cost (or Infinity if blocked)
    */
   getMovementCost(hexId: string, traits?: ArmyMovementTraits, fromHexId?: string): number {
-    const normalized = normalizeHexId(hexId);
-    const hex = this.hexMap.get(normalized);
+    // If no source hex, we can't use edge-based costs
+    // Return a basic cost based on the node
+    if (!fromHexId) {
+      const node = movementGraph.getNode(hexId);
+      if (!node) return Infinity;
 
-    if (!hex) {
-      // Hex doesn't exist in our data - treat as impassable
-      return Infinity;
+      // Return land cost as default (flying ignores this anyway)
+      const { canFly = false } = traits || {};
+      if (canFly) return 1;
+
+      // Basic land cost without edge-based river checking
+      let cost = 1;
+      if (node.travel === 'difficult') cost = 2;
+      else if (node.travel === 'greater-difficult') cost = 3;
+      if (node.hasRoad || node.hasSettlement) cost = Math.max(1, cost - 1);
+      return cost;
     }
 
-    // Default traits (grounded, no special movement)
-    const { canFly = false, canSwim = false, hasBoats = false } = traits || {};
-
-    // Parse hex coordinates for waterway lookup
-    const parts = normalized.split('.');
-    const hexI = parseInt(parts[0], 10);
-    const hexJ = parseInt(parts[1], 10);
-
-    // Check waterways using lookup service
-    // Note: Rivers are now checked via line intersection, not hasRiver()
-    const hasLake = waterwayLookup.hasLake(hexI, hexJ);
-    const hasSwamp = waterwayLookup.hasSwamp(hexI, hexJ);
-    const hasWaterfall = waterwayLookup.hasWaterfall(hexI, hexJ);
-    
-    // Check water terrain (lakes, not rivers)
-    const isWaterTerrain = hex.terrain === 'water';
-    
-    // Only lakes and water terrain are impassable hex-based water
-    // Swamps are NOT impassable - they just have high terrain cost (handled in land cost)
-    // Rivers use line intersection, not hex-based blocking
-    const isHexBasedWater = hasLake || isWaterTerrain;
-
-    // Flying armies always cost 1 per hex (ignore all terrain)
-    if (canFly) {
-      return 1;
-    }
-
-    // Amphibious units: Choose best cost between water and land movement
-    const { amphibious = false } = traits || {};
-    if (amphibious) {
-      // Calculate water movement cost (for hex-based water only)
-      let waterCost = Infinity;
-      if (isHexBasedWater) {
-        // Waterfalls block naval travel (but not swimmers)
-        if (hasWaterfall && hasBoats && !canSwim) {
-          waterCost = Infinity;
-        } else if (canSwim || hasBoats) {
-          waterCost = 1;  // Lakes/water terrain cost 1 for swimmers
-        }
-      }
-      // Swamps are easier for amphibious (cost 2, not +1 difficulty)
-      if (hasSwamp && (canSwim || hasBoats)) {
-        waterCost = Math.min(waterCost, 2);
-      }
-      
-      // Calculate land movement cost
-      let landCost = this.calculateLandCost(hex, hasSwamp);
-      
-      // Check if movement crosses a river (amphibious can cross rivers freely)
-      // Amphibious units can swim across rivers, so no blocking
-      
-      // Choose the better (lower) cost
-      return Math.min(waterCost, landCost);
-    }
-
-    // Handle hex-based water (lakes, water terrain) for non-amphibious units
-    // Note: Swamps are NOT hex-based water - they just have high terrain cost
-    if (isHexBasedWater) {
-      logger.debug(`[Pathfinding] Hex ${hexId} is hex-based water: lake=${hasLake}, waterTerrain=${isWaterTerrain}`);
-      
-      // Waterfalls block naval travel (boats cannot pass)
-      // But swimmers can navigate waterfalls
-      if (hasWaterfall && hasBoats && !canSwim) {
-        return Infinity;  // Pure naval units blocked by waterfalls
-      }
-      
-      // Naval or swimming armies can traverse water
-      if (canSwim || hasBoats) {
-        // Base cost: Lakes/water terrain cost 1
-        let waterCost = 1;
-        
-        // Check for upstream travel penalty (only applies to rivers on water hexes)
-        const hasRiver = waterwayLookup.hasRiver(hexI, hexJ);
-        if (hasRiver && fromHexId) {
-          const fromParts = fromHexId.split('.');
-          const fromHexI = parseInt(fromParts[0], 10);
-          const fromHexJ = parseInt(fromParts[1], 10);
-          
-          if (!isNaN(fromHexI) && !isNaN(fromHexJ)) {
-            const isUpstreamTravel = waterwayLookup.isUpstream(fromHexI, fromHexJ, hexI, hexJ);
-            if (isUpstreamTravel) {
-              waterCost += 1;  // +1 penalty for upstream travel
-              logger.debug(`[Pathfinding] Upstream travel: ${fromHexId} -> ${hexId} (cost +1)`);
-            }
-          }
-        }
-        
-        return waterCost;
-      }
-      
-      // Grounded army, hex-based water = impassable
-      logger.debug(`[Pathfinding] ${hexId} BLOCKED: grounded army on hex-based water`);
-      return Infinity;
-    }
-
-    // RIVER CROSSING CHECK (for grounded, non-swimming, non-amphibious units)
-    // Rivers are line-based obstacles - check if movement path crosses a river
-    const shouldCheckRiver = fromHexId && !canSwim && !hasBoats;
-    
-    if (shouldCheckRiver) {
-      const fromParts = fromHexId!.split('.');
-      const fromHexI = parseInt(fromParts[0], 10);
-      const fromHexJ = parseInt(fromParts[1], 10);
-      
-      if (!isNaN(fromHexI) && !isNaN(fromHexJ)) {
-        // Check if movement line intersects a river segment without a crossing
-        const crossesRiver = waterwayLookup.doesMovementCrossRiver(fromHexI, fromHexJ, hexI, hexJ);
-        if (crossesRiver) {
-          logger.info(`[Pathfinding] Movement ${fromHexId} → ${hexId} BLOCKED by river crossing`);
-          return Infinity;  // Movement blocked by river
-        }
-      }
-    }
-
-    // Land movement: Base cost from travel difficulty (swamps add +1)
-    return this.calculateLandCost(hex, hasSwamp);
-  }
-  
-  /**
-   * Calculate land movement cost for a hex
-   * @param hex - Hex data
-   * @param hasSwamp - Whether hex has swamp (adds difficulty)
-   * @returns Movement cost (1 for open, 2 for difficult, 3 for greater-difficult)
-   */
-  private calculateLandCost(hex: any, hasSwamp: boolean = false): number {
-    let cost = 1; // open (default)
-    
-    if (hex.travel === 'difficult') {
-      cost = 2;
-    } else if (hex.travel === 'greater-difficult') {
-      cost = 3;
-    }
-    
-    // Swamps add +1 difficulty (treated as difficult terrain for movement)
-    if (hasSwamp && cost < 3) {
-      cost += 1;
-    }
-
-    // Roads reduce cost by 1 step (min 1)
-    // Check hasRoad flag OR settlement (settlements count as roads)
-    const hasRoad = hex.hasRoad === true;
-    const hasSettlement = hex.features?.some((f: any) => f.type === 'settlement') ?? false;
-    
-    if (hasRoad || hasSettlement) {
-      cost = Math.max(1, cost - 1);
-    }
-
-    return cost;
+    // Use MovementGraph for edge-based cost lookup
+    return movementGraph.getEdgeCost(fromHexId, hexId, traits);
   }
 
   /**
-   * Calculate all hexes reachable within movement range (NEW: Uses movement traits)
-   * Uses Dijkstra's algorithm (A* without heuristic)
-   * 
+   * Calculate all hexes reachable within movement range
+   * Uses cell-based Dijkstra's algorithm on the navigation grid
+   *
+   * A* runs on 8x8 pixel grid cells. Movement cost is charged only when
+   * entering a NEW hex (not per cell). This allows:
+   * - Entering a hex with a river from the non-river side
+   * - Moving parallel to a river through multiple hexes
+   * - Proper terrain costs (charged once per hex entered)
+   *
    * @param startHexId - Starting hex ID
    * @param maxMovement - Maximum movement points (default: 20)
    * @param traits - Army movement traits (canFly, canSwim, hasBoats)
+   * @param startNavCell - Optional specific nav-grid cell to start from (for armies with saved position)
    * @returns Map of hex ID -> movement cost to reach
    */
-  getReachableHexes(startHexId: string, maxMovement: number = DEFAULT_MOVEMENT_RANGE, traits?: ArmyMovementTraits): ReachabilityMap {
+  getReachableHexes(
+    startHexId: string,
+    maxMovement: number = DEFAULT_MOVEMENT_RANGE,
+    traits?: ArmyMovementTraits,
+    startNavCell?: { x: number; y: number }
+  ): ReachabilityMap {
     const normalized = normalizeHexId(startHexId);
     const reachable: ReachabilityMap = new Map();
-    const frontier: Array<{ hexId: string; cost: number }> = [];
-    
-    // Start with origin (0 cost)
-    frontier.push({ hexId: normalized, cost: 0 });
-    reachable.set(normalized, 0);
 
-    while (frontier.length > 0) {
-      // Get lowest cost hex (simple sort - for large maps, use priority queue)
+    // Check if navigation grid is ready
+    if (!navigationGrid.isReady()) {
+      logger.warn('[Pathfinding] NavigationGrid not ready, falling back to hex-based');
+      return this.getReachableHexesFallback(normalized, maxMovement, traits);
+    }
+
+    // Use provided navCell if available, otherwise find a passable cell in the hex
+    let startCell: { x: number; y: number } | null = null;
+
+    if (startNavCell) {
+      // Verify the provided cell is passable
+      if (navigationGrid.isCellPassable(startNavCell.x, startNavCell.y)) {
+        startCell = startNavCell;
+        logger.debug(`[Pathfinding] Using provided navCell (${startNavCell.x}, ${startNavCell.y})`);
+      } else {
+        logger.warn(`[Pathfinding] Provided navCell (${startNavCell.x}, ${startNavCell.y}) is blocked, finding alternative`);
+      }
+    }
+
+    if (!startCell) {
+      startCell = navigationGrid.getPassableCellInHex(normalized);
+      if (startCell) {
+        logger.debug(`[Pathfinding] Found passable cell (${startCell.x}, ${startCell.y}) in hex ${normalized}`);
+      }
+    }
+
+    if (!startCell) {
+      logger.warn(`[Pathfinding] No passable cell in start hex ${normalized} - hex may be entirely blocked`);
+      reachable.set(normalized, 0);
+      return reachable;
+    }
+
+    // Flying units ignore terrain and rivers - use simpler hex-based pathfinding
+    if (traits?.canFly) {
+      return this.getReachableHexesFlying(normalized, maxMovement);
+    }
+
+    // Track: best cost to reach each hex
+    const hexCosts: Map<string, number> = new Map();
+    hexCosts.set(normalized, 0);
+
+    // Track: best cost to reach each cell (for efficiency)
+    const cellCosts: Map<string, number> = new Map();
+    const startCellKey = `${startCell.x},${startCell.y}`;
+    cellCosts.set(startCellKey, 0);
+
+    // Priority queue: { cell: {x, y}, hexId: string, cost: number }
+    // Using array with sort - for large maps, use proper priority queue
+    const frontier: Array<{ cellX: number; cellY: number; hexId: string; cost: number }> = [];
+    frontier.push({ cellX: startCell.x, cellY: startCell.y, hexId: normalized, cost: 0 });
+
+    // Safety: max iterations to prevent infinite loops
+    const maxIterations = 100000;
+    let iterations = 0;
+
+    while (frontier.length > 0 && iterations < maxIterations) {
+      iterations++;
+
+      // Get lowest cost cell
       frontier.sort((a, b) => a.cost - b.cost);
       const current = frontier.shift()!;
+      const currentCellKey = `${current.cellX},${current.cellY}`;
 
-      // Skip if we've found a better path already
-      if (current.cost > (reachable.get(current.hexId) || Infinity)) {
+      // Skip if we've found a better path to this cell
+      const existingCellCost = cellCosts.get(currentCellKey);
+      if (existingCellCost !== undefined && existingCellCost < current.cost) {
         continue;
       }
 
-      // Check all neighbors
-      const neighbors = getNeighborHexIds(current.hexId);
-      
+      // Explore 4-directional neighbors
+      const neighbors = navigationGrid.getCellNeighbors(current.cellX, current.cellY);
+
       for (const neighbor of neighbors) {
-        const neighborNormalized = normalizeHexId(neighbor);
-        const moveCost = this.getMovementCost(neighborNormalized, traits, current.hexId);
-        
-        // Skip impassable hexes
-        if (moveCost === Infinity) {
+        // Skip blocked cells (unless crossing)
+        if (!navigationGrid.isCellPassable(neighbor.x, neighbor.y)) {
           continue;
+        }
+
+        // What hex is this cell in?
+        const neighborHexId = navigationGrid.getHexForCell(neighbor.x, neighbor.y);
+        if (!neighborHexId) {
+          // Cell is outside kingdom bounds
+          continue;
+        }
+
+        // Calculate cost: 0 if same hex, terrain cost if entering new hex
+        let moveCost = 0;
+        if (neighborHexId !== current.hexId) {
+          // Entering a new hex - charge terrain cost
+          moveCost = this.getHexMovementCost(neighborHexId, traits);
+          if (moveCost === Infinity) {
+            // Impassable hex (e.g., water for non-swimming unit)
+            continue;
+          }
         }
 
         const newCost = current.cost + moveCost;
@@ -301,15 +251,118 @@ export class PathfindingService {
           continue;
         }
 
-        // Skip if we have a better path already
-        const existingCost = reachable.get(neighborNormalized);
-        if (existingCost !== undefined && existingCost <= newCost) {
+        const neighborCellKey = `${neighbor.x},${neighbor.y}`;
+
+        // Check if this is a better path to this cell
+        const existingNeighborCellCost = cellCosts.get(neighborCellKey);
+        if (existingNeighborCellCost !== undefined && existingNeighborCellCost <= newCost) {
           continue;
         }
 
         // Found better path - update
-        reachable.set(neighborNormalized, newCost);
-        frontier.push({ hexId: neighborNormalized, cost: newCost });
+        cellCosts.set(neighborCellKey, newCost);
+
+        // Update hex cost if this is a better path to this hex
+        const existingHexCost = hexCosts.get(neighborHexId);
+        if (existingHexCost === undefined || newCost < existingHexCost) {
+          hexCosts.set(neighborHexId, newCost);
+        }
+
+        // Add to frontier
+        frontier.push({
+          cellX: neighbor.x,
+          cellY: neighbor.y,
+          hexId: neighborHexId,
+          cost: newCost
+        });
+      }
+    }
+
+    if (iterations >= maxIterations) {
+      logger.warn(`[Pathfinding] Hit max iterations (${maxIterations})`);
+    }
+
+    // Convert hexCosts to reachable map
+    for (const [hexId, cost] of hexCosts) {
+      reachable.set(hexId, cost);
+    }
+
+    logger.debug(`[Pathfinding] Cell-based reachability: ${reachable.size} hexes reachable, ${iterations} iterations`);
+    return reachable;
+  }
+
+  /**
+   * Get hex movement cost (terrain-based)
+   * Used by cell-based pathfinding when entering a new hex
+   */
+  private getHexMovementCost(hexId: string, traits?: ArmyMovementTraits): number {
+    const node = movementGraph.getNode(hexId);
+    if (!node) return Infinity;
+
+    const { canSwim = false, hasBoats = false, amphibious = false } = traits || {};
+
+    // Water hexes
+    if (node.waterType === 'lake') {
+      if (canSwim || hasBoats) return 1;
+      return Infinity;
+    }
+
+    if (node.waterType === 'swamp') {
+      if (canSwim || hasBoats) return 2;
+      if (amphibious) return 2;
+      // Land units can traverse swamps at +1 cost
+    }
+
+    // Land terrain
+    let cost = 1;
+    if (node.travel === 'difficult') cost = 2;
+    else if (node.travel === 'greater-difficult') cost = 3;
+
+    // Swamps add +1 for land units (up to max 3)
+    if (node.waterType === 'swamp' && cost < 3) {
+      cost += 1;
+    }
+
+    // Roads reduce cost
+    if (node.hasRoad || node.hasSettlement) {
+      cost = Math.max(1, cost - 1);
+    }
+
+    return cost;
+  }
+
+  /**
+   * Fallback hex-based pathfinding when navigation grid not ready
+   */
+  private getReachableHexesFallback(startHexId: string, maxMovement: number, traits?: ArmyMovementTraits): ReachabilityMap {
+    const reachable: ReachabilityMap = new Map();
+    const frontier: Array<{ hexId: string; cost: number }> = [];
+
+    frontier.push({ hexId: startHexId, cost: 0 });
+    reachable.set(startHexId, 0);
+
+    while (frontier.length > 0) {
+      frontier.sort((a, b) => a.cost - b.cost);
+      const current = frontier.shift()!;
+
+      if (current.cost > (reachable.get(current.hexId) || Infinity)) {
+        continue;
+      }
+
+      const neighbors = navigationGrid.getNeighborHexIds(current.hexId);
+
+      for (const neighborId of neighbors) {
+        const moveCost = this.getMovementCost(neighborId, traits, current.hexId);
+        if (moveCost === Infinity) continue;
+
+        const newCost = current.cost + moveCost;
+        if (newCost > maxMovement) continue;
+
+        const existingCost = reachable.get(neighborId);
+        if (existingCost !== undefined && existingCost <= newCost) continue;
+
+        reachable.set(neighborId, newCost);
+        frontier.push({ hexId: neighborId, cost: newCost });
       }
     }
 
@@ -317,19 +370,60 @@ export class PathfindingService {
   }
 
   /**
-   * Find optimal path from start to target using A* algorithm (NEW: Uses movement traits)
-   * 
+   * Optimized flying pathfinding (ignores terrain and rivers)
+   */
+  private getReachableHexesFlying(startHexId: string, maxMovement: number): ReachabilityMap {
+    const reachable: ReachabilityMap = new Map();
+    const frontier: Array<{ hexId: string; cost: number }> = [];
+
+    frontier.push({ hexId: startHexId, cost: 0 });
+    reachable.set(startHexId, 0);
+
+    while (frontier.length > 0) {
+      frontier.sort((a, b) => a.cost - b.cost);
+      const current = frontier.shift()!;
+
+      if (current.cost > (reachable.get(current.hexId) || Infinity)) {
+        continue;
+      }
+
+      const neighbors = navigationGrid.getNeighborHexIds(current.hexId);
+
+      for (const neighborId of neighbors) {
+        const newCost = current.cost + 1; // Flying always costs 1
+        if (newCost > maxMovement) continue;
+
+        const existingCost = reachable.get(neighborId);
+        if (existingCost !== undefined && existingCost <= newCost) continue;
+
+        reachable.set(neighborId, newCost);
+        frontier.push({ hexId: neighborId, cost: newCost });
+      }
+    }
+
+    return reachable;
+  }
+
+  /**
+   * Find optimal path from start to target using cell-based A* algorithm
+   *
+   * Runs A* on 8x8 pixel grid cells with hex-distance heuristic.
+   * Movement cost is charged when entering a new hex.
+   * Returns the path as a list of hex IDs.
+   *
    * @param startHexId - Starting hex ID
    * @param targetHexId - Target hex ID
    * @param maxMovement - Maximum movement points (default: 20)
    * @param traits - Army movement traits (canFly, canSwim, hasBoats)
-   * @returns PathResult with path, cost, and reachability
+   * @param startNavCell - Optional specific nav-grid cell to start from (for armies with saved position)
+   * @returns PathResult with path, cost, and reachability, plus the final nav cell
    */
   findPath(
     startHexId: string,
     targetHexId: string,
     maxMovement: number = DEFAULT_MOVEMENT_RANGE,
-    traits?: ArmyMovementTraits
+    traits?: ArmyMovementTraits,
+    startNavCell?: { x: number; y: number }
   ): PathResult | null {
     const startNormalized = normalizeHexId(startHexId);
     const targetNormalized = normalizeHexId(targetHexId);
@@ -343,22 +437,255 @@ export class PathfindingService {
       };
     }
 
-    // A* data structures
-    const openSet = new Set<string>([startNormalized]);
+    // Check if navigation grid is ready
+    if (!navigationGrid.isReady()) {
+      logger.warn('[Pathfinding] NavigationGrid not ready, falling back to hex-based');
+      return this.findPathFallback(startNormalized, targetNormalized, maxMovement, traits);
+    }
+
+    // Use provided navCell if available, otherwise find a passable cell in the hex
+    let startCell: { x: number; y: number } | null = null;
+
+    if (startNavCell) {
+      if (navigationGrid.isCellPassable(startNavCell.x, startNavCell.y)) {
+        startCell = startNavCell;
+      } else {
+        logger.warn(`[Pathfinding] Provided navCell is blocked, finding alternative`);
+      }
+    }
+
+    if (!startCell) {
+      startCell = navigationGrid.getPassableCellInHex(startNormalized);
+    }
+
+    if (!startCell) {
+      logger.warn(`[Pathfinding] No passable cell in start hex ${startNormalized}`);
+      return { path: [], totalCost: Infinity, isReachable: false };
+    }
+
+    // For target, we just need any cell in the target hex - we'll reach it when we enter the hex
+    const targetCell = navigationGrid.hexCenterToCell(targetNormalized);
+    if (!targetCell) {
+      logger.warn(`[Pathfinding] Cannot find cell for target hex ${targetNormalized}`);
+      return { path: [], totalCost: Infinity, isReachable: false };
+    }
+
+    // Flying units - use simple hex-based pathfinding
+    if (traits?.canFly) {
+      return this.findPathFlying(startNormalized, targetNormalized, maxMovement);
+    }
+
+    // Cell-based A* with hex tracking
+    // Track: cell -> { cost, parentCell, hexId, parentHexId }
+    interface CellNode {
+      cellX: number;
+      cellY: number;
+      hexId: string;
+      gCost: number;
+      fCost: number;
+      parentCellKey: string | null;
+      parentHexId: string | null;
+    }
+
+    const cellNodes: Map<string, CellNode> = new Map();
+    const openSet: Map<string, CellNode> = new Map();
+    const closedSet: Set<string> = new Set();
+
+    // Heuristic: hex distance to target (admissible since hex distance <= actual cost)
+    const heuristic = (hexId: string): number => hexDistance(hexId, targetNormalized);
+
+    // Initialize start
+    const startCellKey = `${startCell.x},${startCell.y}`;
+    const startNode: CellNode = {
+      cellX: startCell.x,
+      cellY: startCell.y,
+      hexId: startNormalized,
+      gCost: 0,
+      fCost: heuristic(startNormalized),
+      parentCellKey: null,
+      parentHexId: null
+    };
+    cellNodes.set(startCellKey, startNode);
+    openSet.set(startCellKey, startNode);
+
+    // Track best cost to reach each hex (for path reconstruction)
+    const hexParents: Map<string, string | null> = new Map();
+    const hexCosts: Map<string, number> = new Map();
+    hexParents.set(startNormalized, null);
+    hexCosts.set(startNormalized, 0);
+
+    const maxIterations = 100000;
+    let iterations = 0;
+
+    while (openSet.size > 0 && iterations < maxIterations) {
+      iterations++;
+
+      // Get cell with lowest fCost
+      let current: CellNode | null = null;
+      let currentCellKey = '';
+
+      for (const [key, node] of openSet) {
+        if (!current || node.fCost < current.fCost) {
+          current = node;
+          currentCellKey = key;
+        }
+      }
+
+      if (!current) break;
+
+      // Found target hex?
+      if (current.hexId === targetNormalized) {
+        // Reconstruct hex path with final nav cell and cell path
+        return this.reconstructCellPath(
+          hexParents,
+          hexCosts,
+          targetNormalized,
+          { x: current.cellX, y: current.cellY },
+          cellNodes,
+          currentCellKey
+        );
+      }
+
+      // Move from open to closed
+      openSet.delete(currentCellKey);
+      closedSet.add(currentCellKey);
+
+      // Explore neighbors
+      const neighbors = navigationGrid.getCellNeighbors(current.cellX, current.cellY);
+
+      for (const neighbor of neighbors) {
+        const neighborCellKey = `${neighbor.x},${neighbor.y}`;
+
+        // Skip if already evaluated
+        if (closedSet.has(neighborCellKey)) continue;
+
+        // Skip blocked cells
+        if (!navigationGrid.isCellPassable(neighbor.x, neighbor.y)) continue;
+
+        // What hex is this cell in?
+        const neighborHexId = navigationGrid.getHexForCell(neighbor.x, neighbor.y);
+        if (!neighborHexId) continue;
+
+        // Calculate cost
+        let moveCost = 0;
+        if (neighborHexId !== current.hexId) {
+          moveCost = this.getHexMovementCost(neighborHexId, traits);
+          if (moveCost === Infinity) continue;
+        }
+
+        const tentativeGCost = current.gCost + moveCost;
+
+        // Skip if over budget
+        if (tentativeGCost > maxMovement) continue;
+
+        // Check if this is a better path
+        const existingNode = cellNodes.get(neighborCellKey);
+        if (existingNode && existingNode.gCost <= tentativeGCost) continue;
+
+        // Better path found
+        const newNode: CellNode = {
+          cellX: neighbor.x,
+          cellY: neighbor.y,
+          hexId: neighborHexId,
+          gCost: tentativeGCost,
+          fCost: tentativeGCost + heuristic(neighborHexId),
+          parentCellKey: currentCellKey,
+          parentHexId: current.hexId
+        };
+
+        cellNodes.set(neighborCellKey, newNode);
+        openSet.set(neighborCellKey, newNode);
+
+        // Update hex parent if this is a better path to this hex
+        const existingHexCost = hexCosts.get(neighborHexId);
+        if (existingHexCost === undefined || tentativeGCost < existingHexCost) {
+          hexCosts.set(neighborHexId, tentativeGCost);
+          // Record which hex we came from when entering this hex
+          if (neighborHexId !== current.hexId) {
+            hexParents.set(neighborHexId, current.hexId);
+          }
+        }
+      }
+    }
+
+    // No path found
+    return {
+      path: [],
+      totalCost: Infinity,
+      isReachable: false
+    };
+  }
+
+  /**
+   * Reconstruct hex path and cell path from cell-based A* results
+   */
+  private reconstructCellPath(
+    hexParents: Map<string, string | null>,
+    hexCosts: Map<string, number>,
+    targetHexId: string,
+    finalNavCell: { x: number; y: number },
+    cellNodes?: Map<string, { cellX: number; cellY: number; parentCellKey: string | null }>,
+    targetCellKey?: string
+  ): PathResult {
+    // Reconstruct hex path
+    const path: string[] = [];
+    let current: string | null = targetHexId;
+
+    while (current !== null) {
+      path.unshift(current);
+      current = hexParents.get(current) ?? null;
+    }
+
+    const totalCost = hexCosts.get(targetHexId) ?? Infinity;
+
+    // Reconstruct cell path (for debug visualization)
+    let cellPath: Array<{ x: number; y: number }> | undefined;
+    if (cellNodes && targetCellKey) {
+      cellPath = [];
+      let cellKey: string | null = targetCellKey;
+
+      while (cellKey !== null) {
+        const node = cellNodes.get(cellKey);
+        if (node) {
+          cellPath.unshift({ x: node.cellX, y: node.cellY });
+          cellKey = node.parentCellKey;
+        } else {
+          break;
+        }
+      }
+    }
+
+    return {
+      path,
+      totalCost,
+      isReachable: true,
+      finalNavCell,
+      cellPath
+    };
+  }
+
+  /**
+   * Fallback hex-based pathfinding
+   */
+  private findPathFallback(
+    startHexId: string,
+    targetHexId: string,
+    maxMovement: number,
+    traits?: ArmyMovementTraits
+  ): PathResult | null {
+    const openSet = new Set<string>([startHexId]);
     const closedSet = new Set<string>();
     const nodes = new Map<string, PathNode>();
 
-    // Initialize start node
-    nodes.set(startNormalized, {
-      hexId: startNormalized,
+    nodes.set(startHexId, {
+      hexId: startHexId,
       gCost: 0,
-      hCost: hexDistance(startNormalized, targetNormalized),
-      fCost: hexDistance(startNormalized, targetNormalized),
+      hCost: hexDistance(startHexId, targetHexId),
+      fCost: hexDistance(startHexId, targetHexId),
       parent: null
     });
 
     while (openSet.size > 0) {
-      // Get node with lowest fCost
       let current: PathNode | null = null;
       let currentHexId = '';
 
@@ -372,65 +699,107 @@ export class PathfindingService {
 
       if (!current) break;
 
-      // Found target?
-      if (currentHexId === targetNormalized) {
-        return this.reconstructPath(nodes, targetNormalized);
+      if (currentHexId === targetHexId) {
+        return this.reconstructPath(nodes, targetHexId);
       }
 
-      // Move current from open to closed
       openSet.delete(currentHexId);
       closedSet.add(currentHexId);
 
-      // Check neighbors
-      const neighbors = getNeighborHexIds(currentHexId);
+      const neighbors = navigationGrid.getNeighborHexIds(currentHexId);
 
-      for (const neighbor of neighbors) {
-        const neighborNormalized = normalizeHexId(neighbor);
+      for (const neighborId of neighbors) {
+        if (closedSet.has(neighborId)) continue;
 
-        // Skip if already evaluated
-        if (closedSet.has(neighborNormalized)) {
-          continue;
-        }
-
-        const moveCost = this.getMovementCost(neighborNormalized, traits, currentHexId);
-
-        // Skip impassable hexes
-        if (moveCost === Infinity) {
-          continue;
-        }
+        const moveCost = this.getMovementCost(neighborId, traits, currentHexId);
+        if (moveCost === Infinity) continue;
 
         const tentativeGCost = current.gCost + moveCost;
+        if (tentativeGCost > maxMovement) continue;
 
-        // Skip if over budget
-        if (tentativeGCost > maxMovement) {
-          continue;
-        }
-
-        // Check if this is a better path
-        const existingNode = nodes.get(neighborNormalized);
-        
+        const existingNode = nodes.get(neighborId);
         if (!existingNode || tentativeGCost < existingNode.gCost) {
-          const hCost = hexDistance(neighborNormalized, targetNormalized);
-          const newNode: PathNode = {
-            hexId: neighborNormalized,
+          const hCost = hexDistance(neighborId, targetHexId);
+          nodes.set(neighborId, {
+            hexId: neighborId,
             gCost: tentativeGCost,
             hCost,
             fCost: tentativeGCost + hCost,
             parent: currentHexId
-          };
-
-          nodes.set(neighborNormalized, newNode);
-          openSet.add(neighborNormalized);
+          });
+          openSet.add(neighborId);
         }
       }
     }
 
-    // No path found
-    return {
-      path: [],
-      totalCost: Infinity,
-      isReachable: false
-    };
+    return { path: [], totalCost: Infinity, isReachable: false };
+  }
+
+  /**
+   * Optimized flying pathfinding
+   */
+  private findPathFlying(
+    startHexId: string,
+    targetHexId: string,
+    maxMovement: number
+  ): PathResult | null {
+    const openSet = new Set<string>([startHexId]);
+    const closedSet = new Set<string>();
+    const nodes = new Map<string, PathNode>();
+
+    nodes.set(startHexId, {
+      hexId: startHexId,
+      gCost: 0,
+      hCost: hexDistance(startHexId, targetHexId),
+      fCost: hexDistance(startHexId, targetHexId),
+      parent: null
+    });
+
+    while (openSet.size > 0) {
+      let current: PathNode | null = null;
+      let currentHexId = '';
+
+      for (const hexId of openSet) {
+        const node = nodes.get(hexId)!;
+        if (!current || node.fCost < current.fCost) {
+          current = node;
+          currentHexId = hexId;
+        }
+      }
+
+      if (!current) break;
+
+      if (currentHexId === targetHexId) {
+        return this.reconstructPath(nodes, targetHexId);
+      }
+
+      openSet.delete(currentHexId);
+      closedSet.add(currentHexId);
+
+      const neighbors = navigationGrid.getNeighborHexIds(currentHexId);
+
+      for (const neighborId of neighbors) {
+        if (closedSet.has(neighborId)) continue;
+
+        const tentativeGCost = current.gCost + 1; // Flying always costs 1
+        if (tentativeGCost > maxMovement) continue;
+
+        const existingNode = nodes.get(neighborId);
+        if (!existingNode || tentativeGCost < existingNode.gCost) {
+          const hCost = hexDistance(neighborId, targetHexId);
+          nodes.set(neighborId, {
+            hexId: neighborId,
+            gCost: tentativeGCost,
+            hCost,
+            fCost: tentativeGCost + hCost,
+            parent: currentHexId
+          });
+          openSet.add(neighborId);
+        }
+      }
+    }
+
+    return { path: [], totalCost: Infinity, isReachable: false };
   }
 
   /**

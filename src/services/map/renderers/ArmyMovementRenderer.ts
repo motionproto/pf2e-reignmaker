@@ -12,22 +12,113 @@ const MOVEMENT_COLORS = {
   // Origin hex (where army starts)
   origin: 0x00FF00,         // Bright green
   originAlpha: 0.4,
-  
+
   // Reachable hexes (movement range overlay)
   reachable: 0x4CAF50,      // Green
   reachableAlpha: 0.15,
-  
+
   // Path lines
   pathValid: 0x4CAF50,      // Green
   pathValidAlpha: 1.0,       // Fully opaque
   pathWidth: 12,             // Thicker line
-  
+
   // Endpoint indicators
   endpointValid: 0x4CAF50,  // Green circle
   endpointInvalid: 0xFF0000, // Red X
   endpointAlpha: 1.0,
   endpointSize: 40
 };
+
+/**
+ * Cached stripe pattern texture for movement range overlay
+ */
+let cachedStripeTexture: PIXI.Texture | null = null;
+
+/**
+ * Create a diagonal stripe pattern texture for movement range
+ * The texture is cached and reused for performance
+ */
+function getStripePatternTexture(): PIXI.Texture {
+  if (cachedStripeTexture) {
+    return cachedStripeTexture;
+  }
+
+  const canvas = (globalThis as any).canvas;
+  if (!canvas?.app?.renderer) {
+    logger.warn('[ArmyMovementRenderer] Canvas renderer not available for texture generation');
+    // Return a 1x1 white texture as fallback
+    return PIXI.Texture.WHITE;
+  }
+
+  const patternSize = 64;
+  const stripeWidth = 8;
+  const patternGraphics = new PIXI.Graphics();
+
+  // Transparent background
+  patternGraphics.beginFill(0x000000, 0);
+  patternGraphics.drawRect(0, 0, patternSize, patternSize);
+  patternGraphics.endFill();
+
+  // Draw diagonal stripes (green)
+  patternGraphics.lineStyle(stripeWidth, MOVEMENT_COLORS.reachable, 0.5);
+
+  // Multiple diagonal lines to cover the pattern tile
+  for (let offset = -patternSize; offset < patternSize * 2; offset += 32) {
+    patternGraphics.moveTo(offset, 0);
+    patternGraphics.lineTo(offset + patternSize, patternSize);
+  }
+
+  // Use Foundry's renderer to generate texture (PIXI v7 API)
+  cachedStripeTexture = canvas.app.renderer.generateTexture(patternGraphics, {
+    resolution: 1,
+    region: new PIXI.Rectangle(0, 0, patternSize, patternSize)
+  });
+
+  patternGraphics.destroy();
+  return cachedStripeTexture;
+}
+
+/**
+ * Draw a single hex with pattern texture fill
+ */
+function drawHexWithPattern(
+  graphics: PIXI.Graphics,
+  hexId: string,
+  texture: PIXI.Texture,
+  canvas: any
+): boolean {
+  try {
+    const parts = hexId.split('.');
+    const i = parseInt(parts[0], 10);
+    const j = parseInt(parts[1], 10);
+
+    if (isNaN(i) || isNaN(j)) return false;
+
+    const GridHex = (globalThis as any).foundry.grid.GridHex;
+    const hex = new GridHex({ i, j }, canvas.grid);
+    const center = hex.center;
+    const relativeVertices = canvas.grid.getShape(hex.offset);
+    const scale = (canvas.grid.sizeY + 2) / canvas.grid.sizeY;
+
+    const worldVertices = relativeVertices.map((v: any) => ({
+      x: center.x + (v.x * scale),
+      y: center.y + (v.y * scale)
+    }));
+
+    // Draw with texture fill
+    graphics.beginTextureFill({
+      texture,
+      color: 0xFFFFFF,
+      alpha: 1.0
+    });
+    graphics.drawPolygon(worldVertices.flatMap((v: any) => [v.x, v.y]));
+    graphics.endFill();
+
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
 
 /**
  * Render origin hex highlight (green hex at army position)
@@ -55,13 +146,13 @@ export function renderOriginHex(
 }
 
 /**
- * Render movement range overlay (light green tint on reachable hexes)
+ * Render movement range overlay (diagonal stripe pattern on reachable hexes)
  */
 export function renderReachableHexes(
   layer: PIXI.Container,
   reachableHexes: ReachabilityMap,
   canvas: any,
-  drawHexFn: (graphics: PIXI.Graphics, hexId: string, style: any, canvas: any) => boolean
+  _drawHexFn: (graphics: PIXI.Graphics, hexId: string, style: any, canvas: any) => boolean
 ): void {
   if (!canvas?.grid) {
     logger.warn('[ArmyMovementRenderer] Canvas grid not available');
@@ -72,19 +163,18 @@ export function renderReachableHexes(
   graphics.name = 'ReachableHexes';
   graphics.visible = true;
 
-  const style = {
-    fillColor: MOVEMENT_COLORS.reachable,
-    fillAlpha: MOVEMENT_COLORS.reachableAlpha
-  };
+  // Get the stripe pattern texture (cached)
+  const patternTexture = getStripePatternTexture();
 
   let count = 0;
-  reachableHexes.forEach((cost, hexId) => {
-    const drawn = drawHexFn(graphics, hexId, style, canvas);
+  reachableHexes.forEach((_cost, hexId) => {
+    // Draw each hex with pattern fill
+    const drawn = drawHexWithPattern(graphics, hexId, patternTexture, canvas);
     if (drawn) count++;
   });
 
   layer.addChild(graphics);
-  logger.info(`[ArmyMovementRenderer] Rendered ${count} reachable hexes`);
+  logger.info(`[ArmyMovementRenderer] Rendered ${count} reachable hexes with pattern`);
 }
 
 /**
@@ -180,6 +270,72 @@ export function renderPath(
   graphics.endFill();
 
   layer.addChild(graphics);
+}
+
+/**
+ * Render cell path for debug visualization
+ * Shows the actual A* cell path (8px grid) instead of hex center-to-center lines
+ */
+export function renderCellPath(
+  layer: PIXI.Container,
+  cellPath: Array<{ x: number; y: number }>,
+  cellSize: number  // 8 pixels (from NavigationGrid.CELL_SIZE)
+): void {
+  if (cellPath.length < 2) {
+    return; // No path to draw
+  }
+
+  const graphics = new PIXI.Graphics();
+  graphics.name = 'CellPathLines';
+  graphics.visible = true;
+
+  const color = 0x00FFFF; // Cyan
+  const alpha = 1.0;
+
+  // Draw connecting lines between cells
+  graphics.lineStyle({
+    width: 3,
+    color,
+    alpha,
+    cap: PIXI.LINE_CAP.ROUND,
+    join: PIXI.LINE_JOIN.ROUND
+  });
+
+  // Calculate pixel position for first cell (cell center)
+  const firstX = cellPath[0].x * cellSize + cellSize / 2;
+  const firstY = cellPath[0].y * cellSize + cellSize / 2;
+  graphics.moveTo(firstX, firstY);
+
+  // Draw lines to each subsequent cell
+  for (let i = 1; i < cellPath.length; i++) {
+    const x = cellPath[i].x * cellSize + cellSize / 2;
+    const y = cellPath[i].y * cellSize + cellSize / 2;
+    graphics.lineTo(x, y);
+  }
+
+  // Draw dots at each cell (every Nth cell to avoid clutter)
+  const dotInterval = 3; // Draw every 3rd cell
+  graphics.lineStyle(0);
+  graphics.beginFill(color, alpha);
+
+  for (let i = 0; i < cellPath.length; i += dotInterval) {
+    const x = cellPath[i].x * cellSize + cellSize / 2;
+    const y = cellPath[i].y * cellSize + cellSize / 2;
+    graphics.drawCircle(x, y, 4); // 4px radius dots
+  }
+
+  // Always draw last cell
+  const lastIdx = cellPath.length - 1;
+  if (lastIdx % dotInterval !== 0) {
+    const x = cellPath[lastIdx].x * cellSize + cellSize / 2;
+    const y = cellPath[lastIdx].y * cellSize + cellSize / 2;
+    graphics.drawCircle(x, y, 4);
+  }
+
+  graphics.endFill();
+
+  layer.addChild(graphics);
+  logger.info(`[ArmyMovementRenderer] Rendered cell path with ${cellPath.length} cells`);
 }
 
 /**

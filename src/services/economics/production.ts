@@ -128,29 +128,25 @@ function calculateHexProduction(hex: HexData): Map<string, number> {
 export function getWorksiteBaseProduction(worksiteType: string, terrain: string): Map<string, number> {
   const normalizedTerrain = terrain.toLowerCase();
 
-  logger.info(`[Production] Calculating for type="${worksiteType}", terrain="${normalizedTerrain}"`);
+  // Debug level to avoid spam - production is recalculated frequently due to reactive stores
+  logger.debug(`[Production] Calculating for type="${worksiteType}", terrain="${normalizedTerrain}"`);
 
   switch (worksiteType) {
     case 'Farmstead': {
       const foodAmount = normalizedTerrain === 'plains' ? 2 : 1;
-      const result = new Map([['food', foodAmount]]);
-      logger.info(`[Production] Farmstead on ${normalizedTerrain} produces: ${foodAmount} food`);
-      return result;
+      return new Map([['food', foodAmount]]);
     }
 
     case 'Logging Camp': {
       if (normalizedTerrain === 'forest') {
-        const result = new Map([['lumber', 2]]);
-        logger.info(`[Production] Logging Camp on forest produces: 2 lumber`);
-        return result;
+        return new Map([['lumber', 2]]);
       }
-      logger.warn(`[Production] Logging Camp on ${normalizedTerrain} produces nothing (requires forest)`);
+      logger.debug(`[Production] Logging Camp on ${normalizedTerrain} produces nothing (requires forest)`);
       return new Map();
     }
-      
+
     case 'Quarry': {
       if (normalizedTerrain === 'hills' || normalizedTerrain === 'mountains') {
-        logger.info(`[Production] Quarry on ${normalizedTerrain} produces: 1 stone`);
         return new Map([['stone', 1]]);
       }
       return new Map();
@@ -159,7 +155,6 @@ export function getWorksiteBaseProduction(worksiteType: string, terrain: string)
     case 'Mine':
     case 'Bog Mine': {
       if (normalizedTerrain === 'mountains' || normalizedTerrain === 'swamp') {
-        logger.info(`[Production] ${worksiteType} on ${normalizedTerrain} produces: 1 ore`);
         return new Map([['ore', 1]]);
       }
       return new Map();
@@ -167,7 +162,6 @@ export function getWorksiteBaseProduction(worksiteType: string, terrain: string)
 
     case 'Hunting/Fishing Camp': {
       if (normalizedTerrain === 'swamp') {
-        logger.info(`[Production] Hunting/Fishing Camp on swamp produces: 1 food`);
         return new Map([['food', 1]]);
       }
       return new Map();
@@ -175,7 +169,6 @@ export function getWorksiteBaseProduction(worksiteType: string, terrain: string)
 
     case 'Oasis Farm': {
       if (normalizedTerrain === 'desert') {
-        logger.info(`[Production] Oasis Farm on desert produces: 1 food`);
         return new Map([['food', 1]]);
       }
       return new Map();

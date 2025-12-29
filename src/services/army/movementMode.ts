@@ -1,11 +1,14 @@
 /**
  * ArmyMovementMode - Interactive army movement handler
- * 
+ *
  * Activates when clicking an army token, showing:
  * - Origin hex highlight (green)
  * - Movement range overlay (light green)
  * - Path preview on hover (green lines + circle)
  * - Red X for unreachable hexes
+ *
+ * Uses the OverlayManager and standard layer system for consistent
+ * PIXI rendering alongside other map overlays.
  */
 
 import type { Army } from '../../models/Army';
@@ -13,27 +16,18 @@ import type { PathResult, ReachabilityMap } from '../pathfinding/types';
 import { pathfindingService } from '../pathfinding';
 import { ReignMakerMapLayer } from '../map/core/ReignMakerMapLayer';
 import { getOverlayManager, type OverlayManager } from '../map/core/OverlayManager';
+import { ARMY_MOVEMENT_LAYERS, ARMY_MOVEMENT_Z_INDICES } from '../map/overlays/ArmyMovementOverlay';
 import {
   renderOriginHex,
   renderReachableHexes,
   renderPath,
-  renderEndpoint
+  renderEndpoint,
+  renderCellPath
 } from '../map/renderers/ArmyMovementRenderer';
 import { getKingdomActor } from '../../main.kingdom';
 import { positionToOffset, hexToKingmakerId } from '../hex-selector/coordinates';
 import { logger } from '../../utils/Logger';
 import { getArmyMovementTraits, type ArmyMovementTraits } from '../../utils/armyMovementTraits';
-
-/**
- * Layer IDs for army movement visualization
- */
-const LAYER_IDS = {
-  origin: 'army-movement-origin' as const,
-  range: 'army-movement-range' as const,
-  waypoints: 'army-movement-waypoints' as const,
-  path: 'army-movement-path' as const,
-  hover: 'army-movement-hover' as const
-};
 
 /**
  * Waypoint data structure
@@ -42,6 +36,7 @@ interface Waypoint {
   hexId: string;
   cumulativeCost: number;
   pathFromPrevious: string[]; // Path from previous waypoint (or origin)
+  navCell: { x: number; y: number }; // Final nav-grid position at this waypoint
 }
 
 /**
@@ -51,11 +46,16 @@ export class ArmyMovementMode {
   private active = false;
   private selectedArmy: Army | null = null;
   private startHexId: string | null = null;
+  private startNavCell: { x: number; y: number } | null = null; // Nav-grid position for pathfinding
+  private currentNavCell: { x: number; y: number } | null = null; // Current position (updated after waypoints)
   private waypoints: Waypoint[] = [];
   private totalCostSpent: number = 0;
   private maxMovement: number = 20;
   private traits: ArmyMovementTraits = { canFly: false, canSwim: false, hasBoats: false, amphibious: false };
-  private reachableHexes: ReachabilityMap = new Map();
+  private reachableHexes: ReachabilityMap = new Map(); // Reachable from START (for range overlay)
+  private currentReachableHexes: ReachabilityMap = new Map(); // Reachable from CURRENT position (for hover)
+  private currentOriginHexId: string | null = null; // Current origin for pathfinding (last waypoint or start)
+  private currentOriginNavCell: { x: number; y: number } | null = null; // Current nav cell for pathfinding
   private mapLayer: ReignMakerMapLayer | null = null;
   private overlayManager: OverlayManager | null = null;
   private canvasClickHandler: ((event: any) => void) | null = null;
@@ -159,12 +159,49 @@ export class ArmyMovementMode {
     this.startHexId = startHexId;
     this.active = true;
 
+    // Import navigation grid for validation
+    const { navigationGrid } = await import('../pathfinding/NavigationGrid');
+
+    // Get and VALIDATE army's nav-cell position
+    let validNavCell: { x: number; y: number } | null = null;
+
+    if (army.navCellX !== undefined && army.navCellY !== undefined) {
+      // Validate: is the saved navCell actually in the current startHexId?
+      const savedCellHex = navigationGrid.getHexForCell(army.navCellX, army.navCellY);
+
+      if (savedCellHex === startHexId) {
+        // Also check if it's passable (not in a river)
+        if (navigationGrid.isCellPassable(army.navCellX, army.navCellY)) {
+          validNavCell = { x: army.navCellX, y: army.navCellY };
+          logger.info(`[ArmyMovementMode] Using army's saved navCell: (${army.navCellX}, ${army.navCellY}) - validated in hex ${startHexId}`);
+        } else {
+          logger.warn(`[ArmyMovementMode] Saved navCell (${army.navCellX}, ${army.navCellY}) is blocked - finding new position`);
+        }
+      } else {
+        logger.warn(`[ArmyMovementMode] Saved navCell is in hex ${savedCellHex}, but army is at ${startHexId} - finding new position`);
+      }
+    }
+
+    // If no valid navCell, find a passable cell in the current hex
+    if (!validNavCell) {
+      validNavCell = navigationGrid.getPassableCellInHex(startHexId);
+      if (validNavCell) {
+        logger.info(`[ArmyMovementMode] Found passable navCell: (${validNavCell.x}, ${validNavCell.y}) in hex ${startHexId}`);
+      } else {
+        logger.error(`[ArmyMovementMode] No passable cell found in hex ${startHexId} - army may be stuck!`);
+      }
+    }
+
+    this.startNavCell = validNavCell;
+    this.currentNavCell = validNavCell;
+
     // Save current overlay state and set temporary overlays for army movement
-    // Show only territory context - hide other overlays that might clutter the view
+    // Show only territory context + army movement layers - hide other overlays that might clutter the view
     const overlayManager = this.getOverlayManager();
     await overlayManager.setTemporaryOverlays([
       'territories',       // Show territory ownership for context
       'territory-border',  // Show kingdom borders
+      'army-movement',     // Army movement visualization layers
     ]);
     logger.info('[ArmyMovementMode] Saved overlay state and set movement overlays');
 
@@ -179,8 +216,31 @@ export class ArmyMovementMode {
 
     logger.info(`[ArmyMovementMode] Army ${army.name}: range=${this.maxMovement}, traits:`, this.traits);
 
-    // Calculate reachable hexes with army's movement range and traits
-    this.reachableHexes = pathfindingService.getReachableHexes(startHexId, this.maxMovement, this.traits);
+    // Debug: Log navigation grid status
+    const navStats = navigationGrid.getStats();
+    logger.info(`[ArmyMovementMode] NavigationGrid status: ready=${navStats.isReady}, hexes=${navStats.hexCount}, blockedCells=${navStats.blockedCells}, crossingCells=${navStats.crossingCells}`);
+
+    // Debug: Log start position details
+    if (this.startNavCell) {
+      const cellBlocking = navigationGrid.debugCheckPixel(
+        this.startNavCell.x * 8 + 4,
+        this.startNavCell.y * 8 + 4
+      );
+      logger.info(`[ArmyMovementMode] Start navCell (${this.startNavCell.x}, ${this.startNavCell.y}): hex=${cellBlocking.hexId}, blocked=${cellBlocking.isBlocked}, passable=${cellBlocking.isPassable}`);
+    }
+
+    // Calculate reachable hexes with army's movement range, traits, and nav-cell position
+    this.reachableHexes = pathfindingService.getReachableHexes(
+      startHexId,
+      this.maxMovement,
+      this.traits,
+      this.startNavCell ?? undefined
+    );
+
+    // Initialize current reachability (same as start initially)
+    this.currentReachableHexes = this.reachableHexes;
+    this.currentOriginHexId = startHexId;
+    this.currentOriginNavCell = this.startNavCell;
 
     logger.info(`[ArmyMovementMode] Calculated ${this.reachableHexes.size} reachable hexes`);
 
@@ -206,20 +266,20 @@ export class ArmyMovementMode {
 
     const canvas = (globalThis as any).canvas;
     const mapLayer = this.getMapLayer();
-    const layer = mapLayer.createLayer(LAYER_IDS.origin, 49);
-    
+    const layer = mapLayer.createLayer(ARMY_MOVEMENT_LAYERS.origin, ARMY_MOVEMENT_Z_INDICES.origin);
+
     // Clear previous
-    mapLayer.clearLayerContent(LAYER_IDS.origin);
+    mapLayer.clearLayerContent(ARMY_MOVEMENT_LAYERS.origin);
 
     // Render origin
     renderOriginHex(
-      layer, 
-      this.startHexId, 
+      layer,
+      this.startHexId,
       canvas,
       mapLayer['drawSingleHex'].bind(mapLayer)
     );
 
-    mapLayer.showLayer(LAYER_IDS.origin);
+    mapLayer.showLayer(ARMY_MOVEMENT_LAYERS.origin);
   }
 
   /**
@@ -228,10 +288,10 @@ export class ArmyMovementMode {
   private showRangeOverlay(): void {
     const canvas = (globalThis as any).canvas;
     const mapLayer = this.getMapLayer();
-    const layer = mapLayer.createLayer(LAYER_IDS.range, 12);
-    
+    const layer = mapLayer.createLayer(ARMY_MOVEMENT_LAYERS.range, ARMY_MOVEMENT_Z_INDICES.range);
+
     // Clear previous
-    mapLayer.clearLayerContent(LAYER_IDS.range);
+    mapLayer.clearLayerContent(ARMY_MOVEMENT_LAYERS.range);
 
     // Render reachable hexes
     renderReachableHexes(
@@ -241,7 +301,7 @@ export class ArmyMovementMode {
       mapLayer['drawSingleHex'].bind(mapLayer)
     );
 
-    mapLayer.showLayer(LAYER_IDS.range);
+    mapLayer.showLayer(ARMY_MOVEMENT_LAYERS.range);
   }
 
   /**
@@ -286,50 +346,63 @@ export class ArmyMovementMode {
 
       this.currentHoveredHex = hexId;
 
-      // Determine origin for pathfinding (last waypoint or start)
-      const originHexId = this.waypoints.length > 0 
-        ? this.waypoints[this.waypoints.length - 1].hexId 
-        : this.startHexId;
-
-      // Calculate remaining movement
+      // Use cached reachability (updated when waypoints change)
+      const isReachable = this.currentReachableHexes.has(hexId);
       const remainingMovement = this.maxMovement - this.totalCostSpent;
-
-      // Check if hex is reachable from current position
-      const reachableFromOrigin = pathfindingService.getReachableHexes(originHexId, remainingMovement, this.traits);
-      const isReachable = reachableFromOrigin.has(hexId);
 
       const mapLayer = this.getMapLayer();
 
       // Clear previous hover graphics
-      mapLayer.clearLayerContent(LAYER_IDS.path);
-      mapLayer.clearLayerContent(LAYER_IDS.hover);
+      mapLayer.clearLayerContent(ARMY_MOVEMENT_LAYERS.path);
+      mapLayer.clearLayerContent(ARMY_MOVEMENT_LAYERS.hover);
+      mapLayer.clearLayerContent(ARMY_MOVEMENT_LAYERS.cellpath);
 
       if (isReachable) {
-        // Find path from current origin to hover hex
-        const pathResult = pathfindingService.findPath(originHexId, hexId, remainingMovement, this.traits);
+        // Find path from current origin to hover hex (uses cached origin)
+        const pathResult = pathfindingService.findPath(
+          this.currentOriginHexId!,
+          hexId,
+          remainingMovement,
+          this.traits,
+          this.currentOriginNavCell ?? undefined
+        );
 
-        if (pathResult && pathResult.isReachable) {
-          const canvas = (globalThis as any).canvas;
+        const canvas = (globalThis as any).canvas;
 
+        if (pathResult && pathResult.path.length >= 2) {
           // Calculate total cumulative cost
           const totalCost = this.totalCostSpent + pathResult.totalCost;
 
-          // Draw path lines (only the segment from current origin to hover)
-          const pathLayer = mapLayer.createLayer(LAYER_IDS.path, 48);
-          renderPath(pathLayer, pathResult.path, true, canvas);
-          mapLayer.showLayer(LAYER_IDS.path);
+          // DEBUG: Draw cell path (actual A* path through 8px grid)
+          if (pathResult.cellPath && pathResult.cellPath.length >= 2) {
+            const cellpathLayer = mapLayer.createLayer(ARMY_MOVEMENT_LAYERS.cellpath, ARMY_MOVEMENT_Z_INDICES.cellpath);
+            const CELL_SIZE = 8; // NavigationGrid.CELL_SIZE
+            renderCellPath(cellpathLayer, pathResult.cellPath, CELL_SIZE);
+            mapLayer.showLayer(ARMY_MOVEMENT_LAYERS.cellpath);
+          }
 
-          // Draw green circle endpoint with cumulative cost
-          const hoverLayer = mapLayer.createLayer(LAYER_IDS.hover, 50);
-          renderEndpoint(hoverLayer, hexId, true, canvas, totalCost);
-          mapLayer.showLayer(LAYER_IDS.hover);
+          // Draw hex path lines (DISABLED for debug - using cell path instead)
+          // const pathLayer = mapLayer.createLayer(ARMY_MOVEMENT_LAYERS.path, ARMY_MOVEMENT_Z_INDICES.path);
+          // renderPath(pathLayer, pathResult.path, pathResult.isReachable, canvas);
+          // mapLayer.showLayer(ARMY_MOVEMENT_LAYERS.path);
+
+          // Draw endpoint indicator (green circle if reachable, red X if not)
+          const hoverLayer = mapLayer.createLayer(ARMY_MOVEMENT_LAYERS.hover, ARMY_MOVEMENT_Z_INDICES.hover);
+          renderEndpoint(hoverLayer, hexId, pathResult.isReachable, canvas, pathResult.isReachable ? totalCost : undefined);
+          mapLayer.showLayer(ARMY_MOVEMENT_LAYERS.hover);
+        } else {
+          // Path calculation failed but hex was marked reachable - show warning indicator
+          logger.warn(`[ArmyMovementMode] Hex ${hexId} marked reachable but pathfinding failed`);
+          const hoverLayer = mapLayer.createLayer(ARMY_MOVEMENT_LAYERS.hover, ARMY_MOVEMENT_Z_INDICES.hover);
+          renderEndpoint(hoverLayer, hexId, false, canvas);
+          mapLayer.showLayer(ARMY_MOVEMENT_LAYERS.hover);
         }
       } else {
         // Draw red X for unreachable hex
         const canvas = (globalThis as any).canvas;
-        const hoverLayer = mapLayer.createLayer(LAYER_IDS.hover, 50);
+        const hoverLayer = mapLayer.createLayer(ARMY_MOVEMENT_LAYERS.hover, ARMY_MOVEMENT_Z_INDICES.hover);
         renderEndpoint(hoverLayer, hexId, false, canvas);
-        mapLayer.showLayer(LAYER_IDS.hover);
+        mapLayer.showLayer(ARMY_MOVEMENT_LAYERS.hover);
       }
     } catch (error) {
       // Silently fail for hover (might be outside valid hex area)
@@ -372,38 +445,24 @@ export class ArmyMovementMode {
         }
       }
 
-      // Determine origin for pathfinding
-      const originHexId = this.waypoints.length > 0 
-        ? this.waypoints[this.waypoints.length - 1].hexId 
-        : this.startHexId;
-
-      // Calculate remaining movement
+      // Use cached values for reachability check
       const remainingMovement = this.maxMovement - this.totalCostSpent;
 
-      // Debug: Check neighbors and costs (ALWAYS, even for unreachable hexes)
-      const { getNeighborHexIds } = await import('../pathfinding/coordinates');
-      const neighbors = getNeighborHexIds(originHexId);
-      logger.info(`[ArmyMovementMode] Origin ${originHexId} neighbors:`, neighbors);
-      
-      for (const n of neighbors) {
-        const exists = pathfindingService.hexExists(n);
-        const cost = pathfindingService.getMovementCost(n, this.traits);
-        logger.info(`[ArmyMovementMode] Neighbor ${n}: exists=${exists}, cost=${cost}`);
-      }
-
-      // Check if hex is reachable from current position
-      const reachableFromOrigin = pathfindingService.getReachableHexes(originHexId, remainingMovement, this.traits);
-      logger.info(`[ArmyMovementMode] Reachable hexes from ${originHexId}: ${reachableFromOrigin.size}`);
-      logger.info(`[ArmyMovementMode] Is ${hexId} reachable?`, reachableFromOrigin.has(hexId));
-      
-      if (!reachableFromOrigin.has(hexId)) {
+      // Check if hex is reachable using cached reachability
+      if (!this.currentReachableHexes.has(hexId)) {
         const ui = (globalThis as any).ui;
         ui?.notifications?.warn('Cannot move there - out of remaining movement range');
         return;
       }
 
-      // Find path from current origin to clicked hex
-      const pathResult = pathfindingService.findPath(originHexId, hexId, remainingMovement, this.traits);
+      // Find path from current origin to clicked hex (uses cached origin)
+      const pathResult = pathfindingService.findPath(
+        this.currentOriginHexId!,
+        hexId,
+        remainingMovement,
+        this.traits,
+        this.currentOriginNavCell ?? undefined
+      );
 
       if (!pathResult || !pathResult.isReachable) {
         const ui = (globalThis as any).ui;
@@ -412,13 +471,28 @@ export class ArmyMovementMode {
         return;
       }
 
-      // Add waypoint
+      // Get the final nav cell from the path result (or find one if not provided)
+      let finalNavCell = pathResult.finalNavCell;
+      if (!finalNavCell) {
+        // Fallback: get a passable cell in the target hex
+        const { navigationGrid } = await import('../pathfinding/NavigationGrid');
+        const passableCell = navigationGrid.getPassableCellInHex(hexId);
+        if (passableCell) {
+          finalNavCell = passableCell;
+        } else {
+          logger.warn(`[ArmyMovementMode] No passable cell found in target hex ${hexId}`);
+          return;
+        }
+      }
+
+      // Add waypoint with nav cell tracking
       const segmentCost = pathResult.totalCost;
       const newCumulativeCost = this.totalCostSpent + segmentCost;
       const waypoint: Waypoint = {
         hexId,
         cumulativeCost: newCumulativeCost,
-        pathFromPrevious: pathResult.path
+        pathFromPrevious: pathResult.path,
+        navCell: finalNavCell
       };
 
       this.waypoints.push(waypoint);
@@ -442,9 +516,27 @@ export class ArmyMovementMode {
         logger.info(`    [${i}] ${pathHexId}: ${hexCost} movement${isOrigin ? ' (origin - not counted)' : ''}`);
       }
 
+      // Update cached origin and reachability for next hover/click
+      this.currentOriginHexId = hexId;
+      this.currentOriginNavCell = finalNavCell;
+      const newRemainingMovement = this.maxMovement - this.totalCostSpent;
+
+      if (newRemainingMovement > 0) {
+        // Recalculate reachability from new position
+        this.currentReachableHexes = pathfindingService.getReachableHexes(
+          hexId,
+          newRemainingMovement,
+          this.traits,
+          finalNavCell
+        );
+        logger.info(`[ArmyMovementMode] Updated reachability: ${this.currentReachableHexes.size} hexes from ${hexId}`);
+      } else {
+        this.currentReachableHexes = new Map();
+      }
+
       // Render waypoints
       this.renderWaypoints();
-      
+
       // Notify callback of path change
       if (this.pathChangedCallback) {
         this.pathChangedCallback(this.getPlottedPath());
@@ -539,11 +631,11 @@ export class ArmyMovementMode {
     const canvas = (globalThis as any).canvas;
     
     // Clear previous waypoint layer
-    mapLayer.clearLayerContent(LAYER_IDS.waypoints);
-    
+    mapLayer.clearLayerContent(ARMY_MOVEMENT_LAYERS.waypoints);
+
     if (this.waypoints.length === 0) return;
 
-    const waypointLayer = mapLayer.createLayer(LAYER_IDS.waypoints, 51);
+    const waypointLayer = mapLayer.createLayer(ARMY_MOVEMENT_LAYERS.waypoints, ARMY_MOVEMENT_Z_INDICES.waypoints);
     
     // Build full path from origin through all waypoints
     if (this.startHexId) {
@@ -610,16 +702,17 @@ export class ArmyMovementMode {
       }
     }
 
-    mapLayer.showLayer(LAYER_IDS.waypoints);
+    mapLayer.showLayer(ARMY_MOVEMENT_LAYERS.waypoints);
   }
 
   /**
-   * Clear hover graphics (path and endpoint)
+   * Clear hover graphics (path, cellpath, and endpoint)
    */
   private clearHoverGraphics(): void {
     const mapLayer = this.getMapLayer();
-    mapLayer.clearLayerContent(LAYER_IDS.path);
-    mapLayer.clearLayerContent(LAYER_IDS.hover);
+    mapLayer.clearLayerContent(ARMY_MOVEMENT_LAYERS.path);
+    mapLayer.clearLayerContent(ARMY_MOVEMENT_LAYERS.hover);
+    mapLayer.clearLayerContent(ARMY_MOVEMENT_LAYERS.cellpath);
   }
 
   /**
@@ -643,11 +736,12 @@ export class ArmyMovementMode {
 
     // Clear all army movement layers
     if (this.mapLayer) {
-      this.mapLayer.clearLayer(LAYER_IDS.origin);
-      this.mapLayer.clearLayer(LAYER_IDS.range);
-      this.mapLayer.clearLayer(LAYER_IDS.waypoints);
-      this.mapLayer.clearLayer(LAYER_IDS.path);
-      this.mapLayer.clearLayer(LAYER_IDS.hover);
+      this.mapLayer.clearLayer(ARMY_MOVEMENT_LAYERS.origin);
+      this.mapLayer.clearLayer(ARMY_MOVEMENT_LAYERS.range);
+      this.mapLayer.clearLayer(ARMY_MOVEMENT_LAYERS.waypoints);
+      this.mapLayer.clearLayer(ARMY_MOVEMENT_LAYERS.path);
+      this.mapLayer.clearLayer(ARMY_MOVEMENT_LAYERS.hover);
+      this.mapLayer.clearLayer(ARMY_MOVEMENT_LAYERS.cellpath);
     }
 
     // Restore player's overlay preferences
@@ -664,12 +758,28 @@ export class ArmyMovementMode {
     this.active = false;
     this.selectedArmy = null;
     this.startHexId = null;
+    this.startNavCell = null;
+    this.currentNavCell = null;
     this.waypoints = [];
     this.totalCostSpent = 0;
     this.reachableHexes.clear();
+    this.currentReachableHexes.clear();
+    this.currentOriginHexId = null;
+    this.currentOriginNavCell = null;
     this.currentHoveredHex = null;
 
     logger.info('[ArmyMovementMode] Deactivated');
+  }
+
+  /**
+   * Get the final nav cell position after all waypoints
+   * Returns null if no waypoints or no nav cell tracked
+   */
+  getFinalNavCell(): { x: number; y: number } | null {
+    if (this.waypoints.length === 0) {
+      return this.startNavCell;
+    }
+    return this.waypoints[this.waypoints.length - 1].navCell;
   }
 }
 

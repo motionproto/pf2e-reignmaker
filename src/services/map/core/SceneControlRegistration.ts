@@ -261,11 +261,17 @@ export function registerKingdomHexControl(): void {
   });
 
   // Initialize PIXI container when canvas is ready
-  Hooks.on('canvasReady', () => {
+  Hooks.on('canvasReady', async () => {
     const layer = ReignMakerMapLayer.getInstance();
     layer.showPixiContainer(); // Ensures initialization
     layer.hidePixiContainer(); // Start hidden (controlled by scene toggle)
 
+    // Initialize pathfinding service with canvas for movement graph
+    const canvas = (globalThis as any).canvas;
+    if (canvas?.grid) {
+      const { pathfindingService } = await import('../../pathfinding');
+      pathfindingService.initialize(canvas);
+    }
   });
 
   // Clean up on canvas tear down

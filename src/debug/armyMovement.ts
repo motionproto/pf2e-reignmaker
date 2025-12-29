@@ -13,6 +13,8 @@
 
 import { armyMovementMode } from '../services/army/movementMode';
 import { pathfindingService } from '../services/pathfinding';
+import { movementGraph } from '../services/pathfinding/MovementGraph';
+import { navigationGrid } from '../services/pathfinding/NavigationGrid';
 import { logger } from '../utils/Logger';
 
 /**
@@ -196,22 +198,178 @@ export function listReachableHexes(startHex: string, maxMovement: number = 20): 
   });
 }
 
+// ============================================================================
+// Movement Graph Debug Utilities
+// ============================================================================
+
+/**
+ * Inspect edge data between two hexes
+ * Shows all precomputed edge costs and blocking conditions
+ *
+ * Usage: game.reignmaker.debugEdge('5.8', '5.9')
+ */
+export function debugEdge(fromHex: string, toHex: string): void {
+  const edge = movementGraph.getEdge(fromHex, toHex);
+
+  if (!edge) {
+    logger.warn(`[Debug] No edge found from ${fromHex} to ${toHex}`);
+    logger.info(`[Debug] Possible reasons: hexes not adjacent, hex doesn't exist in kingdom data`);
+    return;
+  }
+
+  logger.info(`[Debug] Edge ${fromHex} → ${toHex}:`);
+  logger.info(`  Land cost: ${edge.landCost === Infinity ? '∞ (blocked)' : edge.landCost}`);
+  logger.info(`  Water cost: ${edge.waterCost === Infinity ? '∞ (blocked)' : edge.waterCost}`);
+  logger.info(`  Fly cost: ${edge.flyCost}`);
+  logger.info(`  Crosses river: ${edge.crossesRiver}`);
+  logger.info(`  Has crossing: ${edge.hasCrossing}`);
+  logger.info(`  Has waterfall: ${edge.hasWaterfall}`);
+  logger.info(`  Is upstream: ${edge.isUpstream}`);
+
+  // Summary
+  const blocked = edge.crossesRiver && !edge.hasCrossing;
+  if (blocked) {
+    logger.warn(`[Debug] ⛔ This edge is BLOCKED by river (no crossing)`);
+  } else {
+    logger.info(`[Debug] ✅ This edge is passable for grounded units`);
+  }
+}
+
+/**
+ * Inspect a hex node's data
+ *
+ * Usage: game.reignmaker.debugHex('5.8')
+ */
+export function debugHex(hexId: string): void {
+  const node = movementGraph.getNode(hexId);
+
+  if (!node) {
+    logger.warn(`[Debug] No node found for hex ${hexId}`);
+    return;
+  }
+
+  logger.info(`[Debug] Hex ${hexId}:`);
+  logger.info(`  Terrain: ${node.terrain}`);
+  logger.info(`  Travel: ${node.travel}`);
+  logger.info(`  Has road: ${node.hasRoad}`);
+  logger.info(`  Has settlement: ${node.hasSettlement}`);
+  logger.info(`  Water type: ${node.waterType}`);
+}
+
+/**
+ * List all blocked edges (river crossings without bridges)
+ *
+ * Usage: game.reignmaker.listBlockedEdges()
+ */
+export function listBlockedEdges(): void {
+  const edges = movementGraph.getAllEdges();
+  const blockedEdges: string[] = [];
+
+  for (const [key, edge] of edges) {
+    if (edge.crossesRiver && !edge.hasCrossing) {
+      blockedEdges.push(`${edge.from} → ${edge.to}`);
+    }
+  }
+
+  if (blockedEdges.length === 0) {
+    logger.info('[Debug] No blocked edges found (no rivers, or all have crossings)');
+  } else {
+    logger.info(`[Debug] Blocked edges (${blockedEdges.length}):`);
+    blockedEdges.forEach(edge => logger.info(`  ⛔ ${edge}`));
+  }
+}
+
+/**
+ * Get movement graph statistics
+ *
+ * Usage: game.reignmaker.graphStats()
+ */
+export function graphStats(): void {
+  const nodes = movementGraph.getAllNodes();
+  const edges = movementGraph.getAllEdges();
+  const blocked = movementGraph.getBlockedEdgeCount();
+
+  logger.info('[Debug] Movement Graph Statistics:');
+  logger.info(`  Nodes (hexes): ${nodes.size}`);
+  logger.info(`  Edges (connections): ${edges.size}`);
+  logger.info(`  Blocked by river: ${blocked}`);
+  logger.info(`  Graph ready: ${movementGraph.isReady()}`);
+}
+
+/**
+ * Force rebuild the movement graph
+ *
+ * Usage: game.reignmaker.rebuildGraph()
+ */
+export function rebuildGraph(): void {
+  logger.info('[Debug] Forcing movement graph rebuild...');
+  movementGraph.rebuild();
+  logger.info('[Debug] ✅ Graph rebuilt');
+  graphStats();
+}
+
+/**
+ * Check if a pixel position is blocked by rivers
+ *
+ * Usage: game.reignmaker.checkBlocking(pixelX, pixelY)
+ */
+export function checkBlocking(pixelX: number, pixelY: number): void {
+  const result = navigationGrid.debugCheckPixel(pixelX, pixelY);
+  logger.info('[Debug] Cell blocking check:');
+  logger.info(`  Pixel: (${pixelX}, ${pixelY})`);
+  logger.info(`  Grid cell: (${result.gridX}, ${result.gridY})`);
+  logger.info(`  Hex: ${result.hexId}`);
+  logger.info(`  Is blocked: ${result.isBlocked}`);
+  logger.info(`  Is crossing: ${result.isCrossing}`);
+  logger.info(`  Is passable: ${result.isPassable}`);
+}
+
+/**
+ * Check if moving between two hexes crosses a river
+ *
+ * Usage: game.reignmaker.checkPathBlocking('5.10', '5.11')
+ */
+export function checkPathBlocking(fromHexId: string, toHexId: string): void {
+  const result = navigationGrid.debugPathBlocking(fromHexId, toHexId);
+  logger.info(`[Debug] Path blocking check from ${fromHexId} to ${toHexId}:`);
+  logger.info(`  Crosses river: ${result.crossesRiver}`);
+  logger.info(`  Blocked cells: ${result.blockedCells.length}`);
+  if (result.blockedCells.length > 0) {
+    logger.info(`  Blocked cell positions: ${result.blockedCells.map(c => `(${c.gridX},${c.gridY})`).join(', ')}`);
+  }
+}
+
+/**
+ * Get navigation grid statistics
+ *
+ * Usage: game.reignmaker.navGridStats()
+ */
+export function navGridStats(): void {
+  const stats = navigationGrid.getStats();
+  logger.info('[Debug] Navigation Grid Statistics:');
+  logger.info(`  Ready: ${stats.isReady}`);
+  logger.info(`  Hex count: ${stats.hexCount}`);
+  logger.info(`  Cell size: ${stats.cellSize}px`);
+  logger.info(`  Blocked cells (rivers): ${stats.blockedCells}`);
+  logger.info(`  Crossing cells (bridges/fords): ${stats.crossingCells}`);
+}
+
 /**
  * Register debug utilities on globalThis for browser console access
  */
 export function registerDebugUtils(): void {
   const game = (globalThis as any).game;
-  
+
   if (!game) {
     logger.warn('[Debug] Game not ready, skipping debug registration');
     return;
   }
-  
+
   // Create reignmaker namespace if it doesn't exist
   if (!game.reignmaker) {
     game.reignmaker = {};
   }
-  
+
   // Register debug functions
   game.reignmaker.testArmyMovement = testArmyMovement;
   game.reignmaker.testArmyMovementFromSelection = testArmyMovementFromSelection;
@@ -219,11 +377,23 @@ export function registerDebugUtils(): void {
   game.reignmaker.testPathfinding = testPathfinding;
   game.reignmaker.getHexMovementCost = getHexMovementCost;
   game.reignmaker.listReachableHexes = listReachableHexes;
-  
+
+  // Movement graph debug functions
+  game.reignmaker.debugEdge = debugEdge;
+  game.reignmaker.debugHex = debugHex;
+  game.reignmaker.listBlockedEdges = listBlockedEdges;
+  game.reignmaker.graphStats = graphStats;
+  game.reignmaker.rebuildGraph = rebuildGraph;
+
+  // Navigation grid debug functions
+  game.reignmaker.checkBlocking = checkBlocking;
+  game.reignmaker.checkPathBlocking = checkPathBlocking;
+  game.reignmaker.navGridStats = navGridStats;
+
   // Register hex data checker
   import('../debug/checkHexData').then(module => {
     module.registerHexDataCheck();
   });
-  
+
   // Debug utilities registered - access via game.reignmaker.*
 }

@@ -158,11 +158,12 @@ export const deployArmyPipeline: CheckPipeline = {
     const deployment = ctx.metadata.deployment || {};
     const armyId = deployment.armyId || ctx.metadata.armyId;
     const path = deployment.path || ctx.metadata.path || [];
-    
+    const finalNavCell = deployment.finalNavCell || ctx.metadata.finalNavCell;
+
     if (!armyId || !path || path.length < 2) {
       return { success: false, error: 'Missing army or path data (path must have at least 2 hexes)' };
     }
-    
+
     // Add metadata to game commands
     const commands = ctx.resolutionData?.gameCommands || [];
     for (const command of commands) {
@@ -170,9 +171,10 @@ export const deployArmyPipeline: CheckPipeline = {
         command.armyId = armyId;
         command.path = path;
         command.outcome = ctx.outcome;
+        command.finalNavCell = finalNavCell; // Pass nav cell for pathfinding
       }
     }
-    
+
     return { success: true };
   }
 };

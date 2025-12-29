@@ -2,6 +2,9 @@
   import { onMount, onDestroy } from 'svelte';
   import { writable } from 'svelte/store';
   import { getEditorModeService, type EditorTool, type EditorMode } from '../../services/map/core/EditorModeService';
+  import { cellRiverEditorHandlers } from '../../services/map/editors/CellRiverEditorHandlers';
+  import { cellLakeEditorHandlers } from '../../services/map/editors/CellLakeEditorHandlers';
+  import { cellCrossingEditorHandlers } from '../../services/map/editors/CellCrossingEditorHandlers';
   import SettlementEditorDialog from './SettlementEditorDialog.svelte';
   import { settlementEditorDialog } from '../../stores/SettlementEditorDialogStore';
   import { kingdomData } from '../../stores/KingdomStore';
@@ -54,6 +57,9 @@
   });
   
   onDestroy(() => {
+    // Clean up subscriptions
+    unsubscribeSettlementDialog();
+
     // Exit editor mode on unmount (cleanup)
     editorService.exitEditorMode();
   });
@@ -91,10 +97,13 @@
   
   function getActiveSection(tool: EditorTool): string | null {
     if (tool === 'inactive') return null;
-    if (['river-edit', 'river-scissors', 'river-reverse', 'lake-toggle', 'swamp-toggle'].includes(tool)) {
-      return 'waterways';
+    if (['cell-river-edit', 'cell-river-erase', 'cell-river-area-erase', 'cell-river-flip'].includes(tool)) {
+      return 'rivers';
     }
-    if (['waterfall-toggle', 'bridge-toggle', 'ford-toggle'].includes(tool)) {
+    if (['cell-lake-paint', 'cell-lake-erase'].includes(tool)) {
+      return 'lakes';
+    }
+    if (['cell-crossing-paint', 'cell-crossing-erase', 'waterfall-toggle', 'bridge-toggle', 'ford-toggle'].includes(tool)) {
       return 'crossings';
     }
     if (['road-edit', 'road-scissors'].includes(tool)) {
@@ -128,8 +137,9 @@
     
     // Then set the default tool for this section
     const defaultTools: Record<string, EditorTool> = {
-      'waterways': 'river-edit',
-      'crossings': 'waterfall-toggle',
+      'rivers': 'cell-river-edit',
+      'lakes': 'cell-lake-paint',
+      'crossings': 'cell-crossing-paint',
       'roads': 'road-edit',
       'terrain': 'terrain-plains',
       'bounty': 'bounty-food',
@@ -214,21 +224,31 @@
       await editorService.save();
     } catch (error) {
       console.error('[EditorModePanel] Save error:', error);
-    } finally {
-      // Always close the panel, even if there's an error
-      onClose();
+      const ui = (globalThis as any).ui;
+      ui?.notifications?.error('Failed to save map changes. Please try again.');
+      // Don't close on error - let user retry or cancel
+      return;
     }
+    // Only close on success
+    onClose();
   }
-  
+
   async function handleCancel() {
     try {
       await editorService.cancel();
     } catch (error) {
       console.error('[EditorModePanel] Cancel error:', error);
-    } finally {
-      // Always close the panel, even if there's an error
-      onClose();
+      const ui = (globalThis as any).ui;
+      ui?.notifications?.warn('Error during cancel - changes may not be fully reverted.');
+      // Force cleanup even on error to prevent stuck state
+      try {
+        editorService.exitEditorMode();
+      } catch {
+        // Ignore secondary errors
+      }
     }
+    // Always close on cancel (user wants out)
+    onClose();
   }
   
   // Global mouse event listeners
@@ -246,9 +266,9 @@
   let showSettlementDialog = false;
   let settlementDialogHexId = '';
   let settlementDialogExisting: any = null;
-  
-  // Subscribe to settlement editor dialog store
-  settlementEditorDialog.subscribe(state => {
+
+  // Subscribe to settlement editor dialog store (store unsubscribe for cleanup)
+  const unsubscribeSettlementDialog = settlementEditorDialog.subscribe(state => {
     showSettlementDialog = state.show;
     settlementDialogHexId = state.hexId || '';
     settlementDialogExisting = state.existingSettlement;
@@ -261,6 +281,167 @@
   
   function handleSettlementCancel() {
     settlementEditorDialog.cancel();
+  }
+
+  // River editor handlers
+  async function handleClearAllRivers() {
+    await cellRiverEditorHandlers.clearAll();
+  }
+
+  // Lake editor handlers
+  async function handleClearAllLakes() {
+    await cellLakeEditorHandlers.clearAll();
+  }
+
+  // Crossing editor handlers
+  async function handleClearAllCrossings() {
+    await cellCrossingEditorHandlers.clearAll();
+  }
+
+  // Delete confirmation states (which section is showing confirmation)
+  let deleteConfirmSection: string | null = null;
+
+  function showDeleteConfirm(section: string) {
+    deleteConfirmSection = section;
+  }
+
+  function cancelDeleteConfirm() {
+    deleteConfirmSection = null;
+  }
+
+  async function confirmDelete(section: string) {
+    if (section === 'rivers') {
+      await handleClearAllRivers();
+    } else if (section === 'lakes') {
+      await handleClearAllLakes();
+    } else if (section === 'crossings') {
+      await handleClearAllCrossings();
+    }
+    deleteConfirmSection = null;
+  }
+
+  // Area eraser size options (in pixels)
+  const eraserSizes = [
+    { label: 'S', value: 16, title: 'Small (16px)' },
+    { label: 'M', value: 32, title: 'Medium (32px)' },
+    { label: 'L', value: 64, title: 'Large (64px)' }
+  ];
+  let selectedEraserSize = 32; // Default medium
+
+  function setEraserSize(size: number) {
+    selectedEraserSize = size;
+    cellRiverEditorHandlers.setEraserRadius(size);
+  }
+
+  // Initialize eraser size when selecting area erase tool
+  $: if ($currentTool === 'cell-river-area-erase') {
+    cellRiverEditorHandlers.setEraserRadius(selectedEraserSize);
+  }
+
+  // Keyboard shortcuts for each section
+  const sectionShortcuts: Record<string, { title: string; shortcuts: Array<{ key: string; action: string }> }> = {
+    'rivers': {
+      title: 'River Editor',
+      shortcuts: [
+        { key: 'Click', action: 'Select path' },
+        { key: 'Drag', action: 'Draw river' },
+        { key: 'Shift+Drag', action: 'Move vertex' },
+        { key: 'Ctrl+Z', action: 'Undo last point' },
+        { key: 'Ctrl+Click', action: 'Remove point' },
+        { key: 'Alt', action: 'Finish path' }
+      ]
+    },
+    'lakes': {
+      title: 'Lake Editor',
+      shortcuts: [
+        { key: 'Click/Drag', action: 'Paint lake cells' },
+        { key: '[ ]', action: 'Adjust brush size' },
+        { key: 'X', action: 'Toggle paint/erase' }
+      ]
+    },
+    'crossings': {
+      title: 'Crossings Editor',
+      shortcuts: [
+        { key: 'Click/Drag', action: 'Paint passage' },
+        { key: '[ ]', action: 'Adjust brush size' },
+        { key: 'X', action: 'Toggle paint/erase' }
+      ]
+    },
+    'roads': {
+      title: 'Roads Editor',
+      shortcuts: [
+        { key: 'Click', action: 'Add road' },
+        { key: 'Ctrl+Click', action: 'Remove road' },
+        { key: 'Scissors tool', action: 'Cut road segment' }
+      ]
+    },
+    'terrain': {
+      title: 'Terrain Editor',
+      shortcuts: [
+        { key: 'Click', action: 'Set terrain type' },
+        { key: 'Drag', action: 'Paint terrain' }
+      ]
+    },
+    'bounty': {
+      title: 'Bounty Editor',
+      shortcuts: [
+        { key: 'Click', action: 'Add resource' },
+        { key: 'Ctrl+Click', action: 'Remove resource' }
+      ]
+    },
+    'worksites': {
+      title: 'Worksites Editor',
+      shortcuts: [
+        { key: 'Click', action: 'Place worksite' },
+        { key: 'Ctrl+Click', action: 'Remove worksite' }
+      ]
+    },
+    'settlements': {
+      title: 'Settlements Editor',
+      shortcuts: [
+        { key: 'Click', action: 'Place/edit settlement' },
+        { key: 'Minus tool', action: 'Remove settlement' }
+      ]
+    },
+    'fortifications': {
+      title: 'Fortifications Editor',
+      shortcuts: [
+        { key: 'Click', action: 'Place fortification' },
+        { key: 'Ctrl+Click', action: 'Remove fortification' }
+      ]
+    },
+    'territory': {
+      title: 'Territory Editor',
+      shortcuts: [
+        { key: 'Click', action: 'Claim hex for selected owner' },
+        { key: 'Drag', action: 'Paint territory' }
+      ]
+    }
+  };
+
+  // Send help to Foundry chat
+  function showHelp(section: string) {
+    const help = sectionShortcuts[section];
+    if (!help) return;
+
+    const shortcutLines = help.shortcuts.map(s => `<li><strong>${s.key}</strong> - ${s.action}</li>`).join('');
+    const content = `
+      <div style="padding: 0.5rem;">
+        <h3 style="margin: 0 0 0.5rem 0; color: #8b0000;">${help.title} Shortcuts</h3>
+        <ul style="margin: 0; padding-left: 1.25rem; list-style: disc;">
+          ${shortcutLines}
+        </ul>
+      </div>
+    `;
+
+    // Send to Foundry chat
+    const ChatMessage = (globalThis as any).ChatMessage;
+    if (ChatMessage) {
+      ChatMessage.create({
+        content,
+        whisper: [(globalThis as any).game?.user?.id].filter(Boolean)
+      });
+    }
   }
 </script>
 
@@ -303,7 +484,8 @@
     {#if isMinimized}
       <section class="editor-section dropdown-section">
         <select class="section-dropdown" bind:value={selectedSection} on:change={handleSectionChange}>
-          <option value="waterways">Waterways</option>
+          <option value="rivers">Rivers</option>
+          <option value="lakes">Lakes</option>
           <option value="crossings">Crossings</option>
           <option value="roads">Roads</option>
           <option value="terrain">Terrain</option>
@@ -316,51 +498,146 @@
       </section>
     {/if}
     
-    <!-- Waterways Section -->
-    {#if !isMinimized || selectedSection === 'waterways'}
-    <section class="editor-section" class:active-section={activeSection === 'waterways'}>
+    <!-- Rivers Section (Cell-based) -->
+    {#if !isMinimized || selectedSection === 'rivers'}
+    <section class="editor-section" class:active-section={activeSection === 'rivers'}>
       {#if !isMinimized}
-        <label class="section-label" on:click={() => selectSection('waterways')}>Waterways</label>
+        <label class="section-label" on:click={() => selectSection('rivers')}>Rivers</label>
       {/if}
-      <div class="tool-buttons">
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'river-edit'}
-          on:click={() => setTool('river-edit')}
-          title="Draw Rivers - Click connectors to add points, double-click to finish">
-          <i class="fas fa-water"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'river-scissors'}
-          on:click={() => setTool('river-scissors')}
-          title="Cut Rivers - Click on a segment to split the path">
-          <i class="fas fa-cut"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'river-reverse'}
-          on:click={() => setTool('river-reverse')}
-          title="Reverse Flow - Click on a path to reverse its direction">
-          <i class="fas fa-exchange-alt"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'lake-toggle'}
-          on:click={() => setTool('lake-toggle')}
-          title="Lake - Click hex to toggle lake (open water)">
-          <i class="fas fa-tint"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'swamp-toggle'}
-          on:click={() => setTool('swamp-toggle')}
-          title="Swamp - Click hex to toggle swamp (difficult water)">
-          <i class="fa-solid fa-seedling"></i>
-        </button>
+      <div class="tool-content">
+        {#if deleteConfirmSection === 'rivers'}
+        <div class="delete-confirm-row">
+          <button
+            class="tool-button confirm-delete"
+            on:click={() => confirmDelete('rivers')}
+            title="Confirm delete all rivers">
+            Delete All
+          </button>
+          <button
+            class="tool-button cancel-delete"
+            on:click={cancelDeleteConfirm}
+            title="Cancel">
+            Cancel
+          </button>
+        </div>
+        {:else}
+        <div class="tool-buttons">
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'cell-river-edit'}
+            on:click={() => setTool('cell-river-edit')}
+            title="Draw Rivers - Click to add points, double-click to finish path">
+            <i class="fas fa-water"></i>
+          </button>
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'cell-river-erase'}
+            on:click={() => setTool('cell-river-erase')}
+            title="Erase Path - Click on a river to remove entire path">
+            <i class="fas fa-eraser"></i>
+          </button>
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'cell-river-area-erase'}
+            on:click={() => setTool('cell-river-area-erase')}
+            title="Area Erase - Drag to erase river points in a circular area">
+            <i class="fas fa-circle" style="color: #ff6666;"></i>
+          </button>
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'cell-river-flip'}
+            on:click={() => setTool('cell-river-flip')}
+            title="Flip Direction - Click on a river to reverse its flow">
+            <i class="fas fa-exchange-alt"></i>
+          </button>
+          <button
+            class="tool-button danger"
+            on:click={() => showDeleteConfirm('rivers')}
+            title="Clear All - Remove all river paths">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+        {/if}
+        {#if $currentTool === 'cell-river-area-erase'}
+        <div class="eraser-size-selector">
+          <span class="size-label">Size:</span>
+          {#each eraserSizes as size}
+            <button
+              class="size-button"
+              class:active={selectedEraserSize === size.value}
+              on:click={() => setEraserSize(size.value)}
+              title={size.title}>
+              {size.label}
+            </button>
+          {/each}
+        </div>
+        {/if}
       </div>
+      <button
+        class="tool-button help-button section-help"
+        on:click={() => showHelp('rivers')}
+        title="Show keyboard shortcuts in chat">
+        <i class="fas fa-question"></i>
+      </button>
     </section>
     {/if}
+
+    <!-- Lakes Section (Cell-based) -->
+    {#if !isMinimized || selectedSection === 'lakes'}
+    <section class="editor-section" class:active-section={activeSection === 'lakes'}>
+      {#if !isMinimized}
+        <label class="section-label" on:click={() => selectSection('lakes')}>Lakes</label>
+      {/if}
+      <div class="tool-content">
+        {#if deleteConfirmSection === 'lakes'}
+        <div class="delete-confirm-row">
+          <button
+            class="tool-button confirm-delete"
+            on:click={() => confirmDelete('lakes')}
+            title="Confirm delete all lakes">
+            Delete All
+          </button>
+          <button
+            class="tool-button cancel-delete"
+            on:click={cancelDeleteConfirm}
+            title="Cancel">
+            Cancel
+          </button>
+        </div>
+        {:else}
+        <div class="tool-buttons">
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'cell-lake-paint'}
+            on:click={() => setTool('cell-lake-paint')}
+            title="Paint Lakes - Click and drag to paint lake cells">
+            <i class="fas fa-paint-brush" style="color: #20B2AA;"></i>
+          </button>
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'cell-lake-erase'}
+            on:click={() => setTool('cell-lake-erase')}
+            title="Erase Lakes - Click and drag to erase lake cells">
+            <i class="fas fa-eraser"></i>
+          </button>
+          <button
+            class="tool-button danger"
+            on:click={() => showDeleteConfirm('lakes')}
+            title="Clear All - Remove all lake cells">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+        {/if}
+      </div>
+      <button
+        class="tool-button help-button section-help"
+        on:click={() => showHelp('lakes')}
+        title="Show keyboard shortcuts in chat">
+        <i class="fas fa-question"></i>
+      </button>
+    </section>
+    {/if}
+
     
     <!-- Crossings Section -->
     {#if !isMinimized || selectedSection === 'crossings'}
@@ -368,29 +645,53 @@
       {#if !isMinimized}
         <label class="section-label" on:click={() => selectSection('crossings')}>Crossings</label>
       {/if}
-      <div class="tool-buttons">
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'waterfall-toggle'}
-          on:click={() => setTool('waterfall-toggle')}
-          title="Waterfall - Click edge to toggle waterfall (blocks boats)">
-          <i class="fas fa-angle-double-down"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'bridge-toggle'}
-          on:click={() => setTool('bridge-toggle')}
-          title="Bridge - Click edge to toggle bridge (allows crossing)">
-          <i class="fas fa-archway"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'ford-toggle'}
-          on:click={() => setTool('ford-toggle')}
-          title="Ford - Click edge to toggle ford (allows crossing)">
-          <i class="fas fa-water"></i>
-        </button>
+      <div class="tool-content">
+        {#if deleteConfirmSection === 'crossings'}
+        <div class="delete-confirm-row">
+          <button
+            class="tool-button confirm-delete"
+            on:click={() => confirmDelete('crossings')}
+            title="Confirm delete all crossings">
+            Delete All
+          </button>
+          <button
+            class="tool-button cancel-delete"
+            on:click={cancelDeleteConfirm}
+            title="Cancel">
+            Cancel
+          </button>
+        </div>
+        {:else}
+        <div class="tool-buttons">
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'cell-crossing-paint'}
+            on:click={() => setTool('cell-crossing-paint')}
+            title="Paint Passages - Click and drag to paint crossing cells (bridges/fords)">
+            <i class="fas fa-bridge" style="color: #00FF00;"></i>
+          </button>
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'cell-crossing-erase'}
+            on:click={() => setTool('cell-crossing-erase')}
+            title="Erase Passages - Click and drag to remove crossing cells">
+            <i class="fas fa-eraser"></i>
+          </button>
+          <button
+            class="tool-button danger"
+            on:click={() => showDeleteConfirm('crossings')}
+            title="Clear All - Remove all crossing cells">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+        {/if}
       </div>
+      <button
+        class="tool-button help-button section-help"
+        on:click={() => showHelp('crossings')}
+        title="Show keyboard shortcuts in chat">
+        <i class="fas fa-question"></i>
+      </button>
     </section>
     {/if}
     
@@ -400,22 +701,30 @@
       {#if !isMinimized}
         <label class="section-label" on:click={() => selectSection('roads')}>Roads</label>
       {/if}
-      <div class="tool-buttons">
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'road-edit'}
-          on:click={() => setTool('road-edit')}
-          title="Roads - Click hex to add road, Ctrl+Click to remove">
-          <i class="fas fa-road"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'road-scissors'}
-          on:click={() => setTool('road-scissors')}
-          title="Cut Roads - Click on a segment to break the connection">
-          <i class="fas fa-cut"></i>
-        </button>
+      <div class="tool-content">
+        <div class="tool-buttons">
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'road-edit'}
+            on:click={() => setTool('road-edit')}
+            title="Roads - Click hex to add road, Ctrl+Click to remove">
+            <i class="fas fa-road"></i>
+          </button>
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'road-scissors'}
+            on:click={() => setTool('road-scissors')}
+            title="Cut Roads - Click on a segment to break the connection">
+            <i class="fas fa-cut"></i>
+          </button>
+        </div>
       </div>
+      <button
+        class="tool-button help-button section-help"
+        on:click={() => showHelp('roads')}
+        title="Show keyboard shortcuts in chat">
+        <i class="fas fa-question"></i>
+      </button>
     </section>
     {/if}
     
@@ -425,57 +734,65 @@
       {#if !isMinimized}
         <label class="section-label" on:click={() => selectSection('terrain')}>Terrain</label>
       {/if}
-      <div class="tool-buttons terrain-buttons">
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'terrain-plains'}
-          on:click={() => setTool('terrain-plains')}
-          title="Plains">
-          <i class="fas fa-wheat-awn" style="color: #90C650;"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'terrain-forest'}
-          on:click={() => setTool('terrain-forest')}
-          title="Forest">
-          <i class="fas fa-tree" style="color: #228B22;"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'terrain-hills'}
-          on:click={() => setTool('terrain-hills')}
-          title="Hills">
-          <i class="fa-solid fa-mound" style="color: #8B7355;"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'terrain-mountains'}
-          on:click={() => setTool('terrain-mountains')}
-          title="Mountains">
-          <i class="fas fa-mountain" style="color: #808080;"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'terrain-swamp'}
-          on:click={() => setTool('terrain-swamp')}
-          title="Swamp">
-          <i class="fa-solid fa-seedling" style="color: #6B8E23;"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'terrain-desert'}
-          on:click={() => setTool('terrain-desert')}
-          title="Desert">
-          <i class="fas fa-sun" style="color: #EDC9AF;"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'terrain-water'}
-          on:click={() => setTool('terrain-water')}
-          title="Water">
-          <i class="fas fa-tint" style="color: #4682B4;"></i>
-        </button>
+      <div class="tool-content">
+        <div class="tool-buttons terrain-buttons">
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'terrain-plains'}
+            on:click={() => setTool('terrain-plains')}
+            title="Plains">
+            <i class="fas fa-wheat-awn" style="color: #90C650;"></i>
+          </button>
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'terrain-forest'}
+            on:click={() => setTool('terrain-forest')}
+            title="Forest">
+            <i class="fas fa-tree" style="color: #228B22;"></i>
+          </button>
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'terrain-hills'}
+            on:click={() => setTool('terrain-hills')}
+            title="Hills">
+            <i class="fa-solid fa-mound" style="color: #8B7355;"></i>
+          </button>
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'terrain-mountains'}
+            on:click={() => setTool('terrain-mountains')}
+            title="Mountains">
+            <i class="fas fa-mountain" style="color: #808080;"></i>
+          </button>
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'terrain-swamp'}
+            on:click={() => setTool('terrain-swamp')}
+            title="Swamp">
+            <i class="fa-solid fa-seedling" style="color: #6B8E23;"></i>
+          </button>
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'terrain-desert'}
+            on:click={() => setTool('terrain-desert')}
+            title="Desert">
+            <i class="fas fa-sun" style="color: #EDC9AF;"></i>
+          </button>
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'terrain-water'}
+            on:click={() => setTool('terrain-water')}
+            title="Water">
+            <i class="fas fa-tint" style="color: #4682B4;"></i>
+          </button>
+        </div>
       </div>
+      <button
+        class="tool-button help-button section-help"
+        on:click={() => showHelp('terrain')}
+        title="Show keyboard shortcuts in chat">
+        <i class="fas fa-question"></i>
+      </button>
     </section>
     {/if}
     
@@ -485,50 +802,58 @@
       {#if !isMinimized}
         <label class="section-label" on:click={() => selectSection('bounty')}>Bounty</label>
       {/if}
-      <div class="tool-buttons">
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'bounty-food'}
-          on:click={() => setTool('bounty-food')}
-          title="Food - Click to add">
-          <i class="fas fa-wheat-awn" style="color: var(--icon-food);"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'bounty-lumber'}
-          on:click={() => setTool('bounty-lumber')}
-          title="Lumber - Click to add">
-          <i class="fas fa-tree" style="color: var(--icon-lumber);"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'bounty-stone'}
-          on:click={() => setTool('bounty-stone')}
-          title="Stone - Click to add">
-          <i class="fas fa-cube" style="color: var(--icon-stone);"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'bounty-ore'}
-          on:click={() => setTool('bounty-ore')}
-          title="Ore - Click to add">
-          <i class="fas fa-mountain" style="color: var(--icon-ore);"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'bounty-gold'}
-          on:click={() => setTool('bounty-gold')}
-          title="Gold - Click to add">
-          <i class="fas fa-coins" style="color: var(--icon-gold);"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'bounty-minus'}
-          on:click={() => setTool('bounty-minus')}
-          title="Remove - Click to clear bounty from hex">
-          <i class="fa-solid fa-minus"></i>
-        </button>
+      <div class="tool-content">
+        <div class="tool-buttons">
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'bounty-food'}
+            on:click={() => setTool('bounty-food')}
+            title="Food - Click to add">
+            <i class="fas fa-wheat-awn" style="color: var(--icon-food);"></i>
+          </button>
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'bounty-lumber'}
+            on:click={() => setTool('bounty-lumber')}
+            title="Lumber - Click to add">
+            <i class="fas fa-tree" style="color: var(--icon-lumber);"></i>
+          </button>
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'bounty-stone'}
+            on:click={() => setTool('bounty-stone')}
+            title="Stone - Click to add">
+            <i class="fas fa-cube" style="color: var(--icon-stone);"></i>
+          </button>
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'bounty-ore'}
+            on:click={() => setTool('bounty-ore')}
+            title="Ore - Click to add">
+            <i class="fas fa-mountain" style="color: var(--icon-ore);"></i>
+          </button>
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'bounty-gold'}
+            on:click={() => setTool('bounty-gold')}
+            title="Gold - Click to add">
+            <i class="fas fa-coins" style="color: var(--icon-gold);"></i>
+          </button>
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'bounty-minus'}
+            on:click={() => setTool('bounty-minus')}
+            title="Remove - Click to clear bounty from hex">
+            <i class="fa-solid fa-minus"></i>
+          </button>
+        </div>
       </div>
+      <button
+        class="tool-button help-button section-help"
+        on:click={() => showHelp('bounty')}
+        title="Show keyboard shortcuts in chat">
+        <i class="fas fa-question"></i>
+      </button>
     </section>
     {/if}
     
@@ -538,43 +863,51 @@
       {#if !isMinimized}
         <label class="section-label" on:click={() => selectSection('worksites')}>Worksites</label>
       {/if}
-      <div class="tool-buttons">
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'worksite-farm'}
-          on:click={() => setTool('worksite-farm')}
-          title="Farmstead - Click to place, Ctrl+Click to remove">
-          <i class="fas fa-wheat-awn"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'worksite-lumber-mill'}
-          on:click={() => setTool('worksite-lumber-mill')}
-          title="Logging Camp - Click to place (forest only), Ctrl+Click to remove">
-          <i class="fas fa-tree"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'worksite-mine'}
-          on:click={() => setTool('worksite-mine')}
-          title="Mine - Click to place (mountains/swamp), Ctrl+Click to remove">
-          <i class="fas fa-hammer"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'worksite-quarry'}
-          on:click={() => setTool('worksite-quarry')}
-          title="Quarry - Click to place (hills/mountains), Ctrl+Click to remove">
-          <i class="fas fa-cube"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'worksite-minus'}
-          on:click={() => setTool('worksite-minus')}
-          title="Remove - Click to clear worksite from hex">
-          <i class="fa-solid fa-minus"></i>
-        </button>
+      <div class="tool-content">
+        <div class="tool-buttons">
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'worksite-farm'}
+            on:click={() => setTool('worksite-farm')}
+            title="Farmstead - Click to place, Ctrl+Click to remove">
+            <i class="fas fa-wheat-awn"></i>
+          </button>
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'worksite-lumber-mill'}
+            on:click={() => setTool('worksite-lumber-mill')}
+            title="Logging Camp - Click to place (forest only), Ctrl+Click to remove">
+            <i class="fas fa-tree"></i>
+          </button>
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'worksite-mine'}
+            on:click={() => setTool('worksite-mine')}
+            title="Mine - Click to place (mountains/swamp), Ctrl+Click to remove">
+            <i class="fas fa-hammer"></i>
+          </button>
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'worksite-quarry'}
+            on:click={() => setTool('worksite-quarry')}
+            title="Quarry - Click to place (hills/mountains), Ctrl+Click to remove">
+            <i class="fas fa-cube"></i>
+          </button>
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'worksite-minus'}
+            on:click={() => setTool('worksite-minus')}
+            title="Remove - Click to clear worksite from hex">
+            <i class="fa-solid fa-minus"></i>
+          </button>
+        </div>
       </div>
+      <button
+        class="tool-button help-button section-help"
+        on:click={() => showHelp('worksites')}
+        title="Show keyboard shortcuts in chat">
+        <i class="fas fa-question"></i>
+      </button>
     </section>
     {/if}
     
@@ -584,22 +917,30 @@
       {#if !isMinimized}
         <label class="section-label" on:click={() => selectSection('settlements')}>Settlements</label>
       {/if}
-      <div class="tool-buttons">
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'settlement-place'}
-          on:click={() => setTool('settlement-place')}
-          title="Settlement - Click to place/edit">
-          <i class="fas fa-city"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'settlement-minus'}
-          on:click={() => setTool('settlement-minus')}
-          title="Remove - Click to clear settlement marker from hex">
-          <i class="fa-solid fa-minus"></i>
-        </button>
+      <div class="tool-content">
+        <div class="tool-buttons">
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'settlement-place'}
+            on:click={() => setTool('settlement-place')}
+            title="Settlement - Click to place/edit">
+            <i class="fas fa-city"></i>
+          </button>
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'settlement-minus'}
+            on:click={() => setTool('settlement-minus')}
+            title="Remove - Click to clear settlement marker from hex">
+            <i class="fa-solid fa-minus"></i>
+          </button>
+        </div>
       </div>
+      <button
+        class="tool-button help-button section-help"
+        on:click={() => showHelp('settlements')}
+        title="Show keyboard shortcuts in chat">
+        <i class="fas fa-question"></i>
+      </button>
     </section>
     {/if}
     
@@ -609,36 +950,44 @@
       {#if !isMinimized}
         <label class="section-label" on:click={() => selectSection('fortifications')}>Fortifications</label>
       {/if}
-      <div class="tool-buttons">
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'fortification-tier1'}
-          on:click={() => setTool('fortification-tier1')}
-          title="Earthworks (Tier 1) - Click to place, Ctrl+Click to remove">
-          <i class="fas fa-border-all"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'fortification-tier2'}
-          on:click={() => setTool('fortification-tier2')}
-          title="Wooden Tower (Tier 2) - Click to place, Ctrl+Click to remove">
-          <i class="fas fa-archway"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'fortification-tier3'}
-          on:click={() => setTool('fortification-tier3')}
-          title="Stone Tower (Tier 3) - Click to place, Ctrl+Click to remove">
-          <i class="fas fa-dungeon"></i>
-        </button>
-        <button
-          class="tool-button"
-          class:active={$currentTool === 'fortification-tier4'}
-          on:click={() => setTool('fortification-tier4')}
-          title="Fortress (Tier 4) - Click to place, Ctrl+Click to remove">
-          <i class="fas fa-fort-awesome"></i>
-        </button>
+      <div class="tool-content">
+        <div class="tool-buttons">
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'fortification-tier1'}
+            on:click={() => setTool('fortification-tier1')}
+            title="Earthworks (Tier 1) - Click to place, Ctrl+Click to remove">
+            <i class="fas fa-border-all"></i>
+          </button>
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'fortification-tier2'}
+            on:click={() => setTool('fortification-tier2')}
+            title="Wooden Tower (Tier 2) - Click to place, Ctrl+Click to remove">
+            <i class="fas fa-archway"></i>
+          </button>
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'fortification-tier3'}
+            on:click={() => setTool('fortification-tier3')}
+            title="Stone Tower (Tier 3) - Click to place, Ctrl+Click to remove">
+            <i class="fas fa-dungeon"></i>
+          </button>
+          <button
+            class="tool-button"
+            class:active={$currentTool === 'fortification-tier4'}
+            on:click={() => setTool('fortification-tier4')}
+            title="Fortress (Tier 4) - Click to place, Ctrl+Click to remove">
+            <i class="fas fa-fort-awesome"></i>
+          </button>
+        </div>
       </div>
+      <button
+        class="tool-button help-button section-help"
+        on:click={() => showHelp('fortifications')}
+        title="Show keyboard shortcuts in chat">
+        <i class="fas fa-question"></i>
+      </button>
     </section>
     {/if}
     
@@ -648,46 +997,54 @@
       {#if !isMinimized}
         <label class="section-label" on:click={() => selectSection('territory')}>Territory</label>
       {/if}
-      <div class="territory-controls">
-        <div class="color-swatch-wrapper">
-          <div
-            class="color-swatch"
-            class:unclaimed={selectedClaimOwner === 'null'}
-            style="background-color: {selectedClaimOwner === 'null'
-              ? '#444444'
-              : selectedClaimOwner === 'player'
-                ? ($kingdomData.playerKingdomColor || '#5b9bd5')
-                : ($kingdomData.factions?.find(f => f.id === selectedClaimOwner)?.color || '#666666')};"
-            title="{selectedClaimOwner === 'null' ? 'Unclaimed territory' : 'Click to change faction color'}">
-            {#if selectedClaimOwner === 'null'}
-              <i class="fas fa-times"></i>
+      <div class="tool-content">
+        <div class="territory-controls">
+          <div class="color-swatch-wrapper">
+            <div
+              class="color-swatch"
+              class:unclaimed={selectedClaimOwner === 'null'}
+              style="background-color: {selectedClaimOwner === 'null'
+                ? '#444444'
+                : selectedClaimOwner === 'player'
+                  ? ($kingdomData.playerKingdomColor || '#5b9bd5')
+                  : ($kingdomData.factions?.find(f => f.id === selectedClaimOwner)?.color || '#666666')};"
+              title="{selectedClaimOwner === 'null' ? 'Unclaimed territory' : 'Click to change faction color'}">
+              {#if selectedClaimOwner === 'null'}
+                <i class="fas fa-times"></i>
+              {/if}
+            </div>
+            {#if selectedClaimOwner !== 'null'}
+              <input
+                type="color"
+                bind:this={colorPickerInput}
+                value={selectedClaimOwner === 'player'
+                  ? ($kingdomData.playerKingdomColor || '#5b9bd5')
+                  : ($kingdomData.factions?.find(f => f.id === selectedClaimOwner)?.color || '#666666')}
+                on:change={handleColorChange}
+                class="color-picker-input"
+                title="Click to change faction color"
+              />
             {/if}
           </div>
-          {#if selectedClaimOwner !== 'null'}
-            <input
-              type="color"
-              bind:this={colorPickerInput}
-              value={selectedClaimOwner === 'player'
-                ? ($kingdomData.playerKingdomColor || '#5b9bd5')
-                : ($kingdomData.factions?.find(f => f.id === selectedClaimOwner)?.color || '#666666')}
-              on:change={handleColorChange}
-              class="color-picker-input"
-              title="Click to change faction color"
-            />
-          {/if}
+          <select
+            class="faction-dropdown"
+            bind:value={selectedClaimOwner}
+            on:change={handleClaimOwnerChange}
+            title="Select owner to claim hexes">
+            <option value="null">Unclaimed</option>
+            <option value="player">{$kingdomData.name || 'Player Kingdom'}</option>
+            {#each $kingdomData.factions || [] as faction}
+              <option value={faction.id}>{faction.name}</option>
+            {/each}
+          </select>
         </div>
-        <select
-          class="faction-dropdown"
-          bind:value={selectedClaimOwner}
-          on:change={handleClaimOwnerChange}
-          title="Select owner to claim hexes">
-          <option value="null">Unclaimed</option>
-          <option value="player">{$kingdomData.name || 'Player Kingdom'}</option>
-          {#each $kingdomData.factions || [] as faction}
-            <option value={faction.id}>{faction.name}</option>
-          {/each}
-        </select>
       </div>
+      <button
+        class="tool-button help-button section-help"
+        on:click={() => showHelp('territory')}
+        title="Show keyboard shortcuts in chat">
+        <i class="fas fa-question"></i>
+      </button>
     </section>
     {/if}
     
@@ -869,9 +1226,89 @@
       }
     }
     
+    .tool-content {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-8);
+      flex: 1;
+    }
+
     .tool-buttons {
       display: flex;
       gap: var(--space-8);
+    }
+
+    .delete-confirm-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-8);
+    }
+
+    .section-help {
+      margin-left: auto;
+      flex-shrink: 0;
+      align-self: flex-start;
+    }
+
+    .shortcut-help {
+      display: flex;
+      gap: var(--space-16);
+      font-size: var(--font-sm);
+      color: rgba(255, 255, 255, 0.6);
+      padding-top: var(--space-4);
+
+      span {
+        display: flex;
+        align-items: center;
+        gap: var(--space-6);
+      }
+
+      kbd {
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 4px;
+        padding: 2px 6px;
+        font-family: inherit;
+        font-size: var(--font-xs);
+        color: rgba(255, 255, 255, 0.8);
+      }
+    }
+
+    .eraser-size-selector {
+      display: flex;
+      align-items: center;
+      gap: var(--space-8);
+      padding-top: var(--space-4);
+
+      .size-label {
+        font-size: var(--font-sm);
+        color: rgba(255, 255, 255, 0.6);
+      }
+
+      .size-button {
+        padding: var(--space-4) var(--space-8);
+        background: var(--hover-low);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        color: rgba(255, 255, 255, 0.7);
+        cursor: pointer;
+        font-size: var(--font-xs);
+        font-weight: 600;
+        min-width: 28px;
+        transition: all 0.15s;
+
+        &:hover {
+          background: var(--hover);
+          border-color: var(--border-default);
+          color: #fff;
+        }
+
+        &.active {
+          background: rgba(255, 102, 102, 0.3);
+          border-color: #ff6666;
+          color: #ff6666;
+        }
+      }
     }
     
     .tool-button {
@@ -899,8 +1336,59 @@
         border-color: var(--color-primary, #8b0000);
         box-shadow: 0 0 0.625rem rgba(139, 0, 0, 0.3);
       }
+
+      &.danger {
+        color: rgba(255, 100, 100, 0.8);
+
+        &:hover {
+          background: rgba(180, 50, 50, 0.4);
+          border-color: rgba(200, 80, 80, 0.8);
+          color: #ff6666;
+        }
+      }
+
+      &.confirm-delete {
+        background: rgba(180, 50, 50, 0.6);
+        border-color: rgba(200, 80, 80, 0.8);
+        color: #fff;
+        font-size: var(--font-sm);
+        padding: var(--space-6) var(--space-12);
+
+        &:hover {
+          background: rgba(200, 60, 60, 0.8);
+          border-color: #ff6666;
+        }
+      }
+
+      &.cancel-delete {
+        background: var(--hover);
+        border-color: var(--border-default);
+        color: rgba(255, 255, 255, 0.8);
+        font-size: var(--font-sm);
+        padding: var(--space-6) var(--space-12);
+
+        &:hover {
+          background: var(--hover-high);
+          color: #fff;
+        }
+      }
+
+      &.help-button {
+        background: transparent;
+        border-color: transparent;
+        color: rgba(255, 255, 255, 0.4);
+        padding: var(--space-4) var(--space-8);
+        font-size: var(--font-sm);
+
+        &:hover {
+          background: var(--hover-low);
+          border-color: var(--border-subtle);
+          color: rgba(255, 255, 255, 0.7);
+          transform: none;
+        }
+      }
     }
-    
+
     &.territory-claim-section {
       .territory-controls {
         display: flex;

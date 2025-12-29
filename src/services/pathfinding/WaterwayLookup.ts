@@ -6,34 +6,17 @@
  *
  * Reactive: Automatically rebuilds when kingdom data changes.
  *
- * River Crossing Detection:
- * Uses line intersection to check if movement paths cross river barrier segments.
- * Movement between hexes is blocked if the path intersects a river segment
- * without a crossing (bridge/ford).
+ * Note: River crossing detection for pathfinding is now handled by NavigationGrid.
+ * This service provides hex-based queries for water features.
  */
 
 import type { KingdomData, RiverPath, WaterFeature, RiverCrossing } from '../../actors/KingdomActor';
 import { kingdomData } from '../../stores/KingdomStore';
-import { get } from 'svelte/store';
 import { logger } from '../../utils/Logger';
 import { getEdgeIdForDirection, edgeNameToIndex } from '../../utils/edgeUtils';
-import { type Point } from '../../utils/geometryUtils';
-import { checkLineBarrierCrossing } from '../../utils/gridTraversal';
 import type { EdgeDirection } from '../../models/Hex';
 
 export type WaterwayType = 'river' | 'lake' | 'swamp';
-
-/**
- * River segment with pixel coordinates
- * Used for geometric intersection testing
- */
-export interface RiverSegment {
-  start: Point;
-  end: Point;
-  hasCrossing: boolean;  // If true, river "doesn't exist" here - movement allowed
-  pathId: string;
-  segmentIndex: number;
-}
 
 /**
  * Per-hex waterway data
@@ -42,7 +25,6 @@ interface HexWaterwayData {
   waterways: Set<WaterwayType>;
   crossings: Set<string>;  // Set of crossing types ('bridge', 'ford')
   waterfalls: WaterFeature[];  // Waterfalls on this hex's edges
-  riverSegments: RiverSegment[];  // River line segments passing through this hex
 }
 
 /**
@@ -86,18 +68,28 @@ export class WaterwayLookup {
   
   /**
    * Calculate a simple hash of map data to detect changes
-   * Includes rivers, lakes, swamps
+   * Includes rivers (legacy + cell-based), lakes (hex + cell-based), swamps
    */
   private getRiverDataHash(kingdom: KingdomData): string {
-    // Create a simple hash from path count, total points, and crossing count
+    // Legacy river paths
     const pathCount = kingdom.rivers?.paths?.length || 0;
     const pointCount = kingdom.rivers?.paths?.reduce((sum, p) => sum + p.points.length, 0) || 0;
     const crossingCount = kingdom.rivers?.crossings?.length || 0;
     const waterfallCount = kingdom.rivers?.waterfalls?.length || 0;
+
+    // Cell-based rivers (new system)
+    const cellPathCount = kingdom.rivers?.cellPaths?.length || 0;
+    const cellPathPointCount = kingdom.rivers?.cellPaths?.reduce((sum, p) => sum + p.cells.length, 0) || 0;
+    const rasterizedCellCount = kingdom.rivers?.rasterizedCells?.length || 0;
+
+    // Hex-level water features
     const lakeCount = kingdom.waterFeatures?.lakes?.length || 0;
     const swampCount = kingdom.waterFeatures?.swamps?.length || 0;
-    
-    return `r${pathCount}-p${pointCount}-c${crossingCount}-w${waterfallCount}-l${lakeCount}-s${swampCount}`;
+
+    // Cell-based lakes (new system)
+    const lakeCellCount = kingdom.waterFeatures?.lakeCells?.length || 0;
+
+    return `r${pathCount}-p${pointCount}-cp${cellPathCount}.${cellPathPointCount}-rc${rasterizedCellCount}-c${crossingCount}-w${waterfallCount}-l${lakeCount}-s${swampCount}-lc${lakeCellCount}`;
   }
   
   /**
@@ -127,8 +119,7 @@ export class WaterwayLookup {
       this.hexLookup.set(hexKey, {
         waterways: new Set(),
         crossings: new Set(),
-        waterfalls: [],
-        riverSegments: []
+        waterfalls: []
       });
     }
     return this.hexLookup.get(hexKey)!;
@@ -406,52 +397,6 @@ export class WaterwayLookup {
     return this.hasRiver(hexI, hexJ) || 
            this.hasLake(hexI, hexJ) || 
            this.hasSwamp(hexI, hexJ);
-  }
-  
-  
-  /**
-   * Check if movement between two hexes crosses a river (without a crossing)
-   * Uses direct line intersection between movement path and river barrier segments.
-   *
-   * @param fromHexI - Source hex row
-   * @param fromHexJ - Source hex column
-   * @param toHexI - Destination hex row
-   * @param toHexJ - Destination hex column
-   * @returns true if movement crosses a river without a crossing
-   */
-  doesMovementCrossRiver(fromHexI: number, fromHexJ: number, toHexI: number, toHexJ: number): boolean {
-    const canvas = (globalThis as any).canvas;
-    if (!canvas?.grid) {
-      return false;  // Canvas not ready
-    }
-
-    // Get stored barrier segments from fresh kingdom data (not cached)
-    const kingdom = get(kingdomData);
-    const segments = kingdom?.rivers?.barrierSegments;
-
-    if (!segments || segments.length === 0) {
-      return false;  // No barrier segments stored
-    }
-
-    // Get hex centers for the movement path
-    const fromCenter = canvas.grid.getCenterPoint({ i: fromHexI, j: fromHexJ });
-    const toCenter = canvas.grid.getCenterPoint({ i: toHexI, j: toHexJ });
-
-    if (!fromCenter || !toCenter) {
-      return false;  // Invalid hex coordinates
-    }
-
-    // Use grid traversal for robust barrier crossing detection
-    // This steps along the movement vector and checks for barrier crossings at each step,
-    // which is more robust than a single line-line intersection check (handles collinear
-    // lines and endpoint edge cases better)
-    const blocked = checkLineBarrierCrossing(fromCenter, toCenter, segments);
-
-    if (blocked) {
-      logger.info(`[WaterwayLookup] Movement ${fromHexI}.${fromHexJ} → ${toHexI}.${toHexJ} BLOCKED by river segment`);
-    }
-
-    return blocked;
   }
   
   /**

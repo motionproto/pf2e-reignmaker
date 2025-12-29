@@ -350,6 +350,15 @@ Hooks.once('ready', async () => {
         // Initialize army types cache
         const { armyTypesService } = await import('./services/armyTypes');
         await armyTypesService.initializeCache();
+
+        // Ensure barrier segments exist for rivers (migration for older kingdoms)
+        const { ensureBarrierSegments, recalculateBarrierSegments } = await import('./utils/barrierSegmentUtils');
+        await ensureBarrierSegments();
+
+        // Register debug command for manual recalculation
+        const game = globalThis as any;
+        if (!game.reignmaker) game.reignmaker = {};
+        game.reignmaker.recalculateRiverBarriers = recalculateBarrierSegments;
     } catch (error) {
         console.error('[Module] Failed to initialize kingdom system:', error);
     }

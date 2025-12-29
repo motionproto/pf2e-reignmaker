@@ -231,3 +231,96 @@ export function parseHexId(hexId: string): { i: number; j: number } | null {
 export function formatHexId(i: number, j: number): string {
   return `${i}.${j}`;
 }
+
+/**
+ * Connector types for edge detection
+ */
+export type ConnectorType =
+  | { center: true }
+  | { edge: EdgeDirection }
+  | { cornerIndex: number };
+
+/**
+ * Get the connector (center, edge, or corner) at a click position
+ * Used for placing bridges, fords, and waterfalls at specific hex connection points
+ *
+ * Detection priority:
+ * 1. Hex center (if within 15 pixels)
+ * 2. Edge midpoints (if within 20 pixels)
+ * 3. Corners (if within 15 pixels)
+ *
+ * @param hexI - Hex row coordinate
+ * @param hexJ - Hex column coordinate
+ * @param clickPos - Click position { x, y }
+ * @param canvas - Foundry canvas object
+ * @returns Connector info or null if no connector detected
+ */
+export function getConnectorAtPosition(
+  hexI: number,
+  hexJ: number,
+  clickPos: { x: number; y: number },
+  canvas: any
+): ConnectorType | null {
+  if (!canvas?.grid) return null;
+
+  const CENTER_THRESHOLD = 15;
+  const EDGE_THRESHOLD = 20;
+  const CORNER_THRESHOLD = 15;
+
+  // Check center first
+  const center = getHexCenter(hexI, hexJ, canvas);
+  if (center) {
+    const distToCenter = Math.sqrt(
+      Math.pow(clickPos.x - center.x, 2) + Math.pow(clickPos.y - center.y, 2)
+    );
+    if (distToCenter < CENTER_THRESHOLD) {
+      return { center: true };
+    }
+  }
+
+  // Check edge midpoints
+  const edges: EdgeDirection[] = ['nw', 'ne', 'e', 'se', 'sw', 'w'];
+  let closestEdge: EdgeDirection | null = null;
+  let closestEdgeDist = Infinity;
+
+  for (const edge of edges) {
+    const edgePos = getEdgeMidpoint(hexI, hexJ, edge, canvas);
+    if (edgePos) {
+      const dist = Math.sqrt(
+        Math.pow(clickPos.x - edgePos.x, 2) + Math.pow(clickPos.y - edgePos.y, 2)
+      );
+      if (dist < EDGE_THRESHOLD && dist < closestEdgeDist) {
+        closestEdge = edge;
+        closestEdgeDist = dist;
+      }
+    }
+  }
+
+  if (closestEdge) {
+    return { edge: closestEdge };
+  }
+
+  // Check corners
+  const vertices = canvas.grid.getVertices({ i: hexI, j: hexJ });
+  if (vertices && vertices.length === 6) {
+    let closestCorner = -1;
+    let closestCornerDist = Infinity;
+
+    for (let i = 0; i < 6; i++) {
+      const v = vertices[i];
+      const dist = Math.sqrt(
+        Math.pow(clickPos.x - v.x, 2) + Math.pow(clickPos.y - v.y, 2)
+      );
+      if (dist < CORNER_THRESHOLD && dist < closestCornerDist) {
+        closestCorner = i;
+        closestCornerDist = dist;
+      }
+    }
+
+    if (closestCorner >= 0) {
+      return { cornerIndex: closestCorner };
+    }
+  }
+
+  return null;
+}

@@ -852,7 +852,7 @@ export class PipelineCoordinator {
                        ctx.checkType === 'event' ? 'Kingdom Event' : 
                        'Kingdom Incident';
     
-    await pf2eSkillService.executeSkillRoll({
+    const rollResult = await pf2eSkillService.executeSkillRoll({
       actor: actingCharacter,
       skill,
       dc,
@@ -865,7 +865,24 @@ export class PipelineCoordinator {
         `${ctx.checkType}:kingdom:${pipeline.name.toLowerCase().replace(/\s+/g, '-')}`
       ]
     });
-    
+
+    // Check if roll was cancelled (Foundry dialog closed without rolling)
+    if (rollResult === null || rollResult === undefined) {
+      log(ctx, 3, 'executeRoll', 'Roll cancelled by user');
+
+      // Dispatch cancellation event for listeners (e.g., ArmyDeploymentPanel)
+      const rollCancelledEvent = new CustomEvent('kingdomRollCancelled', {
+        detail: {
+          checkId: ctx.actionId,
+          checkType: ctx.checkType || 'action'
+        }
+      });
+      window.dispatchEvent(rollCancelledEvent);
+
+      // Throw to stop the pipeline
+      throw new Error('Action cancelled by user');
+    }
+
     // Step 3 returns - callback will resume pipeline when roll completes
     log(ctx, 3, 'executeRoll', 'Roll initiated with callback');
   }

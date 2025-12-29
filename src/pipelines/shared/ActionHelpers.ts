@@ -290,7 +290,7 @@ export function getPartyLevel(fallbackLevel?: number): number {
       : partyActor.system.details.level.value || 1;
   }
   
-  console.log(`[getPartyLevel] Party level from party actor: ${partyLevel}`);
+  // Don't log on every call - this is called frequently by reactive components
   return partyLevel || fallbackLevel || 1;
 }
 
