@@ -136,27 +136,27 @@ export class SceneManager {
       case 'road':
         // Show territory, existing roads, AND settlements for road building
         // (settlements count as roads for adjacency) + interactive hover
-        actionViewOverlays = ['territories', 'territory-border', 'roads', 'settlement-icons', 'settlement-labels', 'interactive-hover'];
+        actionViewOverlays = ['territories', 'territory-border', 'roads', 'settlements', 'interactive-hover'];
         break;
-        
+
       case 'settlement':
         // Show territory, existing settlements, and settlement icons/labels + interactive hover
-        actionViewOverlays = ['territories', 'territory-border', 'settlements', 'settlement-icons', 'settlement-labels', 'interactive-hover'];
+        actionViewOverlays = ['territories', 'territory-border', 'settlement-hacks', 'settlements', 'interactive-hover'];
         break;
-        
+
       case 'fortify':
         // Show territory, roads, settlements, and existing fortifications + interactive hover
-        actionViewOverlays = ['territories', 'territory-border', 'roads', 'settlement-icons', 'settlement-labels', 'fortifications', 'interactive-hover'];
+        actionViewOverlays = ['territories', 'territory-border', 'roads', 'settlements', 'fortifications', 'interactive-hover'];
         break;
-        
+
       case 'worksite':
         // Show territory border, existing worksites, and settlement icons (settlements block worksites) + interactive hover
-        actionViewOverlays = ['territories', 'territory-border', 'worksites', 'settlement-icons', 'settlement-labels', 'interactive-hover'];
+        actionViewOverlays = ['territories', 'territory-border', 'worksites', 'settlements', 'interactive-hover'];
         break;
-        
+
       case 'destroyed':
         // Show worksites being destroyed (same overlays as worksite creation but in display mode)
-        actionViewOverlays = ['territories', 'territory-border', 'worksites', 'settlement-icons', 'settlement-labels', 'interactive-hover'];
+        actionViewOverlays = ['territories', 'territory-border', 'worksites', 'settlements', 'interactive-hover'];
         break;
         
       case 'demanded':

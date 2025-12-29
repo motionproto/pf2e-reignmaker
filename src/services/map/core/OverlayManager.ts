@@ -60,7 +60,10 @@ export interface MapOverlay {
   
   // Mutual exclusivity - overlays in the same group can't be active together
   exclusiveGroup?: string;  // Optional group ID for mutual exclusivity
-  
+
+  // Linked overlays - automatically show/hide together with this overlay
+  linkedOverlays?: string[];  // Overlay IDs that should toggle with this one
+
   // Reactive pattern (preferred)
   store?: Readable<any>;  // Store to subscribe to for automatic updates
   render?: (data: any) => void | Promise<void>;  // How to render when data changes
@@ -248,6 +251,15 @@ export class OverlayManager {
         this.mapLayer.showLayer(layerId);
       });
 
+      // Show linked overlays (overlays that should always appear together)
+      if (overlay.linkedOverlays) {
+        for (const linkedId of overlay.linkedOverlays) {
+          if (!this.isOverlayActive(linkedId)) {
+            await this.showOverlay(linkedId, skipStateSave);
+          }
+        }
+      }
+
       // Save state after successful activation (unless told to skip)
       if (!skipStateSave) {
         this.saveState();
@@ -309,13 +321,22 @@ export class OverlayManager {
         this.mapLayer.clearLayer(layerId);
         this.mapLayer.hideLayer(layerId);
       });
-      
+
+      // Hide linked overlays (overlays that should always appear together)
+      if (overlay.linkedOverlays) {
+        for (const linkedId of overlay.linkedOverlays) {
+          if (this.isOverlayActive(linkedId)) {
+            this.hideOverlay(linkedId, skipStateSave);
+          }
+        }
+      }
+
       // Mark as inactive
       this.activeOverlaysStore.update($set => {
         $set.delete(id);
         return $set;
       });
-      
+
       // Save state unless told to skip (bulk operations handle state separately)
       if (!skipStateSave) {
         this.saveState();

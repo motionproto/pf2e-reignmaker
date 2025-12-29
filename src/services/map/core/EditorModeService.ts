@@ -70,11 +70,11 @@ const EDITOR_MODE_OVERLAYS: Record<EditorMode, string[]> = {
   'rivers': ['rivers'],      // Cell-based river editing - show rivers overlay
   'lakes': ['rivers'],       // Cell-based lake editing - show rivers overlay (includes lakes)
   'crossings': ['rivers', 'navigation-grid-debug'],  // Show rivers and nav grid for crossing placement
-  'roads': ['roads', 'territory-border', 'settlement-icons', 'settlement-labels'],
+  'roads': ['roads', 'territory-border', 'settlements'],
   'terrain': ['terrain'],
   'bounty': ['resources'],
   'worksites': ['worksites', 'terrain','territory-border'],
-  'settlements': ['settlements', 'settlement-labels'],
+  'settlements': ['settlement-hacks', 'settlements'],
   'fortifications': ['fortifications','territory-border'],
   'territory': ['territories','territory-border']
 };
@@ -1534,8 +1534,8 @@ export class EditorModeService {
         'worksite-mine': ['worksites'],
         'worksite-quarry': ['worksites'],
         'worksite-minus': ['worksites'],
-        'settlement-place': ['settlements', 'settlement-labels'],
-        'settlement-minus': ['settlements', 'settlement-labels'],
+        'settlement-place': ['settlement-hacks', 'settlements'],
+        'settlement-minus': ['settlement-hacks', 'settlements'],
         'fortification-tier1': ['fortifications'],
         'fortification-tier2': ['fortifications'],
         'fortification-tier3': ['fortifications'],

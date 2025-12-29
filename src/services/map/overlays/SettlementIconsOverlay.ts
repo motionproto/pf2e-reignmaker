@@ -11,10 +11,11 @@ export function createSettlementIconsOverlay(
   isOverlayActive: (id: string) => boolean
 ): MapOverlay {
   return {
-    id: 'settlement-icons',
-    name: 'Settlement Icons',
+    id: 'settlements',
+    name: 'Settlements',
     icon: 'fa-castle',
     layerIds: ['settlement-icons'],
+    linkedOverlays: ['settlement-labels'],
     store: hexesWithSettlementFeatures,
     render: async (hexesWithFeatures) => {
       const settlementData = hexesWithFeatures.map((h: any) => ({
@@ -33,6 +34,6 @@ export function createSettlementIconsOverlay(
     hide: () => {
       // Cleanup handled by OverlayManager
     },
-    isActive: () => isOverlayActive('settlement-icons')
+    isActive: () => isOverlayActive('settlements')
   };
 }

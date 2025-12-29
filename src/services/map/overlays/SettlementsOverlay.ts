@@ -13,8 +13,8 @@ export function createSettlementsOverlay(
   isOverlayActive: (id: string) => boolean
 ): MapOverlay {
   return {
-    id: 'settlements',
-    name: 'Settlements',
+    id: 'settlement-hacks',
+    name: 'Settlement Hacks',
     icon: 'fa-city',
     layerIds: ['settlements-overlay'],
     store: hexesWithSettlementFeatures,
@@ -32,6 +32,6 @@ export function createSettlementsOverlay(
     hide: () => {
       // Cleanup handled by OverlayManager
     },
-    isActive: () => isOverlayActive('settlements')
+    isActive: () => isOverlayActive('settlement-hacks')
   };
 }

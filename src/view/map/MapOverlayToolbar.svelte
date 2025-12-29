@@ -44,6 +44,18 @@
     if (overlay.id === 'interactive-hover') {
       return false;
     }
+    // Hide territory-border - it's linked to territories overlay
+    if (overlay.id === 'territory-border') {
+      return false;
+    }
+    // Hide province overlays - now integrated into territories overlay
+    if (overlay.id === 'provinces' || overlay.id === 'provinces-fill') {
+      return false;
+    }
+    // Hide settlement-labels - linked to settlements overlay
+    if (overlay.id === 'settlement-labels') {
+      return false;
+    }
     return true;
   });
   

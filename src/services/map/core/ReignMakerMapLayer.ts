@@ -478,6 +478,75 @@ export class ReignMakerMapLayer {
   }
 
   /**
+   * Draw territory outlines for multiple factions
+   * Each faction gets its own colored border
+   *
+   * @param factionOutlines - Array of { hexIds, color } for each faction
+   * @param layerId - Layer to draw on (default: 'kingdom-territory-outline')
+   */
+  drawMultiFactionOutlines(
+    factionOutlines: Array<{ hexIds: string[]; color: number }>,
+    layerId: LayerId = 'kingdom-territory-outline'
+  ): void {
+    this.ensureInitialized();
+
+    const canvas = (globalThis as any).canvas;
+    if (!canvas?.grid) {
+      logger.warn('[ReignMakerMapLayer] ❌ Canvas grid not available');
+      return;
+    }
+
+    // Validate and clear content once for all factions
+    this.validateLayerEmpty(layerId);
+    this.clearLayerContent(layerId);
+
+    const layer = this.createLayer(layerId, 10);
+
+    // Draw each faction's outline
+    for (const { hexIds, color } of factionOutlines) {
+      if (hexIds.length === 0) continue;
+
+      const outlineResult = generateTerritoryOutline(hexIds);
+      if (outlineResult.outlines.length === 0) continue;
+
+      const graphics = new PIXI.Graphics();
+      graphics.name = `TerritoryOutline-${color.toString(16)}`;
+      graphics.visible = true;
+
+      graphics.lineStyle({
+        width: 16,
+        color: color,
+        alpha: TERRITORY_BORDER_COLORS.outlineAlpha,
+        cap: PIXI.LINE_CAP.ROUND,
+        join: PIXI.LINE_JOIN.ROUND
+      });
+
+      outlineResult.outlines.forEach((path) => {
+        if (path.length === 0) return;
+
+        graphics.moveTo(path[0].start.x, path[0].start.y);
+
+        for (const segment of path) {
+          graphics.lineTo(segment.end.x, segment.end.y);
+        }
+
+        const firstPoint = path[0].start;
+        const lastPoint = path[path.length - 1].end;
+        const tolerance = 0.1;
+        const isLoop = Math.abs(firstPoint.x - lastPoint.x) < tolerance &&
+                       Math.abs(firstPoint.y - lastPoint.y) < tolerance;
+
+        if (isLoop) {
+          graphics.closePath();
+        }
+      });
+
+      layer.addChild(graphics);
+    }
+    // NOTE: Visibility is controlled by OverlayManager, not draw methods
+  }
+
+  /**
    * Draw province border outlines
    * Creates faint borders around province hex groupings
    *
