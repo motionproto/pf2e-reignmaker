@@ -899,31 +899,36 @@ export function setupFoundrySync(): void {
   // Listen for actor updates to trigger store updates
   Hooks.on('updateActor', (actor: any, changes: any, options: any, userId: string) => {
     const currentActor = get(kingdomActor);
-    
+
     // Check if this is our kingdom actor
     if (currentActor && actor.id === currentActor.id) {
-      // Check if kingdom data OR eventVotes was updated
-      if (changes.flags?.['pf2e-reignmaker']?.['kingdom-data'] || 
-          changes.flags?.['pf2e-reignmaker']?.['eventVotes']) {
+      // Check if any pf2e-reignmaker flags were updated
+      // Foundry structures changes differently depending on the update method
+      const hasReignmakerChanges =
+        changes.flags?.['pf2e-reignmaker'] ||                    // Direct flag object
+        changes['flags.pf2e-reignmaker'] ||                      // Dot notation
+        Object.keys(changes).some(k => k.includes('pf2e-reignmaker')); // Any key containing module name
+
+      if (hasReignmakerChanges) {
+        logger.debug('[KingdomStore] Actor flags updated, refreshing store');
 
         // CRITICAL: Re-wrap the actor to maintain kingdom methods
         // The actor from Foundry's updateActor hook is unwrapped
         const wrappedActor = wrapKingdomActor(actor);
-        
+
         // Refresh the actor reference in the store
         kingdomActor.set(wrappedActor);
-        
+
         // Get the new kingdom data from the updated actor
         const kingdom = actor.getFlag('pf2e-reignmaker', 'kingdom-data');
         const newPhase = kingdom?.currentPhase;
-        
+
         if (kingdom && newPhase) {
           const isLocked = get(phaseViewLocked);
           const currentViewingPhase = get(viewingPhase);
 
           // If locked and viewing phase doesn't match current phase, sync them
           if (isLocked && currentViewingPhase !== newPhase) {
-
             viewingPhase.set(newPhase);
           }
         }

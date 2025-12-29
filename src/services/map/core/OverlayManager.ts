@@ -26,8 +26,7 @@ import { logger } from '../../../utils/Logger';
 import {
   createTerrainOverlay,
   createTerrainDifficultyOverlay,
-  createTerritoriesOverlay,
-  createTerritoryBorderOverlay,
+  createTerritoryCompositeOverlay,
   createProvinceOverlay,
   createProvincesFillOverlay,
   createSettlementsOverlay,
@@ -660,6 +659,19 @@ export class OverlayManager {
     } finally {
       // Always reset batch flag, even if errors occurred
       this.batchOperationInProgress = false;
+
+      // CRITICAL: Trigger initial render for all overlays that were shown during batch
+      // The subscription callbacks were skipped during batch, so we need to render now
+      for (const id of overlayIds) {
+        const overlay = this.overlays.get(id);
+        if (overlay?.store && overlay?.render) {
+          const $data = get(overlay.store);
+          this.pendingRenders.set(id, $data);
+          if (!this.renderLocks.has(id)) {
+            this.processRenderQueue(id, overlay);
+          }
+        }
+      }
     }
   }
   
@@ -833,8 +845,7 @@ export class OverlayManager {
     
     this.registerOverlay(createTerrainOverlay(this.mapLayer, boundIsActive));
     this.registerOverlay(createTerrainDifficultyOverlay(this.mapLayer, boundIsActive));
-    this.registerOverlay(createTerritoriesOverlay(this.mapLayer, boundIsActive));
-    this.registerOverlay(createTerritoryBorderOverlay(this.mapLayer, boundIsActive));
+    this.registerOverlay(createTerritoryCompositeOverlay(this.mapLayer, boundIsActive));
     this.registerOverlay(createProvinceOverlay(this.mapLayer, boundIsActive));
     this.registerOverlay(createProvincesFillOverlay(this.mapLayer, boundIsActive));
     this.registerOverlay(createSettlementsOverlay(this.mapLayer, boundIsActive));

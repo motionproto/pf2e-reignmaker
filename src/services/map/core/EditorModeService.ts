@@ -70,13 +70,13 @@ const EDITOR_MODE_OVERLAYS: Record<EditorMode, string[]> = {
   'rivers': ['rivers'],      // Cell-based river editing - show rivers overlay
   'lakes': ['rivers'],       // Cell-based lake editing - show rivers overlay (includes lakes)
   'crossings': ['rivers', 'navigation-grid-debug'],  // Show rivers and nav grid for crossing placement
-  'roads': ['roads', 'territory-border', 'settlements'],
+  'roads': ['roads', 'territories', 'settlements'],
   'terrain': ['terrain'],
   'bounty': ['resources'],
-  'worksites': ['worksites', 'terrain','territory-border'],
+  'worksites': ['worksites', 'terrain', 'territories'],
   'settlements': ['settlement-hacks', 'settlements'],
-  'fortifications': ['fortifications','territory-border'],
-  'territory': ['territories','territory-border']
+  'fortifications': ['fortifications', 'territories'],
+  'territory': ['territories']  // Composite overlay includes fills, borders, and provinces
 };
 
 /**

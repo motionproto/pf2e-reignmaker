@@ -27,8 +27,9 @@ import goldIcon from '../../img/map_icons/commodity_gold.webp';
 export type LayerId =
   | 'terrain-overlay'             // Terrain type coloring (bottom layer)
   | 'terrain-difficulty-overlay'  // Terrain difficulty coloring (travel speed indicator)
-  | 'kingdom-territory'           // Scene control toggle for kingdom hexes
-  | 'kingdom-territory-outline'   // Territory outline border
+  | 'territory-composite'         // Unified territory layer (fills + borders + provinces)
+  | 'kingdom-territory'           // Legacy: Scene control toggle for kingdom hexes
+  | 'kingdom-territory-outline'   // Legacy: Territory outline border
   | 'province-borders'            // Province border outlines (faint internal borders)
   | 'provinces-fill'              // Province hex fills (for editing mode)
   | 'interactive-hover'           // Interactive hex hover (hex + road preview)

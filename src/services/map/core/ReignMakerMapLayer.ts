@@ -225,6 +225,28 @@ export class ReignMakerMapLayer {
   }
 
   /**
+   * Set visibility of all graphics/containers for a specific faction
+   * Searches territory-related layers for objects named with faction ID
+   */
+  setFactionVisibility(factionId: string, visible: boolean): void {
+    if (!this.layerManager) return;
+
+    const territoryLayers: LayerId[] = ['kingdom-territory', 'kingdom-territory-outline', 'province-borders'];
+
+    for (const layerId of territoryLayers) {
+      const layer = this.layerManager.getLayer(layerId);
+      if (!layer) continue;
+
+      // Find all children with names containing the faction ID
+      for (const child of layer.children) {
+        if (child.name?.includes(`faction-${factionId}`)) {
+          child.visible = visible;
+        }
+      }
+    }
+  }
+
+  /**
    * Clear all layers and reset the map
    */
   clearAllLayers(): void {
@@ -332,6 +354,98 @@ export class ReignMakerMapLayer {
 
     layer.addChild(graphics);
     // NOTE: Visibility is controlled by OverlayManager, not draw methods
+  }
+
+  /**
+   * Draw hexes for a specific faction to a named container within a layer
+   * Each faction gets its own container that can be independently shown/hidden
+   *
+   * @param factionId - Faction identifier (used for container naming)
+   * @param hexData - Array of hex IDs and styles to draw
+   * @param layerId - Target layer
+   * @param visible - Initial visibility state (default: true)
+   */
+  drawFactionTerritory(
+    factionId: string,
+    hexData: Array<{ hexId: string; style: HexStyle }>,
+    layerId: LayerId = 'kingdom-territory',
+    visible: boolean = true
+  ): void {
+    this.ensureInitialized();
+
+    const canvas = (globalThis as any).canvas;
+    if (!canvas?.grid) {
+      logger.warn('[ReignMakerMapLayer] ❌ Canvas grid not available');
+      return;
+    }
+
+    const layer = this.createLayer(layerId, this.getDefaultZIndex(layerId));
+
+    // Create a container for this faction's territory
+    const factionContainer = new PIXI.Graphics();
+    factionContainer.name = `faction-${factionId}`;
+    factionContainer.visible = visible;
+
+    let successCount = 0;
+    for (const { hexId, style } of hexData) {
+      const drawn = this.drawSingleHex(factionContainer, hexId, style, canvas);
+      if (drawn) successCount++;
+    }
+
+    layer.addChild(factionContainer);
+  }
+
+  /**
+   * Draw territory outline for a specific faction to a named container
+   *
+   * @param factionId - Faction identifier
+   * @param hexIds - Hex IDs that make up the faction's territory
+   * @param color - Outline color
+   * @param visible - Initial visibility state
+   */
+  drawFactionOutline(
+    factionId: string,
+    hexIds: string[],
+    color: number,
+    visible: boolean = true
+  ): void {
+    this.ensureInitialized();
+
+    const canvas = (globalThis as any).canvas;
+    if (!canvas?.grid || hexIds.length === 0) return;
+
+    const layer = this.createLayer('kingdom-territory-outline', 10);
+
+    const outlineResult = generateTerritoryOutline(hexIds);
+    if (outlineResult.outlines.length === 0) return;
+
+    const graphics = new PIXI.Graphics();
+    graphics.name = `faction-${factionId}`;
+    graphics.visible = visible;
+
+    graphics.lineStyle({
+      width: 16,
+      color: color,
+      alpha: TERRITORY_BORDER_COLORS.outlineAlpha,
+      cap: PIXI.LINE_CAP.ROUND,
+      join: PIXI.LINE_JOIN.ROUND
+    });
+
+    outlineResult.outlines.forEach((path) => {
+      if (path.length === 0) return;
+      graphics.moveTo(path[0].start.x, path[0].start.y);
+      for (const segment of path) {
+        graphics.lineTo(segment.end.x, segment.end.y);
+      }
+      // Close the path if it forms a loop
+      const first = path[0].start;
+      const last = path[path.length - 1].end;
+      if (Math.abs(first.x - last.x) < 1 && Math.abs(first.y - last.y) < 1) {
+        graphics.closePath();
+      }
+    });
+
+    layer.addChild(graphics);
   }
 
   /**

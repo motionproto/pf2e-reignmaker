@@ -253,8 +253,8 @@
   <div class="toolbar-buttons">
     {#each overlays as overlay}
       <div class="overlay-row">
-        <button 
-          class="toolbar-button" 
+        <button
+          class="toolbar-button"
           class:active={$activeOverlaysStore.has(overlay.id)}
           on:click={() => toggleOverlay(overlay.id)}
           title="Toggle {overlay.name} Overlay"
@@ -262,8 +262,8 @@
           <i class="fas {overlay.icon}"></i>
           <span>{overlay.name}</span>
         </button>
-        
-        {#if overlay.id === 'territories' && $activeOverlaysStore.has('territories')}
+
+        {#if overlay.id === 'territories'}
           <FactionVisibilityDropdown />
         {/if}
       </div>
@@ -415,7 +415,8 @@
   
   .overlay-row {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
     gap: var(--space-4);
   }
   
@@ -429,7 +430,8 @@
     display: flex;
     align-items: center;
     gap: var(--space-12);
-    padding: var(--space-12) var(--space-16);
+    height: 2rem;
+    padding: 0 var(--space-12);
     background: var(--hover-low);
     border: 2px solid var(--border-subtle);
     border-radius: var(--radius-lg);
@@ -438,6 +440,7 @@
     transition: all 0.2s;
     font-size: var(--font-sm);
     font-weight: 500;
+    flex: 1;
     
     &:hover {
       background: var(--hover);

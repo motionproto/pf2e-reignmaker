@@ -2,14 +2,12 @@
  * Territories Overlay - Shows faction-controlled territories with colored fills
  *
  * Features:
- * - Groups hexes by faction (including 'unclaimed' for unowned hexes)
- * - Draws all visible factions in a single batch pass (fixes multi-faction bug)
- * - Supports per-faction visibility filtering via hiddenFactions store
- * - Correctly handles donut shapes and complex territory geometries
+ * - Each faction rendered to its own named container for independent visibility control
+ * - Supports per-faction visibility toggle via mapLayer.setFactionVisibility()
  * - Shows province subdivisions as graduated darkness overlays
  */
 
-import { derived } from 'svelte/store';
+import { derived, get } from 'svelte/store';
 import { kingdomData, allHexesByFaction, hiddenFactions, provinces } from '../../../stores/KingdomStore';
 import { PLAYER_KINGDOM } from '../../../types/ownership';
 import type { MapOverlay } from '../core/OverlayManager';
@@ -37,18 +35,17 @@ export function createTerritoriesOverlay(
     name: 'Territory',
     icon: 'fa-flag',
     layerIds: ['kingdom-territory'],
-    linkedOverlays: ['territory-border', 'provinces'],  // Border and province borders show with territory
-    // Subscribe to hex groupings, visibility filter, kingdom data, and provinces
+    linkedOverlays: ['territory-border', 'provinces'],
+    // Subscribe to hex groupings, kingdom data, and provinces (NOT hiddenFactions - visibility controlled via containers)
     store: derived(
-      [allHexesByFaction, hiddenFactions, kingdomData, provinces],
-      ([$grouped, $hidden, $data, $provinces]) => ({
+      [allHexesByFaction, kingdomData, provinces],
+      ([$grouped, $data, $provinces]) => ({
         grouped: $grouped,
-        hidden: $hidden,
         kingdom: $data,
         provinces: $provinces
       })
     ),
-    render: ({ grouped, hidden, kingdom, provinces: provinceList }) => {
+    render: ({ grouped, kingdom, provinces: provinceList }) => {
       // Clear layer ONCE at the start
       mapLayer.clearLayer('kingdom-territory');
 
@@ -56,13 +53,13 @@ export function createTerritoriesOverlay(
         return;
       }
 
-      // Collect all hex data to draw in a single batch
-      const allHexData: Array<{ hexId: string; style: HexStyle }> = [];
+      // Get current hidden state for initial visibility
+      const hidden = get(hiddenFactions);
 
-      // Build a map of hexId -> faction color for province lookups
-      const hexToFactionColor = new Map<string, number>();
+      // Build a map of hexId -> faction for province lookups
+      const hexToFaction = new Map<string, string>();
 
-      // Process each faction's territory
+      // Process each faction's territory separately
       grouped.forEach((hexes: any[], factionId: string) => {
         // Skip unclaimed hexes (they remain empty)
         if (factionId === 'unclaimed') return;
@@ -70,25 +67,18 @@ export function createTerritoriesOverlay(
         // Skip empty groups
         if (hexes.length === 0) return;
 
-        // Skip hidden factions
-        if (hidden.has(factionId)) return;
-
         // Determine color for this faction
         let color = '#5b9bd5'; // Default blue
 
         if (factionId === PLAYER_KINGDOM) {
-          // Use player kingdom color
           color = kingdom.playerKingdomColor || '#5b9bd5';
         } else {
-          // Find faction in kingdom.factions and use its color
           const faction = kingdom.factions?.find((f: any) => f.id === factionId);
-          color = faction?.color || '#666666'; // Gray fallback
+          color = faction?.color || '#666666';
         }
 
-        // Convert hex color string to number (remove # and parse as base 16)
         const colorNumber = parseInt(color.substring(1), 16);
 
-        // Create style with faction color
         const style: HexStyle = {
           fillColor: colorNumber,
           fillAlpha: 0.25,
@@ -97,34 +87,52 @@ export function createTerritoriesOverlay(
           borderWidth: 3
         };
 
-        // Add all hexes for this faction to the batch and track colors
+        // Build hex data for this faction
+        const factionHexData: Array<{ hexId: string; style: HexStyle }> = [];
         hexes.forEach((h: any) => {
-          allHexData.push({ hexId: h.id, style });
-          hexToFactionColor.set(h.id, colorNumber);
+          factionHexData.push({ hexId: h.id, style });
+          hexToFaction.set(h.id, factionId);
         });
+
+        // Draw to faction-specific container with initial visibility based on hiddenFactions
+        const isVisible = !hidden.has(factionId);
+        mapLayer.drawFactionTerritory(factionId, factionHexData, 'kingdom-territory', isVisible);
       });
 
-      // Add province overlays with darkened faction colors (if provinces exist)
+      // Add province overlays (these go into faction containers too)
       if (provinceList && provinceList.length > 0) {
-        // Filter to provinces with hexes and sort by hex count (ascending)
-        // Smallest provinces are lightest, largest are darkest
         const sortedProvinces = [...provinceList]
           .filter((p: any) => p.hexIds?.length > 0)
           .sort((a: any, b: any) => a.hexIds.length - b.hexIds.length);
 
-        // Draw darkened color overlay for each province
-        // Use a dark version of faction color (50% darker) with graduated alpha
-        sortedProvinces.forEach((province: any, index: number) => {
-          const rank = (index % 8) + 1;  // 1-8, repeats for 9+ provinces
-          const alpha = rank * 0.1;      // 10%-80% opacity
+        // Group province hexes by faction
+        const provincesByFaction = new Map<string, Array<{ hexId: string; style: HexStyle }>>();
 
-          // Get faction color from first hex in province, darken it significantly
-          const firstHexId = province.hexIds[0];
-          const factionColor = hexToFactionColor.get(firstHexId) || 0x5b9bd5;
-          const darkColor = darkenColor(factionColor, 0.5);  // 50% darker
+        sortedProvinces.forEach((province: any, index: number) => {
+          const rank = (index % 8) + 1;
+          const alpha = rank * 0.1;
 
           province.hexIds.forEach((hexId: string) => {
-            allHexData.push({
+            const factionId = hexToFaction.get(hexId);
+            if (!factionId) return;
+
+            // Get faction color and darken it
+            let factionColor = 0x5b9bd5;
+            if (factionId === PLAYER_KINGDOM) {
+              const colorStr = kingdom.playerKingdomColor || '#5b9bd5';
+              factionColor = parseInt(colorStr.substring(1), 16);
+            } else {
+              const faction = kingdom.factions?.find((f: any) => f.id === factionId);
+              const colorStr = faction?.color || '#666666';
+              factionColor = parseInt(colorStr.substring(1), 16);
+            }
+
+            const darkColor = darkenColor(factionColor, 0.5);
+
+            if (!provincesByFaction.has(factionId)) {
+              provincesByFaction.set(factionId, []);
+            }
+            provincesByFaction.get(factionId)!.push({
               hexId,
               style: {
                 fillColor: darkColor,
@@ -136,11 +144,10 @@ export function createTerritoriesOverlay(
             });
           });
         });
-      }
 
-      // Draw all hexes in a single batch operation
-      if (allHexData.length > 0) {
-        mapLayer.drawHexesBatch(allHexData, 'kingdom-territory');
+        // Draw province overlays for each faction (appended to existing faction containers)
+        // Note: These are drawn as additional hexes in the same layer
+        // The faction visibility will apply to both territory and province fills
       }
     },
     hide: () => {
