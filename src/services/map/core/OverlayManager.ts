@@ -91,9 +91,6 @@ export class OverlayManager {
   
   // Single source of truth for active overlay IDs - both runtime and reactive UI state
   private activeOverlaysStore: Writable<Set<string>> = writable(new Set());
-  
-  // Overlay state stack for temporary overlay views (e.g., during map interactions)
-  private overlayStateStack: Set<string>[] = [];
 
   private constructor() {
     this.mapLayer = ReignMakerMapLayer.getInstance();
@@ -449,91 +446,17 @@ export class OverlayManager {
   }
 
   /**
-   * Push current overlay state onto stack (for temporary overlay changes)
-   * Use this before showing temporary overlays during map interactions
-   * 
-   * @returns The saved state (for debugging/verification)
-   */
-  pushOverlayState(): Set<string> {
-    const $active = get(this.activeOverlaysStore);
-    const savedState = new Set($active);
-    this.overlayStateStack.push(savedState);
-    logger.info(`[OverlayManager] 📌 Pushed overlay state (stack depth: ${this.overlayStateStack.length}):`, Array.from(savedState));
-    return savedState;
-  }
-  
-  /**
-   * Pop and restore previous overlay state from stack
-   * Use this to restore player's overlay preferences after map interaction
-   *
-   * @returns true if state was restored, false if stack was empty
-   */
-  async popOverlayState(): Promise<boolean> {
-    if (this.overlayStateStack.length === 0) {
-      logger.warn('[OverlayManager] ⚠️ Cannot pop overlay state - stack is empty');
-      return false;
-    }
-
-    const previousState = this.overlayStateStack.pop()!;
-    logger.info(`[OverlayManager] 📍 Popping overlay state (stack depth: ${this.overlayStateStack.length}):`, Array.from(previousState));
-
-    // Get current active overlays
-    const $active = get(this.activeOverlaysStore);
-
-    // Track any errors during restoration
-    const errors: Array<{ id: string; error: unknown }> = [];
-
-    // Hide overlays that weren't in the previous state
-    const toHide = Array.from($active).filter(id => !previousState.has(id));
-    for (const id of toHide) {
-      try {
-        logger.info(`[OverlayManager]   - Hiding: ${id}`);
-        this.hideOverlay(id, true); // Skip state save during batch operation
-      } catch (error) {
-        logger.error(`[OverlayManager] ❌ Failed to hide overlay ${id}:`, error);
-        errors.push({ id, error });
-        // Continue with other overlays - don't let one failure break restoration
-      }
-    }
-
-    // Show overlays that were in the previous state but aren't active now
-    const toShow = Array.from(previousState).filter(id => !$active.has(id));
-    for (const id of toShow) {
-      try {
-        logger.info(`[OverlayManager]   + Showing: ${id}`);
-        await this.showOverlay(id);
-      } catch (error) {
-        logger.error(`[OverlayManager] ❌ Failed to show overlay ${id}:`, error);
-        errors.push({ id, error });
-        // Continue with other overlays - don't let one failure break restoration
-      }
-    }
-
-    // Save the restored state to localStorage
-    this.saveState();
-
-    // Log summary if there were errors
-    if (errors.length > 0) {
-      logger.warn(`[OverlayManager] ⚠️ Overlay state restoration completed with ${errors.length} error(s)`);
-    }
-
-    return true;
-  }
-  
-  /**
-   * Set temporary overlays for map interaction (auto-saves current state)
-   * This is a convenience method that combines pushOverlayState() + showing specific overlays
+   * Set temporary overlays for map interaction
+   * Shows specified overlays, hides others, and ensures PIXI container is visible
+   * Use restoreUserPreferences() to restore user's saved overlay state afterward
    *
    * @param overlayIds - Array of overlay IDs to show (all others will be hidden)
-   * @param skipPush - If true, don't push state (useful if already pushed manually)
    */
-  async setTemporaryOverlays(overlayIds: string[], skipPush: boolean = false): Promise<void> {
-    // Save current state first (unless told to skip)
-    if (!skipPush) {
-      this.pushOverlayState();
-    }
-
+  async setTemporaryOverlays(overlayIds: string[]): Promise<void> {
     logger.info('[OverlayManager] 🔄 Setting temporary overlays:', overlayIds);
+
+    // Ensure PIXI container is visible (critical for rendering)
+    this.mapLayer.showPixiContainer();
 
     // Track any errors during the operation
     const errors: Array<{ id: string; error: unknown }> = [];
@@ -556,7 +479,7 @@ export class OverlayManager {
     for (const id of overlayIds) {
       if (!$active.has(id)) {
         try {
-          await this.showOverlay(id);
+          await this.showOverlay(id, true); // Skip state save - these are temporary
         } catch (error) {
           logger.error(`[OverlayManager] ❌ Failed to show overlay ${id}:`, error);
           errors.push({ id, error });
@@ -570,23 +493,53 @@ export class OverlayManager {
       logger.info('[OverlayManager] ✅ Temporary overlays set');
     }
   }
-  
+
   /**
-   * Clear the overlay state stack (use sparingly - mainly for cleanup/reset)
+   * Restore user's overlay preferences from localStorage
+   * Use this after temporary overlay changes (hex selection, army movement, etc.)
    */
-  clearOverlayStateStack(): void {
-    const depth = this.overlayStateStack.length;
-    this.overlayStateStack = [];
-    if (depth > 0) {
-      logger.info(`[OverlayManager] 🗑️ Cleared overlay state stack (was ${depth} deep)`);
+  async restoreUserPreferences(): Promise<void> {
+    logger.info('[OverlayManager] 🔄 Restoring user overlay preferences');
+
+    try {
+      const savedState = localStorage.getItem(this.STORAGE_KEY);
+      if (!savedState) {
+        logger.info('[OverlayManager] No saved preferences found, clearing overlays');
+        this.clearAll(false);
+        return;
+      }
+
+      const state = JSON.parse(savedState);
+      const savedOverlays = new Set<string>(state.activeOverlays || []);
+
+      // Get current active overlays
+      const $active = get(this.activeOverlaysStore);
+
+      // Hide overlays that aren't in saved preferences
+      const toHide = Array.from($active).filter(id => !savedOverlays.has(id));
+      for (const id of toHide) {
+        try {
+          this.hideOverlay(id, true); // Skip state save during restoration
+        } catch (error) {
+          logger.error(`[OverlayManager] ❌ Failed to hide overlay ${id}:`, error);
+        }
+      }
+
+      // Show overlays that are in saved preferences
+      for (const id of savedOverlays) {
+        if (!$active.has(id) && this.overlays.has(id)) {
+          try {
+            await this.showOverlay(id, true); // Skip state save during restoration
+          } catch (error) {
+            logger.error(`[OverlayManager] ❌ Failed to show overlay ${id}:`, error);
+          }
+        }
+      }
+
+      logger.info('[OverlayManager] ✅ User preferences restored');
+    } catch (error) {
+      logger.error('[OverlayManager] ❌ Failed to restore user preferences:', error);
     }
-  }
-  
-  /**
-   * Get current overlay state stack depth (for debugging)
-   */
-  getOverlayStateStackDepth(): number {
-    return this.overlayStateStack.length;
   }
   
   /**

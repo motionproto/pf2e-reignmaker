@@ -646,9 +646,11 @@
          
          // Create army with selected type, image, and ledBy faction
          // Token placement is handled by _createArmyInternal, so we don't need to do it here
+         const tokenImage = ARMY_TYPES[armyType as keyof typeof ARMY_TYPES].tokenImage;
          const army = await armyService.createArmy(name, userCharacterLevel, {
             type: armyType,
-            image: ARMY_TYPES[armyType as keyof typeof ARMY_TYPES].image,
+            portraitImage: tokenImage,
+            tokenImage: tokenImage,
             ledBy: factionId  // Set the faction that leads this army
          });
          

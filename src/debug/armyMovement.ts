@@ -108,17 +108,39 @@ export async function testArmyMovementFromSelection(): Promise<void> {
     
     logger.info(`[Debug] Found army ID: ${armyId}`);
     ui?.notifications?.info(`Testing movement for ${token.document.name}`);
-    
+
     // Activate movement mode
     await armyMovementMode.activateForArmy(armyId, hexId);
-    
+
+    // Set up callback to execute movement when path is confirmed
+    armyMovementMode.setPathCompleteCallback(async () => {
+      logger.info('[Debug] Path confirmed - executing movement');
+      await armyMovementMode.executeMovement();
+    });
+
     logger.info('[Debug] ✅ Army movement mode activated');
-    logger.info('[Debug] Hover over hexes to see paths, click to move');
+    logger.info('[Debug] Click hexes to add waypoints, click last waypoint again to execute move');
   } catch (error) {
     logger.error('[Debug] Failed to activate army movement from selection:', error);
     const ui = (globalThis as any).ui;
     ui?.notifications?.error(`Failed to activate: ${error}`);
   }
+}
+
+/**
+ * Execute the current army movement (animate and finalize)
+ * Use after adding waypoints to trigger the actual move
+ */
+export async function executeArmyMovement(): Promise<void> {
+  if (!armyMovementMode.isActive()) {
+    logger.warn('[Debug] Army movement mode is not active');
+    const ui = (globalThis as any).ui;
+    ui?.notifications?.warn('No active army movement to execute');
+    return;
+  }
+
+  logger.info('[Debug] Executing army movement...');
+  await armyMovementMode.executeMovement();
 }
 
 /**
@@ -373,6 +395,7 @@ export function registerDebugUtils(): void {
   // Register debug functions
   game.reignmaker.testArmyMovement = testArmyMovement;
   game.reignmaker.testArmyMovementFromSelection = testArmyMovementFromSelection;
+  game.reignmaker.executeArmyMovement = executeArmyMovement;
   game.reignmaker.deactivateArmyMovement = deactivateArmyMovement;
   game.reignmaker.testPathfinding = testPathfinding;
   game.reignmaker.getHexMovementCost = getHexMovementCost;

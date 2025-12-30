@@ -14,6 +14,7 @@
 import type { Army } from '../../models/Army';
 import type { PathResult, ReachabilityMap } from '../pathfinding/types';
 import { pathfindingService } from '../pathfinding';
+import { navigationGrid } from '../pathfinding/NavigationGrid';
 import { ReignMakerMapLayer } from '../map/core/ReignMakerMapLayer';
 import { getOverlayManager, type OverlayManager } from '../map/core/OverlayManager';
 import { ARMY_MOVEMENT_LAYERS, ARMY_MOVEMENT_Z_INDICES } from '../map/overlays/ArmyMovementOverlay';
@@ -61,6 +62,7 @@ export class ArmyMovementMode {
   private canvasClickHandler: ((event: any) => void) | null = null;
   private canvasMoveHandler: ((event: any) => void) | null = null;
   private currentHoveredHex: string | null = null;
+  private currentHoveredNavCell: { x: number; y: number } | null = null;
   private pathChangedCallback: ((path: string[]) => void) | null = null;
   private pathCompleteCallback: (() => void) | null = null;
 
@@ -130,6 +132,14 @@ export class ArmyMovementMode {
   }
 
   /**
+   * Execute the planned movement (public wrapper for finalizePath)
+   * Call this after waypoints have been added to animate the army and complete the move
+   */
+  async executeMovement(): Promise<void> {
+    await this.finalizePath();
+  }
+
+  /**
    * Activate movement mode for an army
    *
    * @param armyId - ID of the army to move
@@ -196,12 +206,10 @@ export class ArmyMovementMode {
     this.currentNavCell = validNavCell;
 
     // Save current overlay state and set temporary overlays for army movement
-    // Show only territory context + army movement layers - hide other overlays that might clutter the view
+    // Show only army movement layers - hide other overlays that might clutter the view
     const overlayManager = this.getOverlayManager();
     await overlayManager.setTemporaryOverlays([
-      'territories',       // Show territory ownership for context
-      'territory-border',  // Show kingdom borders
-      'army-movement',     // Army movement visualization layers
+      'army-movement',     // Army movement visualization layers only
     ]);
     logger.info('[ArmyMovementMode] Saved overlay state and set movement overlays');
 
@@ -332,19 +340,25 @@ export class ArmyMovementMode {
     try {
       // Get mouse position
       const position = event.data.getLocalPosition((globalThis as any).canvas.stage);
-      
+
       // Convert to hex offset
       const offset = positionToOffset(position.x, position.y);
-      
+
       // Convert to hex ID
       const hexId = hexToKingmakerId(offset);
 
-      // Don't redraw if same hex
-      if (this.currentHoveredHex === hexId) {
+      // Convert mouse position to nav cell for precise targeting within hex
+      const targetNavCell = navigationGrid.pixelToCell(position.x, position.y);
+
+      // Don't redraw if same hex AND same nav cell
+      if (this.currentHoveredHex === hexId &&
+          this.currentHoveredNavCell?.x === targetNavCell.x &&
+          this.currentHoveredNavCell?.y === targetNavCell.y) {
         return;
       }
 
       this.currentHoveredHex = hexId;
+      this.currentHoveredNavCell = targetNavCell;
 
       // Use cached reachability (updated when waypoints change)
       const isReachable = this.currentReachableHexes.has(hexId);
@@ -358,13 +372,15 @@ export class ArmyMovementMode {
       mapLayer.clearLayerContent(ARMY_MOVEMENT_LAYERS.cellpath);
 
       if (isReachable) {
-        // Find path from current origin to hover hex (uses cached origin)
+
+        // Find path from current origin to hover position (uses mouse position for river-aware targeting)
         const pathResult = pathfindingService.findPath(
           this.currentOriginHexId!,
           hexId,
           remainingMovement,
           this.traits,
-          this.currentOriginNavCell ?? undefined
+          this.currentOriginNavCell ?? undefined,
+          targetNavCell
         );
 
         const canvas = (globalThis as any).canvas;
@@ -455,13 +471,17 @@ export class ArmyMovementMode {
         return;
       }
 
-      // Find path from current origin to clicked hex (uses cached origin)
+      // Convert click position to nav cell for precise targeting within hex
+      const targetNavCell = navigationGrid.pixelToCell(position.x, position.y);
+
+      // Find path from current origin to clicked position (uses mouse position for river-aware targeting)
       const pathResult = pathfindingService.findPath(
         this.currentOriginHexId!,
         hexId,
         remainingMovement,
         this.traits,
-        this.currentOriginNavCell ?? undefined
+        this.currentOriginNavCell ?? undefined,
+        targetNavCell
       );
 
       if (!pathResult || !pathResult.isReachable) {
@@ -744,15 +764,11 @@ export class ArmyMovementMode {
       this.mapLayer.clearLayer(ARMY_MOVEMENT_LAYERS.cellpath);
     }
 
-    // Restore player's overlay preferences
+    // Restore player's overlay preferences from localStorage
     const overlayManager = this.getOverlayManager();
-    const restored = await overlayManager.popOverlayState();
-    if (restored) {
-      await overlayManager.refreshActiveOverlays();
-      logger.info('[ArmyMovementMode] Restored player overlay preferences');
-    } else {
-      logger.warn('[ArmyMovementMode] No overlay state to restore');
-    }
+    await overlayManager.restoreUserPreferences();
+    await overlayManager.refreshActiveOverlays();
+    logger.info('[ArmyMovementMode] Restored player overlay preferences');
 
     // Reset state
     this.active = false;

@@ -1141,7 +1141,11 @@ export class ReignMakerMapLayer {
         await this.toolbarManager.show(() => this.handleToolbarManualClose());
         // Only set toggleState after successful show
         this.toggleState = true;
-        // Toolbar's onMount will automatically restore saved overlay states
+
+        // Explicitly restore overlay state (don't rely solely on toolbar's onMount)
+        const { getOverlayManager } = await import('./OverlayManager');
+        const overlayManager = getOverlayManager();
+        await overlayManager.restoreState();
       } catch (error) {
         // If show fails, ensure state is consistent
         logger.error('[ReignMakerMapLayer] Failed to show toolbar:', error);

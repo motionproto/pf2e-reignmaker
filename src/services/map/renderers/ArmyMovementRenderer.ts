@@ -35,6 +35,143 @@ const MOVEMENT_COLORS = {
 let cachedStripeTexture: PIXI.Texture | null = null;
 
 /**
+ * Get the neighbor hex coordinates for a given direction
+ * Uses odd-q offset coordinates (flat-top hexes, odd columns shifted down)
+ *
+ * Directions (clockwise from top-right):
+ * 0: top-right, 1: right, 2: bottom-right, 3: bottom-left, 4: left, 5: top-left
+ */
+function getHexNeighbor(i: number, j: number, direction: number): { i: number; j: number } {
+  // For odd-q offset coordinates (flat-top hex grid)
+  // Odd columns (j % 2 === 1) have different neighbor offsets
+  const isOddColumn = j % 2 === 1;
+
+  // Neighbor offsets for flat-top hex grid with odd-q offset
+  // Format: [di, dj] for each direction
+  const evenColOffsets = [
+    [0, 1],   // 0: top-right
+    [1, 0],   // 1: right (down)
+    [1, -1],  // 2: bottom-right
+    [0, -1],  // 3: bottom-left
+    [-1, 0],  // 4: left (up)
+    [-1, 1],  // 5: top-left
+  ];
+
+  const oddColOffsets = [
+    [-1, 1],  // 0: top-right
+    [1, 0],   // 1: right (down)
+    [0, -1],  // 2: bottom-right
+    [-1, -1], // 3: bottom-left
+    [-1, 0],  // 4: left (up)
+    [0, 1],   // 5: top-left
+  ];
+
+  const offsets = isOddColumn ? oddColOffsets : evenColOffsets;
+  const [di, dj] = offsets[direction];
+
+  return { i: i + di, j: j + dj };
+}
+
+/**
+ * Get the two world-space vertices for a hex edge
+ * Returns the start and end points of the edge line segment
+ */
+function getHexEdgeVertices(
+  hexId: string,
+  direction: number,
+  canvas: any
+): { start: { x: number; y: number }; end: { x: number; y: number } } | null {
+  try {
+    const parts = hexId.split('.');
+    const i = parseInt(parts[0], 10);
+    const j = parseInt(parts[1], 10);
+
+    if (isNaN(i) || isNaN(j)) return null;
+
+    const GridHex = (globalThis as any).foundry.grid.GridHex;
+    const hex = new GridHex({ i, j }, canvas.grid);
+    const center = hex.center;
+    const relativeVertices = canvas.grid.getShape(hex.offset);
+
+    // Scale slightly to match the filled hexes
+    const scale = (canvas.grid.sizeY + 2) / canvas.grid.sizeY;
+
+    const worldVertices = relativeVertices.map((v: any) => ({
+      x: center.x + (v.x * scale),
+      y: center.y + (v.y * scale)
+    }));
+
+    // For flat-top hexes, vertices are ordered clockwise from top
+    // Edge 0 (top-right) uses vertices 0 and 1
+    // Edge 1 (right) uses vertices 1 and 2
+    // etc.
+    const startVertex = worldVertices[direction];
+    const endVertex = worldVertices[(direction + 1) % 6];
+
+    return {
+      start: startVertex,
+      end: endVertex
+    };
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * Render the outer boundary of reachable hexes
+ * Draws lines along hex edges where one side is reachable and the other isn't
+ */
+function renderReachableBoundary(
+  graphics: PIXI.Graphics,
+  reachableHexes: ReachabilityMap,
+  canvas: any
+): void {
+  // Build Set of reachable hexIds for O(1) lookup
+  const reachableSet = new Set<string>();
+  reachableHexes.forEach((_cost, hexId) => {
+    reachableSet.add(hexId);
+  });
+
+  // Set up line style for boundary
+  graphics.lineStyle({
+    width: 5,
+    color: MOVEMENT_COLORS.reachable,
+    alpha: 1.0,
+    cap: PIXI.LINE_CAP.ROUND,
+    join: PIXI.LINE_JOIN.ROUND
+  });
+
+  let edgeCount = 0;
+
+  // For each reachable hex, check all 6 neighbors
+  reachableHexes.forEach((_cost, hexId) => {
+    const parts = hexId.split('.');
+    const i = parseInt(parts[0], 10);
+    const j = parseInt(parts[1], 10);
+
+    if (isNaN(i) || isNaN(j)) return;
+
+    // Check each direction (0-5)
+    for (let dir = 0; dir < 6; dir++) {
+      const neighbor = getHexNeighbor(i, j, dir);
+      const neighborId = `${neighbor.i}.${neighbor.j}`;
+
+      // If neighbor is NOT reachable, this edge is a boundary
+      if (!reachableSet.has(neighborId)) {
+        const edge = getHexEdgeVertices(hexId, dir, canvas);
+        if (edge) {
+          graphics.moveTo(edge.start.x, edge.start.y);
+          graphics.lineTo(edge.end.x, edge.end.y);
+          edgeCount++;
+        }
+      }
+    }
+  });
+
+  logger.info(`[ArmyMovementRenderer] Rendered ${edgeCount} boundary edges`);
+}
+
+/**
  * Create a diagonal stripe pattern texture for movement range
  * The texture is cached and reused for performance
  */
@@ -172,6 +309,9 @@ export function renderReachableHexes(
     const drawn = drawHexWithPattern(graphics, hexId, patternTexture, canvas);
     if (drawn) count++;
   });
+
+  // Draw outer boundary around the reachable area
+  renderReachableBoundary(graphics, reachableHexes, canvas);
 
   layer.addChild(graphics);
   logger.info(`[ArmyMovementRenderer] Rendered ${count} reachable hexes with pattern`);

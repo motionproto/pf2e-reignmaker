@@ -188,27 +188,19 @@ export class ProvinceEditorService {
       'interactive-hover'    // Hover feedback
     ];
 
-    // Apply temporary overlay configuration (saves current state automatically)
+    // Apply temporary overlay configuration (auto-shows PIXI container)
     await this.overlayManager.setTemporaryOverlays(actionViewOverlays);
-
-    // Ensure map layer is visible
-    this.mapLayer.showPixiContainer();
 
     logger.info('[ProvinceEditor] Applied province editing overlays:', actionViewOverlays);
   }
 
   /**
-   * Restore player's overlay preferences
+   * Restore player's overlay preferences from localStorage
    */
   private async restoreOverlays(): Promise<void> {
-    const restored = await this.overlayManager.popOverlayState();
-    if (restored) {
-      // Refresh all active overlays to ensure they render with current data
-      await this.overlayManager.refreshActiveOverlays();
-      logger.info('[ProvinceEditor] Restored player overlay preferences');
-    } else {
-      logger.warn('[ProvinceEditor] No overlay state to restore');
-    }
+    await this.overlayManager.restoreUserPreferences();
+    await this.overlayManager.refreshActiveOverlays();
+    logger.info('[ProvinceEditor] Restored player overlay preferences');
   }
 
   /**

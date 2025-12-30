@@ -305,6 +305,16 @@ export class NavigationGrid {
     return this.cellSize;
   }
 
+  /**
+   * Convert pixel coordinates to nav grid cell coordinates
+   */
+  pixelToCell(pixelX: number, pixelY: number): { x: number; y: number } {
+    return {
+      x: Math.floor(pixelX / this.cellSize),
+      y: Math.floor(pixelY / this.cellSize)
+    };
+  }
+
   // ============================================================================
   // Cell-Based Pathfinding Methods
   // ============================================================================

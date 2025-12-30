@@ -416,6 +416,7 @@ export class PathfindingService {
    * @param maxMovement - Maximum movement points (default: 20)
    * @param traits - Army movement traits (canFly, canSwim, hasBoats)
    * @param startNavCell - Optional specific nav-grid cell to start from (for armies with saved position)
+   * @param targetNavCell - Optional specific nav-grid cell to target (for mouse-position-aware targeting)
    * @returns PathResult with path, cost, and reachability, plus the final nav cell
    */
   findPath(
@@ -423,7 +424,8 @@ export class PathfindingService {
     targetHexId: string,
     maxMovement: number = DEFAULT_MOVEMENT_RANGE,
     traits?: ArmyMovementTraits,
-    startNavCell?: { x: number; y: number }
+    startNavCell?: { x: number; y: number },
+    targetNavCell?: { x: number; y: number }
   ): PathResult | null {
     const startNormalized = normalizeHexId(startHexId);
     const targetNormalized = normalizeHexId(targetHexId);
@@ -463,8 +465,25 @@ export class PathfindingService {
       return { path: [], totalCost: Infinity, isReachable: false };
     }
 
-    // For target, we just need any cell in the target hex - we'll reach it when we enter the hex
-    const targetCell = navigationGrid.hexCenterToCell(targetNormalized);
+    // Determine target cell - use provided targetNavCell if valid, otherwise hex center
+    let targetCell: { x: number; y: number } | null = null;
+
+    if (targetNavCell) {
+      // Check if the provided target cell is in the target hex and passable
+      const targetCellHex = navigationGrid.getHexForCell(targetNavCell.x, targetNavCell.y);
+      if (targetCellHex === targetNormalized && navigationGrid.isCellPassable(targetNavCell.x, targetNavCell.y)) {
+        targetCell = targetNavCell;
+      } else if (targetCellHex === targetNormalized) {
+        // Cell is in hex but blocked - find nearest passable cell in target hex
+        targetCell = navigationGrid.getPassableCellInHex(targetNormalized);
+      }
+    }
+
+    // Fallback to hex center if no valid target cell found
+    if (!targetCell) {
+      targetCell = navigationGrid.hexCenterToCell(targetNormalized);
+    }
+
     if (!targetCell) {
       logger.warn(`[Pathfinding] Cannot find cell for target hex ${targetNormalized}`);
       return { path: [], totalCost: Infinity, isReachable: false };
@@ -491,8 +510,10 @@ export class PathfindingService {
     const openSet: Map<string, CellNode> = new Map();
     const closedSet: Set<string> = new Set();
 
-    // Heuristic: hex distance to target (admissible since hex distance <= actual cost)
-    const heuristic = (hexId: string): number => hexDistance(hexId, targetNormalized);
+    // Heuristic: Manhattan distance to target cell (admissible - never overestimates)
+    const heuristic = (cellX: number, cellY: number): number => {
+      return Math.abs(cellX - targetCell.x) + Math.abs(cellY - targetCell.y);
+    };
 
     // Initialize start
     const startCellKey = `${startCell.x},${startCell.y}`;
@@ -501,7 +522,7 @@ export class PathfindingService {
       cellY: startCell.y,
       hexId: startNormalized,
       gCost: 0,
-      fCost: heuristic(startNormalized),
+      fCost: heuristic(startCell.x, startCell.y),
       parentCellKey: null,
       parentHexId: null
     };
@@ -533,8 +554,8 @@ export class PathfindingService {
 
       if (!current) break;
 
-      // Found target hex?
-      if (current.hexId === targetNormalized) {
+      // Found target cell?
+      if (current.cellX === targetCell.x && current.cellY === targetCell.y) {
         // Reconstruct hex path with final nav cell and cell path
         return this.reconstructCellPath(
           hexParents,
@@ -588,7 +609,7 @@ export class PathfindingService {
           cellY: neighbor.y,
           hexId: neighborHexId,
           gCost: tentativeGCost,
-          fCost: tentativeGCost + heuristic(neighborHexId),
+          fCost: tentativeGCost + heuristic(neighbor.x, neighbor.y),
           parentCellKey: currentCellKey,
           parentHexId: current.hexId
         };
