@@ -14,8 +14,9 @@ import { get } from 'svelte/store';
 import { logger } from '../../utils/Logger';
 import { movementGraph } from './MovementGraph';
 import { navigationGrid } from './NavigationGrid';
-import { getMovementStrategy } from './movement';
+// Movement strategy is used by NavigationGrid.getCellNeighbors()
 import type { ArmyMovementTraits } from '../../utils/armyMovementTraits';
+import { getMovementStrategy } from './movement';
 
 /**
  * Default movement range for armies
@@ -511,10 +512,17 @@ export class PathfindingService {
     const openSet: Map<string, CellNode> = new Map();
     const closedSet: Set<string> = new Set();
 
-    // Heuristic: Use current movement strategy's heuristic (admissible - never overestimates)
+    // Heuristic: Hex distance + tiny cell distance tie-breaker
+    // The hex distance guides through hex space (primary)
+    // The cell distance ensures straight paths within hexes (tie-breaker)
     const strategy = getMovementStrategy();
+    const CELL_HEURISTIC_WEIGHT = 0.0001; // Tiny weight so cell distance doesn't override hex distance
     const heuristic = (cellX: number, cellY: number): number => {
-      return strategy.heuristic(cellX, cellY, targetCell.x, targetCell.y);
+      const cellHexId = navigationGrid.getHexForCell(cellX, cellY);
+      const hexH = cellHexId ? hexDistance(cellHexId, targetNormalized) : 0;
+      // Add cell-level distance as tie-breaker (within same hex, prefer cells closer to target)
+      const cellH = strategy.heuristic(cellX, cellY, targetCell.x, targetCell.y);
+      return hexH + cellH * CELL_HEURISTIC_WEIGHT;
     };
 
     // Initialize start
@@ -564,6 +572,7 @@ export class PathfindingService {
           hexCosts,
           targetNormalized,
           { x: current.cellX, y: current.cellY },
+          traits,
           cellNodes,
           currentCellKey
         );
@@ -596,7 +605,12 @@ export class PathfindingService {
           if (moveCost === Infinity) continue;
         }
 
-        const tentativeGCost = current.gCost + moveCost;
+        // Add tiny per-cell cost to prefer shorter/more direct paths
+        // Use the strategy's step cost (1 for cardinal, sqrt(2) for diagonal)
+        // This ensures fewer cells are traversed when possible
+        const stepCost = strategy.getStepCost(current.cellX, current.cellY, neighbor.x, neighbor.y);
+        const CELL_EPSILON = 0.0001;
+        const tentativeGCost = current.gCost + moveCost + (stepCost * CELL_EPSILON);
 
         // Skip if over budget
         if (tentativeGCost > maxMovement) continue;
@@ -643,25 +657,15 @@ export class PathfindingService {
    * Reconstruct hex path and cell path from cell-based A* results
    */
   private reconstructCellPath(
-    hexParents: Map<string, string | null>,
-    hexCosts: Map<string, number>,
+    _hexParents: Map<string, string | null>,
+    cumulativeHexCosts: Map<string, number>,
     targetHexId: string,
     finalNavCell: { x: number; y: number },
+    traits?: ArmyMovementTraits,
     cellNodes?: Map<string, { cellX: number; cellY: number; parentCellKey: string | null }>,
     targetCellKey?: string
   ): PathResult {
-    // Reconstruct hex path
-    const path: string[] = [];
-    let current: string | null = targetHexId;
-
-    while (current !== null) {
-      path.unshift(current);
-      current = hexParents.get(current) ?? null;
-    }
-
-    const totalCost = hexCosts.get(targetHexId) ?? Infinity;
-
-    // Reconstruct cell path (for debug visualization)
+    // First, reconstruct cell path (needed for both debug visualization and hex path)
     let cellPath: Array<{ x: number; y: number }> | undefined;
     if (cellNodes && targetCellKey) {
       cellPath = [];
@@ -678,12 +682,38 @@ export class PathfindingService {
       }
     }
 
+    // Derive hex path from cell path - this ensures we capture all hexes
+    // the path actually traverses, including detours around obstacles
+    const path: string[] = [];
+    let lastHexId: string | null = null;
+    if (cellPath) {
+      for (const cell of cellPath) {
+        const hexId = navigationGrid.getHexForCell(cell.x, cell.y);
+        if (hexId && hexId !== lastHexId) {
+          path.push(hexId);
+          lastHexId = hexId;
+        }
+      }
+    }
+
+    const totalCost = cumulativeHexCosts.get(targetHexId) ?? Infinity;
+
+    // Build per-hex individual costs (not cumulative)
+    const hexCosts = new Map<string, number>();
+    for (let i = 1; i < path.length; i++) {
+      const hexId = path[i];
+      const prevHexId = path[i - 1];
+      const cost = this.getHexMovementCost(hexId, traits, prevHexId);
+      hexCosts.set(hexId, cost);
+    }
+
     return {
       path,
       totalCost,
       isReachable: true,
       finalNavCell,
-      cellPath
+      cellPath,
+      hexCosts
     };
   }
 
@@ -723,7 +753,7 @@ export class PathfindingService {
       if (!current) break;
 
       if (currentHexId === targetHexId) {
-        return this.reconstructPath(nodes, targetHexId);
+        return this.reconstructPath(nodes, targetHexId, traits);
       }
 
       openSet.delete(currentHexId);
@@ -793,7 +823,7 @@ export class PathfindingService {
       if (!current) break;
 
       if (currentHexId === targetHexId) {
-        return this.reconstructPath(nodes, targetHexId);
+        return this.reconstructPath(nodes, targetHexId, traits);
       }
 
       openSet.delete(currentHexId);
@@ -828,7 +858,7 @@ export class PathfindingService {
   /**
    * Reconstruct path from A* node map
    */
-  private reconstructPath(nodes: Map<string, PathNode>, targetHexId: string): PathResult {
+  private reconstructPath(nodes: Map<string, PathNode>, targetHexId: string, traits?: ArmyMovementTraits): PathResult {
     const path: string[] = [];
     let current: string | null = targetHexId;
 
@@ -845,11 +875,11 @@ export class PathfindingService {
       const from = path[i];
       const to = path[i + 1];
       const distance = hexDistance(from, to);
-      
+
       if (distance !== 1) {
         logger.error(`[Pathfinding] Path jumps from ${from} to ${to} (distance=${distance})!`);
         logger.error(`[Pathfinding] Full path:`, path);
-        
+
         // Get neighbors to debug
         const neighbors = getNeighborHexIds(from);
         logger.error(`[Pathfinding] ${from} neighbors:`, neighbors);
@@ -857,10 +887,20 @@ export class PathfindingService {
       }
     }
 
+    // Build per-hex individual costs
+    const hexCosts = new Map<string, number>();
+    for (let i = 1; i < path.length; i++) {
+      const hexId = path[i];
+      const prevHexId = path[i - 1];
+      const cost = this.getHexMovementCost(hexId, traits, prevHexId);
+      hexCosts.set(hexId, cost);
+    }
+
     return {
       path,
       totalCost: targetNode.gCost,
-      isReachable: true
+      isReachable: true,
+      hexCosts
     };
   }
 

@@ -30,165 +30,28 @@ const MOVEMENT_COLORS = {
 };
 
 /**
- * Cached stripe pattern texture for movement range overlay
+ * Cached polka dot pattern texture for movement range overlay
  */
-let cachedStripeTexture: PIXI.Texture | null = null;
+let cachedPatternTexture: PIXI.Texture | null = null;
 
 /**
- * Get the neighbor hex coordinates for a given direction
- * Uses odd-q offset coordinates (flat-top hexes, odd columns shifted down)
- *
- * Directions (clockwise from top-right):
- * 0: top-right, 1: right, 2: bottom-right, 3: bottom-left, 4: left, 5: top-left
- */
-function getHexNeighbor(i: number, j: number, direction: number): { i: number; j: number } {
-  // For odd-q offset coordinates (flat-top hex grid)
-  // Odd columns (j % 2 === 1) have different neighbor offsets
-  const isOddColumn = j % 2 === 1;
-
-  // Neighbor offsets for flat-top hex grid with odd-q offset
-  // Format: [di, dj] for each direction
-  const evenColOffsets = [
-    [0, 1],   // 0: top-right
-    [1, 0],   // 1: right (down)
-    [1, -1],  // 2: bottom-right
-    [0, -1],  // 3: bottom-left
-    [-1, 0],  // 4: left (up)
-    [-1, 1],  // 5: top-left
-  ];
-
-  const oddColOffsets = [
-    [-1, 1],  // 0: top-right
-    [1, 0],   // 1: right (down)
-    [0, -1],  // 2: bottom-right
-    [-1, -1], // 3: bottom-left
-    [-1, 0],  // 4: left (up)
-    [0, 1],   // 5: top-left
-  ];
-
-  const offsets = isOddColumn ? oddColOffsets : evenColOffsets;
-  const [di, dj] = offsets[direction];
-
-  return { i: i + di, j: j + dj };
-}
-
-/**
- * Get the two world-space vertices for a hex edge
- * Returns the start and end points of the edge line segment
- */
-function getHexEdgeVertices(
-  hexId: string,
-  direction: number,
-  canvas: any
-): { start: { x: number; y: number }; end: { x: number; y: number } } | null {
-  try {
-    const parts = hexId.split('.');
-    const i = parseInt(parts[0], 10);
-    const j = parseInt(parts[1], 10);
-
-    if (isNaN(i) || isNaN(j)) return null;
-
-    const GridHex = (globalThis as any).foundry.grid.GridHex;
-    const hex = new GridHex({ i, j }, canvas.grid);
-    const center = hex.center;
-    const relativeVertices = canvas.grid.getShape(hex.offset);
-
-    // Scale slightly to match the filled hexes
-    const scale = (canvas.grid.sizeY + 2) / canvas.grid.sizeY;
-
-    const worldVertices = relativeVertices.map((v: any) => ({
-      x: center.x + (v.x * scale),
-      y: center.y + (v.y * scale)
-    }));
-
-    // For flat-top hexes, vertices are ordered clockwise from top
-    // Edge 0 (top-right) uses vertices 0 and 1
-    // Edge 1 (right) uses vertices 1 and 2
-    // etc.
-    const startVertex = worldVertices[direction];
-    const endVertex = worldVertices[(direction + 1) % 6];
-
-    return {
-      start: startVertex,
-      end: endVertex
-    };
-  } catch (error) {
-    return null;
-  }
-}
-
-/**
- * Render the outer boundary of reachable hexes
- * Draws lines along hex edges where one side is reachable and the other isn't
- */
-function renderReachableBoundary(
-  graphics: PIXI.Graphics,
-  reachableHexes: ReachabilityMap,
-  canvas: any
-): void {
-  // Build Set of reachable hexIds for O(1) lookup
-  const reachableSet = new Set<string>();
-  reachableHexes.forEach((_cost, hexId) => {
-    reachableSet.add(hexId);
-  });
-
-  // Set up line style for boundary
-  graphics.lineStyle({
-    width: 5,
-    color: MOVEMENT_COLORS.reachable,
-    alpha: 1.0,
-    cap: PIXI.LINE_CAP.ROUND,
-    join: PIXI.LINE_JOIN.ROUND
-  });
-
-  let edgeCount = 0;
-
-  // For each reachable hex, check all 6 neighbors
-  reachableHexes.forEach((_cost, hexId) => {
-    const parts = hexId.split('.');
-    const i = parseInt(parts[0], 10);
-    const j = parseInt(parts[1], 10);
-
-    if (isNaN(i) || isNaN(j)) return;
-
-    // Check each direction (0-5)
-    for (let dir = 0; dir < 6; dir++) {
-      const neighbor = getHexNeighbor(i, j, dir);
-      const neighborId = `${neighbor.i}.${neighbor.j}`;
-
-      // If neighbor is NOT reachable, this edge is a boundary
-      if (!reachableSet.has(neighborId)) {
-        const edge = getHexEdgeVertices(hexId, dir, canvas);
-        if (edge) {
-          graphics.moveTo(edge.start.x, edge.start.y);
-          graphics.lineTo(edge.end.x, edge.end.y);
-          edgeCount++;
-        }
-      }
-    }
-  });
-
-  logger.info(`[ArmyMovementRenderer] Rendered ${edgeCount} boundary edges`);
-}
-
-/**
- * Create a diagonal stripe pattern texture for movement range
+ * Create a polka dot pattern texture for movement range
  * The texture is cached and reused for performance
  */
-function getStripePatternTexture(): PIXI.Texture {
-  if (cachedStripeTexture) {
-    return cachedStripeTexture;
+function getPolkaDotTexture(): PIXI.Texture {
+  if (cachedPatternTexture) {
+    return cachedPatternTexture;
   }
 
   const canvas = (globalThis as any).canvas;
   if (!canvas?.app?.renderer) {
     logger.warn('[ArmyMovementRenderer] Canvas renderer not available for texture generation');
-    // Return a 1x1 white texture as fallback
     return PIXI.Texture.WHITE;
   }
 
-  const patternSize = 64;
-  const stripeWidth = 8;
+  const patternSize = 32;
+  const dotRadius = 4;
+  const dotSpacing = 16;
   const patternGraphics = new PIXI.Graphics();
 
   // Transparent background
@@ -196,23 +59,23 @@ function getStripePatternTexture(): PIXI.Texture {
   patternGraphics.drawRect(0, 0, patternSize, patternSize);
   patternGraphics.endFill();
 
-  // Draw diagonal stripes (green)
-  patternGraphics.lineStyle(stripeWidth, MOVEMENT_COLORS.reachable, 0.5);
-
-  // Multiple diagonal lines to cover the pattern tile
-  for (let offset = -patternSize; offset < patternSize * 2; offset += 32) {
-    patternGraphics.moveTo(offset, 0);
-    patternGraphics.lineTo(offset + patternSize, patternSize);
+  // Draw black dots with low opacity
+  patternGraphics.beginFill(0x000000, 0.2);
+  for (let x = dotSpacing / 2; x < patternSize; x += dotSpacing) {
+    for (let y = dotSpacing / 2; y < patternSize; y += dotSpacing) {
+      patternGraphics.drawCircle(x, y, dotRadius);
+    }
   }
+  patternGraphics.endFill();
 
   // Use Foundry's renderer to generate texture (PIXI v7 API)
-  cachedStripeTexture = canvas.app.renderer.generateTexture(patternGraphics, {
+  cachedPatternTexture = canvas.app.renderer.generateTexture(patternGraphics, {
     resolution: 1,
     region: new PIXI.Rectangle(0, 0, patternSize, patternSize)
   });
 
   patternGraphics.destroy();
-  return cachedStripeTexture;
+  return cachedPatternTexture;
 }
 
 /**
@@ -283,7 +146,7 @@ export function renderOriginHex(
 }
 
 /**
- * Render movement range overlay (diagonal stripe pattern on reachable hexes)
+ * Render movement range overlay (polka dot pattern on reachable hexes)
  */
 export function renderReachableHexes(
   layer: PIXI.Container,
@@ -300,8 +163,8 @@ export function renderReachableHexes(
   graphics.name = 'ReachableHexes';
   graphics.visible = true;
 
-  // Get the stripe pattern texture (cached)
-  const patternTexture = getStripePatternTexture();
+  // Get the polka dot pattern texture (cached)
+  const patternTexture = getPolkaDotTexture();
 
   let count = 0;
   reachableHexes.forEach((_cost, hexId) => {
@@ -310,21 +173,20 @@ export function renderReachableHexes(
     if (drawn) count++;
   });
 
-  // Draw outer boundary around the reachable area
-  renderReachableBoundary(graphics, reachableHexes, canvas);
-
   layer.addChild(graphics);
   logger.info(`[ArmyMovementRenderer] Rendered ${count} reachable hexes with pattern`);
 }
 
 /**
  * Render path as connected lines (center-to-center, through every hex)
+ * @param hexCosts - Optional map of hexId -> individual movement cost for that hex
  */
 export function renderPath(
   layer: PIXI.Container,
   path: string[],
   isValid: boolean,
-  canvas: any
+  canvas: any,
+  hexCosts?: Map<string, number>
 ): void {
   if (!canvas?.grid) {
     logger.warn('[ArmyMovementRenderer] Canvas grid not available');
@@ -358,7 +220,7 @@ export function renderPath(
     const firstParts = path[0].split('.');
     const firstI = parseInt(firstParts[0], 10);
     const firstJ = parseInt(firstParts[1], 10);
-    
+
     if (!isNaN(firstI) && !isNaN(firstJ)) {
       const firstHex = new GridHex({ i: firstI, j: firstJ }, canvas.grid);
       graphics.moveTo(firstHex.center.x, firstHex.center.y);
@@ -386,13 +248,12 @@ export function renderPath(
     }
   }
 
-  // Draw small dots at each hex center (except first and last)
-  graphics.lineStyle(0); // No border for dots
-  graphics.beginFill(color, alpha);
-  
-  for (let i = 1; i < path.length - 1; i++) {
+  // Draw cost indicators at each hex center (except first/origin)
+  // Last hex also shows individual cost; total cost shown separately by endpoint indicator
+  for (let i = 1; i < path.length; i++) {
     try {
-      const parts = path[i].split('.');
+      const hexId = path[i];
+      const parts = hexId.split('.');
       const hexI = parseInt(parts[0], 10);
       const hexJ = parseInt(parts[1], 10);
 
@@ -401,13 +262,36 @@ export function renderPath(
       }
 
       const center = canvas.grid.getCenterPoint({ i: hexI, j: hexJ });
-      graphics.drawCircle(center.x, center.y, 6); // 6px radius dots
+      const cost = hexCosts?.get(hexId);
+
+      // Draw filled circle background
+      graphics.lineStyle(3, 0xFFFFFF, 1.0);
+      graphics.beginFill(color, 1.0);
+      graphics.drawCircle(center.x, center.y, 28);
+      graphics.endFill();
+
+      // Add cost label if available
+      if (cost !== undefined) {
+        const text = new PIXI.Text(cost.toString(), {
+          fontFamily: 'Arial',
+          fontSize: 40,
+          fontWeight: 'bold',
+          fill: 0xFFFFFF,
+          stroke: 0x000000,
+          strokeThickness: 4,
+          align: 'center'
+        });
+
+        text.anchor.set(0.5, 0.5);
+        text.x = center.x;
+        text.y = center.y;
+
+        graphics.addChild(text);
+      }
     } catch (error) {
-      logger.error(`[ArmyMovementRenderer] Failed to draw dot at hex ${path[i]}:`, error);
+      logger.error(`[ArmyMovementRenderer] Failed to draw cost at hex ${path[i]}:`, error);
     }
   }
-  
-  graphics.endFill();
 
   layer.addChild(graphics);
 }
@@ -511,18 +395,10 @@ export function renderEndpoint(
     graphics.visible = true;
 
     if (isReachable) {
-      // Draw green circle
-      graphics.beginFill(MOVEMENT_COLORS.endpointValid, MOVEMENT_COLORS.endpointAlpha);
-      graphics.drawCircle(center.x, center.y, MOVEMENT_COLORS.endpointSize);
-      graphics.endFill();
-
-      // Draw border
-      graphics.lineStyle(3, 0xFFFFFF, 1.0);
-      graphics.drawCircle(center.x, center.y, MOVEMENT_COLORS.endpointSize);
-
-      // Draw movement cost label if provided
+      // Don't draw green circle here - the path layer already draws cost circles
+      // Just draw the total movement cost label to the side
       if (movementCost !== undefined) {
-        const text = new PIXI.Text(movementCost.toString(), {
+        const text = new PIXI.Text(Math.floor(movementCost).toString(), {
           fontFamily: 'Arial',
           fontSize: 64,
           fontWeight: 'bold',
@@ -531,10 +407,10 @@ export function renderEndpoint(
           strokeThickness: 6,
           align: 'center'
         });
-        
+
         text.anchor.set(0.5, 0.5);
-        // Position to the right of the circle
-        text.x = center.x + MOVEMENT_COLORS.endpointSize + 50;
+        // Position to the right of where the cost circle is drawn (radius 28 on path layer)
+        text.x = center.x + 28 + 50;
         text.y = center.y;
         
         graphics.addChild(text);

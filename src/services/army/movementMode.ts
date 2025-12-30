@@ -397,9 +397,9 @@ export class ArmyMovementMode {
             mapLayer.showLayer(ARMY_MOVEMENT_LAYERS.cellpath);
           }
 
-          // Draw hex path lines (connecting hex centers)
+          // Draw hex path lines (connecting hex centers) with per-hex costs
           const pathLayer = mapLayer.createLayer(ARMY_MOVEMENT_LAYERS.path, ARMY_MOVEMENT_Z_INDICES.path);
-          renderPath(pathLayer, pathResult.path, pathResult.isReachable, canvas);
+          renderPath(pathLayer, pathResult.path, pathResult.isReachable, canvas, pathResult.hexCosts);
           mapLayer.showLayer(ARMY_MOVEMENT_LAYERS.path);
 
           // Draw endpoint indicator (green circle if reachable, red X if not)

@@ -16,6 +16,8 @@ export interface PathResult {
   finalNavCell?: { x: number; y: number };
   /** Actual cell path traversed by A* (for debug visualization) */
   cellPath?: Array<{ x: number; y: number }>;
+  /** Per-hex costs along the path (hexId -> individual hex cost) */
+  hexCosts?: Map<string, number>;
 }
 
 /**
