@@ -14,6 +14,7 @@
 import type { KingdomData, RiverPath, RiverCrossing, RiverPathPoint, CellRiverPath, RasterizedCell } from '../../actors/KingdomActor';
 import { logger } from '../../utils/Logger';
 import { getEdgeMidpoint } from '../../utils/riverUtils';
+import { getMovementStrategy } from './movement';
 
 /**
  * Grid cell key format: "gridX,gridY" (pixel coords / cellSize)
@@ -320,15 +321,11 @@ export class NavigationGrid {
   // ============================================================================
 
   /**
-   * Get 4-directional (cardinal) neighbor cells
+   * Get neighbor cells using the current movement strategy
+   * (4-directional for Manhattan, 8-directional for Octile)
    */
   getCellNeighbors(gridX: number, gridY: number): Array<{x: number, y: number}> {
-    return [
-      { x: gridX, y: gridY - 1 },  // Up
-      { x: gridX + 1, y: gridY },  // Right
-      { x: gridX, y: gridY + 1 },  // Down
-      { x: gridX - 1, y: gridY }   // Left
-    ];
+    return getMovementStrategy().getNeighbors(gridX, gridY);
   }
 
   /**

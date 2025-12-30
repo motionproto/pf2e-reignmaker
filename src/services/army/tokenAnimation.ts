@@ -25,13 +25,12 @@ function easeInOutQuad(t: number): number {
 function getHexCenterPixels(hexId: string): { x: number, y: number } {
   const canvas = (globalThis as any).canvas;
   const parts = hexId.split('.');
-  const hexI = parseInt(parts[0], 10);
-  const hexJ = parseInt(parts[1], 10);
-  
-  const GridHex = (globalThis as any).foundry.grid.GridHex;
-  const hex = new GridHex({ i: hexI, j: hexJ }, canvas.grid);
-  const center = hex.center;
-  
+  const i = parseInt(parts[0], 10);
+  const j = parseInt(parts[1], 10);
+
+  // Use Foundry's getCenterPoint API (same as TokenHelpers.hexToTokenPosition)
+  const center = canvas.grid.getCenterPoint({ i, j });
+
   return { x: center.x, y: center.y };
 }
 

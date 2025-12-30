@@ -14,6 +14,7 @@ import { get } from 'svelte/store';
 import { logger } from '../../utils/Logger';
 import { movementGraph } from './MovementGraph';
 import { navigationGrid } from './NavigationGrid';
+import { getMovementStrategy } from './movement';
 import type { ArmyMovementTraits } from '../../utils/armyMovementTraits';
 
 /**
@@ -510,9 +511,10 @@ export class PathfindingService {
     const openSet: Map<string, CellNode> = new Map();
     const closedSet: Set<string> = new Set();
 
-    // Heuristic: Manhattan distance to target cell (admissible - never overestimates)
+    // Heuristic: Use current movement strategy's heuristic (admissible - never overestimates)
+    const strategy = getMovementStrategy();
     const heuristic = (cellX: number, cellY: number): number => {
-      return Math.abs(cellX - targetCell.x) + Math.abs(cellY - targetCell.y);
+      return strategy.heuristic(cellX, cellY, targetCell.x, targetCell.y);
     };
 
     // Initialize start

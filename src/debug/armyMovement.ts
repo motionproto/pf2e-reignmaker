@@ -15,6 +15,12 @@ import { armyMovementMode } from '../services/army/movementMode';
 import { pathfindingService } from '../services/pathfinding';
 import { movementGraph } from '../services/pathfinding/MovementGraph';
 import { navigationGrid } from '../services/pathfinding/NavigationGrid';
+import {
+  setMovementStrategy,
+  getMovementStrategy,
+  manhattanStrategy,
+  octileStrategy
+} from '../services/pathfinding/movement';
 import { logger } from '../utils/Logger';
 
 /**
@@ -376,6 +382,47 @@ export function navGridStats(): void {
   logger.info(`  Crossing cells (bridges/fords): ${stats.crossingCells}`);
 }
 
+// ============================================================================
+// Movement Strategy Debug Utilities
+// ============================================================================
+
+/**
+ * Switch to Manhattan (4-directional) movement
+ * Produces staircase paths, simpler but less natural
+ *
+ * Usage: game.reignmaker.useManhattan()
+ */
+export function useManhattan(): void {
+  setMovementStrategy(manhattanStrategy);
+  logger.info('[Debug] Switched to Manhattan (4-directional) movement strategy');
+  const ui = (globalThis as any).ui;
+  ui?.notifications?.info('Movement strategy: Manhattan (4-dir)');
+}
+
+/**
+ * Switch to Octile (8-directional) movement
+ * Allows diagonal movement, produces smoother paths
+ *
+ * Usage: game.reignmaker.useOctile()
+ */
+export function useOctile(): void {
+  setMovementStrategy(octileStrategy);
+  logger.info('[Debug] Switched to Octile (8-directional) movement strategy');
+  const ui = (globalThis as any).ui;
+  ui?.notifications?.info('Movement strategy: Octile (8-dir)');
+}
+
+/**
+ * Get current movement strategy name
+ *
+ * Usage: game.reignmaker.getMovementStrategyName()
+ */
+export function getMovementStrategyName(): string {
+  const name = getMovementStrategy().name;
+  logger.info(`[Debug] Current movement strategy: ${name}`);
+  return name;
+}
+
 /**
  * Register debug utilities on globalThis for browser console access
  */
@@ -412,6 +459,11 @@ export function registerDebugUtils(): void {
   game.reignmaker.checkBlocking = checkBlocking;
   game.reignmaker.checkPathBlocking = checkPathBlocking;
   game.reignmaker.navGridStats = navGridStats;
+
+  // Movement strategy debug functions
+  game.reignmaker.useManhattan = useManhattan;
+  game.reignmaker.useOctile = useOctile;
+  game.reignmaker.getMovementStrategyName = getMovementStrategyName;
 
   // Register hex data checker
   import('../debug/checkHexData').then(module => {

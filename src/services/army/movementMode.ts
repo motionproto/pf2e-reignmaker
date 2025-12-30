@@ -397,10 +397,10 @@ export class ArmyMovementMode {
             mapLayer.showLayer(ARMY_MOVEMENT_LAYERS.cellpath);
           }
 
-          // Draw hex path lines (DISABLED for debug - using cell path instead)
-          // const pathLayer = mapLayer.createLayer(ARMY_MOVEMENT_LAYERS.path, ARMY_MOVEMENT_Z_INDICES.path);
-          // renderPath(pathLayer, pathResult.path, pathResult.isReachable, canvas);
-          // mapLayer.showLayer(ARMY_MOVEMENT_LAYERS.path);
+          // Draw hex path lines (connecting hex centers)
+          const pathLayer = mapLayer.createLayer(ARMY_MOVEMENT_LAYERS.path, ARMY_MOVEMENT_Z_INDICES.path);
+          renderPath(pathLayer, pathResult.path, pathResult.isReachable, canvas);
+          mapLayer.showLayer(ARMY_MOVEMENT_LAYERS.path);
 
           // Draw endpoint indicator (green circle if reachable, red X if not)
           const hoverLayer = mapLayer.createLayer(ARMY_MOVEMENT_LAYERS.hover, ARMY_MOVEMENT_Z_INDICES.hover);
