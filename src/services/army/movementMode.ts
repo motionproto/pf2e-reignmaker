@@ -22,8 +22,7 @@ import {
   renderOriginHex,
   renderReachableHexes,
   renderPath,
-  renderEndpoint,
-  renderCellPath
+  renderEndpoint
 } from '../map/renderers/ArmyMovementRenderer';
 import { getKingdomActor } from '../../main.kingdom';
 import { positionToOffset, hexToKingmakerId } from '../hex-selector/coordinates';
@@ -388,14 +387,6 @@ export class ArmyMovementMode {
         if (pathResult && pathResult.path.length >= 2) {
           // Calculate total cumulative cost
           const totalCost = this.totalCostSpent + pathResult.totalCost;
-
-          // DEBUG: Draw cell path (actual A* path through 8px grid)
-          if (pathResult.cellPath && pathResult.cellPath.length >= 2) {
-            const cellpathLayer = mapLayer.createLayer(ARMY_MOVEMENT_LAYERS.cellpath, ARMY_MOVEMENT_Z_INDICES.cellpath);
-            const CELL_SIZE = 8; // NavigationGrid.CELL_SIZE
-            renderCellPath(cellpathLayer, pathResult.cellPath, CELL_SIZE);
-            mapLayer.showLayer(ARMY_MOVEMENT_LAYERS.cellpath);
-          }
 
           // Draw hex path lines (connecting hex centers) with per-hex costs
           const pathLayer = mapLayer.createLayer(ARMY_MOVEMENT_LAYERS.path, ARMY_MOVEMENT_Z_INDICES.path);

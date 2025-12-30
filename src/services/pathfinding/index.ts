@@ -512,17 +512,11 @@ export class PathfindingService {
     const openSet: Map<string, CellNode> = new Map();
     const closedSet: Set<string> = new Set();
 
-    // Heuristic: Hex distance + tiny cell distance tie-breaker
-    // The hex distance guides through hex space (primary)
-    // The cell distance ensures straight paths within hexes (tie-breaker)
+    // Heuristic: Just hex distance - step costs in gCost handle straight path preference
+    // Takes hexId as parameter to avoid duplicate getHexForCell() lookups
     const strategy = getMovementStrategy();
-    const CELL_HEURISTIC_WEIGHT = 0.0001; // Tiny weight so cell distance doesn't override hex distance
-    const heuristic = (cellX: number, cellY: number): number => {
-      const cellHexId = navigationGrid.getHexForCell(cellX, cellY);
-      const hexH = cellHexId ? hexDistance(cellHexId, targetNormalized) : 0;
-      // Add cell-level distance as tie-breaker (within same hex, prefer cells closer to target)
-      const cellH = strategy.heuristic(cellX, cellY, targetCell.x, targetCell.y);
-      return hexH + cellH * CELL_HEURISTIC_WEIGHT;
+    const heuristic = (cellHexId: string): number => {
+      return hexDistance(cellHexId, targetNormalized);
     };
 
     // Initialize start
@@ -532,18 +526,12 @@ export class PathfindingService {
       cellY: startCell.y,
       hexId: startNormalized,
       gCost: 0,
-      fCost: heuristic(startCell.x, startCell.y),
+      fCost: heuristic(startNormalized),
       parentCellKey: null,
       parentHexId: null
     };
     cellNodes.set(startCellKey, startNode);
     openSet.set(startCellKey, startNode);
-
-    // Track best cost to reach each hex (for path reconstruction)
-    const hexParents: Map<string, string | null> = new Map();
-    const hexCosts: Map<string, number> = new Map();
-    hexParents.set(startNormalized, null);
-    hexCosts.set(startNormalized, 0);
 
     const maxIterations = 100000;
     let iterations = 0;
@@ -567,10 +555,10 @@ export class PathfindingService {
       // Found target cell?
       if (current.cellX === targetCell.x && current.cellY === targetCell.y) {
         // Reconstruct hex path with final nav cell and cell path
+        // Pass current.gCost as total cost (correctly includes re-entries to same hex)
         return this.reconstructCellPath(
-          hexParents,
-          hexCosts,
           targetNormalized,
+          current.gCost,
           { x: current.cellX, y: current.cellY },
           traits,
           cellNodes,
@@ -625,23 +613,13 @@ export class PathfindingService {
           cellY: neighbor.y,
           hexId: neighborHexId,
           gCost: tentativeGCost,
-          fCost: tentativeGCost + heuristic(neighbor.x, neighbor.y),
+          fCost: tentativeGCost + heuristic(neighborHexId),
           parentCellKey: currentCellKey,
           parentHexId: current.hexId
         };
 
         cellNodes.set(neighborCellKey, newNode);
         openSet.set(neighborCellKey, newNode);
-
-        // Update hex parent if this is a better path to this hex
-        const existingHexCost = hexCosts.get(neighborHexId);
-        if (existingHexCost === undefined || tentativeGCost < existingHexCost) {
-          hexCosts.set(neighborHexId, tentativeGCost);
-          // Record which hex we came from when entering this hex
-          if (neighborHexId !== current.hexId) {
-            hexParents.set(neighborHexId, current.hexId);
-          }
-        }
       }
     }
 
@@ -655,11 +633,16 @@ export class PathfindingService {
 
   /**
    * Reconstruct hex path and cell path from cell-based A* results
+   * @param targetHexId - The target hex ID
+   * @param totalCost - The total path cost from A* (passed directly, not from map lookup)
+   * @param finalNavCell - The final navigation cell position
+   * @param traits - Army movement traits
+   * @param cellNodes - Map of cell nodes from A*
+   * @param targetCellKey - The target cell key for path reconstruction
    */
   private reconstructCellPath(
-    _hexParents: Map<string, string | null>,
-    cumulativeHexCosts: Map<string, number>,
     targetHexId: string,
+    totalCost: number,
     finalNavCell: { x: number; y: number },
     traits?: ArmyMovementTraits,
     cellNodes?: Map<string, { cellX: number; cellY: number; parentCellKey: string | null }>,
@@ -696,7 +679,7 @@ export class PathfindingService {
       }
     }
 
-    const totalCost = cumulativeHexCosts.get(targetHexId) ?? Infinity;
+    // totalCost is now passed as a parameter (correctly includes re-entries to same hex)
 
     // Build per-hex individual costs (not cumulative)
     const hexCosts = new Map<string, number>();

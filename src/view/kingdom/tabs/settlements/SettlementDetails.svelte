@@ -1,8 +1,10 @@
 <script lang="ts">
    import type { Settlement } from '../../../../models/Settlement';
    import { SettlementTier as SettlementTierEnum } from '../../../../models/Settlement';
-   import { updateKingdom } from '../../../../stores/KingdomStore';
+   import { kingdomData, updateKingdom } from '../../../../stores/KingdomStore';
    import { settlementService } from '../../../../services/settlements';
+   import { hexSelectorService } from '../../../../services/hex-selector';
+   import { PLAYER_KINGDOM } from '../../../../types/ownership';
    import SettlementTier from './SettlementTier.svelte';
    import SettlementBasicInfo from './SettlementBasicInfo.svelte';
    import SettlementStructures from './SettlementStructures.svelte';
@@ -167,6 +169,116 @@
          notablePeople: event.detail.notablePeople
       });
    }
+
+   // Handler for Pick Hex button - opens hex selector to choose a location
+   async function handlePickHex() {
+      if (!settlement) return;
+
+      // Validate hex: must be claimed and not already have a linked settlement
+      const validateHex = (hexId: string) => {
+         const hex = $kingdomData.hexes.find(h => h.id === hexId) as any;
+         if (!hex) {
+            return { valid: false, message: 'Hex not found' };
+         }
+
+         // Must be claimed by player
+         if (hex.claimedBy !== PLAYER_KINGDOM) {
+            return { valid: false, message: 'This hex must be in your claimed territory' };
+         }
+
+         // Check if there's already a linked settlement feature
+         const features = hex.features || [];
+         const linkedSettlementFeature = features.find((f: any) =>
+            f.type === 'settlement' && f.linked
+         );
+         if (linkedSettlementFeature) {
+            return { valid: false, message: 'This hex already has a settlement assigned' };
+         }
+
+         return { valid: true };
+      };
+
+      const selectedHexes = await hexSelectorService.selectHexes({
+         title: 'Select Settlement Location',
+         count: 1,
+         colorType: 'settlement',
+         validateHex
+      });
+
+      if (!selectedHexes || selectedHexes.length === 0) {
+         return; // User cancelled
+      }
+
+      const hexId = selectedHexes[0];
+      const [x, y] = hexId.split('.').map(Number);
+
+      // Update settlement location and link/create hex feature
+      let updatedSettlement: Settlement | undefined;
+      await updateKingdom(k => {
+         const s = k.settlements.find(s => s.id === settlement!.id);
+         if (s) {
+            // Clean up any stale links to this settlement in ALL hexes
+            for (const hex of k.hexes) {
+               const hexData = hex as any;
+               if (hexData.features) {
+                  for (const feature of hexData.features) {
+                     if (feature.type === 'settlement' && feature.settlementId === s.id) {
+                        feature.linked = false;
+                        feature.settlementId = null;
+                     }
+                  }
+               }
+            }
+
+            // Update settlement location
+            s.location = { x, y };
+            updatedSettlement = s as Settlement;
+
+            // Find or create the hex feature at the new location
+            const hexData = k.hexes.find(h => h.id === hexId) as any;
+            if (hexData) {
+               // Initialize features array if it doesn't exist
+               if (!hexData.features) {
+                  hexData.features = [];
+               }
+
+               // Check for existing unlinked settlement feature
+               const existingFeature = hexData.features.find((f: any) =>
+                  f.type === 'settlement' && !f.linked
+               );
+
+               if (existingFeature) {
+                  // Link existing feature and update its properties
+                  existingFeature.linked = true;
+                  existingFeature.settlementId = s.id;
+                  existingFeature.name = s.name;
+                  existingFeature.tier = s.tier;
+               } else {
+                  // Create new settlement feature with settlement's attributes
+                  hexData.features.push({
+                     type: 'settlement',
+                     name: s.name,
+                     tier: s.tier,
+                     linked: true,
+                     settlementId: s.id
+                  });
+               }
+            }
+         }
+      });
+
+      // Write settlement name to Kingmaker map
+      if (updatedSettlement) {
+         const { territoryService } = await import('../../../../services/territory');
+         await territoryService.updateKingmakerSettlement(updatedSettlement);
+      }
+
+      // Recalculate kingdom capacities since settlement is now mapped
+      await settlementService.updateKingdomCapacities();
+
+      // @ts-ignore - Foundry global
+      ui.notifications?.info(`Settlement "${settlement.name}" placed at hex ${hexId}`);
+   }
 </script>
 
 <div class="settlement-details-panel">
@@ -265,6 +377,9 @@
                variant="warning"
                title="Settlement Not Placed"
                description="This settlement is not placed on the map. Please select a hex location."
+               actionText="Pick Hex"
+               actionIcon="fas fa-map-marker-alt"
+               onAction={handlePickHex}
             />
          </div>
       {/if}
