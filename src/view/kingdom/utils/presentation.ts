@@ -227,3 +227,29 @@ export function getOutcomeBadgeLabel(outcome: string): string {
       return outcome;
   }
 }
+
+// Import all structure images using Vite's glob import (same pattern as other images in the project)
+const structureImages: Record<string, string> = import.meta.glob(
+  '../../../img/structures_512/*.webp',
+  { eager: true, import: 'default' }
+) as Record<string, string>;
+
+// Build a lookup map from kebab-case name to resolved URL
+const structureImageMap = new Map<string, string>();
+for (const [path, url] of Object.entries(structureImages)) {
+  // Extract filename without extension: '../../../img/structures_512/barracks.webp' -> 'barracks'
+  const filename = path.split('/').pop()?.replace('.webp', '') || '';
+  structureImageMap.set(filename, url);
+}
+
+/**
+ * Get the image path for a structure based on its name
+ * Converts structure name to kebab-case filename (apostrophes removed)
+ */
+export function getStructureImagePath(structureName: string): string {
+  const filename = structureName
+    .toLowerCase()
+    .replace(/'/g, '')  // Remove apostrophes
+    .replace(/\s+/g, '-');  // Replace spaces with hyphens
+  return structureImageMap.get(filename) || '';
+}
