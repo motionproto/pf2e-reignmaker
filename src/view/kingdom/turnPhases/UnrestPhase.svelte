@@ -388,12 +388,14 @@
             {#key incidentCheckId}
                <BaseCheckCard
                         id={incidentCheckId}
+                        imageId={currentIncident.id}
                         name={currentIncident.name}
                         description={currentIncident.description}
                         skills={currentIncident.skills}
                         outcomes={incidentOutcomes}
                         traits={currentIncident.traits || []}
                         checkType="incident"
+                        severity={currentIncident.severity}
                         outcomePreview={currentIncidentInstance}
                         expandable={false}
                         showCompletions={false}

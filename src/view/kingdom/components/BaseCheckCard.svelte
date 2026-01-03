@@ -37,8 +37,9 @@
   import OutcomeRenderer from './OutcomeRenderer.svelte';
   import ActionConfirmDialog from './ActionConfirmDialog.svelte';
   import PreRollChoiceSelector from './CheckCard/components/PreRollChoiceSelector.svelte';
-  
+
   import type { OutcomePreview } from '../../../models/OutcomePreview';
+  import { getCheckImagePath } from '../../../utils/checkImages';
   
   // Required props
   export let id: string;
@@ -54,6 +55,8 @@
   }>;
   export let checkType: 'action' | 'event' | 'incident' = 'action';
   export let traits: string[] = [];  // For events/incidents
+  export let severity: string | undefined = undefined;  // For incidents: 'minor', 'moderate', 'major'
+  export let imageId: string | undefined = undefined;  // Override ID used for image lookup (defaults to id)
   export let outcomePreview: OutcomePreview | null = null;  // Full preview for resolution state
   
   // Feature flags
@@ -466,6 +469,19 @@
   
   // Get card state class - never show as fully resolved for actions
   $: cardStateClass = resolved && checkType !== 'action' ? 'result-state' : 'select-state';
+
+  // Compute image path for events and incidents
+  // Use imageId if provided, otherwise fall back to id
+  $: effectiveImageId = imageId || id;
+  $: checkImagePath = (checkType === 'event' || checkType === 'incident')
+    ? getCheckImagePath(checkType, effectiveImageId, severity)
+    : null;
+
+  // Track if image failed to load (hide gracefully)
+  let imageLoadError = false;
+  function handleImageError() {
+    imageLoadError = true;
+  }
 </script>
 
 <div class="base-check-card {checkType}-card {!available ? 'not-available' : ''} {expandable && expanded ? 'expanded' : ''} {cardStateClass}">
@@ -488,7 +504,17 @@
     <div class="card-details" class:no-border={!expandable}>
       <!-- Description -->
       <CheckCardDescription {description} {brief} />
-      
+
+      <!-- Event/Incident Image -->
+      {#if checkImagePath && !imageLoadError}
+        <img
+          src={checkImagePath}
+          alt={name}
+          class="check-image"
+          on:error={handleImageError}
+        />
+      {/if}
+
       <!-- Slot for content before completion tracking (e.g., CommerceTierInfo) -->
       <slot name="pre-completion-content"></slot>
       
@@ -776,7 +802,15 @@
       padding-top: 0;
     }
   }
-  
+
+  .check-image {
+    width: 100%;
+    aspect-ratio: 2 / 1;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-16);
+  }
+
   .skill-options {
     margin: var(--space-16) 0;
     

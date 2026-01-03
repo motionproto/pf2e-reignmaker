@@ -35,6 +35,7 @@
    import { buildPossibleOutcomes } from '../../../controllers/shared/PossibleOutcomeHelpers';
    import { buildEventOutcomes } from '../../../controllers/shared/EventOutcomeHelpers';
    import { textBadge } from '../../../types/OutcomeBadge';
+   import { getEventImagePath } from '../../../utils/checkImages';
 
    // Testing Mode
    import {
@@ -1006,6 +1007,13 @@
                   </div>
                {/if}
             </div>
+            {#if getEventImagePath(currentEvent.id)}
+               <img
+                  src={getEventImagePath(currentEvent.id)}
+                  alt={currentEvent.name}
+                  class="event-image"
+               />
+            {/if}
          </div>
          <div class="event-body">
             <BaseCheckCard
@@ -1045,6 +1053,7 @@
       {#key `${currentEventInstance.checkId}-${activeAidsCount}`}
          <BaseCheckCard
             id={currentEventInstance.checkId}
+            imageId={currentEventInstance.checkData.id}
             name={currentEventInstance.checkData.name}
             description={currentEventInstance.checkData.description}
             skills={currentEventInstance.checkData.skills}
@@ -1115,6 +1124,7 @@
             {#each ongoingEventsWithOutcomes as item}
                <BaseCheckCard
                   id={item.instance.previewId}
+                  imageId={item.event.id}
                   outcomePreview={item.instance}
                   name={item.event.name}
                   description={item.event.description}
@@ -1216,7 +1226,15 @@
       flex-direction: column;
       gap: var(--space-10);
    }
-   
+
+   .event-image {
+      width: 100%;
+      aspect-ratio: 2 / 1;
+      object-fit: cover;
+      border-radius: var(--radius-md);
+      margin-top: var(--space-16);
+   }
+
    .event-traits {
       display: flex;
       gap: var(--space-6);
