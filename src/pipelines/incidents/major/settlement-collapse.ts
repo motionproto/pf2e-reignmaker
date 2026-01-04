@@ -28,7 +28,7 @@ export const settlementCollapsePipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'The settlement is stabilized and strengthened.',
+      description: 'The settlement is stabilized.',
       modifiers: []
     },
     success: {

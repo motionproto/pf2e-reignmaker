@@ -22,7 +22,7 @@ export const settlementCrisisPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'The settlement thrives despite adversity.',
+      description: 'The settlement is stabilized.',
       modifiers: []
     },
     success: {

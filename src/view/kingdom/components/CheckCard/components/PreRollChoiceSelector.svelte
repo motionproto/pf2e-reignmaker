@@ -3,6 +3,8 @@
   import { VoteService } from '../../../../../services/VoteService';
   import { eventVotes, kingdomData } from '../../../../../stores/KingdomStore';
   import type { EventVote, VoteCast } from '../../../../../types/EventVote';
+  import { DOCTRINE_ICONS } from '../../../../../constants/doctrine';
+  import type { DoctrineType } from '../../../../../types/Doctrine';
   
   export let label: string;
   export let options: any[];
@@ -125,6 +127,33 @@
   })();
   
   /**
+   * Get the doctrine icon for an option based on its personality alignment
+   */
+  function getDoctrineIcon(option: any): string | null {
+    const personality = option.personality || {};
+    const idealist = personality.idealist || 0;
+    const practical = personality.practical || 0;
+    const ruthless = personality.ruthless || 0;
+
+    // If no personality values, return null
+    if (idealist === 0 && practical === 0 && ruthless === 0) {
+      return null;
+    }
+
+    // Determine dominant doctrine
+    let dominant: DoctrineType;
+    if (idealist >= practical && idealist >= ruthless) {
+      dominant = 'idealist';
+    } else if (ruthless >= practical && ruthless >= idealist) {
+      dominant = 'ruthless';
+    } else {
+      dominant = 'practical';
+    }
+
+    return `fas ${DOCTRINE_ICONS[dominant]}`;
+  }
+
+  /**
    * Sort options by personality alignment:
    * - Virtuous (left) → Practical (center) → Ruthless (right)
    * - Within each category, sort by intensity (highest value = furthest from center)
@@ -221,8 +250,8 @@
           }}
           disabled={disabled || (enableVoting && hasVoted)}
         >
-          {#if option.icon}
-            <i class={option.icon}></i>
+          {#if getDoctrineIcon(option) || option.icon}
+            <i class={getDoctrineIcon(option) || option.icon}></i>
           {/if}
           <span class="option-label">{option.label}</span>
         </button>

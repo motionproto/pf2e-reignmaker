@@ -33,7 +33,7 @@ export const tradeWarPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'Trade continues unimpeded.',
+      description: 'Trade continues.',
       modifiers: []
     },
     success: {

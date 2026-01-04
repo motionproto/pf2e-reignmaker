@@ -96,6 +96,7 @@
   export let showAidButton: boolean = false;
   export let aidResult: { outcome: string; bonus: number; characterName?: string } | null = null;
   export let hideUntrainedSkills: boolean = true;
+  export let skillBonusActor: any = null;  // Override actor for skill bonus display (e.g., cohesion leader)
   
   // UI customization props
   export let canPerformMore: boolean = true;  // NOT used for blocking, only for parent logic
@@ -290,13 +291,13 @@
   });
   
   // Get skill bonuses for all skills (including injected lore)
-  // Use Testing Mode character if enabled, otherwise current user's character
+  // Use skillBonusActor if provided, otherwise Testing Mode character, otherwise current user's character
   $: skillBonuses = (() => {
-    const currentCharacter = ($testingModeEnabled && $selectedCharacter)
-      ? $selectedCharacter.actor
-      : getCurrentUserCharacter();
+    const character = skillBonusActor
+      ?? (($testingModeEnabled && $selectedCharacter) ? $selectedCharacter.actor : null)
+      ?? getCurrentUserCharacter();
 
-    return getSkillBonusesForCharacter(skillsWithLore.map(s => s.skill), currentCharacter);
+    return getSkillBonusesForCharacter(skillsWithLore.map(s => s.skill), character);
   })();
   
   // Get the skill that was used

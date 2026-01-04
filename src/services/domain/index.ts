@@ -20,3 +20,5 @@
 export { diceService } from './DiceService'
 export { kingdomModifierService } from './KingdomModifierService'
 export type { ModifierCheckOptions } from './KingdomModifierService'
+export { cohesionService } from './CohesionService'
+export type { SkillOption, CohesionCheckResult } from './CohesionService'

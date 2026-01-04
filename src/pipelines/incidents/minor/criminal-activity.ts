@@ -21,7 +21,7 @@ export const criminalActivityPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'Crime is eliminated.',
+      description: 'Crime is suppressed.',
       modifiers: []
     },
     success: {

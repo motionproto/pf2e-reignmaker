@@ -21,7 +21,7 @@ export const protestsPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'Grievances are fully addressed.',
+      description: 'The protests are resolved peacefully.',
       modifiers: []
     },
     success: {

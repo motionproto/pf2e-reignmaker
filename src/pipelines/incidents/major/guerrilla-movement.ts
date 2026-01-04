@@ -26,7 +26,7 @@ export const guerrillaMovementPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'Your kingdom utterly defeats the guerrilla movement and captures their leaders.',
+      description: 'The rebellion is dispersed.',
       modifiers: []  // No modifiers needed (+1 Fame auto-applied by UnifiedCheckHandler)
     },
     success: {

@@ -21,7 +21,7 @@ export const diseaseOutbreakPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'The disease is eradicated.',
+      description: 'The disease is contained.',
       modifiers: []
     },
     success: {

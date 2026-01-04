@@ -19,6 +19,15 @@ import { DamageStructureHandler } from '../../services/gameCommands/handlers/Dam
 import { ConvertUnrestToImprisonedHandler } from '../../services/gameCommands/handlers/ConvertUnrestToImprisonedHandler';
 import { ApplyArmyConditionHandler } from '../../services/gameCommands/handlers/ApplyArmyConditionHandler';
 import { valueBadge, diceBadge, textBadge } from '../../types/OutcomeBadge';
+import {
+  validateExplored,
+  validateAdjacentToClaimed,
+  safeValidation,
+  getFreshKingdomData,
+  type ValidationResult
+} from '../shared/hexValidators';
+import { PLAYER_KINGDOM } from '../../types/ownership';
+import { claimHexesExecution } from '../../execution/territory/claimHexes';
 
 export const raidersPipeline: CheckPipeline = {
   id: 'raiders',
@@ -253,6 +262,11 @@ export const raidersPipeline: CheckPipeline = {
         }
       } else if (approach === 'ruthless') {
         // Preemptive Strike (Ruthless)
+        // Critical Success: Claim 1 hex (captured raider territory)
+        if (outcome === 'criticalSuccess') {
+          ctx.metadata._claimHexCount = 1;
+        }
+
         // Handle imprisonment (CS/S)
         if (outcome === 'criticalSuccess' || outcome === 'success') {
           // Convert 1d3 unrest to imprisoned (captured raiders)
@@ -304,6 +318,28 @@ export const raidersPipeline: CheckPipeline = {
     const kingdom = get(kingdomData);
     const approach = kingdom.turnState?.eventsPhase?.selectedApproach;
 
+    // Claim hexes (ruthless CS)
+    if (ctx.metadata?._claimHexCount > 0) {
+      const selectedHexData = ctx.resolutionData?.compoundData?.claimedHexes;
+
+      if (selectedHexData) {
+        let hexIds: string[] = [];
+
+        if (Array.isArray(selectedHexData)) {
+          hexIds = selectedHexData;
+        } else if (selectedHexData?.hexIds && Array.isArray(selectedHexData.hexIds)) {
+          hexIds = selectedHexData.hexIds;
+        }
+
+        if (hexIds.length > 0) {
+          await claimHexesExecution(hexIds);
+          const hexList = hexIds.join(', ');
+          const ui = (globalThis as any).ui;
+          ui?.notifications?.info(`Claimed hex from raiders: ${hexList}`);
+        }
+      }
+    }
+
     // Execute faction adjustments
     const factionVirtuousCS = ctx.metadata?._preparedFactionVirtuousCS;
     if (factionVirtuousCS?.commit) {
@@ -336,8 +372,50 @@ export const raidersPipeline: CheckPipeline = {
     return { success: true };
   },
 
-  // Post-apply interaction to show destroyed worksites on map
+  // Post-apply interactions for map selection
   postApplyInteractions: [
+    {
+      id: 'claimedHexes',
+      type: 'map-selection',
+      mode: 'hex-selection',
+      count: (ctx: any) => ctx.metadata?._claimHexCount || 0,
+      title: 'Select a hex to claim from raiders',
+      colorType: 'claim',
+      required: true,
+      condition: (ctx: any) => {
+        return (ctx.metadata?._claimHexCount || 0) > 0;
+      },
+      validateHex: (hexId: string, pendingClaims: string[] = []): ValidationResult => {
+        return safeValidation(() => {
+          const kingdom = getFreshKingdomData();
+          const hex = kingdom.hexes?.find((h: any) => h.id === hexId);
+
+          if (!hex) {
+            return { valid: false, message: 'Hex not found' };
+          }
+
+          // Already claimed by player?
+          if (hex.claimedBy === PLAYER_KINGDOM) {
+            return { valid: false, message: 'This hex is already claimed by your kingdom' };
+          }
+
+          // Already in pending claims?
+          if (pendingClaims.includes(hexId)) {
+            return { valid: false, message: 'This hex is already selected' };
+          }
+
+          // Must be explored
+          const exploredResult = validateExplored(hexId);
+          if (!exploredResult.valid) return exploredResult;
+
+          // Must be adjacent to claimed territory (or pending claims)
+          const adjacencyResult = validateAdjacentToClaimed(hexId, pendingClaims, kingdom);
+          if (!adjacencyResult.valid) return adjacencyResult;
+
+          return { valid: true, message: 'Valid hex to claim from raiders' };
+        }, hexId, 'raiders claim validation');
+      }
+    },
     DestroyWorksiteHandler.getMapDisplayInteraction('Worksite Destroyed by Raiders')
   ],
 

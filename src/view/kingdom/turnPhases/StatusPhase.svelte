@@ -13,9 +13,14 @@ import { logger } from '../../../utils/Logger';
 import CitizensDemandExpansion from './components/CitizensDemandExpansion.svelte';
 import CitizensDemandStructure from './components/CitizensDemandStructure.svelte';
 import { getDoctrineIcon, getDoctrineColor, getDoctrineTierLabel } from '../utils/presentation';
-import { DOCTRINE_THRESHOLDS, DOCTRINE_TIER_ORDER, DOCTRINE_TIER_EFFECTS, DOCTRINE_SKILL_GROUPS, DOCTRINE_PENALTIES } from '../../../constants/doctrine';
+import { DOCTRINE_THRESHOLDS, DOCTRINE_TIER_ORDER, DOCTRINE_TIER_EFFECTS, DOCTRINE_SKILL_GROUPS, DOCTRINE_PENALTIES, getSkillDoctrine } from '../../../constants/doctrine';
 import { DOCTRINE_ABILITY_MAPPINGS, type DoctrineAbilityConfig } from '../../../constants/doctrineAbilityMappings';
 import type { DoctrineType, DoctrineTier } from '../../../types/Doctrine';
+import { cohesionService, type SkillOption } from '../../../services/domain/CohesionService';
+import { completePhaseStepByIndex } from '../../../controllers/shared/PhaseControllerHelpers';
+import { StatusPhaseSteps } from '../../../controllers/shared/PhaseStepConstants';
+import BaseCheckCard from '../components/BaseCheckCard.svelte';
+import { getPipelineCoordinator } from '../../../services/PipelineCoordinator';
 
 // Helper: Get army ability for a doctrine at a specific tier
 function getArmyAbilityForTier(doctrineType: DoctrineType, tier: DoctrineTier) {
@@ -122,6 +127,34 @@ interface LeaderInfo {
    name: string;
    portraitImg: string | null;
    tokenImg: string | null;
+   isOnline: boolean;
+}
+
+// Helper: Check if an actor's owner is online
+function isActorOwnerOnline(actor: any): boolean {
+   const game = (globalThis as any).game;
+   if (!game?.users) return true; // Default to online if we can't check
+
+   // Get the actor's ownership - find non-GM users with OWNER permission (level 3)
+   const ownership = actor.ownership || {};
+
+   // Find all player (non-GM) owners of this actor
+   const playerOwners: any[] = [];
+   for (const [userId, level] of Object.entries(ownership)) {
+      if (level === 3 && userId !== 'default') { // OWNER permission, not default
+         const user = game.users.get(userId);
+         // Only count non-GM users as "player owners"
+         if (user && !user.isGM) {
+            playerOwners.push(user);
+         }
+      }
+   }
+
+   // If no player owners found, consider them "online" (GM-controlled or unassigned)
+   if (playerOwners.length === 0) return true;
+
+   // Check if any player owner is active
+   return playerOwners.some((user: any) => user.active);
 }
 
 // Get party members reactively
@@ -139,17 +172,153 @@ $: leaders = (() => {
          actorId: actor.id,
          name: actor.name,
          portraitImg: actor.img || null,
-         tokenImg: actor.prototypeToken?.texture?.src || null
+         tokenImg: actor.prototypeToken?.texture?.src || null,
+         isOnline: isActorOwnerOnline(actor)
       }));
 })();
 
 // Get leader titles from kingdom data
 $: leaderTitles = $kingdomData.leaderTitles || {};
 
+// Count claimed hexes for display (must be before cohesion checks that use it)
+$: claimedHexCount = hexes.filter((h: any) => h.claimedBy === PLAYER_KINGDOM).length;
+
+// Cohesion check reactive state - calculate from actual hex count for resilience
+$: cohesionCompleted = $kingdomData.turnState?.statusPhase?.cohesionCheckCompleted ?? false;
+$: cohesionRequired = cohesionService.shouldTriggerCohesionCheck(claimedHexCount);
+$: cohesionPenalty = cohesionService.calculateCohesionPenalty(claimedHexCount);
+
+// Get online statuses for cohesion leader selection
+$: leaderOnlineStatuses = leaders.map(l => l.isOnline);
+
+$: cohesionActiveLeaderIndex = cohesionService.getActiveLeaderIndex(
+   $kingdomData.currentTurn || 1,
+   leaders.length,
+   leaderOnlineStatuses
+);
+$: cohesionActiveLeader = cohesionActiveLeaderIndex >= 0 ? leaders[cohesionActiveLeaderIndex] : null;
+
+// Get the full actor for the active leader (for skill check)
+$: cohesionActiveLeaderActor = (() => {
+   if (!cohesionActiveLeader) return null;
+   const game = (globalThis as any).game;
+   return game?.actors?.get(cohesionActiveLeader.actorId) || null;
+})();
+
+// Get top 4 skills for the active leader
+$: cohesionSkills = cohesionActiveLeaderActor
+   ? cohesionService.getLeaderTopSkills(cohesionActiveLeaderActor, 4)
+   : [];
+
+// Format skills for BaseCheckCard (needs { skill, description?, doctrine? } format)
+$: cohesionSkillsForCard = cohesionSkills.map(s => ({
+   skill: s.skill,
+   description: s.label,
+   doctrine: getSkillDoctrine(s.skill) || undefined
+}));
+
+// Get cohesion instance from pendingOutcomes (pipeline creates this)
+$: cohesionInstance = $kingdomData.pendingOutcomes?.find(
+   (o: any) => o.checkId === 'cohesion-check' && o.createdTurn === $kingdomData.currentTurn
+);
+
+// Possible outcomes for preview display (must match PossibleOutcome interface)
+const cohesionPossibleOutcomes = [
+   { result: 'criticalSuccess' as const, label: 'Critical Success', description: 'Perfect cohesion maintained despite growth.', modifiers: [{ type: 'dice', resource: 'unrest', formula: '1d4', negative: true, duration: 'immediate' }], manualEffects: [], gameCommands: [], outcomeBadges: [] },
+   { result: 'success' as const, label: 'Success', description: 'Cohesion maintained.', modifiers: [{ type: 'static', resource: 'unrest', value: -1, duration: 'immediate' }], manualEffects: [], gameCommands: [], outcomeBadges: [] },
+   { result: 'failure' as const, label: 'Failure', description: 'Cohesion slips; dissent spreads.', modifiers: [{ type: 'static', resource: 'unrest', value: 1, duration: 'immediate' }], manualEffects: [], gameCommands: [], outcomeBadges: [] },
+   { result: 'criticalFailure' as const, label: 'Critical Failure', description: 'Kingdom fragments; factions form.', modifiers: [{ type: 'dice', resource: 'unrest', formula: '1d4', duration: 'immediate' }], manualEffects: [], gameCommands: [], outcomeBadges: [] }
+];
+
+// Handle cohesion skill check via pipeline
+async function handleCohesionExecuteSkill(event: CustomEvent<{ skill: string }>) {
+   const { skill } = event.detail;
+   if (!cohesionActiveLeaderActor) return;
+
+   try {
+      const coordinator = await getPipelineCoordinator();
+
+      // Execute via pipeline - handles roll, state sync, and creates instance
+      await coordinator.executePipeline('cohesion-check', {
+         checkType: 'action',
+         actor: {
+            selectedSkill: skill,
+            fullActor: cohesionActiveLeaderActor,
+            actorName: cohesionActiveLeaderActor.name,
+            actorId: cohesionActiveLeaderActor.id,
+            level: cohesionActiveLeaderActor.level || 1,
+            proficiencyRank: 0
+         },
+         metadata: {
+            skills: cohesionSkillsForCard,
+            penalty: cohesionPenalty,
+            hexCount: claimedHexCount,
+            leaderName: cohesionActiveLeader?.name
+         }
+      });
+
+      logger.info(`[StatusPhase] Cohesion check initiated via pipeline: ${skill}`);
+   } catch (error) {
+      logger.error('[StatusPhase] Cohesion check failed:', error);
+   }
+}
+
+// Apply cohesion check result and complete the phase
+async function handleCohesionApplyResult(event: CustomEvent) {
+   if (!cohesionInstance) return;
+
+   try {
+      // Get resolution data from the event
+      const resolutionData = event.detail.resolution;
+      const instanceId = cohesionInstance.previewId;
+
+      // Use PipelineCoordinator to confirm and execute (applies modifiers)
+      const coordinator = await getPipelineCoordinator();
+      await coordinator.confirmApply(instanceId, resolutionData);
+
+      // Mark cohesion as completed after apply
+      await updateKingdom((k) => {
+         if (k.turnState?.statusPhase) {
+            k.turnState.statusPhase.cohesionCheckCompleted = true;
+         }
+      });
+
+      await completePhaseStepByIndex(StatusPhaseSteps.STATUS);
+
+      logger.info('[StatusPhase] Cohesion check completed and applied');
+   } catch (error) {
+      logger.error('[StatusPhase] Failed to complete cohesion:', error);
+   }
+}
+
+// Handle cohesion reroll
+async function handleCohesionReroll(event: CustomEvent) {
+   try {
+      const { instanceId } = event.detail;
+      if (!instanceId) {
+         logger.error('[StatusPhase] Cannot reroll: no instance ID');
+         return;
+      }
+      const coordinator = await getPipelineCoordinator();
+      await coordinator.rerollFromStep3(instanceId);
+   } catch (error) {
+      logger.error('[StatusPhase] Cohesion reroll failed:', error);
+   }
+}
+
 // Title editing state
 let editingTitleFor: string | null = null;
 let editTitleInput = '';
 let titleInputElement: HTMLInputElement;
+
+// Open a leader's character sheet
+function openLeaderSheet(actorId: string) {
+   const game = (globalThis as any).game;
+   const actor = game?.actors?.get(actorId);
+   if (actor?.sheet) {
+      actor.sheet.render(true);
+   }
+}
 
 function startEditingTitle(actorId: string) {
    editingTitleFor = actorId;
@@ -377,10 +546,22 @@ async function initializePhase() {
             <h3>Leaders</h3>
          </div>
 
-         <div class="leaders-grid">
-            {#each leaders as leader (leader.actorId)}
-               <div class="leader-card">
-                  <div class="leader-portrait">
+         <div class="leaders-grid" class:cohesion-active={cohesionRequired && !cohesionCompleted}>
+            {#each leaders as leader, index (leader.actorId)}
+               {@const isActiveForCohesion = cohesionRequired && !cohesionCompleted && index === cohesionActiveLeaderIndex}
+               {@const isInactiveForCohesion = cohesionRequired && !cohesionCompleted && index !== cohesionActiveLeaderIndex}
+               <div
+                  class="leader-card"
+                  class:is-active-cohesion={isActiveForCohesion}
+                  class:is-inactive-cohesion={isInactiveForCohesion}
+                  class:is-offline={!leader.isOnline}
+               >
+                  <!-- svelte-ignore a11y-no-static-element-interactions -->
+                  <div
+                     class="leader-portrait"
+                     on:dblclick={() => openLeaderSheet(leader.actorId)}
+                     title="Double-click to open character sheet"
+                  >
                      {#if leader.portraitImg}
                         <img src={leader.portraitImg} alt={leader.name} />
                      {:else if leader.tokenImg}
@@ -389,6 +570,9 @@ async function initializePhase() {
                         <div class="portrait-placeholder">
                            <i class="fas fa-user"></i>
                         </div>
+                     {/if}
+                     {#if !leader.isOnline}
+                        <div class="offline-badge">Offline</div>
                      {/if}
                   </div>
 
@@ -430,6 +614,28 @@ async function initializePhase() {
             {/each}
          </div>
       </div>
+   {/if}
+
+   <!-- Kingdom Cohesion Check Section -->
+   {#if cohesionRequired && !cohesionCompleted}
+      <BaseCheckCard
+         id="cohesion-check"
+         name="Kingdom Cohesion"
+         description="How does {cohesionActiveLeader?.name || 'your leader'} bring stability to the growing kingdom? ({claimedHexCount} hexes{cohesionPenalty > 0 ? `, -${cohesionPenalty} penalty` : ''})"
+         skills={cohesionSkillsForCard}
+         outcomes={[]}
+         checkType="action"
+         expandable={false}
+         possibleOutcomes={cohesionPossibleOutcomes}
+         resolved={!!cohesionInstance?.appliedOutcome}
+         outcomePreview={cohesionInstance}
+         hideUntrainedSkills={false}
+         skillBonusActor={cohesionActiveLeaderActor}
+         {isViewingCurrentPhase}
+         on:executeSkill={handleCohesionExecuteSkill}
+         on:primary={handleCohesionApplyResult}
+         on:performReroll={handleCohesionReroll}
+      />
    {/if}
 
    <!-- Fame Display Section -->
@@ -802,11 +1008,69 @@ async function initializePhase() {
       display: flex;
       align-items: center;
       justify-content: center;
+      cursor: pointer;
+      transition: filter 0.2s ease;
+      position: relative;
+
+      &:hover {
+         filter: brightness(1.1);
+      }
 
       img {
          width: 100%;
          height: 100%;
          object-fit: contain;
+      }
+   }
+
+   .offline-badge {
+      position: absolute;
+      bottom: var(--space-6);
+      left: 50%;
+      transform: translateX(-50%);
+      padding: var(--space-2) var(--space-8);
+      background: rgba(0, 0, 0, 0.75);
+      color: var(--text-tertiary);
+      font-size: var(--font-xs);
+      font-weight: var(--font-weight-medium);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+   }
+
+   .leader-card.is-offline {
+      opacity: 0.6;
+      border-color: transparent;
+      position: relative;
+
+      &::after {
+         content: '';
+         position: absolute;
+         inset: 0;
+         border-radius: inherit;
+         pointer-events: none;
+         border: 1px dashed var(--border-subtle);
+         // SVG for custom 4px dash, 8px gap pattern
+         background:
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='1'%3E%3Cline x1='0' y1='0.5' x2='4' y2='0.5' stroke='%23666' stroke-width='1'/%3E%3C/svg%3E") repeat-x top,
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='1'%3E%3Cline x1='0' y1='0.5' x2='4' y2='0.5' stroke='%23666' stroke-width='1'/%3E%3C/svg%3E") repeat-x bottom,
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1' height='12'%3E%3Cline x1='0.5' y1='0' x2='0.5' y2='4' stroke='%23666' stroke-width='1'/%3E%3C/svg%3E") repeat-y left,
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1' height='12'%3E%3Cline x1='0.5' y1='0' x2='0.5' y2='4' stroke='%23666' stroke-width='1'/%3E%3C/svg%3E") repeat-y right;
+         background-size: 12px 1px, 12px 1px, 1px 12px, 1px 12px;
+      }
+
+      .leader-portrait {
+         filter: grayscale(100%);
+
+         &:hover {
+            filter: grayscale(100%) brightness(1.1);
+         }
+      }
+
+      .leader-name,
+      .leader-title {
+         color: var(--text-tertiary);
       }
    }
 
@@ -1378,6 +1642,21 @@ async function initializePhase() {
          color: #fbbf24;
          margin-top: var(--space-2);
          flex-shrink: 0;
+      }
+   }
+
+   // Cohesion Check - Leader Styling
+   .leaders-grid.cohesion-active {
+      .leader-card.is-active-cohesion {
+         border: 4px solid var(--color-amber);
+         box-shadow: 0 0 12px rgba(251, 191, 36, 0.4);
+         transform: scale(1.02);
+      }
+
+      .leader-card.is-inactive-cohesion {
+         opacity: 0.6;
+         transform: scale(0.85);
+         filter: grayscale(30%);
       }
    }
 </style>

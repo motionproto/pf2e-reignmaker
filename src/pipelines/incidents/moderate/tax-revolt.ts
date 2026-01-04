@@ -21,7 +21,7 @@ export const taxRevoltPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'Your kingdom handles the tax revolt exceptionally well. Citizens accept fair taxation.',
+      description: 'Taxes are collected normally.',
       modifiers: []  // No modifiers needed (+1 Fame auto-applied by UnifiedCheckHandler)
     },
     success: {

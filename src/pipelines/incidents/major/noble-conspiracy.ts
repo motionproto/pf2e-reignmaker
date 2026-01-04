@@ -25,7 +25,7 @@ export const nobleConspiracyPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'The conspiracy is exposed and the ringleaders arrested.',
+      description: 'The conspiracy is exposed.',
       modifiers: []  // +1 Fame auto-applied by UnifiedCheckHandler
     },
     success: {

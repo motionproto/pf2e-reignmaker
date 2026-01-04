@@ -26,7 +26,7 @@ export const massDesertionThreatPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'Your leadership inspires unwavering loyalty in your troops.',
+      description: 'The troops remain loyal.',
       modifiers: []  // No modifiers needed (+1 Fame auto-applied by UnifiedCheckHandler)
     },
     success: {

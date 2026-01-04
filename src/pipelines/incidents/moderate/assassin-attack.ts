@@ -22,7 +22,7 @@ export const assassinAttackPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'The assassin is captured.',
+      description: 'The assassination is prevented.',
       modifiers: []
     },
     success: {

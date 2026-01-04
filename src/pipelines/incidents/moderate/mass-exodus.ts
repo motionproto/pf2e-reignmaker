@@ -23,7 +23,7 @@ export const massExodusPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'The population is reassured.',
+      description: 'The population remains.',
       modifiers: []
     },
     success: {

@@ -21,7 +21,7 @@ export const borderRaidPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'Your kingdom defends its borders and captures valuable enemy supplies.',
+      description: 'The raiders are repelled.',
       modifiers: []  // No modifiers needed (+1 Fame auto-applied by UnifiedCheckHandler)
     },
     success: {

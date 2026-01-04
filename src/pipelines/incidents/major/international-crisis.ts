@@ -24,7 +24,7 @@ export const internationalCrisisPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'Your kingdom handles the crisis masterfully, improving your international reputation.',
+      description: 'The crisis is contained.',
       modifiers: []  // No modifiers needed (+1 Fame auto-applied by UnifiedCheckHandler)
     },
     success: {

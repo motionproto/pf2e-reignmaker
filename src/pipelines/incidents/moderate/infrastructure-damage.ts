@@ -23,7 +23,7 @@ export const infrastructureDamagePipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'Infrastructure is reinforced.',
+      description: 'Damage is prevented.',
       modifiers: []
     },
     success: {

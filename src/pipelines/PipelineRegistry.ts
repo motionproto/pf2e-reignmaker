@@ -49,6 +49,9 @@ import { tendWoundedPipeline } from './actions/tendWounded';
 // Special Actions
 import { aidAnotherPipeline } from './actions/aidAnother';
 
+// Status Phase Actions
+import { cohesionCheckPipeline } from './actions/cohesionCheck';
+
 // ==================================================
 // EVENT PIPELINES (36)
 // ==================================================
@@ -168,7 +171,10 @@ const ACTION_PIPELINES: CheckPipeline[] = [
   tendWoundedPipeline,
 
   // Special Actions (1)
-  aidAnotherPipeline
+  aidAnotherPipeline,
+
+  // Status Phase Actions (1)
+  cohesionCheckPipeline
 ];
 
 /**
@@ -297,12 +303,6 @@ export class PipelineRegistry {
 
     this.initialized = true;
     console.log(`✅ [PipelineRegistry] Successfully registered ${successCount}/${ALL_PIPELINES.length} pipelines`);
-    
-    // List pipeline counts by type
-    console.log(`[PipelineRegistry] 📊 Registered by type:`);
-    console.log(`[PipelineRegistry]   - Actions: ${ACTION_PIPELINES.length}`);
-    console.log(`[PipelineRegistry]   - Events: ${EVENT_PIPELINES.length}`);
-    console.log(`[PipelineRegistry]   - Incidents: ${INCIDENT_PIPELINES.length}`);
   }
 
   /**

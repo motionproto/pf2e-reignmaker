@@ -25,7 +25,7 @@ export const economicCrashPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'Your kingdom stabilizes the economy and emerges stronger.',
+      description: 'The economy is stabilized.',
       modifiers: []  // No modifiers needed (+1 Fame auto-applied by UnifiedCheckHandler)
     },
     success: {

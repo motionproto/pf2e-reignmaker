@@ -37,7 +37,7 @@ export const emigrationThreatPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'The population is reinvigorated.',
+      description: 'The population stays.',
       modifiers: []
     },
     success: {

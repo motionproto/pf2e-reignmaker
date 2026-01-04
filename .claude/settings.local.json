@@ -27,7 +27,14 @@
       "WebSearch",
       "Bash(npx ts-node:*)",
       "WebFetch(domain:www.redblobgames.com)",
-      "WebFetch(domain:theory.stanford.edu)"
+      "WebFetch(domain:theory.stanford.edu)",
+      "Bash(npx svelte-check:*)",
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=4096\" npm run build:*)",
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=8192\" npm run build:*)",
+      "Bash(for file in src/pipelines/actions/*.ts)",
+      "Bash(do if ! grep -q \"doctrine:\" \"$file\")",
+      "Bash(then echo \"$file\")",
+      "Bash(fi)"
     ],
     "deny": [],
     "ask": []

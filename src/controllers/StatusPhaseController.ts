@@ -7,10 +7,10 @@
  */
 
 import { getKingdomActor } from '../stores/KingdomStore';
-import { 
-  reportPhaseStart, 
-  reportPhaseComplete, 
-  reportPhaseError, 
+import {
+  reportPhaseStart,
+  reportPhaseComplete,
+  reportPhaseError,
   createPhaseResult,
   checkPhaseGuard,
   initializePhaseSteps,
@@ -21,6 +21,7 @@ import { StatusPhaseSteps } from './shared/PhaseStepConstants';
 import { SettlementTier, type Settlement } from '../models/Settlement';
 import { logger } from '../utils/Logger';
 import type { BuildProject } from '../services/buildQueue/BuildProject';
+import { cohesionService } from '../services/domain/CohesionService';
 
 export async function createStatusPhaseController() {
   return {
@@ -91,16 +92,25 @@ export async function createStatusPhaseController() {
         
         // Apply automatic structure effects (Donjon converts unrest, etc.)
         await this.applyAutomaticStructureEffects();
-        
-        // Mark Status phase as completed BEFORE completing the step
-        await actor?.updateKingdomData((k: KingdomData) => {
-          if (k.turnState?.statusPhase) {
-            k.turnState.statusPhase.completed = true;
-          }
-        });
-        
-        // Auto-complete the single step immediately (using type-safe constant)
-        await completePhaseStepByIndex(StatusPhaseSteps.STATUS);
+
+        // Initialize cohesion check (if kingdom > 20 hexes)
+        const cohesionRequired = await this.initializeCohesionCheck();
+
+        // Only auto-complete if cohesion check is NOT required
+        // If cohesion check IS required, the phase will be completed from UI after the check
+        if (!cohesionRequired) {
+          // Mark Status phase as completed BEFORE completing the step
+          await actor?.updateKingdomData((k: KingdomData) => {
+            if (k.turnState?.statusPhase) {
+              k.turnState.statusPhase.completed = true;
+            }
+          });
+
+          // Auto-complete the single step immediately (using type-safe constant)
+          await completePhaseStepByIndex(StatusPhaseSteps.STATUS);
+        } else {
+          logger.info('[StatusPhaseController] Cohesion check required - waiting for player action');
+        }
 
         reportPhaseComplete('StatusPhaseController');
         return createPhaseResult(true);
@@ -539,7 +549,7 @@ export async function createStatusPhaseController() {
           const current = settlement.imprisonedUnrest || 0;
           availableCapacity += Math.max(0, capacity - current);
         }
-        
+
         // Only convert if we have capacity available
         if (availableCapacity > 0) {
           const amountToConvert = Math.min(
@@ -547,21 +557,21 @@ export async function createStatusPhaseController() {
             kingdom.unrest,           // How much unrest we have
             availableCapacity         // How much capacity we have
           );
-          
+
           // Use GameCommandsService to allocate imprisoned unrest
           const { createGameCommandsService } = await import('../services/GameCommandsService');
           const commandsService = await createGameCommandsService();
-          
+
           // Create result tracker
           const result = {
             success: true,
             applied: { resources: [] }
           };
-          
+
           // Convert regular unrest to imprisoned unrest
           await actor.updateKingdomData((k: KingdomData) => {
             k.unrest = (k.unrest || 0) - amountToConvert;
-            
+
             // Add notification to Status phase display
             if (k.turnState?.statusPhase) {
               if (!k.turnState.statusPhase.displayModifiers) {
@@ -589,7 +599,7 @@ export async function createStatusPhaseController() {
               });
             }
           });
-          
+
           // Apply imprisoned unrest (auto-allocates to settlements with capacity)
           await commandsService.applyResourceChange(
             'imprisonedUnrest',
@@ -615,6 +625,57 @@ export async function createStatusPhaseController() {
           });
         }
       }
+    },
+
+    /**
+     * Initialize cohesion check if kingdom size exceeds threshold
+     * Returns true if cohesion check is required (blocks auto-complete)
+     */
+    async initializeCohesionCheck(): Promise<boolean> {
+      const actor = getKingdomActor();
+      if (!actor) {
+        logger.error('❌ [StatusPhaseController] No KingdomActor available for cohesion check');
+        return false;
+      }
+
+      const kingdom = actor.getKingdomData();
+      if (!kingdom) {
+        logger.error('❌ [StatusPhaseController] No kingdom data for cohesion check');
+        return false;
+      }
+
+      // Check if cohesion check is required
+      const cohesionResult = cohesionService.checkCohesionRequirements(kingdom);
+
+      if (!cohesionResult.required) {
+        logger.info(`[StatusPhaseController] Cohesion check not required (${cohesionResult.hexCount} hexes)`);
+        return false;
+      }
+
+      // Get leader count from party (for rotation calculation)
+      // @ts-ignore - Foundry globals
+      const game = globalThis.game;
+      const partyActor = game?.actors?.find((a: any) => a.type === 'party');
+      const members = partyActor?.members ? Array.from(partyActor.members) : [];
+      const leaders = members.filter((a: any) => a.type === 'character');
+      const leaderCount = leaders.length || 1;
+
+      // Calculate active leader index
+      const turnNumber = kingdom.currentTurn || 1;
+      const activeLeaderIndex = cohesionService.getActiveLeaderIndex(turnNumber, leaderCount);
+
+      // Update turn state with cohesion check info
+      await actor.updateKingdomData((k: KingdomData) => {
+        if (k.turnState?.statusPhase) {
+          k.turnState.statusPhase.cohesionCheckRequired = true;
+          k.turnState.statusPhase.cohesionPenalty = cohesionResult.penalty;
+          k.turnState.statusPhase.cohesionCheckCompleted = false;
+          k.turnState.statusPhase.cohesionActiveLeaderIndex = activeLeaderIndex;
+        }
+      });
+
+      logger.info(`[StatusPhaseController] Cohesion check initialized: ${cohesionResult.hexCount} hexes, penalty -${cohesionResult.penalty}, leader index ${activeLeaderIndex}`);
+      return true;
     }
   };
 }

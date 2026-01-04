@@ -1059,7 +1059,8 @@ export class UnifiedCheckHandler {
     if (!pipeline.id) throw new Error('Pipeline missing id');
     if (!pipeline.name) throw new Error('Pipeline missing name');
     if (!pipeline.checkType) throw new Error('Pipeline missing checkType');
-    if (!pipeline.skills || pipeline.skills.length === 0) {
+    // Skills required except for status-phase checks (which get skills dynamically)
+    if (pipeline.category !== 'status-phase' && (!pipeline.skills || pipeline.skills.length === 0)) {
       throw new Error('Pipeline missing skills');
     }
 

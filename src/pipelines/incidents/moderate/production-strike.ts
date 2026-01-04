@@ -33,7 +33,7 @@ export const productionStrikePipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'The strike ends peacefully.',
+      description: 'The strike ends.',
       modifiers: []
     },
     success: {

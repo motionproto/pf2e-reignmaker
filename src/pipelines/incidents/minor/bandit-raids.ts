@@ -24,7 +24,7 @@ export const banditRaidsPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'The bandits are routed completely.',
+      description: 'The bandits are deterred.',
       modifiers: []
     },
     success: {

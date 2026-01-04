@@ -24,7 +24,7 @@ export const prisonBreaksPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'The prison break is thwarted and security is improved.',
+      description: 'The break is prevented.',
       modifiers: []  // +1 Fame auto-applied by UnifiedCheckHandler
     },
     success: {

@@ -93,19 +93,23 @@ export type EventTrait =
     ts_content += """/**
  * Modifier selector types (what the modifier affects)
  */
-export type ModifierSelector = 
-"""
-    selector_lines = [f'  | "{selector}"' for selector in sorted(selectors)]
-    ts_content += '\n'.join(selector_lines) + ';\n\n'
-    
+export type ModifierSelector = """
+    if selectors:
+        selector_lines = [f'  | "{selector}"' for selector in sorted(selectors)]
+        ts_content += '\n' + '\n'.join(selector_lines) + ';\n\n'
+    else:
+        ts_content += 'never;\n\n'
+
     # Add location types
     ts_content += """/**
  * Event location types
  */
-export type EventLocation = 
-"""
-    location_lines = [f'  | "{location}"' for location in sorted(locations)]
-    ts_content += '\n'.join(location_lines) + ';\n\n'
+export type EventLocation = """
+    if locations:
+        location_lines = [f'  | "{location}"' for location in sorted(locations)]
+        ts_content += '\n' + '\n'.join(location_lines) + ';\n\n'
+    else:
+        ts_content += 'never;\n\n'
     
     # Add main event interfaces
     ts_content += """/**

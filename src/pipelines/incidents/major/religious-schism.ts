@@ -25,7 +25,7 @@ export const religiousSchismPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'Religious unity is strengthened through your intervention.',
+      description: 'The schism is averted.',
       modifiers: []  // +1 Fame auto-applied by UnifiedCheckHandler
     },
     success: {

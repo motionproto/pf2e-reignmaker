@@ -23,7 +23,7 @@ export const riotPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'The riot is completely suppressed.',
+      description: 'The riot is quelled.',
       modifiers: []
     },
     success: {

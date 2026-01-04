@@ -38,6 +38,12 @@ export interface StatusPhaseState {
   previousIncidentCleared: boolean;
   previousOutcomesCleared: boolean;
   displayModifiers?: any[];  // Display-only modifiers for Status phase UI (size, metropolises, etc.)
+
+  // Cohesion check state (triggers when kingdom > 20 claimed hexes)
+  cohesionCheckRequired?: boolean;
+  cohesionPenalty?: number;  // -1 per 20 hexes beyond 20
+  cohesionCheckCompleted?: boolean;
+  cohesionActiveLeaderIndex?: number;  // Which leader is active for this turn's check
 }
 
 /**
@@ -221,7 +227,11 @@ export function createDefaultTurnState(turnNumber: number): TurnState {
       permanentModifiersApplied: false,
       resourceDecayProcessed: false,
       previousIncidentCleared: false,
-      previousOutcomesCleared: false
+      previousOutcomesCleared: false,
+      cohesionCheckRequired: false,
+      cohesionPenalty: 0,
+      cohesionCheckCompleted: false,
+      cohesionActiveLeaderIndex: 0
     },
 
     resourcesPhase: {

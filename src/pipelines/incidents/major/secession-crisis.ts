@@ -38,7 +38,7 @@ export const secessionCrisisPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'The independence movement is quelled and grievances addressed.',
+      description: 'The independence movement is quelled.',
       modifiers: []  // +1 Fame auto-applied by UnifiedCheckHandler
     },
     success: {

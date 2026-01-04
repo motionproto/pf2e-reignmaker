@@ -35,7 +35,7 @@ export const tradeEmbargoPipeline: CheckPipeline = {
 
   outcomes: {
     criticalSuccess: {
-      description: 'Your kingdom negotiates favorable trade deals during the embargo.',
+      description: 'Trade continues normally despite the embargo.',
       modifiers: []  // No modifiers needed (+1 Fame auto-applied by UnifiedCheckHandler)
     },
     success: {
